@@ -12,19 +12,29 @@ interface GeoData {
   error: string | null;
 }
 
-/**
- * Synchronously hydrate from sessionStorage on the very first render so the
- * `useGeoLocation` consumer (e.g. InternationalBanner) doesn't flicker
- * isLoading=true → isUS=true → eventually-correct on repeat visits within
- * the same session. The async useEffect path below still runs as a fallback
- * for first visits / corrupt cache.
- */
+const CACHE_KEY = "geo_data_v3";
+// 7-day TTL on the geo cache. Cross-session: a repeat visitor next week
+// gets instant proximity sorting without a 200-800 ms ipapi.co round-trip
+// (and avoids ipapi.co rate limits on a busy domain).
+const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
+interface CachedGeo {
+  data: Omit<GeoData, "isLoading" | "error">;
+  cachedAt: number;
+}
+
 function readCachedGeo(): Omit<GeoData, "isLoading" | "error"> | null {
   try {
     if (typeof window === "undefined") return null;
-    const cached = sessionStorage.getItem("geo_data_v2");
+    // localStorage primary (cross-session), sessionStorage legacy fallback.
+    const cached = localStorage.getItem(CACHE_KEY) || sessionStorage.getItem("geo_data_v2");
     if (!cached) return null;
     const parsed = JSON.parse(cached);
+    if (parsed && typeof parsed.cachedAt === "number" && parsed.data) {
+      if (Date.now() - parsed.cachedAt < CACHE_TTL_MS) return parsed.data as CachedGeo["data"];
+      return null;
+    }
+    // Legacy sessionStorage format (no envelope) — accept once, then upgrade.
     if (parsed && typeof parsed.isUS === "boolean") return parsed;
   } catch { /* ignore */ }
   return null;
@@ -59,14 +69,13 @@ export function useGeoLocation(): GeoData {
         return;
       }
 
-      // Check sessionStorage cache to reduce API calls
-      const cached = sessionStorage.getItem("geo_data_v2");
+      // Re-check the cache from inside the effect: the initial useState
+      // path covers the first render, but the effect can run after the
+      // cache was just populated by a parallel call on another route.
+      const cached = readCachedGeo();
       if (cached) {
-        try {
-          const parsed = JSON.parse(cached);
-          setGeoData({ ...parsed, isLoading: false, error: null });
-          return;
-        } catch { /* ignore parse errors */ }
+        setGeoData({ ...cached, isLoading: false, error: null });
+        return;
       }
 
       try {
@@ -92,7 +101,12 @@ export function useGeoLocation(): GeoData {
           isUS: countryCode === "US",
         };
         
-        sessionStorage.setItem("geo_data_v2", JSON.stringify(result));
+        try {
+          localStorage.setItem(
+            CACHE_KEY,
+            JSON.stringify({ data: result, cachedAt: Date.now() } satisfies CachedGeo),
+          );
+        } catch { /* localStorage full / disabled — non-fatal */ }
         setGeoData({ ...result, isLoading: false, error: null });
       } catch (err) {
         setGeoData({

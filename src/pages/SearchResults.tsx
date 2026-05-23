@@ -1313,6 +1313,26 @@ const SearchResults = () => {
 
             {/* Right Content — Results */}
             <main className="flex-1 min-w-0">
+              {/* Auto-detected-location banner. Renders when the user did
+                  NOT supply a `?location=` AND has no seeker-profile city/state,
+                  but geo-IP successfully resolved to a US state. Tells the
+                  visitor *why* their results look local. The "Change" CTA
+                  scrolls to (or focuses) the inline SearchResultsForm so
+                  they can override without hunting for the field. */}
+              {!location && !seekerProfile?.state && !geo.isLoading && geo.regionCode && geo.isUS && effectiveLocation && (
+                <div className="mb-4 rounded-xl border border-primary/25 bg-primary/5 px-4 py-3 flex items-start gap-3">
+                  <Compass className="h-5 w-5 text-primary shrink-0 mt-0.5" aria-hidden />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground">
+                      Showing facilities near <span className="font-semibold">{effectiveLocation}</span>
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Detected from your location. Type a ZIP code or city above to search a different area.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Featured rail — bucket resolved from current filters.
                   city+state → (city, slug); state only → (state, abbr);
                   treatment only → (treatment, slug); otherwise national.
@@ -1325,7 +1345,21 @@ const SearchResults = () => {
                 />
               )}
 
-              {isLoading ? (
+              {/* Hold the result list during the brief window between page
+                  load and geo-IP resolution. Without this guard, default-sort
+                  ("proximity") sees no location → every facility gets the
+                  "nationwide" tier (equal score 4) → falls back to plan
+                  priority + ranking score → user sees out-of-state featured
+                  centers before re-ordering kicks in. Only applies when the
+                  user hasn't typed a location AND has no profile location;
+                  once cached in localStorage (7-day TTL) repeat visits skip
+                  this window entirely. */}
+              {isLoading || (
+                !location &&
+                !seekerProfile?.state &&
+                geo.isLoading &&
+                sortParam === "proximity"
+              ) ? (
                 <SearchResultsLoading count={6} />
               ) : paginatedCenters.length > 0 ? (
                 <>
