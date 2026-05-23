@@ -478,15 +478,38 @@ const SearchResults = () => {
     // The chip was previously cosmetic (selectedDistance read + counted as
     // active but never applied), so any results being narrowed is a win
     // versus the prior dead-feature behavior.
-    if (selectedDistance && selectedDistance !== "any" && locationMatch) {
+    // Audit fix (2026-05-23): the distance filter previously only fired
+    // when `locationMatch` existed, which was built strictly from the
+    // explicit `location` URL param. A user with no typed location but
+    // a geo-IP-resolved `effectiveLocation` could select "Within 10
+    // miles" and see a no-op — the filter chip displayed as active but
+    // nothing was actually narrowed. Now we build a separate distance
+    // location match from `effectiveLocation` as a fallback so the
+    // distance filter actually constrains results in the geo-IP path.
+    //
+    // Tier ladder also tightened: 50 mi no longer pulls in the "nearby
+    // state" tier (cross-state adjacents that can be 100s of miles
+    // away). 100 mi keeps the looser tier because at that radius
+    // crossing into an adjacent state is plausible.
+    const distanceLocationMatch: LocationMatch | null =
+      locationMatch ??
+      (effectiveLocation
+        ? (() => {
+            const m = parseLocationInput(effectiveLocation);
+            return resolvedZipData ? enrichLocationMatchWithZip(m, resolvedZipData) : m;
+          })()
+        : null);
+
+    if (selectedDistance && selectedDistance !== "any" && distanceLocationMatch) {
       const miles = parseInt(selectedDistance, 10);
       const allow = (tier: string): boolean => {
         if (miles <= 10) return tier === "exact" || tier === "city";
-        if (miles <= 25) return tier === "exact" || tier === "city" || tier === "state";
+        if (miles <= 25) return tier === "exact" || tier === "city";
+        if (miles <= 50) return tier === "exact" || tier === "city" || tier === "state";
         return tier === "exact" || tier === "city" || tier === "state" || tier === "nearby";
       };
       results = results.filter((center) => {
-        const { tier } = getProximityTier(center, locationMatch!);
+        const { tier } = getProximityTier(center, distanceLocationMatch);
         return allow(tier);
       });
     }

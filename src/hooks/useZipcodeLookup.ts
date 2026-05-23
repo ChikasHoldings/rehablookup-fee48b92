@@ -36,8 +36,17 @@ export function useZipcodeLookup() {
     setResult({ data: null, isLoading: true, error: null });
 
     try {
-      const response = await fetch(`https://api.zippopotam.us/us/${zipcode}`);
-      
+      // Audit fix (2026-05-23): 3s timeout so a slow/unresponsive
+      // Zippopotam.us doesn't hang the lookup forever. Without this the
+      // hook stayed in isLoading=true until the user navigated away, and
+      // every downstream consumer that gated on `resolvedZipData` (the
+      // proximity sort, the distance filter, the "Near <city, state>"
+      // hero label) silently fell back to the raw ZIP string, producing
+      // misleading results.
+      const response = await fetch(`https://api.zippopotam.us/us/${zipcode}`, {
+        signal: AbortSignal.timeout(3000),
+      });
+
       if (!response.ok) {
         if (response.status === 404) {
           setResult({ data: null, isLoading: false, error: "Invalid ZIP code" });

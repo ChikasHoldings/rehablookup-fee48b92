@@ -11,7 +11,11 @@ interface InternalLinkBlockProps {
 }
 
 const treatmentTypes = [
-  { name: "Drug Addiction Treatment", slug: "/treatment-types/drug-addiction" },
+  // 2026-05-23: canonical slug is "drug-addiction-treatment" (matches the
+  // homepage hero CTA + the treatment-types route in App.tsx). The previous
+  // "/treatment-types/drug-addiction" entry triggered a redirect hop on
+  // every footer click, diluting crawl efficiency.
+  { name: "Drug Addiction Treatment", slug: "/treatment-types/drug-addiction-treatment" },
   { name: "Alcohol Rehabilitation", slug: "/treatment-types/alcohol-rehabilitation" },
   { name: "Detox Programs", slug: "/treatment-types/detox-programs" },
   { name: "Inpatient Rehab", slug: "/treatment-types/residential-inpatient" },
@@ -38,7 +42,10 @@ const nearMePages = [
   { name: "Detox Near Me", slug: "/detox-near-me" },
   { name: "Dual Diagnosis Near Me", slug: "/dual-diagnosis-near-me" },
   { name: "Inpatient Rehab Near Me", slug: "/inpatient-rehab-near-me" },
-  { name: "Outpatient Near Me", slug: "/outpatient-near-me" },
+  // 2026-05-23: canonical near-me slug is "outpatient-rehab-near-me"
+  // (App.tsx routes /outpatient-near-me → /outpatient-rehab-near-me).
+  // Using the canonical avoids a 301 hop on every footer click.
+  { name: "Outpatient Near Me", slug: "/outpatient-rehab-near-me" },
 ];
 
 export const InternalLinkBlock = forwardRef<HTMLDivElement, InternalLinkBlockProps>(function InternalLinkBlock({
