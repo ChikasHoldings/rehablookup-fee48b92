@@ -91,6 +91,18 @@ export default function ProviderOnboarding() {
   const { data: profile, isLoading: profileLoading } = useProviderProfile();
 
   const addListingIntent = searchParams.get("action") === "add-listing";
+  // Audit fix (2026-05-23): a claim deep link
+  // (?intent=claim&facility_id=… or &facility_slug=…) from an
+  // already-onboarded provider must NOT be silently bounced to the
+  // dashboard. The "Claim This Listing" buttons on facility profile
+  // pages always carry these params, and we need to re-enter the
+  // wizard at the claim flow rather than drop the intent. Treated
+  // like add-listing for the purposes of dashboard-bypass + state
+  // reset.
+  const claimIntent =
+    searchParams.get("intent") === "claim" &&
+    !!(searchParams.get("facility_id") || searchParams.get("facility_slug"));
+  const wizardReEntry = addListingIntent || claimIntent;
 
   // 2026-05-20 unification: when an already-signed-in user arrives with
   // ?intent=claim + ?facility_slug=<slug> (or ?facility_id=<uuid>),
@@ -176,11 +188,14 @@ export default function ProviderOnboarding() {
   // already matches the target.
   const addListingResetRef = useRef(false);
   useEffect(() => {
-    if (!addListingIntent) return;
+    if (!wizardReEntry) return;
     if (!profile?.onboarding_completed_at) return; // only for onboarded users
     if (!stateRow) return;
     if (addListingResetRef.current) return; // run at most once per mount
-    // Row already in a clean post-reset state — no write needed.
+    // Row already in a clean post-reset state — no write needed. For
+    // claim re-entry the pre-seed effect will set mode='claim' + the
+    // facility id once this completes; we don't pre-empt it here so the
+    // "row is clean" check ignores those fields.
     if (
       stateRow.current_step === "find_or_list" &&
       !stateRow.selected_facility_id &&
@@ -202,12 +217,12 @@ export default function ProviderOnboarding() {
           current_step: "find_or_list",
         } as Partial<ProviderOnboardingStateRow>);
       } catch (e) {
-        console.error("[Onboarding] add-listing state reset failed", e);
+        console.error("[Onboarding] wizard re-entry state reset failed", e);
         addListingResetRef.current = false; // allow retry on next render
       }
     })();
     return () => { cancelled = true; };
-  }, [addListingIntent, profile?.onboarding_completed_at, stateRow, advance]);
+  }, [wizardReEntry, profile?.onboarding_completed_at, stateRow, advance]);
 
   // Anonymous-visitor slug guard: when a signed-out user arrives with
   // ?intent=claim&facility_slug=<slug>, the signed-in pre-seed effect
@@ -268,7 +283,19 @@ export default function ProviderOnboarding() {
         : profile
           ? "verify_email"
           : "account";
-  const serverStep: OnboardingStep = stateRow?.current_step ?? inferredServerStep;
+  const rawServerStep: OnboardingStep = stateRow?.current_step ?? inferredServerStep;
+  // Audit fix (2026-05-23): during a wizard re-entry (?action=add-listing
+  // or ?intent=claim) for an already-onboarded provider, the reset
+  // effect is in flight queueing an update to push the cursor from
+  // 'completed' back to 'find_or_list'. Until that lands, the row still
+  // reports 'completed' and the resolved-step pipeline would render
+  // CompletedBounce → navigate('/provider/dashboard'), dropping the
+  // user out of the wizard before the reset settles. Pre-emptively
+  // render the target step so re-entry is jank-free.
+  const serverStep: OnboardingStep =
+    wizardReEntry && profile?.onboarding_completed_at && rawServerStep === "completed"
+      ? "find_or_list"
+      : rawServerStep;
   // Round-30 merge: anon visitors to /provider/claim/:slug land here
   // with ?returnTo=/provider/claim/:slug. Once email is verified we
   // bounce them to the deep link they came from.
@@ -319,13 +346,16 @@ export default function ProviderOnboarding() {
   }
 
   // Already-onboarded → bounce to dashboard, UNLESS the user is here
-  // explicitly to add another facility (?action=add-listing). In that
-  // case fall through to the wizard — the reset effect above moved
-  // their cursor back to find_or_list so the existing rendering logic
-  // handles the rest. Forms read profile.onboarding_completed_at at
-  // publish time to decide whether to advance to PlanStep (first-time)
-  // or jump straight to the dashboard (add-listing).
-  if (profile?.onboarding_completed_at && !addListingIntent) {
+  // explicitly to add another facility (?action=add-listing) OR to
+  // claim a specific one (?intent=claim&facility_id=…). For both
+  // re-entry intents the reset effect above has moved their cursor
+  // back to find_or_list; for claim, the pre-seed effect additionally
+  // sets mode='claim' + the seeded facility id so the wizard lands
+  // on "Continue with [Facility Name]" with one click to confirm.
+  // Forms read profile.onboarding_completed_at at publish time to
+  // decide whether to advance to PlanStep (first-time) or jump
+  // straight to the dashboard (re-entry).
+  if (profile?.onboarding_completed_at && !wizardReEntry) {
     toast.success("You're already onboarded.");
     return <Navigate to="/provider/dashboard" replace />;
   }

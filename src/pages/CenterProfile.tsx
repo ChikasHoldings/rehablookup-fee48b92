@@ -893,14 +893,20 @@ const CenterProfile = () => {
               </div>
 
               {/* Claim CTA — top-right of hero, secondary style so it
-                  doesn't compete with the primary Request Info CTAs below. */}
+                  doesn't compete with the primary Request Info CTAs below.
+                  Hover override (2026-05-23): the outline-variant baseline
+                  applies `hover:text-accent-foreground` (white) on hover,
+                  which collided with our white background here and made
+                  the label disappear. Pin the hover text to `text-primary`
+                  for a clear color shift that stays readable on the white
+                  hover background. */}
               {claimFlags && !claimFlags.is_claimed && (
                 <div className="absolute top-3 right-3">
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={handleClaimClick}
-                    className="bg-white/90 hover:bg-white text-foreground border-white/60 backdrop-blur-sm shadow-md"
+                    className="bg-white/90 hover:bg-white text-foreground hover:text-primary border-white/60 hover:border-primary/40 backdrop-blur-sm shadow-md"
                   >
                     <ShieldCheck className="h-3.5 w-3.5 mr-1.5" />
                     Claim This Listing
