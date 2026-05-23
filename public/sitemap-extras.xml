@@ -1628,4 +1628,43 @@
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
+  <!-- 2026-05-23 editorial backfill: 6 new articles published targeting
+       high-volume search keywords (rehab packing list, relapse warning
+       signs, paying without insurance, FMLA + treatment, Suboxone vs
+       methadone, Narcan rescue guide). Adding to extras so Googlebot
+       discovers them via the canonical sitemap path. -->
+  <url>
+    <loc>https://rehablookup.com/resources/what-to-bring-to-rehab-packing-list</loc>
+    <lastmod>2026-05-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://rehablookup.com/resources/signs-of-relapse-warning-signs</loc>
+    <lastmod>2026-05-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <!-- /resources/how-to-pay-for-rehab-without-insurance is already
+       in the main sitemap.xml (line 14485) — the sitemap generator
+       picked it up from the published article row. Not duplicated
+       here. -->
+  <url>
+    <loc>https://rehablookup.com/resources/fmla-addiction-treatment-employee-rights</loc>
+    <lastmod>2026-05-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://rehablookup.com/resources/suboxone-vs-methadone-comparison</loc>
+    <lastmod>2026-05-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://rehablookup.com/resources/naloxone-narcan-overdose-rescue-guide</loc>
+    <lastmod>2026-05-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
 </urlset>
