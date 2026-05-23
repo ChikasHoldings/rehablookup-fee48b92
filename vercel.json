@@ -742,6 +742,191 @@
       "statusCode": 301
     },
     {
+      "source": "/iop-in-:city",
+      "destination": "/search-results?location=:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/php-in-:city",
+      "destination": "/search-results?location=:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/inpatient-rehab-in-:city",
+      "destination": "/search-results?location=:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/outpatient-rehab-in-:city",
+      "destination": "/search-results?location=:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/drug-rehab-in-:city",
+      "destination": "/search-results?location=:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/alcohol-rehab-in-:city",
+      "destination": "/search-results?location=:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/luxury-rehab-in-:city",
+      "destination": "/search-results?location=:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/detox-centers-in-:city",
+      "destination": "/search-results?location=:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/detox-in-:city",
+      "destination": "/search-results?location=:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/mat-clinic-in-:city",
+      "destination": "/search-results?location=:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/sober-living-in-:city",
+      "destination": "/search-results?location=:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/affordable-rehab-near-me/:state/:city",
+      "destination": "/search-results?location=:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/alcohol-rehab-near-me/:state/:city",
+      "destination": "/search-results?location=:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/luxury-rehab-near-me/:state/:city",
+      "destination": "/search-results?location=:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/inpatient-rehab-near-me/:state/:city",
+      "destination": "/search-results?location=:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/dual-diagnosis-near-me/:state/:city",
+      "destination": "/search-results?location=:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/fentanyl-rehab-near-me/:state/:city",
+      "destination": "/search-results?location=:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/cigna-rehab-near-me/:state/:city",
+      "destination": "/search-results?location=:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/mens-rehab-near-me/:state/:city",
+      "destination": "/search-results?location=:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/emergency-rehab-near-me/:state/:city",
+      "destination": "/search-results?location=:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/aetna-rehab-near-me/:state/:city",
+      "destination": "/search-results?location=:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/holistic-rehab-near-me/:state/:city",
+      "destination": "/search-results?location=:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/medicare-rehab-near-me/:state/:city",
+      "destination": "/search-results?location=:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/medicaid-rehab-near-me/:state/:city",
+      "destination": "/search-results?location=:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/heroin-rehab-near-me/:state/:city",
+      "destination": "/search-results?location=:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/marijuana-rehab-near-me/:state/:city",
+      "destination": "/search-results?location=:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/meth-rehab-near-me/:state/:city",
+      "destination": "/search-results?location=:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/rehab-near-me/:state/:city",
+      "destination": "/search-results?location=:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/sober-living-near-me/:state/:city",
+      "destination": "/search-results?location=:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/90-day-rehab-near-me/:state/:city",
+      "destination": "/search-results?location=:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/24-7-detox-near-me/:state/:city",
+      "destination": "/search-results?location=:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/detox-near-me/:state/:city",
+      "destination": "/search-results?location=:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/drug-rehab-near-me/:state/:city",
+      "destination": "/search-results?location=:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/iop-near-me/:state/:city",
+      "destination": "/search-results?location=:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/php-near-me/:state/:city",
+      "destination": "/search-results?location=:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/sober-living-centers",
+      "destination": "/treatment-types/sober-living",
+      "statusCode": 301
+    },
+    {
+      "source": "/list-your-facility",
+      "destination": "/for-providers",
+      "statusCode": 301
+    },
+    {
       "source": "/treatment/iop",
       "destination": "/iop-programs",
       "statusCode": 301
