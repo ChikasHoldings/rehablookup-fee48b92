@@ -42,7 +42,11 @@
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { chromium } from "playwright";
+
+// Note: `playwright` is imported dynamically inside main() AFTER the BASE_URL
+// guard. It's a devDependency (~80 MB browser binary in the install) and
+// Vercel's production install doesn't include devDeps, so a top-level static
+// import would crash the build before the graceful-skip path could even run.
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = join(__dirname, "..");
@@ -170,6 +174,7 @@ async function main() {
   const picks = sample(manifest, SAMPLE_SIZE);
   console.log(`[check-spa-titles] Checking ${picks.length} routes against ${BASE_URL}`);
 
+  const { chromium } = await import("playwright");
   const browser = await chromium.launch();
   const ctx = await browser.newContext();
   const page = await ctx.newPage();
