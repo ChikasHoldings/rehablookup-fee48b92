@@ -189,8 +189,13 @@ export function useProviderReviews() {
   // logic in one place.
   useEffect(() => {
     if (facilityIds.length === 0) return;
+    // Per-mount random suffix prevents the "cannot add postgres_changes
+    // callbacks after subscribe()" crash when this hook remounts (e.g.,
+    // dashboard re-mount after PlanStep navigates from /onboarding) and
+    // the previous channel hasn't fully unsubscribed yet.
+    const channelName = `provider-reviews-${facilityIds.join(",")}-${Math.random().toString(36).slice(2, 10)}`;
     const channel = supabase
-      .channel(`provider-reviews-${facilityIds.join(",")}`)
+      .channel(channelName)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "facility_reviews" },
@@ -207,7 +212,9 @@ export function useProviderReviews() {
         () => { fetchReviews(); },
       )
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      try { supabase.removeChannel(channel); } catch { /* already torn down */ }
+    };
   }, [facilityIds, fetchReviews]);
 
   // Calculate stats from reviews. The `disputed` count uses `!!r.dispute`

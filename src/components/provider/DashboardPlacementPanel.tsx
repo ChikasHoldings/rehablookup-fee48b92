@@ -72,9 +72,16 @@ export function DashboardPlacementPanel({ facilityIds, isPro: _isPro }: Dashboar
   // don't tear down + recreate the channels on every parent render.
   useEffect(() => {
     if (!sortedFacilityIds.length) return;
+    // Per-mount random suffix on each channel name. Without it,
+    // remounting this panel (e.g., after PlanStep navigates to
+    // /provider/dashboard, or when sortedFacilityIds composition
+    // changes) collides with the still-cached channel of the same
+    // name and the .on() chain throws "cannot add postgres_changes
+    // callbacks after subscribe()".
+    const mountSuffix = Math.random().toString(36).slice(2, 10);
     const channels = sortedFacilityIds.map(fid =>
       supabase
-        .channel(`dash-placements-${fid}`)
+        .channel(`dash-placements-${fid}-${mountSuffix}`)
         .on("postgres_changes", {
           event: "*", schema: "public", table: "concierge_introductions",
           filter: `facility_id=eq.${fid}`,
@@ -83,7 +90,11 @@ export function DashboardPlacementPanel({ facilityIds, isPro: _isPro }: Dashboar
         })
         .subscribe()
     );
-    return () => { channels.forEach(ch => supabase.removeChannel(ch)); };
+    return () => {
+      channels.forEach(ch => {
+        try { supabase.removeChannel(ch); } catch { /* already torn down */ }
+      });
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [facilityIdsKey, queryClient]);
 

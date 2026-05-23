@@ -38,12 +38,23 @@ export function usePendingConciergeCount(facilityId?: string) {
     queryClient.invalidateQueries({ queryKey: ["pending-concierge-count", facilityId] });
   }, [queryClient, facilityId]);
 
-  // Subscribe to realtime changes
+  // Subscribe to realtime changes.
+  //
+  // Channel name carries a per-mount random suffix so successive
+  // mounts of this hook (e.g., after navigate('/provider/dashboard',
+  // { replace: true }) from PlanStep, or React's normal effect re-fire
+  // when a dep changes) never collide on a name that's still in
+  // Supabase's internal channel registry. Without the suffix,
+  // supabase.channel(name) would return the existing-and-still-
+  // subscribed channel, and the subsequent .on() throws "cannot add
+  // postgres_changes callbacks after subscribe()" — crashing the
+  // dashboard with no recovery short of a hard reload.
   useEffect(() => {
     if (!facilityId) return;
 
+    const channelName = `concierge-intros-count-${facilityId}-${Math.random().toString(36).slice(2, 10)}`;
     const channel = supabase
-      .channel(`concierge-intros-count-${facilityId}`)
+      .channel(channelName)
       .on(
         "postgres_changes",
         {
@@ -53,15 +64,19 @@ export function usePendingConciergeCount(facilityId?: string) {
           filter: `facility_id=eq.${facilityId}`,
         },
         () => {
-          queryClient.invalidateQueries({ 
-            queryKey: ["pending-concierge-count", facilityId] 
+          queryClient.invalidateQueries({
+            queryKey: ["pending-concierge-count", facilityId]
           });
         }
       )
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      try {
+        supabase.removeChannel(channel);
+      } catch {
+        /* removeChannel may throw if the channel was already torn down */
+      }
     };
   }, [facilityId, queryClient]);
 

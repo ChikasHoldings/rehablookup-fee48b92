@@ -57,13 +57,20 @@ export function useProviderData(facilityId?: string) {
   const queryClient = useQueryClient();
 
   // Set up realtime subscription for facility changes + polling for leads/views
-  // (leads table removed from Realtime publication for PII security)
+  // (leads table removed from Realtime publication for PII security).
+  //
+  // Channel name carries a per-mount random suffix so that successive
+  // mounts can never collide on a name still held in Supabase's
+  // internal channel registry. Without the suffix, supabase.channel()
+  // returns the existing subscribed channel and the next .on() throws
+  // "cannot add postgres_changes callbacks after subscribe()" —
+  // crashing the dashboard right after the user lands from PlanStep.
   useEffect(() => {
     if (!facilityId) return;
 
-    // Subscribe to facility changes (for profile completion updates)
+    const channelName = `facility-data-${facilityId}-${Math.random().toString(36).slice(2, 10)}`;
     const facilityChannel = supabase
-      .channel(`facility-data-${facilityId}`)
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -84,7 +91,11 @@ export function useProviderData(facilityId?: string) {
     }, 60000);
 
     return () => {
-      supabase.removeChannel(facilityChannel);
+      try {
+        supabase.removeChannel(facilityChannel);
+      } catch {
+        /* removeChannel may throw if the channel was already torn down */
+      }
       clearInterval(pollInterval);
     };
   }, [facilityId, queryClient]);
