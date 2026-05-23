@@ -28,6 +28,7 @@ import {
   useState,
   type FormEvent,
 } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -315,6 +316,7 @@ export default function ClaimWizard({ embedded = false, slugProp, onCancel }: Cl
   const { slug: paramSlug } = useParams<{ slug: string }>();
   const slug = slugProp ?? paramSlug;
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const [authChecking, setAuthChecking] = useState(!embedded);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -550,6 +552,15 @@ export default function ClaimWizard({ embedded = false, slugProp, onCancel }: Cl
                             { user_id: uid, current_step: "plan" } as never,
                             { onConflict: "user_id" },
                           );
+                        // Refresh the onboarding-state cache BEFORE
+                        // navigating so the wizard host's canReach()
+                        // check sees current_step='plan'. Same bug
+                        // pattern that bit ProviderSignup — direct
+                        // upsert bypassed the useProviderOnboardingState
+                        // advance() helper that normally invalidates
+                        // for us. See ProviderSignup.tsx line ~1015
+                        // for the matching fix.
+                        await queryClient.invalidateQueries({ queryKey: ["provider-onboarding-state"] });
                       }
                     }
                   } catch (e) {

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -194,6 +195,7 @@ export default function ProviderSignup({
   void emailVerified;
   const { toast } = useToast();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
 
   // Check if user is already logged in
@@ -1012,6 +1014,18 @@ export default function ProviderSignup({
             { onConflict: "user_id" },
           );
         if (stateErr) throw stateErr;
+
+        // CRITICAL: refresh the React Query cache for
+        // `provider-onboarding-state` BEFORE navigating. The Onboarding
+        // host reads `current_step` from the cached row to decide
+        // whether `?step=plan` is reachable via `canReach()`. Without
+        // this, the cache still says `build` for ~5s of staleTime,
+        // canReach('plan', 'build') returns false, and the wizard host
+        // strips the query param + shows "Let's finish the current step
+        // first" — silently bouncing the user back to the Build form
+        // they just completed. Awaiting invalidateQueries blocks on the
+        // refetch so the navigate below lands on a fresh cache.
+        await queryClient.invalidateQueries({ queryKey: ["provider-onboarding-state"] });
       } catch (e) {
         console.error("[ProviderSignup] onboarding state advance failed", e);
         toast({
