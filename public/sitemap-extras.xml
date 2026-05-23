@@ -1536,4 +1536,96 @@
     <priority>0.7</priority>
   </url>
   <!-- Editorial team / authors (Phase 4H — E-E-A-T) -->
+  <!-- 2026-05-23 SEO audit backfill: 14 prerendered HTML pages were
+       discovered by validate-sitemap-robots as "orphan" — generated
+       in /public but absent from the main sitemap and not blocked by
+       robots.txt. Adding them here makes them sitemap-discoverable so
+       Googlebot finds them via the canonical crawl path instead of
+       only via direct URL hits. /search-results was excluded
+       intentionally (page emits <meta name="robots" content="noindex">
+       so it must not appear in sitemap). -->
+  <url>
+    <loc>https://rehablookup.com/outpatient-rehab</loc>
+    <lastmod>2026-05-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://rehablookup.com/rehab-vs-detox</loc>
+    <lastmod>2026-05-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://rehablookup.com/rehab-centers/georgia/county/cherokee-ga</loc>
+    <lastmod>2026-05-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://rehablookup.com/rehab-centers/nevada/county/elko-nv</loc>
+    <lastmod>2026-05-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://rehablookup.com/rehab-centers/new-jersey/county/camden-nj</loc>
+    <lastmod>2026-05-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://rehablookup.com/rehab-centers/north-carolina/county/catawba</loc>
+    <lastmod>2026-05-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://rehablookup.com/rehab-centers/north-carolina/county/cleveland-nc</loc>
+    <lastmod>2026-05-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://rehablookup.com/rehab-centers/north-carolina/county/iredell</loc>
+    <lastmod>2026-05-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://rehablookup.com/rehab-centers/pennsylvania/county/chester-pa</loc>
+    <lastmod>2026-05-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://rehablookup.com/rehab-centers/south-carolina/county/anderson-sc</loc>
+    <lastmod>2026-05-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://rehablookup.com/rehab-centers/south-carolina/county/lexington-sc</loc>
+    <lastmod>2026-05-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://rehablookup.com/rehab-centers/south-dakota/county/brookings-sd</loc>
+    <lastmod>2026-05-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://rehablookup.com/rehab-centers/texas/county/hays-tx</loc>
+    <lastmod>2026-05-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://rehablookup.com/rehab-centers/west-virginia/county/putnam-wv</loc>
+    <lastmod>2026-05-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
 </urlset>
