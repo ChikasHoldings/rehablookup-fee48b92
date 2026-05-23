@@ -28,7 +28,7 @@
  *    selected_facility_id when the row is created.
  */
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams, Navigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { toast } from "sonner";
@@ -446,13 +446,39 @@ export default function ProviderOnboarding() {
 }
 
 function CompletedBounce({ onBounce }: { onBounce: () => void }) {
+  // Render a recovery link after a short delay. The primary path is
+  // `onBounce()` (React Router navigate) firing on mount, which should
+  // be instant. If it doesn't take — React Router internals stuck, a
+  // child error boundary in the dashboard route trapping the
+  // navigation, etc. — the user would otherwise stare at "Finishing
+  // up…" forever with no escape. After 3s we surface a hard-nav link
+  // so they can always get out manually.
+  const [showRecovery, setShowRecovery] = useState(false);
+
   useEffect(() => {
     onBounce();
+    const t = window.setTimeout(() => setShowRecovery(true), 3000);
+    return () => window.clearTimeout(t);
   }, [onBounce]);
+
   return (
-    <div className="flex items-center gap-2 text-sm text-slate-600">
-      <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-      Finishing up…
+    <div className="space-y-3">
+      <div className="flex items-center gap-2 text-sm text-slate-600">
+        <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+        Finishing up…
+      </div>
+      {showRecovery && (
+        <p className="text-xs text-slate-500">
+          Taking longer than expected?{" "}
+          <a
+            href="/provider/dashboard"
+            className="font-medium text-[#1B365D] underline underline-offset-2"
+          >
+            Open your dashboard
+          </a>
+          .
+        </p>
+      )}
     </div>
   );
 }
