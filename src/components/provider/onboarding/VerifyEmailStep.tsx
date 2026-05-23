@@ -250,7 +250,17 @@ export function VerifyEmailStep({ onAdvance }: { onAdvance: () => void }) {
       console.warn("[VerifyEmailStep] orphan cleanup on change-email failed", e);
     }
     await supabase.auth.signOut();
-    window.location.assign("/provider/onboarding");
+    // Audit fix (2026-05-23): preserve the original entry-point query
+    // string (?intent=claim&facility_id=…&returnTo=…) when restarting
+    // the wizard. Previously this hard-coded "/provider/onboarding"
+    // and dropped everything, so a user who arrived via a claim deep
+    // link and then changed their email lost the facility context
+    // entirely on the second sign-up attempt.
+    const here =
+      typeof window !== "undefined"
+        ? window.location.search
+        : "";
+    window.location.assign(`/provider/onboarding${here}`);
   }
 
   return (

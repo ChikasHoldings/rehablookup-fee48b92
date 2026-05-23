@@ -923,7 +923,7 @@
     },
     {
       "source": "/list-your-facility",
-      "destination": "/for-providers",
+      "destination": "/provider/onboarding",
       "statusCode": 301
     },
     {
