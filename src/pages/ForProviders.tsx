@@ -1,18 +1,8 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Accordion,
   AccordionContent,
@@ -26,8 +16,6 @@ import {
   Check,
   Minus,
   ArrowRight,
-  Loader2,
-  CheckCircle2,
   CheckCircle,
   Sparkles,
   Building2,
@@ -35,9 +23,6 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { CONCIERGE_PHONE_DISPLAY, CONCIERGE_PHONE_TEL } from "@/lib/contactInfo";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 
 // ──────────────────────────────────────────────────────────────────────
 // Pricing — monthly is the default headline. Annual is offered as a
@@ -103,7 +88,7 @@ const fmtMoneyWhole = (n: number) =>
 // Hero
 // ──────────────────────────────────────────────────────────────────────
 
-function HeroSection({ scrollToForm }: { scrollToForm: () => void }) {
+function HeroSection() {
   return (
     <section
       className="relative overflow-hidden border-b border-white/5 text-white"
@@ -155,11 +140,13 @@ function HeroSection({ scrollToForm }: { scrollToForm: () => void }) {
           <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Button
               size="lg"
-              onClick={scrollToForm}
+              asChild
               className="bg-[#CDA223] text-[#1B365D] hover:bg-[#B38C1C] font-bold shadow-xl shadow-black/30 transition-all hover:scale-[1.02] gap-2 w-full sm:w-auto"
             >
-              Claim or list my facility — free
-              <ArrowRight className="h-4 w-4" />
+              <Link to="/provider/onboarding">
+                Claim or list my facility — free
+                <ArrowRight className="h-4 w-4" />
+              </Link>
             </Button>
             <a
               href="#pricing"
@@ -735,7 +722,7 @@ function ConciergePartnerSection() {
 // addons/concierge sections. Navy block with gold accent.
 // ──────────────────────────────────────────────────────────────────────
 
-function MidPageCtaStrip({ scrollToForm }: { scrollToForm: () => void }) {
+function MidPageCtaStrip() {
   return (
     <section
       className="relative overflow-hidden text-white"
@@ -754,11 +741,13 @@ function MidPageCtaStrip({ scrollToForm }: { scrollToForm: () => void }) {
           <div className="mt-5 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Button
               size="lg"
-              onClick={scrollToForm}
+              asChild
               className="bg-[#CDA223] text-[#1B365D] hover:bg-[#B38C1C] font-bold shadow-xl shadow-black/30 gap-2 w-full sm:w-auto"
             >
-              Claim or list — free
-              <ArrowRight className="h-4 w-4" />
+              <Link to="/provider/onboarding">
+                Claim or list — free
+                <ArrowRight className="h-4 w-4" />
+              </Link>
             </Button>
             <a
               href="#pricing"
@@ -923,465 +912,10 @@ function FaqSection() {
 }
 
 // ──────────────────────────────────────────────────────────────────────
-// Interest form — captures provider interest into `provider_interest`
-// via the `provider-interest-submit` edge function. No real upgrade /
-// Stripe flow yet — that's a future PR.
-// ──────────────────────────────────────────────────────────────────────
-
-type BillingIntervalInterest = "" | "monthly" | "annual" | "either" | "not_sure";
-
-interface FormState {
-  facilityName: string;
-  contactName: string;
-  contactTitle: string;
-  email: string;
-  phone: string;
-  city: string;
-  state: string;
-  admissionVolume: "" | "<10/mo" | "10-25/mo" | "25-50/mo" | "50-100/mo" | "100+/mo";
-  tierInterest: "" | "pro" | "pro_plus_featured" | "pro_plus_concierge" | "pro_plus_all_addons";
-  billingInterval: BillingIntervalInterest;
-  pricingFrustration: string;
-}
-
-const INITIAL_FORM: FormState = {
-  facilityName: "",
-  contactName: "",
-  contactTitle: "",
-  email: "",
-  phone: "",
-  city: "",
-  state: "",
-  admissionVolume: "",
-  tierInterest: "",
-  billingInterval: "",
-  pricingFrustration: "",
-};
-
-const VOLUME_CHIPS: Array<{ value: FormState["admissionVolume"]; label: string }> = [
-  { value: "<10/mo",     label: "<10/mo" },
-  { value: "10-25/mo",   label: "10-25/mo" },
-  { value: "25-50/mo",   label: "25-50/mo" },
-  { value: "50-100/mo",  label: "50-100/mo" },
-  { value: "100+/mo",    label: "100+/mo" },
-];
-
-// Pro is the plan. Featured + Concierge are marketing add-ons on top
-// of Pro. The form captures which of these the provider is most
-// interested in so sales can prioritize the follow-up call.
-const TIER_OPTIONS: Array<{ value: FormState["tierInterest"]; label: string }> = [
-  { value: "pro",                  label: "Pro ($99/mo or $1,009.80/yr)" },
-  { value: "pro_plus_featured",    label: "Pro + Featured add-on" },
-  { value: "pro_plus_concierge",   label: "Pro + Concierge add-on" },
-  { value: "pro_plus_all_addons",  label: "Pro + both add-ons" },
-];
-
-const BILLING_INTERVAL_CHIPS: Array<{ value: Exclude<BillingIntervalInterest, "">; label: string }> = [
-  { value: "monthly",  label: "Monthly" },
-  { value: "annual",   label: "Annual (save 15%)" },
-  { value: "either",   label: "Either" },
-  { value: "not_sure", label: "Not sure yet" },
-];
-
-interface InterestFormProps {
-  formRef: React.RefObject<HTMLDivElement>;
-}
-
-function InterestForm({ formRef }: InterestFormProps) {
-  const [form, setForm] = useState<FormState>(INITIAL_FORM);
-  const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
-  const [submitting, setSubmitting] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const { toast } = useToast();
-
-  const update = <K extends keyof FormState>(key: K, value: FormState[K]) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
-    if (errors[key]) setErrors((prev) => ({ ...prev, [key]: undefined }));
-  };
-
-  const validate = (): boolean => {
-    const next: Partial<Record<keyof FormState, string>> = {};
-    if (!form.facilityName.trim()) next.facilityName = "Facility name is required";
-    if (!form.contactName.trim()) next.contactName = "Your name is required";
-    if (!form.contactTitle.trim()) next.contactTitle = "Your title is required";
-    if (!form.email.trim()) next.email = "Email is required";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) next.email = "Enter a valid email";
-    if (!form.city.trim()) next.city = "City is required";
-    if (!form.state.trim()) next.state = "State is required";
-    if (!form.admissionVolume) next.admissionVolume = "Pick a volume range";
-    if (!form.tierInterest) next.tierInterest = "Pick a tier";
-    if (!form.billingInterval) next.billingInterval = "Pick a billing preference";
-    setErrors(next);
-    return Object.keys(next).length === 0;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validate()) return;
-    setSubmitting(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("provider-interest-submit", {
-        body: {
-          facilityName: form.facilityName.trim(),
-          contactName: form.contactName.trim(),
-          contactTitle: form.contactTitle.trim(),
-          email: form.email.trim(),
-          phone: form.phone.trim() || undefined,
-          city: form.city.trim(),
-          state: form.state.trim(),
-          admissionVolume: form.admissionVolume,
-          tierInterest: form.tierInterest,
-          billingInterval: form.billingInterval || undefined,
-          pricingFrustration: form.pricingFrustration.trim() || undefined,
-          landingPage: typeof window !== "undefined" ? window.location.pathname : undefined,
-        },
-      });
-      if (error) throw error;
-      if (!data?.ok) throw new Error("Submission failed");
-      setSuccess(true);
-    } catch (err) {
-      console.error("[for-providers] interest submit failed", err);
-      toast({
-        title: "Couldn't submit",
-        description:
-          "Something went wrong on our end. Email us at sales@rehablookup.com or call " +
-          CONCIERGE_PHONE_DISPLAY +
-          " and we'll get you on the list manually.",
-        variant: "destructive",
-      });
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const inputErrCls = "border-destructive ring-1 ring-destructive";
-
-  return (
-    <section
-      ref={formRef}
-      id="interest"
-      className="py-14 md:py-20 bg-background scroll-mt-20"
-    >
-      <div className="container px-4 md:px-6 lg:px-8">
-        <div className="mx-auto max-w-2xl">
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 md:p-10 shadow-sm">
-            {success ? (
-              <div className="text-center" role="status" aria-live="polite">
-                <div className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100">
-                  <CheckCircle2 className="h-6 w-6 text-emerald-700" aria-hidden />
-                </div>
-                <h2 className="mt-4 font-display text-xl md:text-2xl font-bold tracking-tight text-[#1B365D]">
-                  Thanks — you're on the list.
-                </h2>
-                <p className="mt-3 text-[15px] text-slate-600 leading-relaxed">
-                  We'll be in touch within 48 hours. In the meantime, you can reach our
-                  sales team at{" "}
-                  <a
-                    href={`tel:${CONCIERGE_PHONE_TEL}`}
-                    className="font-medium text-[#1B365D] underline underline-offset-4"
-                  >
-                    {CONCIERGE_PHONE_DISPLAY}
-                  </a>
-                  .
-                </p>
-              </div>
-            ) : (
-              <>
-                <div className="text-center">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#1B365D]/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#1B365D]">
-                    <Sparkles className="h-3 w-3" aria-hidden />
-                    25 design-partner spots
-                  </span>
-                  <h2 className="mt-4 font-display text-2xl md:text-3xl font-bold tracking-tight text-[#1B365D]">
-                    Limited launch access. Tell us about your facility.
-                  </h2>
-                  <p className="mt-3 text-[15px] md:text-base text-slate-600 leading-relaxed">
-                    We're onboarding 25 design-partner facilities for the launch. Tell us
-                    about your current setup and we'll be in touch within 48 hours.
-                  </p>
-                </div>
-
-                <form onSubmit={handleSubmit} className="mt-7 space-y-4" noValidate>
-                  <div>
-                    <Label htmlFor="facilityName" className="text-sm font-medium">
-                      Facility name <span className="text-destructive">*</span>
-                    </Label>
-                    <Input
-                      id="facilityName"
-                      value={form.facilityName}
-                      onChange={(e) => update("facilityName", e.target.value)}
-                      placeholder="e.g., Sunrise Recovery Center"
-                      className={cn("h-11 mt-1.5", errors.facilityName && inputErrCls)}
-                      maxLength={255}
-                    />
-                    {errors.facilityName && (
-                      <p className="mt-1 text-xs text-destructive">{errors.facilityName}</p>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div>
-                      <Label htmlFor="contactName" className="text-sm font-medium">
-                        Your name <span className="text-destructive">*</span>
-                      </Label>
-                      <Input
-                        id="contactName"
-                        value={form.contactName}
-                        onChange={(e) => update("contactName", e.target.value)}
-                        placeholder="First and last"
-                        className={cn("h-11 mt-1.5", errors.contactName && inputErrCls)}
-                        maxLength={255}
-                      />
-                      {errors.contactName && (
-                        <p className="mt-1 text-xs text-destructive">{errors.contactName}</p>
-                      )}
-                    </div>
-                    <div>
-                      <Label htmlFor="contactTitle" className="text-sm font-medium">
-                        Your title <span className="text-destructive">*</span>
-                      </Label>
-                      <Input
-                        id="contactTitle"
-                        value={form.contactTitle}
-                        onChange={(e) => update("contactTitle", e.target.value)}
-                        placeholder="e.g., Director of Admissions"
-                        className={cn("h-11 mt-1.5", errors.contactTitle && inputErrCls)}
-                        maxLength={255}
-                      />
-                      {errors.contactTitle && (
-                        <p className="mt-1 text-xs text-destructive">{errors.contactTitle}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div>
-                      <Label htmlFor="email" className="text-sm font-medium">
-                        Email <span className="text-destructive">*</span>
-                      </Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={form.email}
-                        onChange={(e) => update("email", e.target.value)}
-                        placeholder="you@facility.org"
-                        className={cn("h-11 mt-1.5", errors.email && inputErrCls)}
-                        maxLength={255}
-                      />
-                      {errors.email && (
-                        <p className="mt-1 text-xs text-destructive">{errors.email}</p>
-                      )}
-                    </div>
-                    <div>
-                      <Label htmlFor="phone" className="text-sm font-medium">
-                        Phone <span className="text-xs text-muted-foreground">(optional)</span>
-                      </Label>
-                      <Input
-                        id="phone"
-                        type="tel"
-                        value={form.phone}
-                        onChange={(e) => update("phone", e.target.value)}
-                        placeholder="(555) 555-5555"
-                        className="h-11 mt-1.5"
-                        maxLength={64}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                    <div className="sm:col-span-2">
-                      <Label htmlFor="city" className="text-sm font-medium">
-                        City <span className="text-destructive">*</span>
-                      </Label>
-                      <Input
-                        id="city"
-                        value={form.city}
-                        onChange={(e) => update("city", e.target.value)}
-                        placeholder="City"
-                        className={cn("h-11 mt-1.5", errors.city && inputErrCls)}
-                        maxLength={120}
-                      />
-                      {errors.city && (
-                        <p className="mt-1 text-xs text-destructive">{errors.city}</p>
-                      )}
-                    </div>
-                    <div>
-                      <Label htmlFor="state" className="text-sm font-medium">
-                        State <span className="text-destructive">*</span>
-                      </Label>
-                      <Input
-                        id="state"
-                        value={form.state}
-                        onChange={(e) => update("state", e.target.value)}
-                        placeholder="CA"
-                        className={cn("h-11 mt-1.5", errors.state && inputErrCls)}
-                        maxLength={120}
-                      />
-                      {errors.state && (
-                        <p className="mt-1 text-xs text-destructive">{errors.state}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <span className="text-sm font-medium">
-                      Approximate admission volume <span className="text-destructive">*</span>
-                    </span>
-                    <div role="radiogroup" aria-label="Admission volume" className="mt-2 flex flex-wrap gap-2">
-                      {VOLUME_CHIPS.map((chip) => {
-                        const active = form.admissionVolume === chip.value;
-                        return (
-                          <button
-                            key={chip.value}
-                            type="button"
-                            role="radio"
-                            aria-checked={active}
-                            onClick={() => update("admissionVolume", chip.value)}
-                            className={cn(
-                              "rounded-full border px-4 py-1.5 text-sm font-medium transition-colors",
-                              active
-                                ? "border-[#1B365D] bg-[#1B365D] text-white"
-                                : "border-slate-200 bg-white text-slate-700 hover:border-[#1B365D]/40",
-                            )}
-                          >
-                            {chip.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    {errors.admissionVolume && (
-                      <p className="mt-1 text-xs text-destructive">{errors.admissionVolume}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <Label htmlFor="tierInterest" className="text-sm font-medium">
-                      Which tier interests you most? <span className="text-destructive">*</span>
-                    </Label>
-                    <Select
-                      value={form.tierInterest}
-                      onValueChange={(v) => update("tierInterest", v as FormState["tierInterest"])}
-                    >
-                      <SelectTrigger
-                        id="tierInterest"
-                        className={cn("h-11 mt-1.5", errors.tierInterest && inputErrCls)}
-                      >
-                        <SelectValue placeholder="Pick a tier" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {TIER_OPTIONS.map((opt) => (
-                          <SelectItem key={opt.value} value={opt.value!}>
-                            {opt.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {errors.tierInterest && (
-                      <p className="mt-1 text-xs text-destructive">{errors.tierInterest}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <span className="text-sm font-medium">
-                      Which billing interval interests you most?{" "}
-                      <span className="text-destructive">*</span>
-                    </span>
-                    <div role="radiogroup" aria-label="Billing interval" className="mt-2 flex flex-wrap gap-2">
-                      {BILLING_INTERVAL_CHIPS.map((chip) => {
-                        const active = form.billingInterval === chip.value;
-                        return (
-                          <button
-                            key={chip.value}
-                            type="button"
-                            role="radio"
-                            aria-checked={active}
-                            onClick={() => update("billingInterval", chip.value)}
-                            className={cn(
-                              "rounded-full border px-4 py-1.5 text-sm font-medium transition-colors",
-                              active
-                                ? "border-[#1B365D] bg-[#1B365D] text-white"
-                                : "border-slate-200 bg-white text-slate-700 hover:border-[#1B365D]/40",
-                            )}
-                          >
-                            {chip.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    {errors.billingInterval && (
-                      <p className="mt-1 text-xs text-destructive">{errors.billingInterval}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <Label htmlFor="pricingFrustration" className="text-sm font-medium">
-                      What's your biggest frustration with current rehab directory pricing?{" "}
-                      <span className="text-xs text-muted-foreground">(optional, but the answer helps)</span>
-                    </Label>
-                    <Textarea
-                      id="pricingFrustration"
-                      value={form.pricingFrustration}
-                      onChange={(e) => update("pricingFrustration", e.target.value.slice(0, 2000))}
-                      placeholder="Pay-per-call rates? Surprise renewals? Lead routing? Tell us what would actually move the needle."
-                      rows={4}
-                      maxLength={2000}
-                      className="mt-1.5 resize-none"
-                    />
-                  </div>
-
-                  <Button
-                    type="submit"
-                    size="lg"
-                    disabled={submitting}
-                    className="w-full bg-[#1B365D] hover:bg-[#142a4a] text-white font-semibold gap-2"
-                  >
-                    {submitting ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Submitting…
-                      </>
-                    ) : (
-                      <>
-                        Request access
-                        <ArrowRight className="h-4 w-4" />
-                      </>
-                    )}
-                  </Button>
-                  <p className="text-center text-xs text-slate-500">
-                    Or call{" "}
-                    <a href={`tel:${CONCIERGE_PHONE_TEL}`} className="font-medium text-[#1B365D] underline underline-offset-4">
-                      {CONCIERGE_PHONE_DISPLAY}
-                    </a>{" "}
-                    and ask for sales.
-                  </p>
-                </form>
-              </>
-            )}
-          </div>
-
-          <p className="mt-5 text-center text-sm text-slate-500">
-            Already have a claimed listing?{" "}
-            <Link to="/provider/claims" className="font-medium text-[#1B365D] underline underline-offset-4">
-              Sign in to your provider dashboard
-            </Link>
-            .
-          </p>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// ──────────────────────────────────────────────────────────────────────
 // Page
 // ──────────────────────────────────────────────────────────────────────
 
 export default function ForProviders() {
-  const formRef = useRef<HTMLDivElement>(null);
-  const scrollToForm = () => {
-    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
-
   return (
     <Layout>
       <SEO
@@ -1389,16 +923,15 @@ export default function ForProviders() {
         description="Reach more families. Grow admissions. List your accredited treatment center on the largest verified rehab directory in the U.S. Pro from $99/mo. Cancel anytime. EKRA-compliant by design."
         canonical="/for-providers"
       />
-      <HeroSection scrollToForm={scrollToForm} />
+      <HeroSection />
       <WhyDifferentSection />
       <PlanComparisonSection />
       <AddOnsSection />
       <FeaturedRotationSection />
       <ConciergePartnerSection />
-      <MidPageCtaStrip scrollToForm={scrollToForm} />
+      <MidPageCtaStrip />
       <CancellationSection />
       <FaqSection />
-      <InterestForm formRef={formRef} />
     </Layout>
   );
 }
