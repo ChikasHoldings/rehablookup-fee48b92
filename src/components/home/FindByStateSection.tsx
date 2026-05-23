@@ -279,71 +279,75 @@ export function FindByStateSection() {
                   key={s.name}
                   className="snap-start shrink-0 w-[160px] sm:w-[180px] md:w-[200px] lg:w-[220px]"
                 >
-                  {/* Card structure: photo on top (unobscured), caption
-                      strip below. Previously the title + count chip sat
-                      ON TOP of the image inside a dark full-frame
-                      gradient overlay — that gradient covered the
-                      photography by design (typography legibility), but
-                      hid the imagery the user actually wanted to show.
-                      Splitting the card into image-above + caption-below
-                      gives the photo a clean surface and gives the text
-                      its own readable background. */}
                   <Link
                     to={`/rehab-centers/${stateSlug(s.name)}`}
                     aria-label={ariaLabel}
-                    className="group block overflow-hidden rounded-2xl ring-1 ring-white/15 bg-slate-900/40 shadow-lg transition-all duration-300 hover:shadow-2xl hover:ring-[#CDA223]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CDA223]"
+                    className="group block relative aspect-[4/5] overflow-hidden rounded-2xl ring-1 ring-white/15 bg-slate-900 shadow-lg transition-all duration-300 hover:shadow-2xl hover:ring-[#CDA223]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CDA223]"
                   >
-                    {/* Photo — fixed aspect, no overlay. Slight hover
-                        zoom kept (the `group-hover:scale-[1.06]` on the
-                        img) so the card still feels interactive. */}
-                    <div className="relative aspect-[4/5] overflow-hidden bg-slate-900">
-                      {img ? (
-                        <img
-                          src={img}
-                          alt={`${s.name} landscape`}
-                          className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.06]"
-                          // First 6 cards eager so they paint with the
-                          // section (above-the-fold on most viewports);
-                          // remainder lazy so the network doesn't burst
-                          // on mount when most cards are off-screen.
-                          loading={idx < 6 ? "eager" : "lazy"}
-                          decoding="async"
-                          width={400}
-                          height={500}
-                          // If the remote Unsplash URL fails (rate-limit,
-                          // 404, network), hide the broken image so the
-                          // slate background still shows a recognizable
-                          // empty card instead of a broken-image icon.
-                          // Local imports are bundled so they never fail
-                          // this branch.
-                          onError={(e) => {
-                            (e.currentTarget as HTMLImageElement).style.display = "none";
-                          }}
-                        />
-                      ) : (
-                        <div
-                          className="absolute inset-0 bg-gradient-to-br from-primary/80 via-primary to-primary/90"
-                          aria-hidden
-                        />
-                      )}
+                    {img ? (
+                      <img
+                        src={img}
+                        alt={`${s.name} landscape`}
+                        className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.06]"
+                        // First 6 cards eager so they paint with the
+                        // section (above-the-fold on most viewports);
+                        // remainder lazy so the network doesn't burst
+                        // on mount when most cards are off-screen.
+                        loading={idx < 6 ? "eager" : "lazy"}
+                        decoding="async"
+                        width={400}
+                        height={500}
+                        // If the remote Unsplash URL fails (rate-limit,
+                        // 404, network), hide the broken image so the
+                        // dark gradient below + glassy chip still render
+                        // a complete card. Local imports are bundled so
+                        // they never fail this branch.
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).style.display = "none";
+                        }}
+                      />
+                    ) : (
+                      <div
+                        className="absolute inset-0 bg-gradient-to-br from-primary/80 via-primary to-primary/90"
+                        aria-hidden
+                      />
+                    )}
+
+                    {/* Title-anchoring gradient — REWORKED so the image
+                        reads through clearly. The previous
+                        `from-slate-950/90 via-slate-950/40 to-slate-950/10`
+                        washed the entire card with a dark tint; the new
+                        gradient is fully transparent at the top, only
+                        ramping to dark on the bottom ~45% where the
+                        title actually sits. Photography reads cleanly
+                        through the top half; the title still gets a
+                        legible dark background. */}
+                    <div
+                      className="absolute inset-x-0 bottom-0 h-[55%] bg-gradient-to-t from-slate-950/85 via-slate-950/55 to-transparent group-hover:from-slate-950/90 transition-colors duration-300"
+                      aria-hidden
+                    />
+
+                    {/* Glassy facility-count chip, top-right. */}
+                    <div className="absolute top-3 right-3">
+                      <span className="inline-flex items-center rounded-full bg-white/15 backdrop-blur-md px-2.5 py-1 text-[11px] font-semibold text-white ring-1 ring-white/25 tabular-nums shadow-sm">
+                        {s.count > 0 ? `${s.count.toLocaleString()} facilities` : "Verified"}
+                      </span>
                     </div>
 
-                    {/* Caption strip — below the image. Gives the state
-                        name + facility count their own readable surface
-                        without painting over the photo. The hover-shift
-                        arrow signals "tap to view" without needing the
-                        old overlay. */}
-                    <div className="px-3 py-2.5 md:px-3.5 md:py-3 bg-slate-900/95">
-                      <div className="flex items-start justify-between gap-2">
-                        <h3 className="font-display text-sm md:text-base font-bold text-white leading-tight tracking-tight truncate">
-                          {s.name}
-                        </h3>
-                        <ArrowRight className="h-3.5 w-3.5 shrink-0 text-white/70 mt-0.5 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:text-white" />
-                      </div>
-                      <p className="mt-0.5 text-[11px] md:text-xs text-white/65 tabular-nums">
-                        {s.count > 0
-                          ? `${s.count.toLocaleString()} ${s.count === 1 ? "facility" : "facilities"}`
-                          : "Verified directory"}
+                    {/* Title block, bottom-left — sits inside the
+                        bottom-only gradient so the text is legible
+                        without the top half of the image being washed
+                        out. drop-shadow on the headline as belt-and-
+                        suspenders for the few cards where the photo
+                        happens to have a bright element at the title
+                        baseline. */}
+                    <div className="absolute inset-x-0 bottom-0 p-3 md:p-4">
+                      <h3 className="font-display text-base md:text-lg lg:text-xl font-bold text-white leading-tight tracking-tight drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
+                        {s.name}
+                      </h3>
+                      <p className="mt-0.5 inline-flex items-center gap-1 text-[11px] md:text-xs font-medium text-white/90 drop-shadow-[0_1px_1px_rgba(0,0,0,0.4)]">
+                        View centers
+                        <ArrowRight className="h-3 w-3 transition-transform duration-300 group-hover:translate-x-0.5" />
                       </p>
                     </div>
                   </Link>
