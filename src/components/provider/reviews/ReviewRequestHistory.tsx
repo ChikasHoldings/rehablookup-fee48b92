@@ -4,7 +4,9 @@ import { formatDistanceToNow } from "date-fns";
 import {
   CheckCircle2,
   Clock,
+  Eye,
   Mail,
+  MousePointerClick,
   Send,
   XCircle,
 } from "lucide-react";
@@ -28,6 +30,8 @@ interface RequestRow {
   recipient_email: string;
   status: string;
   sent_at: string | null;
+  opened_at: string | null;
+  clicked_at: string | null;
   review_submitted_at: string | null;
   expires_at: string | null;
   created_at: string;
@@ -51,7 +55,7 @@ export function ReviewRequestHistory({
     queryFn: async () => {
       const { data, error } = await supabase
         .from("review_requests")
-        .select("id, facility_id, recipient_name, recipient_email, status, sent_at, review_submitted_at, expires_at, created_at")
+        .select("id, facility_id, recipient_name, recipient_email, status, sent_at, opened_at, clicked_at, review_submitted_at, expires_at, created_at")
         .in("facility_id", facilityIds)
         .order("created_at", { ascending: false })
         .limit(50);
@@ -64,12 +68,16 @@ export function ReviewRequestHistory({
   const [visibleCount, setVisibleCount] = useState(initialLimit);
   const visible = rows.slice(0, visibleCount);
   const summary = useMemo(() => {
-    const out = { sent: 0, submitted: 0, expired: 0, pending: 0 };
+    const out = { sent: 0, opened: 0, clicked: 0, submitted: 0, expired: 0, pending: 0 };
     const now = Date.now();
     for (const r of rows) {
       const expired = r.expires_at ? new Date(r.expires_at).getTime() < now : false;
+      // Priority order matches the per-row badge selector below so
+      // the funnel summary across the top adds up to the row count.
       if (r.review_submitted_at) out.submitted++;
       else if (expired) out.expired++;
+      else if (r.clicked_at) out.clicked++;
+      else if (r.opened_at) out.opened++;
       else if (r.sent_at) out.sent++;
       else out.pending++;
     }
@@ -123,7 +131,8 @@ export function ReviewRequestHistory({
           Review requests
         </CardTitle>
         <div className="text-xs text-muted-foreground tabular-nums">
-          {summary.submitted} submitted · {summary.sent} sent · {summary.expired} expired
+          {summary.submitted} submitted · {summary.clicked + summary.opened} engaged ·{" "}
+          {summary.sent} delivered · {summary.expired} expired
         </div>
       </CardHeader>
       <CardContent className="pt-0 divide-y divide-border">
@@ -150,6 +159,10 @@ export function ReviewRequestHistory({
 function RequestRowDisplay({ row }: { row: RequestRow }) {
   const expired = row.expires_at ? new Date(row.expires_at).getTime() < Date.now() : false;
   let badge: { label: string; icon: React.ElementType; className: string };
+  // Priority: Submitted (terminal success) > Expired (terminal failure)
+  // > Clicked (engagement signal) > Opened (engagement signal) > Sent
+  // (delivered to Resend) > Pending (row created but email not yet
+  // out the door). Matches the summary counter at the card head.
   if (row.review_submitted_at) {
     badge = {
       label: "Submitted",
@@ -161,6 +174,18 @@ function RequestRowDisplay({ row }: { row: RequestRow }) {
       label: "Expired",
       icon: XCircle,
       className: "bg-slate-100 text-slate-600 border-slate-200",
+    };
+  } else if (row.clicked_at) {
+    badge = {
+      label: "Clicked",
+      icon: MousePointerClick,
+      className: "bg-violet-100 text-violet-700 border-violet-200",
+    };
+  } else if (row.opened_at) {
+    badge = {
+      label: "Opened",
+      icon: Eye,
+      className: "bg-indigo-100 text-indigo-700 border-indigo-200",
     };
   } else if (row.sent_at) {
     badge = {
@@ -177,9 +202,14 @@ function RequestRowDisplay({ row }: { row: RequestRow }) {
   }
   const Icon = badge.icon;
 
-  // When-line: prefer review_submitted_at > sent_at > created_at so
-  // the most informative timestamp surfaces.
-  const whenIso = row.review_submitted_at || row.sent_at || row.created_at;
+  // When-line: prefer review_submitted_at > clicked_at > opened_at >
+  // sent_at > created_at so the most informative timestamp surfaces.
+  const whenIso =
+    row.review_submitted_at ||
+    row.clicked_at ||
+    row.opened_at ||
+    row.sent_at ||
+    row.created_at;
   const whenText = (() => {
     try {
       return formatDistanceToNow(new Date(whenIso), { addSuffix: true });
@@ -187,6 +217,16 @@ function RequestRowDisplay({ row }: { row: RequestRow }) {
       return null;
     }
   })();
+
+  const whenLabel = row.review_submitted_at
+    ? `Submitted ${whenText}`
+    : row.clicked_at
+      ? `Clicked ${whenText}`
+      : row.opened_at
+        ? `Opened ${whenText}`
+        : row.sent_at
+          ? `Sent ${whenText}`
+          : `Created ${whenText}`;
 
   return (
     <div className="py-3 flex items-start justify-between gap-3 first:pt-0 last:pb-0">
@@ -196,13 +236,7 @@ function RequestRowDisplay({ row }: { row: RequestRow }) {
         </p>
         <p className="text-xs text-muted-foreground truncate">{row.recipient_email}</p>
         {whenText && (
-          <p className="text-[11px] text-muted-foreground/70 mt-0.5">
-            {row.review_submitted_at
-              ? `Submitted ${whenText}`
-              : row.sent_at
-                ? `Sent ${whenText}`
-                : `Created ${whenText}`}
-          </p>
+          <p className="text-[11px] text-muted-foreground/70 mt-0.5">{whenLabel}</p>
         )}
       </div>
       <Badge variant="outline" className={`text-xs shrink-0 gap-1 ${badge.className}`}>

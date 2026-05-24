@@ -266,6 +266,33 @@ Deno.serve(withSentry("resend-webhook", async (req) => {
       logStep("Tracking event stored", { eventType, emailId, emailType });
     }
 
+    // Review-request funnel tracking. send-review-request stores the
+    // Resend message id on the review_requests row via
+    // mark_review_request_sent, so we can correlate opens + clicks
+    // back to the original invite using resend_id. COALESCE keeps the
+    // FIRST event of each type (Resend may fire multiple opens as the
+    // recipient revisits the email).
+    if (emailType === "review_request" && (eventType === "opened" || eventType === "clicked")) {
+      const column = eventType === "opened" ? "opened_at" : "clicked_at";
+      const { error: funnelErr } = await supabaseClient
+        .from("review_requests")
+        .update({
+          [column]: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("resend_id", emailId)
+        .is(column, null);
+      if (funnelErr) {
+        logStep("Review-request funnel update failed (non-fatal)", {
+          error: funnelErr.message,
+          emailId,
+          column,
+        });
+      } else {
+        logStep("Review-request funnel updated", { emailId, column });
+      }
+    }
+
     // Suppression sync — block future sends to bad addresses.
     // Map Resend events → suppressed_emails.reason (CHECK constrained):
     //   bounced     → "bounced"      (hard bounce; permanent)
