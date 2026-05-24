@@ -25,6 +25,8 @@ export interface AddLocationDraft {
   email: string;
   website: string;
   bed_count: string;
+  year_established: string;       // captured as text so empty is "", normalize on submit
+  accepting_admissions: "" | "yes" | "no" | "waitlist";
 
   // Step 2 — treatment details
   levels_of_care: string[];
@@ -32,6 +34,7 @@ export interface AddLocationDraft {
   treatment_approaches: string[];
   age_groups: string[];
   languages: string[];
+  gender_served: string;          // "" | "All" | "Men" | "Women"
 
   // Step 3 — insurance & payment
   insurance: string[];
@@ -46,6 +49,8 @@ export interface AddLocationDraft {
   video_url: string;
   virtual_tour_url: string;
   amenities: string[];
+  accessibility_features: string[];
+  hours_of_operation: string;
 
   // Step 6 — staff (Pro)
   // Per-staff entries with photo URLs filled in post-create; the
@@ -71,11 +76,14 @@ export const INITIAL_DRAFT: AddLocationDraft = {
   email: "",
   website: "",
   bed_count: "",
+  year_established: "",
+  accepting_admissions: "",
   levels_of_care: [],
   services: [],
   treatment_approaches: [],
   age_groups: [],
   languages: [],
+  gender_served: "",
   insurance: [],
   payment_options: [],
   accreditations: [],
@@ -84,6 +92,8 @@ export const INITIAL_DRAFT: AddLocationDraft = {
   video_url: "",
   virtual_tour_url: "",
   amenities: [],
+  accessibility_features: [],
+  hours_of_operation: "",
   staff: [],
 };
 
@@ -167,6 +177,13 @@ export function validateStep(stepIndex: number, draft: AddLocationDraft): string
       errs.push("Email is invalid");
     if (draft.website && !/^https?:\/\//i.test(draft.website))
       errs.push("Website must start with http:// or https://");
+    if (draft.year_established) {
+      const y = Number(draft.year_established);
+      const currentYear = new Date().getFullYear();
+      if (!Number.isInteger(y) || y < 1900 || y > currentYear) {
+        errs.push(`Year established must be between 1900 and ${currentYear}`);
+      }
+    }
   }
   if (stepIndex === 4) {
     if (draft.video_url && !/^https?:\/\//i.test(draft.video_url))

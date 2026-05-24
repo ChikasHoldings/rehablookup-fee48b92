@@ -99,6 +99,14 @@ export function StaffFormModal({
     }
 
     setIsUploading(true);
+    // Capture the prior in-progress photo so we can clean it up after
+    // a successful upload. Only photos uploaded earlier in THIS modal
+    // session (i.e. not the persisted staff.photo_url, which the
+    // updateStaff mutation will clean up on save) are removed here —
+    // otherwise dismissing the modal would orphan the new photo AND
+    // delete the saved one.
+    const previousInSessionUrl =
+      photoUrl && photoUrl !== staff?.photo_url ? photoUrl : null;
     try {
       // Get current user ID for storage policy compliance
       const { data: { user } } = await supabase.auth.getUser();
@@ -121,7 +129,18 @@ export function StaffFormModal({
         .getPublicUrl(fileName);
 
       setPhotoUrl(publicUrl);
-    } catch (error) {
+
+      if (previousInSessionUrl) {
+        const marker = "/storage/v1/object/public/facility-images/";
+        const idx = previousInSessionUrl.indexOf(marker);
+        if (idx !== -1) {
+          const path = previousInSessionUrl.slice(idx + marker.length).split("?")[0];
+          if (path) {
+            await supabase.storage.from("facility-images").remove([path]);
+          }
+        }
+      }
+    } catch {
       toast({
         title: "Upload failed",
         description: "Failed to upload photo. Please try again.",

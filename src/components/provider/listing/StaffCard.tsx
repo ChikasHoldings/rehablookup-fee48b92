@@ -2,13 +2,13 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { 
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreVertical, Pencil, Trash2, GripVertical, Eye, EyeOff } from "lucide-react";
+import { MoreVertical, Pencil, Trash2, ChevronUp, ChevronDown, EyeOff } from "lucide-react";
 import type { FacilityStaff } from "@/hooks/useFacilityStaff";
 
 interface StaffCardProps {
@@ -16,7 +16,11 @@ interface StaffCardProps {
   onEdit: (staff: FacilityStaff) => void;
   onDelete: (id: string) => void;
   onToggleVisibility: (id: string, isVisible: boolean) => void;
-  isDragging?: boolean;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  canMoveUp?: boolean;
+  canMoveDown?: boolean;
+  isReordering?: boolean;
 }
 
 export function StaffCard({
@@ -24,7 +28,11 @@ export function StaffCard({
   onEdit,
   onDelete,
   onToggleVisibility,
-  isDragging,
+  onMoveUp,
+  onMoveDown,
+  canMoveUp,
+  canMoveDown,
+  isReordering,
 }: StaffCardProps) {
   const getInitials = (name: string) => {
     return name
@@ -39,13 +47,34 @@ export function StaffCard({
     <div
       className={`
         flex items-center gap-3 p-3 rounded-lg border bg-card transition-all
-        ${isDragging ? "shadow-lg ring-2 ring-primary/20" : "hover:bg-accent/50"}
+        ${isReordering ? "opacity-70" : "hover:bg-accent/50"}
         ${!staff.is_visible ? "opacity-60" : ""}
       `}
     >
-      {/* Drag Handle */}
-      <div className="cursor-grab text-muted-foreground hover:text-foreground">
-        <GripVertical className="h-4 w-4" />
+      {/* Reorder controls */}
+      <div className="flex flex-col -my-1">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-5 w-5"
+          onClick={onMoveUp}
+          disabled={!canMoveUp || isReordering || !onMoveUp}
+          aria-label={`Move ${staff.name} up`}
+        >
+          <ChevronUp className="h-4 w-4" />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-5 w-5"
+          onClick={onMoveDown}
+          disabled={!canMoveDown || isReordering || !onMoveDown}
+          aria-label={`Move ${staff.name} down`}
+        >
+          <ChevronDown className="h-4 w-4" />
+        </Button>
       </div>
 
       {/* Photo */}

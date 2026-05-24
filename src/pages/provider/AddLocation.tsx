@@ -166,6 +166,29 @@ const COMMON_AMENITIES = [
   "Family visitation rooms",
 ] as const;
 
+const ACCESSIBILITY_FEATURES = [
+  "Wheelchair accessible",
+  "ASL / sign-language available",
+  "Elevators on site",
+  "Accessible bathrooms",
+  "Service animal welcome",
+  "Visual aids available",
+  "Hearing-loop equipped",
+  "Step-free entrances",
+] as const;
+
+const GENDER_OPTIONS = [
+  { value: "All", label: "All genders" },
+  { value: "Men", label: "Men only" },
+  { value: "Women", label: "Women only" },
+] as const;
+
+const ADMISSIONS_OPTIONS = [
+  { value: "yes", label: "Yes — currently accepting" },
+  { value: "waitlist", label: "Waitlist only" },
+  { value: "no", label: "Not currently accepting" },
+] as const;
+
 const STAFF_BIO_LIMIT = 500;
 const FREE_STAFF_CAP = 3;
 const PRO_STAFF_CAP = 10;
@@ -354,6 +377,27 @@ export default function AddLocationPage() {
       if (draft.payment_options.length > 0)
         insertPayload.payment_options = draft.payment_options;
       if (draft.dba_name) insertPayload.dba_name = draft.dba_name;
+      if (draft.gender_served) insertPayload.gender_served = draft.gender_served;
+      if (draft.hours_of_operation.trim())
+        insertPayload.hours_of_operation = draft.hours_of_operation.trim();
+      if (draft.accessibility_features.length > 0)
+        insertPayload.accessibility_features = draft.accessibility_features;
+      // accepting_admissions: "" stays unset, "yes" → true, "no" / "waitlist" → false.
+      // The public page exposes the boolean only — waitlist is a UI nuance the
+      // provider can elaborate in the description; we route both no + waitlist
+      // to false so the public page does not advertise availability.
+      if (draft.accepting_admissions === "yes") {
+        insertPayload.accepting_admissions = true;
+      } else if (
+        draft.accepting_admissions === "no" ||
+        draft.accepting_admissions === "waitlist"
+      ) {
+        insertPayload.accepting_admissions = false;
+      }
+      if (draft.year_established) {
+        const y = Number(draft.year_established);
+        if (Number.isInteger(y)) insertPayload.year_established = y;
+      }
       // license_number is stored on facility_credentials.licensing_info
       // (the existing free-text column the public page reads).
 
@@ -913,16 +957,57 @@ function Step1Identity({
           />
         </Field>
       </div>
-      <Field label="Bed count">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <Field label="Bed count">
+          <Select
+            value={draft.bed_count}
+            onValueChange={(v) => updateField("bed_count", v)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="How many beds?" />
+            </SelectTrigger>
+            <SelectContent>
+              {BED_COUNT_OPTIONS.map((o) => (
+                <SelectItem key={o.value} value={o.value}>
+                  {o.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
+        <Field label="Year established" hint="e.g. 2008">
+          <Input
+            value={draft.year_established}
+            onChange={(e) =>
+              updateField(
+                "year_established",
+                e.target.value.replace(/\D/g, "").slice(0, 4),
+              )
+            }
+            placeholder="2008"
+            inputMode="numeric"
+            maxLength={4}
+          />
+        </Field>
+      </div>
+      <Field
+        label="Accepting admissions"
+        hint="Shown on your public page so families know whether to call."
+      >
         <Select
-          value={draft.bed_count}
-          onValueChange={(v) => updateField("bed_count", v)}
+          value={draft.accepting_admissions}
+          onValueChange={(v) =>
+            updateField(
+              "accepting_admissions",
+              v as "" | "yes" | "no" | "waitlist",
+            )
+          }
         >
           <SelectTrigger>
-            <SelectValue placeholder="How many beds?" />
+            <SelectValue placeholder="Pick admissions status" />
           </SelectTrigger>
           <SelectContent>
-            {BED_COUNT_OPTIONS.map((o) => (
+            {ADMISSIONS_OPTIONS.map((o) => (
               <SelectItem key={o.value} value={o.value}>
                 {o.label}
               </SelectItem>
@@ -976,6 +1061,23 @@ function Step2Treatment({
         selected={draft.age_groups}
         onChange={(v) => updateField("age_groups", v)}
       />
+      <Field label="Gender served">
+        <Select
+          value={draft.gender_served}
+          onValueChange={(v) => updateField("gender_served", v)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Who do you serve?" />
+          </SelectTrigger>
+          <SelectContent>
+            {GENDER_OPTIONS.map((o) => (
+              <SelectItem key={o.value} value={o.value}>
+                {o.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </Field>
       <ChipMultiSelect
         label="Languages spoken"
         options={[...COMMON_LANGUAGES]}
@@ -1113,6 +1215,28 @@ function Step5Content({
         allowCustom
       />
 
+      <ChipMultiSelect
+        label="Accessibility features"
+        options={[...ACCESSIBILITY_FEATURES]}
+        selected={draft.accessibility_features}
+        onChange={(v) => updateField("accessibility_features", v)}
+        allowCustom
+      />
+
+      <Field
+        label="Hours of operation"
+        hint="Plain text — e.g. 'Admissions Mon–Fri 8a–6p, 24/7 inquiry phone line'"
+      >
+        <Textarea
+          value={draft.hours_of_operation}
+          onChange={(e) =>
+            updateField("hours_of_operation", e.target.value.slice(0, 500))
+          }
+          rows={2}
+          placeholder="Admissions Mon–Fri 8a–6p · 24/7 inquiry line"
+        />
+      </Field>
+
       <StaffSubStep draft={draft} updateField={updateField} isPro={isPro} />
     </div>
   );
@@ -1150,6 +1274,14 @@ function Step6Review({
           {draft.website && <span> · {draft.website}</span>}
         </p>
         {draft.bed_count && <p>Beds: {draft.bed_count}</p>}
+        {draft.year_established && <p>Established: {draft.year_established}</p>}
+        {draft.accepting_admissions && (
+          <p>
+            Admissions:{" "}
+            {ADMISSIONS_OPTIONS.find((o) => o.value === draft.accepting_admissions)
+              ?.label ?? draft.accepting_admissions}
+          </p>
+        )}
       </ReviewSection>
 
       <ReviewSection title="Treatment details" onEdit={() => onEditStep(1)}>
@@ -1157,6 +1289,7 @@ function Step6Review({
         <ReviewList label="Services" items={draft.services} />
         <ReviewList label="Approaches" items={draft.treatment_approaches} />
         <ReviewList label="Age groups" items={draft.age_groups} />
+        {draft.gender_served && <p>Gender served: {draft.gender_served}</p>}
         <ReviewList label="Languages" items={draft.languages} />
       </ReviewSection>
 
@@ -1175,6 +1308,8 @@ function Step6Review({
         {draft.video_url && <p>Video: {draft.video_url}</p>}
         {draft.virtual_tour_url && <p>Tour: {draft.virtual_tour_url}</p>}
         <ReviewList label="Amenities" items={draft.amenities} />
+        <ReviewList label="Accessibility" items={draft.accessibility_features} />
+        {draft.hours_of_operation && <p>Hours: {draft.hours_of_operation}</p>}
         {draft.staff.length > 0 && (
           <p className="text-muted-foreground">
             {draft.staff.filter((s) => s.name && s.job_title).length} staff member(s)

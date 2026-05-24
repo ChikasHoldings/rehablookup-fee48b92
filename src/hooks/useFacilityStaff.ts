@@ -2,6 +2,34 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
+const STAFF_PHOTO_BUCKET = "facility-images";
+
+// Extract the storage object path from a public URL produced by
+// `supabase.storage.from('facility-images').getPublicUrl(...)`.
+// Returns null if the URL isn't a Supabase storage URL for this bucket
+// (e.g. legacy external URLs, blank sentinels) — we never call
+// storage.remove on a URL we can't confidently identify.
+function storagePathFromPublicUrl(publicUrl: string | null | undefined): string | null {
+  if (!publicUrl) return null;
+  const marker = `/storage/v1/object/public/${STAFF_PHOTO_BUCKET}/`;
+  const idx = publicUrl.indexOf(marker);
+  if (idx === -1) return null;
+  const path = publicUrl.slice(idx + marker.length).split("?")[0];
+  return path.length > 0 ? path : null;
+}
+
+async function removeStaffPhotoIfOwned(photoUrl: string | null | undefined) {
+  const path = storagePathFromPublicUrl(photoUrl);
+  if (!path) return;
+  const { error } = await supabase.storage.from(STAFF_PHOTO_BUCKET).remove([path]);
+  if (error) {
+    // Don't throw — the row delete/update is the source of truth.
+    // A failed storage cleanup leaves at most one orphan; we surface
+    // the warning so it's discoverable in the console.
+    console.warn("[useFacilityStaff] failed to remove storage object", path, error.message);
+  }
+}
+
 export interface FacilityStaff {
   id: string;
   facility_id: string;
@@ -105,6 +133,24 @@ export function useFacilityStaff(facilityId: string | undefined) {
 
   const updateStaff = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: UpdateStaffData }) => {
+      // If a NEW photo URL is being written, look up the OLD one and
+      // remove it from storage after the row update succeeds. We only
+      // run this when the photo is actually changing (data.photo_url
+      // is defined AND different from current) so visibility / bio /
+      // name edits don't churn storage lookups.
+      let oldPhotoUrl: string | null = null;
+      if (typeof data.photo_url === "string") {
+        const { data: existing } = await supabase
+          .from("facility_staff")
+          .select("photo_url")
+          .eq("id", id)
+          .maybeSingle();
+        const existingUrl = (existing as { photo_url: string | null } | null)?.photo_url ?? null;
+        if (existingUrl && existingUrl !== data.photo_url) {
+          oldPhotoUrl = existingUrl;
+        }
+      }
+
       const { data: updatedStaff, error } = await supabase
         .from("facility_staff")
         .update(data)
@@ -113,6 +159,10 @@ export function useFacilityStaff(facilityId: string | undefined) {
         .single();
 
       if (error) throw error;
+
+      if (oldPhotoUrl) {
+        await removeStaffPhotoIfOwned(oldPhotoUrl);
+      }
       return updatedStaff as FacilityStaff;
     },
     onSuccess: () => {
@@ -133,12 +183,26 @@ export function useFacilityStaff(facilityId: string | undefined) {
 
   const deleteStaff = useMutation({
     mutationFn: async (id: string) => {
+      // Look up the photo URL first so we can remove the storage
+      // object after the row is gone. The row delete is the source of
+      // truth — if storage cleanup fails afterwards we have at most
+      // one orphan, never a dangling row pointing at a missing image.
+      const { data: existing } = await supabase
+        .from("facility_staff")
+        .select("photo_url")
+        .eq("id", id)
+        .maybeSingle();
+
       const { error } = await supabase
         .from("facility_staff")
         .delete()
         .eq("id", id);
 
       if (error) throw error;
+
+      await removeStaffPhotoIfOwned(
+        (existing as { photo_url: string | null } | null)?.photo_url ?? null,
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["facility-staff", facilityId] });

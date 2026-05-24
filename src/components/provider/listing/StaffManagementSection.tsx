@@ -45,12 +45,13 @@ export function StaffManagementSection({
   onToggle,
 }: StaffManagementSectionProps) {
   const { data: proStatus } = useProStatus(facilityId);
-  const { 
-    staff, 
-    isLoading, 
-    createStaff, 
-    updateStaff, 
+  const {
+    staff,
+    isLoading,
+    createStaff,
+    updateStaff,
     deleteStaff,
+    reorderStaff,
   } = useFacilityStaff(facilityId);
   
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -93,6 +94,14 @@ export function StaffManagementSection({
 
   const handleToggleVisibility = (id: string, isVisible: boolean) => {
     updateStaff.mutate({ id, data: { is_visible: isVisible } });
+  };
+
+  const handleMove = (index: number, direction: -1 | 1) => {
+    const target = index + direction;
+    if (target < 0 || target >= staff.length) return;
+    const next = [...staff];
+    [next[index], next[target]] = [next[target], next[index]];
+    reorderStaff.mutate(next.map((s) => s.id));
   };
 
   return (
@@ -142,13 +151,18 @@ export function StaffManagementSection({
                   {/* Staff List */}
                   {staff.length > 0 ? (
                     <div className="space-y-2">
-                      {staff.map((member) => (
+                      {staff.map((member, idx) => (
                         <StaffCard
                           key={member.id}
                           staff={member}
                           onEdit={handleEditClick}
                           onDelete={(id) => setDeleteConfirm({ id, isOpen: true })}
                           onToggleVisibility={handleToggleVisibility}
+                          onMoveUp={() => handleMove(idx, -1)}
+                          onMoveDown={() => handleMove(idx, 1)}
+                          canMoveUp={idx > 0}
+                          canMoveDown={idx < staff.length - 1}
+                          isReordering={reorderStaff.isPending}
                         />
                       ))}
                     </div>
