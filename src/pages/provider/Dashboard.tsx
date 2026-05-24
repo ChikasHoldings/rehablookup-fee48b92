@@ -44,6 +44,7 @@ import { DashboardFacilityPerformancePanel } from "@/components/provider/Dashboa
 import { DashboardMissedLeads } from "@/components/provider/DashboardMissedLeads";
 
 import { DashboardPlacementPanel } from "@/components/provider/DashboardPlacementPanel";
+import { VerificationStateCard } from "@/components/provider/VerificationStateCard";
 
 // Compact directory-style metric tile. Hairline border, white bg, no
 // shadow lift on hover — just a subtle border accent. Title sits as a
@@ -640,6 +641,11 @@ export default function ProviderDashboardPage() {
 
           {/* Right Column - Sidebar */}
           <div className="lg:col-span-4 space-y-3 sm:space-y-4">
+
+            {/* Verification state — surfaces engine signals (badge paused,
+                license expiring, etc.). Top of the sidebar so providers
+                see it before lead-volume alerts. */}
+            {facilityId && <VerificationStateCard facilityId={facilityId} />}
 
             {/* Alerts */}
             <div className="space-y-2.5">

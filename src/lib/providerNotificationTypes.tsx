@@ -89,6 +89,12 @@ export const NOTIFICATION_TYPES: Record<string, NotificationTypeEntry> = {
   image_flagged: { label: "Image Flagged", icon: <ImageOff className="h-5 w-5 text-red-500" />, route: "/provider/listings", category: "listings" },
   credential_verified: { label: "Credential Verified", icon: shieldIcon, route: "/provider/listings", category: "listings" },
   credential_rejected: { label: "Credential Rejected", icon: errIcon, route: "/provider/listings", category: "listings" },
+  // Re-verification monitoring engine signals. All three route to the
+  // dashboard where the VerificationStateCard shows current state +
+  // remediation guidance. Soft = badge stays; medium/hard = badge paused.
+  verification_soft: { label: "Verification — please confirm", icon: warnIcon, route: "/provider/dashboard", category: "listings" },
+  verification_medium: { label: "Badge paused — action needed", icon: errIcon, route: "/provider/dashboard", category: "listings" },
+  verification_hard: { label: "Urgent verification issue", icon: errIcon, route: "/provider/dashboard", category: "listings" },
   facilities_reactivated: { label: "Listings Reactivated", icon: <Sparkles className="h-5 w-5 text-emerald-500" />, route: "/provider/listings", category: "listings" },
   facilities_suspended: { label: "Listings Paused", icon: warnIcon, route: "/provider/listings", category: "listings" },
 
