@@ -772,15 +772,18 @@ export default function ProviderSettingsPage() {
   }
 
   return (
-    <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6">
-      <div className="max-w-5xl mx-auto space-y-6">
+    <div className="bg-slate-50 px-3 py-4 sm:px-4 sm:py-6 md:px-6 lg:px-8">
+      <div className="mx-auto max-w-5xl space-y-6">
         {/* Page Header */}
         <div>
-          <h1 className="font-display text-xl font-bold text-foreground md:text-2xl">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+            Provider · Account
+          </p>
+          <h1 className="mt-0.5 font-display text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
             Settings
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Manage your account, security, and notification preferences
+          <p className="mt-1 text-[13px] text-slate-600">
+            Manage your account, security, and notification preferences.
           </p>
         </div>
 

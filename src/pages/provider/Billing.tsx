@@ -253,12 +253,15 @@ export default function ProviderSubscription() {
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
 
-      <div className="container mx-auto px-4 py-8 max-w-3xl space-y-6">
+      <div className="container mx-auto max-w-3xl space-y-6 px-4 py-8">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+            Provider · Billing
+          </p>
+          <h1 className="mt-0.5 font-display text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
             Subscription
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-[13px] text-slate-600">
             Your account plan. Free or Pro — pick what fits.
           </p>
         </div>

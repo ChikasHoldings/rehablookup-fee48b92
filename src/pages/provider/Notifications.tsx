@@ -249,14 +249,19 @@ export default function ProviderNotificationsPage() {
   }
 
   return (
-    <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
-      <div className="max-w-5xl mx-auto space-y-6">
+    <div className="bg-slate-50 px-3 py-4 sm:px-4 sm:py-6 md:px-6 md:py-8 lg:px-8">
+      <div className="mx-auto max-w-5xl space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-xl md:text-2xl lg:text-3xl font-bold">Notifications</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Stay updated with your leads and account activity
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+            Provider · Activity
+          </p>
+          <h1 className="mt-0.5 font-display text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
+            Notifications
+          </h1>
+          <p className="mt-1 text-[13px] text-slate-600">
+            Stay updated with your leads and account activity.
           </p>
         </div>
         <div className="flex items-center gap-2">

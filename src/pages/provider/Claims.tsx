@@ -171,12 +171,15 @@ export default function ProviderClaims() {
         <meta name="robots" content="noindex" />
       </Helmet>
       <Header />
-      <main className="container mx-auto px-4 md:px-6 lg:px-8 py-10 md:py-14 max-w-3xl">
-        <header className="space-y-1.5 mb-6">
-          <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">
+      <main className="container mx-auto max-w-3xl px-4 py-10 md:px-6 md:py-14 lg:px-8">
+        <header className="mb-6">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+            Provider · Claims
+          </p>
+          <h1 className="mt-0.5 font-display text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
             My claims
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="mt-1 text-[13px] text-slate-600">
             Every listing you've claimed, along with where it stands.
           </p>
         </header>

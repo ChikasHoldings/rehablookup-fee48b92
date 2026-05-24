@@ -276,20 +276,20 @@ export default function ProviderAnalyticsPage() {
   }
 
   return (
-    <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
-      <div className="max-w-5xl mx-auto space-y-5">
+    <div className="bg-slate-50 px-3 py-4 sm:px-4 sm:py-6 md:px-6 md:py-8 lg:px-8">
+      <div className="mx-auto max-w-5xl space-y-5">
         {/* ── Page Header ── */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-              <BarChart3 className="h-5 w-5 text-primary" />
-            </div>
-            <div className="min-w-0">
-              <h1 className="text-xl md:text-2xl font-bold text-foreground">Analytics</h1>
-              <p className="text-sm text-muted-foreground">
-                Track performance across your listings
-              </p>
-            </div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+              Provider · Insights
+            </p>
+            <h1 className="mt-0.5 font-display text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
+              Analytics
+            </h1>
+            <p className="mt-1 text-[13px] text-slate-600">
+              Track performance across your listings.
+            </p>
           </div>
 
           {/* Filters Row */}

@@ -281,32 +281,34 @@ export default function ProviderInquiriesPage() {
   }, [inquiries, selectedInquiry]);
 
   return (
-    <div className="h-full flex flex-col overflow-hidden bg-background">
+    <div className="flex h-full flex-col overflow-hidden bg-slate-50">
       {/* Header */}
-      <div className="flex-shrink-0 px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-5 border-b bg-card">
-        <div className="flex items-center justify-between gap-3 sm:gap-4 mb-3 sm:mb-4">
-          <div className="flex items-center gap-2.5 sm:gap-3 md:gap-4 min-w-0">
+      <div className="flex-shrink-0 border-b border-slate-200 bg-white px-3 py-4 sm:px-4 md:px-6 md:py-5 lg:px-8">
+        <div className="flex items-center justify-between gap-3 sm:gap-4">
+          <div className="flex min-w-0 items-center gap-2.5 sm:gap-3 md:gap-4">
             {isMobile && mobileView === 'detail' && (
-              <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8 -ml-1 sm:-ml-2" onClick={handleBackToList}>
+              <Button variant="ghost" size="icon" className="-ml-1 h-7 w-7 sm:-ml-2 sm:h-8 sm:w-8" onClick={handleBackToList}>
                 <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
             )}
             <div className="min-w-0">
-              <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-foreground">
-                {isMobile && mobileView === 'detail' ? 'Lead Details' : 'Leads'}
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                Provider · Inbox
+              </p>
+              <h1 className="mt-0.5 font-display text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
+                {isMobile && mobileView === 'detail' ? 'Lead details' : 'Leads'}
               </h1>
-              <p className="text-xs sm:text-sm md:text-base text-muted-foreground">
-                Manage and respond to your leads
+              <p className="mt-0.5 text-[13px] text-slate-600">
+                Manage and respond to inquiries from families looking for care.
               </p>
             </div>
           </div>
         </div>
-
       </div>
 
       {/* Stats */}
       {(!isMobile || mobileView === 'list') && !isLoading && inquiries.length > 0 && (
-        <div className="flex-shrink-0 px-3 sm:px-4 md:px-6 lg:px-8 py-2.5 sm:py-3 border-b bg-card">
+        <div className="flex-shrink-0 border-b border-slate-200 bg-white px-3 py-2.5 sm:px-4 sm:py-3 md:px-6 lg:px-8">
           <InquiriesStatsHeader
             total={stats.total}
             new={stats.new}
@@ -319,20 +321,20 @@ export default function ProviderInquiriesPage() {
 
       {/* Filters */}
       {(!isMobile || mobileView === 'list') && (
-        <div className="flex-shrink-0 px-3 sm:px-4 md:px-6 lg:px-8 py-2.5 sm:py-3 md:py-4 border-b bg-muted/30">
+        <div className="flex-shrink-0 border-b border-slate-200 bg-white px-3 py-2.5 sm:px-4 sm:py-3 md:px-6 md:py-3.5 lg:px-8">
           <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 md:gap-3">
-            <div className="relative flex-1 min-w-[160px] sm:min-w-[200px] max-w-xs md:max-w-sm">
-              <Search className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
+            <div className="relative min-w-[160px] max-w-xs flex-1 sm:min-w-[200px] md:max-w-sm">
+              <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 sm:left-3 sm:h-4 sm:w-4" />
               <Input
-                placeholder="Search by name, location, care type..."
+                placeholder="Search by name, location, care type…"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8 sm:pl-9 h-8 sm:h-9 md:h-10 bg-background text-xs sm:text-sm"
+                className="h-8 border-slate-200 bg-slate-50 pl-8 text-xs sm:h-9 sm:pl-9 sm:text-sm md:h-10"
               />
             </div>
-            
+
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[100px] sm:w-[130px] h-8 sm:h-9 bg-background text-xs sm:text-sm">
+              <SelectTrigger className="h-8 w-[100px] border-slate-200 bg-slate-50 text-xs sm:h-9 sm:w-[130px] sm:text-sm">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -346,7 +348,7 @@ export default function ProviderInquiriesPage() {
 
             {facilities.length > 1 && (
               <Select value={facilityFilter} onValueChange={setFacilityFilter}>
-                <SelectTrigger className="w-[120px] sm:w-[150px] h-8 sm:h-9 bg-background text-xs sm:text-sm">
+                <SelectTrigger className="h-8 w-[120px] border-slate-200 bg-slate-50 text-xs sm:h-9 sm:w-[150px] sm:text-sm">
                   <SelectValue placeholder="Facility" />
                 </SelectTrigger>
                 <SelectContent>
@@ -359,8 +361,8 @@ export default function ProviderInquiriesPage() {
             )}
 
             {hasFilters && (
-              <Button variant="ghost" size="sm" onClick={clearFilters} className="h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm">
-                <X className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-0.5 sm:mr-1" />
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="h-8 px-2 text-xs text-slate-600 hover:bg-slate-100 sm:h-9 sm:px-3 sm:text-sm">
+                <X className="mr-0.5 h-3.5 w-3.5 sm:mr-1 sm:h-4 sm:w-4" />
                 <span className="hidden sm:inline">Clear</span>
               </Button>
             )}
@@ -379,12 +381,12 @@ export default function ProviderInquiriesPage() {
       )}
 
       {/* Content - Split Pane Layout */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex flex-1 overflow-hidden">
         {/* List Panel */}
         {(!isMobile || mobileView === 'list') && (
           <div className={cn(
-            "flex flex-col border-r bg-card overflow-hidden",
-            isMobile ? "w-full" : "w-[320px] md:w-[360px] lg:w-[400px] flex-shrink-0"
+            "flex flex-col overflow-hidden border-r border-slate-200 bg-white",
+            isMobile ? "w-full" : "w-[320px] flex-shrink-0 md:w-[360px] lg:w-[400px]"
           )}>
             <div className="flex-1 overflow-auto">
               {isLoading ? (
@@ -500,34 +502,34 @@ export default function ProviderInquiriesPage() {
 
         {/* Detail Panel */}
         {(!isMobile || mobileView === 'detail') && (
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 overflow-hidden bg-slate-50">
             {selectedInquiry ? (
               <InquiryDetailPanel inquiry={selectedInquiry} />
             ) : isLoading ? (
-              <div className="h-full flex flex-col items-center justify-center text-center p-8 bg-muted/20 gap-3">
+              <div className="flex h-full flex-col items-center justify-center gap-3 p-8 text-center">
                 <Skeleton className="h-16 w-16 rounded-full" />
                 <Skeleton className="h-4 w-48" />
                 <Skeleton className="h-3 w-64" />
               </div>
             ) : inquiries.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-center p-8 bg-muted/20">
-                <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                  <MailQuestion className="h-8 w-8 text-primary" />
+              <div className="flex h-full flex-col items-center justify-center p-8 text-center">
+                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-slate-100">
+                  <MailQuestion className="h-7 w-7 text-slate-500" />
                 </div>
-                <h3 className="text-lg font-semibold text-foreground mb-2">
+                <h3 className="mb-1.5 text-base font-semibold text-slate-900">
                   Your inbox is ready
                 </h3>
-                <p className="text-sm text-muted-foreground max-w-md">
+                <p className="max-w-md text-[13px] text-slate-600">
                   New family inquiries will land here automatically with full contact details so you can respond right away.
                 </p>
               </div>
             ) : (
-              <div className="h-full flex flex-col items-center justify-center text-center p-8 bg-muted/20">
-                <Users className="h-16 w-16 text-muted-foreground/30 mb-4" />
-                <h3 className="text-lg font-semibold text-muted-foreground mb-2">
+              <div className="flex h-full flex-col items-center justify-center p-8 text-center">
+                <Users className="mb-4 h-14 w-14 text-slate-300" />
+                <h3 className="mb-1.5 text-base font-semibold text-slate-700">
                   Select an inquiry
                 </h3>
-                <p className="text-sm text-muted-foreground max-w-sm">
+                <p className="max-w-sm text-[13px] text-slate-500">
                   Click on an inquiry from the list to view details and take action.
                 </p>
               </div>

@@ -173,7 +173,7 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
           <Button
             variant="ghost"
             size="icon"
-            className="lg:hidden text-white hover:text-white hover:bg-white/15 transition-all duration-200 hover:scale-105 active:scale-95"
+            className="lg:hidden text-white hover:text-white hover:bg-white/10 transition-colors"
             onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
             aria-label={mobileSearchOpen ? "Close search" : "Open search"}
           >
@@ -186,7 +186,7 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
               <Button
                 variant="ghost"
                 size="icon"
-                className="relative text-white hover:text-white hover:bg-white/15 transition-all duration-200 hover:scale-105 active:scale-95"
+                className="relative text-white hover:text-white hover:bg-white/10 transition-colors"
                 aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : "Notifications"}
               >
                 <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -266,7 +266,7 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
             <DropdownMenuTrigger asChild>
               <Button 
                 variant="ghost" 
-                className="gap-1.5 sm:gap-2 text-white hover:text-white hover:bg-white/15 h-10 sm:h-10 pl-1.5 sm:pl-2 pr-2 sm:pr-3 rounded-lg transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                className="gap-1.5 sm:gap-2 text-white hover:text-white hover:bg-white/10 h-10 sm:h-10 pl-1.5 sm:pl-2 pr-2 sm:pr-3 rounded-lg transition-colors"
               >
                 <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-white/30 border border-white/30 flex items-center justify-center text-xs sm:text-sm font-semibold text-white overflow-hidden">
                   {selectedFacility?.logo_url ? (

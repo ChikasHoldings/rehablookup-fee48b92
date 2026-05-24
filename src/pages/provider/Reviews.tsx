@@ -167,16 +167,21 @@ export default function ProviderReviews() {
   }
 
   return (
-    <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8 overflow-x-hidden">
-      <div className="max-w-5xl mx-auto space-y-6">
+    <div className="overflow-x-hidden bg-slate-50 px-3 py-4 sm:px-4 sm:py-6 md:px-6 md:py-8 lg:px-8">
+      <div className="mx-auto max-w-5xl space-y-6">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
-          <h1 className="text-xl md:text-2xl lg:text-3xl font-bold tracking-tight">Reviews</h1>
-          <p className="text-muted-foreground mt-1">
-            {facilities.length > 1 
-              ? `Manage reviews across ${facilities.length} locations`
-              : facilities[0]?.name ? `Manage reviews for ${facilities[0].name}` : 'Manage your reviews'
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+            Provider · Reputation
+          </p>
+          <h1 className="mt-0.5 font-display text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
+            Reviews
+          </h1>
+          <p className="mt-1 text-[13px] text-slate-600">
+            {facilities.length > 1
+              ? `Manage reviews across ${facilities.length} locations.`
+              : facilities[0]?.name ? `Manage reviews for ${facilities[0].name}.` : 'Manage your reviews.'
             }
           </p>
         </div>
