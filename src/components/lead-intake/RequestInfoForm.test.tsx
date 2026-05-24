@@ -223,13 +223,7 @@ beforeEach(() => {
 // --------------------------------------------------------------------------
 // 1. Consent notice presence — must be shown on the contact step
 // --------------------------------------------------------------------------
-// TODO(lead-intake-tests): Re-enable once the consent-notice copy and the
-// PhoneInput → libphonenumber-js submission contract are stabilised. The UI
-// copy and PhoneInput formatting drifted from these end-to-end assertions;
-// they currently fail for reasons unrelated to the feature under test and
-// were blocking unrelated work (site-wide pagination). Skipping is the
-// minimally-invasive fix until the form contract is re-pinned.
-describe.skip("Request Information form — consent notice", () => {
+describe("Request Information form — consent notice", () => {
   it("shows the consent notice naming the facility, with Privacy Policy and Terms links, before Submit is interactable", async () => {
     const user = userEvent.setup();
     renderForm();
@@ -240,14 +234,19 @@ describe.skip("Request Information form — consent notice", () => {
     const submitBtn = await screen.findByRole("button", { name: /^submit$/i });
     expect(submitBtn).toBeInTheDocument();
 
-    // Required: explicit consent language naming the facility. Framer-motion
-    // may keep both the outgoing and incoming step panels mounted during the
-    // transition, so we accept >=1 matching node.
+    // Required: explicit consent language naming the facility. The current
+    // copy splits the heading ("I agree to be contacted") from the body
+    // ("By checking this box, I consent to be contacted by [FACILITY] via
+    // phone, SMS, or email..."), so we match against the parent node's
+    // textContent which concatenates both. Framer-motion may keep both the
+    // outgoing and incoming step panels mounted during the transition, so
+    // we accept >=1 matching node.
     const consentMatches = screen.getAllByText(
       (_content, node) => {
         if (!node) return false;
         const text = node.textContent || "";
-        return /I agree to be contacted by/i.test(text)
+        return /I agree to be contacted/i.test(text)
+          && /I consent to be contacted by/i.test(text)
           && text.includes(FACILITY.name)
           && /phone, SMS, or email/i.test(text);
       }
@@ -260,8 +259,10 @@ describe.skip("Request Information form — consent notice", () => {
     expect(privacy).toHaveAttribute("href", "/privacy-policy");
     expect(terms).toHaveAttribute("href", "/terms-of-service");
 
-    // Confidentiality assurance.
-    expect(consentMatches[0].textContent).toMatch(/confidential/i);
+    // Confidentiality assurance — copy was extracted from the consent
+    // block into a separate Privacy notice card above consent. Assert it
+    // exists somewhere on the contact step regardless of which block.
+    expect(screen.getAllByText(/confidential/i).length).toBeGreaterThan(0);
 
     // Submit must be disabled until consent is ticked.
     expect(submitBtn).toBeDisabled();
@@ -371,13 +372,12 @@ describe("Request Information form — email notification trigger", () => {
 // email and facility notification email will fail in production. Locking
 // them down here gives us a regression-safe contract test.
 // --------------------------------------------------------------------------
-// TODO(lead-intake-tests): see note above the consent-notice describe.skip.
-describe.skip("Request Information form — submit-qualified-lead payload contract", () => {
+describe("Request Information form — submit-qualified-lead payload contract", () => {
   const SEEKER = {
-    firstName: "Maria",
-    lastName: "Gonzalez",
-    phoneDigits: "5551234567",
-    email: "maria.gonzalez@example.com",
+    firstName: "Test",
+    lastName: "Seeker",
+    phoneDigits: "5555551234",
+    email: "test.seeker@example.com",
   };
 
   /**
@@ -402,8 +402,6 @@ describe.skip("Request Information form — submit-qualified-lead payload contra
     await advanceToContactStep(user);
     await screen.findByRole("button", { name: /^submit$/i });
 
-    clearContactStepFields();
-
     await user.type(screen.getByPlaceholderText(/^john$/i), SEEKER.firstName);
     await user.type(screen.getByPlaceholderText(/^doe$/i), SEEKER.lastName);
 
@@ -423,16 +421,28 @@ describe.skip("Request Information form — submit-qualified-lead payload contra
 
     // Wait for the submit-qualified-lead invocation, then return its body.
     let payload: Record<string, unknown> | undefined;
-    await waitFor(
-      () => {
-        const submitCall = mockState.invokeMock.mock.calls.find(
-          (c) => c[0] === "submit-qualified-lead"
-        );
-        expect(submitCall).toBeDefined();
-        payload = submitCall![1].body as Record<string, unknown>;
-      },
-      { timeout: 5000 }
-    );
+    try {
+      await waitFor(
+        () => {
+          const submitCall = mockState.invokeMock.mock.calls.find(
+            (c) => c[0] === "submit-qualified-lead"
+          );
+          expect(submitCall).toBeDefined();
+          payload = submitCall![1].body as Record<string, unknown>;
+        },
+        { timeout: 5000 }
+      );
+    } catch (err) {
+      // Diagnostic — log what edge functions DID get called, so the
+      // contract drift root-cause is obvious in CI failures rather than
+      // a generic timeout.
+      // eslint-disable-next-line no-console
+      console.error(
+        "[contract-test diagnostic] invokeMock calls were:",
+        mockState.invokeMock.mock.calls.map((c) => c[0]),
+      );
+      throw err;
+    }
 
     return payload!;
   }
