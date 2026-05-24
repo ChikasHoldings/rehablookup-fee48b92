@@ -558,3 +558,12 @@ verify_jwt = false
 # present and validates each independently.
 [functions.sync-google-reviews]
 verify_jwt = false
+
+# verify_jwt=false so the function does its own ownership + Pro +
+# verified gating against the caller JWT. Same pattern as
+# send-review-request. Generates a personalised marketing/credibility
+# kit (PDF cert + SVG badge + email signature + social images), zips
+# it, uploads to the credential-kits storage bucket, and returns a
+# 1-hour signed URL.
+[functions.generate-credential-kit]
+verify_jwt = false

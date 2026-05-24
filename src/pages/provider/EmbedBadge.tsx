@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Helmet } from "react-helmet-async";
+import { Link } from "react-router-dom";
 import {
   AlertCircle,
   Award,
@@ -380,6 +381,39 @@ export default function EmbedBadgePage() {
               card so the natural reading flow is configure → preview
               → copy → check performance. */}
           <EmbedAnalyticsCard facilityId={selectedFacility.id} />
+
+          {/* Pro+verified cross-link to the Credential Kit. Lives at
+              the bottom of the embed page because both surfaces are
+              about external brand presence; the Credential Kit
+              complements the widgets with downloadable assets
+              (certificate, signature, social images). The page
+              itself does the eligibility gating — this card is just
+              an entry-point hint. */}
+          <Card className="border-amber-200/60 bg-gradient-to-br from-amber-50/40 to-card">
+            <CardContent className="pt-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <div className="h-10 w-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
+                  <Sparkles className="h-5 w-5 text-amber-600" aria-hidden />
+                </div>
+                <div className="min-w-0">
+                  <p className="font-semibold text-foreground">
+                    Need print-quality assets too?
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-0.5 leading-relaxed">
+                    Pro + RehabLookup Verified facilities can download a
+                    Credential Kit — Certificate of Verification,
+                    RehabLookup Verified badge, email signature, and social
+                    images, all personalised.
+                  </p>
+                </div>
+              </div>
+              <Button asChild variant="outline" className="shrink-0 gap-2">
+                <Link to="/provider/credential-kit">
+                  Open Credential Kit
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </>

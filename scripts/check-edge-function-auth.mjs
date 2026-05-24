@@ -95,6 +95,10 @@ const ANON_NAMES = new Set([
   "send-claim-rejection-email",
   "send-review-notification",
   "send-review-request",
+  // generate-credential-kit — authenticated-provider only (in-body
+  // ownership + verified + Pro check). Anon callers fail auth.getUser
+  // upfront. Bucket label matches the send-* family pattern.
+  "generate-credential-kit",
   "notify-free-tier-inquiry-redirect",
   "notify-admin-provider-signup",
   "notify-flagged-image",

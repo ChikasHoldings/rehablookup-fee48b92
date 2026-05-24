@@ -360,6 +360,7 @@ const ProviderAnalyticsPage = lazy(() => import("./pages/provider/Analytics"));
 
 const ProviderSettingsPage = lazy(() => import("./pages/provider/Settings"));
 const ProviderEmbedBadgePage = lazy(() => import("./pages/provider/EmbedBadge"));
+const ProviderCredentialKitPage = lazy(() => import("./pages/provider/CredentialKit"));
 const ProviderNotificationsPage = lazy(() => import("./pages/provider/Notifications"));
 const ProviderHelpPage = lazy(() => import("./pages/provider/Help"));
 const ProviderKnowledgeBasePage = lazy(() => import("./pages/provider/KnowledgeBase"));
@@ -1834,6 +1835,12 @@ const AppInner = () => {
               <Route path="marketing/concierge" element={<ProviderMarketingConcierge />} />
               <Route path="settings" element={<ProviderSettingsPage />} />
               <Route path="embed-badge" element={<ProviderEmbedBadgePage />} />
+              {/* Credential Kit — Pro + verified gate enforced server-side
+                  by the generate-credential-kit edge function. The page
+                  itself renders a lockwall for ineligible providers; the
+                  edge function refuses to generate even for a tampered
+                  client that bypasses the lockwall. */}
+              <Route path="credential-kit" element={<ProviderCredentialKitPage />} />
               <Route path="notifications" element={<ProviderNotificationsPage />} />
               <Route path="help" element={<ProviderHelpPage />} />
               <Route path="knowledge-base" element={<ProviderKnowledgeBasePage />} />
