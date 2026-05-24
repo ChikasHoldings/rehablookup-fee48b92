@@ -152,7 +152,7 @@ export function ListingCard({
           {mainImage ? (
             <img
               src={mainImage}
-              alt=""
+              alt={`${facility.name} — ${facility.city}${facility.state ? `, ${facility.state}` : ""}`}
               className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
               loading="lazy"
             />

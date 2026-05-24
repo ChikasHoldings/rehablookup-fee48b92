@@ -37,7 +37,8 @@ import {
   X,
   CircleCheck,
   CircleDashed,
-  Users2
+  Users2,
+  AlertTriangle,
 } from "lucide-react";
 import { MultiSelectDropdown } from "@/components/search/MultiSelectDropdown";
 import { Card, CardContent } from "@/components/ui/card";
@@ -448,12 +449,25 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
     }
   }, [facilityData]);
 
-  // Real-time subscriptions
+  // Real-time subscriptions.
+  //
+  // Per-mount random suffix on every channel name so successive mounts
+  // of the editor (provider closes the tab and re-opens, navigates to
+  // another listing and back, etc.) never collide with a still-cached
+  // subscribed channel — same fix we shipped across the dashboard +
+  // pending-concierge-count + useProviderData hooks. Without the
+  // suffix, supabase.channel(samename) returns the existing channel
+  // and the next .on() chain throws "cannot add postgres_changes
+  // callbacks after subscribe()" — which SEORouteBoundary catches
+  // and renders as the "temporarily unavailable" fallback. cleanup
+  // removeChannel wrapped in try/catch because the channel can be
+  // torn down server-side asynchronously.
   useEffect(() => {
     if (!currentFacilityId) return;
+    const suffix = Math.random().toString(36).slice(2, 10);
 
     const facilityChannel = supabase
-      .channel(`facility-${currentFacilityId}`)
+      .channel(`facility-${currentFacilityId}-${suffix}`)
       .on(
         "postgres_changes",
         {
@@ -469,7 +483,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
       .subscribe();
 
     const servicesChannel = supabase
-      .channel(`services-${currentFacilityId}`)
+      .channel(`services-${currentFacilityId}-${suffix}`)
       .on(
         "postgres_changes",
         {
@@ -485,7 +499,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
       .subscribe();
 
     const insuranceChannel = supabase
-      .channel(`insurance-${currentFacilityId}`)
+      .channel(`insurance-${currentFacilityId}-${suffix}`)
       .on(
         "postgres_changes",
         {
@@ -501,7 +515,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
       .subscribe();
 
     const ageGroupsChannel = supabase
-      .channel(`age-groups-${currentFacilityId}`)
+      .channel(`age-groups-${currentFacilityId}-${suffix}`)
       .on(
         "postgres_changes",
         {
@@ -517,10 +531,13 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
       .subscribe();
 
     return () => {
-      supabase.removeChannel(facilityChannel);
-      supabase.removeChannel(servicesChannel);
-      supabase.removeChannel(insuranceChannel);
-      supabase.removeChannel(ageGroupsChannel);
+      for (const ch of [facilityChannel, servicesChannel, insuranceChannel, ageGroupsChannel]) {
+        try {
+          supabase.removeChannel(ch);
+        } catch {
+          /* channel may already be torn down server-side */
+        }
+      }
     };
   }, [currentFacilityId, queryClient, refetchServices, refetchInsurance, refetchAgeGroups]);
 
@@ -775,10 +792,21 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
         queryClient.invalidateQueries({ queryKey: ["provider-facilities"] });
         queryClient.invalidateQueries({ queryKey: ["facility-services-count", currentFacilityId] });
         queryClient.invalidateQueries({ queryKey: ["facility-insurance-count", currentFacilityId] });
+        // Stats chips on /provider/listings (ListingCard) read these
+        // per-facility view/lead counters with a 5-minute staleTime.
+        // Without an explicit invalidation on save, the listings index
+        // shows stale stats for up to 5 minutes after the user edited
+        // the listing — confusing because the rest of the row reflects
+        // their latest changes. These keys mirror the queries in
+        // src/components/provider/listing/ListingCard.tsx lines 102+.
+        queryClient.invalidateQueries({ queryKey: ["facility-views-count", currentFacilityId] });
+        queryClient.invalidateQueries({ queryKey: ["facility-leads-count", currentFacilityId] });
         queryClient.invalidateQueries({ queryKey: ["approved-facilities"] });
         queryClient.invalidateQueries({ queryKey: PUBLIC_FACILITIES_QUERY_KEY });
         queryClient.invalidateQueries({ queryKey: ["facility", facility.slug] });
-        setTimeout(() => setShowSaved(false), 2000);
+        // Saved-badge dwell time bumped 2s → 4s. The earlier window
+        // dismissed before slow networks could even render the badge.
+        setTimeout(() => setShowSaved(false), 4000);
 
         // First-time 100%-complete celebration: fire-and-forget the
         // congratulatory email (deployed function had no callers).
@@ -1284,6 +1312,28 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
 
   return (
     <div className="max-w-5xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 pb-28 lg:pb-8">
+      {/* Suspended facility banner. Saves still go through (the row
+          is RLS-readable + RLS-writable by the owner) but we surface
+          the state prominently so the provider knows their listing
+          isn't public and what to do about it. Without this banner
+          they could spend 20 minutes polishing a facility that won't
+          appear in search results and have no clue why. */}
+      {(facility as { suspended?: boolean }).suspended && (
+        <div className="mb-5 flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50/70 p-4">
+          <AlertTriangle className="h-5 w-5 shrink-0 text-amber-600" aria-hidden />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-amber-900">
+              This listing is paused
+            </p>
+            <p className="mt-1 text-[13px] leading-relaxed text-amber-800/80">
+              Edits still save, but the facility won't appear in public
+              search results or accept new inquiries. Contact support to
+              reactivate.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* ── Top Bar ── */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
         <div className="flex items-center gap-3 min-w-0">

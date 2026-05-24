@@ -208,6 +208,24 @@ export default function AddLocationPage() {
         .single();
 
       if (error) {
+        // 23505 unique_violation: the DB-level
+        // facilities_provider_dedup_uidx caught a duplicate
+        // (same user + same name + same address + same city). Tell
+        // the user clearly that the listing already exists instead
+        // of leaking the raw Postgres error string. Same friendly-
+        // error pattern as ProviderSignup.tsx for the wizard's
+        // double-submit case.
+        const pgCode = (error as { code?: string }).code;
+        if (pgCode === "23505") {
+          toast({
+            title: "Already in your listings",
+            description:
+              "A facility with this name and address is already in your account. Open it from My Listings to keep editing.",
+            variant: "destructive",
+          });
+          navigate("/provider/listings");
+          return;
+        }
         console.error("[AddLocation] Facility creation error:", error);
         throw error;
       }
