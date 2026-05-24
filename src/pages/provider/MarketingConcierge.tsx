@@ -1,29 +1,34 @@
-import { Link, Navigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, AlertCircle } from "lucide-react";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { useFacilitySubscription } from "@/hooks/useFacilitySubscription";
 import { ConciergeMarketingDetail } from "@/components/provider/marketing/ConciergeMarketingDetail";
 import { ConciergeManagementPanel } from "@/components/provider/marketing/ConciergeManagementPanel";
 import { ConciergeAnalyticsWidget } from "@/components/provider/marketing/ConciergeAnalyticsWidget";
+import { LockedFeaturePreview } from "@/components/provider/LockedFeaturePreview";
+import { ConciergeManagementSample } from "@/components/provider/concierge/ConciergeManagementSample";
 
 /**
- * /provider/marketing/concierge — the unified Concierge Partner hub.
+ * /provider/marketing/concierge — Concierge Partner add-on surface.
  *
- *   • Free / non-Pro callers       → bounce back to the Marketing Hub.
- *   • Pro WITHOUT Concierge        → render the marketing pitch + EKRA
- *                                    explainer + purchase CTAs.
- *   • Pro WITH Concierge Partner   → render analytics + geo management
- *                                    in one place (no more bouncing to
- *                                    /provider/billing/concierge).
+ *   • Free / non-Pro callers       → render the page WITH a locked
+ *     preview of the management UI (sample geos + placement history)
+ *     so they see what they'd unlock. Inert + clearly labeled
+ *     "Preview"; server-side gating (RLS + create-checkout-session
+ *     intent='add_addon' Pro check) is the source of truth.
+ *   • Pro WITHOUT Concierge        → marketing pitch + EKRA explainer
+ *     + purchase CTAs.
+ *   • Pro WITH Concierge Partner   → analytics + geo management +
+ *     placement history.
  */
 export default function MarketingConcierge() {
   const { selectedFacility } = useSelectedFacility();
   const facilityId = selectedFacility?.id;
-  const { data: subscription, isLoading } = useFacilitySubscription(facilityId);
+  const { data: subscription, isLoading, isError, refetch } = useFacilitySubscription(facilityId);
 
   if (isLoading) {
     return (
@@ -35,10 +40,47 @@ export default function MarketingConcierge() {
     );
   }
 
-  const isPro = subscription?.tier === "pro" && subscription?.status === "active";
-  if (!isPro) return <Navigate to="/provider/marketing" replace />;
-  if (!facilityId) return <Navigate to="/provider/marketing" replace />;
+  if (isError) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
+        <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-2 text-sm">
+            <AlertCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" aria-hidden />
+            <div>
+              <p className="font-medium text-foreground">Couldn't load your subscription.</p>
+              <p className="text-muted-foreground mt-0.5">
+                We weren't able to check your Pro / Concierge status. Try refreshing.
+              </p>
+            </div>
+          </div>
+          <Button variant="outline" onClick={() => refetch()}>Retry</Button>
+        </div>
+      </div>
+    );
+  }
 
+  if (!facilityId) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-2 text-sm">
+            <AlertCircle className="h-5 w-5 text-amber-700 shrink-0 mt-0.5" aria-hidden />
+            <div>
+              <p className="font-medium text-foreground">No facility selected.</p>
+              <p className="text-muted-foreground mt-0.5">
+                Pick a facility from the header dropdown to manage Concierge Partner.
+              </p>
+            </div>
+          </div>
+          <Button asChild variant="outline">
+            <Link to="/provider/listings">Go to listings</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  const isPro = subscription?.tier === "pro" && subscription?.status === "active";
   const hasConcierge = subscription?.has_concierge_partner === true;
   const periodEndStr = subscription?.current_period_end
     ? new Date(subscription.current_period_end).toLocaleDateString("en-US", {
@@ -56,7 +98,6 @@ export default function MarketingConcierge() {
       </Helmet>
 
       <div className="container mx-auto px-4 py-8 max-w-4xl space-y-6">
-        {/* Breadcrumb */}
         <div>
           <Button variant="ghost" size="sm" className="gap-1.5" asChild>
             <Link to="/provider/marketing">
@@ -86,7 +127,32 @@ export default function MarketingConcierge() {
           </div>
         </div>
 
-        {hasConcierge ? (
+        {!isPro ? (
+          <LockedFeaturePreview
+            title="Concierge Partner"
+            subtitle="Prominent surfacing when our human advisors match seekers"
+            tier="concierge"
+            valueStatement={
+              <>
+                When seekers call our concierge, advisors match them by clinical
+                criteria first — <strong>never by who paid us</strong>. Concierge
+                Partners get a visual badge in our advisor tool so the advisor
+                naturally mentions you. Flat subscription; never per-call or
+                per-admission.
+              </>
+            }
+            bullets={[
+              "EKRA-compliant by design — at least 2 non-partner alternatives always presented alongside partners",
+              "Capped at 3–5 facilities per major city (waitlist when full)",
+              "Calls go directly to your admissions line — we never intermediate",
+            ]}
+            ctaLabel="Upgrade to Pro to unlock"
+            ctaTo="/provider/billing?upgrade=pro"
+            secondaryAction={{ label: "See full pricing", to: "/for-providers" }}
+          >
+            <ConciergeManagementSample />
+          </LockedFeaturePreview>
+        ) : hasConcierge ? (
           <>
             <ConciergeAnalyticsWidget facilityId={facilityId} />
             <ConciergeManagementPanel facilityId={facilityId} subscription={subscription!} />

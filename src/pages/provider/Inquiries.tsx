@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
-import { Users, Search, X, ChevronLeft, Inbox, ShieldCheck, MailQuestion } from "lucide-react";
+import { Users, Search, X, ChevronLeft, Inbox, ShieldCheck, MailQuestion, AlertCircle } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -412,6 +412,26 @@ export default function ProviderInquiriesPage() {
                   <p className="text-center text-xs text-muted-foreground pt-2">
                     Loading your leads…
                   </p>
+                </div>
+              ) : inquiriesError ? (
+                <div className="flex flex-col items-center justify-center py-10 sm:py-14 px-4 text-center">
+                  <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
+                    <AlertCircle className="h-7 w-7 sm:h-8 sm:w-8 text-destructive" aria-hidden />
+                  </div>
+                  <h3 className="text-base sm:text-lg font-semibold text-foreground mb-1.5">
+                    Couldn't load your inquiries
+                  </h3>
+                  <p className="text-sm text-muted-foreground max-w-sm mb-5">
+                    There was a problem reaching the inquiries service.
+                    Your inquiries are still saved; this is just a display issue.
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.location.reload()}
+                  >
+                    Refresh
+                  </Button>
                 </div>
               ) : filteredInquiries.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-10 sm:py-14 px-4 text-center">

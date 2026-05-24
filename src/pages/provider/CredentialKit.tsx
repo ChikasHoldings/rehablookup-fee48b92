@@ -29,6 +29,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { useProStatus } from "@/hooks/useProStatus";
 import { useToast } from "@/hooks/use-toast";
+import { LockedFeaturePreview } from "@/components/provider/LockedFeaturePreview";
 
 /* react-helmet-async re-exports keep a single import — ignore the
    shim alias above; bundlers tree-shake the unused name. */
@@ -266,11 +267,68 @@ export default function CredentialKitPage() {
               cta={{ label: "Go to Credentials", to: "/provider/listings" }}
             />
           ) : !isPro ? (
-            <Lockwall
-              title="Pro required"
-              body="The Credential Kit is a Pro-tier perk. Upgrade to Pro to download the Certificate of Verification, RehabLookup Verified badges, email signature, and social images."
-              cta={{ label: "Upgrade to Pro", to: "/provider/billing?upgrade=pro", primary: true }}
-            />
+            <LockedFeaturePreview
+              title="Credential Kit"
+              subtitle="A polished proof-of-verification kit you can share with referral partners"
+              tier="pro"
+              valueStatement={
+                <>
+                  Once your facility is RehabLookup Verified and on Pro, this page
+                  generates a fresh ZIP containing eight personalised assets — a
+                  formal Certificate of Verification PDF, scalable SVG badges, an
+                  email-signature snippet, and four social-image sizes. Refresh
+                  any time; old downloads stay valid as long as the data hasn't
+                  changed.
+                </>
+              }
+              bullets={[
+                "Certificate of Verification (one-page printable PDF)",
+                "RehabLookup Verified badge SVG (scales 24px → 512px)",
+                "Email-signature HTML snippet for Gmail / Outlook / Apple Mail",
+                "Social image set: OG, X, Instagram square, LinkedIn",
+              ]}
+              ctaLabel="Upgrade to Pro to unlock"
+              ctaTo="/provider/billing?upgrade=pro"
+              secondaryAction={{ label: "See full pricing", to: "/for-providers" }}
+            >
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">What's in the kit</CardTitle>
+                  <CardDescription>
+                    Eight files in one ZIP. Every asset is personalised with your
+                    facility name, verified-since date, and profile URL.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {ASSET_LIST.map((asset) => {
+                    const Icon = asset.icon;
+                    return (
+                      <div
+                        key={asset.title}
+                        className="flex items-start gap-3 rounded-lg border bg-card p-3"
+                      >
+                        <div
+                          className={cn(
+                            "h-9 w-9 shrink-0 rounded-lg flex items-center justify-center",
+                            asset.iconBg,
+                          )}
+                        >
+                          <Icon className={cn("h-4 w-4", asset.iconColor)} aria-hidden />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-foreground">
+                            {asset.title}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                            {asset.description}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </CardContent>
+              </Card>
+            </LockedFeaturePreview>
           ) : (
             <>
               <Card>
