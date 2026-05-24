@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
-  ArrowLeft,
+  Award,
   CheckCircle2,
   Download,
   FileText,
@@ -17,6 +17,7 @@ import {
   Sparkles,
   Loader2,
 } from "lucide-react";
+import { ProviderPageHeader } from "@/components/provider/ProviderPageHeader";
 import { formatDistanceToNow } from "date-fns";
 import { Helmet as _HelmetIgnore } from "react-helmet-async"; // silence unused-import lints in odd setups
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -225,39 +226,20 @@ export default function CredentialKitPage() {
       </Helmet>
 
       <div className="min-h-full bg-slate-50">
-        <div className="border-b border-slate-200 bg-white">
-          <div className="mx-auto max-w-4xl px-4 py-7 sm:px-6 md:py-8 lg:px-8">
-            <Button variant="ghost" size="sm" className="gap-1.5 mb-3" asChild>
-              <Link to="/provider/embed-badge">
-                <ArrowLeft className="h-4 w-4" />
-                Embed widgets
-              </Link>
-            </Button>
-            <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#1B365D]/70">
-              Pro · Verified-only
-            </p>
-            <div className="mt-1 flex items-end justify-between gap-4 flex-wrap">
-              <div>
-                <h1 className="font-display text-[26px] font-bold tracking-tight text-slate-900 sm:text-[30px]">
-                  RehabLookup Verified Credential Kit
-                </h1>
-                <p className="mt-1.5 max-w-xl text-[15px] text-slate-600">
-                  Downloadable marketing + credibility assets — Certificate
-                  of Verification, RehabLookup Verified badge, email
-                  signature, and social images — all personalised with your
-                  facility data.
-                </p>
-              </div>
-              {gateOpen && (
-                <Badge className="bg-emerald-600 hover:bg-emerald-600 self-start">
-                  Eligible
-                </Badge>
-              )}
-            </div>
-          </div>
-        </div>
+        <ProviderPageHeader
+          title="Credential Kit"
+          description="Downloadable certificate, badge, email signature, and social images — personalised for your facility."
+          icon={<Award className="h-4 w-4" />}
+          backTo="/provider/marketing"
+          backLabel="Marketing"
+          actions={
+            gateOpen ? (
+              <Badge className="bg-emerald-600 hover:bg-emerald-600">Eligible</Badge>
+            ) : null
+          }
+        />
 
-        <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6 md:py-8 lg:px-8 space-y-6">
+        <div className="mx-auto max-w-4xl px-4 py-5 sm:px-6 sm:py-6 lg:px-8 space-y-5">
           {loading ? (
             <Card>
               <CardContent className="pt-6 space-y-4">

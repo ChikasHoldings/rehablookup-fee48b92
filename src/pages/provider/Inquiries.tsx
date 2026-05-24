@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ProviderPageHeader } from "@/components/provider/ProviderPageHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { fromLeadsProviderView } from "@/lib/leadsProviderView";
 import { isWithinInterval, startOfDay, endOfDay } from "date-fns";
@@ -283,27 +284,20 @@ export default function ProviderInquiriesPage() {
   return (
     <div className="flex h-full flex-col overflow-hidden bg-slate-50">
       {/* Header */}
-      <div className="flex-shrink-0 border-b border-slate-200 bg-white px-4 py-6 sm:px-6 md:py-7 lg:px-8">
-        <div className="flex items-center justify-between gap-3 sm:gap-4">
-          <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-            {isMobile && mobileView === 'detail' && (
-              <Button variant="ghost" size="icon" className="-ml-2 h-9 w-9" onClick={handleBackToList}>
-                <ChevronLeft className="h-5 w-5" />
+      <div className="flex-shrink-0">
+        <ProviderPageHeader
+          title={isMobile && mobileView === 'detail' ? 'Lead details' : 'Leads'}
+          description="Manage and respond to inquiries from families looking for care."
+          icon={<Users className="h-4 w-4" />}
+          actions={
+            isMobile && mobileView === 'detail' ? (
+              <Button variant="ghost" size="sm" onClick={handleBackToList} className="gap-1">
+                <ChevronLeft className="h-4 w-4" />
+                Back
               </Button>
-            )}
-            <div className="min-w-0">
-              <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#1B365D]/70">
-                Inbox
-              </p>
-              <h1 className="mt-1 font-display text-[26px] font-bold tracking-tight text-slate-900 sm:text-[30px]">
-                {isMobile && mobileView === 'detail' ? 'Lead details' : 'Leads'}
-              </h1>
-              <p className="mt-1.5 max-w-xl text-[15px] text-slate-600">
-                Manage and respond to inquiries from families looking for care.
-              </p>
-            </div>
-          </div>
-        </div>
+            ) : null
+          }
+        />
       </div>
 
       {/* Stats */}

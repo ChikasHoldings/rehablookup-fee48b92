@@ -98,7 +98,7 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
                   onClick={(e) => handleNavClick(e, item.href)}
                   onMouseEnter={() => handleMouseEnter(item.href)}
                   className={cn(
-                    "group relative flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] font-medium transition-colors",
+                    "group relative flex items-center gap-2.5 rounded-md px-2.5 py-2.5 text-[15px] font-medium transition-colors",
                     isActive
                       ? "bg-[#1B365D]/5 text-[#1B365D]"
                       : "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
@@ -117,7 +117,7 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
                   />
                   <Icon
                     className={cn(
-                      "h-4 w-4 shrink-0",
+                      "h-[18px] w-[18px] shrink-0",
                       isActive ? "text-[#1B365D]" : "text-slate-500 group-hover:text-slate-700",
                     )}
                     aria-hidden

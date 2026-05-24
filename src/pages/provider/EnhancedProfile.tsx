@@ -3,13 +3,14 @@ import { Helmet } from "react-helmet-async";
 import { Link, Navigate, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  ArrowLeft,
+  Building2,
   ShieldCheck,
   Star,
   Loader2,
   Sparkles,
   ExternalLink,
 } from "lucide-react";
+import { ProviderPageHeader } from "@/components/provider/ProviderPageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -75,49 +76,27 @@ export default function EnhancedProfile() {
       </Helmet>
 
       <div className="min-h-full bg-slate-50">
-        <div className="border-b border-slate-200 bg-white">
-          <div className="mx-auto max-w-5xl px-4 py-7 sm:px-6 md:py-8 lg:px-8">
-            <Button variant="ghost" size="sm" className="gap-1.5 mb-3" asChild>
-              <Link to="/provider/listings">
-                <ArrowLeft className="h-4 w-4" />
-                My Listings
-              </Link>
-            </Button>
-            <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#1B365D]/70">
-              Pro profile
-            </p>
-            <div className="mt-1 flex items-end justify-between gap-4 flex-wrap">
-              <div>
-                <h1 className="font-display text-[26px] font-bold tracking-tight text-slate-900 sm:text-[30px]">
-                  Enhanced profile
-                </h1>
-                <p className="mt-1.5 max-w-xl text-[15px] text-slate-600">
-                  Add programs, amenities, video, and highlight your top
-                  accreditations. Pro facilities surface all of this on the
-                  public listing.
-                </p>
-              </div>
-              {isPro ? (
-                <Badge className="bg-emerald-600 hover:bg-emerald-600 self-start">
-                  Pro · live on profile
-                </Badge>
-              ) : (
-                <Button
-                  asChild
-                  size="sm"
-                  className="bg-amber-500 hover:bg-amber-600 text-white gap-1.5"
-                >
-                  <Link to="/provider/billing?upgrade=pro">
-                    <Sparkles className="h-4 w-4" />
-                    Upgrade to Pro
-                  </Link>
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
+        <ProviderPageHeader
+          title="Enhanced profile"
+          description="Add programs, amenities, video, and accreditations. Pro facilities show all of this on the public listing."
+          icon={<Building2 className="h-4 w-4" />}
+          backTo="/provider/listings"
+          backLabel="My Listings"
+          actions={
+            isPro ? (
+              <Badge className="bg-emerald-600 hover:bg-emerald-600">Pro · live</Badge>
+            ) : (
+              <Button asChild size="sm" className="bg-amber-500 hover:bg-amber-600 text-white gap-1.5">
+                <Link to="/provider/billing?upgrade=pro">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Upgrade to Pro
+                </Link>
+              </Button>
+            )
+          }
+        />
 
-        <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 md:py-8 lg:px-8 space-y-6">
+        <div className="mx-auto max-w-5xl px-4 py-5 sm:px-6 sm:py-6 lg:px-8 space-y-5">
           {/* Tab strip */}
           <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
             <nav

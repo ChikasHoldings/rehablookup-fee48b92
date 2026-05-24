@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ProviderPageHeader } from "@/components/provider/ProviderPageHeader";
 import {
   Select,
   SelectContent,
@@ -271,20 +272,12 @@ export default function ProviderNotificationsPage() {
 
   return (
     <div className="min-h-full bg-slate-50">
-      <div className="border-b border-slate-200 bg-white">
-        <div className="mx-auto max-w-5xl px-4 py-7 sm:px-6 md:py-8 lg:px-8">
-          <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#1B365D]/70">
-            Activity
-          </p>
-          <h1 className="mt-1 font-display text-[26px] font-bold tracking-tight text-slate-900 sm:text-[30px]">
-            Notifications
-          </h1>
-          <p className="mt-1.5 max-w-xl text-[15px] text-slate-600">
-            Stay updated with your leads, claim approvals, and account activity.
-          </p>
-        </div>
-      </div>
-      <div className="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-6 md:py-8 lg:px-8">
+      <ProviderPageHeader
+        title="Notifications"
+        description="Leads, claim approvals, and account activity."
+        icon={<Bell className="h-4 w-4" />}
+      />
+      <div className="mx-auto max-w-5xl space-y-5 px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
       {/* Toolbar row */}
       <div className="flex justify-end">
         <div className="flex items-center gap-2">

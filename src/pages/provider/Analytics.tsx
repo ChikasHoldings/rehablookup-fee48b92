@@ -1,5 +1,6 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { BarChart3, CalendarIcon, X, ChevronDown, Building2, Download } from "lucide-react";
+import { ProviderPageHeader } from "@/components/provider/ProviderPageHeader";
 import { SubscriptionAnalyticsTab } from "@/components/provider/analytics/SubscriptionAnalyticsTab";
 import { CentralizedLeadAnalyticsDashboard } from "@/components/provider/CentralizedLeadAnalyticsDashboard";
 import { CentralizedEngagementAnalytics } from "@/components/provider/CentralizedEngagementAnalytics";
@@ -302,20 +303,12 @@ export default function ProviderAnalyticsPage() {
 
   return (
     <div className="min-h-full bg-slate-50">
-      <div className="border-b border-slate-200 bg-white">
-        <div className="mx-auto max-w-5xl px-4 py-7 sm:px-6 md:py-8 lg:px-8">
-          <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#1B365D]/70">
-            Insights
-          </p>
-          <h1 className="mt-1 font-display text-[26px] font-bold tracking-tight text-slate-900 sm:text-[30px]">
-            Analytics
-          </h1>
-          <p className="mt-1.5 max-w-xl text-[15px] text-slate-600">
-            Track performance — views, leads, conversion — across your listings.
-          </p>
-        </div>
-      </div>
-      <div className="mx-auto max-w-5xl space-y-5 px-4 py-6 sm:px-6 md:py-8 lg:px-8">
+      <ProviderPageHeader
+        title="Analytics"
+        description="Track views, leads, and conversion across your listings."
+        icon={<BarChart3 className="h-4 w-4" />}
+      />
+      <div className="mx-auto max-w-5xl space-y-4 px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
         {/* ── Filters ── */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-end">
           <div className="hidden">{/* hero moved above; this preserves the original child positions */}</div>

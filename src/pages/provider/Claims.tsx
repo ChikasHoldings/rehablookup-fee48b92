@@ -31,6 +31,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   AlertTriangle,
   CheckCircle2,
+  ClipboardCheck,
   Clock,
   FileText,
   Loader2,
@@ -38,6 +39,7 @@ import {
   MessageSquare,
   ShieldCheck,
 } from "lucide-react";
+import { ProviderPageHeader } from "@/components/provider/ProviderPageHeader";
 
 type ClaimStatus =
   | "pending"
@@ -172,20 +174,12 @@ export default function ProviderClaims() {
       </Helmet>
       <Header />
       <main className="min-h-screen bg-slate-50">
-        <div className="border-b border-slate-200 bg-white">
-          <div className="container mx-auto max-w-3xl px-4 py-8 md:px-6 md:py-10 lg:px-8">
-            <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#1B365D]/70">
-              Provider · Claims
-            </p>
-            <h1 className="mt-1 font-display text-[26px] font-bold tracking-tight text-slate-900 sm:text-[30px]">
-              My claims
-            </h1>
-            <p className="mt-1.5 max-w-xl text-[15px] text-slate-600">
-              Every listing you've claimed, along with where it stands in review.
-            </p>
-          </div>
-        </div>
-        <div className="container mx-auto max-w-3xl px-4 py-8 md:px-6 lg:px-8">
+        <ProviderPageHeader
+          title="My claims"
+          description="Every listing you've claimed, along with where it stands in review."
+          icon={<ClipboardCheck className="h-4 w-4" />}
+        />
+        <div className="container mx-auto max-w-3xl px-4 py-5 md:px-6 lg:px-8">
 
         {authChecking || claims === null ? (
           <Card className="p-8 flex flex-col items-center gap-2">

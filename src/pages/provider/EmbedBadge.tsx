@@ -6,6 +6,7 @@ import {
   Award,
   BarChart3,
   Check,
+  Code2,
   Copy,
   Images,
   MessageSquareQuote,
@@ -15,6 +16,7 @@ import {
   Moon,
   Monitor,
 } from "lucide-react";
+import { ProviderPageHeader } from "@/components/provider/ProviderPageHeader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -165,23 +167,15 @@ export default function EmbedBadgePage() {
       </Helmet>
 
       <div className="min-h-full bg-slate-50">
-        <div className="border-b border-slate-200 bg-white">
-          <div className="mx-auto max-w-5xl px-4 py-7 sm:px-6 md:py-8 lg:px-8">
-            <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#1B365D]/70">
-              Embed
-            </p>
-            <h1 className="mt-1 font-display text-[26px] font-bold tracking-tight text-slate-900 sm:text-[30px]">
-              Widgets for your website
-            </h1>
-            <p className="mt-1.5 max-w-xl text-[15px] text-slate-600">
-              Drop a verified badge or live-reviews block onto your facility
-              site. Each widget is sandboxed and links back to your RehabLookup
-              profile.
-            </p>
-          </div>
-        </div>
+        <ProviderPageHeader
+          title="Embed widgets"
+          description="Drop a verified badge, reviews block, or photo gallery onto your website."
+          icon={<Code2 className="h-4 w-4" />}
+          backTo="/provider/marketing"
+          backLabel="Marketing"
+        />
 
-        <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 md:py-8 lg:px-8 space-y-6">
+        <div className="mx-auto max-w-5xl px-4 py-5 sm:px-6 sm:py-6 lg:px-8 space-y-5">
           {/* Widget picker */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <WidgetPickerCard

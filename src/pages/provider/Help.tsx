@@ -29,6 +29,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ProviderPageHeader } from "@/components/provider/ProviderPageHeader";
 import {
   Select,
   SelectContent,
@@ -268,20 +269,12 @@ export default function ProviderHelpPage() {
 
   return (
     <div className="min-h-full bg-slate-50">
-      <div className="border-b border-slate-200 bg-white">
-        <div className="mx-auto max-w-5xl px-4 py-7 sm:px-6 md:py-8 lg:px-8">
-          <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#1B365D]/70">
-            Support
-          </p>
-          <h1 className="mt-1 font-display text-[26px] font-bold tracking-tight text-slate-900 sm:text-[30px]">
-            Help & Support
-          </h1>
-          <p className="mt-1.5 max-w-xl text-[15px] text-slate-600">
-            Find answers, browse guides, or send our team a message — we respond within 24-48 business hours.
-          </p>
-        </div>
-      </div>
-      <div className="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-6 md:py-8 lg:px-8">
+      <ProviderPageHeader
+        title="Help & Support"
+        description="Find answers, browse guides, or message support (24-48h response)."
+        icon={<HelpCircle className="h-4 w-4" />}
+      />
+      <div className="mx-auto max-w-5xl space-y-5 px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
 
         {/* Quick Help Topics */}
         <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-3">

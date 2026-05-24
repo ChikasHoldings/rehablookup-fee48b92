@@ -24,7 +24,9 @@ import {
   LogOut,
   Activity,
   HelpCircle,
+  Settings as SettingsIcon,
 } from "lucide-react";
+import { ProviderPageHeader } from "@/components/provider/ProviderPageHeader";
 import { PhoneVerificationStep } from "@/components/ui/PhoneVerificationStep";
 import { ActivityLogTab } from "@/components/provider/settings/ActivityLogTab";
 import { SessionManagementTab } from "@/components/provider/settings/SessionManagementTab";
@@ -774,20 +776,12 @@ export default function ProviderSettingsPage() {
 
   return (
     <div className="min-h-full bg-slate-50">
-      <div className="border-b border-slate-200 bg-white">
-        <div className="mx-auto max-w-5xl px-4 py-7 sm:px-6 md:py-8 lg:px-8">
-          <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#1B365D]/70">
-            Account
-          </p>
-          <h1 className="mt-1 font-display text-[26px] font-bold tracking-tight text-slate-900 sm:text-[30px]">
-            Settings
-          </h1>
-          <p className="mt-1.5 max-w-xl text-[15px] text-slate-600">
-            Manage your profile, security, and notification preferences.
-          </p>
-        </div>
-      </div>
-      <div className="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-6 md:py-8 lg:px-8">
+      <ProviderPageHeader
+        title="Settings"
+        description="Profile, security, and notification preferences."
+        icon={<SettingsIcon className="h-4 w-4" />}
+      />
+      <div className="mx-auto max-w-5xl space-y-5 px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
 
         {/* Unsaved Changes Dialog. Reset pendingTab whenever the dialog
             closes so a back-button / esc dismiss can't leave a stale

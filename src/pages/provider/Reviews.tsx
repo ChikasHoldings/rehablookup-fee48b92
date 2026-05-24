@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useDebounce } from '@/hooks/useDebounce';
+import { ProviderPageHeader } from '@/components/provider/ProviderPageHeader';
 
 import { ReviewStatsCards } from '@/components/provider/reviews/ReviewStatsCards';
 import { ProviderReviewCard } from '@/components/provider/reviews/ProviderReviewCard';
@@ -208,36 +209,30 @@ export default function ProviderReviews() {
 
   return (
     <div className="min-h-full overflow-x-hidden bg-slate-50">
-      <div className="border-b border-slate-200 bg-white">
-        <div className="mx-auto max-w-5xl px-4 py-7 sm:px-6 md:py-8 lg:px-8">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div className="min-w-0">
-              <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#1B365D]/70">
-                Reputation
-              </p>
-              <h1 className="mt-1 font-display text-[26px] font-bold tracking-tight text-slate-900 sm:text-[30px]">
-                Reviews
-              </h1>
-              <p className="mt-1.5 max-w-xl text-[15px] text-slate-600">
-                {facilities.length > 1
-                  ? `Respond to reviews across ${facilities.length} locations and request new ones from past patients.`
-                  : facilities[0]?.name ? `Respond to reviews for ${facilities[0].name} and request new ones from past patients.` : 'Respond to reviews and request new ones from past patients.'
-                }
-              </p>
-            </div>
-            {facilities.length > 0 && (
-              <Button
-                onClick={() => setReviewRequestOpen(true)}
-                className="gap-2 bg-[#1B365D] hover:bg-[#142a4a] shrink-0 self-start sm:self-auto"
-              >
-                <Mail className="h-4 w-4" aria-hidden />
-                Request a review
-              </Button>
-            )}
-          </div>
-        </div>
-      </div>
-      <div className="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-6 md:py-8 lg:px-8">
+      <ProviderPageHeader
+        title="Reviews"
+        description={
+          facilities.length > 1
+            ? `Respond to reviews across ${facilities.length} locations and request new ones.`
+            : facilities[0]?.name
+              ? `Respond to reviews for ${facilities[0].name} and request new ones.`
+              : "Respond to reviews and request new ones from past patients."
+        }
+        icon={<Star className="h-4 w-4" />}
+        actions={
+          facilities.length > 0 ? (
+            <Button
+              size="sm"
+              onClick={() => setReviewRequestOpen(true)}
+              className="gap-1.5 bg-[#1B365D] hover:bg-[#142a4a]"
+            >
+              <Mail className="h-3.5 w-3.5" aria-hidden />
+              Request a review
+            </Button>
+          ) : null
+        }
+      />
+      <div className="mx-auto max-w-5xl space-y-5 px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
       <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
         <div className="flex items-center gap-2 flex-shrink-0 flex-wrap sm:gap-3">
           {/* Sort */}
