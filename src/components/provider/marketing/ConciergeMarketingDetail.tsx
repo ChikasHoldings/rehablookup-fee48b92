@@ -15,7 +15,11 @@ interface ConciergeMarketingDetailProps {
  * when the facility doesn't yet have Concierge Partner active.
  *
  * Geo / LoC / compliance-checkbox configuration happens AFTER Stripe
- * Checkout in the manager view (deferred multi-step purchase flow).
+ * Checkout in `ConciergeManagementPanel` via `AddConciergeGeoForm`.
+ * This split is intentional: geo caps (3-5 per major city) can fill
+ * while the user is mid-checkout, so picking from currently-available
+ * inventory post-payment is the correct order — and the EKRA-compliance
+ * acknowledgement lives alongside the geo picker where it's contextual.
  */
 export function ConciergeMarketingDetail({ facilityId }: ConciergeMarketingDetailProps) {
   const [submittingInterval, setSubmittingInterval] = useState<"monthly" | "annual" | null>(null);

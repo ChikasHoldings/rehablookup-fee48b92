@@ -15,10 +15,13 @@ interface FeaturedMarketingDetailProps {
  * the facility doesn't yet have Featured active.
  *
  * The CTAs route through create-checkout-session in 'add_addon' intent.
- * Slot selection happens in a follow-up step inside the purchase flow
- * (deferred to the next PR — for now we send the user to Stripe with
- * no specific slots, and slot selection happens post-payment in the
- * manage view).
+ * Stripe Checkout is intentionally slot-agnostic: we send the user to
+ * Stripe with no specific slots, the webhook activates the subscription
+ * on payment, and slot selection happens in `FeaturedManagementPanel`
+ * via `AddFeaturedPlacementForm` (live availability + waitlist). This
+ * split keeps slot inventory honest — slots can fill while the user is
+ * mid-checkout, so picking them post-payment from currently-available
+ * inventory is the correct order.
  */
 export function FeaturedMarketingDetail({ facilityId }: FeaturedMarketingDetailProps) {
   const [submittingInterval, setSubmittingInterval] = useState<"monthly" | "annual" | null>(null);
