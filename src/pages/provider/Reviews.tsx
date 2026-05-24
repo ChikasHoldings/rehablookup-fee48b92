@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useProviderReviews, ProviderReview } from '@/hooks/useProviderReviews';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
@@ -21,8 +22,11 @@ import {
   Star,
   X,
   ArrowUpDown,
+  Search,
+  CheckCircle2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useDebounce } from '@/hooks/useDebounce';
 
 import { ReviewStatsCards } from '@/components/provider/reviews/ReviewStatsCards';
 import { ProviderReviewCard } from '@/components/provider/reviews/ProviderReviewCard';
@@ -64,11 +68,38 @@ export default function ProviderReviews() {
   const [disputeDialogOpen, setDisputeDialogOpen] = useState(false);
   const [selectedReviewForDispute, setSelectedReviewForDispute] = useState<ProviderReview | null>(null);
 
+  // Search across reviewer name + review body. Debounced 200ms so the
+  // filter doesn't churn through 2,000 rows on every keystroke. Empty
+  // query matches everything; the trimmed-lowercase form is what we
+  // actually compare against so casing + leading/trailing whitespace
+  // don't matter.
+  const [searchInput, setSearchInput] = useState("");
+  const debouncedSearch = useDebounce(searchInput, 200);
+  const normalizedSearch = debouncedSearch.trim().toLowerCase();
+
   const filteredReviews = useMemo(() => {
     const list = reviews.filter(r => {
       if (facilityFilter !== "all" && r.facility_id !== facilityFilter) return false;
-      if (selectedTab === 'needs-response') return !r.response;
-      if (selectedTab === 'disputed') return !!r.dispute;
+      if (selectedTab === 'needs-response') {
+        if (r.response) return false;
+      } else if (selectedTab === 'replied') {
+        if (!r.response) return false;
+      } else if (selectedTab === 'disputed') {
+        if (!r.dispute) return false;
+      }
+      if (normalizedSearch) {
+        const hay = [
+          r.reviewer_display_name,
+          r.user_display_name,
+          r.reviewer_first_name,
+          r.review_text,
+          r.facility_name,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        if (!hay.includes(normalizedSearch)) return false;
+      }
       return true;
     });
     const sorted = [...list];
@@ -90,7 +121,7 @@ export default function ProviderReviews() {
         break;
     }
     return sorted;
-  }, [reviews, selectedTab, facilityFilter, sortKey]);
+  }, [reviews, selectedTab, facilityFilter, sortKey, normalizedSearch]);
 
   const reviewsPagination = usePagination({
     tableId: "provider-reviews",
@@ -115,13 +146,14 @@ export default function ProviderReviews() {
       ? Math.round((filtered.reduce((sum, r) => sum + r.rating, 0) / totalReviews) * 10) / 10
       : null;
     const needsResponse = filtered.filter(r => !r.response).length;
+    const replied = filtered.filter(r => !!r.response).length;
     const disputed = filtered.filter(r => !!r.dispute).length;
     const dist = [5, 4, 3, 2, 1].map(star => ({
       star,
       count: filtered.filter(r => r.rating === star).length,
     }));
     return {
-      filteredStats: { totalReviews, averageRating, needsResponse, disputed },
+      filteredStats: { totalReviews, averageRating, needsResponse, replied, disputed },
       ratingDistribution: dist,
       scopedTotal: totalReviews,
     };
@@ -300,6 +332,32 @@ export default function ProviderReviews() {
         </Card>
       )}
 
+      {/* Search bar — searches reviewer name + review body. Debounced
+          200ms by the consumer state above so 2,000-row filter
+          recompute doesn't churn per keystroke. Sits above the tab
+          row so it acts on the currently-selected tab. */}
+      <div className="relative max-w-md">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden />
+        <Input
+          type="search"
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          placeholder="Search by reviewer name or review text…"
+          aria-label="Search reviews"
+          className="h-10 border-slate-200 bg-white pl-9 pr-9 text-[14px]"
+        />
+        {searchInput && (
+          <button
+            type="button"
+            onClick={() => setSearchInput("")}
+            aria-label="Clear search"
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+          >
+            <X className="h-3.5 w-3.5" aria-hidden />
+          </button>
+        )}
+      </div>
+
       {/* Reviews Tabs */}
       <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-4">
         <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
@@ -316,6 +374,20 @@ export default function ProviderReviews() {
               {filteredStats.needsResponse > 0 && (
                 <span className="bg-orange-500 text-white px-1.5 py-0.5 rounded text-xs">
                   {filteredStats.needsResponse}
+                </span>
+              )}
+            </TabsTrigger>
+            {/* "Replied" tab — fills the missing slot in the spec.
+                Providers want to see which reviews they've already
+                engaged with at a glance (e.g., to follow up on stale
+                threads). Mirrors the needs-response filter but for the
+                positive case. */}
+            <TabsTrigger value="replied" className="flex-1 sm:flex-none gap-1.5 text-xs sm:text-sm">
+              <CheckCircle2 className="h-4 w-4" />
+              <span>Replied</span>
+              {filteredStats.replied > 0 && (
+                <span className="rounded bg-emerald-600 px-1.5 py-0.5 text-xs text-white">
+                  {filteredStats.replied}
                 </span>
               )}
             </TabsTrigger>

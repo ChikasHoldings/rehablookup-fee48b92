@@ -54,6 +54,15 @@ export interface ReviewStats {
   totalReviews: number;
   averageRating: number | null;
   needsResponse: number;
+  /**
+   * Reviews that already have a `review_responses` row. Surfaced as
+   * the count on the "Replied" tab so the provider can see what
+   * they've already engaged with vs the unresponded set. Optional
+   * so the existing `stats` calls in useProviderReviews (which
+   * doesn't compute this yet — only the page-level filtered stats
+   * does) still type-check.
+   */
+  replied?: number;
   disputed: number;
 }
 
