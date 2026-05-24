@@ -1,6 +1,7 @@
 import { useCallback, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ArrowLeft, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ListingsLandingPage } from "@/components/provider/listing";
 import { useProviderFacilities } from "@/hooks/useProviderFacilities";
@@ -50,7 +51,7 @@ export default function MyListingsPage() {
     return (
       <div className="min-h-full bg-background">
         {/* Back Button Header */}
-        <div className="max-w-5xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 pt-4 sm:pt-6 md:pt-8">
+        <div className="max-w-5xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 pt-4 sm:pt-6 md:pt-8 flex items-center justify-between gap-2">
           <Button
             variant="ghost"
             size="sm"
@@ -60,6 +61,16 @@ export default function MyListingsPage() {
           >
             <ArrowLeft className="h-4 w-4 md:h-5 md:w-5" aria-hidden />
             Back to All Listings
+          </Button>
+          {/* Quick jump to the rich-profile editor for the listing being
+              edited. Passing ?facility= preserves the current facility
+              even if the header context has a different one selected. */}
+          <Button asChild variant="outline" size="sm" className="gap-1.5 shrink-0">
+            <Link to={`/provider/listings/profile?facility=${editingFacilityId}`}>
+              <Sparkles className="h-4 w-4 text-amber-500" aria-hidden />
+              <span className="hidden sm:inline">Enhanced profile</span>
+              <span className="sm:hidden">Profile</span>
+            </Link>
           </Button>
         </div>
 

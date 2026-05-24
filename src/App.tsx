@@ -352,6 +352,7 @@ const SeekerShell = lazy(() => import("./components/seeker/SeekerShell").then(m 
 // Provider Panel pages - lazy load (shell handles Suspense)
 const ProviderDashboardPage = lazy(() => import("./pages/provider/Dashboard"));
 const ProviderListingPage = lazy(() => import("./pages/provider/MyListings"));
+const ProviderEnhancedProfilePage = lazy(() => import("./pages/provider/EnhancedProfile"));
 const ProviderInquiriesPage = lazy(() => import("./pages/provider/Inquiries"));
 const ProviderReviewsPage = lazy(() => import("./pages/provider/Reviews"));
 const ProviderAnalyticsPage = lazy(() => import("./pages/provider/Analytics"));
@@ -1805,6 +1806,7 @@ const AppInner = () => {
               <Route index element={<Navigate to="/provider/dashboard" replace />} />
               <Route path="dashboard" element={<ProviderDashboardPage />} />
               <Route path="listings" element={<ProviderListingPage />} />
+              <Route path="listings/profile" element={<ProviderEnhancedProfilePage />} />
               <Route path="listing" element={<Navigate to="/provider/listings" replace />} />
               <Route path="add-location" element={<ProviderAddLocation />} />
               <Route path="inquiries" element={<ProviderInquiriesPage />} />
