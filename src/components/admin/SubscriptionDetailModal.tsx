@@ -26,7 +26,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -37,8 +36,6 @@ import {
   Receipt,
   Clock,
   ChevronUp,
-  ChevronDown,
-  Minus,
   ArrowUpRight,
   CheckCircle2,
   XCircle,

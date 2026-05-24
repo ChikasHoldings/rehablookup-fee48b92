@@ -1,13 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { Building2, Eye, Users, TrendingUp, ChevronRight, CheckCircle, Clock } from "lucide-react";
+import { Building2, Eye, Users, ChevronRight, CheckCircle, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { fromLeadsProviderView } from "@/lib/leadsProviderView";
-import { cn } from "@/lib/utils";
 
 interface FacilitySummary {
   id: string;

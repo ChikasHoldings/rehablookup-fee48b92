@@ -4,7 +4,6 @@ import { ProviderPageHeader } from "@/components/provider/ProviderPageHeader";
 import { SubscriptionAnalyticsTab } from "@/components/provider/analytics/SubscriptionAnalyticsTab";
 import { CentralizedLeadAnalyticsDashboard } from "@/components/provider/CentralizedLeadAnalyticsDashboard";
 import { CentralizedEngagementAnalytics } from "@/components/provider/CentralizedEngagementAnalytics";
-import { ProviderPerformanceAnalytics } from "@/components/provider/ProviderPerformanceAnalytics";
 import { PerformanceDashboard } from "@/components/provider/analytics/PerformanceDashboard";
 import { ROICalculatorWidget } from "@/components/provider/ROICalculatorWidget";
 import { DATE_RANGE_PRESETS, type DateRange } from "@/hooks/useLeadAnalytics";

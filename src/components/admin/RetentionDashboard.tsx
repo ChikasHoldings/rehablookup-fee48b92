@@ -36,7 +36,7 @@ import {
   MousePointerClick,
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { format, formatDistanceToNow, subDays, differenceInHours } from "date-fns";
+import { format, subDays, differenceInHours } from "date-fns";
 
 interface OutreachRecord {
   id: string;

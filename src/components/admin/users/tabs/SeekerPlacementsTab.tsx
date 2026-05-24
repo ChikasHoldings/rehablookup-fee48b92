@@ -3,9 +3,8 @@ import { pluckNonNull } from "@/lib/nullableRows";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Shield, Building2, Calendar, MapPin, Clock,
-  User, CheckCircle, XCircle, Handshake, FileText,
+import { Building2, Calendar, MapPin,
+  User, CheckCircle, XCircle, Handshake,
   AlertTriangle, Star,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";

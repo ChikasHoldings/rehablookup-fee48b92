@@ -12,7 +12,6 @@ import {
   CheckCircle,
   ChevronRight,
   Clock,
-  Search,
   Star,
   Zap,
 } from "lucide-react";

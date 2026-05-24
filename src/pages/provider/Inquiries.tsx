@@ -13,7 +13,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProviderPageHeader } from "@/components/provider/ProviderPageHeader";
-import { supabase } from "@/integrations/supabase/client";
 import { fromLeadsProviderView } from "@/lib/leadsProviderView";
 import { isWithinInterval, startOfDay, endOfDay } from "date-fns";
 import { cn } from "@/lib/utils";

@@ -5,17 +5,14 @@ import { Button } from "@/components/ui/button";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { StateLinksSection } from "@/components/treatment/StateLinksSection";
-import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { ResponsiveListingGrid } from "@/components/listings/ResponsiveListingGrid";
 import {
   Home,
   ArrowRight,
-  Phone,
   CheckCircle,
   Shield,
   Clock,
   Heart,
-  ChevronRight,
   Brain,
   Pill,
   Activity,
@@ -30,7 +27,6 @@ import {
 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
-import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 
 import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 import { TreatmentHubHero } from "@/components/seo/TreatmentHubHero";

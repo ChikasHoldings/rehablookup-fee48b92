@@ -28,7 +28,6 @@ import {
   Sparkles,
   BadgeCheck,
   Building2,
-  Heart,
 } from "lucide-react";
 import conciergeHero from "@/assets/concierge-hero.jpg";
 import { TrustStrip } from "@/components/home/TrustStrip";

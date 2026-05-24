@@ -3,9 +3,7 @@ import { assertCronSecret } from "../_shared/cron-auth.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 import { Resend } from "https://esm.sh/resend@2.0.0?target=denonext";
 import {
-  PLAN_CONFIG,
   PRO_PRODUCT_IDS,
-  getPlanStyles,
   emailStart,
   emailEnd,
   emailHeader,

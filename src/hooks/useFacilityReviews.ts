@@ -98,7 +98,7 @@ export function useFacilityReviews(facilityId: string) {
     // reply right next to the original review. Same surface the seeker
     // already gets on /account/reviews (which uses a separate hook).
     const reviewIds = (reviewsData || []).map((r) => r.id);
-    let responseByReview = new Map<string, { id: string; response_text: string; created_at: string; updated_at: string }>();
+    const responseByReview = new Map<string, { id: string; response_text: string; created_at: string; updated_at: string }>();
     if (reviewIds.length > 0) {
       const { data: respRows } = await supabase
         .from('review_responses')

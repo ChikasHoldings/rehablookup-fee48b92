@@ -7,11 +7,9 @@ import {
   ArrowRight,
   CheckCircle,
   Shield,
-  Clock,
   Heart,
   ChevronRight,
   Phone,
-  Sparkles,
   Building2,
   Users,
   Utensils,
@@ -25,7 +23,6 @@ import {
 } from "@/components/ui/accordion";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
-import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 
 import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 import { TreatmentHubHero } from "@/components/seo/TreatmentHubHero";

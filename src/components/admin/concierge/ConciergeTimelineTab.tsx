@@ -6,7 +6,6 @@ import { getCaseEventActorType } from "@/lib/caseEventActor";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { Save, Loader2, StickyNote } from "lucide-react";
 import { CaseTimelineEvents } from "./CaseTimelineEvents";

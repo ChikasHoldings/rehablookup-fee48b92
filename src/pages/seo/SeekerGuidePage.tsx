@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import { InlineNotFound } from "@/components/InlineNotFound";
 import { SEOLandingTemplate } from "@/components/seo/SEOLandingTemplate";

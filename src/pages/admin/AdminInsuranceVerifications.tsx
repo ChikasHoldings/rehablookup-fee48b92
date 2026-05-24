@@ -2,16 +2,14 @@ import { useMemo, useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { logAdminAction, AdminAuditActions } from "@/hooks/useAdminAuditLog";
+import { logAdminAction } from "@/hooks/useAdminAuditLog";
 import { format, formatDistanceToNow } from "date-fns";
 import {
   ShieldCheck,
   Search,
   Phone,
   Mail,
-  Clock,
   Loader2,
-  ExternalLink,
   Filter,
   Copy,
   Check,
@@ -26,7 +24,7 @@ import {
   Timer,
 } from "lucide-react";
 import { BulkStatusUpdateIvrDialog } from "@/components/admin/insurance/BulkStatusUpdateIvrDialog";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

@@ -4,7 +4,7 @@ import { SEO } from "@/components/SEO";
 import { Layout } from "@/components/layout/Layout";
 import { InternationalPageHero } from "./components";
 import { motion } from "framer-motion";
-import { ArrowRight, CheckCircle, MapPin, Shield, ChevronRight, Plane, FileText, Heart, Sparkles, Lock, Languages, Star, Clock, Building2, Globe } from "lucide-react";
+import { ArrowRight, Shield, ChevronRight, Plane, FileText, Heart, Sparkles, Lock, Languages, Star, Clock, Building2 } from "lucide-react";
 import heroImage from "@/assets/hero-uae-rehab.jpg";
 
 const fadeUp = {

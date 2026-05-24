@@ -15,7 +15,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Facility, ProSubscription } from "../ProviderListItem";
+import type { Facility } from "../ProviderListItem";
 import { getSourceBadge, getClaimBadge } from "../ProviderListItem";
 
 interface ProviderOverviewTabProps {

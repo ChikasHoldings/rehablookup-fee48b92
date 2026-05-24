@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, BookOpen, ExternalLink } from "lucide-react";
+import { ArrowRight, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // Topic-based article linking matrix for SEO crawlability

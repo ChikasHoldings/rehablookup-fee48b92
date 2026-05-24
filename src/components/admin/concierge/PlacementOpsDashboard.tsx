@@ -1,15 +1,14 @@
 import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   AlertTriangle, Users, Eye, Building2,
   CheckCircle2, ChevronRight, Flame, Timer, Bot,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { getStageConfig, STATUS_CONFIG } from "./placementPipelineConfig";
-import { getCaseNextAction, type ActionPriority } from "./placementActionUtils";
+import { STATUS_CONFIG } from "./placementPipelineConfig";
+import { getCaseNextAction } from "./placementActionUtils";
 import { cn } from "@/lib/utils";
 
 interface CaseRow {

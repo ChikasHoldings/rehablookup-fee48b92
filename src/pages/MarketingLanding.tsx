@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Shield, Clock, CheckCircle2, Star, ArrowRight, Phone, Zap } from "lucide-react";

@@ -3,7 +3,6 @@ import { useLocation } from "react-router-dom";
 import { SEOLandingTemplate } from "@/components/seo/SEOLandingTemplate";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { treatmentCenters } from "@/data/treatmentCenters";
-import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
 import { shouldEmitFAQSchema } from "@/utils/seoPageValidator";
 import { statesData } from "@/data/locationSeoData";
 import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";

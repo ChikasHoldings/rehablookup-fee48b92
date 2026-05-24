@@ -13,7 +13,6 @@ import {
   Loader2, 
   User, 
   Clock, 
-  Mail, 
   Phone,
   ChevronDown,
   ChevronUp,

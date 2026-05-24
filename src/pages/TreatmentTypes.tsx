@@ -22,7 +22,6 @@ import {
   Stethoscope,
   Sparkles,
   ArrowRight,
-  CheckCircle,
   Heart,
   Leaf,
   LucideIcon,
@@ -32,13 +31,10 @@ import {
   GraduationCap,
   Briefcase,
   Cross,
-  Baby,
   Shield,
   MapPin,
   Navigation,
-  ChevronRight,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { TOPIC_HERO_IMAGES } from "@/data/locationImages";
 import { InlineIntakeForm } from "@/components/conversion/InlineIntakeForm";

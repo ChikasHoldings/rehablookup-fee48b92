@@ -4,7 +4,6 @@ import { SEO, generateTreatmentNearMeSchema, generateNearMeSchema } from "@/comp
 import { NearMeHero } from "@/components/seo/NearMeHero";
 import { LocalSignalsSection } from "@/components/seo/LocalSignalsSection";
 import { TreatmentFAQSection, getDrugRehabNearMeFAQs } from "@/components/seo/TreatmentFAQSection";
-import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { ResponsiveListingGrid } from "@/components/listings/ResponsiveListingGrid";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
 import { statesData } from "@/data/locationSeoData";

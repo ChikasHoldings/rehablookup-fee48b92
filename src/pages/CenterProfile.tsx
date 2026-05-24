@@ -10,7 +10,6 @@ import { RelatedLinksSection } from "@/components/seo/RelatedLinksSection";
 import { buildProfileRelatedLinks } from "@/lib/profileRelatedLinks";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { RatingBadge } from "@/components/ui/RatingBadge";
 import { supabase } from "@/integrations/supabase/client";
 import { RequestInfoModal } from "@/components/profile/RequestInfoModal";
 import { FacilityTourRequestModal } from "@/components/facility/FacilityTourRequestModal";
@@ -22,7 +21,6 @@ import {
   Phone,
   Globe,
   Crown,
-  CheckCircle,
   Shield,
   ArrowLeft,
   Clock,
@@ -30,16 +28,13 @@ import {
   Heart,
   Stethoscope,
   Building2,
-  BadgeCheck,
   ExternalLink,
   Image as ImageIcon,
   MessageSquare,
   Flag,
-  Calendar,
   CalendarCheck,
   Bed,
   Mail,
-  Award,
   ShieldCheck,
   Sparkles,
   ChevronDown,
@@ -52,7 +47,6 @@ import { CenterProfileSkeleton } from "@/components/skeletons/CenterProfileSkele
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ReportImageDialog } from "@/components/profile/ReportImageDialog";
-import { TrustBadgesInline } from "@/components/trust/TrustBadgesSection";
 import { FacilityReviewsSection } from "@/components/reviews/FacilityReviewsSection";
 import { cn } from "@/lib/utils";
 import { formatPhoneNumber, getPhoneDigits } from "@/lib/phoneUtils";
@@ -67,8 +61,6 @@ import { PageFAQ } from "@/components/seo/PageFAQ";
 import { buildProfileFAQs } from "@/lib/buildProfileFAQs";
 import { ConciergeCTACard } from "@/components/concierge/ConciergeCTACard";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { loadFacilityBySlug } from "@/hooks/useFacilityBySlug";
 import { loadFacilityDetails } from "@/hooks/useFacilityDetails";
 // Premium facility-profile augmentation components (Phase 3 v2). The

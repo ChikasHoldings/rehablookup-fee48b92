@@ -11,7 +11,6 @@ import {
   Check, 
   Eye, 
   EyeOff,
-  Phone as PhoneIcon,
   Calendar,
   Percent,
 } from "lucide-react";

@@ -1,4 +1,4 @@
-/* eslint-disable no-console */
+ 
 /**
  * scripts/featured-strip-fairness.ts
  *

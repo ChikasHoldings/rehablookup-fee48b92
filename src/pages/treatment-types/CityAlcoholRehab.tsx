@@ -4,7 +4,6 @@ import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { statesData } from "@/data/locationSeoData";
 import { RelatedLinksSection } from "@/components/seo/RelatedLinksSection";
-import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { StateFacilitiesSection } from "@/components/seo/StateFacilitiesSection";
 import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 import { TreatmentCityHero } from "@/components/seo/TreatmentCityHero";
@@ -18,7 +17,6 @@ import {
   Brain,
   Users,
   Activity,
-  MapPin,
   ArrowRight,
 } from "lucide-react";
 

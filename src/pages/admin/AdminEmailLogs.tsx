@@ -25,7 +25,6 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { PaginationFooter } from "@/components/common/PaginationFooter";
 import { PageSizeSelect } from "@/components/common/PageSizeSelect";
 import { usePagination } from "@/hooks/usePagination";
 

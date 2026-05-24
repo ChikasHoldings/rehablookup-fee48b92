@@ -16,7 +16,6 @@ import {
   Star,
   MessageSquare,
   ChevronDown,
-  ChevronRight,
 } from "lucide-react";
 import step1Image from "@/assets/how-it-works/step-1-search.png";
 import step2Image from "@/assets/how-it-works/step-2-compare.png";

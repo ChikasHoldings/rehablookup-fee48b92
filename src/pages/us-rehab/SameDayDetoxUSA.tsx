@@ -1,7 +1,7 @@
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { InternationalPageHero, StateDestinations, InternationalFAQ, PlacementCTA } from "./components";
-import { Heart, Shield, Activity, CheckCircle } from "lucide-react";
+import { CheckCircle } from "lucide-react";
 import { motion } from "framer-motion";
 
 const detoxTypes = [

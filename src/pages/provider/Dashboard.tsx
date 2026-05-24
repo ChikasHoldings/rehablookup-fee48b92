@@ -27,7 +27,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { fromLeadsProviderView } from "@/lib/leadsProviderView";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { LeadStatusBadge, type LeadStatus } from "@/components/provider/leads/LeadStatusBadge";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { LeadDetailDrawer } from "@/components/provider/leads/LeadDetailDrawer";
 import { FeaturedAnalyticsWidget } from "@/components/provider/FeaturedAnalyticsWidget";

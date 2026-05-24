@@ -4,7 +4,7 @@ import { costEstimatorFaqs } from "@/data/pageFaqs";
 import { Calculator, DollarSign, Shield, Clock, AlertCircle, CheckCircle2, Info, MapPin, Building2, ArrowRight, RotateCcw, TrendingDown, Heart, Stethoscope } from "lucide-react";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
@@ -13,7 +13,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Link } from "react-router-dom";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { TOPIC_HERO_IMAGES } from "@/data/locationImages";
-import { Progress } from "@/components/ui/progress";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 

@@ -1,7 +1,7 @@
 import { useMemo, useRef, useEffect, useCallback, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
-import { useStaticFacilities, type PublicFacility } from "@/hooks/useStaticFacilities";
+import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { useGeoLocation } from "@/hooks/useGeoLocation";
 import { getNearbyStates } from "@/lib/proximitySearch";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";

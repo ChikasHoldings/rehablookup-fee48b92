@@ -1,4 +1,4 @@
-import { useLocation, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSec
 import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
 import { shouldEmitFAQSchema } from "@/utils/seoPageValidator";
 import { statesData } from "@/data/locationSeoData";
-import { Search, ArrowRight, Shield, MapPin, Phone } from "lucide-react";
+import { ArrowRight, Shield, MapPin, Phone } from "lucide-react";
 import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
 
 interface HubConfig {

@@ -2,7 +2,6 @@ import {
   CheckCircle2, 
   XCircle, 
   Camera, 
-  Image as ImageIcon, 
   AlertTriangle,
   FileImage,
   Shield,
@@ -10,7 +9,6 @@ import {
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Separator } from "@/components/ui/separator";
 
 const ImageGuidelines = () => {
   const acceptableImages = [

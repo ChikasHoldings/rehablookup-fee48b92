@@ -1,5 +1,5 @@
 import { getFacilityPlaceholder } from "@/lib/facilityPlaceholder";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Crown, ShieldCheck, Clock, CreditCard, Sparkles, Phone, ExternalLink } from "lucide-react";

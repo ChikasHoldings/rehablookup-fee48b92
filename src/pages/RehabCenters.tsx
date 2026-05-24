@@ -21,7 +21,6 @@ import {
   Star,
   Shield,
   Clock,
-  ChevronLeft,
   ChevronRight,
   Building2,
   HelpCircle,
@@ -33,7 +32,6 @@ import {
   ArrowRight,
   X
 } from "lucide-react";
-import MedicalPatternBackground from "@/components/backgrounds/MedicalPatternBackground";
 import supportSpecialistImg from "@/assets/support-specialist.png";
 import { Button } from "@/components/ui/button";
 import {

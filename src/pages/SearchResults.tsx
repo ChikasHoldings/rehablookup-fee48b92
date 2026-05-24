@@ -1,5 +1,4 @@
 import { useMemo, useState, useCallback, useEffect, useRef, type ReactNode } from "react";
-import { cn } from "@/lib/utils";
 import { useSearchParams, Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO, generateSearchResultsSchema } from "@/components/SEO";
@@ -46,14 +45,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuCheckboxItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+
+
 import { Badge } from "@/components/ui/badge";
 import { 
   parseLocationInput, 
@@ -61,11 +54,8 @@ import {
   getProximityTier,
   getStateAbbr,
   getNearbyStates,
-  normalizeLocation,
   facilityMatchesLocation,
   PROXIMITY_TIER_ORDER,
-  type ProximityTier, 
-  type ProximityResult,
   type LocationMatch 
 } from "@/lib/proximitySearch";
 import { useZipcodeLookup } from "@/hooks/useZipcodeLookup";

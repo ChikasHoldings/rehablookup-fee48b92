@@ -350,7 +350,7 @@ Deno.serve(async (req) => {
       .eq("user_id", targetUserId)
       .single();
 
-    let result: any = { success: true };
+    const result: any = { success: true };
 
     switch (action) {
       case "suspend": {

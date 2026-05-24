@@ -14,7 +14,6 @@ import {
   Building2, 
   ChevronRight, 
   ArrowRight,
-  Map,
   Globe,
   Compass,
   Heart,

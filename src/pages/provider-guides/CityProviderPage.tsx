@@ -1,6 +1,6 @@
 import { useLocation } from "react-router-dom";
 import { ProviderConversionPage } from "@/components/provider-guides/ProviderConversionPage";
-import { getCityFromPathname, ProviderCityInfo } from "@/data/providerCityData";
+import { getCityFromPathname } from "@/data/providerCityData";
 import NotFound from "@/pages/NotFound";
 
 function slugToName(slug: string): string {

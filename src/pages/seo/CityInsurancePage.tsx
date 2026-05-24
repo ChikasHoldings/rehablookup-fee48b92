@@ -6,7 +6,7 @@ import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { citiesMatch } from "@/lib/cityNameMatch";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
-import { shouldEmitFAQSchema, validatePage, getFacilityDensity } from "@/utils/seoPageValidator";
+import { shouldEmitFAQSchema, validatePage } from "@/utils/seoPageValidator";
 import {
   insurerConfigs,
   stateInsuranceConfigs,

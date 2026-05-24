@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Ban, Trash2, Loader2, Shield, Clock, User, Globe } from "lucide-react";
+import { Ban, Loader2, Shield, Clock, User, Globe } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,

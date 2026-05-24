@@ -4,7 +4,6 @@ import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { statesData, getNearbyStates } from "@/data/locationSeoData";
 import { RelatedLinksSection } from "@/components/seo/RelatedLinksSection";
-import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { StateFacilitiesSection } from "@/components/seo/StateFacilitiesSection";
 import { TreatmentFAQSection } from "@/components/seo/TreatmentFAQSection";
 import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
@@ -14,8 +13,7 @@ import {
   generateStateTreatmentFAQs,
   generateStateTreatmentChecklist,
 } from "@/utils/stateContentGenerator";
-import {
-  Phone, Clock, Shield, CheckCircle, MapPin, ArrowRight, Search, Heart, Activity,
+import { Clock, Shield, CheckCircle, ArrowRight, Search, Heart, Activity,
 } from "lucide-react";
 import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
 

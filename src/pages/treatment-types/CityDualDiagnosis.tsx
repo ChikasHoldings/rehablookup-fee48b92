@@ -11,7 +11,6 @@ import {
   Shield,
   Clock,
   Heart,
-  ChevronRight,
   Pill,
   Stethoscope,
   Users,
@@ -19,7 +18,6 @@ import {
   Building2,
   Sparkles,
 } from "lucide-react";
-import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { StateFacilitiesSection } from "@/components/seo/StateFacilitiesSection";
 import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 import { TreatmentCityHero } from "@/components/seo/TreatmentCityHero";

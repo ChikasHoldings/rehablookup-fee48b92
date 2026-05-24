@@ -4,7 +4,6 @@ import { Link } from "react-router-dom";
 import {
   AlertCircle,
   Award,
-  BarChart3,
   Check,
   Code2,
   Copy,

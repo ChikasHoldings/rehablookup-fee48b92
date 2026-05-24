@@ -3,10 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  FileText, Shield, UserPlus, Settings, MessageSquare, Star, Ban, Trash2, KeyRound, Eye, Clock,
+  FileText, Shield, UserPlus, Settings, MessageSquare, Star, Ban, Trash2, KeyRound, Eye,
 } from "lucide-react";
 import { format } from "date-fns";
-import { cn } from "@/lib/utils";
 
 interface SeekerAuditLogTabProps {
   userId: string;

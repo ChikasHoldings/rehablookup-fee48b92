@@ -5,7 +5,7 @@ import { Header as PublicHeader } from "@/components/layout/Header";
 import { Footer as PublicFooter } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { ArrowLeft, ArrowRight, Loader2, CheckCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
 import { scrollToTopSmooth } from "@/hooks/useScrollToTop";

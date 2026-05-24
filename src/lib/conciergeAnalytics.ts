@@ -41,7 +41,7 @@ export type ConciergeFunnelEvent =
   | "concierge_intake_submitted";
 
 // META_PIXEL_NAMES retained for future provider integration reference.
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ 
 const _META_PIXEL_NAMES: Record<ConciergeFunnelEvent, string> = {
   concierge_intake_prefilled: "ConciergeIntakePrefilled",
   concierge_intake_started: "ConciergeIntakeStarted",
@@ -154,7 +154,7 @@ function scrubPayload(input: Record<string, unknown>): Record<string, unknown> {
   return out;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ 
 export function emitConciergeFunnelEvent(
   _event: ConciergeFunnelEvent,
   _payload: Record<string, unknown>,

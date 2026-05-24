@@ -8,13 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { logAdminAction, AdminAuditActions } from "@/hooks/useAdminAuditLog";
+import { logAdminAction } from "@/hooks/useAdminAuditLog";
 import { TwoFactorVerifyDialog } from "@/components/admin/TwoFactorVerifyDialog";
 import { getBrowserInfo } from "@/hooks/useSessionManager";
 import {
   getStoredDeviceToken,
   setStoredDeviceToken,
-  clearStoredDeviceToken,
   generateDeviceToken,
   hashDeviceToken,
 } from "@/lib/trustedDevice";

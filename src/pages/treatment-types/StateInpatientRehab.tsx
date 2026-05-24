@@ -4,7 +4,6 @@ import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { statesData, getNearbyStates } from "@/data/locationSeoData";
 import { RelatedLinksSection } from "@/components/seo/RelatedLinksSection";
-import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { StateFacilitiesSection } from "@/components/seo/StateFacilitiesSection";
 import { TreatmentFAQSection } from "@/components/seo/TreatmentFAQSection";
 import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
@@ -14,9 +13,8 @@ import {
   generateStateTreatmentFAQs,
   generateStateTreatmentChecklist,
 } from "@/utils/stateContentGenerator";
-import {
-  Sparkles, ArrowRight, CheckCircle, Shield, Clock, Heart,
-  Home, Home as HomeIcon, Users, Brain, Activity, Calendar, MapPin, Building2, Search,
+import { CheckCircle, Shield, Clock, Heart,
+  Home, Home as HomeIcon, Users, Brain, Activity, Calendar, Search,
 } from "lucide-react";
 import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
 

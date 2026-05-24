@@ -7,7 +7,6 @@ import { useImpersonation } from "@/hooks/useImpersonation";
 import {
   useAdminUserManagement,
   ROLE_DEFAULTS,
-  type AdminRoleType,
   type AdminUser,
 } from "@/hooks/useAdminUserManagement";
 import { getCaseEventActorType } from "@/lib/caseEventActor";

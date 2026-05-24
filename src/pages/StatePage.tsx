@@ -4,7 +4,6 @@ import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import NotFound from "@/pages/NotFound";
 import { buildStateOverview } from "@/lib/locationDescriptions";
-import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { ResponsiveListingGrid } from "@/components/listings/ResponsiveListingGrid";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { Loader2 } from "lucide-react";
@@ -24,9 +23,7 @@ import { getStateArticles } from "@/data/stateArticlesData";
 import { getStateStats } from "@/data/stateAddictionStats";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
 import { Button } from "@/components/ui/button";
-import { FeaturedRail } from "@/components/featured/FeaturedRail";
 import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
-import { NearbyStatesLinks } from "@/components/seo/CityLinkGrid";
 import { RelatedLinksSection, defaultInsuranceLinks } from "@/components/seo/RelatedLinksSection";
 import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
 import { InlineIntakeForm } from "@/components/conversion/InlineIntakeForm";
@@ -34,9 +31,7 @@ import { LocationStatTile } from "@/components/seo/LocationStatTile";
 import { 
   MapPin, 
   Building2, 
-  ChevronRight, 
   Search, 
-  Phone, 
   ArrowRight,
   CheckCircle,
   Shield,

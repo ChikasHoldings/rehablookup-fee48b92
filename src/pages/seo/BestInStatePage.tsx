@@ -4,9 +4,9 @@ import { SEOLandingTemplate } from "@/components/seo/SEOLandingTemplate";
 import { getStateImage } from "@/data/locationImages";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { treatmentCenters } from "@/data/treatmentCenters";
-import { bestInStateConfigs, type BestInStateConfig } from "@/data/seoBestInStateConfig";
+import { bestInStateConfigs } from "@/data/seoBestInStateConfig";
 import { topCities, seoTreatmentTypes, getCityTreatmentSlug } from "@/data/seoPageConfig";
-import { insurerConfigs, stateInsuranceConfigs } from "@/data/seoInsuranceStateConfig";
+import { insurerConfigs } from "@/data/seoInsuranceStateConfig";
 import { validatePage } from "@/utils/seoPageValidator";
 import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
 

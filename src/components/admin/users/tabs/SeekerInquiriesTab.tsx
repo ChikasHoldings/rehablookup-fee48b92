@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Mail, Phone, MapPin, MessageSquare, Search, Building2, Clock, CheckCircle, FileText, Calendar,
+  Mail, Phone, MapPin, MessageSquare, Search, Building2, CheckCircle,
 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { cn } from "@/lib/utils";

@@ -32,7 +32,6 @@ import {
   Heart,
   Search,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import type { TreatmentCenter } from "@/data/treatmentCenters";
 
 interface SEOLandingTemplateProps {

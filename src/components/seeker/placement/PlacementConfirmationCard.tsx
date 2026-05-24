@@ -1,14 +1,11 @@
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { 
   CheckCircle, 
-  ArrowRight, 
   Clock,
   Sparkles,
   PartyPopper
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 interface PlacementConfirmationCardProps {
   type: "ready" | "awaiting_provider" | "awaiting_admin" | "confirmed";

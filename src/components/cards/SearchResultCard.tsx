@@ -12,7 +12,6 @@ import {
   CreditCard,
   Phone,
   Building2,
-  CheckCircle,
   Heart,
   ExternalLink,
   Navigation,

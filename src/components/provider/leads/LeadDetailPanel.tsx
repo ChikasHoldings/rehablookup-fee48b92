@@ -7,7 +7,6 @@ import {
   Mail,
   MessageSquare,
   Copy,
-  ExternalLink,
   Check,
   Plus,
   Trash2,
@@ -56,7 +55,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { LeadStatusBadge, getStatusOptions, type LeadStatus } from "./LeadStatusBadge";
+import { getStatusOptions, type LeadStatus } from "./LeadStatusBadge";
 import { EmailLeadDialog } from "./EmailLeadDialog";
 
 import { cn } from "@/lib/utils";

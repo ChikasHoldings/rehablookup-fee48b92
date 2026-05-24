@@ -1,9 +1,8 @@
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { InternationalPageHero, CountriesServed, InternationalFAQ, PlacementCTA } from "./components";
-import { Plane, FileCheck, Home, CreditCard, Clock, Shield, CheckCircle, MapPin } from "lucide-react";
+import { Plane, FileCheck, Home, CreditCard, CheckCircle } from "lucide-react";
 import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import heroImg from "@/assets/hero-international-rehab.jpg";
 

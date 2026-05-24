@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { Play, RefreshCw, MapPin, Building2, CreditCard, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { Play, RefreshCw, MapPin, Building2, CheckCircle, XCircle, Loader2 } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 
 type ConciergeInquiry = Database["public"]["Tables"]["concierge_inquiries"]["Row"];

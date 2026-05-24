@@ -11,7 +11,7 @@ import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
 import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 import { shouldEmitFAQSchema, getFacilityDensity, getUrbanClassification } from "@/utils/seoPageValidator";
 import {
-  Search, ArrowRight, Shield, Clock, CheckCircle, MapPin, Heart, Phone,
+  Search, ArrowRight, Shield, Phone,
 } from "lucide-react";
 
 interface CityTreatmentConfig {

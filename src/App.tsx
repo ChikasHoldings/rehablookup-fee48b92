@@ -15,7 +15,6 @@ import { RouteLoadingFallback } from "@/components/RouteLoadingFallback";
 import { useTelClickTracking } from "@/hooks/useTelClickTracking";
 import { useGAInternalTrafficFlag } from "@/hooks/useGAInternalTrafficFlag";
 import { PublicRouteGuard } from "@/components/PublicRouteGuard";
-import { Layout } from "@/components/layout/Layout";
 import { GlobalErrorBoundary } from "@/components/GlobalErrorBoundary";
 import { queryClient } from "@/lib/queryClient";
 import { safeReturnTo } from "@/lib/safeReturnTo";

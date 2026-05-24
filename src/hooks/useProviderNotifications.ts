@@ -46,9 +46,10 @@ export function useProviderNotifications() {
   const playNotificationSound = useCallback(() => {
     if (audioRef.current) {
       audioRef.current.currentTime = 0;
-      audioRef.current.play().catch((err) => {
-        if (import.meta.env.DEV) console.log("Could not play notification sound:", err);
-      });
+      // Autoplay is frequently blocked until the user interacts with the
+      // page; a rejected play() is expected and non-actionable, so we
+      // swallow it intentionally rather than log noise.
+      audioRef.current.play().catch(() => {});
     }
   }, []);
 

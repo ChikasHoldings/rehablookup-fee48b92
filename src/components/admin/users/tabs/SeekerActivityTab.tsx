@@ -1,11 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Clock, LogIn, UserPlus, MessageSquare, Star, Heart, MapPin, Send, Shield, Settings, CheckCircle, FileText, Eye, KeyRound, LogOut, Trash2,
+  Clock, LogIn, UserPlus, MessageSquare, Star, Heart, MapPin, Send, Shield, Settings, CheckCircle, Eye, KeyRound, LogOut, Trash2,
 } from "lucide-react";
-import { formatDistanceToNow, format } from "date-fns";
+import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
 interface SeekerActivityTabProps {

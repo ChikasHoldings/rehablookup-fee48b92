@@ -12,7 +12,6 @@ import {
   Clock,
   Zap,
   Copy,
-  ExternalLink,
   Check,
   CheckCircle,
   XCircle,

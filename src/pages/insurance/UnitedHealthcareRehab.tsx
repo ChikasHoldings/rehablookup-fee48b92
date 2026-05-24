@@ -1,19 +1,16 @@
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
-import { SEO, generateFAQSchema, generateLocalBusinessAggregateSchema } from "@/components/SEO";
+import { SEO, generateFAQSchema } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { InsuranceFacilitiesSection } from "@/components/seo/InsuranceFacilitiesSection";
 import { InsuranceCarrierHero } from "@/components/seo/InsuranceCarrierHero";
 import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 import { InsuranceVerifyCarrierCTA } from "@/components/insurance/InsuranceVerifyCarrierCTA";
 import {
-  Shield,
   CheckCircle,
   ArrowRight,
   Phone,
-  MapPin,
   FileText,
   Clock,
   DollarSign,

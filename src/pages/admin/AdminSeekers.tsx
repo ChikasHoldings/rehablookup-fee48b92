@@ -1,9 +1,8 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
-import { useUserManagement } from "@/hooks/admin/useUserManagement";
 import { UserProfileModal } from "@/components/admin/users/UserProfileModal";
 import { BulkBanSeekersDialog } from "@/components/admin/users/BulkBanSeekersDialog";
 import { Button } from "@/components/ui/button";
@@ -12,7 +11,6 @@ import {
   Users as UsersIcon,
   Phone,
   MapPin,
-  Calendar,
   CheckCircle,
   XCircle,
   MessageSquare,

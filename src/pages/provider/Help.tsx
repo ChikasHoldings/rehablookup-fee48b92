@@ -7,7 +7,6 @@ import {
   Mail,
   FileText,
   Clock,
-  BookOpen,
   AlertCircle,
   CheckCircle,
   Send,
@@ -179,7 +178,12 @@ export default function ProviderHelpPage() {
   const lastSubmitRef = useRef<number>(0);
 
   // Fetch user's submitted tickets
-  const { data: myTickets = [], isLoading: loadingTickets, refetch: refetchTickets } = useQuery({
+  const {
+    data: myTickets = [],
+    isLoading: loadingTickets,
+    isError: ticketsError,
+    refetch: refetchTickets,
+  } = useQuery({
     queryKey: ["my-support-tickets"],
     queryFn: async () => {
       const session = await getCachedSession();
@@ -190,7 +194,13 @@ export default function ProviderHelpPage() {
         .eq("sender_user_id", session.user.id)
         .order("created_at", { ascending: false })
         .limit(20);
-      if (error) { console.error("Error fetching tickets:", error); return []; }
+      // Throw so React Query surfaces isError — returning [] here would
+      // render the "no tickets yet" empty state on a real fetch
+      // failure, hiding the problem from the provider.
+      if (error) {
+        console.error("[Help] support_tickets fetch failed", error);
+        throw new Error(error.message || "Failed to load support tickets");
+      }
       return data || [];
     },
   });
@@ -522,6 +532,19 @@ export default function ProviderHelpPage() {
             {loadingTickets ? (
               <div className="space-y-3">
                 {[1, 2].map(i => <Skeleton key={i} className="h-16 w-full" />)}
+              </div>
+            ) : ticketsError ? (
+              <div className="text-center py-8">
+                <div className="h-10 w-10 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-2">
+                  <AlertCircle className="h-5 w-5 text-destructive" aria-hidden />
+                </div>
+                <p className="text-sm font-medium text-foreground">Couldn't load your tickets</p>
+                <p className="text-xs text-muted-foreground mt-1 mb-3">
+                  There was a problem reaching support. Your tickets are still saved.
+                </p>
+                <Button variant="outline" size="sm" onClick={() => refetchTickets()}>
+                  Try again
+                </Button>
               </div>
             ) : myTickets.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">

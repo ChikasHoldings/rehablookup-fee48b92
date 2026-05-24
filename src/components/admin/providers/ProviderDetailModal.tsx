@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Eye, LayoutList, Inbox, History, FileCheck2, Wallet, Send,
+  Eye, LayoutList, Inbox, History, FileCheck2, Send,
   Handshake, Star, TrendingUp, BadgeCheck, Crown, MapPin,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";

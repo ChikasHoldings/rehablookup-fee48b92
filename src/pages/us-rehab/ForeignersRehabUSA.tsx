@@ -2,7 +2,7 @@ import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { InternationalPageHero, CountriesServed, InternationalFAQ, WhyUSATreatment, PlacementCTA } from "./components";
 import { Link } from "react-router-dom";
-import { CheckCircle, Globe, FileCheck, Shield, Heart } from "lucide-react";
+import { Globe, FileCheck, Shield, Heart } from "lucide-react";
 import { motion } from "framer-motion";
 import heroImg from "@/assets/hero-international-rehab.jpg";
 

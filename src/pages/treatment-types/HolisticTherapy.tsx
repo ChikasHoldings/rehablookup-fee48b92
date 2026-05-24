@@ -9,8 +9,6 @@ import {
   Shield,
   Clock,
   Heart,
-  ChevronRight,
-  Phone,
   Leaf,
   Music,
   Palette,
@@ -27,7 +25,6 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { treatmentCenters } from "@/data/treatmentCenters";
-import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 
 import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 import { TreatmentHubHero } from "@/components/seo/TreatmentHubHero";

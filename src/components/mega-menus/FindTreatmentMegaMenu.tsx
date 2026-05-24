@@ -1,7 +1,6 @@
 import { useState, useCallback } from "react";
 import { PrefetchLink } from "@/components/PrefetchLink";
 import { Link, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import {
   MapPin, Search, ArrowRight, Pill, Wine, Brain, Building2, Heart,
   Sparkles, Activity, Users, Shield, ChevronRight,

@@ -5,12 +5,9 @@ import { getStateImage } from "@/data/locationImages";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import {
-  insuranceStateConfigs,
   insurerConfigs,
   stateInsuranceConfigs,
   getInsuranceStateFAQs,
-  type InsurerConfig,
-  type StateInsuranceConfig,
 } from "@/data/seoInsuranceStateConfig";
 import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
 import { shouldEmitFAQSchema, validatePage } from "@/utils/seoPageValidator";

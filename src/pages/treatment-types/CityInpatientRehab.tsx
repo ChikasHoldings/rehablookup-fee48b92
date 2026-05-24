@@ -4,14 +4,11 @@ import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { statesData } from "@/data/locationSeoData";
 import {
-  Sparkles,
   ArrowRight,
   Phone,
-  CheckCircle,
   Shield,
   Clock,
   Heart,
-  ChevronRight,
   Home,
   Users,
   Brain,
@@ -19,7 +16,6 @@ import {
   MapPin,
   Building2,
 } from "lucide-react";
-import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { StateFacilitiesSection } from "@/components/seo/StateFacilitiesSection";
 import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 import { TreatmentCityHero } from "@/components/seo/TreatmentCityHero";

@@ -9,12 +9,10 @@ import {
   Shield,
   Users,
   CheckCircle,
-  ArrowRight,
   Eye,
   Target,
   Lightbulb,
   Clock,
-  ChevronRight,
   Phone,
 } from "lucide-react";
 import supportSpecialistImg from "@/assets/support-specialist.png";

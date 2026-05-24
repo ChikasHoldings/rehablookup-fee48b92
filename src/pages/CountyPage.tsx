@@ -4,24 +4,21 @@ import NotFound from "@/pages/NotFound";
 import { buildCountyOverview } from "@/lib/locationDescriptions";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
-import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { ResponsiveListingGrid } from "@/components/listings/ResponsiveListingGrid";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { cityInList } from "@/lib/cityNameMatch";
 import { getStateBySlug } from "@/data/locationSeoData";
-import { getCountyBySlug, getCountiesForState, getStateCountyData } from "@/data/countySeoData";
+import { getCountiesForState, getStateCountyData } from "@/data/countySeoData";
 import { resolveCounty } from "@/lib/countyLookup";
 import { getStateArticles } from "@/data/stateArticlesData";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
 import { Button } from "@/components/ui/button";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
-import { RelatedLinksSection, defaultInsuranceLinks } from "@/components/seo/RelatedLinksSection";
 import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
 import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 import { LocationStatTile } from "@/components/seo/LocationStatTile";
 import {
-  MapPin, Building2, ChevronRight, Search, Phone, ArrowRight,
-  CheckCircle, Shield, Clock, Star, Heart, ChevronDown, HelpCircle,
+  MapPin, Building2, ChevronRight, Search, Phone, ArrowRight, ChevronDown, HelpCircle,
   Pill, Brain, Activity, Home, Stethoscope, Sparkles, Users, Map, Landmark
 } from "lucide-react";
 import { cn } from "@/lib/utils";

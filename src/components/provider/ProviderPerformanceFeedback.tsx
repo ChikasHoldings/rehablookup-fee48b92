@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, Zap, TrendingUp, Clock, Trophy } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { supabase } from "@/integrations/supabase/client";
 import { fromLeadsProviderView } from "@/lib/leadsProviderView";
 import { cn } from "@/lib/utils";
 

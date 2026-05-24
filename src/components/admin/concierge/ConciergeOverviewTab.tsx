@@ -3,7 +3,6 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   User, Calendar, Clock, Shield, MapPin, CheckCircle, XCircle, AlertTriangle,
 } from "lucide-react";

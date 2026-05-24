@@ -3,7 +3,6 @@ import { Layout } from "@/components/layout/Layout";
 import { SEO, generateFAQSchema } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { InsuranceFacilitiesSection } from "@/components/seo/InsuranceFacilitiesSection";
 import { InsuranceVerifyCarrierCTA } from "@/components/insurance/InsuranceVerifyCarrierCTA";
 import { InternalLinkingSection, treatmentTypeLinks, nearMeLinks, resourceLinks } from "@/components/seo/InternalLinkingSection";
@@ -11,11 +10,9 @@ import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSec
 import { InsuranceCarrierHero } from "@/components/seo/InsuranceCarrierHero";
 import { StateLinksSection } from "@/components/treatment/StateLinksSection";
 import {
-  Shield,
   CheckCircle,
   ArrowRight,
   Phone,
-  MapPin,
   FileText,
   Clock,
   DollarSign,

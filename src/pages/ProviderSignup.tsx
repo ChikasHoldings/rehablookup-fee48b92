@@ -44,11 +44,10 @@ import {
 import { PhoneInput } from "@/components/ui/phone-input";
 import { PhoneVerificationStep } from "@/components/ui/PhoneVerificationStep";
 import { useFacilityPhoneVerification } from "@/hooks/useFacilityPhoneVerification";
-import { formatPhoneNumber } from "@/lib/phoneUtils";
 import { cn } from "@/lib/utils";
 import { compressImage, validateImageFile } from "@/lib/imageUtils";
 import { sanitizeText, sanitizeFacilityName, sanitizePersonName, sanitizeJobTitle, validateFacilityType, validateState, validateZipCode, validatePhone, validateEmail, sanitizeDescription, sanitizeWebsite, validateYearEstablished } from "@/lib/facilitySanitization";
-import { FACILITY_TYPES, FACILITY_TYPE_VALUES, US_STATES, INSURANCE_PROVIDERS, TREATMENT_SERVICES, AGE_GROUPS, ACCREDITATION_OPTIONS } from "@/lib/facilityConstants";
+import { FACILITY_TYPES, FACILITY_TYPE_VALUES, US_STATES, INSURANCE_PROVIDERS, TREATMENT_SERVICES, ACCREDITATION_OPTIONS } from "@/lib/facilityConstants";
 
 import { PasswordStrengthIndicator, calculatePasswordStrength } from "@/components/ui/password-strength-indicator";
 import { PLAN_LIMITS, resolvePlan } from "@/lib/planLimits";
@@ -363,7 +362,7 @@ export default function ProviderSignup({
     } catch {
       // Corrupt draft — ignore.
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only restore
+   
   }, []);
 
   useEffect(() => {

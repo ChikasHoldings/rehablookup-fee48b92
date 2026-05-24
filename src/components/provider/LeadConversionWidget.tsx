@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { 
   TrendingUp, 
   Clock, 
-  CheckCircle2, 
   Phone,
   ArrowUpRight,
   ArrowDownRight,
@@ -12,7 +11,6 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { supabase } from "@/integrations/supabase/client";
 import { fromLeadsProviderView } from "@/lib/leadsProviderView";
 import { differenceInHours, startOfMonth, subMonths } from "date-fns";
 import { cn } from "@/lib/utils";

@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import {
@@ -19,10 +18,8 @@ import {
   MapPin,
   Phone,
   Mail,
-  Globe,
   ExternalLink,
   CheckCircle2,
-  XCircle,
   Users,
   Heart,
   Calendar,

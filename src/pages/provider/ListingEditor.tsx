@@ -32,11 +32,8 @@ import {
   Info,
   Save,
   Eye,
-  ArrowUpRight,
   Sparkles,
-  X,
   CircleCheck,
-  CircleDashed,
   Users2,
   AlertTriangle,
 } from "lucide-react";

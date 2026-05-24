@@ -3,14 +3,13 @@ import { Layout } from "@/components/layout/Layout";
 import { SEO, generateFAQSchema } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { InsuranceFacilitiesSection } from "@/components/seo/InsuranceFacilitiesSection";
 import { InsuranceVerifyCarrierCTA } from "@/components/insurance/InsuranceVerifyCarrierCTA";
 import { InternalLinkingSection, treatmentTypeLinks, nearMeLinks, resourceLinks } from "@/components/seo/InternalLinkingSection";
 import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 import { InsuranceCarrierHero } from "@/components/seo/InsuranceCarrierHero";
 import { StateLinksSection } from "@/components/treatment/StateLinksSection";
-import { Shield, CheckCircle, ArrowRight, Phone, MapPin, FileText, Clock, DollarSign, Building2, Users, Stethoscope, Heart, AlertCircle } from "lucide-react";
+import { CheckCircle, ArrowRight, Phone, FileText, Clock, DollarSign, Building2, Users, Stethoscope, Heart, AlertCircle } from "lucide-react";
 
 const coverageDetails = [
   { icon: Stethoscope, title: "Medical Detox", coverage: "Covered", details: "Medically supervised detox and withdrawal management" },

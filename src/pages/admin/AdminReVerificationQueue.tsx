@@ -53,13 +53,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  AlertTriangle,
   CheckCircle2,
   ExternalLink,
   RefreshCw,
   Search,
   ShieldAlert,
-  ShieldCheck,
   XCircle,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";

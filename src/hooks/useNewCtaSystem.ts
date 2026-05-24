@@ -8,12 +8,12 @@
  * flipped per-environment.
  */
 export function useNewCtaSystem(): boolean {
-  // eslint-disable-next-line no-undef
+   
   const raw = (typeof import.meta !== "undefined" && (import.meta as { env?: Record<string, string> }).env?.VITE_NEW_CTA_SYSTEM) ?? "";
   return raw === "1" || raw.toLowerCase() === "true";
 }
 
 /** Same value at module import time, for non-hook call sites. */
-// eslint-disable-next-line no-undef
+ 
 const moduleEnv = (typeof import.meta !== "undefined" && (import.meta as { env?: Record<string, string> }).env?.VITE_NEW_CTA_SYSTEM) ?? "";
 export const NEW_CTA_SYSTEM = moduleEnv === "1" || moduleEnv.toLowerCase() === "true";

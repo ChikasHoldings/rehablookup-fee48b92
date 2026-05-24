@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { MapPin, Building2, CheckCircle, Heart, Search, Clock } from "lucide-react";
+import { Building2, CheckCircle, Heart, Search, Clock } from "lucide-react";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { LocationStatTile } from "@/components/seo/LocationStatTile";
 

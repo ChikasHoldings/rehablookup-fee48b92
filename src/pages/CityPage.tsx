@@ -10,7 +10,6 @@ import {
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
-import { FeaturedRail } from "@/components/featured/FeaturedRail";
 import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 import { useFacilityChildData } from "@/hooks/useFacilityChildData";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
@@ -24,9 +23,7 @@ import { Button } from "@/components/ui/button";
 import { 
   MapPin, 
   Building2, 
-  ChevronRight, 
   Search, 
-  Phone, 
   ArrowRight,
   CheckCircle,
   Shield,

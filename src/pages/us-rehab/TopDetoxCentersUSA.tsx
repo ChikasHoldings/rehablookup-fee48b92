@@ -1,7 +1,7 @@
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { InternationalPageHero, WhyUSATreatment, StateDestinations, CountriesServed, InternationalFAQ, PlacementCTA } from "./components";
-import { CheckCircle, Activity, Shield, Heart } from "lucide-react";
+import { CheckCircle } from "lucide-react";
 import { motion } from "framer-motion";
 
 const TopDetoxCentersUSA = () => {

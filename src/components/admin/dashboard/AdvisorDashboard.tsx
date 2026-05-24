@@ -21,7 +21,6 @@ import {
   ChevronRight,
   HeartHandshake,
   Calendar,
-  AlertCircle,
   Inbox,
   MapPin,
   Activity,
@@ -47,7 +46,7 @@ function formatTimeAgo(dateString: string): string {
 
 // Canonical statuses live in conciergeStatusConstants.ts to keep dashboards,
 // filters, and counts aligned with the Postgres validation trigger.
-import { ACTIVE_STATUSES, TERMINAL_STATUSES_NOT_IN } from "@/components/admin/concierge/conciergeStatusConstants";
+import { ACTIVE_STATUSES } from "@/components/admin/concierge/conciergeStatusConstants";
 
 const statusConfig: Record<string, { label: string; color: string; bgColor: string; order: number }> = {
   pending_intake: { label: "Pending", color: "text-muted-foreground", bgColor: "bg-muted/40 border-border", order: 0 },

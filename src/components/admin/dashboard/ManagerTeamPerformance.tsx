@@ -3,9 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { UserCheck, Headphones, TrendingUp, Target } from "lucide-react";
+import { UserCheck, Headphones, Target } from "lucide-react";
 
 interface StaffMember {
   user_id: string;

@@ -137,7 +137,7 @@ Deno.serve(async (req) => {
   }> = [];
 
   // Cache active prices once — paged in case the account has many.
-  let allActivePrices: Stripe.Price[] = [];
+  const allActivePrices: Stripe.Price[] = [];
   try {
     for await (const price of stripe.prices.list({ active: true, limit: 100, expand: ["data.product"] })) {
       allActivePrices.push(price);

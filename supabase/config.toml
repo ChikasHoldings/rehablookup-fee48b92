@@ -257,9 +257,6 @@ verify_jwt = true
 [functions.create-checkout-session]
 verify_jwt = true
 
-[functions.create-international-checkout]
-verify_jwt = true
-
 [functions.customer-portal]
 verify_jwt = true
 
@@ -339,9 +336,6 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.get-inquiry-match-candidates]
-verify_jwt = true
-
-[functions.setup-provider-payment-method]
 verify_jwt = true
 
 [functions.save-provider-payment-method]

@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Clock, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getCaseNextSteps, type CaseAction, type ActionPriority } from "./placementActionUtils";
-import { getStageIndex } from "./placementPipelineConfig";
 import type { Database } from "@/integrations/supabase/types";
 
 type ConciergeInquiry = Database["public"]["Tables"]["concierge_inquiries"]["Row"];

@@ -7,7 +7,7 @@ import {
   TREATMENT_THEMES,
   type TreatmentThemeKey,
 } from "@/components/seo/treatmentThemes";
-import { ArrowRight, Heart, Search, Building2, MapPin, Activity } from "lucide-react";
+import { Heart, Search, Building2, MapPin, Activity } from "lucide-react";
 
 interface TreatmentHubHeroProps {
   treatmentKey: TreatmentThemeKey;

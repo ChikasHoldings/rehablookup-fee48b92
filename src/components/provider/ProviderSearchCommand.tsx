@@ -8,7 +8,6 @@ import {
   Building2,
   Users,
   BarChart3,
-  CreditCard,
   Settings,
   Handshake,
   Bell,

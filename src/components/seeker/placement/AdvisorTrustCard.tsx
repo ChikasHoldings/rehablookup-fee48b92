@@ -1,9 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { User, Phone, Zap, Clock, HeartHandshake, Sparkles } from "lucide-react";
+import { User, Zap, Clock, HeartHandshake, Sparkles } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import { cn } from "@/lib/utils";
 
 interface AdvisorTrustCardProps {
   advisorId: string | null;

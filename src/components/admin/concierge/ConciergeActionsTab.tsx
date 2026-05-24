@@ -8,7 +8,6 @@ import { EscalationDialog } from "@/components/admin/escalations/EscalationDialo
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -45,7 +44,7 @@ interface ConciergeActionsTabProps {
   onSwitchTab?: (tab: string) => void;
 }
 
-import { VALID_TRANSITIONS, PIPELINE_STAGES, CLOSED_STAGE, type PlacementStage, getStageConfig } from "./placementPipelineConfig";
+import { VALID_TRANSITIONS, type PlacementStage, getStageConfig } from "./placementPipelineConfig";
 
 // Build valid status options dynamically based on current status
 function getStatusOptions(currentStatus: string, isAdvisor: boolean) {

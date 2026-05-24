@@ -3,7 +3,6 @@ import { Link, useLocation } from "react-router-dom";
 import { X, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useGeoLocation } from "@/hooks/useGeoLocation";
-import { cn } from "@/lib/utils";
 
 const STORAGE_KEY = "intl_banner_dismissed";
 const DISMISS_DURATION_DAYS = 30;

@@ -7,7 +7,6 @@ import {
   Monitor, 
   Smartphone, 
   Tablet, 
-  Globe, 
   LogOut, 
   Shield, 
   Clock,

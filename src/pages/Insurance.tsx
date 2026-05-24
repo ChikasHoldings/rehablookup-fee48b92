@@ -11,7 +11,6 @@ import {
   ArrowRight,
   Heart,
   HelpCircle,
-  FileText,
   Scale,
   Building2,
   Phone,
@@ -23,7 +22,6 @@ import {
   Check,
   X,
   Minus,
-  ChevronRight,
 } from "lucide-react";
 import {
   Table,

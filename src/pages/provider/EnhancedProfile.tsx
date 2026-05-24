@@ -6,7 +6,6 @@ import {
   Building2,
   ShieldCheck,
   Star,
-  Loader2,
   Sparkles,
   ExternalLink,
 } from "lucide-react";

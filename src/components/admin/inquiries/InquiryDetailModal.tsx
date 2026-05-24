@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -13,11 +13,10 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  User, Mail, Phone, MapPin, Calendar, Building2,
+  User, Mail, Phone, Building2,
   MessageSquare, Shield, FileText, CheckCircle,
   Share2, Clock, Zap, Star, Loader2,
-  Save, StickyNote, Handshake, Activity,
-  CreditCard, Eye, ArrowRightLeft, AlertTriangle,
+  Save, StickyNote, Handshake, Activity, Eye, ArrowRightLeft, AlertTriangle,
   Send, Flag,
 } from "lucide-react";
 import { format } from "date-fns";

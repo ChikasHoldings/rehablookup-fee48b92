@@ -88,7 +88,7 @@ Deno.serve(async (req) => {
       throw listError;
     }
 
-    let orphanedFiles: string[] = [];
+    const orphanedFiles: string[] = [];
     let totalChecked = 0;
 
     // Check each file/folder

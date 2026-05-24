@@ -12,7 +12,7 @@ import { TrustBar } from "@/components/seo/TrustBar";
 import { ConversionSection } from "@/components/seo/ConversionSection";
 import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, MapPin } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import {
   InternalLinkingSection,
   treatmentTypeLinks,

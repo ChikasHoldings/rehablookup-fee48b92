@@ -436,7 +436,7 @@ describe("Request Information form — submit-qualified-lead payload contract", 
       // Diagnostic — log what edge functions DID get called, so the
       // contract drift root-cause is obvious in CI failures rather than
       // a generic timeout.
-      // eslint-disable-next-line no-console
+       
       console.error(
         "[contract-test diagnostic] invokeMock calls were:",
         mockState.invokeMock.mock.calls.map((c) => c[0]),

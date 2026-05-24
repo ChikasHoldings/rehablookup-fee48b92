@@ -1,5 +1,5 @@
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Users2, Mail, Phone } from "lucide-react";
+import { Users2 } from "lucide-react";
 import { usePublicFacilityStaff } from "@/hooks/useFacilityStaff";
 import { cn } from "@/lib/utils";
 

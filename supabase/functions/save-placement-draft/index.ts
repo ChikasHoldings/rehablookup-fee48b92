@@ -4,7 +4,6 @@ import {
   sanitizePhone,
   sanitizeEmail,
   sanitizeStringArray,
-  isValidEmail,
   errorResponse,
   jsonError,
   successResponse,

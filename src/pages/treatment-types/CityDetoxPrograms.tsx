@@ -7,11 +7,9 @@ import {
   Sparkles,
   ArrowRight,
   Phone,
-  CheckCircle,
   Shield,
   Clock,
   Heart,
-  ChevronRight,
   Pill,
   Timer,
   HeartPulse,
@@ -20,7 +18,6 @@ import {
   MapPin,
   Building2,
 } from "lucide-react";
-import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { StateFacilitiesSection } from "@/components/seo/StateFacilitiesSection";
 import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 import { TreatmentCityHero } from "@/components/seo/TreatmentCityHero";

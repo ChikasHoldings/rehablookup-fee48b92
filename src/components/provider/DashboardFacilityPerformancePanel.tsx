@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { fromLeadsProviderView } from "@/lib/leadsProviderView";
-import { useProviderFacilities, type ProviderFacility } from "@/hooks/useProviderFacilities";
+import { useProviderFacilities } from "@/hooks/useProviderFacilities";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { startOfWeek, subWeeks, format, eachWeekOfInterval } from "date-fns";

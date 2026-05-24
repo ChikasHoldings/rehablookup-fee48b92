@@ -30,7 +30,6 @@ import {
   ExternalLink,
   Sparkles,
   Eye,
-  X,
   Download,
   ZoomIn,
   ZoomOut

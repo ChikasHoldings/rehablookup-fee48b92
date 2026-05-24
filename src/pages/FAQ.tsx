@@ -9,8 +9,8 @@ import { TOPIC_HERO_IMAGES } from "@/data/locationImages";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Search, HelpCircle, ArrowRight, Heart, Phone, Lock,
-  Stethoscope, DollarSign, Building2, X, Shield, CheckCircle,
-  ChevronDown, Users, Globe, Home, Clock, Pill, Brain,
+  Stethoscope, DollarSign, Building2, X, Shield,
+  ChevronDown, Users, Globe, Pill, Brain,
   CalendarCheck, BookOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";

@@ -2,7 +2,6 @@ import { useParams } from "react-router-dom";
 import { ProviderConversionPage } from "@/components/provider-guides/ProviderConversionPage";
 import { getCountyBySlug } from "@/data/countySeoData";
 import { getStateBySlug } from "@/data/locationSeoData";
-import { treatmentProviderConfigs } from "@/data/providerPageConfigs";
 import NotFound from "@/pages/NotFound";
 
 const TREATMENT_MAP: Record<string, { label: string; filterKey: string }> = {

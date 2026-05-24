@@ -4,12 +4,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  User, Mail, Phone, MapPin, Calendar, CheckCircle, Shield,
+  User, MapPin, Calendar, CheckCircle, Shield,
   Send, KeyRound, Ban, Trash2, ShieldOff, Loader2, FileText,
   Clock, MessageSquare, Star, Heart, StickyNote, Save,
-  Building2, Handshake, AlertTriangle, XCircle,
+  Building2, Handshake, XCircle,
 } from "lucide-react";
-import { format, formatDistanceToNow } from "date-fns";
+import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 

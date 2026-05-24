@@ -6,7 +6,7 @@ import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { InternationalPageHero } from "./components";
 import { motion } from "framer-motion";
-import { Globe, Plane, FileCheck, Heart, Users, MessageCircle, ArrowRight, CheckCircle, ChevronRight, Sparkles, Clock, Building2, Shield } from "lucide-react";
+import { Globe, Plane, FileCheck, Heart, Users, MessageCircle, ArrowRight, ChevronRight, Sparkles, Clock, Building2, Shield } from "lucide-react";
 import heroImage from "@/assets/hero-international-rehab.jpg";
 
 const fadeUp = {

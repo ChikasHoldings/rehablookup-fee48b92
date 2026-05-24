@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { CheckCircle2, MapPin, Building2, ArrowRight, Sparkles, Phone, Heart, Clock, Shield, Star } from "lucide-react";
+import { CheckCircle2, MapPin, Building2, ArrowRight, Sparkles, Phone, Heart, Clock, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";

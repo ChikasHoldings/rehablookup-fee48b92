@@ -7,15 +7,8 @@ import { SEO, generateArticleSchema } from "@/components/SEO";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   BookOpen,
-  Clock,
-  ArrowLeft,
   ArrowRight,
   Heart,
-  Calendar,
-  User,
-  MapPin,
-  Stethoscope,
-  Shield,
   Sparkles,
 } from "lucide-react";
 import { ReactNode, useMemo } from "react";
