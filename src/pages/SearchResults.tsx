@@ -205,11 +205,18 @@ const SearchResults = () => {
   useEffect(() => {
     const parsed = parseLocationInput(location);
     if (parsed.isZipcode && parsed.zipcode) {
-      lookupZipcode(parsed.zipcode).then((result) => {
-        if (result) {
-          setResolvedZipData(result);
-        }
-      });
+      lookupZipcode(parsed.zipcode)
+        .then((result) => {
+          if (result) {
+            setResolvedZipData(result);
+          }
+        })
+        .catch((err) => {
+          // Zip lookup failure is non-fatal — proximity sort just
+          // falls back to the raw input. Log so we notice systemic
+          // outages but don't block the search.
+          console.error("[SearchResults] lookupZipcode failed:", err);
+        });
     } else {
       setResolvedZipData(null);
     }

@@ -43,6 +43,7 @@ const CONFIG_PATH = join(REPO_ROOT, "supabase", "config.toml");
 const WEBHOOK_NAMES = new Set([
   "stripe-webhook",
   "twilio-sms-inbound",
+  "twilio-voice-otp-twiml",
   "resend-webhook",
   "provider-emails-unsubscribe",
   "og-share",

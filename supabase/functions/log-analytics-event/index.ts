@@ -10,6 +10,7 @@
 //    front-end fire-and-forget calls quiet on bad input)
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
+import { checkRateLimit, logRateLimitAttempt } from "../_shared/rate-limit.ts";
 
 const VERSION = "1.0.0";
 const LOG = `[LOG-ANALYTICS-EVENT v${VERSION}]`;
@@ -128,6 +129,45 @@ Deno.serve(async (req: Request) => {
         // ignore — anonymous fallback
       }
     }
+
+    // Rate limit BEFORE parsing the body. Identifier:
+    //   - Logged-in users → user id
+    //   - Anonymous → session_id-prefixed header from the client (or
+    //     the CF/Vercel IP-equivalent header if available). Falls back
+    //     to a per-request token so floods at minimum cost storage,
+    //     not query time.
+    // Limit: 300 events / minute / identifier. That's well above any
+    // legitimate first-party analytics flush (we batch 50/req max),
+    // and well below an attacker's spam budget.
+    const rateIdentifier =
+      userId ||
+      req.headers.get("x-real-ip") ||
+      req.headers.get("cf-connecting-ip") ||
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      `anon:${crypto.randomUUID()}`;
+    const rateCheck = await checkRateLimit(supabase, {
+      identifier: rateIdentifier,
+      actionType: "analytics_event",
+      maxAttempts: 300,
+      windowMinutes: 1,
+    });
+    if (!rateCheck.allowed) {
+      return new Response(
+        JSON.stringify({
+          error: "Rate limit exceeded",
+          retryAfterSec: 60,
+        }),
+        {
+          status: 429,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+            "Retry-After": "60",
+          },
+        },
+      );
+    }
+    await logRateLimitAttempt(supabase, rateIdentifier, "analytics_event", true);
 
     const raw = await req.text();
     if (raw.length > MAX_BODY_BYTES) {

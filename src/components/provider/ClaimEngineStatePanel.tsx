@@ -31,6 +31,7 @@ import {
   HelpCircle,
   Check,
   Loader2,
+  PhoneCall,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -87,6 +88,10 @@ export function ClaimEngineStatePanel({
   const [config, setConfig] = useState<Config | null>(null);
   const [loading, setLoading] = useState(true);
   const [confirming, setConfirming] = useState(false);
+  const [voiceCalling, setVoiceCalling] = useState(false);
+  const [voicePrompt, setVoicePrompt] = useState<{ maskedPhone: string } | null>(null);
+  const [voiceCode, setVoiceCode] = useState("");
+  const [voiceVerifying, setVoiceVerifying] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -143,6 +148,68 @@ export function ClaimEngineStatePanel({
       mounted = false;
     };
   }, [claimId, facilityId]);
+
+  async function startVoiceOtp() {
+    setVoiceCalling(true);
+    const { data, error } = await supabase.functions.invoke<{
+      maskedPhone?: string;
+      error?: string;
+    }>("initiate-claim-voice-otp", { body: { claimRequestId: claimId } });
+    setVoiceCalling(false);
+    if (error || data?.error || !data?.maskedPhone) {
+      toast({
+        title: "Voice call couldn't be placed",
+        description: data?.error || error?.message || "Try SMS or email verification.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setVoicePrompt({ maskedPhone: data.maskedPhone });
+    toast({
+      title: "Voice call placed",
+      description: `Calling ${data.maskedPhone}. Listen for a 6-digit code.`,
+    });
+  }
+
+  async function verifyVoiceOtp() {
+    if (!/^\d{6}$/.test(voiceCode)) {
+      toast({ title: "Enter 6 digits", variant: "destructive" });
+      return;
+    }
+    setVoiceVerifying(true);
+    const { data, error } = await supabase.functions.invoke<{
+      verified?: boolean;
+      error?: string;
+      attemptsRemaining?: number;
+    }>("verify-claim-voice-otp", {
+      body: { claimRequestId: claimId, code: voiceCode },
+    });
+    setVoiceVerifying(false);
+    if (error || data?.error) {
+      const remaining = data?.attemptsRemaining;
+      toast({
+        title: "Couldn't verify code",
+        description:
+          (data?.error || error?.message) +
+          (typeof remaining === "number" ? ` (${remaining} attempts left)` : ""),
+        variant: "destructive",
+      });
+      return;
+    }
+    toast({ title: "Voice OTP verified" });
+    setVoicePrompt(null);
+    setVoiceCode("");
+    // Re-fetch attempt state so the panel reflects the new score.
+    const { data: aRows } = await supabase
+      .from("verification_attempts")
+      .select(
+        "id,status,legitimacy_score,ownership_score,confidence_score,final_decision,trigger_reason",
+      )
+      .eq("claim_id", claimId)
+      .order("started_at", { ascending: false })
+      .limit(1);
+    if (aRows?.[0]) setAttempt(aRows[0] as Attempt);
+  }
 
   async function confirmAlias() {
     if (!alias) return;
@@ -288,6 +355,74 @@ export function ClaimEngineStatePanel({
                 {RUNG_LABEL[rung] ?? rung}
               </span>
             ))}
+          </div>
+        )}
+
+        {/* Voice OTP rung — the highest-confidence ownership signal.
+            Only show when ownership hasn't already passed; the engine
+            already enforces the AND-gate so triggering this once
+            you've cleared SMS+email is wasted UX. */}
+        {!ownerOK && attempt.final_decision == null && (
+          <div className="mt-2 rounded border border-slate-200 bg-white p-2">
+            {voicePrompt ? (
+              <div className="space-y-1.5">
+                <p className="text-[11px] text-muted-foreground">
+                  We placed a voice call to{" "}
+                  <strong className="text-foreground">
+                    {voicePrompt.maskedPhone}
+                  </strong>
+                  . Listen for a 6-digit code, then enter it below.
+                </p>
+                <div className="flex gap-1.5">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    pattern="\d{6}"
+                    maxLength={6}
+                    value={voiceCode}
+                    onChange={(e) =>
+                      setVoiceCode(e.target.value.replace(/\D/g, "").slice(0, 6))
+                    }
+                    placeholder="123456"
+                    className="flex-1 h-7 px-2 text-xs rounded border border-slate-300 bg-white"
+                    autoComplete="one-time-code"
+                  />
+                  <Button
+                    size="sm"
+                    onClick={verifyVoiceOtp}
+                    disabled={voiceVerifying || voiceCode.length !== 6}
+                    className="h-7 text-xs"
+                  >
+                    {voiceVerifying ? (
+                      <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
+                    ) : (
+                      "Verify"
+                    )}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between gap-2">
+                <div className="text-[11px] text-muted-foreground flex-1 min-w-0">
+                  Strongest ownership signal — we place a voice call to
+                  your facility's on-file phone and read a code aloud.
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={startVoiceOtp}
+                  disabled={voiceCalling}
+                  className="h-7 text-xs gap-1 shrink-0"
+                >
+                  {voiceCalling ? (
+                    <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
+                  ) : (
+                    <PhoneCall className="h-3 w-3" aria-hidden />
+                  )}
+                  Call me
+                </Button>
+              </div>
+            )}
           </div>
         )}
 

@@ -566,6 +566,27 @@ verify_jwt = false
 [functions.run-re-verification-sweep]
 verify_jwt = false
 
+# Voice OTP rung — claimant-initiated. verify_jwt stays ON; the
+# function authenticates the caller against the JWT and then places
+# the Twilio call to the facility's on-file phone (NEVER a
+# claimant-typed number). Mirrors initiate-claim-sms-verification.
+[functions.initiate-claim-voice-otp]
+verify_jwt = true
+
+# Public Twilio webhook — TwiML callback for the voice OTP rung.
+# Twilio authenticates via X-Twilio-Signature (HMAC-SHA1), so JWT is
+# off. The signature check inside the function rejects forged
+# callbacks; only Twilio knows the auth token.
+[functions.twilio-voice-otp-twiml]
+verify_jwt = false
+
+# Voice OTP verify — JWT-authed, claimant-only. Parallel to
+# confirm-claim-verification-code but filters phone_verification_codes
+# by purpose='claim_verification_voice'. On success the bridge trigger
+# records a voice_otp signal at score 90.
+[functions.verify-claim-voice-otp]
+verify_jwt = true
+
 # verify_jwt=false so the function does its own ownership + Pro +
 # verified gating against the caller JWT. Same pattern as
 # send-review-request. Generates a personalised marketing/credibility

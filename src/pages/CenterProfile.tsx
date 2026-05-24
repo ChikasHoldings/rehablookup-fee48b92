@@ -328,9 +328,17 @@ const CenterProfile = () => {
   }, [location.pathname, location.search]);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setCurrentUserId(session?.user?.id ?? null);
-    });
+    supabase.auth
+      .getSession()
+      .then(({ data: { session } }) => {
+        setCurrentUserId(session?.user?.id ?? null);
+      })
+      .catch((err) => {
+        // Session lookup failure → treat as logged-out. Don't break
+        // the page render; the public profile works fine without it.
+        console.error("[CenterProfile] getSession failed:", err);
+        setCurrentUserId(null);
+      });
   }, []);
 
   useEffect(() => {
