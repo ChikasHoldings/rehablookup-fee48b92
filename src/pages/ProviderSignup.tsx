@@ -643,6 +643,68 @@ export default function ProviderSignup({
         .single();
 
       if (facilityError) {
+        // PG 23505 unique_violation: the DB-level guard on
+        // (user_id, lower(name), lower(address), lower(city))
+        // fired — the same provider just submitted an identical
+        // facility. This is the "double-submit during a cache race"
+        // recovery path: their first insert already succeeded, so we
+        // do NOT trigger the orphan-cleanup rollback (which would
+        // destroy the auth user + the row they just created). Find
+        // the row that's now in the DB and route them straight to
+        // the plan step (which is where they were headed anyway).
+        const pgCode = (facilityError as { code?: string }).code;
+        if (pgCode === "23505") {
+          console.warn(
+            "[ProviderSignup] facility insert hit unique guard — finding existing row",
+            facilityError.message,
+          );
+          try {
+            const { data: existing } = await supabase
+              .from("facilities")
+              .select("id")
+              .eq("user_id", userId)
+              .order("created_at", { ascending: false })
+              .limit(1)
+              .maybeSingle();
+            if (existing?.id) {
+              // Mirror the success path: advance the onboarding row
+              // to 'plan' so the wizard host shows the plan picker
+              // instead of bouncing back to build via canReach.
+              await supabase
+                .from("provider_onboarding_state")
+                .upsert(
+                  { user_id: userId, current_step: "plan" } as never,
+                  { onConflict: "user_id" },
+                );
+              await queryClient.invalidateQueries({ queryKey: ["provider-onboarding-state"] });
+              toast({
+                title: "Listing already saved",
+                description:
+                  "Looks like your facility was already saved — continuing to the plan step.",
+              });
+              navigate("/provider/onboarding?step=plan");
+              submittingRef.current = false;
+              setIsSubmitting(false);
+              return;
+            }
+          } catch (lookupErr) {
+            console.warn("[ProviderSignup] post-23505 existing-row lookup failed", lookupErr);
+          }
+          // Fell through — could not locate the existing row.
+          // Surface a useful error instead of triggering the auth
+          // rollback (which would delete what they actually have).
+          toast({
+            title: "We've already saved this facility",
+            description:
+              "Refresh the page or go to your dashboard — your listing is in our system.",
+            variant: "destructive",
+          });
+          submittingRef.current = false;
+          setIsSubmitting(false);
+          navigate("/provider/dashboard");
+          return;
+        }
+
         // Hardening: a failed facility insert leaves an orphan auth user +
         // profile with no facility. We now call the signup-rollback-cleanup
         // edge function which deletes the auth user + profile so the email
