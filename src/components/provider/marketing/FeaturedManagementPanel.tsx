@@ -88,6 +88,7 @@ export function FeaturedManagementPanel({ facilityId, subscription }: FeaturedMa
       if (cancelled) return;
       if (error) {
         console.error("[FeaturedManagement] tagline load failed", error);
+        toast.error("Couldn't load your saved tagline. Refresh to try again.");
         setTaglineLoaded(true);
         return;
       }

@@ -89,6 +89,11 @@ export function useFacilitySubscription(
     enabled: !!facilityId,
     staleTime: 1000 * 30,
     refetchInterval: options.pollWhilePending ? 2000 : false,
+    // Re-fetch when the tab regains focus so post-Stripe-return flows
+    // (checkout, portal cancel/upgrade, addon purchase) reflect the
+    // webhook-applied state without a hard reload. `staleTime: 30s`
+    // already debounces this to one DB hit per half-minute.
+    refetchOnWindowFocus: true,
     retry: 1,
   });
 }

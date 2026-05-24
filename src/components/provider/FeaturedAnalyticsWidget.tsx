@@ -69,6 +69,9 @@ export function FeaturedAnalyticsWidget({ facilityId }: FeaturedAnalyticsWidgetP
     },
     enabled: !!facilityId && hasFeatured,
     staleTime: 5 * 60 * 1000,
+    // Mirror ConciergeAnalyticsWidget so returning from the Marketing
+    // detail page or from a Stripe portal redirect refreshes the panel.
+    refetchOnWindowFocus: true,
     retry: 2,
   });
 
@@ -179,6 +182,14 @@ export function FeaturedAnalyticsWidget({ facilityId }: FeaturedAnalyticsWidgetP
             </div>
           ))}
         </div>
+
+        {analytics && analytics.impressions === 0 && (
+          <p className="text-xs text-slate-600 text-center leading-relaxed">
+            Featured is active. Metrics populate as users see your listing on
+            the pages you're rotating in — give it 24 hours for the first
+            impressions to land.
+          </p>
+        )}
 
         {analytics && analytics.conversionRate > 0 && (
           <div className="flex items-center justify-between p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800">

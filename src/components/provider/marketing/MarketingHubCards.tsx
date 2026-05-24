@@ -66,7 +66,9 @@ function useActiveGeoCount(subscriptionId: string, active: boolean) {
 }
 
 function FeaturedCard({ active, subscriptionId }: { active: boolean; subscriptionId: string }) {
-  const { data: count } = useActivePlacementCount(subscriptionId, active);
+  const { data: count, isLoading: countLoading } = useActivePlacementCount(subscriptionId, active);
+  const countLabel = countLoading || count === undefined ? "—" : count.toLocaleString();
+  const pluralSuffix = count === 1 ? "" : "s";
 
   return (
     <Card className="border-amber-200/60 bg-gradient-to-br from-white to-amber-50/30">
@@ -95,7 +97,7 @@ function FeaturedCard({ active, subscriptionId }: { active: boolean; subscriptio
           <>
             <div className="rounded-md bg-white border border-amber-200/60 p-3 text-xs space-y-0.5">
               <p className="font-medium text-slate-900 tabular-nums">
-                {count ?? 0} active placement{(count ?? 0) === 1 ? "" : "s"}
+                {countLabel} active placement{pluralSuffix}
               </p>
               <p className="text-slate-500">
                 Analytics, slot picker, and tagline editor inside.
@@ -132,7 +134,9 @@ function FeaturedCard({ active, subscriptionId }: { active: boolean; subscriptio
 }
 
 function ConciergeCard({ active, subscriptionId }: { active: boolean; subscriptionId: string }) {
-  const { data: count } = useActiveGeoCount(subscriptionId, active);
+  const { data: count, isLoading: countLoading } = useActiveGeoCount(subscriptionId, active);
+  const countLabel = countLoading || count === undefined ? "—" : count.toLocaleString();
+  const geographyWord = count === 1 ? "geography" : "geographies";
 
   return (
     <Card className="border-violet-200/60 bg-gradient-to-br from-white to-violet-50/30">
@@ -162,7 +166,7 @@ function ConciergeCard({ active, subscriptionId }: { active: boolean; subscripti
           <>
             <div className="rounded-md bg-white border border-violet-200/60 p-3 text-xs space-y-0.5">
               <p className="font-medium text-slate-900 tabular-nums">
-                {count ?? 0} active geograph{(count ?? 0) === 1 ? "y" : "ies"}
+                {countLabel} active {geographyWord}
               </p>
               <p className="text-slate-500">
                 Performance metrics, levels of care, and management inside.
