@@ -542,3 +542,19 @@ verify_jwt = false
 
 [functions.signup-rollback-cleanup]
 verify_jwt = false
+
+# verify_jwt=false so the function can do its own auth: the body
+# explicitly calls supabase.auth.getUser() against the caller's
+# Authorization header and only acts when the JWT belongs to a
+# provider who owns the targeted facility. Matches the pattern
+# used by send-support-request.
+[functions.send-review-request]
+verify_jwt = false
+
+# verify_jwt=false because this function has DUAL auth: X-Cron-Secret
+# header for the nightly batch (pg_cron has no JWT), OR Authorization
+# header for the single-facility ad-hoc sync fired from the provider
+# portal. The function body picks the path based on which header is
+# present and validates each independently.
+[functions.sync-google-reviews]
+verify_jwt = false

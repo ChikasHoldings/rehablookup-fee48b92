@@ -37,7 +37,7 @@ import {
 
 interface ReviewWithDetails {
   id: string;
-  user_id: string;
+  user_id: string | null;
   facility_id: string;
   rating: number;
   review_text: string | null;
@@ -46,6 +46,10 @@ interface ReviewWithDetails {
   admin_notes: string | null;
   created_at: string;
   updated_at: string;
+  // Token-submitted reviews (from the send-a-link funnel) carry the
+  // originating review_requests row id. NULL = direct seeker submission.
+  // Used by the row UI to flag provenance with an "Invited" badge.
+  review_request_id?: string | null;
   facility_name?: string;
   reviewer_name?: string;
   reviewer_city?: string | null;
@@ -194,7 +198,7 @@ export default function AdminReviews() {
     queryFn: async (): Promise<ReviewWithDetails[]> => {
       const { data, error } = await supabase
         .from('facility_reviews')
-        .select('id, facility_id, user_id, rating, review_text, status, helpful_count, disputed, admin_notes, reviewed_at, reviewed_by, created_at, updated_at, reviewer_display_name')
+        .select('id, facility_id, user_id, rating, review_text, status, helpful_count, disputed, admin_notes, reviewed_at, reviewed_by, created_at, updated_at, reviewer_display_name, review_request_id')
         .order('created_at', { ascending: false })
         .limit(1000);
       if (error) throw error;
@@ -262,7 +266,7 @@ export default function AdminReviews() {
       const [reviewsResult, facilitiesResult] = await Promise.all([
         supabase
           .from('facility_reviews')
-          .select('id, facility_id, user_id, rating, review_text, status, helpful_count, admin_notes, created_at, updated_at, reviewer_display_name')
+          .select('id, facility_id, user_id, rating, review_text, status, helpful_count, admin_notes, created_at, updated_at, reviewer_display_name, review_request_id')
           .in('id', reviewIds),
         supabase.from('facilities').select('id, name').in('id', facilityIds),
       ]);
@@ -1184,6 +1188,20 @@ export default function AdminReviews() {
                                   <Badge variant="outline" className="bg-warning/10 text-warning border-warning/30 text-[10px]">
                                     <Flag className="h-2.5 w-2.5 mr-0.5" />
                                     Disputed
+                                  </Badge>
+                                )}
+                                {review.review_request_id && (
+                                  // Token-submitted reviews originated from the
+                                  // provider's "Request a review" invite flow.
+                                  // Moderators tend to approve these faster
+                                  // because the facility itself vouched for
+                                  // the customer.
+                                  <Badge
+                                    variant="outline"
+                                    className="bg-blue-50 text-blue-700 border-blue-200 text-[10px]"
+                                    title="Submitted via a provider's review-request invitation"
+                                  >
+                                    Invited
                                   </Badge>
                                 )}
                               </div>

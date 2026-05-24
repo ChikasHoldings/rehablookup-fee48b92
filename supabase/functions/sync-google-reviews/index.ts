@@ -1,37 +1,25 @@
 /**
  * sync-google-reviews
  *
- * Nightly cron-driven sync that refreshes Google rating + review-count
- * for every facility_reviews_config row a provider has configured a
- * place_id on. Writes the latest aggregate values back so the public
- * profile (and the GoogleReviewsConfigCard in the provider portal)
- * surfaces the right numbers.
+ * Two operating modes, sharing the same Google-Places fetch logic:
  *
- * Calls Google Maps "Places API (New)" v1 Place Details endpoint with
- * a tight field mask (rating + userRatingCount only) so the API cost
- * stays at the cheapest billing SKU.
+ *   1. CRON mode (X-Cron-Secret header set):
+ *      Nightly batch refresh of facility_reviews_config rows ordered
+ *      by last_updated_at NULLS FIRST. Capped at MAX_PER_RUN per
+ *      invocation. Scheduled at 04:35 UTC by migration
+ *      20260730000000.
  *
- *   GET https://places.googleapis.com/v1/places/<place_id>
- *     ?fields=id,rating,userRatingCount
- *   Headers:
- *     X-Goog-Api-Key:    <env GOOGLE_PLACES_API_KEY>
- *     X-Goog-FieldMask:  id,rating,userRatingCount
+ *   2. PROVIDER mode (Authorization header set + body.facility_id):
+ *      Single-facility refresh fired from GoogleReviewsConfigCard
+ *      right after the provider saves a new place_id, so the
+ *      rating + count populate within seconds instead of waiting
+ *      up to 24h for the cron. The Supabase client built from the
+ *      caller JWT verifies the provider owns the facility via the
+ *      existing user_owns_facility() helper — no separate auth.
  *
- * Auth model:
- *   - X-Cron-Secret header required (assertCronSecret).
- *   - No JWT verification (pg_cron has no user context).
- *   - GOOGLE_PLACES_API_KEY is a Supabase project secret; never
- *     embedded in source or logged at any level.
- *
- * Idempotency / rate limits:
- *   - Re-running the function is safe: each fetch is independent, and
- *     UPDATEs are stamped with now() each pass.
- *   - We sort configs by last_updated_at NULLS FIRST so the oldest
- *     row in the queue gets refreshed first, then walk the list with
- *     a 120ms inter-request delay (≈8 req/s — well under Google's
- *     default per-key quota and gentle enough to avoid 429s).
- *   - Caps at 500 facilities per run so a misconfigured key on a
- *     large dataset doesn't blow through the daily quota in one go.
+ * Both modes hit the same Place Details endpoint (Places API New v1)
+ * with a tight X-Goog-FieldMask=id,rating,userRatingCount so we hit
+ * the cheapest billing SKU instead of paying for the full payload.
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 import { assertCronSecret } from "../_shared/cron-auth.ts";
@@ -59,6 +47,14 @@ interface GooglePlace {
   userRatingCount?: number;
 }
 
+type SyncCounts = {
+  processed: number;
+  updated: number;
+  unchanged: number;
+  notFound: number;
+  failed: number;
+};
+
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
@@ -70,156 +66,205 @@ function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
-
-  const auth = assertCronSecret(req);
-  if (!auth.ok) return auth.response;
-
-  const SB_URL = Deno.env.get("SUPABASE_URL");
-  const SB_SVC = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  const G_KEY = Deno.env.get("GOOGLE_PLACES_API_KEY");
-
-  if (!SB_URL || !SB_SVC) {
-    return json({ error: "Missing Supabase credentials" }, 500);
+async function fetchGooglePlace(placeId: string, key: string): Promise<
+  | { kind: "ok"; place: GooglePlace }
+  | { kind: "not_found" }
+  | { kind: "error"; status: number; body: string }
+> {
+  const url = `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}`;
+  const res = await fetch(url, {
+    method: "GET",
+    headers: {
+      "X-Goog-Api-Key": key,
+      "X-Goog-FieldMask": "id,rating,userRatingCount",
+      Accept: "application/json",
+    },
+  });
+  if (res.status === 404) return { kind: "not_found" };
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    return { kind: "error", status: res.status, body: body.slice(0, 200) };
   }
-  if (!G_KEY) {
-    // Fail loudly so the cron retry queue surfaces the misconfig in
-    // logs but never leak the env-var name into a user response.
-    console.error("[sync-google-reviews] GOOGLE_PLACES_API_KEY not configured");
-    return json({ error: "Sync service not configured" }, 500);
-  }
+  const place = (await res.json()) as GooglePlace;
+  return { kind: "ok", place };
+}
 
-  const supabase = createClient(SB_URL, SB_SVC);
+// deno-lint-ignore no-explicit-any
+async function applyPlaceToRow(supabase: any, row: ConfigRow, place: GooglePlace): Promise<"updated" | "unchanged" | "failed"> {
+  const newRating =
+    typeof place.rating === "number" && isFinite(place.rating)
+      ? Math.round(place.rating * 100) / 100
+      : null;
+  const newCount =
+    typeof place.userRatingCount === "number" && isFinite(place.userRatingCount)
+      ? Math.max(0, Math.floor(place.userRatingCount))
+      : null;
 
-  // Pull the next batch — oldest-stale-first so we don't starve any
-  // single facility while always-refreshing the most-recently-edited.
-  const { data: configs, error: fetchErr } = await supabase
+  const ratingChanged = (row.google_rating ?? null) !== newRating;
+  const countChanged = (row.google_review_count ?? null) !== newCount;
+
+  const { error } = await supabase
     .from("facility_reviews_config")
-    .select("facility_id, google_place_id, google_rating, google_review_count, last_updated_at")
-    .not("google_place_id", "is", null)
-    .order("last_updated_at", { ascending: true, nullsFirst: true })
-    .limit(MAX_PER_RUN);
+    .update({
+      google_rating: newRating,
+      google_review_count: newCount,
+      last_updated_at: new Date().toISOString(),
+    })
+    .eq("facility_id", row.facility_id);
 
-  if (fetchErr) {
-    console.error("[sync-google-reviews] config fetch failed:", fetchErr.message);
-    return json({ error: "Could not load review configs" }, 500);
+  if (error) {
+    console.warn(
+      "[sync-google-reviews] update failed for facility",
+      row.facility_id,
+      error.message,
+    );
+    return "failed";
   }
+  return ratingChanged || countChanged ? "updated" : "unchanged";
+}
 
-  const rows = (configs ?? []) as ConfigRow[];
-  if (rows.length === 0) {
-    return json({ ok: true, processed: 0, message: "No configured facilities to sync." });
-  }
-
-  const startedAt = Date.now();
-  const counts = { processed: 0, updated: 0, unchanged: 0, notFound: 0, failed: 0 };
-
+// deno-lint-ignore no-explicit-any
+async function syncRows(supabase: any, rows: ConfigRow[], key: string, paced: boolean): Promise<SyncCounts> {
+  const counts: SyncCounts = { processed: 0, updated: 0, unchanged: 0, notFound: 0, failed: 0 };
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
     counts.processed++;
-
-    const placeId = row.google_place_id?.trim();
-    if (!placeId) {
+    if (!row.google_place_id?.trim()) {
       counts.failed++;
       continue;
     }
-
-    let place: GooglePlace | null = null;
+    let result: Awaited<ReturnType<typeof fetchGooglePlace>>;
     try {
-      const url = `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}`;
-      const res = await fetch(url, {
-        method: "GET",
-        headers: {
-          "X-Goog-Api-Key": G_KEY,
-          "X-Goog-FieldMask": "id,rating,userRatingCount",
-          Accept: "application/json",
-        },
-      });
-      if (res.status === 404) {
-        // The place ID the provider entered is invalid (typo or
-        // Google replaced the entry). Skip silently — we don't want
-        // to NULL out an existing rating just because one fetch
-        // failed; admin can flag this row out-of-band if the failure
-        // is persistent. Logging here lets us notice the pattern.
-        counts.notFound++;
-        console.warn("[sync-google-reviews] place not found:", placeId);
-        continue;
-      }
-      if (!res.ok) {
-        counts.failed++;
-        const body = await res.text().catch(() => "");
-        // Truncate response in logs so a Google error containing the
-        // full request URL (with key) can't accidentally leak even
-        // though we don't pass the key in the URL anyway.
-        console.warn(
-          "[sync-google-reviews] non-OK response:",
-          res.status,
-          body.slice(0, 200),
-        );
-        continue;
-      }
-      place = (await res.json()) as GooglePlace;
+      result = await fetchGooglePlace(row.google_place_id.trim(), key);
     } catch (err) {
       counts.failed++;
       console.warn(
         "[sync-google-reviews] fetch threw:",
         err instanceof Error ? err.message : String(err),
       );
-      // Pace before the next iteration even on failure so a flaky
-      // Google endpoint doesn't trigger a tight retry loop.
-      await sleep(REQUEST_DELAY_MS);
+      if (paced && i < rows.length - 1) await sleep(REQUEST_DELAY_MS);
       continue;
     }
-
-    if (!place) {
+    if (result.kind === "not_found") {
+      counts.notFound++;
+      console.warn("[sync-google-reviews] place not found:", row.google_place_id);
+    } else if (result.kind === "error") {
       counts.failed++;
-      continue;
-    }
-
-    const newRating =
-      typeof place.rating === "number" && isFinite(place.rating) ? Math.round(place.rating * 100) / 100 : null;
-    const newCount =
-      typeof place.userRatingCount === "number" && isFinite(place.userRatingCount)
-        ? Math.max(0, Math.floor(place.userRatingCount))
-        : null;
-
-    const ratingChanged = (row.google_rating ?? null) !== newRating;
-    const countChanged = (row.google_review_count ?? null) !== newCount;
-
-    if (!ratingChanged && !countChanged) {
-      counts.unchanged++;
+      console.warn("[sync-google-reviews] non-OK response:", result.status, result.body);
     } else {
-      counts.updated++;
+      const outcome = await applyPlaceToRow(supabase, row, result.place);
+      counts[outcome]++;
     }
+    if (paced && i < rows.length - 1) await sleep(REQUEST_DELAY_MS);
+  }
+  return counts;
+}
 
-    const { error: updErr } = await supabase
-      .from("facility_reviews_config")
-      .update({
-        google_rating: newRating,
-        google_review_count: newCount,
-        last_updated_at: new Date().toISOString(),
-      })
-      .eq("facility_id", row.facility_id);
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
-    if (updErr) {
-      counts.failed++;
-      console.warn(
-        "[sync-google-reviews] update failed for facility",
-        row.facility_id,
-        updErr.message,
-      );
-    }
+  const SB_URL = Deno.env.get("SUPABASE_URL");
+  const SB_ANON = Deno.env.get("SUPABASE_ANON_KEY");
+  const SB_SVC = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const G_KEY = Deno.env.get("GOOGLE_PLACES_API_KEY");
 
-    // Pace between requests so we stay below Google's per-key QPS.
-    // Skip the sleep on the last iteration so the function returns
-    // promptly to the cron caller.
-    if (i < rows.length - 1) await sleep(REQUEST_DELAY_MS);
+  if (!SB_URL || !SB_SVC || !SB_ANON) {
+    return json({ error: "Missing Supabase credentials" }, 500);
+  }
+  if (!G_KEY) {
+    console.error("[sync-google-reviews] GOOGLE_PLACES_API_KEY not configured");
+    return json({ error: "Sync service not configured" }, 500);
   }
 
-  const elapsedMs = Date.now() - startedAt;
-  return json({
-    ok: true,
-    elapsed_ms: elapsedMs,
-    ...counts,
+  const supabase = createClient(SB_URL, SB_SVC);
+  const startedAt = Date.now();
+
+  // ─── Auth-mode selection ─────────────────────────────────────────────
+  // If the caller sends X-Cron-Secret, run the batch path. Otherwise
+  // expect a provider JWT + body.facility_id and refresh just that one
+  // facility. Each path validates its own credentials — no mode can
+  // bypass the other's check by mixing headers.
+  const hasCronSecret = !!req.headers.get("x-cron-secret");
+
+  if (hasCronSecret) {
+    const auth = assertCronSecret(req);
+    if (!auth.ok) return auth.response;
+
+    const { data: configs, error: fetchErr } = await supabase
+      .from("facility_reviews_config")
+      .select("facility_id, google_place_id, google_rating, google_review_count, last_updated_at")
+      .not("google_place_id", "is", null)
+      .order("last_updated_at", { ascending: true, nullsFirst: true })
+      .limit(MAX_PER_RUN);
+
+    if (fetchErr) {
+      console.error("[sync-google-reviews] config fetch failed:", fetchErr.message);
+      return json({ error: "Could not load review configs" }, 500);
+    }
+    const rows = (configs ?? []) as ConfigRow[];
+    if (rows.length === 0) {
+      return json({ ok: true, mode: "cron", processed: 0, message: "No configured facilities to sync." });
+    }
+    const counts = await syncRows(supabase, rows, G_KEY, /* paced */ true);
+    return json({ ok: true, mode: "cron", elapsed_ms: Date.now() - startedAt, ...counts });
+  }
+
+  // ─── Provider single-facility mode ──────────────────────────────────
+  const authHeader = req.headers.get("authorization");
+  if (!authHeader) {
+    return json({ error: "Missing authorization" }, 401);
+  }
+
+  // User-scoped client so RLS / user_owns_facility can verify the
+  // caller actually owns the facility they're asking us to sync.
+  const userClient = createClient(SB_URL, SB_ANON, {
+    global: { headers: { Authorization: authHeader } },
   });
+  const { data: { user }, error: userErr } = await userClient.auth.getUser();
+  if (userErr || !user) {
+    return json({ error: "Unauthorized" }, 401);
+  }
+
+  let body: { facility_id?: string };
+  try {
+    body = await req.json();
+  } catch {
+    return json({ error: "Invalid JSON body" }, 400);
+  }
+  const facilityId = body.facility_id?.trim();
+  if (!facilityId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(facilityId)) {
+    return json({ error: "facility_id (uuid) required" }, 400);
+  }
+
+  // Ownership check via the same helper RLS uses. Service-role
+  // client does the function call so we don't double-pass the JWT
+  // header (and so the call works the same regardless of admin
+  // role on the calling JWT).
+  const { data: ownsRaw, error: ownErr } = await supabase.rpc("user_owns_facility", {
+    _facility_id: facilityId,
+    _user_id: user.id,
+  });
+  if (ownErr) {
+    console.warn("[sync-google-reviews] user_owns_facility error:", ownErr.message);
+    return json({ error: "Authorization check failed" }, 500);
+  }
+  if (!ownsRaw) {
+    return json({ error: "Forbidden — facility not owned by caller" }, 403);
+  }
+
+  const { data: configRow, error: configErr } = await supabase
+    .from("facility_reviews_config")
+    .select("facility_id, google_place_id, google_rating, google_review_count, last_updated_at")
+    .eq("facility_id", facilityId)
+    .maybeSingle();
+
+  if (configErr) {
+    return json({ error: "Could not load config" }, 500);
+  }
+  if (!configRow || !configRow.google_place_id) {
+    return json({ ok: true, mode: "provider", message: "No place_id configured for this facility yet." });
+  }
+
+  const counts = await syncRows(supabase, [configRow as ConfigRow], G_KEY, /* paced */ false);
+  return json({ ok: true, mode: "provider", facility_id: facilityId, elapsed_ms: Date.now() - startedAt, ...counts });
 });

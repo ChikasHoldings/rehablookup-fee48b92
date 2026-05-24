@@ -83,6 +83,12 @@ export function GoogleReviewsConfigCard({ facilityId, facilityName }: GoogleRevi
     if (auto) setPlaceId(auto);
   }, [placeUrl, placeId.length]);
 
+  // Track whether the inline sync after save is currently running, so
+  // the UI can show a "Syncing rating from Google…" hint without
+  // blocking the form. The sync is fire-and-forget from the user's
+  // perspective — failures fall back to the nightly cron.
+  const [isSyncing, setIsSyncing] = useState(false);
+
   const save = useMutation({
     mutationFn: async () => {
       const cleanUrl = placeUrl.trim().slice(0, URL_MAX);
@@ -122,15 +128,37 @@ export function GoogleReviewsConfigCard({ facilityId, facilityName }: GoogleRevi
           });
         if (error) throw error;
       }
+      return { hasPlaceId: cleanId.length > 0 };
     },
-    onSuccess: () => {
+    onSuccess: async (result) => {
       queryClient.invalidateQueries({ queryKey: ["facility-reviews-config", facilityId] });
       toast({
         title: "Google reviews settings saved",
-        description: placeId.trim() || placeUrl.trim()
-          ? "We'll sync your rating + review count shortly."
+        description: result.hasPlaceId
+          ? "Syncing your rating from Google now — it'll appear in a moment."
           : "Configuration cleared.",
       });
+
+      // Fire-and-forget immediate sync so the provider sees their
+      // rating + count populate within seconds instead of waiting up
+      // to 24 h for the nightly cron. Failures here are silent — the
+      // cron will catch up on its next run, and the underlying save
+      // already succeeded so the provider doesn't need to know.
+      if (result.hasPlaceId) {
+        setIsSyncing(true);
+        try {
+          await supabase.functions.invoke("sync-google-reviews", {
+            body: { facility_id: facilityId },
+          });
+          queryClient.invalidateQueries({ queryKey: ["facility-reviews-config", facilityId] });
+        } catch (err) {
+          if (import.meta.env.DEV) {
+            console.warn("[GoogleReviewsConfigCard] immediate sync failed:", err);
+          }
+        } finally {
+          setIsSyncing(false);
+        }
+      }
     },
     onError: (err: Error) =>
       toast({
@@ -180,7 +208,12 @@ export function GoogleReviewsConfigCard({ facilityId, facilityName }: GoogleRevi
           </div>
         ) : (
           <>
-            {row?.google_rating != null && (
+            {isSyncing ? (
+              <div className="rounded-lg border bg-slate-50 px-3 py-2.5 flex items-center gap-2 text-xs text-muted-foreground">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+                Syncing rating from Google…
+              </div>
+            ) : row?.google_rating != null ? (
               <div className="rounded-lg border bg-slate-50 px-3 py-2.5 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                   <Star className="h-4 w-4 fill-amber-400 text-amber-400" aria-hidden />
@@ -197,7 +230,7 @@ export function GoogleReviewsConfigCard({ facilityId, facilityName }: GoogleRevi
                   </span>
                 )}
               </div>
-            )}
+            ) : null}
 
             <div className="space-y-1.5">
               <Label htmlFor="g-url">Google Maps share URL</Label>

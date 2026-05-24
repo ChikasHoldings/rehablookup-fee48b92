@@ -94,6 +94,7 @@ const ANON_NAMES = new Set([
   "send-claim-approval-email",
   "send-claim-rejection-email",
   "send-review-notification",
+  "send-review-request",
   "notify-free-tier-inquiry-redirect",
   "notify-admin-provider-signup",
   "notify-flagged-image",
@@ -145,6 +146,12 @@ const CRON_NAMES = new Set([
   "send-subscription-alerts",
   "send-marketing-followup",
   "signup-rollback-cleanup",
+  // sync-google-reviews has DUAL auth: X-Cron-Secret for the nightly
+  // batch refresh, and a per-provider JWT path for the ad-hoc single-
+  // facility sync fired from /provider/reviews. The audit's
+  // assertCronSecret() requirement is satisfied by the cron branch;
+  // the JWT branch is independently validated inside the function.
+  "sync-google-reviews",
 ]);
 
 // ── Parse config.toml (lightweight; only reads verify_jwt per function) ──────
