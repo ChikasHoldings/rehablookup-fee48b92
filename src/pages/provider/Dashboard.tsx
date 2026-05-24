@@ -9,13 +9,17 @@ import {
   CreditCard,
   Building2,
   FileEdit,
-  Phone,
-  AlertTriangle,
   TrendingUp,
   Sparkles,
   ChevronRight,
-  X,
   ArrowRight,
+  Star,
+  Megaphone,
+  ShieldCheck,
+  Code2,
+  Lock,
+  Plus,
+  ExternalLink,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -28,21 +32,10 @@ import { fromLeadsProviderView } from "@/lib/leadsProviderView";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
+import { useFacilitySubscription } from "@/hooks/useFacilitySubscription";
 import { LeadDetailDrawer } from "@/components/provider/leads/LeadDetailDrawer";
-import { FeaturedAnalyticsWidget } from "@/components/provider/FeaturedAnalyticsWidget";
 import { cn } from "@/lib/utils";
-import { LeadConversionWidget } from "@/components/provider/LeadConversionWidget";
-import { ProBenefitsWidget } from "@/components/provider/ProBenefitsWidget";
-import { ProMultiFacilityOverview } from "@/components/provider/ProMultiFacilityOverview";
 import { Lead } from "@/components/provider/leads/LeadDetailPanel";
-import { ProviderPerformanceFeedback } from "@/components/provider/ProviderPerformanceFeedback";
-
-import { DashboardKPIStrip } from "@/components/provider/DashboardKPIStrip";
-import { DashboardLeadFeed } from "@/components/provider/DashboardLeadFeed";
-import { DashboardFacilityPerformancePanel } from "@/components/provider/DashboardFacilityPerformancePanel";
-import { DashboardMissedLeads } from "@/components/provider/DashboardMissedLeads";
-
-import { DashboardPlacementPanel } from "@/components/provider/DashboardPlacementPanel";
 import { VerificationStateCard } from "@/components/provider/VerificationStateCard";
 
 // Compact directory-style metric tile. Hairline border, white bg, no
@@ -139,6 +132,7 @@ export default function ProviderDashboardPage() {
   const { facilities } = useProviderFacilities();
   const { planTier } = useFacilityLimits();
   const proStatus = { isPro: planTier === "pro" };
+  const { data: subscription } = useFacilitySubscription(facilityId);
   
   const facility = selectedFacility || providerData?.facility;
   const profile = providerData?.profile;
@@ -159,16 +153,6 @@ export default function ProviderDashboardPage() {
 
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [profilePromptDismissedFields, setProfilePromptDismissedFields] = useState<string | null>(() => {
-    if (!facilityId) return null;
-    return localStorage.getItem(`profile-prompt-dismissed-${facilityId}`);
-  });
-
-  useEffect(() => {
-    if (facilityId) {
-      setProfilePromptDismissedFields(localStorage.getItem(`profile-prompt-dismissed-${facilityId}`));
-    }
-  }, [facilityId]);
 
   // Round-30 audit recovery: a user who timed out of PlanStep's
   // Pro-confirmation poll (Stripe webhook lag > 30s) lands here with
@@ -222,12 +206,7 @@ export default function ProviderDashboardPage() {
   // route to concierge upstream — see submit-qualified-lead). Polled
   // every 30s while the tab is visible (React Query pauses
   // refetchInterval automatically when the tab is hidden).
-  const {
-    data: recentLeads = [],
-    isLoading: leadsLoading,
-    isError: leadsErrored,
-    refetch: refetchLeads,
-  } = useQuery({
+  const { data: recentLeads = [] } = useQuery({
     queryKey: ["recent-leads", facilityId],
     queryFn: async (): Promise<Lead[]> => {
       if (!facilityId) return [];
@@ -404,16 +383,6 @@ export default function ProviderDashboardPage() {
     return missing.sort();
   };
 
-  const handleDismissProfilePrompt = (e: React.MouseEvent, missingFields: string[]) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (facilityId) {
-      const fieldsKey = missingFields.sort().join(",");
-      localStorage.setItem(`profile-prompt-dismissed-${facilityId}`, fieldsKey);
-      setProfilePromptDismissedFields(fieldsKey);
-    }
-  };
-
   // Recent leads polls itself every 30s via refetchInterval (above);
   // when a refetch lands we also invalidate the dependent counts so the
   // dashboard header + KPI strip stay in sync. We can't simply put
@@ -464,65 +433,83 @@ export default function ProviderDashboardPage() {
     }
   };
 
-  const statusConfig = facility ? getStatusConfig(facility.status) : getStatusConfig("inactive");
-  const StatusIcon = statusConfig.icon;
-
-  // Note: urgent-leads counting moved to the server-side `urgentLeadsCount`
-  // query above so the alert reflects ALL stale leads (not just the 4 most
-  // recent loaded for the dashboard feed).
+  // ---- derived overview values ----
+  const totalFacilities = facilities?.length ?? 0;
+  const liveCount = facilities?.filter((f) => f.status === "approved").length ?? 0;
+  const pendingCount = facilities?.filter((f) => f.status === "pending").length ?? 0;
+  const PROFILE_CHECKS = 7;
+  const missingFields = providerData?.facility ? computeMissingFields() : [];
+  const profilePct = providerData?.facility
+    ? Math.max(0, Math.round(((PROFILE_CHECKS - missingFields.length) / PROFILE_CHECKS) * 100))
+    : 0;
+  const memberSince = profile?.created_at
+    ? format(new Date(profile.created_at), "MMMM yyyy")
+    : null;
+  const renewalDate = subscription?.current_period_end
+    ? format(new Date(subscription.current_period_end), "MMM d, yyyy")
+    : null;
+  const hasFeatured = subscription?.has_featured === true;
+  const hasConcierge = subscription?.has_concierge_partner === true;
+  const isVerified = (facility as { verified?: boolean } | undefined)?.verified === true;
+  const accountName =
+    [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || "Your account";
 
   return (
     <div className="min-h-full bg-slate-50">
-      {/* Post-onboarding welcome modal is mounted globally in
-          ProviderShell (<WelcomeModal/>) — it self-gates on
-          profiles.welcomed_at + onboarding_completed_at and is
-          plan-aware (Free → "Upgrade to Pro" CTA, Pro → "Add Featured"
-          CTA). The older ProviderWelcomeModal that used to render here
-          was a duplicate-with-different-gate and is retired. */}
-
-      {/* Hero band — same eyebrow + 26–30px title pattern that runs
-          across every other provider page so the dashboard reads as
-          part of one polished directory chrome. Includes a personal
-          greeting that uses the provider's first name when available. */}
+      {/* Slim header — no large hero. Greeting + plan + public-page link. */}
       <div className="border-b border-slate-200 bg-white">
-        <div className="mx-auto max-w-7xl px-4 py-7 sm:px-6 md:py-9 lg:px-8">
-          <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#1B365D]/70">
-            Dashboard
-          </p>
-          <h1 className="mt-1 font-display text-[26px] font-bold tracking-tight text-slate-900 sm:text-[30px]">
-            {profile?.first_name ? `Welcome back, ${profile.first_name}` : "Welcome back"}
-          </h1>
-          <p className="mt-1.5 max-w-xl text-[15px] text-slate-600">
-            {facility?.name
-              ? `${facility.name} · ${facility.city}${facility.state ? `, ${facility.state}` : ""}`
-              : "Your provider home — leads, listings, performance, and growth."}
-          </p>
+        <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1B365D]/70">
+                Dashboard
+              </p>
+              <h1 className="mt-0.5 truncate text-[22px] font-bold tracking-tight text-slate-900 sm:text-[24px]">
+                {profile?.first_name ? `Welcome back, ${profile.first_name}` : "Welcome back"}
+              </h1>
+            </div>
+            <div className="flex items-center gap-2">
+              {proStatus.isPro ? (
+                <span className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-bold tracking-wide text-amber-800">
+                  <Sparkles className="h-3.5 w-3.5" aria-hidden /> PRO
+                </span>
+              ) : (
+                <Button asChild size="sm" className="gap-1.5 bg-[#1B365D] hover:bg-[#142a4a]">
+                  <Link to="/provider/billing?upgrade=pro">
+                    <Sparkles className="h-3.5 w-3.5" aria-hidden /> Upgrade to Pro
+                  </Link>
+                </Button>
+              )}
+              {facility?.slug && facility.status === "approved" && (
+                <Button asChild size="sm" variant="outline" className="gap-1.5">
+                  <a href={`/center/${facility.slug}`} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+                    <span className="hidden sm:inline">View public page</span>
+                    <span className="sm:hidden">Public</span>
+                  </a>
+                </Button>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
-
-        {/* Signup recovery banner — shown only when ProviderSignup
-            redirected here with ?signup_facility_failed=1 AND the
-            rollback edge function couldn't clean up automatically.
-            Last-resort safety net so the user is never stuck on a
-            half-completed account with no on-screen guidance. */}
+      <div className="mx-auto max-w-7xl space-y-5 px-3 py-5 sm:px-4 sm:py-6 md:px-6 lg:px-8">
+        {/* Signup recovery banner */}
         {showSignupRecovery && (
-          <Card className="mb-4 border-rose-300 bg-rose-50 dark:bg-rose-950/30">
-            <CardContent className="p-4 flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 text-rose-600 shrink-0 mt-0.5" />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-rose-900 dark:text-rose-200">
+          <Card className="border-rose-300 bg-rose-50">
+            <CardContent className="flex items-start gap-3 p-4">
+              <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-rose-600" aria-hidden />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-rose-900">
                   Your facility didn't save during signup
                 </p>
-                <p className="text-xs text-rose-800/80 dark:text-rose-200/80 mt-1">
-                  Your account is set up but the facility details from the signup form weren't
-                  saved. Add your facility now to start receiving leads. Our support team has
-                  also been notified — they'll reach out within one business day if you'd
-                  prefer help.
+                <p className="mt-1 text-xs text-rose-800/80">
+                  Your account is set up but the facility details weren't saved. Add your
+                  facility now to start receiving inquiries. Support has been notified.
                 </p>
-                <div className="flex flex-wrap items-center gap-2 mt-3">
-                  <Button asChild size="sm" variant="default" className="bg-rose-600 hover:bg-rose-700">
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <Button asChild size="sm" className="bg-rose-600 hover:bg-rose-700">
                     <Link to="/provider/add-location">Add facility now</Link>
                   </Button>
                   <Button size="sm" variant="ghost" onClick={dismissSignupRecovery}>
@@ -534,302 +521,440 @@ export default function ProviderDashboardPage() {
           </Card>
         )}
 
-        {/* Main Grid Layout - No full-width sections */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 md:gap-5">
-          
-          {/* Left Column - Header & Main Content */}
-          <div className="lg:col-span-8 space-y-3 sm:space-y-4 md:space-y-5">
-            
-            {/* Header Card */}
-            <Card>
-              <CardContent className="p-4 sm:p-5 md:p-6">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 md:gap-4">
-                  <div className="space-y-1">
-                    <p className="text-xs md:text-sm text-muted-foreground font-medium uppercase tracking-wider">
-                      {format(new Date(), "EEEE, MMM d")}
-                    </p>
-                    <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">
-                      {userName ? `Welcome, ${userName}` : "Dashboard"}
-                    </h1>
-                    {facility && (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <span>{facility.name}</span>
-                        {facility.status === "approved" && (
-                          <span className="inline-flex items-center gap-1 text-xs font-medium text-success bg-success/10 px-1.5 py-0.5 rounded">
-                            <span className="h-1.5 w-1.5 rounded-full bg-success" />
-                            Live
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="flex items-center gap-2.5">
-                    {/* Plan Badge */}
-                    {proStatus.isPro ? (
-                      <Link
-                        to="/provider/billing"
-                        className="group relative inline-flex items-center gap-1.5 pl-2.5 pr-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 via-amber-500 to-amber-600 text-white text-xs font-bold tracking-wide shadow-[0_2px_8px_-2px_rgba(245,158,11,0.4)] hover:shadow-[0_4px_12px_-2px_rgba(245,158,11,0.5)] transition-all overflow-hidden"
-                      >
-                        <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <div className="h-5 w-5 rounded-md bg-white/20 flex items-center justify-center">
-                          <Sparkles className="h-3 w-3" />
-                        </div>
-                        <span className="relative">PRO</span>
-                      </Link>
-                    ) : (
-                      <Link
-                        to="/provider/billing"
-                        className="group relative inline-flex items-center gap-2 pl-2.5 pr-3.5 py-2 rounded-xl border border-border/50 bg-card hover:border-primary/40 hover:bg-primary/5 transition-all text-xs font-semibold text-muted-foreground hover:text-primary"
-                      >
-                        <div className="h-5 w-5 rounded-md bg-muted flex items-center justify-center group-hover:bg-primary/10 transition-colors">
-                          <Sparkles className="h-3 w-3 text-muted-foreground/60 group-hover:text-primary transition-colors" />
-                        </div>
-                        <span>Free</span>
-                        <ArrowRight className="h-3 w-3 opacity-0 -ml-1 group-hover:opacity-100 group-hover:ml-0 transition-all" />
-                      </Link>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-
-            {/* Primary KPI Strip */}
-            {facilityId && (
-              <DashboardKPIStrip
-                facilityId={facilityId}
-                isPro={proStatus.isPro}
-                impressionCount={impressionCount}
-                reviewCount={reviewCount}
-                totalLeadsCount={totalLeadsCount}
-              />
-            )}
-
-            {/* Lead Feed */}
-            <DashboardLeadFeed
-              leads={recentLeads}
-              facilityName={facility?.name}
-              isLoading={leadsLoading}
-              isError={leadsErrored}
-              onRetry={() => void refetchLeads()}
-              onLeadClick={handleLeadClick}
-            />
-
-            {/* Missed Leads — Psychological Trigger */}
-            {facilityId && (
-              <DashboardMissedLeads facilityId={facilityId} isPro={proStatus.isPro} />
-            )}
-
-            {/* Lead Conversion Widget */}
-            {facilityIds.length > 0 && (
-              <LeadConversionWidget facilityIds={facilityIds} />
-            )}
-
-            {/* Facility Performance Panel (Pro-gated) */}
-            <DashboardFacilityPerformancePanel isPro={proStatus.isPro} />
-
-            {/* Placement Opportunities Panel */}
-            <DashboardPlacementPanel facilityIds={facilityIds} isPro={proStatus.isPro} />
-
-            {/* Multi-Facility Overview (Pro only) */}
-            {proStatus?.isPro && facilities && facilities.length > 1 && (
-              <ProMultiFacilityOverview facilities={facilities} />
-            )}
+        {isLoading && !facility ? (
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="mt-3 h-9 w-16" />
+                <Skeleton className="mt-2 h-3 w-24" />
+              </div>
+            ))}
           </div>
-
-          {/* Right Column - Sidebar */}
-          <div className="lg:col-span-4 space-y-3 sm:space-y-4">
-
-            {/* Verification state — surfaces engine signals (badge paused,
-                license expiring, etc.). Top of the sidebar so providers
-                see it before lead-volume alerts. */}
-            {facilityId && <VerificationStateCard facilityId={facilityId} />}
-
-            {/* Alerts */}
-            <div className="space-y-2.5">
-              {/* Inquiries Available */}
-              {totalLeadsCount > 0 && (
-                <Card className="border-success/30 bg-success/5">
-                  <CardContent className="p-3.5">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-lg bg-success flex items-center justify-center shrink-0">
-                        <span className="text-sm font-bold text-white tabular-nums">{totalLeadsCount}</span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-foreground">
-                          <span className="tabular-nums">{totalLeadsCount}</span> Inquir{totalLeadsCount !== 1 ? 'ies' : 'y'}
-                        </p>
-                        <p className="text-xs text-muted-foreground">Tap to view full details</p>
-                      </div>
-                      <Button size="sm" className="h-9 sm:h-8 text-xs bg-success hover:bg-success/90" asChild>
-                        <Link to="/provider/inquiries">
-                          View
-                        </Link>
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Urgent Leads Alert — uses the server-side count so providers
-                  with more than the 4 most-recent leads still see the real
-                  number waiting 24h+. */}
-              {urgentLeadsCount > 0 && (
-                <Card className="border-l-2 border-l-warning">
-                  <CardContent className="p-3.5">
-                    <div className="flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-lg bg-warning/10 flex items-center justify-center shrink-0">
-                        <AlertTriangle className="h-4 w-4 text-warning" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-foreground">
-                          <span className="tabular-nums">{urgentLeadsCount}</span> Need Follow-up
-                        </p>
-                        <p className="text-xs text-muted-foreground">Waiting 24h+</p>
-                      </div>
-                      <Button size="sm" className="h-9 sm:h-8 text-xs bg-warning hover:bg-warning/90 text-warning-foreground" asChild>
-                        <Link to="/provider/inquiries?status=new">
-                          <Phone className="h-3.5 w-3.5 mr-1" />
-                          Call
-                        </Link>
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Profile Completion */}
-              {providerData?.facility && (() => {
-                const missingFields = computeMissingFields();
-                if (missingFields.length === 0) return null;
-                const currentFieldsKey = missingFields.join(",");
-                if (profilePromptDismissedFields === currentFieldsKey) return null;
-                
-                return (
-                  <Card className="border-dashed border-primary/30 bg-primary/5">
-                    <CardContent className="p-3.5">
-                      <div className="flex items-center gap-2.5">
-                        <FileEdit className="h-4 w-4 text-primary shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground">Complete Profile</p>
-                          <p className="text-xs text-muted-foreground">{missingFields.length} items missing</p>
-                        </div>
-                        <Button size="sm" className="h-9 sm:h-8 text-xs" asChild>
-                          <Link to="/provider/listings">Add</Link>
-                        </Button>
-                        <button
-                          onClick={(e) => handleDismissProfilePrompt(e, missingFields)}
-                          className="p-1.5 hover:bg-muted/50 rounded text-muted-foreground touch-manipulation"
-                          aria-label="Dismiss profile completion prompt"
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })()}
-
-              {/* Status Banner */}
-              {facility?.status !== "approved" && (
-                <Card className={cn("border-l-2", statusConfig.dotClass === 'bg-warning' ? "border-l-warning" : "border-l-muted-foreground")}>
-                  <CardContent className="p-3.5 flex items-center gap-3">
-                    <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center shrink-0", statusConfig.bgClass)}>
-                      <StatusIcon className={cn("h-4 w-4", statusConfig.textClass)} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <span className={cn("text-sm font-medium", statusConfig.textClass)}>{statusConfig.label}</span>
-                      {facility?.status === "pending" && (
-                        <p className="text-xs text-muted-foreground">Review: 24-48h</p>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+        ) : hasNoFacility ? (
+          /* Getting started — no facility yet */
+          <Card className="border-[#1B365D]/20 bg-[#1B365D]/[0.03]">
+            <CardContent className="flex flex-col items-start gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#1B365D]/10">
+                  <Building2 className="h-6 w-6 text-[#1B365D]" aria-hidden />
+                </div>
+                <div>
+                  <p className="text-base font-semibold text-slate-900">
+                    List your facility to get started
+                  </p>
+                  <p className="mt-0.5 max-w-md text-sm text-slate-600">
+                    Add your facility to appear in the directory, receive inquiries, and
+                    unlock your provider tools. It takes a few minutes.
+                  </p>
+                </div>
+              </div>
+              <Button asChild size="lg" className="gap-1.5 bg-[#1B365D] hover:bg-[#142a4a]">
+                <Link to="/provider/add-location">
+                  Add your facility <ArrowRight className="h-4 w-4" aria-hidden />
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <>
+            {/* ---- Stat row ---- */}
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+              <MetricCard
+                title="Locations"
+                value={totalFacilities}
+                subtitle={
+                  pendingCount > 0
+                    ? `${liveCount} live · ${pendingCount} pending`
+                    : `${liveCount} live`
+                }
+                icon={Building2}
+                iconBg="bg-[#1B365D]/10"
+                iconColor="text-[#1B365D]"
+                action={{ label: "Manage listings", href: "/provider/listings" }}
+              />
+              <MetricCard
+                title="Inquiries"
+                value={proStatus.isPro ? totalLeadsCount : "Pro"}
+                subtitle={
+                  proStatus.isPro
+                    ? urgentLeadsCount > 0
+                      ? `${urgentLeadsCount} need follow-up`
+                      : "All caught up"
+                    : "Upgrade to receive"
+                }
+                icon={Users}
+                iconBg="bg-emerald-100"
+                iconColor="text-emerald-700"
+                action={
+                  proStatus.isPro
+                    ? { label: "View inquiries", href: "/provider/inquiries" }
+                    : { label: "Upgrade to Pro", href: "/provider/billing?upgrade=pro" }
+                }
+              />
+              <MetricCard
+                title="Profile"
+                value={`${profilePct}%`}
+                subtitle={profilePct === 100 ? "Complete" : `${missingFields.length} item${missingFields.length !== 1 ? "s" : ""} left`}
+                icon={FileEdit}
+                iconBg="bg-violet-100"
+                iconColor="text-violet-700"
+                action={
+                  profilePct < 100
+                    ? { label: "Complete profile", href: "/provider/listings" }
+                    : undefined
+                }
+              />
+              <MetricCard
+                title="Reviews"
+                value={reviewCount}
+                subtitle={`${impressionCount.toLocaleString()} profile views`}
+                icon={Star}
+                iconBg="bg-amber-100"
+                iconColor="text-amber-600"
+                action={{ label: "Manage reviews", href: "/provider/reviews" }}
+              />
             </div>
 
-            {/* Performance Feedback Loop */}
-            {facilityId && <ProviderPerformanceFeedback facilityId={facilityId} />}
-
-            {/* Pro Benefits Widget */}
-            <ProBenefitsWidget />
-
-            {/* Quick Actions */}
-            <Card>
-              <CardHeader className="p-3.5 pb-2.5 border-b">
-                <CardTitle className="text-sm font-semibold">Quick Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="p-2.5">
-                <div className="grid grid-cols-2 gap-1.5">
-                  <Button variant="ghost" size="sm" className="justify-start h-8 text-xs px-2.5" asChild>
-                    <Link to="/provider/listings">
-                      <FileEdit className="h-3.5 w-3.5 mr-2" />
-                      Listing
-                    </Link>
-                  </Button>
-                  <Button variant="ghost" size="sm" className="justify-start h-8 text-xs px-2.5" asChild>
-                    <Link to="/provider/inquiries">
-                      <Users className="h-3.5 w-3.5 mr-2" />
-                      Inquiries
-                    </Link>
-                  </Button>
-                  <Button variant="ghost" size="sm" className="justify-start h-8 text-xs px-2.5" asChild>
-                    <Link to="/provider/analytics">
-                      <TrendingUp className="h-3.5 w-3.5 mr-2" />
-                      Analytics
-                    </Link>
-                  </Button>
-                  <Button variant="ghost" size="sm" className="justify-start h-8 text-xs px-2.5" asChild>
-                    <Link to="/provider/billing">
-                      <CreditCard className="h-3.5 w-3.5 mr-2" />
-                      Billing
-                    </Link>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Featured Analytics Widget - if Pro */}
-            {proStatus?.isPro && facility?.id && (
-              <FeaturedAnalyticsWidget facilityId={facility.id} />
-            )}
-          </div>
-
-          {/* Getting Started - No facility (spans both columns) */}
-          {hasNoFacility && (
-            <div className="lg:col-span-12">
-              <Card className="bg-primary/5 border-primary/20">
-                <CardContent className="p-5">
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3.5">
-                      <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <Building2 className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-base font-semibold text-foreground">Complete your listing</p>
-                        <p className="text-sm text-muted-foreground">Add facility info to start receiving leads</p>
-                      </div>
-                    </div>
-                    <Button size="sm" className="h-9 text-sm" asChild>
-                      <Link to="/provider/listings">
-                        Get Started <ArrowRight className="h-4 w-4 ml-1.5" />
+            {/* ---- Main grid ---- */}
+            <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+              {/* Left column */}
+              <div className="space-y-5 lg:col-span-2">
+                {/* Account & plan */}
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b py-3.5">
+                    <CardTitle className="text-sm font-semibold">Account &amp; plan</CardTitle>
+                    <Button asChild variant="ghost" size="sm" className="h-7 gap-1 text-xs text-[#1B365D]">
+                      <Link to="/provider/settings">
+                        Settings <ChevronRight className="h-3.5 w-3.5" />
                       </Link>
                     </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-        </div>
+                  </CardHeader>
+                  <CardContent className="p-4 sm:p-5">
+                    <div className="grid grid-cols-1 gap-y-3 sm:grid-cols-2 sm:gap-x-6 text-sm">
+                      <div>
+                        <p className="text-xs uppercase tracking-wide text-slate-500">Name</p>
+                        <p className="mt-0.5 font-medium text-slate-900">{accountName}</p>
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs uppercase tracking-wide text-slate-500">Email</p>
+                        <p className="mt-0.5 truncate font-medium text-slate-900">{profile?.email ?? "—"}</p>
+                      </div>
+                      {memberSince && (
+                        <div>
+                          <p className="text-xs uppercase tracking-wide text-slate-500">Member since</p>
+                          <p className="mt-0.5 font-medium text-slate-900">{memberSince}</p>
+                        </div>
+                      )}
+                      <div>
+                        <p className="text-xs uppercase tracking-wide text-slate-500">Plan</p>
+                        <p className="mt-0.5 font-medium text-slate-900">
+                          {proStatus.isPro ? "Pro" : "Free"}
+                          {proStatus.isPro && subscription?.billing_period
+                            ? ` · ${subscription.billing_period === "annual" ? "Annual" : "Monthly"}`
+                            : ""}
+                        </p>
+                      </div>
+                    </div>
 
-        {/* Lead Detail Drawer */}
-        <LeadDetailDrawer
-          lead={selectedLead}
-          open={drawerOpen}
-          onOpenChange={setDrawerOpen}
-        />
+                    {proStatus.isPro ? (
+                      <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-4">
+                        <p className="text-xs text-slate-600">
+                          {renewalDate ? `Renews ${renewalDate}` : "Active subscription"}
+                        </p>
+                        <Button asChild size="sm" variant="outline" className="gap-1.5">
+                          <Link to="/provider/billing">
+                            <CreditCard className="h-3.5 w-3.5" /> Manage billing
+                          </Link>
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50/60 p-3.5">
+                        <p className="text-sm font-medium text-slate-900">
+                          You're on the Free plan
+                        </p>
+                        <p className="mt-0.5 text-xs text-slate-600">
+                          Upgrade to Pro for inquiry delivery, analytics, a facility video,
+                          priority placement, and the RehabLookup Verified badge.
+                        </p>
+                        <Button asChild size="sm" className="mt-3 gap-1.5 bg-[#1B365D] hover:bg-[#142a4a]">
+                          <Link to="/provider/billing?upgrade=pro">
+                            <Sparkles className="h-3.5 w-3.5" /> Upgrade to Pro
+                          </Link>
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Your facilities */}
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b py-3.5">
+                    <CardTitle className="text-sm font-semibold">Your facilities</CardTitle>
+                    <Button asChild variant="ghost" size="sm" className="h-7 gap-1 text-xs text-[#1B365D]">
+                      <Link to="/provider/add-location">
+                        <Plus className="h-3.5 w-3.5" /> Add location
+                      </Link>
+                    </Button>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <ul className="divide-y divide-slate-100">
+                      {(facilities ?? []).map((f) => {
+                        const sc = getStatusConfig(f.status);
+                        return (
+                          <li key={f.id} className="flex items-center gap-3 px-4 py-3 sm:px-5">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100">
+                              <Building2 className="h-4 w-4 text-slate-500" aria-hidden />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-sm font-medium text-slate-900">{f.name}</p>
+                              <p className="truncate text-xs text-slate-500">
+                                {[f.city, f.state].filter(Boolean).join(", ") || "Location not set"}
+                              </p>
+                            </div>
+                            <span
+                              className={cn(
+                                "inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium",
+                                sc.bgClass,
+                                sc.textClass,
+                              )}
+                            >
+                              <span className={cn("h-1.5 w-1.5 rounded-full", sc.dotClass)} />
+                              {sc.label}
+                            </span>
+                            <Button asChild variant="ghost" size="sm" className="h-8 shrink-0 px-2 text-xs">
+                              <Link to={`/provider/listings?edit=${f.id}`}>Manage</Link>
+                            </Button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </CardContent>
+                </Card>
+
+                {/* Recent inquiries (Pro) OR profile checklist (incomplete) */}
+                {proStatus.isPro && recentLeads.length > 0 ? (
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b py-3.5">
+                      <CardTitle className="text-sm font-semibold">Recent inquiries</CardTitle>
+                      <Button asChild variant="ghost" size="sm" className="h-7 gap-1 text-xs text-[#1B365D]">
+                        <Link to="/provider/inquiries">
+                          View all <ChevronRight className="h-3.5 w-3.5" />
+                        </Link>
+                      </Button>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                      <ul className="divide-y divide-slate-100">
+                        {recentLeads.slice(0, 4).map((lead) => (
+                          <li key={lead.id}>
+                            <button
+                              type="button"
+                              onClick={() => handleLeadClick(lead)}
+                              className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-slate-50 sm:px-5"
+                            >
+                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-semibold text-emerald-700">
+                                {(lead.name || "?").charAt(0).toUpperCase()}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-sm font-medium text-slate-900">
+                                  {maskName(lead.name || "New inquiry")}
+                                </p>
+                                <p className="truncate text-xs text-slate-500">
+                                  {lead.level_of_care || lead.inquiry_type || "Inquiry"}
+                                  {lead.location_city_state ? ` · ${lead.location_city_state}` : ""}
+                                </p>
+                              </div>
+                              <span className="shrink-0 text-xs text-slate-400">
+                                {format(new Date(lead.created_at), "MMM d")}
+                              </span>
+                              <ChevronRight className="h-4 w-4 shrink-0 text-slate-300" aria-hidden />
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                  </Card>
+                ) : missingFields.length > 0 ? (
+                  <Card>
+                    <CardHeader className="border-b py-3.5">
+                      <CardTitle className="text-sm font-semibold">Finish your profile</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4 sm:p-5">
+                      <p className="text-xs text-slate-600">
+                        Complete profiles rank higher and convert more inquiries. You have{" "}
+                        {missingFields.length} item{missingFields.length !== 1 ? "s" : ""} left:
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-1.5">
+                        {missingFields.map((m) => (
+                          <span
+                            key={m}
+                            className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-slate-700"
+                          >
+                            <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+                            {m}
+                          </span>
+                        ))}
+                      </div>
+                      <Button asChild size="sm" className="mt-4 gap-1.5">
+                        <Link to="/provider/listings">
+                          <FileEdit className="h-3.5 w-3.5" /> Complete profile
+                        </Link>
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ) : null}
+              </div>
+
+              {/* Right column */}
+              <div className="space-y-5">
+                {facilityId && <VerificationStateCard facilityId={facilityId} />}
+
+                {/* Marketing & growth */}
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b py-3.5">
+                    <CardTitle className="text-sm font-semibold">Marketing &amp; growth</CardTitle>
+                    <Button asChild variant="ghost" size="sm" className="h-7 gap-1 text-xs text-[#1B365D]">
+                      <Link to="/provider/marketing">
+                        Open <ChevronRight className="h-3.5 w-3.5" />
+                      </Link>
+                    </Button>
+                  </CardHeader>
+                  <CardContent className="p-2">
+                    {[
+                      {
+                        icon: Megaphone,
+                        label: "Featured placements",
+                        href: "/provider/marketing/featured",
+                        active: hasFeatured,
+                        locked: !proStatus.isPro,
+                      },
+                      {
+                        icon: Users,
+                        label: "Concierge Partner",
+                        href: "/provider/marketing/concierge",
+                        active: hasConcierge,
+                        locked: !proStatus.isPro,
+                      },
+                      {
+                        icon: Code2,
+                        label: "Embed widgets",
+                        href: "/provider/embed-badge",
+                        active: false,
+                        locked: !proStatus.isPro || !isVerified,
+                      },
+                      {
+                        icon: ShieldCheck,
+                        label: "Credential kit",
+                        href: "/provider/credential-kit",
+                        active: false,
+                        locked: !proStatus.isPro || !isVerified,
+                      },
+                    ].map((row) => {
+                      const RowIcon = row.icon;
+                      return (
+                        <Link
+                          key={row.label}
+                          to={row.href}
+                          className="flex items-center gap-3 rounded-lg px-2.5 py-2.5 transition-colors hover:bg-slate-50"
+                        >
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100">
+                            <RowIcon className="h-4 w-4 text-slate-600" aria-hidden />
+                          </div>
+                          <span className="flex-1 truncate text-sm font-medium text-slate-800">
+                            {row.label}
+                          </span>
+                          {row.active ? (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
+                              <CheckCircle className="h-3 w-3" /> Active
+                            </span>
+                          ) : row.locked ? (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-400">
+                              <Lock className="h-3 w-3" /> Pro
+                            </span>
+                          ) : (
+                            <ChevronRight className="h-4 w-4 text-slate-300" aria-hidden />
+                          )}
+                        </Link>
+                      );
+                    })}
+                  </CardContent>
+                </Card>
+
+                {/* Upgrade card (Free only) */}
+                {!proStatus.isPro && (
+                  <Card className="border-amber-200 bg-gradient-to-br from-amber-50 to-white">
+                    <CardContent className="p-5">
+                      <div className="flex items-center gap-2">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100">
+                          <Sparkles className="h-4 w-4 text-amber-600" aria-hidden />
+                        </div>
+                        <p className="text-sm font-semibold text-slate-900">Upgrade to Pro</p>
+                      </div>
+                      <p className="mt-2 text-xs text-slate-600">$99/month — cancel anytime.</p>
+                      <ul className="mt-3 space-y-1.5 text-xs text-slate-700">
+                        {[
+                          "Inquiries delivered to your inbox",
+                          "Analytics + market reports",
+                          "Facility video & 10 photos",
+                          "Priority placement",
+                          "RehabLookup Verified badge",
+                        ].map((b) => (
+                          <li key={b} className="flex items-start gap-2">
+                            <CheckCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600" aria-hidden />
+                            <span>{b}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      <Button asChild className="mt-4 w-full gap-1.5 bg-[#1B365D] hover:bg-[#142a4a]">
+                        <Link to="/provider/billing?upgrade=pro">
+                          Upgrade to Pro <ArrowRight className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Quick links */}
+                <Card>
+                  <CardHeader className="border-b py-3.5">
+                    <CardTitle className="text-sm font-semibold">Quick links</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-2.5">
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {[
+                        { label: "Listings", href: "/provider/listings", icon: FileEdit },
+                        { label: "Inquiries", href: "/provider/inquiries", icon: Users },
+                        { label: "Analytics", href: "/provider/analytics", icon: TrendingUp },
+                        { label: "Reviews", href: "/provider/reviews", icon: Star },
+                        { label: "Billing", href: "/provider/billing", icon: CreditCard },
+                        { label: "Help", href: "/provider/help", icon: AlertCircle },
+                      ].map((q) => {
+                        const QIcon = q.icon;
+                        return (
+                          <Button
+                            key={q.href}
+                            asChild
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 justify-start px-2.5 text-xs"
+                          >
+                            <Link to={q.href}>
+                              <QIcon className="mr-2 h-3.5 w-3.5" aria-hidden /> {q.label}
+                            </Link>
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </>
+        )}
       </div>
+
+      {/* Lead Detail Drawer */}
+      <LeadDetailDrawer lead={selectedLead} open={drawerOpen} onOpenChange={setDrawerOpen} />
     </div>
   );
 }
