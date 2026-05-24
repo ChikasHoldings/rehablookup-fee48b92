@@ -828,6 +828,8 @@ function AdminClaimsReviewPanel() {
 
                           <VerificationPanel claim={claim} signedUrls={signedUrls} />
 
+                          <VerificationEnginePanel claimId={claim.id} />
+
                           <EnrichmentPreview claim={claim} />
 
                           {!isResolved && (
@@ -1091,6 +1093,274 @@ function VerificationPanel({
               );
             })}
           </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * VerificationEnginePanel
+ * ──────────────────────
+ * Surfaces the two-axis verification engine (verification_attempts +
+ * verification_signals) state for a single claim. Pulls the latest
+ * attempt and the per-signal audit log so reviewers see WHY a claim
+ * routed to manual review (which axis fell short, which rungs the
+ * claimant cleared).
+ */
+type EngineAttempt = {
+  id: string;
+  status: string;
+  legitimacy_score: number | null;
+  ownership_score: number | null;
+  confidence_score: number | null;
+  final_decision: string | null;
+  routed_to_review: boolean;
+  review_reasons: Array<{ rule: string; detail: string }> | null;
+  trigger_reason: string;
+  started_at: string;
+  completed_at: string | null;
+};
+
+type EngineSignal = {
+  id: string;
+  axis: "legitimacy" | "ownership";
+  signal_type: string;
+  score: number | null;
+  passed: boolean | null;
+  reasons: Array<{ rule: string; detail: string }> | null;
+  is_hard_fraud_signal: boolean;
+  created_at: string;
+};
+
+type EngineConfig = {
+  auto_approve_threshold: number;
+  legitimacy_min_threshold: number;
+  ownership_min_threshold: number;
+};
+
+function VerificationEnginePanel({ claimId }: { claimId: string }) {
+  const [attempt, setAttempt] = useState<EngineAttempt | null>(null);
+  const [signals, setSignals] = useState<EngineSignal[]>([]);
+  const [config, setConfig] = useState<EngineConfig | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      setLoading(true);
+      const [{ data: aRows }, { data: cfgRows }] = await Promise.all([
+        supabase
+          .from("verification_attempts")
+          .select(
+            "id,status,legitimacy_score,ownership_score,confidence_score,final_decision,routed_to_review,review_reasons,trigger_reason,started_at,completed_at",
+          )
+          .eq("claim_id", claimId)
+          .order("started_at", { ascending: false })
+          .limit(1),
+        supabase
+          .from("verification_config")
+          .select(
+            "auto_approve_threshold,legitimacy_min_threshold,ownership_min_threshold",
+          )
+          .eq("id", 1)
+          .maybeSingle(),
+      ]);
+      if (!mounted) return;
+      const a = (aRows?.[0] ?? null) as EngineAttempt | null;
+      setAttempt(a);
+      setConfig((cfgRows as EngineConfig | null) ?? null);
+      if (a?.id) {
+        const { data: sRows } = await supabase
+          .from("verification_signals")
+          .select(
+            "id,axis,signal_type,score,passed,reasons,is_hard_fraud_signal,created_at",
+          )
+          .eq("attempt_id", a.id)
+          .order("created_at", { ascending: true });
+        if (mounted) setSignals((sRows ?? []) as EngineSignal[]);
+      } else {
+        setSignals([]);
+      }
+      setLoading(false);
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [claimId]);
+
+  if (loading) {
+    return (
+      <div className="rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground">
+        Loading verification engine…
+      </div>
+    );
+  }
+  if (!attempt) {
+    return (
+      <div className="rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground">
+        No verification engine attempt for this claim yet.
+      </div>
+    );
+  }
+
+  const legitOK =
+    config != null &&
+    attempt.legitimacy_score != null &&
+    Number(attempt.legitimacy_score) >= Number(config.legitimacy_min_threshold);
+  const ownerOK =
+    config != null &&
+    attempt.ownership_score != null &&
+    Number(attempt.ownership_score) >= Number(config.ownership_min_threshold);
+  const combinedOK =
+    config != null &&
+    attempt.confidence_score != null &&
+    Number(attempt.confidence_score) >= Number(config.auto_approve_threshold);
+
+  const decisionBadge: {
+    label: string;
+    variant: "default" | "secondary" | "destructive" | "outline";
+  } = (() => {
+    if (attempt.final_decision === "auto_approved")
+      return { label: "Auto-approved", variant: "outline" };
+    if (attempt.final_decision === "manual_review")
+      return { label: "Manual review", variant: "secondary" };
+    if (attempt.final_decision === "rejected")
+      return { label: "Rejected", variant: "destructive" };
+    return { label: `In progress (${attempt.status})`, variant: "default" };
+  })();
+
+  return (
+    <div className="rounded-md border bg-muted/30 p-3 space-y-3">
+      <div className="flex items-center gap-2 flex-wrap">
+        <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+          Verification engine
+        </Label>
+        <Badge variant={decisionBadge.variant}>{decisionBadge.label}</Badge>
+        <Badge variant="outline" className="text-xs">
+          trigger: {attempt.trigger_reason}
+        </Badge>
+      </div>
+
+      <div className="grid gap-2 md:grid-cols-3 text-xs">
+        <div className="rounded border p-2 bg-background">
+          <div className="text-muted-foreground">Legitimacy</div>
+          <div className="text-lg font-medium">
+            {attempt.legitimacy_score != null
+              ? Number(attempt.legitimacy_score).toFixed(1)
+              : "—"}
+            <span className="text-muted-foreground text-sm">
+              {" "}
+              / {config?.legitimacy_min_threshold ?? "—"}
+            </span>
+          </div>
+          <Badge
+            variant={legitOK ? "outline" : "destructive"}
+            className="mt-1 text-[10px]"
+          >
+            {legitOK ? "above threshold" : "below threshold"}
+          </Badge>
+        </div>
+        <div className="rounded border p-2 bg-background">
+          <div className="text-muted-foreground">Ownership</div>
+          <div className="text-lg font-medium">
+            {attempt.ownership_score != null
+              ? Number(attempt.ownership_score).toFixed(1)
+              : "—"}
+            <span className="text-muted-foreground text-sm">
+              {" "}
+              / {config?.ownership_min_threshold ?? "—"}
+            </span>
+          </div>
+          <Badge
+            variant={ownerOK ? "outline" : "destructive"}
+            className="mt-1 text-[10px]"
+          >
+            {ownerOK ? "above threshold" : "below threshold"}
+          </Badge>
+        </div>
+        <div className="rounded border p-2 bg-background">
+          <div className="text-muted-foreground">Combined</div>
+          <div className="text-lg font-medium">
+            {attempt.confidence_score != null
+              ? Number(attempt.confidence_score).toFixed(1)
+              : "—"}
+            <span className="text-muted-foreground text-sm">
+              {" "}
+              / {config?.auto_approve_threshold ?? "—"}
+            </span>
+          </div>
+          <Badge
+            variant={combinedOK ? "outline" : "destructive"}
+            className="mt-1 text-[10px]"
+          >
+            {combinedOK ? "auto-approve cleared" : "below auto-approve"}
+          </Badge>
+        </div>
+      </div>
+
+      {attempt.review_reasons && attempt.review_reasons.length > 0 && (
+        <div>
+          <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+            Review reasons
+          </Label>
+          <ul className="mt-1 text-xs space-y-1 list-disc pl-4">
+            {attempt.review_reasons.map((r, i) => (
+              <li key={i}>
+                <span className="font-medium">{r.rule}</span>: {r.detail}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {signals.length > 0 && (
+        <div>
+          <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+            Signal audit ({signals.length})
+          </Label>
+          <div className="mt-1 border rounded overflow-hidden">
+            <table className="w-full text-xs">
+              <thead className="bg-background">
+                <tr>
+                  <th className="px-2 py-1 text-left">Axis</th>
+                  <th className="px-2 py-1 text-left">Signal</th>
+                  <th className="px-2 py-1 text-right">Score</th>
+                  <th className="px-2 py-1">Pass</th>
+                  <th className="px-2 py-1 text-left">Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {signals.map((s) => (
+                  <tr key={s.id} className="border-t">
+                    <td className="px-2 py-1">{s.axis}</td>
+                    <td className="px-2 py-1">
+                      {s.signal_type}
+                      {s.is_hard_fraud_signal && (
+                        <Badge
+                          variant="destructive"
+                          className="ml-1 text-[10px]"
+                        >
+                          hard fraud
+                        </Badge>
+                      )}
+                    </td>
+                    <td className="px-2 py-1 text-right">
+                      {s.score != null ? Number(s.score).toFixed(1) : "—"}
+                    </td>
+                    <td className="px-2 py-1 text-center">
+                      {s.passed === true ? "✓" : s.passed === false ? "✗" : "—"}
+                    </td>
+                    <td className="px-2 py-1 text-muted-foreground">
+                      {s.reasons && s.reasons.length > 0
+                        ? s.reasons[0].detail
+                        : "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>
