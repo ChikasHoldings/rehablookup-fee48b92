@@ -2690,13 +2690,14 @@ export type Database = {
           helpful_count: number
           id: string
           rating: number
+          review_request_id: string | null
           review_text: string | null
           reviewed_at: string | null
           reviewed_by: string | null
           reviewer_display_name: string | null
           status: string
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           admin_notes?: string | null
@@ -2706,13 +2707,14 @@ export type Database = {
           helpful_count?: number
           id?: string
           rating: number
+          review_request_id?: string | null
           review_text?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           reviewer_display_name?: string | null
           status?: string
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           admin_notes?: string | null
@@ -2722,13 +2724,14 @@ export type Database = {
           helpful_count?: number
           id?: string
           rating?: number
+          review_request_id?: string | null
           review_text?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           reviewer_display_name?: string | null
           status?: string
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -2743,6 +2746,13 @@ export type Database = {
             columns: ["facility_id"]
             isOneToOne: false
             referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "facility_reviews_review_request_id_fkey"
+            columns: ["review_request_id"]
+            isOneToOne: false
+            referencedRelation: "review_requests"
             referencedColumns: ["id"]
           },
         ]
@@ -5228,6 +5238,7 @@ export type Database = {
         Row: {
           clicked_at: string | null
           created_at: string
+          expires_at: string
           facility_id: string
           id: string
           opened_at: string | null
@@ -5243,6 +5254,7 @@ export type Database = {
         Insert: {
           clicked_at?: string | null
           created_at?: string
+          expires_at?: string
           facility_id: string
           id?: string
           opened_at?: string | null
@@ -5258,6 +5270,7 @@ export type Database = {
         Update: {
           clicked_at?: string | null
           created_at?: string
+          expires_at?: string
           facility_id?: string
           id?: string
           opened_at?: string | null
@@ -6977,6 +6990,14 @@ export type Database = {
           refund_amount_cents: number
         }[]
       }
+      create_review_request: {
+        Args: {
+          p_facility_id: string
+          p_recipient_email: string
+          p_recipient_name: string
+        }
+        Returns: Json
+      }
       current_auth_uid: { Args: never; Returns: string }
       current_user_email: { Args: never; Returns: string }
       enqueue_renewal_reminder: {
@@ -7051,6 +7072,11 @@ export type Database = {
           facility_count: number
           state_count: number
         }[]
+      }
+      get_embed_badge: { Args: { p_facility_id: string }; Returns: Json }
+      get_embed_reviews: {
+        Args: { p_facility_id: string; p_limit?: number }
+        Returns: Json
       }
       get_facility_leads_count: {
         Args: { p_facility_id: string }
@@ -7211,6 +7237,10 @@ export type Database = {
           zip_code: string
         }[]
       }
+      get_review_request_by_token: {
+        Args: { p_request_id: string }
+        Returns: Json
+      }
       get_seeker_emails_for_admin: {
         Args: never
         Returns: {
@@ -7352,6 +7382,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      mark_review_request_sent: {
+        Args: { p_request_id: string; p_resend_id: string }
+        Returns: undefined
+      }
       mark_stripe_webhook_event_processed: {
         Args: { p_error?: string; p_event_id: string; p_status?: string }
         Returns: undefined
@@ -7418,6 +7452,15 @@ export type Database = {
         Args: { p_user_email: string; p_user_id: string }
         Returns: undefined
       }
+      record_widget_impression: {
+        Args: {
+          p_facility_id: string
+          p_referrer_domain: string
+          p_size: string
+          p_widget_type: string
+        }
+        Returns: undefined
+      }
       regenerate_facility_descriptions_canonical: {
         Args: never
         Returns: number
@@ -7467,6 +7510,15 @@ export type Database = {
         }[]
       }
       state_code_to_name: { Args: { code: string }; Returns: string }
+      submit_review_via_token: {
+        Args: {
+          p_rating: number
+          p_request_id: string
+          p_review_text: string
+          p_reviewer_display_name: string
+        }
+        Returns: Json
+      }
       test_leads_provider_view_masks_non_owner: { Args: never; Returns: Json }
       title_case_with_acronyms: { Args: { input: string }; Returns: string }
       touch_admin_activity: { Args: { p_user_id: string }; Returns: undefined }

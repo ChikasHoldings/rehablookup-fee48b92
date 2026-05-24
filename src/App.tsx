@@ -353,6 +353,7 @@ const SeekerShell = lazy(() => import("./components/seeker/SeekerShell").then(m 
 const ProviderDashboardPage = lazy(() => import("./pages/provider/Dashboard"));
 const ProviderListingPage = lazy(() => import("./pages/provider/MyListings"));
 const ProviderEnhancedProfilePage = lazy(() => import("./pages/provider/EnhancedProfile"));
+const PublicReviewSubmissionPage = lazy(() => import("./pages/PublicReviewSubmission"));
 const ProviderInquiriesPage = lazy(() => import("./pages/provider/Inquiries"));
 const ProviderReviewsPage = lazy(() => import("./pages/provider/Reviews"));
 const ProviderAnalyticsPage = lazy(() => import("./pages/provider/Analytics"));
@@ -681,6 +682,11 @@ const AppInner = () => {
             <Route path="/rehab-centers/:stateSlug/:citySlug" element={<PublicRouteGuard><CityPage /></PublicRouteGuard>} />
             <Route path="/rehab-centers/:stateSlug" element={<PublicRouteGuard><StatePage /></PublicRouteGuard>} />
             <Route path="/center/:slug" element={<PublicRouteGuard><CenterProfile /></PublicRouteGuard>} />
+            {/* Tokenized review-request landing — anon, no auth. The
+                page calls SECURITY DEFINER RPCs for read + submit, so
+                no client-side gating is needed (and tampering can't
+                escape the server-side token validation). */}
+            <Route path="/review/:id" element={<PublicReviewSubmissionPage />} />
             <Route path="/treatment-types" element={<PublicRouteGuard><TreatmentTypes /></PublicRouteGuard>} />
             <Route path="/treatment-types/drug-addiction" element={<Navigate to="/treatment-types/drug-addiction-treatment" replace />} />
             <Route path="/treatment-types/drug-addiction-treatment" element={<PublicRouteGuard><DrugAddictionTreatment /></PublicRouteGuard>} />

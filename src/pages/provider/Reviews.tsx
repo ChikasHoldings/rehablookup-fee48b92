@@ -24,6 +24,7 @@ import {
   ArrowUpDown,
   Search,
   CheckCircle2,
+  Mail,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -31,6 +32,8 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { ReviewStatsCards } from '@/components/provider/reviews/ReviewStatsCards';
 import { ProviderReviewCard } from '@/components/provider/reviews/ProviderReviewCard';
 import { FlagReviewDialog } from '@/components/provider/reviews/FlagReviewDialog';
+import { ReviewRequestDialog } from '@/components/provider/reviews/ReviewRequestDialog';
+import { ReviewRequestHistory } from '@/components/provider/reviews/ReviewRequestHistory';
 import { PaginationFooter } from '@/components/common/PaginationFooter';
 import { usePagination } from '@/hooks/usePagination';
 
@@ -64,6 +67,10 @@ export default function ProviderReviews() {
 
   const [selectedTab, setSelectedTab] = useState('all');
   const [facilityFilter, setFacilityFilter] = useState<string>("all");
+  // Review-request invite dialog state. Lives at the page level so the
+  // hero CTA can open it and the dialog handles its own form state +
+  // submit via the send-review-request edge function.
+  const [reviewRequestOpen, setReviewRequestOpen] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>('newest');
   const [disputeDialogOpen, setDisputeDialogOpen] = useState(false);
   const [selectedReviewForDispute, setSelectedReviewForDispute] = useState<ProviderReview | null>(null);
@@ -217,6 +224,15 @@ export default function ProviderReviews() {
                 }
               </p>
             </div>
+            {facilities.length > 0 && (
+              <Button
+                onClick={() => setReviewRequestOpen(true)}
+                className="gap-2 bg-[#1B365D] hover:bg-[#142a4a] shrink-0 self-start sm:self-auto"
+              >
+                <Mail className="h-4 w-4" aria-hidden />
+                Request a review
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -285,6 +301,19 @@ export default function ProviderReviews() {
 
       {/* Stats Cards */}
       <ReviewStatsCards stats={filteredStats} />
+
+      {/* Review-request history — funnel view of past invites. Shows
+          nothing until the provider has sent at least one, then surfaces
+          status badges (Pending / Sent / Submitted / Expired) per row. */}
+      {facilities.length > 0 && (
+        <ReviewRequestHistory
+          facilityIds={
+            facilityFilter === "all"
+              ? facilities.map((f) => f.id)
+              : [facilityFilter]
+          }
+        />
+      )}
 
       {/* Rating Distribution */}
       {scopedTotal > 0 && (
@@ -472,6 +501,15 @@ export default function ProviderReviews() {
         onSubmit={handleSubmitDispute}
       />
 
+      {/* Send-a-review invite dialog. Pre-selects the active facility
+          filter (if any) so a provider drilled into one location's
+          reviews doesn't have to re-pick on the form. */}
+      <ReviewRequestDialog
+        open={reviewRequestOpen}
+        onOpenChange={setReviewRequestOpen}
+        facilities={facilities.map((f) => ({ id: f.id, name: f.name }))}
+        defaultFacilityId={facilityFilter !== "all" ? facilityFilter : undefined}
+      />
 
       </div>
     </div>
