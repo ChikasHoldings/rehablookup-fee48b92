@@ -26,7 +26,7 @@ export interface AddLocationDraft {
   website: string;
   bed_count: string;
   year_established: string;       // captured as text so empty is "", normalize on submit
-  accepting_admissions: "" | "yes" | "no" | "waitlist";
+  accepting_admissions: "" | "yes" | "no";
 
   // Step 2 — treatment details
   levels_of_care: string[];

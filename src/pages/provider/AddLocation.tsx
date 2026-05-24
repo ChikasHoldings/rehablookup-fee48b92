@@ -178,14 +178,13 @@ const ACCESSIBILITY_FEATURES = [
 ] as const;
 
 const GENDER_OPTIONS = [
-  { value: "All", label: "All genders" },
-  { value: "Men", label: "Men only" },
-  { value: "Women", label: "Women only" },
+  { value: "All Genders", label: "All genders" },
+  { value: "Men Only", label: "Men only" },
+  { value: "Women Only", label: "Women only" },
 ] as const;
 
 const ADMISSIONS_OPTIONS = [
   { value: "yes", label: "Yes — currently accepting" },
-  { value: "waitlist", label: "Waitlist only" },
   { value: "no", label: "Not currently accepting" },
 ] as const;
 
@@ -382,16 +381,11 @@ export default function AddLocationPage() {
         insertPayload.hours_of_operation = draft.hours_of_operation.trim();
       if (draft.accessibility_features.length > 0)
         insertPayload.accessibility_features = draft.accessibility_features;
-      // accepting_admissions: "" stays unset, "yes" → true, "no" / "waitlist" → false.
-      // The public page exposes the boolean only — waitlist is a UI nuance the
-      // provider can elaborate in the description; we route both no + waitlist
-      // to false so the public page does not advertise availability.
+      // accepting_admissions: "" stays unset (NULL hides the badge),
+      // "yes" → true, "no" → false. Schema is boolean only.
       if (draft.accepting_admissions === "yes") {
         insertPayload.accepting_admissions = true;
-      } else if (
-        draft.accepting_admissions === "no" ||
-        draft.accepting_admissions === "waitlist"
-      ) {
+      } else if (draft.accepting_admissions === "no") {
         insertPayload.accepting_admissions = false;
       }
       if (draft.year_established) {
@@ -999,7 +993,7 @@ function Step1Identity({
           onValueChange={(v) =>
             updateField(
               "accepting_admissions",
-              v as "" | "yes" | "no" | "waitlist",
+              v as "" | "yes" | "no",
             )
           }
         >
