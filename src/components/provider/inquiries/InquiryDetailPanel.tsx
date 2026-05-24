@@ -114,14 +114,30 @@ export function InquiryDetailPanel({ inquiry }: InquiryDetailPanelProps) {
       // Skip when status reverts to pending — that's a correction, not a
       // response.
       if (status !== "pending") {
+        // Route tour requests through the tour-aware notification
+        // function so the seeker gets tour-specific copy ("your tour
+        // proposal is being scheduled") instead of the generic
+        // "facility_contacted_you" email. Earlier this branch always
+        // hit send-seeker-emails, so a provider acknowledging a tour
+        // request silently sent the wrong template.
+        const isTour = inquiry.inquiry_type === "tour_request";
+        const fnName = isTour ? "send-tour-notifications" : "send-seeker-emails";
+        const body = isTour
+          ? { type: "tour_proposed", leadId: inquiry.id }
+          : { type: "facility_contacted_you", leadId: inquiry.id };
         void supabase.functions
-          .invoke("send-seeker-emails", {
-            body: { type: "facility_contacted_you", leadId: inquiry.id },
-          })
+          .invoke(fnName, { body })
           .catch((err) => {
-            // Logging-only — best-effort; do not block the provider's
-            // status-change toast on an email-send hiccup.
-            console.warn("[InquiryDetailPanel] seeker notification failed", err);
+            // Best-effort: the status update itself succeeded; only the
+            // seeker notification stumbled. Surface a non-blocking
+            // warning toast so the provider knows the seeker may need a
+            // manual follow-up rather than the silent log we used to
+            // emit. (Network panel still captures the actual error for
+            // ops triage.)
+            console.warn(`[InquiryDetailPanel] ${fnName} failed`, err);
+            toast.warning(
+              "Status saved, but we couldn't send the seeker notification. Reach out directly to confirm.",
+            );
           });
       }
     },
@@ -155,7 +171,7 @@ export function InquiryDetailPanel({ inquiry }: InquiryDetailPanelProps) {
   ];
 
   return (
-    <div className="h-full flex flex-col bg-card">
+    <div className="h-full flex flex-col bg-white">
       {/* Header */}
       <div className="flex-shrink-0 p-4 border-b">
         <div className="flex items-center justify-between gap-3">
@@ -284,7 +300,13 @@ export function InquiryDetailPanel({ inquiry }: InquiryDetailPanelProps) {
                       currentStatus === status && activeClass,
                     )}
                     onClick={() => handleStatusClick(status)}
-                    disabled={updateStatus.isPending}
+                    // Only disable the sibling buttons during a pending
+                    // mutation, not the one the user actively clicked
+                    // (that one shows its own spinner). Previously the
+                    // shared `disabled={isPending}` gray-blocked the
+                    // whole row, making it look like nothing was
+                    // responding.
+                    disabled={updateStatus.isPending && pendingStatus !== status}
                     aria-label={`Mark inquiry as ${label.toLowerCase()}`}
                     aria-pressed={currentStatus === status}
                   >
@@ -305,7 +327,10 @@ export function InquiryDetailPanel({ inquiry }: InquiryDetailPanelProps) {
                   size="sm"
                   className="gap-1.5 text-muted-foreground hover:text-foreground"
                   onClick={() => handleStatusClick("pending")}
-                  disabled={updateStatus.isPending}
+                  // Match the per-button disable rule on the status
+                  // trio above — the Revert button stays clickable
+                  // unless ITS own revert is mid-flight.
+                  disabled={updateStatus.isPending && pendingStatus !== "pending"}
                   aria-label="Revert to pending"
                 >
                   {updateStatus.isPending && pendingStatus === "pending" ? (

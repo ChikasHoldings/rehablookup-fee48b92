@@ -52,9 +52,16 @@ export function InquiryListItem({ inquiry, isSelected, onClick }: InquiryListIte
         isSelected && "bg-primary/5 border-l-2 border-l-primary"
       )}
     >
-      {/* Status indicator dot */}
+      {/* Status indicator dot. role + aria-label so screen readers
+          announce the status — the colored pill alone is invisible
+          to them. */}
       <div className="flex-shrink-0 mt-1.5">
-        <div className={cn("h-2.5 w-2.5 rounded-full", status.color)} title={status.label} />
+        <div
+          className={cn("h-2.5 w-2.5 rounded-full", status.color)}
+          title={status.label}
+          role="img"
+          aria-label={`Status: ${status.label}`}
+        />
       </div>
 
       {/* Content */}

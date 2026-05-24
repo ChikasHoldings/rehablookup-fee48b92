@@ -1,8 +1,15 @@
 import { Badge } from "@/components/ui/badge";
-import { Info, Phone } from "lucide-react";
+import { Info, Phone, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type InquiryType = 'request_info' | 'request_callback';
+// `tour_request` added 2026-05-24 — previously the union was missing
+// this value and tour-request leads silently fell through to the
+// "Request Info" default, so the provider couldn't visually
+// distinguish tour requests from generic info requests. See also
+// InquiryDetailPanel.tsx which now branches on the same value to
+// route tour confirmations through send-tour-notifications instead of
+// the generic facility-contacted-you path.
+export type InquiryType = 'request_info' | 'request_callback' | 'tour_request';
 
 interface InquiryTypeBadgeProps {
   type: InquiryType | string | null | undefined;
@@ -24,6 +31,11 @@ const INQUIRY_CONFIG: Record<InquiryType, {
     label: "Request Callback",
     icon: Phone,
     className: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 hover:bg-emerald-100",
+  },
+  tour_request: {
+    label: "Tour Request",
+    icon: Calendar,
+    className: "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300 hover:bg-violet-100",
   },
 };
 
