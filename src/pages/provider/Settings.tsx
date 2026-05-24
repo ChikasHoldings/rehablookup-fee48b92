@@ -148,9 +148,11 @@ export default function ProviderSettingsPage() {
   // Delete account states
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
-  
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
   // Sign out all sessions state
   const [isSigningOutAll, setIsSigningOutAll] = useState(false);
+  const [showSignOutAllDialog, setShowSignOutAllDialog] = useState(false);
   
   // Notification states
   const [emailLeadAlerts, setEmailLeadAlerts] = useState(true);
@@ -671,12 +673,10 @@ export default function ProviderSettingsPage() {
         throw new Error(response.error.message || "Failed to delete account");
       }
 
-      // Log activity before sign out
-      await logActivity.mutateAsync({
-        userId: session.user.id,
-        eventType: "account_deleted",
-        eventDescription: "Account permanently deleted",
-      }).catch(() => {}); // Ignore errors as account is being deleted
+      // No client-side activity log here — delete-provider-account wipes
+      // account_activity_log for this user_id seconds before the auth row
+      // disappears (see edge function lines ~249-253), so any row we
+      // insert from here is overwritten before anyone can read it.
 
       toast({
         title: "Account deleted",
@@ -728,6 +728,7 @@ export default function ProviderSettingsPage() {
         description: "You have been signed out from all devices.",
       });
 
+      setShowSignOutAllDialog(false);
       navigate("/login");
     } catch (error) {
       console.error("Error signing out:", error);
@@ -1266,21 +1267,61 @@ export default function ProviderSettingsPage() {
                     </div>
                   </div>
                 </div>
-                <div className="flex justify-end">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="gap-2 text-muted-foreground"
-                    onClick={handleSignOutAllSessions}
-                    disabled={isSigningOutAll}
-                  >
-                    {isSigningOutAll ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <LogOut className="h-4 w-4" />
-                    )}
-                    Sign Out All Sessions
-                  </Button>
+                <div className="flex flex-col gap-1.5 sm:items-end">
+                  <p className="text-xs text-muted-foreground sm:text-right">
+                    Need to manage individual devices? See the{" "}
+                    <button
+                      type="button"
+                      onClick={() => handleTabChange("sessions")}
+                      className="text-primary underline-offset-2 hover:underline"
+                    >
+                      Sessions
+                    </button>{" "}
+                    tab.
+                  </p>
+                  <AlertDialog open={showSignOutAllDialog} onOpenChange={setShowSignOutAllDialog}>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-2 text-muted-foreground"
+                        disabled={isSigningOutAll}
+                      >
+                        {isSigningOutAll ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <LogOut className="h-4 w-4" />
+                        )}
+                        Sign Out All Sessions
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Sign out from every device?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This signs you out on this device and every other
+                          device you're currently logged in on. You'll need to
+                          sign in again on each of them.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel disabled={isSigningOutAll}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleSignOutAllSessions();
+                          }}
+                          disabled={isSigningOutAll}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90 gap-2"
+                        >
+                          {isSigningOutAll ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : null}
+                          Sign out everywhere
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </CardContent>
             </Card>
@@ -1304,7 +1345,21 @@ export default function ProviderSettingsPage() {
                       Permanently delete your account and all associated data
                     </p>
                   </div>
-                  <AlertDialog>
+                  <AlertDialog
+                    open={showDeleteDialog}
+                    onOpenChange={(open) => {
+                      // Mid-deletion, ignore close attempts — the request is
+                      // already in flight and the dialog disables its own
+                      // close paths.
+                      if (isDeletingAccount && !open) return;
+                      setShowDeleteDialog(open);
+                      // Always reset the typed confirmation when the dialog
+                      // closes so reopening starts blank — without this,
+                      // typing DELETE then closing left "DELETE" sitting in
+                      // state and a one-click reopen-and-confirm path open.
+                      if (!open) setDeleteConfirmText("");
+                    }}
+                  >
                     <AlertDialogTrigger asChild>
                       <Button variant="destructive" size="sm" className="gap-2">
                         <Trash2 className="h-4 w-4" />
@@ -1315,11 +1370,11 @@ export default function ProviderSettingsPage() {
                       <AlertDialogHeader>
                         <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                         <AlertDialogDescription className="space-y-3">
-                          <p>
-                            This action cannot be undone. This will permanently delete your account, 
+                          <span className="block">
+                            This action cannot be undone. This will permanently delete your account,
                             facility listing, leads, and all associated data from our servers.
-                          </p>
-                          <div className="space-y-2">
+                          </span>
+                          <span className="block space-y-2">
                             <Label htmlFor="deleteConfirm" className="text-sm font-medium text-foreground">
                               Type DELETE to confirm
                             </Label>
@@ -1329,13 +1384,15 @@ export default function ProviderSettingsPage() {
                               onChange={(e) => setDeleteConfirmText(e.target.value)}
                               placeholder="DELETE"
                               className="font-mono"
+                              disabled={isDeletingAccount}
+                              autoComplete="off"
                             />
-                          </div>
+                          </span>
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel onClick={() => setDeleteConfirmText("")}>Cancel</AlertDialogCancel>
-                        <Button 
+                        <AlertDialogCancel disabled={isDeletingAccount}>Cancel</AlertDialogCancel>
+                        <Button
                           variant="destructive"
                           onClick={handleDeleteAccount}
                           disabled={isDeletingAccount || deleteConfirmText !== "DELETE"}

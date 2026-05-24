@@ -45,13 +45,21 @@ export async function logActivity({ eventType, description, metadata }: LogActiv
   }
 }
 
-// React Query mutation hook for provider settings
+// React Query mutation hook for provider settings.
+//
+// Routes through the same SECURITY DEFINER RPC as the seeker-side
+// `logActivity` helper above. Previous implementation did a direct
+// `from('account_activity_log').insert(...)` which is blocked by RLS
+// (only service_role can INSERT) and was silently failing every call —
+// the Activity tab was missing every provider-initiated event as a
+// result. `userId` is kept in the signature for caller compatibility
+// and for the post-success cache invalidation, but the RPC ignores
+// any client-supplied id and uses `auth.uid()` server-side.
 export const useLogActivity = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({
-      userId,
       eventType,
       eventDescription,
       metadata,
@@ -61,12 +69,11 @@ export const useLogActivity = () => {
       eventDescription: string;
       metadata?: Record<string, Json>;
     }) => {
-      const { error } = await supabase.from("account_activity_log").insert([{
-        user_id: userId,
-        event_type: eventType,
-        event_description: eventDescription,
-        metadata: (metadata || {}) as Json,
-      }]);
+      const { error } = await supabase.rpc("log_account_activity", {
+        p_event_type: eventType,
+        p_event_description: eventDescription,
+        p_metadata: (metadata || {}) as Json,
+      });
 
       if (error) throw error;
       return { success: true };
