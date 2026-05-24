@@ -20,7 +20,13 @@ interface MobileBottomNavProps {
 const navItems = [
   { href: "/provider/dashboard", label: "Home", icon: Home },
   { href: "/provider/inquiries", label: "Leads", icon: Users },
-  { href: "/provider/placement-network", label: "Placement", icon: Network },
+  // The legacy /provider/placement-network route was retired in the
+  // monetization rebuild — App.tsx still redirects it to /marketing
+  // for backlinks but mobile users tapping the tab were silently
+  // hitting that redirect. Point straight at the concierge management
+  // surface (which is where pendingDomesticCount tells them to act)
+  // so the tap lands them on a real page.
+  { href: "/provider/marketing/concierge", label: "Concierge", icon: Network },
   { href: "/provider/listings", label: "Listings", icon: Building2 },
 ];
 
@@ -62,7 +68,7 @@ export function MobileBottomNav({ onMoreClick }: MobileBottomNavProps) {
           const isActive = location.pathname === item.href;
           const Icon = item.icon;
           const isLeadsItem = item.href === "/provider/inquiries";
-          const isPlacementItem = item.href === "/provider/placement-network";
+          const isPlacementItem = item.href === "/provider/marketing/concierge";
           const showBadge = (isLeadsItem && pendingInquiriesCount > 0) || (isPlacementItem && totalPlacementCount > 0);
           const badgeCount = isLeadsItem ? pendingInquiriesCount : totalPlacementCount;
 

@@ -42,7 +42,11 @@ const categories = [
   { id: "getting-started", name: "Getting Started", icon: BookOpen, color: "bg-blue-500" },
   { id: "listing", name: "Managing Your Listing", icon: FileText, color: "bg-green-500" },
   { id: "leads", name: "Leads & Plans", icon: Users, color: "bg-purple-500" },
-  { id: "placements", name: "Placement Network", icon: Handshake, color: "bg-teal-500" },
+  // Category id "placements" intentionally preserved so existing
+  // ?category=placements links (from Help.tsx helpTopics and any
+  // outbound documentation) keep working — only the display name
+  // updates to the current product (Concierge Partner).
+  { id: "placements", name: "Concierge Partner", icon: Handshake, color: "bg-teal-500" },
   { id: "billing", name: "Billing & Pro", icon: CreditCard, color: "bg-amber-500" },
   { id: "analytics", name: "Analytics & Insights", icon: TrendingUp, color: "bg-cyan-500" },
   { id: "account", name: "Account & Security", icon: Shield, color: "bg-red-500" },
@@ -363,146 +367,118 @@ Enable **instant email notifications** and keep your email open during business 
     updatedAt: "2026-04-09"
   },
 
-  // ── Placement Network ──
+  // ── Concierge Partner ──
+  // The legacy success-based Placement Network was retired in the
+  // 2026-05 monetization rebuild and replaced with the Concierge
+  // Add-On — a flat $1,000/mo subscription. These articles describe
+  // the current product. (Article IDs renamed to match.)
   {
-    id: "placement-overview",
-    title: "Placement Network Overview",
-    excerpt: "How our concierge team matches pre-screened families to your facility — and how you get paid.",
+    id: "concierge-overview",
+    title: "Concierge Partner Overview",
+    excerpt: "How human advisors match pre-screened families to your facility — flat fee, EKRA-clean, no per-admission charges.",
     content: `
-# Placement Network Overview
+# Concierge Partner Overview
 
-The Placement Network is a premium referral channel where our concierge team connects pre-screened, treatment-ready families with your facility.
+The Concierge Partner Add-On is a premium surface that puts your facility in front of pre-screened, treatment-ready families when our human advisors match a case to your geography and accepted levels of care.
 
 ## How It Works
 
-1. **Family Submits Request** — A family completes a detailed intake form describing their needs, insurance, location preferences, and urgency
-2. **We Match Cases** — Our concierge team reviews the intake and matches it to facilities that fit the clinical and logistical criteria
-3. **You Receive an Introduction** — Matched cases appear in your **Placements** tab with anonymized details (case ID, care needs, insurance, location)
-4. **You Respond** — Mark the case as "Interested" or "Not Interested"
-5. **Coordination** — If interested, our team facilitates introductions, tour scheduling, and admission coordination
-6. **EKRA-compliant matching** — Advisors always present at least two non-partner alternatives alongside any Concierge partner
+1. **Family submits intake** — A seeker completes a detailed intake form (location, insurance, levels of care, urgency).
+2. **An advisor reviews** — A RehabLookup care advisor reads the intake and shortlists facilities that fit the clinical and logistical criteria.
+3. **You receive an introduction** — Matched cases appear on the Inquiries page with full contact details. You also get an email + in-app notification.
+4. **You respond** — Mark each case Interested or Not interested. If interested, you can call/text the family directly.
+5. **Coordination** — Our advisor stays in the loop to help with tour scheduling and admission questions when asked.
 
-## Key Benefits
+## EKRA-safe by design
 
-- **No per-placement fees** — Whether you're on Free, Pro, or have the Concierge Add-On, there are no per-admission charges
-- **Pre-screened families** — Our team verifies insurance, readiness, and fit before matching
-- **Higher conversion** — Qualified referrals convert at significantly higher rates than cold leads
-- **Concierge Add-On** ($1,000/mo, Pro-only) adds a verified-partner badge in advisor matching
+Advisors always present at least two non-partner alternatives alongside any Concierge partner. Pricing is a flat subscription — never per-call, per-lead, or per-admission. The whole product is built to keep your operations clean under 18 U.S.C. § 220.
+
+## What you pay
+
+- **Flat $1,000/month** for the Concierge Add-On (Pro-only, billed via Stripe).
+- **No per-admission, per-call, or per-lead fees** — ever.
+- **No commission** on placements.
+- The add-on is independent of your Pro subscription — you can cancel it at any time without losing Pro itself.
     `,
     category: "placements",
-    tags: ["placements", "concierge", "referrals", "network"],
+    tags: ["concierge", "referrals", "EKRA", "add-on"],
     readTime: 5,
-    updatedAt: "2026-04-12"
+    updatedAt: "2026-05-24"
   },
   {
-    id: "joining-placement-network",
-    title: "How to Join the Placement Network",
-    excerpt: "Step-by-step guide to opting in, setting your admissions criteria, and receiving your first introductions.",
+    id: "becoming-concierge-partner",
+    title: "Becoming a Concierge Partner",
+    excerpt: "Step-by-step guide to subscribing, setting your service area, and configuring the levels of care you accept.",
     content: `
-# How to Join the Placement Network
+# Becoming a Concierge Partner
 
-Joining is free and takes just a few minutes.
+The add-on activates instantly once you're subscribed. Setup takes about 5 minutes.
 
-## Steps to Opt In
+## Prerequisites
 
-1. Navigate to **Placement Network** in the sidebar
-2. Click **"Join the Network"** or **"Opt In"**
-3. Complete your admissions profile:
-   - **Admissions contact** — Name, email, and phone for the person who handles admissions
-   - **Accepted care types** — Residential, PHP, IOP, Detox, Sober Living, etc.
-   - **Accepted insurance** — List the insurance providers you work with
-   - **Availability status** — Whether you currently have open beds
-4. Review and accept the placement terms
-5. Start receiving matched introductions
+1. **Pro subscription** — Concierge is a Pro-only add-on. Subscribe to Pro from **Subscription** in the sidebar if you haven't already.
+2. **Verified facility profile** — Your listing must be approved by admin (typically same business day after onboarding).
 
-## Managing Your Availability
+## Steps to subscribe
 
-You can update your availability status at any time:
-- **Available** — Actively accepting new placements
-- **Limited** — Taking cases selectively
-- **Unavailable** — Temporarily pausing new introductions
+1. Navigate to **Marketing → Concierge Partner**.
+2. Click **Become a Concierge Partner**.
+3. Complete Stripe checkout for the $1,000/month add-on.
+4. Configure your concierge geography:
+   - **Service areas** — Cities or states where you accept new admissions.
+   - **Levels of care** — Residential, PHP, IOP, Detox, Sober Living, Telehealth, Outpatient.
+   - **Capacity cap** — Optional monthly intro limit so the advisor team doesn't overwhelm your admissions line.
+5. Add an admissions contact (name + phone + email) so the family knows who to call when matched.
 
-## Admissions Contact
+## Pausing or stopping
 
-Make sure your admissions contact info is up to date. This is the person our concierge team will reach out to when coordinating a placement.
+You can pause new introductions at any time from the Concierge management panel — useful when you're at capacity. Cancel the add-on entirely from **Subscription → Manage add-ons**; Pro stays active.
     `,
     category: "placements",
-    tags: ["opt-in", "admissions", "setup", "availability"],
+    tags: ["onboarding", "concierge", "geography", "levels-of-care"],
     readTime: 4,
-    updatedAt: "2026-04-10"
+    updatedAt: "2026-05-24"
   },
   {
-    id: "responding-to-introductions",
-    title: "Responding to Placement Introductions",
-    excerpt: "What you see when a case is matched to you, how to review it, and how to respond.",
+    id: "responding-to-concierge-intros",
+    title: "Responding to Concierge Introductions",
+    excerpt: "What lands when an advisor matches a family to your facility, how to review it, and what counts as a good response.",
     content: `
-# Responding to Placement Introductions
+# Responding to Concierge Introductions
 
-When our concierge team matches a case to your facility, here's what happens.
+When a RehabLookup care advisor matches a family to your facility, here's what happens on your end.
 
-## What You'll See
+## Where it shows up
 
-Each introduction includes:
-- **Case ID** — An anonymized reference number
-- **Care needs** — Primary concern, level of care, co-occurring conditions
-- **Insurance** — Carrier and coverage details
-- **Location** — General area the family is searching in
-- **Urgency** — How quickly the family needs placement
+Every concierge introduction lands in three places at once:
+- **Inquiries** — The full case appears on the same queue as your direct leads (filterable by inquiry type).
+- **Notifications** — An in-app notification with the case summary.
+- **Email + SMS** — If you've enabled those channels in Settings → Notifications.
 
-Contact details (name, email, phone) are **not** shared until you express interest and our team facilitates the introduction.
+## What you'll see
 
-## How to Respond
+Each intro includes:
+- **Family contact details** — Name, phone, email (full contact, not anonymized — you're a verified partner).
+- **Care needs** — Primary concern, level of care, co-occurring conditions.
+- **Insurance** — Carrier and coverage estimate.
+- **Location** — Where the family is searching.
+- **Urgency** — How quickly they need admission.
 
-1. Go to **Placements** in the sidebar
-2. Review the case details
-3. Click **"Interested"** to move forward, or **"Not Interested"** to pass
-4. If interested, add any notes about availability or questions for our team
+## How to respond
 
-## What Happens Next
+1. Open the inquiry from your Leads page.
+2. Mark it **Interested** or **Not interested**.
+3. If interested, call or email the family within 2 business hours — concierge cases convert significantly better when the first response is fast.
+4. Add notes back in the inquiry record so the advisor team knows the outcome (toured, admitted, declined).
 
-- Our concierge team contacts the family and shares your facility information
-- Tour coordination begins (virtual or in-person)
-- If the family chooses your facility, admission is coordinated
-- The placement fee is invoiced only after successful admission
+## What good looks like
 
-## Response Time
-
-Respond to introductions promptly. Families in the placement pipeline are actively making decisions, and delays can mean losing a case to another facility.
+The strongest concierge partners respond within an hour, follow up with a tour offer, and keep the inquiry notes current so the advisor can step in if the family has follow-up questions. Your response rate and outcome metrics are visible on your Analytics page.
     `,
     category: "placements",
     tags: ["introductions", "response", "coordination", "cases"],
-    readTime: 5,
-    updatedAt: "2026-04-12"
-  },
-  {
-    id: "placement-billing",
-    title: "Placement Fees & Billing",
-    excerpt: "When fees are charged, how much they cost, and how Pro members save on every placement.",
-    content: `
-# Placement Fees & Billing
-
-The Placement Network uses a success-based billing model — you only pay when a patient is admitted.
-
-## Fee Structure
-
-- **Domestic placements** — A standard placement fee is charged upon admission
-- **International placements** — A premium placement fee applies for international cases
-- **EKRA compliance** — Advisors always present at least two non-partner alternatives alongside any Concierge partner, so families have a real choice
-
-## When You're Charged
-
-Nothing. The Concierge Add-On is a flat **$1,000/month** subscription for Pro providers — no per-placement fees, no per-admission fees, no commissions. EKRA-clean by design.
-
-## Tracking
-
-- View your placement activity in the **Placements** tab of the provider panel
-- Confirmed admissions show in your dashboard's recent-activity feed
-- All Concierge invoices are accessible from **Billing > Invoices**
-    `,
-    category: "placements",
-    tags: ["concierge", "placements", "EKRA"],
-    readTime: 3,
-    updatedAt: "2026-05-17"
+    readTime: 4,
+    updatedAt: "2026-05-24"
   },
 
   // ── Billing & Pro ──
@@ -611,8 +587,8 @@ The Analytics page gives you data-driven insights into your facility's performan
 - Average time between receiving a lead and making contact
 - Faster response times correlate with higher conversion rates
 
-### Placement Activity
-- If opted into the Placement Network: introductions received, interest expressed, and admissions
+### Concierge Activity
+- If you have the Concierge Add-On: advisor introductions received, your interest responses, and successful admissions
 
 ## Date Range Filters
 
@@ -715,7 +691,7 @@ The **facility dropdown** in the top header lets you switch between your listing
 - Leads and lead history
 - Analytics and performance data
 - Listing content and images
-- Placement Network opt-in and introductions
+- Concierge Add-On configuration + advisor introductions
 - Reviews
 
 ## Adding or Removing Facilities

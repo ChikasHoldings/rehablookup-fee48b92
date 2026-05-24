@@ -146,8 +146,8 @@ const helpTopics = [
   },
   {
     icon: Handshake,
-    title: "Placement Network",
-    description: "Learn how placements work",
+    title: "Concierge Partner",
+    description: "How advisor-matched cases reach your facility",
     link: "/provider/knowledge-base?category=placements"
   },
   {

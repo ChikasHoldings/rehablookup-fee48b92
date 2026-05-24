@@ -80,7 +80,12 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
             const isActive = location.pathname === item.href;
             const Icon = item.icon;
             const isInquiriesItem = item.href === "/provider/inquiries";
-            const isPlacementItem = item.href === "/provider/placement-network";
+            // After the /provider/placement-network retirement, the
+            // pending-concierge badge lives on the Marketing item
+            // since /provider/marketing → /marketing/concierge is the
+            // canonical surface where the provider acts on pending
+            // cases. Old isPlacementItem name kept for clarity.
+            const isPlacementItem = item.href === "/provider/marketing";
             const showInquiriesBadge = isInquiriesItem && pendingInquiriesCount > 0;
             const showPlacementBadge = isPlacementItem && totalPlacementCount > 0;
             const showBadge = showInquiriesBadge || showPlacementBadge;
