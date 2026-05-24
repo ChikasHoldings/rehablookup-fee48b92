@@ -34,6 +34,7 @@ import { ProviderReviewCard } from '@/components/provider/reviews/ProviderReview
 import { FlagReviewDialog } from '@/components/provider/reviews/FlagReviewDialog';
 import { ReviewRequestDialog } from '@/components/provider/reviews/ReviewRequestDialog';
 import { ReviewRequestHistory } from '@/components/provider/reviews/ReviewRequestHistory';
+import { GoogleReviewsConfigCard } from '@/components/provider/reviews/GoogleReviewsConfigCard';
 import { PaginationFooter } from '@/components/common/PaginationFooter';
 import { usePagination } from '@/hooks/usePagination';
 
@@ -314,6 +315,21 @@ export default function ProviderReviews() {
           }
         />
       )}
+
+      {/* Google reviews integration — only meaningful when filtered to
+          one facility (place_id is per-location). Hidden in the
+          all-facilities view so the form isn't ambiguous about which
+          facility it configures. */}
+      {facilityFilter !== "all" && (() => {
+        const facility = facilities.find((f) => f.id === facilityFilter);
+        if (!facility) return null;
+        return (
+          <GoogleReviewsConfigCard
+            facilityId={facility.id}
+            facilityName={facility.name}
+          />
+        );
+      })()}
 
       {/* Rating Distribution */}
       {scopedTotal > 0 && (
