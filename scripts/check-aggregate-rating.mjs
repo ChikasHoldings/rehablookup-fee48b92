@@ -44,7 +44,13 @@ function listHtmlFiles(dir) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) {
-      if (["assets", "images", "img", "fonts", "static"].includes(entry.name)) continue;
+      // Skip non-page directories. `embed` is the iframe-only widget
+      // payload — explicitly noindex/nofollow at the document level —
+      // so it has no canonical "page rating" to attest to. The
+      // aggregate values are loaded dynamically per-facility from the
+      // get_embed_reviews RPC and don't belong in a static JSON-LD
+      // block on a page Google should never crawl in the first place.
+      if (["assets", "images", "img", "fonts", "static", "embed"].includes(entry.name)) continue;
       out.push(...listHtmlFiles(full));
     } else if (entry.isFile() && entry.name.endsWith(".html")) {
       out.push(full);

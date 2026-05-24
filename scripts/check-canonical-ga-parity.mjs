@@ -49,6 +49,11 @@ function listHtml(dir, prefix = "") {
   const out = [];
   for (const name of readdirSync(dir, { withFileTypes: true })) {
     if (name.isDirectory()) {
+      // Skip `embed` — the widget iframe payloads are explicitly
+      // noindex/nofollow and don't represent canonical-able pages.
+      // The SPA never navigates to them and search engines should
+      // never crawl them, so the canonical-GA invariants don't apply.
+      if (!prefix && name.name === "embed") continue;
       out.push(...listHtml(join(dir, name.name), join(prefix, name.name)));
     } else if (name.name.endsWith(".html")) {
       out.push(prefix ? `${prefix}/${name.name}` : name.name);

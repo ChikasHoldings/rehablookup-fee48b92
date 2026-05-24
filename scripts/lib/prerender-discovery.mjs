@@ -19,7 +19,12 @@ import { readdirSync, statSync, existsSync, readFileSync } from "node:fs";
 import { join, relative, sep } from "node:path";
 
 const SKIP_FILES = new Set(["index.html", "404.html", "200.html"]);
-const SKIP_DIRS = new Set(["assets", "static", "lovable-uploads", "fonts", "images"]);
+// `embed` holds widget iframe payloads (noindex, nofollow, served only
+// to <iframe sandbox=…>). They are intentionally not "pages" — no
+// canonical-to-route mapping, no FAQ / AggregateRating obligations, no
+// sitemap entry. Skip them in every SEO validator that uses this
+// discovery helper.
+const SKIP_DIRS = new Set(["assets", "static", "lovable-uploads", "fonts", "images", "embed"]);
 
 /**
  * Walk public/ and return a Map<route, { flatPath?: string, indexPath?: string }>.
