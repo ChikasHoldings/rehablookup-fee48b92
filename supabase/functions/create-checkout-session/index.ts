@@ -28,8 +28,9 @@
 // ============================================================================
 import Stripe from "https://esm.sh/stripe@18.5.0?target=denonext";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
+import { classifyStripeError } from "../_shared/stripe-errors.ts";
 
-const VERSION = "1.1.0";
+const VERSION = "1.2.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -315,8 +316,17 @@ Deno.serve(async (req) => {
     });
     return json(200, { url: session.url, sessionId: session.id });
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    log("ERROR", "Unhandled exception", { error: errorMessage });
-    return json(500, { error: errorMessage, code: "UNHANDLED_EXCEPTION" });
+    const classified = classifyStripeError(error);
+    const rawMessage = error instanceof Error ? error.message : String(error);
+    log("ERROR", "Unhandled exception", {
+      raw: rawMessage,
+      code: classified.code,
+      retryable: classified.retryable,
+    });
+    return json(classified.httpStatus, {
+      error: classified.message,
+      code: classified.code,
+      retryable: classified.retryable,
+    });
   }
 });

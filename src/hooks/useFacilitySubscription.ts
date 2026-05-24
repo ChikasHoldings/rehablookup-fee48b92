@@ -53,11 +53,32 @@ const SELECT = [
 ].join(", ");
 
 /**
+ * Decaying polling schedule: fast at first (webhooks usually land in
+ * under 10s) then back off so we don't hammer the DB if Stripe is slow.
+ *
+ *   attempts 1..5  →  2s  (first 10s — covers the typical case)
+ *   attempts 6..15 →  4s  (next 40s — covers slow webhooks)
+ *   attempts 16..30→  8s  (next ~2 min — covers Stripe queue backlog)
+ *   attempts >30   →  false (give up; UI shows "Check now")
+ *
+ * Total covered: roughly 3 minutes. After that the user gets a clear
+ * manual escalation rather than indefinite polling.
+ */
+function pollingIntervalFor(attemptCount: number): number | false {
+  if (attemptCount < 5) return 2_000;
+  if (attemptCount < 15) return 4_000;
+  if (attemptCount < 30) return 8_000;
+  return false;
+}
+
+/**
  * Fetches the facility's current subscription row.
  *
  * `pollWhilePending`: when true (used right after the Stripe-Checkout
- * return), the query re-runs every 2 seconds until status becomes
- * `active`. Bounded to 90s by the caller via timeout state.
+ * return), the query re-runs on a decaying schedule until status becomes
+ * `active` or the schedule exhausts (~3 min). When polling stops on its
+ * own without a positive result, callers should surface a "Check now"
+ * button so the user can manually re-arm polling.
  */
 export function useFacilitySubscription(
   facilityId: string | null | undefined,
@@ -71,8 +92,12 @@ export function useFacilitySubscription(
       if (!session) return null;
       const { data, error } = await supabase
         .from("facility_subscriptions")
-        // deno-lint-ignore no-explicit-any
-        .select(SELECT as any)
+        // The generated supabase-js types require a literal column list
+        // typed as a tuple. We compose `SELECT` at module scope from an
+        // array to keep the column inventory readable, then cast to the
+        // looser `unknown` to satisfy both the runtime (which accepts a
+        // plain string) and TypeScript (which wants the tuple shape).
+        .select(SELECT as unknown as never)
         .eq("facility_id", facilityId)
         .maybeSingle();
       if (error) {
@@ -88,7 +113,14 @@ export function useFacilitySubscription(
     },
     enabled: !!facilityId,
     staleTime: 1000 * 30,
-    refetchInterval: options.pollWhilePending ? 2000 : false,
+    refetchInterval: options.pollWhilePending
+      ? (query) => {
+          // Stop polling the moment the subscription is active.
+          const data = query.state.data as FacilitySubscriptionRow | null;
+          if (data?.status === "active") return false;
+          return pollingIntervalFor(query.state.dataUpdateCount);
+        }
+      : false,
     // Re-fetch when the tab regains focus so post-Stripe-return flows
     // (checkout, portal cancel/upgrade, addon purchase) reflect the
     // webhook-applied state without a hard reload. `staleTime: 30s`

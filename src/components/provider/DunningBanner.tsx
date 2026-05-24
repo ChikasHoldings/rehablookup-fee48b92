@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle, ArrowRight } from "lucide-react";
+import { AlertTriangle, ArrowRight, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 
@@ -22,9 +22,15 @@ interface PastDueRow {
  * link lets the provider update their payment method. The webhook will
  * fire customer.subscription.updated when payment recovers and the
  * status flips back to active.
+ *
+ * On query failure we DO NOT silently fall through to "no banner" —
+ * an unreachable DB could hide a real past-due state and the provider
+ * would never know their card failed. Instead we render a smaller
+ * "couldn't verify subscription status" notice so the provider sees
+ * something is off, with a Refresh CTA.
  */
 export function DunningBanner() {
-  const { data: pastDue } = useQuery({
+  const { data: pastDue, isError, refetch } = useQuery({
     queryKey: ["provider-dunning-past-due"],
     queryFn: async (): Promise<PastDueRow[]> => {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -36,14 +42,41 @@ export function DunningBanner() {
         .eq("provider_id", userId)
         .eq("status", "past_due");
       if (error) {
-        console.warn("[DunningBanner] past-due lookup failed", error);
-        return [];
+        // Log + throw so React Query surfaces isError. Returning [] here
+        // would silently hide a real past_due state.
+        console.error("[DunningBanner] past-due lookup failed", error);
+        throw new Error(error.message || "Past-due lookup failed");
       }
       return (data ?? []) as PastDueRow[];
     },
     staleTime: 1000 * 30,
     refetchOnWindowFocus: true,
+    retry: 2,
   });
+
+  if (isError) {
+    return (
+      <div className="border-b border-slate-300 bg-slate-50 px-4 py-2 sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
+          <div className="flex items-start gap-2 text-xs text-slate-700">
+            <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-slate-500" aria-hidden />
+            <span>
+              Couldn't verify subscription status. Your account may still be
+              past-due — refresh to check again.
+            </span>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 gap-1.5 text-xs"
+            onClick={() => refetch()}
+          >
+            Refresh
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (!pastDue || pastDue.length === 0) return null;
 

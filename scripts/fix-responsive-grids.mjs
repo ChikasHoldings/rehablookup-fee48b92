@@ -152,11 +152,6 @@ const fixes = [
     replace: "grid grid-cols-2 sm:grid-cols-4 divide-x",
   },
   {
-    file: "src/components/provider/EmbedBadgeWidget.tsx",
-    find: "grid w-full grid-cols-4 h-8",
-    replace: "grid w-full grid-cols-2 sm:grid-cols-4 h-8",
-  },
-  {
     file: "src/components/provider/ProMultiFacilityOverview.tsx",
     find: "grid grid-cols-3 gap-2 mb-3",
     replace: "grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3",

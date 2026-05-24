@@ -75,18 +75,32 @@ export default function ProviderSubscription() {
   const portalDebounceRef = useRef(false);
   const [portalLoading, setPortalLoading] = useState(false);
 
-  const [pollingTimedOut, setPollingTimedOut] = useState(false);
+  // The hook owns the decaying polling schedule (2s → 4s → 8s, ~3 min
+  // total). We watch the query's pending state via a ref to decide when
+  // to surface the manual "Check now" escalation. `pollingStartedAt`
+  // also drives an elapsed-time hint so the user knows how long Stripe
+  // has been taking.
+  const [pollingStartedAt, setPollingStartedAt] = useState<number | null>(
+    isCheckoutReturn ? Date.now() : null,
+  );
+  const [elapsedSec, setElapsedSec] = useState(0);
   useEffect(() => {
-    if (!pollingActive) return;
-    const t = setTimeout(() => {
-      setPollingTimedOut(true);
-      setPollingActive(false);
-    }, 90_000);
-    return () => clearTimeout(t);
-  }, [pollingActive]);
+    if (!pollingActive || !pollingStartedAt) return;
+    const t = setInterval(() => {
+      setElapsedSec(Math.floor((Date.now() - pollingStartedAt) / 1000));
+    }, 1000);
+    return () => clearInterval(t);
+  }, [pollingActive, pollingStartedAt]);
+  // The decaying schedule exhausts around the 30th attempt (~3 minutes
+  // of clock time). At that point the hook stops polling on its own.
+  // We watch elapsedSec rather than try to inspect the React Query
+  // internals — once we hit 180s with no `active` status, surface the
+  // manual escalation.
+  const pollingTimedOut = pollingActive && elapsedSec >= 180;
   useEffect(() => {
     if (pollingActive && subscription?.status === "active") {
       setPollingActive(false);
+      setPollingStartedAt(null);
     }
   }, [pollingActive, subscription?.status]);
 
@@ -136,22 +150,45 @@ export default function ProviderSubscription() {
     }
   }, [upgradeIntent, signupRetry, isLoading, subscription?.tier, searchParams, setSearchParams]);
 
+  // Both edge functions return { error, code, retryable } in the body
+  // when they fail (classifyStripeError). Surface the friendly message
+  // and add an inline Retry action when the server says it's safe.
+  const surfaceStripeError = (
+    data: { error?: string; code?: string; retryable?: boolean } | null | undefined,
+    fallback: string,
+    onRetry?: () => void,
+  ) => {
+    const message = data?.error ?? fallback;
+    const retryable = Boolean(data?.retryable) && onRetry;
+    if (retryable) {
+      toast.error(message, { action: { label: "Try again", onClick: onRetry! } });
+    } else {
+      toast.error(message);
+    }
+  };
+
   const handleManageBilling = async () => {
     if (portalDebounceRef.current) return;
     portalDebounceRef.current = true;
     setPortalLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("customer-portal");
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      // A transport-level error (network down, function not deployed):
+      // we don't have a classified body, so fall back to a generic message.
+      if (error) {
+        console.error("[Subscription] portal transport error", error);
+        toast.error("Couldn't reach the billing portal. Check your connection and try again.");
+        return;
+      }
+      if (data?.error) {
+        surfaceStripeError(data, "Failed to open billing portal.", handleManageBilling);
+        return;
+      }
       if (!isSafeStripeUrl(data?.url)) {
-        throw new Error(data?.url ? "Invalid portal URL" : "No portal URL returned");
+        toast.error("Billing portal returned an invalid URL. Please contact support.");
+        return;
       }
       window.open(data.url, "_blank", "noopener,noreferrer");
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Failed to open billing portal.";
-      console.error("[Subscription] portal error", err);
-      toast.error(message);
     } finally {
       setPortalLoading(false);
       setTimeout(() => { portalDebounceRef.current = false; }, 4000);
@@ -169,15 +206,24 @@ export default function ProviderSubscription() {
           items: [{ product: "pro" }],
         },
       });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      if (error) {
+        console.error("[Subscription] upgrade transport error", error);
+        toast.error("Couldn't reach checkout. Check your connection and try again.");
+        return;
+      }
+      if (data?.error) {
+        surfaceStripeError(data, "Failed to start checkout.", () => handleProUpgrade(interval));
+        return;
+      }
       if (!isSafeStripeUrl(data?.url)) {
-        throw new Error("Invalid checkout URL");
+        toast.error("Checkout returned an invalid URL. Please contact support.");
+        return;
       }
       window.location.assign(data.url);
     } catch (err) {
-      console.error("[Subscription] upgrade failed", err);
-      toast.error(err instanceof Error ? err.message : "Failed to start checkout");
+      // Truly unexpected (e.g. crash in our own code path).
+      console.error("[Subscription] upgrade unexpected error", err);
+      toast.error("Something went wrong. Please try again.");
     }
   };
 
@@ -283,8 +329,8 @@ export default function ProviderSubscription() {
                 </p>
                 <p className="text-xs text-slate-600 mt-0.5">
                   {pollingTimedOut
-                    ? "Your payment was successful, but the activation is taking longer than usual. Try checking now, or contact support if it stays in this state."
-                    : "Your payment succeeded. We're activating your account — this usually takes a few seconds."}
+                    ? "Your payment was successful, but activation is taking longer than usual. Click below to check again, or contact support if it stays in this state."
+                    : `Your payment succeeded. We're activating your account — this usually takes a few seconds.${elapsedSec >= 15 ? ` (${elapsedSec}s elapsed)` : ""}`}
                 </p>
               </div>
               {pollingTimedOut && (
@@ -292,7 +338,10 @@ export default function ProviderSubscription() {
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    setPollingTimedOut(false);
+                    // Re-arm the decaying schedule. The hook will retry
+                    // 2s → 4s → 8s and stop after ~3 more minutes.
+                    setPollingStartedAt(Date.now());
+                    setElapsedSec(0);
                     setPollingActive(true);
                     invalidateSub(facilityId);
                   }}

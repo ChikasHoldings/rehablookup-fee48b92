@@ -1,7 +1,8 @@
 import Stripe from "https://esm.sh/stripe@18.5.0?target=denonext";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
+import { classifyStripeError } from "../_shared/stripe-errors.ts";
 
-const VERSION = "1.0.1";
+const VERSION = "1.1.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -66,11 +67,22 @@ Deno.serve(async (req) => {
       status: 200,
     });
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep(requestId, "ERROR in customer-portal", { message: errorMessage });
-    return new Response(JSON.stringify({ error: errorMessage, requestId, _version: VERSION }), {
+    const classified = classifyStripeError(error);
+    const rawMessage = error instanceof Error ? error.message : String(error);
+    logStep(requestId, "ERROR in customer-portal", {
+      raw: rawMessage,
+      code: classified.code,
+      retryable: classified.retryable,
+    });
+    return new Response(JSON.stringify({
+      error: classified.message,
+      code: classified.code,
+      retryable: classified.retryable,
+      requestId,
+      _version: VERSION,
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
+      status: classified.httpStatus,
     });
   }
 });

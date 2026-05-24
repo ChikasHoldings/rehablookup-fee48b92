@@ -18,6 +18,7 @@ import { Loader2, X, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { AddConciergeGeoForm } from "@/components/provider/concierge/AddConciergeGeoForm";
+import { ConciergePlacementHistory } from "@/components/provider/concierge/ConciergePlacementHistory";
 import { MyWaitlistEntries } from "@/components/provider/MyWaitlistEntries";
 import type { FacilitySubscriptionRow } from "@/hooks/useFacilitySubscription";
 
@@ -198,6 +199,8 @@ export function ConciergeManagementPanel({ facilityId, subscription }: Concierge
         {periodEndStr}; removing opens the slot for another facility immediately.
         You can re-claim before {periodEndStr} at no additional charge.
       </p>
+
+      <ConciergePlacementHistory facilityId={facilityId} />
 
       <MyWaitlistEntries facilityId={facilityId} addonType="concierge" />
 
