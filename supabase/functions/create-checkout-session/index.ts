@@ -265,6 +265,13 @@ Deno.serve(async (req) => {
     const checkoutMetadata = {
       type: reuseTag,
       facility_id: facilityId,
+      // CANONICAL key — matches what stripe-webhook reads (it also
+      // reads `provider_user_id` as a fallback for any in-flight
+      // sessions written by the older version of this function).
+      user_id: userId,
+      // Backwards-compat: write both keys so a webhook running an
+      // older deploy still finds it. Will be removed after one
+      // billing-period rollover when all sessions are guaranteed new.
       provider_user_id: userId,
       billing_period: billingPeriod,
       // The webhook keys off plan_tier to know whether to call

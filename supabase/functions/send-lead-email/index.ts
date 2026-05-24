@@ -744,9 +744,35 @@ Deno.serve(async (req: Request): Promise<Response> => {
     // Lead-unlock gate retired — pay-per-lead-unlock model was dropped
     // in the monetization rebuild. Access is now scoped by facility
     // ownership (checked above) and by the facility's active
-    // subscription tier. Pro-tier subscription check ships in the
-    // upgrade-flow PR; for now any facility owner whose ownership
-    // check passed can send the email.
+    // subscription tier.
+    //
+    // PRO gate: sending lead-response emails is a Pro feature. Free
+    // facilities can still see inquiries and respond manually via the
+    // contact methods on the lead detail — they just can't fire
+    // platform-branded emails from the panel. has_active_pro is the
+    // canonical gate; same RPC the credential kit + analytics use.
+    {
+      const { data: isProRaw, error: proErr } = await supabase.rpc(
+        "has_active_pro",
+        { p_facility_id: facility.id },
+      );
+      if (proErr) {
+        console.error("[send-lead-email] has_active_pro check failed:", proErr.message);
+        return new Response(
+          JSON.stringify({ error: "Could not verify subscription tier" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+      if (!isProRaw) {
+        return new Response(
+          JSON.stringify({
+            error: "Pro subscription required to send lead-response emails. Free providers can call or text the inquiry contact directly from the lead detail.",
+            reason: "pro_required",
+          }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+    }
 
     const replyToEmail = facility.reply_email || facility.email || profile.email;
     if (!replyToEmail) {

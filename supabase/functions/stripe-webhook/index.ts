@@ -2190,7 +2190,12 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
       // PRO_SUBSCRIPTION (annual)
       if (session.mode === "subscription" && metadataType === "pro_subscription") {
         const facilityId = session.metadata?.facility_id;
-        const userId = session.metadata?.user_id;
+        // create-checkout-session used to write `provider_user_id`;
+        // it now writes both (canonical `user_id` + the legacy key as
+        // a fallback during the rollover window). Accept either so
+        // in-flight sessions don't silently no-op.
+        const userId =
+          session.metadata?.user_id ?? session.metadata?.provider_user_id;
         const subscriptionId = session.subscription as string;
         const customerId = session.customer as string;
 
