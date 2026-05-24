@@ -28,6 +28,8 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useSelectedFacility } from '@/contexts/SelectedFacilityContext';
+import { useProStatus } from '@/hooks/useProStatus';
 import { ProviderPageHeader } from '@/components/provider/ProviderPageHeader';
 
 import { ReviewStatsCards } from '@/components/provider/reviews/ReviewStatsCards';
@@ -69,6 +71,14 @@ export default function ProviderReviews() {
 
   const [selectedTab, setSelectedTab] = useState('all');
   const [facilityFilter, setFacilityFilter] = useState<string>("all");
+
+  // Pro status for the active facility — gates the review-request dialog
+  // (Pro-only, enforced server-side by create_review_request). Uses the
+  // filtered facility when one is chosen, else the globally-selected one.
+  const { selectedFacility } = useSelectedFacility();
+  const requestFacilityId =
+    facilityFilter !== "all" ? facilityFilter : selectedFacility?.id;
+  const { data: requestProStatus } = useProStatus(requestFacilityId);
   // Review-request invite dialog state. Lives at the page level so the
   // hero CTA can open it and the dialog handles its own form state +
   // submit via the send-review-request edge function.
@@ -520,6 +530,7 @@ export default function ProviderReviews() {
         onOpenChange={setReviewRequestOpen}
         facilities={facilities.map((f) => ({ id: f.id, name: f.name }))}
         defaultFacilityId={facilityFilter !== "all" ? facilityFilter : undefined}
+        isPro={requestProStatus?.isPro}
       />
 
       </div>

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Mail, Sparkles, AlertCircle } from "lucide-react";
+import { Loader2, Mail, Sparkles, AlertCircle, ArrowRight, Lock } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -34,6 +35,14 @@ interface ReviewRequestDialogProps {
   facilities: { id: string; name: string }[];
   /** Optional facility to pre-select (used when the page filters by facility). */
   defaultFacilityId?: string;
+  /**
+   * Whether the active facility is on Pro. Review requests are Pro-gated
+   * server-side (create_review_request raises if not Pro). When false we
+   * show an upgrade prompt instead of the form so a Free provider gets a
+   * clear path rather than filling a form that the server would reject.
+   * Undefined = don't gate in the UI (server still enforces).
+   */
+  isPro?: boolean;
 }
 
 const NAME_MAX = 100;
@@ -47,6 +56,7 @@ export function ReviewRequestDialog({
   onOpenChange,
   facilities,
   defaultFacilityId,
+  isPro,
 }: ReviewRequestDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -144,6 +154,49 @@ export function ReviewRequestDialog({
           </DialogDescription>
         </DialogHeader>
 
+        {isPro === false ? (
+          <div className="py-2">
+            <div className="rounded-xl border border-amber-200 bg-gradient-to-br from-amber-50 to-white p-5">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800">
+                  <Lock className="h-2.5 w-2.5" aria-hidden /> Pro feature
+                </span>
+              </div>
+              <h3 className="mt-2 text-base font-semibold text-slate-900">
+                Send review-request invitations with Pro
+              </h3>
+              <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                Email past clients a one-time link to leave a moderated review,
+                and track opens, clicks, and submissions. Upgrade to Pro to turn
+                this on.
+              </p>
+              <ul className="mt-3 space-y-1.5 text-xs text-slate-700">
+                {[
+                  "One-time, expiring review links",
+                  "Open / click / submission tracking",
+                  "EKRA-safe — no incentives, ever",
+                ].map((b) => (
+                  <li key={b} className="flex items-start gap-2">
+                    <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600" aria-hidden />
+                    <span>{b}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <DialogFooter className="mt-4">
+              <Button variant="outline" onClick={() => onOpenChange(false)}>
+                Maybe later
+              </Button>
+              <Button asChild className="gap-2 bg-[#1B365D] hover:bg-[#142a4a]">
+                <Link to="/provider/billing?upgrade=pro" onClick={() => onOpenChange(false)}>
+                  Upgrade to Pro
+                  <ArrowRight className="h-4 w-4" aria-hidden />
+                </Link>
+              </Button>
+            </DialogFooter>
+          </div>
+        ) : (
+        <>
         <div className="space-y-4 py-1">
           {!single && (
             <div className="space-y-1.5">
@@ -241,6 +294,8 @@ export function ReviewRequestDialog({
             Send invitation
           </Button>
         </DialogFooter>
+        </>
+        )}
       </DialogContent>
     </Dialog>
   );
