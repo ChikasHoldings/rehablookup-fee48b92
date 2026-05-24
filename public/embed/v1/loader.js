@@ -55,13 +55,16 @@
 
     var SIZES = { small: 1, medium: 1, large: 1 };
     var THEMES = { light: 1, dark: 1, auto: 1 };
-    var WIDGETS = { badge: 1, reviews: 1 };
+    var WIDGETS = { badge: 1, reviews: 1, gallery: 1 };
 
-    // Initial-height heuristics. The widget posts its real height after
-    // render; these just prevent layout jank in the first frame.
+    // Initial-height heuristics. The widget posts its real height
+    // after render; these just prevent layout jank in the first
+    // frame. Gallery sizes mirror the aspect ratios baked into
+    // gallery.html (4:3 for small/medium, 16:10 for large).
     var INITIAL_HEIGHTS = {
       badge: { small: 60, medium: 80, large: 110 },
       reviews: { small: 320, medium: 420, large: 540 },
+      gallery: { small: 240, medium: 360, large: 400 },
     };
 
     function injectAll() {

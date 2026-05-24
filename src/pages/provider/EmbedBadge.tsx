@@ -3,8 +3,10 @@ import { Helmet } from "react-helmet-async";
 import {
   AlertCircle,
   Award,
+  BarChart3,
   Check,
   Copy,
+  Images,
   MessageSquareQuote,
   ShieldCheck,
   Sparkles,
@@ -21,8 +23,9 @@ import { cn } from "@/lib/utils";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { useProStatus } from "@/hooks/useProStatus";
 import { useToast } from "@/hooks/use-toast";
+import { EmbedAnalyticsCard } from "@/components/provider/embed/EmbedAnalyticsCard";
 
-type WidgetType = "badge" | "reviews";
+type WidgetType = "badge" | "reviews" | "gallery";
 type WidgetSize = "small" | "medium" | "large";
 type WidgetTheme = "light" | "dark" | "auto";
 
@@ -41,6 +44,10 @@ const THEME_OPTIONS: { value: WidgetTheme; label: string; icon: typeof Sun }[] =
 const PREVIEW_HEIGHTS: Record<WidgetType, Record<WidgetSize, number>> = {
   badge: { small: 60, medium: 80, large: 110 },
   reviews: { small: 320, medium: 420, large: 540 },
+  // Gallery aspect ratios mirror the CSS in gallery.html so the
+  // portal preview iframe matches what visitors see at the same
+  // width: 4:3 for small/medium, 16:10 for large.
+  gallery: { small: 240, medium: 360, large: 400 },
 };
 
 function buildSnippet({
@@ -175,7 +182,7 @@ export default function EmbedBadgePage() {
 
         <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 md:py-8 lg:px-8 space-y-6">
           {/* Widget picker */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <WidgetPickerCard
               icon={ShieldCheck}
               iconColor="text-emerald-600"
@@ -200,6 +207,17 @@ export default function EmbedBadgePage() {
               description="Aggregate rating + recent approved reviews. Updates live."
               active={activeWidget === "reviews"}
               onClick={() => setActiveWidget("reviews")}
+            />
+            <WidgetPickerCard
+              icon={Images}
+              iconColor="text-sky-600"
+              iconBg="bg-sky-100"
+              title="Photo Carousel"
+              description="Auto-rotating gallery of your facility photos. Free shows 5, Pro shows 10."
+              active={activeWidget === "gallery"}
+              onClick={() => setActiveWidget("gallery")}
+              badge={isPro ? "10-photo cap on Pro" : "5-photo cap on Free"}
+              badgeColor={isPro ? "bg-amber-100 text-amber-800" : "bg-slate-100 text-slate-700"}
             />
           </div>
 
@@ -354,6 +372,14 @@ export default function EmbedBadgePage() {
               </Card>
             </>
           )}
+
+          {/* Live impression-analytics card. Anchored to the selected
+              facility id so multi-facility providers always see the
+              numbers for the listing the picker chrome is pointed at,
+              not whatever was last viewed. Renders below the snippet
+              card so the natural reading flow is configure → preview
+              → copy → check performance. */}
+          <EmbedAnalyticsCard facilityId={selectedFacility.id} />
         </div>
       </div>
     </>

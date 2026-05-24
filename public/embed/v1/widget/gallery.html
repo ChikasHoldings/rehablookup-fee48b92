@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="canonical" href="https://rehablookup.com/embed/v1/widget/gallery.html">
+  <title>RehabLookup facility gallery widget</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: transparent;
+      --card: #ffffff;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --muted: #64748b;
+      --navy: #1B365D;
+      --shadow: 0 1px 3px rgba(15, 23, 42, .08), 0 6px 20px rgba(15, 23, 42, .05);
+      --radius: 12px;
+    }
+    [data-theme="dark"] {
+      color-scheme: dark;
+      --card: #0f172a;
+      --border: #1e293b;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --navy: #6f9aff;
+      --shadow: 0 1px 3px rgba(0, 0, 0, .4), 0 6px 20px rgba(0, 0, 0, .25);
+    }
+    @media (prefers-color-scheme: dark) {
+      [data-theme="auto"] {
+        color-scheme: dark;
+        --card: #0f172a;
+        --border: #1e293b;
+        --text: #f1f5f9;
+        --muted: #94a3b8;
+        --navy: #6f9aff;
+        --shadow: 0 1px 3px rgba(0, 0, 0, .4), 0 6px 20px rgba(0, 0, 0, .25);
+      }
+    }
+    html, body {
+      margin: 0; padding: 0; background: var(--bg); color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .wrap {
+      box-sizing: border-box;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      max-width: 100%;
+    }
+
+    /* ── Carousel viewport ─────────────────────────────────────────── */
+    .viewport {
+      position: relative;
+      width: 100%;
+      background: var(--card);
+      /* 4:3 base ratio for predictable iframe sizing; the loader sets
+         the iframe height via postMessage after first paint so this is
+         a fallback for the pre-message frame. */
+      aspect-ratio: 4 / 3;
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: pan-y pinch-zoom;
+    }
+    [data-size="small"] .viewport  { aspect-ratio: 4 / 3; }
+    [data-size="medium"] .viewport { aspect-ratio: 4 / 3; }
+    [data-size="large"] .viewport  { aspect-ratio: 16 / 10; }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      transition: opacity 320ms ease;
+      background-position: center;
+      background-size: cover;
+      background-repeat: no-repeat;
+      will-change: opacity;
+    }
+    .slide.active { opacity: 1; z-index: 1; }
+
+    /* Gradient overlay for caption contrast */
+    .viewport::after {
+      content: "";
+      position: absolute;
+      inset: auto 0 0 0;
+      height: 60%;
+      background: linear-gradient(to bottom, rgba(15, 23, 42, 0), rgba(15, 23, 42, .55));
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    /* ── Caption / brand overlay ───────────────────────────────────── */
+    .caption {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      padding: 14px 16px;
+      z-index: 3;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    [data-size="small"] .caption { padding: 10px 12px; }
+    [data-size="large"] .caption { padding: 18px 20px; }
+    .caption-name {
+      font-weight: 600;
+      font-size: 14px;
+      line-height: 1.25;
+      text-shadow: 0 1px 4px rgba(0, 0, 0, .45);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      max-width: 70%;
+    }
+    [data-size="small"] .caption-name { font-size: 12px; }
+    [data-size="large"] .caption-name { font-size: 16px; }
+    .caption-meta {
+      font-size: 11px;
+      opacity: 0.85;
+      text-shadow: 0 1px 4px rgba(0, 0, 0, .45);
+      margin-top: 2px;
+    }
+    .caption-brand {
+      flex: 0 0 auto;
+      font-size: 10px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      opacity: 0.85;
+      text-shadow: 0 1px 4px rgba(0, 0, 0, .45);
+      text-decoration: none;
+      color: #ffffff;
+    }
+    .caption-brand:hover, .caption-brand:focus-visible { opacity: 1; outline: none; text-decoration: underline; }
+    .pro-pill {
+      display: inline-block;
+      font-size: 9px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #1B365D; background: rgba(255, 255, 255, .95);
+      padding: 2px 5px; border-radius: 999px;
+      margin-left: 6px; vertical-align: 2px;
+    }
+
+    /* ── Prev/Next buttons ─────────────────────────────────────────── */
+    .nav-btn {
+      position: absolute;
+      top: 50%; transform: translateY(-50%);
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.92);
+      color: #1B365D;
+      border: 0;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center; justify-content: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, .25);
+      z-index: 4;
+      opacity: 0;
+      transition: opacity 200ms ease, transform 200ms ease;
+    }
+    .viewport:hover .nav-btn, .viewport:focus-within .nav-btn { opacity: 1; }
+    .nav-btn:hover, .nav-btn:focus-visible {
+      transform: translateY(-50%) scale(1.05);
+      outline: 2px solid rgba(27, 54, 93, .35);
+      outline-offset: 2px;
+    }
+    .nav-btn[data-dir="prev"] { left: 10px; }
+    .nav-btn[data-dir="next"] { right: 10px; }
+    [data-size="small"] .nav-btn { width: 28px; height: 28px; }
+    [data-size="large"] .nav-btn { width: 42px; height: 42px; }
+    .nav-btn svg { width: 18px; height: 18px; }
+    [data-size="small"] .nav-btn svg { width: 14px; height: 14px; }
+    [data-size="large"] .nav-btn svg { width: 22px; height: 22px; }
+
+    /* When the carousel has only 1 photo, hide the controls entirely. */
+    .single .nav-btn, .single .dots { display: none; }
+
+    /* ── Dot indicators ────────────────────────────────────────────── */
+    .dots {
+      position: absolute;
+      left: 50%;
+      bottom: 56px;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 6px;
+      z-index: 4;
+    }
+    [data-size="small"] .dots { bottom: 44px; }
+    [data-size="large"] .dots { bottom: 64px; }
+    .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.55);
+      border: 0;
+      padding: 0;
+      cursor: pointer;
+      transition: background 180ms ease, transform 180ms ease;
+    }
+    .dot.active {
+      background: #ffffff;
+      transform: scale(1.2);
+    }
+    .dot:focus-visible {
+      outline: 2px solid #ffffff;
+      outline-offset: 2px;
+    }
+
+    /* ── Empty / loading / error states ────────────────────────────── */
+    .placeholder {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--muted); font-size: 13px;
+      background: var(--card);
+      z-index: 0;
+    }
+    .empty {
+      padding: 32px 20px; text-align: center;
+      color: var(--muted); font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+<div id="root" class="wrap" hidden>
+  <div class="viewport" id="viewport">
+    <div class="placeholder" id="placeholder">Loading…</div>
+    <button class="nav-btn" data-dir="prev" id="btn-prev" aria-label="Previous photo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+    </button>
+    <button class="nav-btn" data-dir="next" id="btn-next" aria-label="Next photo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <polyline points="9 18 15 12 9 6"/>
+      </svg>
+    </button>
+    <div class="dots" id="dots" role="tablist" aria-label="Choose a photo"></div>
+    <div class="caption">
+      <a id="caption-link" class="caption-brand" href="#" target="_top" rel="noopener" style="color:#fff; text-decoration:none;">
+        <div>
+          <div class="caption-name" id="caption-name"></div>
+          <div class="caption-meta" id="caption-meta"></div>
+        </div>
+      </a>
+      <a class="caption-brand" id="brand-link" href="#" target="_top" rel="noopener">
+        RehabLookup<span id="pro-pill" class="pro-pill" hidden>Pro</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<div id="empty" class="empty wrap" hidden>This facility hasn't uploaded gallery photos yet.</div>
+
+<script>
+(function () {
+  "use strict";
+  // Same publishable key the SPA exposes — safe to ship in client code.
+  var SB_URL = "https://mldbxpntzcjalgjmwnqa.supabase.co";
+  var SB_KEY = "sb_publishable_tHLCRbeUrsu7EmMlCR0n6g_ygNXmMYP";
+
+  // Auto-advance every 4.5s; pauses on hover/focus so a reader who
+  // wants to dwell on a photo doesn't get yanked off it.
+  var AUTOPLAY_MS = 4500;
+
+  function param(name) {
+    var m = new RegExp("[?&]" + name + "=([^&]*)").exec(window.location.search);
+    return m ? decodeURIComponent(m[1].replace(/\+/g, " ")) : null;
+  }
+
+  function postHeight() {
+    try {
+      var h = document.body.scrollHeight;
+      parent.postMessage({ type: "rehablookup-widget-height", height: h }, "*");
+    } catch (_) {}
+  }
+
+  async function rpc(fn, payload) {
+    var res = await fetch(SB_URL + "/rest/v1/rpc/" + fn, {
+      method: "POST",
+      headers: {
+        "apikey": SB_KEY,
+        "Authorization": "Bearer " + SB_KEY,
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: JSON.stringify(payload || {})
+    });
+    if (!res.ok) throw new Error("rpc " + fn + " " + res.status);
+    return res.json();
+  }
+
+  function escapeAttr(s) {
+    return String(s == null ? "" : s).replace(/"/g, "&quot;");
+  }
+
+  async function render() {
+    var facility = param("facility");
+    var size = (param("size") || "medium").toLowerCase();
+    var theme = (param("theme") || "light").toLowerCase();
+    if (!/^(small|medium|large)$/.test(size)) size = "medium";
+    if (!/^(light|dark|auto)$/.test(theme)) theme = "light";
+
+    document.body.setAttribute("data-theme", theme);
+    document.documentElement.setAttribute("data-theme", theme);
+    document.body.setAttribute("data-size", size);
+    document.getElementById("root").setAttribute("data-size", size);
+    document.getElementById("root").setAttribute("data-theme", theme);
+
+    if (!facility) return;
+
+    var data;
+    try {
+      data = await rpc("get_embed_gallery", { p_facility_id: facility });
+    } catch (_) {
+      return;
+    }
+    if (!data) return;
+
+    var photos = Array.isArray(data.photos) ? data.photos : [];
+    if (photos.length === 0) {
+      document.getElementById("empty").hidden = false;
+      requestAnimationFrame(postHeight);
+      return;
+    }
+
+    // Render slides — preload only the first 3 to keep payload small.
+    var viewport = document.getElementById("viewport");
+    var placeholder = document.getElementById("placeholder");
+    var preloadCount = Math.min(3, photos.length);
+    photos.forEach(function (url, i) {
+      var slide = document.createElement("div");
+      slide.className = "slide" + (i === 0 ? " active" : "");
+      slide.setAttribute("data-index", String(i));
+      slide.setAttribute("role", "img");
+      slide.setAttribute("aria-label", "Photo " + (i + 1) + " of " + photos.length);
+      if (i < preloadCount) {
+        slide.style.backgroundImage = "url(\"" + escapeAttr(url) + "\")";
+      } else {
+        slide.setAttribute("data-bg", url);
+      }
+      viewport.insertBefore(slide, placeholder);
+    });
+    placeholder.remove();
+
+    // Caption / brand attribution
+    var name = data.name || "";
+    var loc = [data.city, data.state].filter(Boolean).join(", ");
+    document.getElementById("caption-name").textContent = name;
+    document.getElementById("caption-meta").textContent = loc;
+    if (data.is_pro) document.getElementById("pro-pill").hidden = false;
+
+    var profile = String(data.profile_url || "") + "?utm_source=embed&utm_medium=gallery&utm_campaign=widget";
+    document.getElementById("caption-link").href = profile;
+    document.getElementById("brand-link").href = profile;
+
+    // Wire navigation
+    var root = document.getElementById("root");
+    root.hidden = false;
+    var slides = viewport.querySelectorAll(".slide");
+    var dotsHost = document.getElementById("dots");
+    var current = 0;
+
+    if (slides.length === 1) {
+      root.classList.add("single");
+    }
+
+    function setActive(i) {
+      var n = slides.length;
+      if (n === 0) return;
+      var next = ((i % n) + n) % n;
+      slides[current].classList.remove("active");
+      slides[next].classList.add("active");
+      // Lazy-load images we haven't preloaded yet, one step ahead.
+      var lookahead = slides[(next + 1) % n];
+      if (lookahead) {
+        var bg = lookahead.getAttribute("data-bg");
+        if (bg) {
+          lookahead.style.backgroundImage = "url(\"" + escapeAttr(bg) + "\")";
+          lookahead.removeAttribute("data-bg");
+        }
+      }
+      // Update dot state
+      var dots = dotsHost.querySelectorAll(".dot");
+      if (dots[current]) {
+        dots[current].classList.remove("active");
+        dots[current].setAttribute("aria-selected", "false");
+      }
+      if (dots[next]) {
+        dots[next].classList.add("active");
+        dots[next].setAttribute("aria-selected", "true");
+      }
+      current = next;
+    }
+
+    // Dots
+    for (var i = 0; i < slides.length; i++) {
+      var dot = document.createElement("button");
+      dot.className = "dot" + (i === 0 ? " active" : "");
+      dot.setAttribute("role", "tab");
+      dot.setAttribute("aria-selected", i === 0 ? "true" : "false");
+      dot.setAttribute("aria-label", "Show photo " + (i + 1));
+      (function (idx) {
+        dot.addEventListener("click", function () { setActive(idx); restart(); });
+      })(i);
+      dotsHost.appendChild(dot);
+    }
+
+    document.getElementById("btn-prev").addEventListener("click", function () { setActive(current - 1); restart(); });
+    document.getElementById("btn-next").addEventListener("click", function () { setActive(current + 1); restart(); });
+
+    // Keyboard nav (left/right arrows)
+    viewport.tabIndex = 0;
+    viewport.addEventListener("keydown", function (e) {
+      if (e.key === "ArrowLeft")  { e.preventDefault(); setActive(current - 1); restart(); }
+      if (e.key === "ArrowRight") { e.preventDefault(); setActive(current + 1); restart(); }
+    });
+
+    // Touch / swipe
+    var touchStartX = null;
+    viewport.addEventListener("touchstart", function (e) {
+      if (e.touches.length === 1) touchStartX = e.touches[0].clientX;
+    }, { passive: true });
+    viewport.addEventListener("touchend", function (e) {
+      if (touchStartX === null) return;
+      var dx = (e.changedTouches[0].clientX - touchStartX);
+      touchStartX = null;
+      if (Math.abs(dx) > 40) {
+        setActive(current + (dx < 0 ? 1 : -1));
+        restart();
+      }
+    }, { passive: true });
+
+    // Click anywhere on the photo → open the profile.
+    viewport.addEventListener("click", function (e) {
+      // Avoid hijacking control clicks
+      if (e.target.closest(".nav-btn,.dot,.caption-brand")) return;
+      window.top.location.href = profile;
+    });
+
+    // Auto-advance
+    var timer = null;
+    function start() {
+      if (slides.length < 2) return;
+      timer = setInterval(function () { setActive(current + 1); }, AUTOPLAY_MS);
+    }
+    function stop() {
+      if (timer) { clearInterval(timer); timer = null; }
+    }
+    function restart() { stop(); start(); }
+    viewport.addEventListener("mouseenter", stop);
+    viewport.addEventListener("mouseleave", start);
+    viewport.addEventListener("focusin", stop);
+    viewport.addEventListener("focusout", start);
+    document.addEventListener("visibilitychange", function () {
+      if (document.hidden) stop(); else start();
+    });
+    start();
+
+    // Impression record — fire-and-forget.
+    try {
+      var domain = "";
+      try {
+        if (document.referrer) domain = new URL(document.referrer).hostname;
+      } catch (_) {}
+      rpc("record_widget_impression", {
+        p_facility_id: facility,
+        p_widget_type: "gallery",
+        p_referrer_domain: domain,
+        p_size: size
+      }).catch(function () {});
+    } catch (_) {}
+
+    requestAnimationFrame(function () {
+      requestAnimationFrame(postHeight);
+    });
+    window.addEventListener("load", postHeight);
+    window.addEventListener("resize", postHeight);
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>
