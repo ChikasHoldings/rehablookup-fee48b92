@@ -1,6 +1,7 @@
 # =============================================================================
 # robots.txt for RehabLookup
 # https://rehablookup.com
+# Last updated: 2026-05-24 — sitemap regenerated; 0 URLs included (filtered from 0). Prerender coverage: hybrid <path>.html + <path>/index.html.
 # Last updated: 2026-05-23 — sitemap regenerated; 0 URLs included (filtered from 0). Prerender coverage: hybrid <path>.html + <path>/index.html.
 # Last updated: 2026-05-23 — SEO audit pass: 46,670 URLs across 3 sitemaps
 #   (sitemap.xml: 46,398, sitemap-extras.xml: 269, sitemap-facilities.xml: 3).

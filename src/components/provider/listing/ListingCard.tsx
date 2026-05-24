@@ -1,16 +1,14 @@
-import { 
-  Building2, 
-  MapPin, 
-  Clock, 
-  CheckCircle, 
+import {
+  Building2,
+  MapPin,
+  CheckCircle,
+  Clock,
   AlertCircle,
   Edit3,
   Eye,
   Users,
   Lock,
 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -36,6 +34,13 @@ interface ListingCardProps {
   };
   onSelect: (facilityId: string) => void;
   onPreview?: (facility: { name: string; slug: string }) => void;
+  /**
+   * Render as a row inside a container that already has its own border
+   * (the ListingsLandingPage wraps the rows in a single rounded panel
+   * with hairline dividers). When false the row carries its own border —
+   * use that mode for standalone usage outside the listings index.
+   */
+  withinList?: boolean;
 }
 
 const getStatusConfig = (status: string) => {
@@ -43,71 +48,72 @@ const getStatusConfig = (status: string) => {
     case "approved":
       return {
         label: "Live",
-        description: "Visible to families",
         icon: CheckCircle,
         dotColor: "bg-emerald-500",
-        badgeClass: "bg-emerald-500/10 text-emerald-700 border-emerald-200 dark:text-emerald-400 dark:border-emerald-800"
+        pillClass: "bg-emerald-50 text-emerald-700 ring-emerald-200",
       };
     case "pending":
       return {
-        label: "Pending Review",
-        description: "Usually 24-48 hours",
+        label: "Pending",
         icon: Clock,
         dotColor: "bg-amber-500",
-        badgeClass: "bg-amber-500/10 text-amber-700 border-amber-200 dark:text-amber-400 dark:border-amber-800"
+        pillClass: "bg-amber-50 text-amber-700 ring-amber-200",
       };
     default:
       return {
         label: "Draft",
-        description: "Not published yet",
         icon: AlertCircle,
-        dotColor: "bg-muted-foreground",
-        badgeClass: "bg-muted text-muted-foreground border-border"
+        dotColor: "bg-slate-400",
+        pillClass: "bg-slate-50 text-slate-600 ring-slate-200",
       };
   }
 };
 
-export function ListingCard({ facility, onSelect, onPreview }: ListingCardProps) {
+/**
+ * Compact directory-style row for a single owned facility.
+ *
+ * Visual contract — Healthgrades / Yelp / Zocdoc reference: hairline
+ * borders, small thumbnail, a single horizontal row of name + meta +
+ * stats + actions, no shadow lift on hover. Hover warms the row's
+ * background tint instead of raising the card. Status renders as a
+ * tiny pill at top-right, not as a label over an image.
+ */
+export function ListingCard({
+  facility,
+  onSelect,
+  onPreview,
+  withinList = true,
+}: ListingCardProps) {
   const isSuspended = facility.suspended === true;
   const statusConfig = isSuspended
-    // Legacy state from the credit-era listing-cap model: when a Pro
-    // subscription was cancelled, the trigger auto-suspended extras.
-    // Pro now grants unlimited facilities (Phase D) so new suspensions
-    // are not possible; any rows still flagged are historical and need
-    // a support hand to clear.
-    ? { label: "Paused", description: "Contact support to reactivate", icon: Lock, dotColor: "bg-muted-foreground", badgeClass: "bg-muted text-muted-foreground border-border" }
+    ? {
+        label: "Paused",
+        icon: Lock,
+        dotColor: "bg-slate-400",
+        pillClass: "bg-slate-50 text-slate-600 ring-slate-200",
+      }
     : getStatusConfig(facility.status);
   const StatusIcon = statusConfig.icon;
-  const createdDate = format(new Date(facility.created_at), "MMM d, yyyy");
-  // Only animate the status dot when the listing is actively in a
-  // "live" state. Pending/draft/paused dots pulsing draws unnecessary
-  // attention and clashes with prefers-reduced-motion accessibility.
-  const shouldPulseDot = facility.status === "approved" && !isSuspended;
 
-  // Get the main image (first gallery image or logo as fallback)
   const mainImage = facility.gallery_urls?.[0] || facility.logo_url;
-
-  // Build full address string - handle missing fields gracefully
+  const createdDate = format(new Date(facility.created_at), "MMM d, yyyy");
   const addressParts = [
     facility.address,
     facility.city,
-    facility.state && facility.zip_code ? `${facility.state} ${facility.zip_code}` : facility.state
+    facility.state && facility.zip_code
+      ? `${facility.state} ${facility.zip_code}`
+      : facility.state,
   ].filter(Boolean);
-  const fullAddress = addressParts.length > 0 ? addressParts.join(', ') : `${facility.city}, ${facility.state}`;
+  const fullAddress = addressParts.length > 0 ? addressParts.join(", ") : `${facility.city}, ${facility.state}`;
 
-  // Profile-view count (excludes raw impression rows). The card is
-  // re-rendered every time the parent list refetches; staleTime + a
-  // long-ish gc keep the counts cached so a 10-facility page doesn't
-  // fire 20 head-count queries on each navigation back to the index.
   const { data: viewsData } = useQuery({
-    queryKey: ['facility-views-count', facility.id],
+    queryKey: ["facility-views-count", facility.id],
     queryFn: async () => {
       const { count, error } = await supabase
-        .from('provider_events')
-        .select('id', { count: 'exact', head: true })
-        .eq('facility_id', facility.id)
-        .eq('event_type', 'profile_view');
-
+        .from("provider_events")
+        .select("id", { count: "exact", head: true })
+        .eq("facility_id", facility.id)
+        .eq("event_type", "profile_view");
       if (error) throw error;
       return count || 0;
     },
@@ -115,14 +121,12 @@ export function ListingCard({ facility, onSelect, onPreview }: ListingCardProps)
     gcTime: 1000 * 60 * 30,
   });
 
-  // Leads count (live leads through leads_provider_view).
   const { data: leadsData } = useQuery({
-    queryKey: ['facility-leads-count', facility.id],
+    queryKey: ["facility-leads-count", facility.id],
     queryFn: async () => {
       const { count, error } = await fromLeadsProviderView()
-        .select('id', { count: 'exact', head: true })
-        .eq('facility_id', facility.id);
-
+        .select("id", { count: "exact", head: true })
+        .eq("facility_id", facility.id);
       if (error) throw error;
       return count || 0;
     },
@@ -131,130 +135,109 @@ export function ListingCard({ facility, onSelect, onPreview }: ListingCardProps)
   });
 
   return (
-    <Card className={cn(
-      "group border-border/60 shadow-sm transition-all duration-300 overflow-hidden",
-      isSuspended 
-        ? "opacity-60 border-dashed border-muted-foreground/30" 
-        : "hover:shadow-lg hover:border-primary/30"
-    )}>
-      <CardContent className="p-0">
-        <div className="flex flex-col sm:flex-row">
-          {/* Image Section */}
-          <div className="relative w-full sm:w-40 lg:w-48 h-32 sm:h-auto sm:min-h-[140px] bg-muted/30 shrink-0 overflow-hidden">
-            {mainImage ? (
-              <img
-                src={mainImage}
-                alt={facility.name}
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              />
-            ) : (
-              <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/5 to-primary/10">
-                <Building2 className="h-12 w-12 sm:h-16 sm:w-16 text-primary/30" />
-              </div>
-            )}
-            {/* Gradient overlay for better badge visibility */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
-            {/* Status Badge */}
-            <div className="absolute top-2 left-2 sm:top-3 sm:left-3">
-              <Badge
-                variant="outline"
-                className={cn(
-                  "gap-1 sm:gap-1.5 text-[10px] sm:text-xs font-medium backdrop-blur-md bg-background/90 shadow-sm",
-                  statusConfig.badgeClass,
-                )}
-                aria-label={`Status: ${statusConfig.label}`}
-              >
-                <span
-                  className={cn(
-                    "h-1.5 w-1.5 rounded-full",
-                    statusConfig.dotColor,
-                    // Only "Live" listings pulse; non-live dots remain static
-                    // (and respect prefers-reduced-motion via motion-safe:).
-                    shouldPulseDot && "motion-safe:animate-pulse",
-                  )}
-                  aria-hidden
-                />
-                {statusConfig.label}
-              </Badge>
+    <article
+      className={cn(
+        "group relative bg-white transition-colors",
+        withinList
+          ? "px-4 py-3.5 sm:px-5 hover:bg-slate-50"
+          : "rounded-lg border border-slate-200 px-4 py-3.5 sm:px-5 hover:border-slate-300",
+        isSuspended && "opacity-70",
+      )}
+    >
+      <div className="flex items-start gap-3.5 sm:gap-4">
+        {/* Thumbnail — small, square, hairline border. No hover scale. */}
+        <div className="relative h-14 w-14 sm:h-16 sm:w-16 shrink-0 overflow-hidden rounded-md border border-slate-200 bg-slate-50">
+          {mainImage ? (
+            <img
+              src={mainImage}
+              alt=""
+              className="h-full w-full object-cover"
+              loading="lazy"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center">
+              <Building2 className="h-5 w-5 text-slate-400" aria-hidden />
             </div>
+          )}
+        </div>
+
+        {/* Body */}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <h3 className="truncate text-[15px] font-semibold text-slate-900 group-hover:text-slate-900">
+                {facility.name}
+              </h3>
+              <p className="mt-0.5 flex items-center gap-1 truncate text-[13px] text-slate-600">
+                <MapPin className="h-3 w-3 shrink-0 text-slate-400" aria-hidden />
+                <span className="truncate">{fullAddress}</span>
+              </p>
+            </div>
+
+            {/* Status pill — tiny, ring-style, no animation by default. */}
+            <span
+              className={cn(
+                "inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset",
+                statusConfig.pillClass,
+              )}
+              aria-label={`Status: ${statusConfig.label}`}
+            >
+              <span className={cn("h-1.5 w-1.5 rounded-full", statusConfig.dotColor)} aria-hidden />
+              <StatusIcon className="hidden h-3 w-3 sm:inline-block" aria-hidden />
+              {statusConfig.label}
+            </span>
           </div>
 
-          {/* Content Section */}
-          <div className="flex-1 p-3 sm:p-4 flex flex-col justify-between min-h-[130px] sm:min-h-[140px]">
-            <div className="space-y-1.5 sm:space-y-2">
-              {/* Header: Name & Type Badge */}
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0 flex-1">
-                  <h3 className="font-semibold text-foreground text-sm sm:text-base leading-tight mb-1 group-hover:text-primary transition-colors line-clamp-1">
-                    {facility.name}
-                  </h3>
-                  <Badge variant="secondary" className="text-[10px] sm:text-xs font-normal">
-                    {facility.facility_type || "Treatment Center"}
-                  </Badge>
-                </div>
-              </div>
-              
-              {/* Full Address */}
-              <div className="flex items-start gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground">
-                <MapPin className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0 mt-0.5 text-primary/60" />
-                <span className="line-clamp-1">{fullAddress}</span>
-              </div>
+          {/* Meta strip — small typography, separators */}
+          <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-slate-500">
+            <span>{facility.facility_type || "Treatment Center"}</span>
+            <span className="hidden text-slate-300 sm:inline">·</span>
+            <span className="flex items-center gap-1">
+              <Eye className="h-3 w-3" aria-hidden />
+              {viewsData ?? 0} views
+            </span>
+            <span className="text-slate-300">·</span>
+            <span className="flex items-center gap-1">
+              <Users className="h-3 w-3" aria-hidden />
+              {leadsData ?? 0} leads
+            </span>
+            <span className="hidden text-slate-300 sm:inline">·</span>
+            <span className="hidden sm:inline">Added {createdDate}</span>
+          </p>
 
-              {/* KPI Stats */}
-              <div className="flex items-center gap-1.5 sm:gap-2 pt-0.5 sm:pt-1">
-                <div className="flex items-center gap-1 sm:gap-1.5 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-md sm:rounded-lg bg-muted/60 border border-border/40">
-                  <Eye className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary" />
-                  <span className="text-xs sm:text-sm font-medium">{viewsData ?? 0}</span>
-                  <span className="text-[10px] sm:text-xs text-muted-foreground hidden sm:inline">views</span>
-                </div>
-                <div className="flex items-center gap-1 sm:gap-1.5 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-md sm:rounded-lg bg-muted/60 border border-border/40">
-                  <Users className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary" />
-                  <span className="text-xs sm:text-sm font-medium">{leadsData ?? 0}</span>
-                  <span className="text-[10px] sm:text-xs text-muted-foreground hidden sm:inline">leads</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Footer: Date & Actions */}
-            <div className="flex items-center justify-between pt-2 sm:pt-3 mt-1.5 sm:mt-2 border-t border-border/50">
-              <span className="text-[10px] sm:text-xs text-muted-foreground">
-                Added {createdDate}
+          {/* Actions row — inline, small, directory-style */}
+          <div className="mt-2.5 flex items-center gap-2">
+            {isSuspended ? (
+              <span className="inline-flex items-center gap-1 text-[12px] text-slate-500">
+                <Lock className="h-3 w-3" aria-hidden />
+                Contact support to reactivate
               </span>
-              
-              <div className="flex items-center gap-1.5 sm:gap-2">
-                {facility.slug && onPreview && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-1 sm:gap-1.5 h-7 sm:h-8 px-2 sm:px-2.5 text-[11px] sm:text-xs"
-                    onClick={() => onPreview({ name: facility.name, slug: facility.slug! })}
-                    aria-label={`Preview ${facility.name}'s public profile`}
-                  >
-                    <Eye className="h-3 w-3 sm:h-3.5 sm:w-3.5" aria-hidden />
-                    <span className="hidden xs:inline sm:inline">Preview</span>
-                  </Button>
-                )}
-                {isSuspended ? (
-                  <Badge variant="outline" className="text-[10px] sm:text-xs text-muted-foreground gap-1">
-                    <Lock className="h-3 w-3" aria-hidden />
-                    Contact support
-                  </Badge>
-                ) : (
-                  <Button
-                    size="sm"
-                    className="gap-1 sm:gap-1.5 h-7 sm:h-8 px-2.5 sm:px-3 text-[11px] sm:text-xs"
-                    onClick={() => onSelect(facility.id)}
-                    aria-label={`Edit ${facility.name}`}
-                  >
-                    <Edit3 className="h-3 w-3 sm:h-3.5 sm:w-3.5" aria-hidden />
-                    <span>Edit</span>
-                  </Button>
-                )}
-              </div>
-            </div>
+            ) : (
+              <Button
+                size="sm"
+                className="h-7 gap-1 bg-[#1B365D] px-2.5 text-[12px] font-medium text-white hover:bg-[#142a4a]"
+                onClick={() => onSelect(facility.id)}
+                aria-label={`Edit ${facility.name}`}
+              >
+                <Edit3 className="h-3 w-3" aria-hidden />
+                Edit
+              </Button>
+            )}
+            {facility.slug && onPreview && !isSuspended && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 gap-1 border-slate-200 px-2.5 text-[12px] font-medium text-slate-700 hover:bg-slate-50"
+                onClick={() => onPreview({ name: facility.name, slug: facility.slug! })}
+                aria-label={`Preview ${facility.name}'s public profile`}
+              >
+                <Eye className="h-3 w-3" aria-hidden />
+                Preview
+              </Button>
+            )}
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </article>
   );
 }

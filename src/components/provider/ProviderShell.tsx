@@ -274,8 +274,10 @@ function ProviderShellContent() {
 
       {/* Row 2 — Sidebar + Main (single grid cell, internal flex) */}
       <div className="flex min-h-0 w-full overflow-hidden">
-        {/* Fixed Desktop Sidebar */}
-        <aside className="hidden lg:flex flex-col w-64 flex-shrink-0 border-r border-border bg-card/50 backdrop-blur-sm overflow-y-auto z-40">
+        {/* Fixed Desktop Sidebar — clean white panel with a hairline
+            divider, matches Healthgrades / Yelp directory chrome (no
+            translucency tint that competes with content). */}
+        <aside className="hidden lg:flex flex-col w-64 flex-shrink-0 border-r border-slate-200 bg-white overflow-y-auto z-40">
           <ProviderSidebar />
         </aside>
 
@@ -320,7 +322,7 @@ function ProviderShellContent() {
         {/* Main scroll area — bounded by grid, no padding hack needed */}
         <main
           ref={mainContentRef}
-          className="flex-1 min-w-0 min-h-0 overflow-x-hidden overflow-y-auto bg-muted/30"
+          className="flex-1 min-w-0 min-h-0 overflow-x-hidden overflow-y-auto bg-slate-50"
         >
           <DunningBanner />
           <ProviderErrorBoundary>

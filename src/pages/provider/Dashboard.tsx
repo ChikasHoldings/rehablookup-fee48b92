@@ -45,17 +45,22 @@ import { DashboardMissedLeads } from "@/components/provider/DashboardMissedLeads
 
 import { DashboardPlacementPanel } from "@/components/provider/DashboardPlacementPanel";
 
-// Compact Metric Card
-function MetricCard({ 
-  title, 
-  value, 
-  subtitle, 
-  icon: Icon, 
-  iconBg, 
+// Compact directory-style metric tile. Hairline border, white bg, no
+// shadow lift on hover — just a subtle border accent. Title sits as a
+// small uppercase eyebrow above the value; subtitle (if any) drops
+// below in 12px muted. iconBg / iconColor are kept as props so each
+// metric can hold its accent (emerald for live, amber for pending,
+// etc.) without restyling the wrapper.
+function MetricCard({
+  title,
+  value,
+  subtitle,
+  icon: Icon,
+  iconBg,
   iconColor,
   action,
-  isLoading
-}: { 
+  isLoading,
+}: {
   title: string;
   value: string | number;
   subtitle?: string;
@@ -66,32 +71,39 @@ function MetricCard({
   isLoading?: boolean;
 }) {
   return (
-    <Card className="border-border/40 hover:border-border/60 transition-colors">
-      <CardContent className="p-2.5 sm:p-4">
-        <div className="flex items-center gap-2 sm:gap-3">
-          <div className={cn("h-9 w-9 sm:h-10 sm:w-10 rounded-lg flex items-center justify-center shrink-0", iconBg)}>
-            <Icon className={cn("h-4 w-4 sm:h-[18px] sm:w-[18px]", iconColor)} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">{title}</p>
-            {isLoading ? (
-              <Skeleton className="h-5 sm:h-6 w-10 sm:w-12 mt-0.5" />
-            ) : (
-              <p className="text-lg sm:text-xl font-bold text-foreground leading-tight tabular-nums">{value}</p>
-            )}
-            {subtitle && <p className="text-xs sm:text-xs text-muted-foreground mt-0.5 truncate">{subtitle}</p>}
-          </div>
-          {action && (
-            <Button variant="ghost" size="sm" className="h-7 sm:h-8 px-2 sm:px-2.5 text-xs sm:text-xs hidden sm:flex" asChild>
-              <Link to={action.href}>
-                {action.label}
-                <ChevronRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 ml-0.5" />
-              </Link>
-            </Button>
+    <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 transition-colors hover:border-slate-300">
+      <div className="flex items-center gap-3">
+        <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-md", iconBg)}>
+          <Icon className={cn("h-4 w-4", iconColor)} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+            {title}
+          </p>
+          {isLoading ? (
+            <Skeleton className="mt-0.5 h-6 w-12" />
+          ) : (
+            <p className="text-xl font-bold leading-tight tabular-nums text-slate-900">{value}</p>
+          )}
+          {subtitle && (
+            <p className="mt-0.5 truncate text-[11px] text-slate-500">{subtitle}</p>
           )}
         </div>
-      </CardContent>
-    </Card>
+        {action && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="hidden h-7 gap-0.5 px-2 text-[11px] font-medium text-[#1B365D] hover:bg-slate-50 sm:inline-flex"
+            asChild
+          >
+            <Link to={action.href}>
+              {action.label}
+              <ChevronRight className="ml-0.5 h-3 w-3" />
+            </Link>
+          </Button>
+        )}
+      </div>
+    </div>
   );
 }
 
