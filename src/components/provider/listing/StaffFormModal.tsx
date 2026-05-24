@@ -76,13 +76,33 @@ export function StaffFormModal({
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    // Always reset the file input value so the same filename can be
+    // selected twice in a row, and so a failed upload doesn't strand
+    // the input on a "selected" file. Done before any early return.
+    if (e.target) e.target.value = "";
+
     if (!file) return;
 
-    // Validate file type
-    if (!file.type.startsWith("image/")) {
+    // Guard against double-upload race: if a previous upload is still
+    // in flight, ignore this one. The button's `disabled={isUploading}`
+    // attribute prevents the click in normal use; this is the
+    // belt-and-braces for keyboard / programmatic triggers.
+    if (isUploading) return;
+
+    // Strict MIME allowlist. `image/*` would accept image/svg+xml,
+    // which can carry inline <script> and render as XSS when served
+    // back with its native content-type. We accept only raster image
+    // formats that browsers render inertly.
+    const ALLOWED_MIME = new Set([
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+      "image/gif",
+    ]);
+    if (!ALLOWED_MIME.has(file.type)) {
       toast({
-        title: "Invalid file type",
-        description: "Please upload an image file.",
+        title: "Unsupported image format",
+        description: "Please upload a JPG, PNG, WebP, or GIF photo.",
         variant: "destructive",
       });
       return;
@@ -114,13 +134,27 @@ export function StaffFormModal({
         throw new Error("User not authenticated");
       }
 
-      const fileExt = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      // Derive the extension from the (already-allowlisted) MIME, not
+      // from the user-supplied filename. A filename like "trojan.svg"
+      // would otherwise land at /<uid>/staff/<uuid>.svg even though
+      // we accepted it as image/png.
+      const EXT_BY_MIME: Record<string, string> = {
+        "image/jpeg": "jpg",
+        "image/png":  "png",
+        "image/webp": "webp",
+        "image/gif":  "gif",
+      };
+      const fileExt = EXT_BY_MIME[file.type] ?? "jpg";
       // Storage policy requires user ID as first folder (auth.uid())
       const fileName = `${user.id}/staff/${crypto.randomUUID()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from("facility-images")
-        .upload(fileName, file, { upsert: true });
+        // Explicit contentType — never let Supabase auto-detect from
+        // the path extension. We've already validated the MIME against
+        // the allowlist; pass it through verbatim so the served
+        // Content-Type matches what we authorized.
+        .upload(fileName, file, { upsert: true, contentType: file.type });
 
       if (uploadError) throw uploadError;
 

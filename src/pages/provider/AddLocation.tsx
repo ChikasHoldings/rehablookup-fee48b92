@@ -463,6 +463,14 @@ export default function AddLocationPage() {
         draft.treatment_approaches.map((approach, idx) => ({
           facility_id: facilityId,
           name: approach,
+          // facility_programs.description is NOT NULL with a
+          // `length(btrim(description)) > 0` CHECK. The wizard captures
+          // approaches as bare names; we seed description with the
+          // name itself so the row inserts cleanly. Providers can
+          // enrich each program (full description + level_of_care +
+          // length_text) from the enhanced-profile editor after the
+          // facility is approved.
+          description: approach,
           display_order: idx,
           is_visible: true,
         })),
@@ -505,21 +513,34 @@ export default function AddLocationPage() {
         }));
       await insertSideTable("facility_staff", staffRows);
 
-      // Refresh React Query caches so the provider's listings list
-      // updates immediately.
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["provider-facilities"] }),
-        queryClient.invalidateQueries({ queryKey: ["facility-limits"] }),
-      ]);
-      refetchFacilities();
-
-      // Clear localStorage draft on success
+      // The facility row + all side-tables are committed at this point —
+      // anything below is best-effort UX polish. Clear the draft FIRST
+      // so a network blip on cache invalidation can't leave a stale
+      // draft (the user might refresh, see the old draft, and re-submit,
+      // accidentally creating a second facility).
       reset();
 
+      // Show the right outcome screen before kicking off cache work so
+      // the user gets visual confirmation even if the React Query
+      // invalidation network calls hang.
       if (failedTables.length > 0) {
         setPartialSuccess({ facilityId, failedTables });
       } else {
         setSuccess({ facilityId, slug: newFacility.slug ?? null });
+      }
+
+      // Refresh React Query caches so the provider's listings list
+      // updates immediately. Best-effort — failures here only mean
+      // the listings page won't auto-refresh, not that the facility
+      // wasn't created.
+      try {
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ["provider-facilities"] }),
+          queryClient.invalidateQueries({ queryKey: ["facility-limits"] }),
+        ]);
+        refetchFacilities();
+      } catch (cacheErr) {
+        console.warn("[add-location] cache invalidation failed (non-fatal):", cacheErr);
       }
     } catch (err) {
       console.error("[add-location] unexpected error:", err);
@@ -635,8 +656,8 @@ export default function AddLocationPage() {
                     Continue in editor
                   </Link>
                 </Button>
-                <Button variant="outline" onClick={() => setPartialSuccess(null)}>
-                  Retry submit
+                <Button asChild variant="outline">
+                  <Link to="/provider/listings">Back to My Listings</Link>
                 </Button>
               </div>
             </CardContent>

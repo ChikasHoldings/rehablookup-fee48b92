@@ -222,14 +222,21 @@ export function useFacilityStaff(facilityId: string | undefined) {
 
   const reorderStaff = useMutation({
     mutationFn: async (orderedIds: string[]) => {
-      const updates = orderedIds.map((id, index) => 
-        supabase
+      // Sequential updates — Supabase doesn't expose multi-statement
+      // transactions from the client SDK, so a Promise.all here would
+      // leave the DB partially reordered if one row failed mid-flight.
+      // Sequential awaits give us short-circuit: first failure aborts
+      // the rest, leaving the original order intact above the failure
+      // point and the partial new order below. We re-throw so the
+      // mutation rejects and the cache invalidation refetches the
+      // truth from the server.
+      for (let i = 0; i < orderedIds.length; i++) {
+        const { error } = await supabase
           .from("facility_staff")
-          .update({ display_order: index })
-          .eq("id", id)
-      );
-      
-      await Promise.all(updates);
+          .update({ display_order: i })
+          .eq("id", orderedIds[i]);
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["facility-staff", facilityId] });
