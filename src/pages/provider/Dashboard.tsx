@@ -222,7 +222,12 @@ export default function ProviderDashboardPage() {
   // route to concierge upstream — see submit-qualified-lead). Polled
   // every 30s while the tab is visible (React Query pauses
   // refetchInterval automatically when the tab is hidden).
-  const { data: recentLeads = [], isLoading: leadsLoading } = useQuery({
+  const {
+    data: recentLeads = [],
+    isLoading: leadsLoading,
+    isError: leadsErrored,
+    refetch: refetchLeads,
+  } = useQuery({
     queryKey: ["recent-leads", facilityId],
     queryFn: async (): Promise<Lead[]> => {
       if (!facilityId) return [];
@@ -333,11 +338,18 @@ export default function ProviderDashboardPage() {
     refetchOnWindowFocus: true,
   });
 
-  // Auto-refresh impressions via realtime subscription
+  // Auto-refresh impressions via realtime subscription.
+  // Per-mount random suffix on the channel name so successive mounts
+  // can't collide with an already-subscribed cached channel — same
+  // pattern as DashboardPlacementPanel + usePendingConciergeCount +
+  // useProviderData (the dashboard-crash fix). Without it the second
+  // mount of the dashboard throws "cannot add postgres_changes
+  // callbacks after subscribe()" and SEORouteBoundary catches it.
   useEffect(() => {
     if (!facilityId) return;
+    const channelName = `impressions-live-${facilityId}-${Math.random().toString(36).slice(2, 10)}`;
     const channel = supabase
-      .channel(`impressions-live-${facilityId}`)
+      .channel(channelName)
       .on(
         "postgres_changes",
         {
@@ -351,7 +363,13 @@ export default function ProviderDashboardPage() {
         }
       )
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      try {
+        supabase.removeChannel(channel);
+      } catch {
+        /* channel may already be torn down server-side */
+      }
+    };
   }, [facilityId, queryClient]);
 
   // Fetch review count
@@ -454,13 +472,33 @@ export default function ProviderDashboardPage() {
   // recent loaded for the dashboard feed).
 
   return (
-    <div className="min-h-full bg-background">
+    <div className="min-h-full bg-slate-50">
       {/* Post-onboarding welcome modal is mounted globally in
           ProviderShell (<WelcomeModal/>) — it self-gates on
           profiles.welcomed_at + onboarding_completed_at and is
           plan-aware (Free → "Upgrade to Pro" CTA, Pro → "Add Featured"
           CTA). The older ProviderWelcomeModal that used to render here
           was a duplicate-with-different-gate and is retired. */}
+
+      {/* Hero band — same eyebrow + 26–30px title pattern that runs
+          across every other provider page so the dashboard reads as
+          part of one polished directory chrome. Includes a personal
+          greeting that uses the provider's first name when available. */}
+      <div className="border-b border-slate-200 bg-white">
+        <div className="mx-auto max-w-7xl px-4 py-7 sm:px-6 md:py-9 lg:px-8">
+          <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#1B365D]/70">
+            Dashboard
+          </p>
+          <h1 className="mt-1 font-display text-[26px] font-bold tracking-tight text-slate-900 sm:text-[30px]">
+            {profile?.first_name ? `Welcome back, ${profile.first_name}` : "Welcome back"}
+          </h1>
+          <p className="mt-1.5 max-w-xl text-[15px] text-slate-600">
+            {facility?.name
+              ? `${facility.name} · ${facility.city}${facility.state ? `, ${facility.state}` : ""}`
+              : "Your provider home — leads, listings, performance, and growth."}
+          </p>
+        </div>
+      </div>
 
       <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
 
@@ -573,6 +611,8 @@ export default function ProviderDashboardPage() {
               leads={recentLeads}
               facilityName={facility?.name}
               isLoading={leadsLoading}
+              isError={leadsErrored}
+              onRetry={() => void refetchLeads()}
               onLeadClick={handleLeadClick}
             />
 

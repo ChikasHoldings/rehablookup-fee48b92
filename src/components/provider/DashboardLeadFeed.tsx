@@ -9,6 +9,8 @@ import {
   Building2,
   ChevronRight,
   Users,
+  AlertCircle,
+  RefreshCw,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,6 +26,13 @@ interface DashboardLeadFeedProps {
   leads: Lead[];
   facilityName?: string;
   isLoading: boolean;
+  /** True if the underlying query threw. When set, the feed renders
+   *  a small error card with a retry CTA instead of silently going
+   *  blank. Optional so existing callers don't need to update. */
+  isError?: boolean;
+  /** Manual retry trigger surfaced by the error state. Wired to the
+   *  parent query's `refetch()`. */
+  onRetry?: () => void;
   onLeadClick: (lead: Lead) => void;
 }
 
@@ -49,6 +58,8 @@ export function DashboardLeadFeed({
   leads,
   facilityName,
   isLoading,
+  isError,
+  onRetry,
   onLeadClick,
 }: DashboardLeadFeedProps) {
   return (
@@ -88,6 +99,25 @@ export function DashboardLeadFeed({
                 <Skeleton className="h-8 w-full" />
               </div>
             ))}
+          </div>
+        ) : isError ? (
+          <div className="px-4 py-6 text-center">
+            <AlertCircle className="mx-auto mb-2 h-7 w-7 text-rose-500" aria-hidden />
+            <p className="text-sm font-semibold text-slate-900">Couldn't load leads</p>
+            <p className="mt-0.5 text-xs text-slate-500">
+              We hit a snag reaching the inbox. Try again in a moment.
+            </p>
+            {onRetry && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onRetry}
+                className="mt-3 h-7 gap-1 border-slate-300 px-2.5 text-xs text-slate-700 hover:bg-slate-50"
+              >
+                <RefreshCw className="h-3 w-3" aria-hidden />
+                Try again
+              </Button>
+            )}
           </div>
         ) : leads.length === 0 ? (
           <div className="text-center py-8 px-4">
