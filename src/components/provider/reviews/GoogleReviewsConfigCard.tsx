@@ -37,11 +37,11 @@ const PLACE_ID_MAX = 200;
 const PLACE_ID_REGEX = /!1s(0x[0-9a-fA-F]+:[0-9a-fA-Fx]+)!/;
 
 function extractPlaceIdFromUrl(url: string): string | null {
-  try {
-    const m = url.match(PLACE_ID_REGEX);
-    if (m && m[1]) return m[1];
-  } catch {}
-  return null;
+  // String.match never throws even for malformed regex / unicode input,
+  // so the previous try/catch was pure noise. Just guard against the
+  // null match.
+  const m = url.match(PLACE_ID_REGEX);
+  return m && m[1] ? m[1] : null;
 }
 
 export function GoogleReviewsConfigCard({ facilityId, facilityName }: GoogleReviewsConfigCardProps) {

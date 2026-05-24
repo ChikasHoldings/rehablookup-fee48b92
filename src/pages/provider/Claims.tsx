@@ -129,6 +129,12 @@ export default function ProviderClaims() {
         return;
       }
       setAuthChecking(false);
+    }).catch((err) => {
+      if (cancelled) return;
+      console.error("[Claims] auth.getSession failed", err);
+      // Don't leave the user stuck on the auth-checking spinner. Show
+      // the unauth state so they can navigate to login.
+      navigate("/provider/onboarding?returnTo=/provider/claims", { replace: true });
     });
     return () => {
       cancelled = true;
@@ -153,6 +159,10 @@ export default function ProviderClaims() {
         } else {
           setClaims((data ?? []) as unknown as ClaimRow[]);
         }
+      }, (err) => {
+        if (cancelled) return;
+        console.error("[Claims] facility_claim_requests fetch failed", err);
+        setError(err instanceof Error ? err.message : "Couldn't load your claims");
       });
     return () => {
       cancelled = true;

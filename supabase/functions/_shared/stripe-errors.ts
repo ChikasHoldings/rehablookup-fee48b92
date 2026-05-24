@@ -41,6 +41,17 @@ export function classifyStripeError(err: unknown): ClassifiedStripeError {
       ? (err.message ?? err.raw?.message ?? "Unknown Stripe error")
       : String(err);
 
+  // Our own TimeoutError (from withTimeout) — treat as retryable upstream
+  // unreachable. Match by `type` field to avoid an import cycle.
+  if (typeof err === "object" && err !== null && (err as { type?: string }).type === "TimeoutError") {
+    return {
+      message: "The request took too long — likely an upstream slowdown. Try again in a moment.",
+      code: "UPSTREAM_TIMEOUT",
+      retryable: true,
+      httpStatus: 504,
+    };
+  }
+
   if (isStripeError(err)) {
     switch (err.type) {
       case "StripeRateLimitError":

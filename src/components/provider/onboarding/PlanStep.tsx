@@ -140,7 +140,14 @@ export function PlanStep({ onAdvance, onBack }: PlanStepProps) {
           .maybeSingle();
         if (sub?.tier === "pro") {
           await advance({ plan: "pro", current_step: "completed" });
-          try { await supabase.rpc("complete_provider_onboarding"); } catch { /* ignore */ }
+          try {
+            await supabase.rpc("complete_provider_onboarding");
+          } catch (err) {
+            // The onboarding state was already set via advance() above,
+            // so we don't need to block on this RPC. But log it so we
+            // can debug stuck-in-onboarding reports if they happen.
+            console.warn("[PlanStep] complete_provider_onboarding RPC failed (non-fatal)", err);
+          }
           // Fire the Pro-tier welcome email exactly once on completion.
           void fireProviderWelcomeEmail("pro");
           toast.success("Pro is active. Welcome to RehabLookup.");

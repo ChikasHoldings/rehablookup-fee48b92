@@ -46,8 +46,18 @@ export function SelectedFacilityProvider({ children }: { children: ReactNode }) 
   // Reset hydration when user changes (prevents stale data cross-contamination)
   useEffect(() => {
     const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      const newUserId = session?.user?.id || null;
+      let newUserId: string | null = null;
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        newUserId = session?.user?.id || null;
+      } catch (err) {
+        // Transient auth-endpoint failure. Don't tear down the user's
+        // selected-facility state — that would force them to re-pick
+        // a facility just because the auth check blipped. Leave the
+        // context as-is and try again on the next render cycle.
+        console.warn("[SelectedFacilityContext] auth.getSession failed, retaining state", err);
+        return;
+      }
       
       // If user changed, reset everything
       if (currentUserId && newUserId && currentUserId !== newUserId) {

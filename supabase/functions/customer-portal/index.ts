@@ -1,8 +1,11 @@
 import Stripe from "https://esm.sh/stripe@18.5.0?target=denonext";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 import { classifyStripeError } from "../_shared/stripe-errors.ts";
+import { withTimeout } from "../_shared/with-timeout.ts";
 
-const VERSION = "1.1.0";
+const VERSION = "1.2.0";
+const STRIPE_TIMEOUT_MS = 12_000;
+const SUPABASE_TIMEOUT_MS = 8_000;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -41,14 +44,22 @@ Deno.serve(async (req) => {
     logStep(requestId, "Authorization header found");
 
     const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
+    const { data: userData, error: userError } = await withTimeout(
+      supabaseClient.auth.getUser(token),
+      SUPABASE_TIMEOUT_MS,
+      "supabase.auth.getUser",
+    );
     if (userError) throw new Error(`Authentication error: ${userError.message}`);
     const user = userData.user;
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep(requestId, "User authenticated", { userId: user.id, email: user.email });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+    const customers = await withTimeout(
+      stripe.customers.list({ email: user.email, limit: 1 }),
+      STRIPE_TIMEOUT_MS,
+      "stripe.customers.list",
+    );
     if (customers.data.length === 0) {
       throw new Error("No Stripe customer found. Please subscribe to a plan first.");
     }
@@ -56,10 +67,14 @@ Deno.serve(async (req) => {
     logStep(requestId, "Found Stripe customer", { customerId });
 
     const origin = req.headers.get("origin") || "https://rehablookup.com";
-    const portalSession = await stripe.billingPortal.sessions.create({
-      customer: customerId,
-      return_url: `${origin}/provider/billing`,
-    });
+    const portalSession = await withTimeout(
+      stripe.billingPortal.sessions.create({
+        customer: customerId,
+        return_url: `${origin}/provider/billing`,
+      }),
+      STRIPE_TIMEOUT_MS,
+      "stripe.billingPortal.sessions.create",
+    );
     logStep(requestId, "Customer portal session created", { sessionId: portalSession.id });
 
     return new Response(JSON.stringify({ url: portalSession.url, requestId }), {

@@ -121,6 +121,11 @@ function ProviderShellContent() {
             role: "provider",
           });
         }
+      }).catch((err) => {
+        // Sentry context is best-effort. Don't fail the shell just
+        // because we couldn't tag the user — observability degrades
+        // but the panel still works.
+        console.warn("[ProviderShell] setSentryUser failed", err);
       });
     }
   }, [role, isAuthenticated]);

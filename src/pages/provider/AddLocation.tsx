@@ -225,9 +225,15 @@ export default function AddLocationPage() {
 
   const [userId, setUserId] = useState<string | null>(null);
   useEffect(() => {
-    void getCachedSession().then((session) => {
-      setUserId(session?.user?.id ?? null);
-    });
+    getCachedSession()
+      .then((session) => setUserId(session?.user?.id ?? null))
+      .catch((err) => {
+        // Transient session-fetch failure. Surface to console for
+        // monitoring; the wizard's submit flow re-calls
+        // getCachedSession and will redirect to login if it actually
+        // fails at submit time, so leaving userId null here is safe.
+        console.warn("[AddLocation] getCachedSession failed", err);
+      });
   }, []);
 
   const { draft, updateField, reset, hydrated } = useAddLocationWizard(userId);

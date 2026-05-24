@@ -29,8 +29,11 @@
 import Stripe from "https://esm.sh/stripe@18.5.0?target=denonext";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 import { classifyStripeError } from "../_shared/stripe-errors.ts";
+import { withTimeout } from "../_shared/with-timeout.ts";
 
-const VERSION = "1.2.0";
+const VERSION = "1.3.0";
+const STRIPE_TIMEOUT_MS = 12_000;
+const SUPABASE_TIMEOUT_MS = 8_000;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -81,7 +84,11 @@ Deno.serve(async (req) => {
     if (!authHeader) return json(401, { error: "Authentication required", code: "AUTH_MISSING" });
     const anon = createClient(SUPABASE_URL, SUPABASE_ANON);
     const token = authHeader.replace(/^Bearer\s+/i, "");
-    const { data: u, error: uErr } = await anon.auth.getUser(token);
+    const { data: u, error: uErr } = await withTimeout(
+      anon.auth.getUser(token),
+      SUPABASE_TIMEOUT_MS,
+      "supabase.auth.getUser",
+    );
     if (uErr || !u?.user?.email) return json(401, { error: "Invalid authentication", code: "AUTH_INVALID" });
     const userId = u.user.id;
     const userEmail = u.user.email;
@@ -136,11 +143,11 @@ Deno.serve(async (req) => {
     const stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: "2025-08-27.basil" });
 
     // ---- Authorization: caller must own the facility. ----
-    const { data: facility, error: facilityErr } = await svc
-      .from("facilities")
-      .select("id, user_id")
-      .eq("id", facilityId)
-      .maybeSingle();
+    const { data: facility, error: facilityErr } = await withTimeout(
+      svc.from("facilities").select("id, user_id").eq("id", facilityId).maybeSingle(),
+      SUPABASE_TIMEOUT_MS,
+      "facilities.lookup",
+    );
     if (facilityErr) {
       log("ERROR", "facilities lookup failed", { error: facilityErr.message });
       return json(500, { error: "Internal error", code: "DB_ERROR" });
@@ -151,11 +158,14 @@ Deno.serve(async (req) => {
     }
 
     // ---- Subscription state lookup (intent-specific). ----
-    const { data: facSub, error: facSubErr } = await svc
-      .from("facility_subscriptions")
-      .select("id, tier, status, has_featured, has_concierge_partner, stripe_customer_id, current_period_end")
-      .eq("facility_id", facilityId)
-      .maybeSingle();
+    const { data: facSub, error: facSubErr } = await withTimeout(
+      svc.from("facility_subscriptions")
+        .select("id, tier, status, has_featured, has_concierge_partner, stripe_customer_id, current_period_end")
+        .eq("facility_id", facilityId)
+        .maybeSingle(),
+      SUPABASE_TIMEOUT_MS,
+      "facility_subscriptions.lookup",
+    );
     if (facSubErr) {
       log("ERROR", "facility_subscriptions lookup failed", { error: facSubErr.message });
       return json(500, { error: "Internal error", code: "DB_ERROR" });
@@ -196,11 +206,15 @@ Deno.serve(async (req) => {
 
     // ---- Resolve Stripe price by lookup key ----
     const lookupKey = LOOKUP_KEYS[product][billingPeriod];
-    const priceList = await stripe.prices.list({
-      lookup_keys: [lookupKey],
-      active: true,
-      limit: 1,
-    });
+    const priceList = await withTimeout(
+      stripe.prices.list({
+        lookup_keys: [lookupKey],
+        active: true,
+        limit: 1,
+      }),
+      STRIPE_TIMEOUT_MS,
+      "stripe.prices.list",
+    );
     const price = priceList.data[0];
     if (!price) {
       log("ERROR", "Price not found", { lookupKey });
@@ -216,7 +230,11 @@ Deno.serve(async (req) => {
       : null;
     let customerId = storedCustomerId ?? undefined;
     if (!customerId) {
-      const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
+      const customers = await withTimeout(
+        stripe.customers.list({ email: userEmail, limit: 1 }),
+        STRIPE_TIMEOUT_MS,
+        "stripe.customers.list",
+      );
       customerId = customers.data[0]?.id;
     }
     // For initial_subscription on a brand-new account there may be no
@@ -227,11 +245,15 @@ Deno.serve(async (req) => {
       intent === "initial_subscription" ? "pro_subscription" : `${product}_addon`;
     if (customerId) {
       const thirtyMinAgo = Math.floor((Date.now() - 30 * 60 * 1000) / 1000);
-      const recentSessions = await stripe.checkout.sessions.list({
-        customer: customerId,
-        limit: 10,
-        created: { gte: thirtyMinAgo },
-      });
+      const recentSessions = await withTimeout(
+        stripe.checkout.sessions.list({
+          customer: customerId,
+          limit: 10,
+          created: { gte: thirtyMinAgo },
+        }),
+        STRIPE_TIMEOUT_MS,
+        "stripe.checkout.sessions.list",
+      );
       const openSession = recentSessions.data.find(
         (s) =>
           s.status === "open" &&
@@ -284,7 +306,7 @@ Deno.serve(async (req) => {
       ...(product === "concierge" && levelsOfCareCsv ? { levels_of_care: levelsOfCareCsv } : {}),
     };
 
-    const session = await stripe.checkout.sessions.create(
+    const session = await withTimeout(stripe.checkout.sessions.create(
       {
         ...(customerId
           ? { customer: customerId, customer_update: { name: "auto", address: "auto" } }
@@ -301,7 +323,7 @@ Deno.serve(async (req) => {
         },
       },
       { idempotencyKey },
-    );
+    ), STRIPE_TIMEOUT_MS, "stripe.checkout.sessions.create");
 
     if (!session.url) {
       log("ERROR", "Stripe returned session without URL", { sessionId: session.id });
