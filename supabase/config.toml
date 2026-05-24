@@ -559,6 +559,13 @@ verify_jwt = false
 [functions.sync-google-reviews]
 verify_jwt = false
 
+# Cron-only orchestrator for the re-verification monitoring engine.
+# Calls run_data_feed_diff(), run_expiry_sweep(), and
+# run_backstop_sweep() in order. pg_cron has no JWT so verify_jwt is
+# off; X-Cron-Secret is required.
+[functions.run-re-verification-sweep]
+verify_jwt = false
+
 # verify_jwt=false so the function does its own ownership + Pro +
 # verified gating against the caller JWT. Same pattern as
 # send-review-request. Generates a personalised marketing/credibility

@@ -138,6 +138,7 @@ const CRON_NAMES = new Set([
   "process-seeker-drip",
   "process-seeker-followup-reminders",
   "revenue-enforcement-cron",
+  "run-re-verification-sweep",
   "samhsa-import-batch",
   "send-dunning-emails",
   "send-new-facility-alerts",
