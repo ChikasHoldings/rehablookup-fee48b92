@@ -40,6 +40,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { ProviderPageHeader } from "@/components/provider/ProviderPageHeader";
+import { ClaimEngineStatePanel } from "@/components/provider/ClaimEngineStatePanel";
 
 type ClaimStatus =
   | "pending"
@@ -282,6 +283,10 @@ function ClaimListItem({ claim }: { claim: ClaimRow }) {
               {claim.rejection_reason}
             </p>
           )}
+          <ClaimEngineStatePanel
+            claimId={claim.id}
+            facilityId={claim.facilities?.id ?? null}
+          />
         </div>
         <div className="flex flex-col gap-2 shrink-0">
           {primaryHref && (
