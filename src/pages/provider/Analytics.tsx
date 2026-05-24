@@ -10,6 +10,7 @@ import { ROICalculatorWidget } from "@/components/provider/ROICalculatorWidget";
 import { DATE_RANGE_PRESETS, type DateRange } from "@/hooks/useLeadAnalytics";
 import { useCentralizedEngagementAnalytics } from "@/hooks/useCentralizedEngagementAnalytics";
 import { useCentralizedLeadAnalytics } from "@/hooks/useCentralizedLeadAnalytics";
+import { MarketReportPanel } from "@/components/provider/analytics/MarketReportPanel";
 import { useProviderFacilities } from "@/hooks/useProviderFacilities";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
@@ -39,7 +40,7 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { toast } from "sonner";
 
-type TabKey = "overview" | "engagement" | "leads" | "performance" | "roi" | "subscription";
+type TabKey = "overview" | "engagement" | "leads" | "performance" | "market" | "roi" | "subscription";
 
 export default function ProviderAnalyticsPage() {
   const shouldOpenCalendarFromMenuRef = useRef(false);
@@ -229,6 +230,7 @@ export default function ProviderAnalyticsPage() {
     { key: "engagement", label: "Engagement" },
     { key: "leads", label: "Leads" },
     { key: "performance", label: "Performance" },
+    { key: "market", label: "Market Report" },
     { key: "roi", label: "ROI Calculator" },
   ];
 
@@ -596,6 +598,13 @@ export default function ProviderAnalyticsPage() {
                 renders the headline-only teaser with a blurred Pro
                 preview underneath. */}
             <PerformanceDashboard
+              facilityId={selectedFacilityId !== "all" ? selectedFacilityId : approvedFacilities[0]?.id}
+            />
+          </div>
+        )}
+        {activeTab === "market" && (
+          <div role="tabpanel" id="analytics-panel-market" aria-labelledby="analytics-tab-market" tabIndex={0} className="focus-visible:outline-none">
+            <MarketReportPanel
               facilityId={selectedFacilityId !== "all" ? selectedFacilityId : approvedFacilities[0]?.id}
             />
           </div>

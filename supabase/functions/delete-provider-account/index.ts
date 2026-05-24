@@ -155,11 +155,9 @@ Deno.serve(async (req) => {
         .in("facility_id", facilityIds);
 
 
-      // Delete pending changes
-      await adminClient
-        .from("facility_pending_changes")
-        .delete()
-        .in("facility_id", facilityIds);
+      // facility_pending_changes was dropped in 20260809000000 (orphan
+      // table — provider edits go direct to facilities). No cleanup
+      // needed; the cascade on DROP TABLE handled any historical rows.
 
       // Delete provider notifications
       await adminClient
