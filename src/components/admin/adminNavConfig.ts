@@ -65,7 +65,7 @@ const superAdminNav: NavSection[] = [
     entries: [
       { to: "/admin/leads", icon: Users, label: "Inquiries", permission: "leads", countKey: "leads" },
       { to: "/admin/insurance-verifications", icon: FileCheck2, label: "Insurance VOB", permission: "leads", countKey: "insuranceVerifications" },
-      { to: "/admin/re-verification", icon: ShieldAlert, label: "Re-verification", permission: "providers" },
+      { to: "/admin/re-verification", icon: ShieldAlert, label: "Re-verification", permission: "providers", countKey: "reVerificationPending" },
       { to: "/admin/providers", icon: Building2, label: "Providers", permission: "providers", countKey: "pendingProviders" },
       { to: "/admin/seekers", icon: UserSearch, label: "Clients", permission: "seekers" },
       // Placements is a single unified workspace at /admin/concierge with
@@ -134,7 +134,7 @@ const managerNav: NavSection[] = [
       { to: "/admin/users", icon: ShieldCheck, label: "Staff Management", permission: "users" },
       { to: "/admin/leads", icon: Users, label: "Inquiries", permission: "leads", countKey: "leads" },
       { to: "/admin/insurance-verifications", icon: FileCheck2, label: "Insurance VOB", permission: "leads", countKey: "insuranceVerifications" },
-      { to: "/admin/re-verification", icon: ShieldAlert, label: "Re-verification", permission: "providers" },
+      { to: "/admin/re-verification", icon: ShieldAlert, label: "Re-verification", permission: "providers", countKey: "reVerificationPending" },
       { to: "/admin/providers", icon: Building2, label: "Providers", permission: "providers", countKey: "pendingProviders" },
       { to: "/admin/seekers", icon: UserSearch, label: "Clients", permission: "seekers" },
       // Placements is a single unified workspace at /admin/concierge with

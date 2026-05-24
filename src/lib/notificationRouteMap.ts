@@ -26,6 +26,7 @@ export type AdminRouteKey =
   | "/admin/email-logs"
   | "/admin/seekers"
   | "/admin/insurance-verifications"
+  | "/admin/re-verification"
   | "/admin/notifications";
 
 // Exact-match table. Type → route.

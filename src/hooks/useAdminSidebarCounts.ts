@@ -47,6 +47,11 @@ export interface AdminSidebarCounts {
   marketingLeads: number;         // -> /admin/marketing
   openEscalations: number;        // -> /admin/escalations
   insuranceVerifications: number; // -> /admin/insurance-verifications
+  // Re-verification queue count — pulled directly from
+  // re_verification_events (the engine doesn't fire admin_notifications
+  // per event; the queue page is the source of truth, so the badge
+  // mirrors it instead of duplicating signals into admin_notifications).
+  reVerificationPending: number;  // -> /admin/re-verification
 }
 
 const EMPTY_ROUTE_MAP: Record<AdminRouteKey, number> = {
@@ -63,6 +68,7 @@ const EMPTY_ROUTE_MAP: Record<AdminRouteKey, number> = {
   "/admin/email-logs": 0,
   "/admin/seekers": 0,
   "/admin/insurance-verifications": 0,
+  "/admin/re-verification": 0,
   "/admin/notifications": 0,
 };
 
@@ -77,7 +83,7 @@ export function useAdminSidebarCounts() {
       // Fetch only what we need: `type` so we can aggregate by route.
       // `read=false` filter is applied server-side. Cap at 5000 each
       // (more than 5000 unread is a triage failure, not a UI concern).
-      const [globalRes, userRes] = await Promise.all([
+      const [globalRes, userRes, reVerifyRes] = await Promise.all([
         supabase
           .from("admin_notifications")
           .select("type")
@@ -91,10 +97,21 @@ export function useAdminSidebarCounts() {
               .eq("read", false)
               .limit(5000)
           : Promise.resolve({ data: [], error: null } as { data: Array<{ type: string }>; error: null }),
+        // Engine-raised re-verification events that need a human
+        // decision. `head: true` skips returning rows; `count: 'exact'`
+        // gets the matching-row total via the response Content-Range
+        // header. RLS scopes the table to admins automatically.
+        supabase
+          .from("re_verification_events")
+          .select("id", { count: "exact", head: true })
+          .in("resolution", ["pending", "notified", "lapsed", "pending_review"]),
       ]);
 
       if (globalRes.error) throw new Error(`Global unread fetch failed: ${globalRes.error.message}`);
       if (userRes.error) throw new Error(`Personal unread fetch failed: ${userRes.error.message}`);
+      // Don't fail the whole hook if the re-verify count errors —
+      // worst case the badge shows 0 and the queue is still reachable.
+      if (reVerifyRes.error) console.warn("[admin-sidebar-counts] re-verify count failed:", reVerifyRes.error.message);
 
       const routeCounts: Record<AdminRouteKey, number> = { ...EMPTY_ROUTE_MAP };
       let totalUnread = 0;
@@ -110,6 +127,9 @@ export function useAdminSidebarCounts() {
         totalUnread += 1;
       }
 
+      const reVerificationPending = reVerifyRes.count ?? 0;
+      routeCounts["/admin/re-verification"] = reVerificationPending;
+
       return {
         unreadByRoute: routeCounts,
         totalUnread,
@@ -124,6 +144,7 @@ export function useAdminSidebarCounts() {
         marketingLeads: routeCounts["/admin/marketing"],
         openEscalations: routeCounts["/admin/escalations"],
         insuranceVerifications: routeCounts["/admin/insurance-verifications"],
+        reVerificationPending,
       };
     },
     staleTime: 30 * 1000,
@@ -147,6 +168,11 @@ export function useAdminSidebarCounts() {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "admin_user_notifications" },
+        invalidate,
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "re_verification_events" },
         invalidate,
       )
       .subscribe();
