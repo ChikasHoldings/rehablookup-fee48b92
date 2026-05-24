@@ -122,6 +122,7 @@ Deno.serve(async (req) => {
       billing: "Billing",
       listing: "Listing",
       leads: "Leads",
+      placements: "Concierge Partner",
       technical: "Technical",
       search: "Search & Filters",
       facility: "Facility Information",
@@ -132,6 +133,15 @@ Deno.serve(async (req) => {
 
     const categoryLabel = categoryLabels[category] || category;
 
+    // Urgent-subject detection: matches the on-form copy that promises
+    // "include Urgent in the subject" gets routed first. Word-boundary +
+    // case-insensitive so casual phrasing ("URGENT - leads down",
+    // "Urgent issue", "[urgent]") all flag, while non-urgent words that
+    // happen to contain "urgent" as a substring won't false-positive.
+    const isUrgent = /\burgent\b/i.test(subject);
+    const ticketPriority = isUrgent ? "urgent" : "normal";
+    const urgencyPrefix = isUrgent ? "[URGENT] " : "";
+
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
     const { data: ticketData, error: ticketError } = await supabaseAdmin.from('support_tickets').insert({
       source: ticketSource,
@@ -139,6 +149,7 @@ Deno.serve(async (req) => {
       sender_email: userEmail,
       sender_user_id: user.id,
       category: categoryLabel,
+      priority: ticketPriority,
       subject: subject,
       message: contextInfo ? `${contextInfo}\n\n${message}` : message,
     }).select('id').single();
@@ -158,10 +169,10 @@ Deno.serve(async (req) => {
         const notifications = adminUsers.map(admin => ({
           user_id: admin.user_id,
           type: 'support_ticket',
-          title: `New ${sourceLabel} Support Request`,
+          title: `${urgencyPrefix}New ${sourceLabel} Support Request`,
           message: `${userName}${!isSeeker && contextInfo ? ` (${contextInfo})` : ''} needs help with ${categoryLabel}`,
           link: `/admin/support?ticket=${ticketData?.id}`,
-          metadata: { ticket_id: ticketData?.id, source: ticketSource }
+          metadata: { ticket_id: ticketData?.id, source: ticketSource, priority: ticketPriority }
         }));
         
         await supabaseAdmin.from('admin_user_notifications').insert(notifications);
@@ -247,7 +258,7 @@ Deno.serve(async (req) => {
     const emailResponse = await sendEmailWithRetry(supabase, resend, {
       from: "RehabLookup Support <no-reply@rehablookup.com>",
       to: ["Support@rehablookup.com"],
-      subject: `[${sourceLabel}] ${categoryLabel} - ${subject}`,
+      subject: `${urgencyPrefix}[${sourceLabel}] ${categoryLabel} - ${subject}`,
       html: emailHtml,
       replyTo: userEmail,
     }, {

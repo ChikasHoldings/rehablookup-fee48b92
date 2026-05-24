@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { 
@@ -162,8 +162,8 @@ const CATEGORIES = [
   { value: "account", label: "Account Issues" },
   { value: "billing", label: "Billing & Payments" },
   { value: "listing", label: "Listing Help" },
-  { value: "leads", label: "Leads & Credits" },
-  { value: "placements", label: "Placement Network" },
+  { value: "leads", label: "Leads & Placements" },
+  { value: "placements", label: "Concierge Partner" },
   { value: "technical", label: "Technical Support" },
   { value: "other", label: "Other" },
 ] as const;
@@ -197,6 +197,15 @@ export default function ProviderHelpPage() {
   const trimmedSubject = contactSubject.trim();
   const trimmedMessage = contactMessage.trim();
   const isFormValid = !!contactCategory && trimmedSubject.length >= 3 && trimmedMessage.length >= 10;
+
+  // Auto-dismiss the success panel after 8s without leaking the timer
+  // on unmount — the previous setTimeout fired setState even after the
+  // component was gone, which warned in dev and could break in prod.
+  useEffect(() => {
+    if (!submitted) return;
+    const t = window.setTimeout(() => setSubmitted(false), 8000);
+    return () => window.clearTimeout(t);
+  }, [submitted]);
 
   const handleSubjectChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -245,8 +254,10 @@ export default function ProviderHelpPage() {
       setContactCategory("");
       setContactMessage("");
       refetchTickets();
-
-      setTimeout(() => setSubmitted(false), 8000);
+      // Auto-dismissal of the "Message Sent!" panel is handled by the
+      // effect below so the timer is cleaned up if the user navigates
+      // away — replacing the previous unmanaged setTimeout that would
+      // call setState on an unmounted tree.
     } catch (error) {
       console.error("Error submitting support request:", error);
       toast.error(error instanceof Error ? error.message : "Failed to send message. Please try again.");
@@ -256,17 +267,21 @@ export default function ProviderHelpPage() {
   };
 
   return (
-    <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
-      <div className="max-w-5xl mx-auto space-y-6">
-        {/* Page Header */}
-        <div>
-          <h1 className="font-display text-xl md:text-2xl lg:text-3xl font-bold text-foreground">
+    <div className="min-h-full bg-slate-50">
+      <div className="border-b border-slate-200 bg-white">
+        <div className="mx-auto max-w-5xl px-4 py-7 sm:px-6 md:py-8 lg:px-8">
+          <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#1B365D]/70">
+            Support
+          </p>
+          <h1 className="mt-1 font-display text-[26px] font-bold tracking-tight text-slate-900 sm:text-[30px]">
             Help & Support
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Find answers, learn about features, or contact our support team
+          <p className="mt-1.5 max-w-xl text-[15px] text-slate-600">
+            Find answers, browse guides, or send our team a message — we respond within 24-48 business hours.
           </p>
         </div>
+      </div>
+      <div className="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-6 md:py-8 lg:px-8">
 
         {/* Quick Help Topics */}
         <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-3">
@@ -368,10 +383,13 @@ export default function ProviderHelpPage() {
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="subject" className="text-sm">Subject <span className="text-destructive">*</span></Label>
-                      <span className={cn(
-                        "text-xs tabular-nums",
-                        contactSubject.length > SUBJECT_MAX * 0.9 ? "text-destructive" : "text-muted-foreground"
-                      )}>
+                      <span
+                        id="subject-counter"
+                        className={cn(
+                          "text-xs tabular-nums",
+                          contactSubject.length > SUBJECT_MAX * 0.9 ? "text-destructive" : "text-muted-foreground"
+                        )}
+                      >
                         {contactSubject.length}/{SUBJECT_MAX}
                       </span>
                     </div>
@@ -382,16 +400,23 @@ export default function ProviderHelpPage() {
                       onChange={handleSubjectChange}
                       className="h-9"
                       maxLength={SUBJECT_MAX}
+                      aria-describedby="subject-counter subject-help"
                     />
+                    <p id="subject-help" className="text-xs text-muted-foreground">
+                      Include the word <strong>Urgent</strong> for time-sensitive lead, placement, or outage issues — we'll route those first.
+                    </p>
                   </div>
 
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="message" className="text-sm">Message <span className="text-destructive">*</span></Label>
-                      <span className={cn(
-                        "text-xs tabular-nums",
-                        contactMessage.length > MESSAGE_MAX * 0.9 ? "text-destructive" : "text-muted-foreground"
-                      )}>
+                      <span
+                        id="message-counter"
+                        className={cn(
+                          "text-xs tabular-nums",
+                          contactMessage.length > MESSAGE_MAX * 0.9 ? "text-destructive" : "text-muted-foreground"
+                        )}
+                      >
                         {contactMessage.length}/{MESSAGE_MAX}
                       </span>
                     </div>
@@ -402,9 +427,17 @@ export default function ProviderHelpPage() {
                       value={contactMessage}
                       onChange={handleMessageChange}
                       maxLength={MESSAGE_MAX}
+                      aria-describedby={
+                        trimmedMessage.length > 0 && trimmedMessage.length < 10
+                          ? "message-counter message-error"
+                          : "message-counter"
+                      }
+                      aria-invalid={trimmedMessage.length > 0 && trimmedMessage.length < 10}
                     />
                     {trimmedMessage.length > 0 && trimmedMessage.length < 10 && (
-                      <p className="text-xs text-destructive">Please provide at least 10 characters.</p>
+                      <p id="message-error" className="text-xs text-destructive">
+                        Please provide at least 10 characters.
+                      </p>
                     )}
                   </div>
 
@@ -465,8 +498,9 @@ export default function ProviderHelpPage() {
               <div className="flex items-start gap-3 p-3 rounded-lg border border-border/60 bg-background">
                 <Shield className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  For urgent matters regarding patient leads, placements, or system outages, 
-                  use the contact form with <strong>"Urgent"</strong> in the subject line.
+                  For urgent matters regarding patient leads, placements, or system outages,
+                  include <strong>Urgent</strong> in the subject line — those tickets are
+                  automatically flagged and surfaced to our team first.
                 </p>
               </div>
             </CardContent>
@@ -523,6 +557,14 @@ export default function ProviderHelpPage() {
                             <Badge variant="secondary" className={cn("text-xs shrink-0", st.className)}>
                               {st.label}
                             </Badge>
+                            {ticket.priority === "urgent" && (
+                              <Badge
+                                variant="secondary"
+                                className="text-xs shrink-0 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
+                              >
+                                Urgent
+                              </Badge>
+                            )}
                           </div>
                           <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
                             <span>{ticket.category}</span>
