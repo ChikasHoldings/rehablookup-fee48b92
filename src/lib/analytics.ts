@@ -196,8 +196,6 @@ export const analytics = {
   facilityContact: (facilityId: string, contactMethod: string) =>
     enqueue("facility_contact", { facility_id: facilityId, method: contactMethod }, "facility"),
   phoneClick: (location: string) => enqueue("phone_click", { location }, "facility"),
-  insuranceCheck: (insuranceProvider: string) =>
-    enqueue("insurance_check", { provider: insuranceProvider }, "insurance"),
   navClick: (navItem: string) => enqueue("nav_click", { item: navItem }, "nav"),
   outboundClick: (url: string, linkText?: string) =>
     enqueue("outbound_click", { url, ...(linkText ? { text: linkText } : {}) }, "nav"),
