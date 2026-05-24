@@ -14,7 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Loader2, X, ShieldCheck } from "lucide-react";
+import { Loader2, X, ShieldCheck, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { AddConciergeGeoForm } from "@/components/provider/concierge/AddConciergeGeoForm";
@@ -54,7 +54,12 @@ export function ConciergeManagementPanel({ facilityId, subscription }: Concierge
   const [confirmRemove, setConfirmRemove] = useState<ConciergeGeoRow | null>(null);
   const [removing, setRemoving] = useState(false);
 
-  const { data: geos, isLoading: geosLoading } = useQuery({
+  const {
+    data: geos,
+    isLoading: geosLoading,
+    isError: geosError,
+    refetch: refetchGeos,
+  } = useQuery({
     queryKey: ["concierge-geos", subscription.id],
     queryFn: async (): Promise<ConciergeGeoRow[]> => {
       const { data, error } = await supabase
@@ -63,9 +68,11 @@ export function ConciergeManagementPanel({ facilityId, subscription }: Concierge
         .eq("subscription_id", subscription.id)
         .eq("active", true)
         .order("activated_at", { ascending: false });
+      // Surface the failure so a paying partner sees a retry — not a
+      // false "no active geos" empty state.
       if (error) {
         console.error("[ConciergeManagement] fetch failed", error);
-        return [];
+        throw error;
       }
       return (data as ConciergeGeoRow[]) ?? [];
     },
@@ -132,6 +139,16 @@ export function ConciergeManagementPanel({ facilityId, subscription }: Concierge
         <CardContent>
           {geosLoading ? (
             <Skeleton className="h-32 w-full" />
+          ) : geosError ? (
+            <div className="flex flex-col items-center gap-3 py-8 text-center">
+              <AlertCircle className="h-6 w-6 text-destructive" aria-hidden />
+              <p className="text-sm text-slate-600">
+                Couldn't load your active geographies.
+              </p>
+              <Button variant="outline" size="sm" onClick={() => refetchGeos()}>
+                Retry
+              </Button>
+            </div>
           ) : !geos || geos.length === 0 ? (
             <div className="text-center py-8">
               <p className="font-medium text-slate-900">

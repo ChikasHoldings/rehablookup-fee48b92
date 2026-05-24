@@ -23,6 +23,7 @@ import {
   UserCheck,
   Check,
   X,
+  AlertCircle,
 } from "lucide-react";
 import {
   TIER_PRICING,
@@ -53,7 +54,7 @@ import {
 export default function MarketingHub() {
   const { selectedFacility } = useSelectedFacility();
   const facilityId = selectedFacility?.id;
-  const { data: subscription, isLoading } = useFacilitySubscription(facilityId);
+  const { data: subscription, isLoading, isError, refetch } = useFacilitySubscription(facilityId);
 
   const isPro = subscription?.tier === "pro" && subscription?.status === "active";
 
@@ -68,6 +69,38 @@ export default function MarketingHub() {
         <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
           <Skeleton className="h-10 w-2/3 mb-4" />
           <Skeleton className="h-80 w-full" />
+        </div>
+      </>
+    );
+  }
+
+  // Never fall through to the Free-plan view on a fetch error — a Pro
+  // facility whose subscription failed to load would otherwise see the
+  // upgrade wall and their paid add-ons would look gone. Show a retry.
+  if (isError) {
+    return (
+      <>
+        <ProviderPageHeader
+          title="Marketing"
+          description="Grow your facility's visibility and brand reach."
+          icon={<Megaphone className="h-4 w-4" />}
+        />
+        <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
+          <Card className="border-destructive/40 bg-destructive/5">
+            <CardContent className="p-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-2 text-sm">
+                <AlertCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" aria-hidden />
+                <div>
+                  <p className="font-medium text-foreground">Couldn't load your plan.</p>
+                  <p className="text-muted-foreground mt-0.5">
+                    We weren't able to check your subscription, so your marketing
+                    tools are hidden for now. Try again.
+                  </p>
+                </div>
+              </div>
+              <Button variant="outline" onClick={() => refetch()}>Retry</Button>
+            </CardContent>
+          </Card>
         </div>
       </>
     );

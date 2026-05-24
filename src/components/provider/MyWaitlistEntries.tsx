@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, X, BellOff } from "lucide-react";
+import { Loader2, X, BellOff, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import {
   Card,
@@ -50,7 +50,7 @@ export function MyWaitlistEntries({ facilityId, addonType }: Props) {
 
   const queryKey = ["my-waitlist-entries", facilityId ?? "*", addonType ?? "*"];
 
-  const { data: rows, isLoading } = useQuery({
+  const { data: rows, isLoading, isError, refetch } = useQuery({
     queryKey,
     queryFn: async (): Promise<WaitlistRow[]> => {
       const { data: sess } = await supabase.auth.getSession();
@@ -67,9 +67,11 @@ export function MyWaitlistEntries({ facilityId, addonType }: Props) {
       if (facilityId) q = q.eq("facility_id", facilityId);
       if (addonType) q = q.eq("addon_type", addonType);
       const { data, error } = await q;
+      // Surface the failure so an enrolled provider sees a retry rather
+      // than a vanished card that implies they're on no waitlists.
       if (error) {
         console.warn("[MyWaitlistEntries] fetch failed", error);
-        return [];
+        throw error;
       }
       return (data as unknown as WaitlistRow[]) ?? [];
     },
@@ -110,6 +112,23 @@ export function MyWaitlistEntries({ facilityId, addonType }: Props) {
         </CardHeader>
         <CardContent>
           <Skeleton className="h-24 w-full" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Your waitlist</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col items-center gap-3 py-6 text-center">
+          <AlertCircle className="h-6 w-6 text-destructive" aria-hidden />
+          <p className="text-sm text-slate-600">Couldn't load your waitlist entries.</p>
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            Retry
+          </Button>
         </CardContent>
       </Card>
     );

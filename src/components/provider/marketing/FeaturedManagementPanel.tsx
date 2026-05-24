@@ -16,7 +16,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Loader2, X } from "lucide-react";
+import { Loader2, X, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { AddFeaturedPlacementForm } from "@/components/provider/featured/AddFeaturedPlacementForm";
@@ -70,6 +70,8 @@ export function FeaturedManagementPanel({ facilityId, subscription }: FeaturedMa
   // save round-trip can't fail silently.
   const [tagline, setTagline] = useState("");
   const [taglineLoaded, setTaglineLoaded] = useState(false);
+  const [taglineError, setTaglineError] = useState(false);
+  const [taglineReloadKey, setTaglineReloadKey] = useState(0);
   const [savedTagline, setSavedTagline] = useState("");
   const [savingTagline, setSavingTagline] = useState(false);
 
@@ -79,6 +81,8 @@ export function FeaturedManagementPanel({ facilityId, subscription }: FeaturedMa
       return;
     }
     let cancelled = false;
+    setTaglineError(false);
+    setTaglineLoaded(false);
     (async () => {
       const { data, error } = await supabase
         .from("facilities")
@@ -87,9 +91,11 @@ export function FeaturedManagementPanel({ facilityId, subscription }: FeaturedMa
         .maybeSingle();
       if (cancelled) return;
       if (error) {
+        // Don't fall through to an empty editable textarea — saving from
+        // it would overwrite the provider's existing paid tagline. Show a
+        // retry instead.
         console.error("[FeaturedManagement] tagline load failed", error);
-        toast.error("Couldn't load your saved tagline. Refresh to try again.");
-        setTaglineLoaded(true);
+        setTaglineError(true);
         return;
       }
       const initial = ((data as { sponsored_tagline: string | null } | null)?.sponsored_tagline ?? "").trim();
@@ -100,7 +106,7 @@ export function FeaturedManagementPanel({ facilityId, subscription }: FeaturedMa
     return () => {
       cancelled = true;
     };
-  }, [facilityId]);
+  }, [facilityId, taglineReloadKey]);
 
   const handleSaveTagline = async () => {
     if (!facilityId) return;
@@ -133,7 +139,12 @@ export function FeaturedManagementPanel({ facilityId, subscription }: FeaturedMa
   const taglineDirty = tagline.trim() !== savedTagline.trim();
   const taglineOverLimit = tagline.length > 120;
 
-  const { data: placements, isLoading: placementsLoading } = useQuery({
+  const {
+    data: placements,
+    isLoading: placementsLoading,
+    isError: placementsError,
+    refetch: refetchPlacements,
+  } = useQuery({
     queryKey: ["featured-placements", subscription.id],
     queryFn: async (): Promise<FeaturedPlacementRow[]> => {
       const { data, error } = await supabase
@@ -142,9 +153,11 @@ export function FeaturedManagementPanel({ facilityId, subscription }: FeaturedMa
         .eq("subscription_id", subscription.id)
         .eq("active", true)
         .order("activated_at", { ascending: false });
+      // Surface the failure so a paying provider sees a retry — not a
+      // false "no active placements" empty state.
       if (error) {
         console.error("[FeaturedManagement] fetch failed", error);
-        return [];
+        throw error;
       }
       return (data as FeaturedPlacementRow[]) ?? [];
     },
@@ -195,7 +208,21 @@ export function FeaturedManagementPanel({ facilityId, subscription }: FeaturedMa
             <Label htmlFor="sponsored-tagline" className="sr-only">
               Sponsored tagline
             </Label>
-            {!taglineLoaded ? (
+            {taglineError ? (
+              <div className="flex flex-col gap-2 rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2.5 text-sm sm:flex-row sm:items-center sm:justify-between">
+                <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                  <AlertCircle className="h-4 w-4 text-destructive shrink-0" aria-hidden />
+                  Couldn't load your saved tagline.
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setTaglineReloadKey((k) => k + 1)}
+                >
+                  Retry
+                </Button>
+              </div>
+            ) : !taglineLoaded ? (
               <Skeleton className="h-20 w-full" />
             ) : (
               <Textarea
@@ -208,27 +235,29 @@ export function FeaturedManagementPanel({ facilityId, subscription }: FeaturedMa
                 className="resize-none"
               />
             )}
-            <div className="flex items-center justify-between text-xs">
-              <span
-                className={taglineOverLimit ? "text-destructive" : "text-slate-500"}
-              >
-                {tagline.length} / 120
-              </span>
-              <Button
-                size="sm"
-                onClick={handleSaveTagline}
-                disabled={
-                  savingTagline ||
-                  !taglineLoaded ||
-                  !taglineDirty ||
-                  taglineOverLimit
-                }
-                className="bg-[#1B365D] hover:bg-[#142a4a] gap-1.5"
-              >
-                {savingTagline ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
-                {savingTagline ? "Saving…" : "Save tagline"}
-              </Button>
-            </div>
+            {!taglineError && (
+              <div className="flex items-center justify-between text-xs">
+                <span
+                  className={taglineOverLimit ? "text-destructive" : "text-slate-500"}
+                >
+                  {tagline.length} / 120
+                </span>
+                <Button
+                  size="sm"
+                  onClick={handleSaveTagline}
+                  disabled={
+                    savingTagline ||
+                    !taglineLoaded ||
+                    !taglineDirty ||
+                    taglineOverLimit
+                  }
+                  className="bg-[#1B365D] hover:bg-[#142a4a] gap-1.5"
+                >
+                  {savingTagline ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+                  {savingTagline ? "Saving…" : "Save tagline"}
+                </Button>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -249,6 +278,16 @@ export function FeaturedManagementPanel({ facilityId, subscription }: FeaturedMa
         <CardContent>
           {placementsLoading ? (
             <Skeleton className="h-32 w-full" />
+          ) : placementsError ? (
+            <div className="flex flex-col items-center gap-3 py-8 text-center">
+              <AlertCircle className="h-6 w-6 text-destructive" aria-hidden />
+              <p className="text-sm text-slate-600">
+                Couldn't load your active placements.
+              </p>
+              <Button variant="outline" size="sm" onClick={() => refetchPlacements()}>
+                Retry
+              </Button>
+            </div>
           ) : !placements || placements.length === 0 ? (
             <div className="text-center py-8">
               <p className="font-medium text-slate-900">

@@ -40,7 +40,9 @@ function useActivePlacementCount(subscriptionId: string, active: boolean) {
         .select("id", { count: "exact", head: true })
         .eq("subscription_id", subscriptionId)
         .eq("active", true);
-      if (error) return 0;
+      // Surface the failure (caller renders "—") rather than a false "0",
+      // which would tell a paying provider their placements vanished.
+      if (error) throw error;
       return count ?? 0;
     },
     enabled: active,
@@ -57,7 +59,8 @@ function useActiveGeoCount(subscriptionId: string, active: boolean) {
         .select("id", { count: "exact", head: true })
         .eq("subscription_id", subscriptionId)
         .eq("active", true);
-      if (error) return 0;
+      // Surface the failure (caller renders "—") rather than a false "0".
+      if (error) throw error;
       return count ?? 0;
     },
     enabled: active,
