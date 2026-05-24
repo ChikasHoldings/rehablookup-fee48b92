@@ -37,7 +37,7 @@ export function useProviderSearch(query: string, facilityId?: string) {
   }, [query]);
 
   // Fetch leads for search
-  const { data: leads = [], isLoading: leadsLoading } = useQuery({
+  const { data: leads = [], isLoading: leadsLoading, isError: leadsError } = useQuery({
     queryKey: ["provider-search-leads", facilityId],
     queryFn: async () => {
       if (!facilityId) return [];
@@ -54,7 +54,7 @@ export function useProviderSearch(query: string, facilityId?: string) {
   });
 
   // Fetch placements (concierge introductions) for search
-  const { data: placements = [], isLoading: placementsLoading } = useQuery({
+  const { data: placements = [], isLoading: placementsLoading, isError: placementsError } = useQuery({
     queryKey: ["provider-search-placements", facilityId],
     queryFn: async () => {
       if (!facilityId) return [];
@@ -81,8 +81,13 @@ export function useProviderSearch(query: string, facilityId?: string) {
     staleTime: 60 * 1000,
   });
 
-  // Fetch provider's own facilities (listings) for search
-  const { data: listings = [], isLoading: listingsLoading } = useQuery({
+  // Fetch provider's own facilities (listings) for search.
+  // Active/approved facilities should outrank archived ones in the
+  // result panel — Postgres has no nullable-aware ordering on the
+  // string `status` column, so we order by suspended (false first)
+  // then status alphabetically (approved < pending < rejected etc.),
+  // then by created_at as the tie-breaker.
+  const { data: listings = [], isLoading: listingsLoading, isError: listingsError } = useQuery({
     queryKey: ["provider-search-listings"],
     queryFn: async () => {
       const session = await getCachedSession();
@@ -91,6 +96,8 @@ export function useProviderSearch(query: string, facilityId?: string) {
         .from("facilities")
         .select("id, name, city, state, status, suspended")
         .eq("user_id", session.user.id)
+        .order("suspended", { ascending: true })
+        .order("status", { ascending: true })
         .order("created_at", { ascending: false })
         .limit(20);
       if (error) throw error;
@@ -103,27 +110,54 @@ export function useProviderSearch(query: string, facilityId?: string) {
   const normalizePhone = (phone: string | null | undefined) =>
     phone?.replace(/\D/g, "") || "";
 
+  // Strip combining diacritical marks so a search for "Jose" matches
+  // a lead row stored as "José" — significant for our Spanish-speaking
+  // seeker demographic. Uses Unicode NFD then drops the combining
+  // range; works on every modern browser since `String.normalize`
+  // ships in Node 12+ / Chrome 67+ / Safari 10+.
+  const stripDiacritics = (s: string) =>
+    s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+  // True if EVERY whitespace-delimited token in the query appears
+  // somewhere in any of the supplied haystack strings. Lets "John 555"
+  // match a lead named "John Smith" with phone 555-1234 — the previous
+  // monolithic `includes` only matched if the literal phrase appeared
+  // verbatim. Empty haystacks short-circuit to false.
+  const tokensMatchAll = (tokens: string[], haystacks: string[]): boolean => {
+    if (tokens.length === 0) return true;
+    const joined = haystacks.filter(Boolean).map(stripDiacritics).join(" ").toLowerCase();
+    if (!joined) return false;
+    return tokens.every((t) => joined.includes(t));
+  };
+
   // Filter and format results
   const results = useMemo(() => {
-    const searchTerm = debouncedQuery.toLowerCase().trim();
-    const normalizedSearchTerm = searchTerm.replace(/\D/g, "");
-
-    if (!searchTerm) {
+    const rawTerm = debouncedQuery.trim();
+    if (!rawTerm) {
       return { leads: [], pages: [], placements: [], listings: [], total: 0 };
     }
+
+    // Tokenize: split on whitespace, lowercase + strip diacritics on
+    // each. The whole-string phone digits are kept separately so a
+    // pure-digit token still matches the normalized phone via the
+    // existing prefix logic.
+    const normalizedTerm = stripDiacritics(rawTerm).toLowerCase();
+    const tokens = normalizedTerm.split(/\s+/).filter(Boolean);
+    const phoneDigits = rawTerm.replace(/\D/g, "");
 
     // Search leads
     const matchedLeads: SearchResult[] = leads
       .filter((lead) => {
         const phoneMatch =
-          normalizedSearchTerm.length >= 3 &&
-          normalizePhone(lead.phone).includes(normalizedSearchTerm);
-        return (
-          lead.name?.toLowerCase().includes(searchTerm) ||
-          lead.email?.toLowerCase().includes(searchTerm) ||
-          phoneMatch ||
-          lead.message?.toLowerCase().includes(searchTerm)
-        );
+          phoneDigits.length >= 3 &&
+          normalizePhone(lead.phone).includes(phoneDigits);
+        if (phoneMatch) return true;
+        return tokensMatchAll(tokens, [
+          lead.name || "",
+          lead.email || "",
+          lead.message || "",
+          lead.location_city_state || "",
+        ]);
       })
       .slice(0, 5)
       .map((lead) => ({
@@ -142,11 +176,7 @@ export function useProviderSearch(query: string, facilityId?: string) {
         const name = (inquiry?.user_name as string) || "";
         const status = (inquiry?.status as string) || "";
         const care = (inquiry?.level_of_care as string) || "";
-        return (
-          name.toLowerCase().includes(searchTerm) ||
-          status.toLowerCase().includes(searchTerm) ||
-          care.toLowerCase().includes(searchTerm)
-        );
+        return tokensMatchAll(tokens, [name, status, care]);
       })
       .slice(0, 5)
       .map((p) => {
@@ -159,20 +189,22 @@ export function useProviderSearch(query: string, facilityId?: string) {
           type: "placement" as const,
           title: name,
           subtitle: [care, status, p.provider_response].filter(Boolean).join(" • "),
-          url: "/provider/placement-network",
+          // The retired /provider/placement-network route redirected
+          // to /provider/marketing (hub) which then required another
+          // click to drill into the concierge management UI. Route
+          // straight to the management surface so the click lands the
+          // user on the screen where they can actually act on this
+          // placement.
+          url: "/provider/marketing/concierge",
           metadata: { status, response: p.provider_response },
         };
       });
 
     // Search listings
     const matchedListings: SearchResult[] = listings
-      .filter((l) => {
-        return (
-          l.name?.toLowerCase().includes(searchTerm) ||
-          l.city?.toLowerCase().includes(searchTerm) ||
-          l.state?.toLowerCase().includes(searchTerm)
-        );
-      })
+      .filter((l) =>
+        tokensMatchAll(tokens, [l.name || "", l.city || "", l.state || ""]),
+      )
       .slice(0, 5)
       .map((l) => ({
         id: l.id,
@@ -184,12 +216,9 @@ export function useProviderSearch(query: string, facilityId?: string) {
       }));
 
     // Search pages
-    const matchedPages: SearchResult[] = NAVIGATION_PAGES.filter((page) => {
-      return (
-        page.title.toLowerCase().includes(searchTerm) ||
-        page.subtitle?.toLowerCase().includes(searchTerm)
-      );
-    });
+    const matchedPages: SearchResult[] = NAVIGATION_PAGES.filter((page) =>
+      tokensMatchAll(tokens, [page.title, page.subtitle || ""]),
+    );
 
     return {
       leads: matchedLeads,
@@ -203,6 +232,10 @@ export function useProviderSearch(query: string, facilityId?: string) {
   return {
     results,
     isLoading: (leadsLoading || placementsLoading || listingsLoading) && !!debouncedQuery,
+    // Surface prefetch failures so the UI can show an error state
+    // instead of rendering "No results for X" — which is misleading
+    // when the cache is empty because the network call failed.
+    isError: leadsError || placementsError || listingsError,
     query: debouncedQuery,
   };
 }

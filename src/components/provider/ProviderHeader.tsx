@@ -529,10 +529,11 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
       {/* Mobile Search Expanded */}
       {mobileSearchOpen && (
         <div className="lg:hidden px-4 pb-3 bg-primary border-t border-white/10 animate-fade-in">
-          <ProviderSearchCommand 
-            facilityId={facilityId} 
-            onClose={() => setMobileSearchOpen(false)} 
+          <ProviderSearchCommand
+            facilityId={facilityId}
+            onClose={() => setMobileSearchOpen(false)}
             variant="header"
+            autoFocus
           />
         </div>
       )}

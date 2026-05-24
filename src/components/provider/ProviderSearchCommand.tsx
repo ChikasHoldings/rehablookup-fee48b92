@@ -11,7 +11,6 @@ import {
   CreditCard,
   Settings,
   Handshake,
-  Star,
   Bell,
   Loader2,
   X,
@@ -19,7 +18,7 @@ import {
   Clock,
   Trash2,
   Sparkles,
-  History,
+  AlertCircle,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -31,24 +30,32 @@ interface ProviderSearchCommandProps {
   facilityId?: string;
   onClose?: () => void;
   variant?: "header" | "modal";
+  /**
+   * Focus the input on mount. The header-mounted instance leaves this
+   * false so the page doesn't steal focus from the user; the mobile
+   * panel sets it true so opening the toggle puts the cursor in the
+   * input without a second tap.
+   */
+  autoFocus?: boolean;
 }
 
 const RECENT_SEARCHES_KEY = "provider-recent-searches";
 const MAX_RECENT_SEARCHES = 5;
+const LISTBOX_ID = "provider-search-listbox";
 
+// Icon for each entry in NAVIGATION_PAGES (useProviderSearch.ts). Adds
+// new keys here when adding pages; the result falls back to FileText.
 const pageIcons: Record<string, React.ReactNode> = {
   dashboard: <LayoutDashboard className="h-4 w-4" />,
   listing: <Building2 className="h-4 w-4" />,
   inquiries: <Users className="h-4 w-4" />,
-  credits: <CreditCard className="h-4 w-4" />,
-  "unlock-history": <History className="h-4 w-4" />,
   "pro-upgrade": <Sparkles className="h-4 w-4" />,
   analytics: <BarChart3 className="h-4 w-4" />,
   settings: <Settings className="h-4 w-4" />,
   notifications: <Bell className="h-4 w-4" />,
 };
 
-export function ProviderSearchCommand({ facilityId, onClose, variant = "header" }: ProviderSearchCommandProps) {
+export function ProviderSearchCommand({ facilityId, onClose, variant = "header", autoFocus = false }: ProviderSearchCommandProps) {
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -57,8 +64,34 @@ export function ProviderSearchCommand({ facilityId, onClose, variant = "header" 
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const { results, isLoading } = useProviderSearch(query, facilityId);
+  const { results, isLoading, isError } = useProviderSearch(query, facilityId);
   const allResults = [...results.leads, ...results.placements, ...results.listings, ...results.pages];
+
+  // Auto-focus on mount when the caller asked for it (mobile panel).
+  // Wrapped in a microtask so the input is mounted/measured before
+  // we call focus; otherwise iOS Safari sometimes drops the focus
+  // request while the panel is still slide-animating in.
+  useEffect(() => {
+    if (!autoFocus) return;
+    const id = window.requestAnimationFrame(() => {
+      inputRef.current?.focus();
+      setIsOpen(true);
+    });
+    return () => window.cancelAnimationFrame(id);
+  }, [autoFocus]);
+
+  // Keep the highlighted result in view as the user arrow-keys through
+  // results. Without this, a long result list would scroll under the
+  // hood while the selection indicator stays pinned to the top.
+  useEffect(() => {
+    if (!isOpen) return;
+    const root = dropdownRef.current;
+    if (!root) return;
+    const el = root.querySelector<HTMLElement>(`[data-result-index="${selectedIndex}"]`);
+    if (el) {
+      el.scrollIntoView({ block: "nearest" });
+    }
+  }, [selectedIndex, isOpen]);
 
   // Load recent searches from localStorage
   useEffect(() => {
@@ -178,12 +211,20 @@ export function ProviderSearchCommand({ facilityId, onClose, variant = "header" 
     inputRef.current?.focus();
   };
 
-  const showDropdown = isOpen && (query.length > 0 || isLoading || recentSearches.length > 0);
+  const showDropdown = isOpen && (query.length > 0 || isLoading || isError || recentSearches.length > 0);
+  // The active descendant ID is announced by screen readers as the
+  // selection moves with the arrow keys. Mirrors the data-result-index
+  // attribute on each option so the visual + the announcement stay in
+  // sync.
+  const activeDescendantId =
+    showDropdown && allResults.length > 0
+      ? `provider-search-option-${selectedIndex}`
+      : undefined;
 
   return (
     <div className="relative w-full">
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/70" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/70" aria-hidden />
         <Input
           ref={inputRef}
           type="text"
@@ -192,6 +233,14 @@ export function ProviderSearchCommand({ facilityId, onClose, variant = "header" 
           onChange={(e) => setQuery(e.target.value)}
           onFocus={handleFocus}
           onKeyDown={handleKeyDown}
+          role="combobox"
+          aria-label="Search the provider panel"
+          aria-expanded={showDropdown}
+          aria-controls={LISTBOX_ID}
+          aria-autocomplete="list"
+          aria-activedescendant={activeDescendantId}
+          autoComplete="off"
+          spellCheck={false}
           className="w-full h-10 pl-10 pr-8 bg-white/15 border-white/30 text-white text-sm placeholder:text-white/60 focus:bg-white/20 focus:border-white/50 focus:ring-white/20 rounded-lg"
         />
         {query && (
@@ -200,8 +249,9 @@ export function ProviderSearchCommand({ facilityId, onClose, variant = "header" 
             size="icon"
             className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-white/70 hover:text-white hover:bg-white/15"
             onClick={handleClear}
+            aria-label="Clear search"
           >
-            <X className="h-3.5 w-3.5" />
+            <X className="h-3.5 w-3.5" aria-hidden />
           </Button>
         )}
       </div>
@@ -210,11 +260,23 @@ export function ProviderSearchCommand({ facilityId, onClose, variant = "header" 
       {showDropdown && (
         <div
           ref={dropdownRef}
+          id={LISTBOX_ID}
+          role="listbox"
+          aria-label="Search results"
           className="absolute top-full left-0 right-0 mt-2 bg-card border rounded-xl shadow-xl overflow-hidden z-50 animate-fade-in"
         >
           {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            <div className="flex items-center justify-center py-8" role="status" aria-live="polite">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" aria-hidden />
+              <span className="sr-only">Loading search results</span>
+            </div>
+          ) : isError ? (
+            <div className="py-8 text-center" role="alert">
+              <AlertCircle className="h-8 w-8 text-amber-500/70 mx-auto mb-2" aria-hidden />
+              <p className="text-sm text-foreground">Search is temporarily unavailable</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                We couldn't reach the search index. Try again in a moment.
+              </p>
             </div>
           ) : !query && recentSearches.length > 0 ? (
             /* Recent Searches */
@@ -236,6 +298,12 @@ export function ProviderSearchCommand({ facilityId, onClose, variant = "header" 
                 <button
                   key={search}
                   onClick={() => handleRecentClick(search)}
+                  type="button"
+                  role="option"
+                  id={`provider-search-recent-${index}`}
+                  aria-selected={selectedIndex === index}
+                  aria-label={`Recent search: ${search}`}
+                  data-result-index={index}
                   className={cn(
                     "w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors group",
                     selectedIndex === index
@@ -260,9 +328,13 @@ export function ProviderSearchCommand({ facilityId, onClose, variant = "header" 
             </div>
           ) : allResults.length === 0 && query.length > 0 ? (
             <div className="py-8 text-center">
-              <Search className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
+              <Search className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" aria-hidden />
               <p className="text-sm text-muted-foreground">No results for "{query}"</p>
-              <p className="text-xs text-muted-foreground/60 mt-1">Try a different search term</p>
+              <p className="text-xs text-muted-foreground/60 mt-1">
+                {facilityId
+                  ? "Try a different search term"
+                  : "Select a facility to search leads and placements"}
+              </p>
             </div>
           ) : (
             <div className="max-h-[400px] overflow-y-auto">
@@ -278,6 +350,11 @@ export function ProviderSearchCommand({ facilityId, onClose, variant = "header" 
                     <button
                       key={result.id}
                       onClick={() => handleSelect(result)}
+                      type="button"
+                      role="option"
+                      id={`provider-search-option-${index}`}
+                      aria-selected={selectedIndex === index}
+                      data-result-index={index}
                       className={cn(
                         "w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors",
                         selectedIndex === index
@@ -286,7 +363,7 @@ export function ProviderSearchCommand({ facilityId, onClose, variant = "header" 
                       )}
                     >
                       <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-primary/10 shrink-0">
-                        <User className="h-4 w-4 text-primary" />
+                        <User className="h-4 w-4 text-primary" aria-hidden />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">{result.title}</p>
@@ -323,6 +400,11 @@ export function ProviderSearchCommand({ facilityId, onClose, variant = "header" 
                       <button
                         key={result.id}
                         onClick={() => handleSelect(result)}
+                        type="button"
+                        role="option"
+                        id={`provider-search-option-${actualIndex}`}
+                        aria-selected={selectedIndex === actualIndex}
+                        data-result-index={actualIndex}
                         className={cn(
                           "w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors",
                           selectedIndex === actualIndex
@@ -331,7 +413,7 @@ export function ProviderSearchCommand({ facilityId, onClose, variant = "header" 
                         )}
                       >
                         <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-accent/50 shrink-0">
-                          <Handshake className="h-4 w-4 text-accent-foreground" />
+                          <Handshake className="h-4 w-4 text-accent-foreground" aria-hidden />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium truncate">{result.title}</p>
@@ -358,6 +440,11 @@ export function ProviderSearchCommand({ facilityId, onClose, variant = "header" 
                       <button
                         key={result.id}
                         onClick={() => handleSelect(result)}
+                        type="button"
+                        role="option"
+                        id={`provider-search-option-${actualIndex}`}
+                        aria-selected={selectedIndex === actualIndex}
+                        data-result-index={actualIndex}
                         className={cn(
                           "w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors",
                           selectedIndex === actualIndex
@@ -366,7 +453,7 @@ export function ProviderSearchCommand({ facilityId, onClose, variant = "header" 
                         )}
                       >
                         <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-muted shrink-0">
-                          <Building2 className="h-4 w-4 text-muted-foreground" />
+                          <Building2 className="h-4 w-4 text-muted-foreground" aria-hidden />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium truncate">{result.title}</p>
@@ -393,6 +480,11 @@ export function ProviderSearchCommand({ facilityId, onClose, variant = "header" 
                       <button
                         key={result.id}
                         onClick={() => handleSelect(result)}
+                        type="button"
+                        role="option"
+                        id={`provider-search-option-${actualIndex}`}
+                        aria-selected={selectedIndex === actualIndex}
+                        data-result-index={actualIndex}
                         className={cn(
                           "w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors",
                           selectedIndex === actualIndex
