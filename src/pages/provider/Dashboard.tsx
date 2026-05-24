@@ -71,38 +71,40 @@ function MetricCard({
   isLoading?: boolean;
 }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 transition-colors hover:border-slate-300">
-      <div className="flex items-center gap-3">
-        <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-md", iconBg)}>
-          <Icon className={cn("h-4 w-4", iconColor)} />
+    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-shadow hover:shadow">
+      <div className="flex items-start justify-between">
+        <p className="text-[13px] font-semibold uppercase tracking-wide text-slate-500">
+          {title}
+        </p>
+        <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", iconBg)}>
+          <Icon className={cn("h-5 w-5", iconColor)} aria-hidden />
         </div>
-        <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">
-            {title}
-          </p>
-          {isLoading ? (
-            <Skeleton className="mt-0.5 h-6 w-12" />
-          ) : (
-            <p className="text-xl font-bold leading-tight tabular-nums text-slate-900">{value}</p>
-          )}
-          {subtitle && (
-            <p className="mt-0.5 truncate text-[11px] text-slate-500">{subtitle}</p>
-          )}
-        </div>
-        {action && (
+      </div>
+      {isLoading ? (
+        <Skeleton className="mt-3 h-9 w-20" />
+      ) : (
+        <p className="mt-2 font-display text-[30px] font-bold leading-none tabular-nums text-slate-900">
+          {value}
+        </p>
+      )}
+      {subtitle && (
+        <p className="mt-1.5 truncate text-[13px] text-slate-500">{subtitle}</p>
+      )}
+      {action && (
+        <div className="mt-3 border-t border-slate-100 pt-3">
           <Button
             variant="ghost"
             size="sm"
-            className="hidden h-7 gap-0.5 px-2 text-[11px] font-medium text-[#1B365D] hover:bg-slate-50 sm:inline-flex"
+            className="h-8 gap-1 px-0 text-[13px] font-semibold text-[#1B365D] hover:bg-transparent hover:text-[#142a4a]"
             asChild
           >
             <Link to={action.href}>
               {action.label}
-              <ChevronRight className="ml-0.5 h-3 w-3" />
+              <ChevronRight className="ml-0.5 h-4 w-4" />
             </Link>
           </Button>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

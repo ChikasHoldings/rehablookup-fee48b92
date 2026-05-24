@@ -249,21 +249,23 @@ export default function ProviderNotificationsPage() {
   }
 
   return (
-    <div className="bg-slate-50 px-3 py-4 sm:px-4 sm:py-6 md:px-6 md:py-8 lg:px-8">
-      <div className="mx-auto max-w-5xl space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-            Provider · Activity
+    <div className="min-h-full bg-slate-50">
+      <div className="border-b border-slate-200 bg-white">
+        <div className="mx-auto max-w-5xl px-4 py-7 sm:px-6 md:py-8 lg:px-8">
+          <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#1B365D]/70">
+            Activity
           </p>
-          <h1 className="mt-0.5 font-display text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
+          <h1 className="mt-1 font-display text-[26px] font-bold tracking-tight text-slate-900 sm:text-[30px]">
             Notifications
           </h1>
-          <p className="mt-1 text-[13px] text-slate-600">
-            Stay updated with your leads and account activity.
+          <p className="mt-1.5 max-w-xl text-[15px] text-slate-600">
+            Stay updated with your leads, claim approvals, and account activity.
           </p>
         </div>
+      </div>
+      <div className="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-6 md:py-8 lg:px-8">
+      {/* Toolbar row */}
+      <div className="flex justify-end">
         <div className="flex items-center gap-2">
           {unreadCount > 0 && (
             <Button variant="outline" size="sm" onClick={() => markAllAsRead()}>

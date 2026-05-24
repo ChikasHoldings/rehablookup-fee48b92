@@ -772,20 +772,21 @@ export default function ProviderSettingsPage() {
   }
 
   return (
-    <div className="bg-slate-50 px-3 py-4 sm:px-4 sm:py-6 md:px-6 lg:px-8">
-      <div className="mx-auto max-w-5xl space-y-6">
-        {/* Page Header */}
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-            Provider · Account
+    <div className="min-h-full bg-slate-50">
+      <div className="border-b border-slate-200 bg-white">
+        <div className="mx-auto max-w-5xl px-4 py-7 sm:px-6 md:py-8 lg:px-8">
+          <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#1B365D]/70">
+            Account
           </p>
-          <h1 className="mt-0.5 font-display text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
+          <h1 className="mt-1 font-display text-[26px] font-bold tracking-tight text-slate-900 sm:text-[30px]">
             Settings
           </h1>
-          <p className="mt-1 text-[13px] text-slate-600">
-            Manage your account, security, and notification preferences.
+          <p className="mt-1.5 max-w-xl text-[15px] text-slate-600">
+            Manage your profile, security, and notification preferences.
           </p>
         </div>
+      </div>
+      <div className="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-6 md:py-8 lg:px-8">
 
         {/* Unsaved Changes Dialog. Reset pendingTab whenever the dialog
             closes so a back-button / esc dismiss can't leave a stale

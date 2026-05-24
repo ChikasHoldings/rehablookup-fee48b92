@@ -167,25 +167,30 @@ export default function ProviderReviews() {
   }
 
   return (
-    <div className="overflow-x-hidden bg-slate-50 px-3 py-4 sm:px-4 sm:py-6 md:px-6 md:py-8 lg:px-8">
-      <div className="mx-auto max-w-5xl space-y-6">
-      {/* Page Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-            Provider · Reputation
-          </p>
-          <h1 className="mt-0.5 font-display text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
-            Reviews
-          </h1>
-          <p className="mt-1 text-[13px] text-slate-600">
-            {facilities.length > 1
-              ? `Manage reviews across ${facilities.length} locations.`
-              : facilities[0]?.name ? `Manage reviews for ${facilities[0].name}.` : 'Manage your reviews.'
-            }
-          </p>
+    <div className="min-h-full overflow-x-hidden bg-slate-50">
+      <div className="border-b border-slate-200 bg-white">
+        <div className="mx-auto max-w-5xl px-4 py-7 sm:px-6 md:py-8 lg:px-8">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div className="min-w-0">
+              <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#1B365D]/70">
+                Reputation
+              </p>
+              <h1 className="mt-1 font-display text-[26px] font-bold tracking-tight text-slate-900 sm:text-[30px]">
+                Reviews
+              </h1>
+              <p className="mt-1.5 max-w-xl text-[15px] text-slate-600">
+                {facilities.length > 1
+                  ? `Respond to reviews across ${facilities.length} locations and request new ones from past patients.`
+                  : facilities[0]?.name ? `Respond to reviews for ${facilities[0].name} and request new ones from past patients.` : 'Respond to reviews and request new ones from past patients.'
+                }
+              </p>
+            </div>
+          </div>
         </div>
-        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0 flex-wrap">
+      </div>
+      <div className="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-6 md:py-8 lg:px-8">
+      <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+        <div className="flex items-center gap-2 flex-shrink-0 flex-wrap sm:gap-3">
           {/* Sort */}
           <Select value={sortKey} onValueChange={(v) => setSortKey(v as SortKey)}>
             <SelectTrigger className="w-[170px]" aria-label="Sort reviews">

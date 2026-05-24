@@ -253,18 +253,21 @@ export default function ProviderSubscription() {
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
 
-      <div className="container mx-auto max-w-3xl space-y-6 px-4 py-8">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-            Provider · Billing
-          </p>
-          <h1 className="mt-0.5 font-display text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
-            Subscription
-          </h1>
-          <p className="mt-1 text-[13px] text-slate-600">
-            Your account plan. Free or Pro — pick what fits.
-          </p>
+      <div className="min-h-screen bg-slate-50">
+        <div className="border-b border-slate-200 bg-white">
+          <div className="container mx-auto max-w-3xl px-4 py-8 md:py-10">
+            <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#1B365D]/70">
+              Billing
+            </p>
+            <h1 className="mt-1 font-display text-[26px] font-bold tracking-tight text-slate-900 sm:text-[30px]">
+              Subscription
+            </h1>
+            <p className="mt-1.5 max-w-xl text-[15px] text-slate-600">
+              Your account plan. Free or Pro — pick what fits and switch any time.
+            </p>
+          </div>
         </div>
+        <div className="container mx-auto max-w-3xl space-y-6 px-4 py-8">
 
         {checkoutPolling && (
           <Card>
@@ -375,9 +378,11 @@ export default function ProviderSubscription() {
             <ProUpgradeChoices onChoose={handleProUpgrade} />
           </>
         )}
+        </div>
       </div>
     </>
   );
+}
 }
 
 function FreeSubscriptionCard() {
