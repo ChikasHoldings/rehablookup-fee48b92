@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>RehabLookup reviews widget</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: transparent;
+      --card: #ffffff;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --muted: #64748b;
+      --navy: #1B365D;
+      --amber: #f59e0b;
+      --emerald: #059669;
+      --shadow: 0 1px 3px rgba(15, 23, 42, .08), 0 6px 20px rgba(15, 23, 42, .05);
+      --radius: 12px;
+    }
+    [data-theme="dark"] {
+      color-scheme: dark;
+      --card: #0f172a;
+      --border: #1e293b;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --navy: #6f9aff;
+      --shadow: 0 1px 3px rgba(0, 0, 0, .4), 0 6px 20px rgba(0, 0, 0, .25);
+    }
+    @media (prefers-color-scheme: dark) {
+      [data-theme="auto"] {
+        color-scheme: dark;
+        --card: #0f172a;
+        --border: #1e293b;
+        --text: #f1f5f9;
+        --muted: #94a3b8;
+        --navy: #6f9aff;
+        --shadow: 0 1px 3px rgba(0, 0, 0, .4), 0 6px 20px rgba(0, 0, 0, .25);
+      }
+    }
+    html, body {
+      margin: 0; padding: 0;
+      background: var(--bg); color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .wrap {
+      box-sizing: border-box;
+      max-width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+    [data-size="small"] .wrap { padding: 12px; }
+    [data-size="large"] .wrap { padding: 20px; }
+    .head {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; margin-bottom: 12px;
+    }
+    .agg {
+      display: flex; flex-direction: column; min-width: 0; gap: 2px;
+    }
+    .stars-row {
+      display: inline-flex; align-items: center; gap: 8px;
+    }
+    .stars {
+      display: inline-flex; align-items: center; gap: 1px; line-height: 1;
+    }
+    .star { width: 16px; height: 16px; }
+    .star.full { color: var(--amber); }
+    .star.empty { color: var(--border); }
+    .avg {
+      font-weight: 700; font-size: 16px; color: var(--text);
+    }
+    [data-size="small"] .avg { font-size: 14px; }
+    [data-size="large"] .avg { font-size: 18px; }
+    .count {
+      font-size: 12px; color: var(--muted);
+    }
+    .brand {
+      font-size: 11px; color: var(--muted);
+      text-decoration: none; text-align: right; line-height: 1.2;
+      white-space: nowrap;
+    }
+    .brand:hover, .brand:focus-visible { color: var(--navy); text-decoration: underline; outline: none; }
+    .reviews {
+      display: flex; flex-direction: column; gap: 10px;
+      max-height: 360px; overflow: auto;
+    }
+    [data-size="small"] .reviews { max-height: 220px; }
+    [data-size="large"] .reviews { max-height: 480px; }
+    .review {
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--card);
+    }
+    .review-head {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 8px; margin-bottom: 4px;
+    }
+    .review-stars { display: inline-flex; gap: 1px; line-height: 1; }
+    .review-stars .star { width: 12px; height: 12px; }
+    .who {
+      font-size: 12px; color: var(--muted); font-weight: 500;
+    }
+    .review-body {
+      font-size: 13px; line-height: 1.5; color: var(--text);
+      word-break: break-word;
+    }
+    [data-size="small"] .review-body { font-size: 12px; }
+    [data-size="large"] .review-body { font-size: 14px; }
+    .empty, .gone {
+      padding: 20px 12px; text-align: center; color: var(--muted);
+      font-size: 13px;
+    }
+    .footer {
+      margin-top: 12px;
+      display: flex; justify-content: flex-end;
+    }
+    .read-more {
+      font-size: 12px; color: var(--navy); text-decoration: none;
+      font-weight: 600;
+    }
+    .read-more:hover, .read-more:focus-visible { text-decoration: underline; outline: none; }
+    .pro-pill {
+      display: inline-block;
+      font-size: 9px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #92400e; background: rgba(245, 158, 11, .15);
+      padding: 1px 5px; border-radius: 999px;
+      margin-left: 4px;
+      vertical-align: 2px;
+    }
+  </style>
+</head>
+<body>
+<div id="root" class="wrap" hidden>
+  <div class="head">
+    <div class="agg">
+      <div class="stars-row">
+        <span class="stars" id="agg-stars"></span>
+        <span class="avg" id="agg-avg"></span>
+      </div>
+      <span class="count" id="agg-count"></span>
+    </div>
+    <a id="brand" class="brand" href="#" target="_top" rel="noopener">
+      <span id="brand-name"></span>
+      <span id="brand-pro" class="pro-pill" hidden>Pro</span>
+      <br>verified by RehabLookup
+    </a>
+  </div>
+  <div id="reviews" class="reviews"></div>
+  <div class="footer">
+    <a id="read-more" class="read-more" href="#" target="_top" rel="noopener">Read all reviews →</a>
+  </div>
+</div>
+
+<div id="empty" class="empty" hidden>No reviews yet for this facility.</div>
+
+<script>
+(function () {
+  "use strict";
+  var SB_URL = "https://mldbxpntzcjalgjmwnqa.supabase.co";
+  var SB_KEY = "sb_publishable_tHLCRbeUrsu7EmMlCR0n6g_ygNXmMYP";
+
+  function param(name) {
+    var m = new RegExp("[?&]" + name + "=([^&]*)").exec(window.location.search);
+    return m ? decodeURIComponent(m[1].replace(/\+/g, " ")) : null;
+  }
+
+  function postHeight() {
+    try {
+      var h = document.body.scrollHeight;
+      parent.postMessage({ type: "rehablookup-widget-height", height: h }, "*");
+    } catch (_) {}
+  }
+
+  async function rpc(fn, payload) {
+    var res = await fetch(SB_URL + "/rest/v1/rpc/" + fn, {
+      method: "POST",
+      headers: {
+        "apikey": SB_KEY,
+        "Authorization": "Bearer " + SB_KEY,
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: JSON.stringify(payload || {})
+    });
+    if (!res.ok) throw new Error("rpc " + fn + " " + res.status);
+    return res.json();
+  }
+
+  function starsHtml(rating, max) {
+    // Produces a 5-star row. Ratings are 1..5 integers from
+    // facility_reviews.rating. Half-stars are intentionally omitted so
+    // the visual matches the source data exactly.
+    max = max || 5;
+    var html = "";
+    for (var i = 1; i <= max; i++) {
+      var cls = i <= rating ? "full" : "empty";
+      html +=
+        '<svg class="star ' + cls + '" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">' +
+        '<path d="M10 1.5l2.59 5.24 5.79.84-4.19 4.08.99 5.76L10 14.6l-5.18 2.72.99-5.76L1.62 7.58l5.79-.84L10 1.5z"/>' +
+        "</svg>";
+    }
+    return html;
+  }
+
+  function escapeHtml(s) {
+    var div = document.createElement("div");
+    div.textContent = s == null ? "" : String(s);
+    return div.innerHTML;
+  }
+
+  function formatRelative(iso) {
+    try {
+      var d = new Date(iso);
+      var diff = (Date.now() - d.getTime()) / 1000;
+      if (diff < 60) return "just now";
+      if (diff < 3600) return Math.round(diff / 60) + "m ago";
+      if (diff < 86400) return Math.round(diff / 3600) + "h ago";
+      if (diff < 2592000) return Math.round(diff / 86400) + "d ago";
+      if (diff < 31536000) return Math.round(diff / 2592000) + "mo ago";
+      return Math.round(diff / 31536000) + "y ago";
+    } catch (_) {
+      return "";
+    }
+  }
+
+  async function render() {
+    var facility = param("facility");
+    var size = (param("size") || "medium").toLowerCase();
+    var theme = (param("theme") || "light").toLowerCase();
+    if (!/^(small|medium|large)$/.test(size)) size = "medium";
+    if (!/^(light|dark|auto)$/.test(theme)) theme = "light";
+
+    document.body.setAttribute("data-theme", theme);
+    document.documentElement.setAttribute("data-theme", theme);
+    document.body.setAttribute("data-size", size);
+    if (!facility) return;
+
+    var limit = size === "small" ? 3 : size === "large" ? 8 : 5;
+    var data;
+    try {
+      data = await rpc("get_embed_reviews", { p_facility_id: facility, p_limit: limit });
+    } catch (_) {
+      return;
+    }
+    if (!data) return;
+
+    document.getElementById("agg-stars").innerHTML = starsHtml(Math.round(data.avg_rating || 0));
+    document.getElementById("agg-avg").textContent =
+      data.rating_count > 0 ? Number(data.avg_rating).toFixed(1) : "—";
+    document.getElementById("agg-count").textContent =
+      data.rating_count + " " + (data.rating_count === 1 ? "review" : "reviews");
+    document.getElementById("brand-name").textContent = data.name;
+    document.getElementById("brand").href =
+      data.profile_url + "?utm_source=embed&utm_medium=reviews&utm_campaign=widget";
+    document.getElementById("read-more").href =
+      data.profile_url + "#reviews?utm_source=embed&utm_medium=reviews&utm_campaign=widget";
+
+    if (data.is_pro) document.getElementById("brand-pro").hidden = false;
+
+    var reviewsEl = document.getElementById("reviews");
+    var emptyEl = document.getElementById("empty");
+    var rootEl = document.getElementById("root");
+
+    if (!data.reviews || data.reviews.length === 0) {
+      // Pro / verified facilities with zero reviews still render the
+      // header (rating: —, 0 reviews) plus the empty-state message so
+      // the embed never goes completely blank.
+      reviewsEl.innerHTML = '<div class="empty">No reviews yet — be the first.</div>';
+    } else {
+      reviewsEl.innerHTML = data.reviews
+        .map(function (r) {
+          return (
+            '<div class="review">' +
+              '<div class="review-head">' +
+                '<span class="review-stars">' + starsHtml(r.rating || 0) + "</span>" +
+                '<span class="who">' + escapeHtml(r.reviewer_initial) + ". · " + formatRelative(r.created_at) + "</span>" +
+              "</div>" +
+              '<div class="review-body">' + escapeHtml(r.review_text) + "</div>" +
+            "</div>"
+          );
+        })
+        .join("");
+    }
+
+    rootEl.hidden = false;
+    emptyEl.hidden = true;
+
+    try {
+      var domain = "";
+      try {
+        if (document.referrer) domain = new URL(document.referrer).hostname;
+      } catch (_) {}
+      rpc("record_widget_impression", {
+        p_facility_id: facility,
+        p_widget_type: "reviews",
+        p_referrer_domain: domain,
+        p_size: size
+      }).catch(function () {});
+    } catch (_) {}
+
+    requestAnimationFrame(function () {
+      requestAnimationFrame(postHeight);
+    });
+    window.addEventListener("load", postHeight);
+    window.addEventListener("resize", postHeight);
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>

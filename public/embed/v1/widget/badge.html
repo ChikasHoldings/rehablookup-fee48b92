@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>RehabLookup verified-badge widget</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: transparent;
+      --card: #ffffff;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --muted: #64748b;
+      --navy: #1B365D;
+      --emerald: #059669;
+      --amber: #f59e0b;
+      --shadow: 0 1px 3px rgba(15, 23, 42, .08), 0 4px 16px rgba(15, 23, 42, .04);
+      --radius: 12px;
+    }
+    [data-theme="dark"] {
+      color-scheme: dark;
+      --bg: transparent;
+      --card: #0f172a;
+      --border: #1e293b;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --navy: #6f9aff;
+      --emerald: #34d399;
+      --shadow: 0 1px 3px rgba(0, 0, 0, .4), 0 4px 16px rgba(0, 0, 0, .25);
+    }
+    @media (prefers-color-scheme: dark) {
+      [data-theme="auto"] {
+        color-scheme: dark;
+        --card: #0f172a;
+        --border: #1e293b;
+        --text: #f1f5f9;
+        --muted: #94a3b8;
+        --navy: #6f9aff;
+        --emerald: #34d399;
+        --shadow: 0 1px 3px rgba(0, 0, 0, .4), 0 4px 16px rgba(0, 0, 0, .25);
+      }
+    }
+    html, body {
+      margin: 0; padding: 0;
+      background: var(--bg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    a.badge {
+      display: inline-flex; align-items: center; gap: 10px;
+      text-decoration: none; color: var(--text);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 8px 12px;
+      box-shadow: var(--shadow);
+      transition: transform .15s ease, box-shadow .15s ease;
+      max-width: calc(100% - 2px); box-sizing: border-box;
+    }
+    a.badge:hover, a.badge:focus-visible {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 6px rgba(15, 23, 42, .12), 0 8px 24px rgba(15, 23, 42, .08);
+      outline: none;
+    }
+    a.badge[data-size="small"]  { padding: 6px 10px; border-radius: 10px; }
+    a.badge[data-size="large"]  { padding: 12px 16px; border-radius: 14px; }
+    a.badge[data-pro="true"] {
+      border-color: rgba(245, 158, 11, .6);
+      background: linear-gradient(135deg, var(--card) 0%, rgba(245, 158, 11, .07) 100%);
+    }
+    .logo {
+      width: 36px; height: 36px; border-radius: 8px;
+      background: var(--card);
+      flex: 0 0 auto;
+      object-fit: cover;
+      border: 1px solid var(--border);
+    }
+    a.badge[data-size="small"] .logo { width: 28px; height: 28px; border-radius: 6px; }
+    a.badge[data-size="large"] .logo { width: 48px; height: 48px; border-radius: 10px; }
+    .body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .line1 {
+      display: flex; align-items: center; gap: 6px;
+      font-weight: 600; font-size: 13px; line-height: 1.2;
+      color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      max-width: 360px;
+    }
+    a.badge[data-size="small"] .line1 { font-size: 12px; max-width: 240px; }
+    a.badge[data-size="large"] .line1 { font-size: 15px; max-width: 480px; }
+    .line2 {
+      font-size: 11px; color: var(--muted); line-height: 1.2;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    a.badge[data-size="large"] .line2 { font-size: 12px; }
+    .checkmark {
+      flex: 0 0 auto;
+      width: 16px; height: 16px;
+      color: var(--emerald);
+    }
+    a.badge[data-size="small"] .checkmark { width: 14px; height: 14px; }
+    a.badge[data-size="large"] .checkmark { width: 18px; height: 18px; }
+    .pro-pill {
+      display: inline-flex; align-items: center;
+      font-size: 9px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #92400e; background: rgba(245, 158, 11, .15);
+      padding: 1px 5px; border-radius: 999px;
+      margin-left: 2px;
+    }
+    [data-theme="dark"] .pro-pill,
+    @media (prefers-color-scheme: dark) {
+      [data-theme="auto"] .pro-pill {
+        color: #fbbf24;
+        background: rgba(245, 158, 11, .18);
+      }
+    }
+  </style>
+</head>
+<body>
+<a id="badge" class="badge" href="#" target="_top" rel="noopener" hidden>
+  <img id="logo" class="logo" alt="" referrerpolicy="no-referrer">
+  <span class="body">
+    <span id="line1" class="line1">
+      <span id="name"></span>
+      <span id="pro" class="pro-pill" hidden>Pro</span>
+    </span>
+    <span id="line2" class="line2"></span>
+  </span>
+  <svg class="checkmark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M9 12l2 2 4-4"/>
+    <circle cx="12" cy="12" r="10"/>
+  </svg>
+</a>
+
+<script>
+(function () {
+  "use strict";
+  // sb_publishable_* keys are explicitly safe to ship in client code —
+  // this is the same key the SPA exposes via VITE_SUPABASE_PUBLISHABLE_KEY.
+  var SB_URL = "https://mldbxpntzcjalgjmwnqa.supabase.co";
+  var SB_KEY = "sb_publishable_tHLCRbeUrsu7EmMlCR0n6g_ygNXmMYP";
+
+  function param(name) {
+    var m = new RegExp("[?&]" + name + "=([^&]*)").exec(window.location.search);
+    return m ? decodeURIComponent(m[1].replace(/\+/g, " ")) : null;
+  }
+
+  function postHeight() {
+    try {
+      var h = document.body.scrollHeight;
+      parent.postMessage({ type: "rehablookup-widget-height", height: h }, "*");
+    } catch (_) {}
+  }
+
+  function escapeText(s) {
+    return String(s == null ? "" : s);
+  }
+
+  async function rpc(fn, payload) {
+    var res = await fetch(SB_URL + "/rest/v1/rpc/" + fn, {
+      method: "POST",
+      headers: {
+        "apikey": SB_KEY,
+        "Authorization": "Bearer " + SB_KEY,
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: JSON.stringify(payload || {})
+    });
+    if (!res.ok) throw new Error("rpc " + fn + " " + res.status);
+    return res.json();
+  }
+
+  async function render() {
+    var facility = param("facility");
+    var size = (param("size") || "medium").toLowerCase();
+    var theme = (param("theme") || "light").toLowerCase();
+    if (!/^(small|medium|large)$/.test(size)) size = "medium";
+    if (!/^(light|dark|auto)$/.test(theme)) theme = "light";
+
+    document.body.setAttribute("data-theme", theme);
+    document.documentElement.setAttribute("data-theme", theme);
+
+    if (!facility) return; // nothing to render
+
+    var data;
+    try {
+      data = await rpc("get_embed_badge", { p_facility_id: facility });
+    } catch (_) {
+      // Acceptance: a non-verified facility shows nothing for the badge.
+      // Network / RPC errors do the same — never display a half-rendered
+      // badge that misrepresents the facility's status.
+      return;
+    }
+    if (!data) return; // unverified / unapproved / suspended
+
+    var el = document.getElementById("badge");
+    document.getElementById("name").textContent = escapeText(data.name);
+    document.getElementById("line2").textContent =
+      escapeText(data.city) + ", " + escapeText(data.state) + " · Verified by RehabLookup";
+
+    if (data.logo_url) {
+      var logo = document.getElementById("logo");
+      logo.src = data.logo_url;
+      logo.alt = escapeText(data.name) + " logo";
+    } else {
+      var logoEl = document.getElementById("logo");
+      logoEl.parentNode && logoEl.parentNode.removeChild(logoEl);
+    }
+
+    if (data.is_pro) {
+      el.setAttribute("data-pro", "true");
+      var pro = document.getElementById("pro");
+      pro.hidden = false;
+    }
+
+    el.setAttribute("data-size", size);
+    el.href = data.profile_url + "?utm_source=embed&utm_medium=badge&utm_campaign=widget";
+    el.hidden = false;
+
+    // Fire-and-forget impression record.
+    try {
+      var domain = "";
+      try {
+        if (document.referrer) {
+          domain = new URL(document.referrer).hostname;
+        }
+      } catch (_) {}
+      rpc("record_widget_impression", {
+        p_facility_id: facility,
+        p_widget_type: "verified",
+        p_referrer_domain: domain,
+        p_size: size
+      }).catch(function () {});
+    } catch (_) {}
+
+    // Defer height post until images settle.
+    requestAnimationFrame(function () {
+      requestAnimationFrame(postHeight);
+    });
+    window.addEventListener("load", postHeight);
+    window.addEventListener("resize", postHeight);
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>
