@@ -22,14 +22,16 @@ import { useProStatus } from "@/hooks/useProStatus";
 import { ProgramsManagementSection } from "@/components/provider/listing/ProgramsManagementSection";
 import { AmenitiesManagementSection } from "@/components/provider/listing/AmenitiesManagementSection";
 import { MediaUrlsSection } from "@/components/provider/listing/MediaUrlsSection";
+import { StaffManagementSection } from "@/components/provider/listing/StaffManagementSection";
 
-type Tab = "programs" | "amenities" | "media" | "accreditations";
+type Tab = "programs" | "amenities" | "media" | "accreditations" | "staff";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "programs", label: "Programs" },
   { id: "amenities", label: "Amenities" },
   { id: "media", label: "Video & Tour" },
   { id: "accreditations", label: "Accreditations" },
+  { id: "staff", label: "Staff" },
 ];
 
 /**
@@ -162,6 +164,29 @@ export default function EnhancedProfile() {
                 hidden={activeTab !== "accreditations"}
               >
                 <AccreditationHighlightPanel facilityId={facilityId} isPro={isPro} />
+              </div>
+
+              <div
+                id="profile-panel-staff"
+                role="tabpanel"
+                aria-labelledby="profile-tab-staff"
+                hidden={activeTab !== "staff"}
+              >
+                {/* Staff is Pro-only on the public profile (the
+                    public_facility_staff view filters by has_active_pro).
+                    The editor lets Free providers prepare staff entries
+                    so nothing is lost on upgrade, mirroring the
+                    programs/amenities pattern. The wrapping component
+                    was originally collapsible; the tab parent already
+                    controls visibility, so we keep it permanently
+                    expanded with a no-op toggle. */}
+                <StaffManagementSection
+                  facilityId={facilityId}
+                  isExpanded={true}
+                  onToggle={() => {
+                    /* tab-controlled — no-op */
+                  }}
+                />
               </div>
             </CardContent>
           </Card>
