@@ -383,7 +383,6 @@ export default function ProviderSubscription() {
     </>
   );
 }
-}
 
 function FreeSubscriptionCard() {
   return (
