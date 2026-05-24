@@ -101,6 +101,18 @@ export const NOTIFICATION_TYPES: Record<string, NotificationTypeEntry> = {
   placement_introduction: { label: "Placement", icon: <UserPlus className="h-5 w-5 text-indigo-500" />, route: "/provider/marketing/concierge", category: "placements" },
   concierge_seeker_confirmed: { label: "Placement Confirmed", icon: successIcon, route: "/provider/marketing/concierge", category: "placements" },
   concierge_placement_complete: { label: "Placement Complete", icon: successIcon, route: "/provider/marketing/concierge", category: "placements" },
+  // Concierge case-progress stages, emitted by send-concierge-notifications
+  // as `concierge_${stage}` where stage ∈ tour_completed | admission_updated
+  // | move_in_scheduled | moved_in. Each maps back to the concierge hub so
+  // the provider can review the case timeline.
+  concierge_tour_completed: { label: "Tour Completed", icon: successIcon, route: "/provider/marketing/concierge", category: "placements" },
+  concierge_admission_updated: { label: "Admission Updated", icon: <MessageSquare className="h-5 w-5 text-indigo-500" />, route: "/provider/marketing/concierge", category: "placements" },
+  concierge_move_in_scheduled: { label: "Move-In Scheduled", icon: <CheckCircle2 className="h-5 w-5 text-emerald-500" />, route: "/provider/marketing/concierge", category: "placements" },
+  concierge_moved_in: { label: "Moved In", icon: <CheckCircle2 className="h-5 w-5 text-emerald-500" />, route: "/provider/marketing/concierge", category: "placements" },
+  // Free-tier providers — surfaces the inquiry-redirect notification with
+  // an upgrade pitch. Routes to the inquiries page so the provider can
+  // see their existing pipeline and the upsell CTA in context.
+  free_tier_inquiry_redirect: { label: "Inquiry Routed", icon: <UserPlus className="h-5 w-5 text-amber-500" />, route: "/provider/inquiries", category: "leads" },
   tour_request: { label: "Tour Request", icon: <MessageSquare className="h-5 w-5 text-blue-500" />, route: "/provider/inquiries", category: "placements" },
   tour_confirmed: { label: "Tour Confirmed", icon: successIcon, route: "/provider/inquiries", category: "placements" },
   tour_cancelled: { label: "Tour Cancelled", icon: errIcon, route: "/provider/inquiries", category: "placements" },

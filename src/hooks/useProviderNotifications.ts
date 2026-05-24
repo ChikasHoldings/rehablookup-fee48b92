@@ -160,7 +160,10 @@ export function useProviderNotifications() {
             // optimistic-update mutation in flight. Without this, the
             // server-side row (still showing read=false to the realtime
             // pipeline mid-write) overwrites our optimistic read=true
-            // state and the row briefly flips back to unread.
+            // state and the row briefly flips back to unread. The
+            // "__all__" sentinel covers bulk mark-as-read where we
+            // don't track every individual row id.
+            if (inFlightMutationsRef.current.has("__all__")) return;
             if (inFlightMutationsRef.current.has(updatedNotification.id)) return;
             queryClient.setQueryData<ProviderNotification[]>(["provider-notifications"], (old) => {
               if (!old) return old;
@@ -178,6 +181,10 @@ export function useProviderNotifications() {
           },
           (payload) => {
             const deletedId = (payload.old as { id: string }).id;
+            // Same "__all__" sentinel guard as the UPDATE handler so a
+            // bulk-delete mid-flight doesn't get partial realtime
+            // events bouncing rows back into the optimistic-empty list.
+            if (inFlightMutationsRef.current.has("__all__")) return;
             queryClient.setQueryData<ProviderNotification[]>(["provider-notifications"], (old) => {
               if (!old) return old;
               return old.filter(n => n.id !== deletedId);
@@ -257,15 +264,20 @@ export function useProviderNotifications() {
       if (error) throw error;
     },
     onMutate: async () => {
+      // "__all__" sentinel — the realtime UPDATE/DELETE handlers above
+      // honour this and skip processing, otherwise the per-row Stripe-
+      // style replay would briefly bounce some rows back to unread
+      // while the optimistic state shows everything read.
+      inFlightMutationsRef.current.add("__all__");
       await queryClient.cancelQueries({ queryKey: ["provider-notifications"] });
       const previousNotifications = queryClient.getQueryData<ProviderNotification[]>(["provider-notifications"]);
-      
+
       // Optimistically update all as read
       queryClient.setQueryData<ProviderNotification[]>(["provider-notifications"], (old) => {
         if (!old) return old;
         return old.map((n) => ({ ...n, read: true }));
       });
-      
+
       return { previousNotifications };
     },
     onError: (error: Error, _, context) => {
@@ -278,6 +290,7 @@ export function useProviderNotifications() {
       toast.success("All notifications marked as read");
     },
     onSettled: () => {
+      inFlightMutationsRef.current.delete("__all__");
       queryClient.invalidateQueries({ queryKey: ["provider-notifications"] });
     },
   });
@@ -331,12 +344,17 @@ export function useProviderNotifications() {
       if (error) throw error;
     },
     onMutate: async () => {
+      // Same "__all__" sentinel as markAllAsRead so realtime DELETE
+      // events from the server-side cascade don't slip through the
+      // handler and trigger partial re-renders against the now-empty
+      // optimistic cache.
+      inFlightMutationsRef.current.add("__all__");
       await queryClient.cancelQueries({ queryKey: ["provider-notifications"] });
       const previousNotifications = queryClient.getQueryData<ProviderNotification[]>(["provider-notifications"]);
-      
+
       // Optimistically clear all
       queryClient.setQueryData<ProviderNotification[]>(["provider-notifications"], []);
-      
+
       return { previousNotifications };
     },
     onError: (error: Error, _, context) => {
@@ -349,6 +367,7 @@ export function useProviderNotifications() {
       toast.success("All notifications cleared");
     },
     onSettled: () => {
+      inFlightMutationsRef.current.delete("__all__");
       queryClient.invalidateQueries({ queryKey: ["provider-notifications"] });
     },
   });

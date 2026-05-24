@@ -191,8 +191,8 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
               >
                 <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
                 {unreadCount > 0 && (
-                  <span className="absolute top-0.5 right-0.5 sm:top-1 sm:right-1 flex h-3.5 w-3.5 sm:h-4 sm:w-4 items-center justify-center rounded-full bg-destructive text-[9px] sm:text-xs font-bold text-white ring-2 ring-primary">
-                    {unreadCount > 9 ? "9+" : unreadCount}
+                  <span className="absolute top-0.5 right-0.5 sm:top-1 sm:right-1 flex min-h-3.5 min-w-3.5 sm:min-h-4 sm:min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[9px] sm:text-[10px] font-bold leading-none text-white ring-2 ring-primary">
+                    {unreadCount > 99 ? "99+" : unreadCount}
                   </span>
                 )}
               </Button>

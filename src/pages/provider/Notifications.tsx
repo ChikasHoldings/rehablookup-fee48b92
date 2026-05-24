@@ -80,11 +80,24 @@ function NotificationItem({
 
   return (
     <div
+      role="button"
+      tabIndex={0}
+      aria-label={`${entry.label}: ${notification.title}${notification.read ? "" : " (unread)"}`}
       className={cn(
-        "flex items-start gap-4 p-4 border-b last:border-b-0 cursor-pointer transition-colors hover:bg-muted/50",
+        "flex items-start gap-4 p-4 border-b last:border-b-0 cursor-pointer transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:bg-muted/50 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-inset",
         !notification.read && "bg-primary/5"
       )}
       onClick={handleClick}
+      onKeyDown={(e) => {
+        // Enter/Space activate the row — matches the implicit affordance
+        // of role="button" so keyboard users get the same behaviour as
+        // a click. Without this the row was a no-op for screen-reader
+        // and keyboard-only users.
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          handleClick();
+        }
+      }}
     >
       <div className="flex-shrink-0 mt-0.5">{entry.icon}</div>
       <div className="flex-1 min-w-0">
@@ -173,17 +186,25 @@ export default function ProviderNotificationsPage() {
   }, [activeTab, typeFilter]);
 
   const groupedNotifications = visibleNotifications.reduce((groups, notification) => {
-    const date = format(new Date(notification.created_at), "yyyy-MM-dd");
+    // Defensive parsing — a malformed created_at would otherwise throw
+    // synchronously inside the reducer and crash the whole page. The
+    // column is NOT NULL TIMESTAMP at the DB level but realtime payloads
+    // and cache writes have produced empty strings in the past, so we
+    // fall back to "now" to keep the row visible in the most-recent
+    // bucket instead of taking the page down.
+    const parsed = new Date(notification.created_at);
+    const safe = Number.isNaN(parsed.getTime()) ? new Date() : parsed;
+    const date = format(safe, "yyyy-MM-dd");
     const today = format(new Date(), "yyyy-MM-dd");
     const yesterday = format(new Date(Date.now() - 86400000), "yyyy-MM-dd");
-    
+
     let groupLabel: string;
     if (date === today) {
       groupLabel = "Today";
     } else if (date === yesterday) {
       groupLabel = "Yesterday";
     } else {
-      groupLabel = format(new Date(notification.created_at), "MMMM d, yyyy");
+      groupLabel = format(safe, "MMMM d, yyyy");
     }
 
     if (!groups[groupLabel]) {
@@ -285,7 +306,9 @@ export default function ProviderNotificationsPage() {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Clear all notifications?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This will permanently delete all your notifications. This action cannot be undone.
+                    This permanently deletes every notification on this account —
+                    including unread leads, billing alerts, and review activity.
+                    It cannot be undone.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
