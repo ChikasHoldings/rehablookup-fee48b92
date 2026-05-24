@@ -4,6 +4,7 @@ import { SubscriptionAnalyticsTab } from "@/components/provider/analytics/Subscr
 import { CentralizedLeadAnalyticsDashboard } from "@/components/provider/CentralizedLeadAnalyticsDashboard";
 import { CentralizedEngagementAnalytics } from "@/components/provider/CentralizedEngagementAnalytics";
 import { ProviderPerformanceAnalytics } from "@/components/provider/ProviderPerformanceAnalytics";
+import { PerformanceDashboard } from "@/components/provider/analytics/PerformanceDashboard";
 import { ROICalculatorWidget } from "@/components/provider/ROICalculatorWidget";
 import { DATE_RANGE_PRESETS, type DateRange } from "@/hooks/useLeadAnalytics";
 import { useCentralizedEngagementAnalytics } from "@/hooks/useCentralizedEngagementAnalytics";
@@ -592,11 +593,18 @@ export default function ProviderAnalyticsPage() {
         )}
         {activeTab === "performance" && (
           <div role="tabpanel" id="analytics-panel-performance" aria-labelledby="analytics-tab-performance" tabIndex={0} className="focus-visible:outline-none">
-            <Card>
-              <CardContent className="p-3 sm:p-5">
-                <ProviderPerformanceAnalytics dateRange={dateRange} facilityId={selectedFacilityId !== "all" ? selectedFacilityId : undefined} />
-              </CardContent>
-            </Card>
+            {/* Rollup-backed dashboard. Reads from
+                facility_metrics_daily (cron-refreshed hourly + JIT
+                refresh when a single facility's row is older than
+                15min) instead of aggregating provider_events /
+                leads / badge_impressions live on every render.
+                Pro shape includes WoW deltas, daily series, traffic
+                sources, and aggregate market position; Free shape
+                renders the headline-only teaser with a blurred Pro
+                preview underneath. */}
+            <PerformanceDashboard
+              facilityId={selectedFacilityId !== "all" ? selectedFacilityId : approvedFacilities[0]?.id}
+            />
           </div>
         )}
         {activeTab === "roi" && (
