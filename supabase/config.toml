@@ -347,6 +347,9 @@ verify_jwt = true
 [functions.validate-and-upload]
 verify_jwt = true
 
+[functions.get-billing-summary]
+verify_jwt = true
+
 [functions.send-reply-email-verification]
 verify_jwt = true
 

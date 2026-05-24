@@ -24,6 +24,7 @@ import {
 import { SwitchToAnnualBanner } from "@/components/provider/billing/SwitchToAnnualBanner";
 import { SwitchToMonthlyAtRenewalBanner } from "@/components/provider/billing/SwitchToMonthlyAtRenewalBanner";
 import { ProUpgradeChoices } from "@/components/provider/subscription/ProUpgradeChoices";
+import { BillingDetailsCard } from "@/components/provider/billing/BillingDetailsCard";
 import { fmtMoney, TIER_PRICING } from "@/lib/billingPricing";
 
 /**
@@ -414,13 +415,22 @@ export default function ProviderSubscription() {
         )}
 
         {(isPro || isPaymentIssue) && subscription ? (
-          <ProSubscriptionCard
-            subscription={subscription}
-            onManageBilling={handleManageBilling}
-            managingPortal={portalLoading}
-            onCancel={() => navigate("/provider/billing/cancel")}
-            isCancelScheduled={isCancelScheduled}
-          />
+          <>
+            <ProSubscriptionCard
+              subscription={subscription}
+              onManageBilling={handleManageBilling}
+              managingPortal={portalLoading}
+              onCancel={() => navigate("/provider/billing/cancel")}
+              isCancelScheduled={isCancelScheduled}
+            />
+            {facilityId && (
+              <BillingDetailsCard
+                facilityId={facilityId}
+                onManage={handleManageBilling}
+                managing={portalLoading}
+              />
+            )}
+          </>
         ) : (
           <>
             <FreeSubscriptionCard />
