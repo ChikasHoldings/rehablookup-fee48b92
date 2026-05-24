@@ -82,14 +82,25 @@ export function useCentralizedEngagementAnalytics(dateRange?: DateRange, filterF
     : approvedFacilities.map((f) => f.id);
   const facilityIdsKey = facilityIds.join(",");
 
-  // Realtime invalidation on event inserts/updates for any of these facilities.
-  // Server-side aggregation still benefits from cache invalidation so we re-call
-  // the RPC when new events land.
+  // Realtime invalidation on event inserts/updates for any of these
+  // facilities. Server-side aggregation still benefits from cache
+  // invalidation so we re-call the RPC when new events land.
+  //
+  // Per-mount random suffix on every channel name. The previous
+  // `${facilityId}-${index}` was unstable: if the facilityIds array
+  // re-ordered between renders (sort change, add/remove), the index
+  // shifted, the channel name shifted, and the old channels leaked
+  // while the new ones tried to subscribe to an already-cached name —
+  // same crash mode we keep fixing across the codebase
+  // ("cannot add postgres_changes callbacks after subscribe()"). A
+  // single mount-scoped suffix shared by all the per-facility
+  // channels also ensures cleanup matches what was opened.
   useEffect(() => {
     if (facilityIds.length === 0) return;
-    const eventChannels = facilityIds.map((facilityId, index) =>
+    const mountSuffix = Math.random().toString(36).slice(2, 10);
+    const eventChannels = facilityIds.map((facilityId) =>
       supabase
-        .channel(`centralized-engagement-events-${facilityId}-${index}`)
+        .channel(`centralized-engagement-events-${facilityId}-${mountSuffix}`)
         .on(
           "postgres_changes",
           {
@@ -105,7 +116,13 @@ export function useCentralizedEngagementAnalytics(dateRange?: DateRange, filterF
         .subscribe(),
     );
     return () => {
-      eventChannels.forEach((channel) => supabase.removeChannel(channel));
+      eventChannels.forEach((channel) => {
+        try {
+          supabase.removeChannel(channel);
+        } catch {
+          /* channel may already be torn down server-side */
+        }
+      });
     };
   }, [facilityIdsKey, queryClient]); // eslint-disable-line react-hooks/exhaustive-deps
 

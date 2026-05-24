@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useCallback } from "react";
+import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { BarChart3, CalendarIcon, X, ChevronDown, Building2, Download } from "lucide-react";
 import { SubscriptionAnalyticsTab } from "@/components/provider/analytics/SubscriptionAnalyticsTab";
 import { CentralizedLeadAnalyticsDashboard } from "@/components/provider/CentralizedLeadAnalyticsDashboard";
@@ -59,6 +59,19 @@ export default function ProviderAnalyticsPage() {
     () => facilities.filter(f => f.status === "approved"),
     [facilities]
   );
+
+  // Guard: if the facility the user had selected was deleted /
+  // un-approved while the Analytics tab was open (admin transfer,
+  // suspension, etc.), the filter would point at a non-existent id
+  // and every downstream query would silently return empty data
+  // (blank charts, blank tables, no error message). Reset to "all"
+  // the moment the selected id falls out of the approved set.
+  useEffect(() => {
+    if (selectedFacilityId === "all") return;
+    if (facilitiesLoading) return;
+    if (approvedFacilities.some(f => f.id === selectedFacilityId)) return;
+    setSelectedFacilityId("all");
+  }, [selectedFacilityId, approvedFacilities, facilitiesLoading]);
 
   const effectiveFacilityId = selectedFacilityId !== "all" ? selectedFacilityId : undefined;
   const { data: engagementData } = useCentralizedEngagementAnalytics(dateRange, effectiveFacilityId);
@@ -231,10 +244,21 @@ export default function ProviderAnalyticsPage() {
   };
 
   const handleApplyRange = () => {
-    if (tempRange.from) {
-      setDateRange({ from: tempRange.from, to: tempRange.to });
-      setSelectedPreset("custom");
+    if (!tempRange.from) {
+      setIsCalendarOpen(false);
+      return;
     }
+    // Defensive normalization: if the user somehow flipped the range
+    // (clicked end before start), swap so downstream queries don't
+    // hit a from > to combination that returns zero rows with no
+    // visible explanation. The Calendar UI prevents this in normal
+    // use, but a back-button restore + Apply combo can produce it.
+    const [from, to] =
+      tempRange.to && tempRange.from > tempRange.to
+        ? [tempRange.to, tempRange.from]
+        : [tempRange.from, tempRange.to];
+    setDateRange({ from, to });
+    setSelectedPreset("custom");
     setIsCalendarOpen(false);
   };
 
