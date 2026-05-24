@@ -81,15 +81,44 @@ export function useProviderFacilities() {
         return [];
       }
 
-      const { data, error } = await supabase
+      const COLS =
+        "id, name, slug, status, address, city, state, zip_code, facility_type, logo_url, gallery_urls, featured, suspended, created_at";
+
+      // Owned facilities.
+      const { data: owned, error } = await supabase
         .from("facilities")
-        .select("id, name, slug, status, address, city, state, zip_code, facility_type, logo_url, gallery_urls, featured, suspended, created_at")
+        .select(COLS)
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
-
       if (error) throw error;
 
-      const facilities = (data || []) as ProviderFacility[];
+      // Facilities this user is an active team member of (manager/viewer).
+      // Their access is enforced server-side (facility RLS + facility_role
+      // helpers, Pro-gated). We merge them in so members see the panel for
+      // facilities they belong to. A non-member gets an empty list here.
+      const { data: memberRows } = await supabase
+        .from("facility_team_members")
+        .select("facility_id")
+        .eq("user_id", user.id)
+        .eq("status", "active");
+      const memberIds = (memberRows ?? [])
+        .map((r) => (r as { facility_id: string }).facility_id)
+        .filter((id) => !(owned ?? []).some((f) => (f as { id: string }).id === id));
+
+      let memberFacilities: ProviderFacility[] = [];
+      if (memberIds.length > 0) {
+        const { data: mem } = await supabase
+          .from("facilities")
+          .select(COLS)
+          .in("id", memberIds)
+          .order("created_at", { ascending: false });
+        memberFacilities = (mem ?? []) as ProviderFacility[];
+      }
+
+      const facilities = [
+        ...((owned ?? []) as ProviderFacility[]),
+        ...memberFacilities,
+      ];
 
       try {
         localStorage.setItem(

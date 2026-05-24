@@ -130,6 +130,28 @@ function ProviderShellContent() {
     }
   }, [role, isAuthenticated]);
 
+  // Activate any pending team invitations addressed to this provider's
+  // email. Invites created before the invitee had an account land as
+  // status='pending' rows keyed by email; this binds them to the now
+  // signed-in user so they gain access immediately. Fire-and-forget,
+  // once per shell mount.
+  const hasLinkedInvites = useRef(false);
+  useEffect(() => {
+    if (role !== "provider" || !isAuthenticated || hasLinkedInvites.current) return;
+    hasLinkedInvites.current = true;
+    supabase
+      .rpc("link_pending_team_invites" as never)
+      .then(({ error }) => {
+        if (error) {
+          console.warn("[ProviderShell] link_pending_team_invites failed", error);
+        } else {
+          // Newly-linked memberships change which facilities this user
+          // can reach — refresh the facility picker.
+          queryClient.invalidateQueries({ queryKey: ["provider-facilities"] });
+        }
+      });
+  }, [role, isAuthenticated, queryClient]);
+
   // Resume-from-where-you-stopped: any authenticated provider whose
   // onboarding isn't complete and who lands on a non-onboarding
   // provider route (e.g. /provider/dashboard via bookmark, deep link,

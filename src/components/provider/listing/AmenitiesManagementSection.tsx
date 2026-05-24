@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
-import { Plus, Star, X, Loader2, Sparkles } from "lucide-react";
+import { Plus, Star, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { ProAuthorNotice } from "./ProAuthorNotice";
 import {
   useFacilityAmenities,
   AMENITY_SUGGESTIONS,
@@ -66,15 +67,7 @@ export function AmenitiesManagementSection({ facilityId, isPro }: AmenitiesManag
         </p>
       </div>
 
-      {!isPro && (
-        <div className="flex items-start gap-3 rounded-lg border border-amber-200/60 bg-amber-50/60 p-3 text-sm">
-          <Sparkles className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" aria-hidden />
-          <p className="text-amber-900 leading-relaxed">
-            Amenities are <strong>visible on your public profile only with Pro</strong>.
-            You can still curate the list now so it's ready when you upgrade.
-          </p>
-        </div>
-      )}
+      {!isPro && <ProAuthorNotice feature="Amenities" />}
 
       <div className="space-y-2">
         <Label htmlFor="amenity-input">Add an amenity</Label>

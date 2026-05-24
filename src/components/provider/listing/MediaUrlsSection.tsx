@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { Loader2, Save, Video, Globe2, Sparkles, ExternalLink } from "lucide-react";
+import { Loader2, Save, Video, Globe2, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { ProAuthorNotice } from "./ProAuthorNotice";
 
 interface MediaUrlsSectionProps {
   facilityId: string;
@@ -89,16 +90,7 @@ export function MediaUrlsSection({
         </p>
       </div>
 
-      {!isPro && (
-        <div className="flex items-start gap-3 rounded-lg border border-amber-200/60 bg-amber-50/60 p-3 text-sm">
-          <Sparkles className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" aria-hidden />
-          <p className="text-amber-900 leading-relaxed">
-            Video and virtual tour render on your public profile only with
-            Pro. Add the URLs now — they'll go live automatically when your
-            subscription is active.
-          </p>
-        </div>
-      )}
+      {!isPro && <ProAuthorNotice feature="Video & virtual tour links" />}
 
       <div className="space-y-4">
         <div className="space-y-1.5">

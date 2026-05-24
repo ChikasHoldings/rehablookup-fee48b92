@@ -393,9 +393,20 @@ export default function ProviderSubscription() {
                 <p className="font-medium text-foreground">Finalizing your first invoice…</p>
                 <p className="text-sm text-muted-foreground mt-0.5">
                   Stripe is settling your first charge. Pro benefits unlock as soon
-                  as it clears.
+                  as it clears — this usually takes under a minute. If it stays here,
+                  open the billing portal to check your payment method, or contact
+                  support.
                 </p>
               </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleManageBilling}
+                disabled={portalLoading}
+                className="shrink-0"
+              >
+                Billing portal
+              </Button>
             </CardContent>
           </Card>
         )}

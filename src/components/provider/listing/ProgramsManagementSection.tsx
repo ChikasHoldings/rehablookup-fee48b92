@@ -8,7 +8,6 @@ import {
   EyeOff,
   ArrowUp,
   ArrowDown,
-  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,6 +44,7 @@ import {
   PROGRAM_LEVELS_OF_CARE,
   type FacilityProgram,
 } from "@/hooks/useFacilityPrograms";
+import { ProAuthorNotice } from "./ProAuthorNotice";
 
 interface ProgramsManagementSectionProps {
   facilityId: string;
@@ -142,16 +142,7 @@ export function ProgramsManagementSection({ facilityId, isPro }: ProgramsManagem
         </Button>
       </div>
 
-      {!isPro && (
-        <div className="flex items-start gap-3 rounded-lg border border-amber-200/60 bg-amber-50/60 p-3 text-sm">
-          <Sparkles className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" aria-hidden />
-          <p className="text-amber-900 leading-relaxed">
-            Programs are <strong>visible on your public profile only with Pro</strong>.
-            You can still author them here so they go live the moment you
-            upgrade — nothing is lost.
-          </p>
-        </div>
-      )}
+      {!isPro && <ProAuthorNotice feature="Programs" />}
 
       {isLoading ? (
         <div className="flex items-center justify-center py-10">

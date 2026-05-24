@@ -25,11 +25,13 @@ import {
   Activity,
   HelpCircle,
   Settings as SettingsIcon,
+  UsersRound,
 } from "lucide-react";
 import { ProviderPageHeader } from "@/components/provider/ProviderPageHeader";
 import { PhoneVerificationStep } from "@/components/ui/PhoneVerificationStep";
 import { ActivityLogTab } from "@/components/provider/settings/ActivityLogTab";
 import { SessionManagementTab } from "@/components/provider/settings/SessionManagementTab";
+import { TeamManagementTab } from "@/components/provider/settings/TeamManagementTab";
 import { useLogActivity } from "@/hooks/useActivityLog";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -180,7 +182,7 @@ export default function ProviderSettingsPage() {
 
   // Sync tab from URL
   useEffect(() => {
-    if (urlTab && ["profile", "security", "notifications", "sessions", "activity"].includes(urlTab)) {
+    if (urlTab && ["profile", "security", "notifications", "team", "sessions", "activity"].includes(urlTab)) {
       setActiveTab(urlTab);
     }
   }, [urlTab]);
@@ -864,8 +866,15 @@ export default function ProviderSettingsPage() {
                 Notifications
                 {hasNotificationChanges && <span className="ml-1.5 h-2 w-2 rounded-full bg-primary" />}
               </TabsTrigger>
-              <TabsTrigger 
-                value="sessions" 
+              <TabsTrigger
+                value="team"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-3 md:px-4 py-2.5 md:py-3 text-xs md:text-sm font-medium whitespace-nowrap"
+              >
+                <UsersRound className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1.5 md:mr-2" />
+                Team
+              </TabsTrigger>
+              <TabsTrigger
+                value="sessions"
                 className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-3 md:px-4 py-2.5 md:py-3 text-xs md:text-sm font-medium whitespace-nowrap"
               >
                 <Globe className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1.5 md:mr-2" />
@@ -1650,6 +1659,10 @@ export default function ProviderSettingsPage() {
           </TabsContent>
 
           {/* Activity Tab */}
+          <TabsContent value="team" className="mt-6">
+            <TeamManagementTab />
+          </TabsContent>
+
           <TabsContent value="activity" className="mt-6">
             <ActivityLogTab />
           </TabsContent>
