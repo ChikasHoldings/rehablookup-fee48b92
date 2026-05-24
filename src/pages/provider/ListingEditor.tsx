@@ -745,6 +745,14 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
       return;
     }
 
+    // First-time 100%-complete celebration. Decide BEFORE the write so
+    // we can persist `profile_completion_celebrated` in the SAME update —
+    // otherwise the flag never gets set and the congratulatory email
+    // re-fires on every save at 100%.
+    const shouldCelebrate =
+      profileCompletion.percentage === 100 &&
+      !(facility as { profile_completion_celebrated?: boolean }).profile_completion_celebrated;
+
     try {
       const { error } = await supabase
         .from("facilities")
@@ -770,6 +778,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
           languages_spoken: facility.languages_spoken,
           accessibility_features: facility.accessibility_features,
           accepting_admissions: facility.accepting_admissions,
+          ...(shouldCelebrate ? { profile_completion_celebrated: true } : {}),
         })
         .eq("id", facility.id)
         .eq("user_id", saveSession.user.id);
@@ -805,13 +814,14 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
         // dismissed before slow networks could even render the badge.
         setTimeout(() => setShowSaved(false), 4000);
 
-        // First-time 100%-complete celebration: fire-and-forget the
-        // congratulatory email (deployed function had no callers).
-        if (
-          profileCompletion.percentage === 100 &&
-          !(facility as { profile_completion_celebrated?: boolean })
-            .profile_completion_celebrated
-        ) {
+        // First-time 100%-complete celebration. The flag was persisted in
+        // the UPDATE above, so reflect it locally + in cache to keep an
+        // immediate re-save from re-evaluating shouldCelebrate as true
+        // before the next refetch. Fire the email exactly once.
+        if (shouldCelebrate) {
+          const celebrated = { ...facility, profile_completion_celebrated: true } as Facility;
+          setFacility(celebrated);
+          queryClient.setQueryData(["facility-listing", currentFacilityId], celebrated);
           void supabase.functions
             .invoke("send-profile-complete-email", {
               body: { facilityId: currentFacilityId },

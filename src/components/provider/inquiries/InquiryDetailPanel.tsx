@@ -7,6 +7,7 @@ import {
   Clock, Shield, Heart, DollarSign, AlertTriangle, Users, RotateCcw
 } from "lucide-react";
 import { ResponseTemplatesDrawer } from "@/components/provider/inquiries/ResponseTemplatesDrawer";
+import { EmailLeadDialog } from "@/components/provider/leads/EmailLeadDialog";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
@@ -63,6 +64,7 @@ export function InquiryDetailPanel({ inquiry }: InquiryDetailPanelProps) {
   const queryClient = useQueryClient();
   const { trackContact } = useLeadContactTracking();
   const [responseNotes, setResponseNotes] = useState("");
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
   // Track which specific status button is in-flight so the spinner only
   // renders on the button the provider just clicked (instead of every
   // non-active button).
@@ -72,6 +74,7 @@ export function InquiryDetailPanel({ inquiry }: InquiryDetailPanelProps) {
   // otherwise notes typed for lead A would carry over to lead B's textarea.
   useEffect(() => {
     setResponseNotes("");
+    setEmailDialogOpen(false);
     setPendingStatus(null);
   }, [inquiry.id]);
 
@@ -256,19 +259,27 @@ export function InquiryDetailPanel({ inquiry }: InquiryDetailPanelProps) {
                   >
                     <Copy className="h-4 w-4" />
                   </Button>
-                  <Button size="sm" variant="outline" className="gap-1.5" asChild>
-                    <a
-                      href={`mailto:${displayEmail}`}
-                      onClick={() => trackContact(inquiry.id, inquiry.facility_id, "email")}
-                      aria-label={`Email ${displayName}`}
-                    >
-                      <Mail className="h-4 w-4" />
-                      Email
-                    </a>
+                  <Button
+                    size="sm"
+                    className="gap-1.5"
+                    onClick={() => setEmailDialogOpen(true)}
+                    aria-label={`Send email to ${displayName}`}
+                  >
+                    <Mail className="h-4 w-4" />
+                    Send email
                   </Button>
                 </div>
               </div>
             </div>
+            {/* Open the email client as a fallback to the in-platform send. */}
+            <a
+              href={`mailto:${displayEmail}`}
+              onClick={() => trackContact(inquiry.id, inquiry.facility_id, "email")}
+              className="mt-1 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+            >
+              <ExternalLink className="h-3 w-3" />
+              Open in your email app instead
+            </a>
             {/* Response Templates */}
             <ResponseTemplatesDrawer
               leadName={displayName}
@@ -281,6 +292,16 @@ export function InquiryDetailPanel({ inquiry }: InquiryDetailPanelProps) {
               }
             />
           </div>
+
+          {/* Platform email send — templated, tracked, with per-template
+              cooldown via the send-lead-email edge function. Same dialog
+              the dashboard lead drawer uses, now available here too. */}
+          <EmailLeadDialog
+            lead={{ id: inquiry.id, name: displayName, email: displayEmail }}
+            open={emailDialogOpen}
+            onOpenChange={setEmailDialogOpen}
+            facilityId={inquiry.facility_id}
+          />
 
         {/* Status Management */}
         <div className="space-y-3">
