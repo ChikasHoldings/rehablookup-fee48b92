@@ -59,6 +59,7 @@ import { formatPhoneNumber, getPhoneDigits } from "@/lib/phoneUtils";
 import { useProviderEventTracking } from "@/hooks/useProviderEventTracking";
 import { gaFacilityView, gaFacilityContact } from "@/lib/ga";
 import { FacilityStaffSection } from "@/components/facility/FacilityStaffSection";
+import { RichProfileSections } from "@/components/facility/RichProfileSections";
 import { FacilityProfileExtras } from "@/components/facility/FacilityProfileExtras";
 import { FacilityPhotoGallery } from "@/components/facility/FacilityPhotoGallery";
 import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
@@ -1389,8 +1390,25 @@ const CenterProfile = () => {
               <AccreditationsPanel accreditations={accreditationTypes} />
 
 
-              {/* Our Team Section */}
+              {/* Our Team Section — Pro-gated via public_facility_staff.
+                  Component returns null when the view returns empty, so
+                  Free facilities render nothing (the divide-y skips it). */}
               <FacilityStaffSection facilityId={facility.id} />
+
+              {/* Pro rich content — programs, amenities, video tour,
+                  virtual tour, highlighted accreditations. Each
+                  subsection self-gates: it only renders when the
+                  server-side Pro-gated view actually returned data, so
+                  a tampered SPA can't surface any of this for Free
+                  facilities (public_facility_programs/amenities are
+                  filtered by has_active_pro server-side; video_url +
+                  virtual_tour_url are masked to NULL via the
+                  public_facilities CASE expression). */}
+              <RichProfileSections
+                facilityId={facility.id}
+                videoUrl={(facility as { video_url?: string | null }).video_url ?? null}
+                virtualTourUrl={(facility as { virtual_tour_url?: string | null }).virtual_tour_url ?? null}
+              />
 
               {/* SEO-friendly FAQ — data-driven, unique per profile.
                   PageFAQ emits FAQPage JSON-LD when ≥3 Q&A pairs are

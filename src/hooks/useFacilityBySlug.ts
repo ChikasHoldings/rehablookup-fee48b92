@@ -65,6 +65,11 @@ export interface FacilityBaseData {
    *    false → "Not currently accepting / waitlist"
    *    null  → unspecified (do not render the badge) */
   accepting_admissions?: boolean | null;
+  /** Pro-only rich-profile fields. The public_facilities view returns
+   *  NULL for these on Free facilities — no client tampering can
+   *  surface them, the gate evaluates has_active_pro() server-side. */
+  video_url?: string | null;
+  virtual_tour_url?: string | null;
 }
 
 export interface ClaimFlags {
@@ -116,6 +121,10 @@ const SELECT_LIST = [
   "is_claimed",
   "is_pro",
   "is_premium_visible",
+  // Pro-gated rich-profile columns — public_facilities returns NULL
+  // for non-Pro facilities (CASE WHEN has_active_pro(id) THEN …).
+  "video_url",
+  "virtual_tour_url",
 ].join(",");
 
 function viewRowToBase(row: Record<string, unknown>): FacilityBaseData {
@@ -152,6 +161,8 @@ function viewRowToBase(row: Record<string, unknown>): FacilityBaseData {
       row.accepting_admissions == null
         ? null
         : !!row.accepting_admissions,
+    video_url: (row.video_url as string | null) ?? null,
+    virtual_tour_url: (row.virtual_tour_url as string | null) ?? null,
   };
 }
 

@@ -258,6 +258,13 @@ async function fetchFacilities() {
     "featured",
     "gender_served",
     "updated_at",
+    // Pro-gated. public_facilities view masks these to NULL for
+    // non-Pro facilities so the static HTML stays thin for Free
+    // listings — flipping a facility to Free downgrades the next
+    // prerender cycle automatically.
+    "is_pro",
+    "video_url",
+    "virtual_tour_url",
   ].join(",");
 
   return fetchAll(
@@ -483,6 +490,119 @@ ${rows}
 }
 
 // ---------------------------------------------------------------------------
+// Pro-only rich sections (programs, amenities, staff, video, virtual tour,
+// highlighted accreditations). Every input array comes from a public_*
+// view that bakes has_active_pro() into its WHERE, so Free facilities
+// have empty arrays here and the function returns "" — no client-side
+// or script-side Pro check needed.
+// ---------------------------------------------------------------------------
+
+function renderProRichSections(f, kids) {
+  if (!f.is_pro) return "";
+
+  const parts = [];
+
+  // Programs
+  const programs = kids.programs.get(f.id) ?? [];
+  if (programs.length > 0) {
+    const rows = programs
+      .map((p) => {
+        const meta = [p.level_of_care, p.length_text]
+          .filter(Boolean)
+          .map((s) => `<span class="meta">${escapeHtml(s)}</span>`)
+          .join(" ");
+        return `<article class="program">
+<h3>${escapeHtml(p.name)}</h3>
+${meta ? `<p class="program-meta">${meta}</p>` : ""}
+<p>${escapeHtml(p.description)}</p>
+</article>`;
+      })
+      .join("\n");
+    parts.push(`<section class="rich pro">
+<h2>Programs</h2>
+${rows}
+</section>`);
+  }
+
+  // Amenities (highlighted first)
+  const amenities = kids.amenities.get(f.id) ?? [];
+  if (amenities.length > 0) {
+    const chips = amenities
+      .map(
+        (a) =>
+          `<li class="${a.is_highlighted ? "amenity-hi" : "amenity"}">${escapeHtml(a.amenity_name)}</li>`,
+      )
+      .join("");
+    parts.push(`<section class="rich pro">
+<h2>Amenities</h2>
+<ul class="amenities">${chips}</ul>
+</section>`);
+  }
+
+  // Staff
+  const staff = kids.staff.get(f.id) ?? [];
+  if (staff.length > 0) {
+    const rows = staff
+      .map((s) => {
+        const bio = s.bio
+          ? `<p class="staff-bio">${escapeHtml(s.bio)}</p>`
+          : "";
+        return `<article class="staff-member">
+<h3>${escapeHtml(s.name)}</h3>
+<p class="staff-title">${escapeHtml(s.job_title)}</p>
+${bio}
+</article>`;
+      })
+      .join("\n");
+    parts.push(`<section class="rich pro">
+<h2>Our Team</h2>
+${rows}
+</section>`);
+  }
+
+  // Video tour — emit a plain anchor; the SPA renders the actual <iframe>
+  // after hydration. Static HTML just needs a crawlable link.
+  if (f.video_url) {
+    parts.push(`<section class="rich pro">
+<h2>Facility Tour</h2>
+<p><a class="pro-link" href="${escapeAttr(f.video_url)}" rel="nofollow noopener" target="_blank">Watch the facility tour video</a></p>
+</section>`);
+  }
+
+  // Virtual tour — same treatment as video.
+  if (f.virtual_tour_url) {
+    parts.push(`<section class="rich pro">
+<h2>Virtual Tour</h2>
+<p><a class="pro-link" href="${escapeAttr(f.virtual_tour_url)}" rel="nofollow noopener" target="_blank">Open the 360° virtual tour</a></p>
+</section>`);
+  }
+
+  // Featured accreditations
+  const hl = kids.highlightedAccreds.get(f.id) ?? [];
+  if (hl.length > 0) {
+    const rows = hl
+      .map((a) => {
+        const auth = a.issuing_authority
+          ? ` <span class="meta">${escapeHtml(a.issuing_authority)}</span>`
+          : "";
+        const link = a.verification_url
+          ? ` <a href="${escapeAttr(a.verification_url)}" rel="nofollow noopener" target="_blank">verify</a>`
+          : "";
+        return `<li><strong>★ ${escapeHtml(a.accreditation_type)}</strong>${auth}${link}</li>`;
+      })
+      .join("\n");
+    parts.push(`<section class="rich pro">
+<h2>Featured Accreditations</h2>
+<ul>
+${rows}
+</ul>
+</section>`);
+  }
+
+  return parts.join("\n");
+}
+
+// ---------------------------------------------------------------------------
 // HTML template
 // ---------------------------------------------------------------------------
 
@@ -649,6 +769,11 @@ function renderFacilityHtml(f, kids) {
     : `<h2>About ${escapeHtml(f.name)}</h2><p>${escapeHtml(f.name)} provides accredited addiction treatment services in ${escapeHtml(f.city)}, ${escapeHtml(f.state)}. View the full profile for programs, insurance accepted, and admissions details.</p>`;
 
   const richSections = renderRichSections(f, facSvc, facIns, facAge, facAcc);
+  // Pro-only sections — empty string when f.is_pro is false, so the
+  // static HTML stays thin for Free facilities. The downgrade path is
+  // automatic: a facility losing Pro between builds drops out of the
+  // public_facility_* views and renders empty rich content next cycle.
+  const proRichSections = renderProRichSections(f, kids);
 
   // ── Facility-specific FAQs ────────────────────────────────────────────────
   // Data-driven: every Q is dropped if we can't answer it from real columns.
@@ -763,6 +888,7 @@ ${websiteLine}
 </div>
 ${descBlock}
 ${richSections}
+${proRichSections}
 <div class="cta">
 <h2>Request Information from ${escapeHtml(f.name)}</h2>
 <p>Get verified program details, insurance verification, and admissions information directly from this facility. Confidential — no obligation.</p>
@@ -800,13 +926,53 @@ async function main() {
   let insRows;
   let ageRows;
   let accRows;
+  // Rich Pro-only content lives on its own paginated fetches so we
+  // don't refetch them when a Free facility's profile rebuilds. Each
+  // public_facility_* view bakes has_active_pro() into its WHERE so
+  // these return empty for Free facilities and we don't have to filter
+  // client-side. As Pro adoption scales these stay small relative to
+  // the 3,800-row services/insurance/etc. counts.
+  let programRows;
+  let amenityRows;
+  let staffRows;
+  let highlightedAccRows;
   try {
-    [facilities, svcRows, insRows, ageRows, accRows] = await Promise.all([
+    [
+      facilities,
+      svcRows,
+      insRows,
+      ageRows,
+      accRows,
+      programRows,
+      amenityRows,
+      staffRows,
+      highlightedAccRows,
+    ] = await Promise.all([
       fetchFacilities(),
       fetchAll("facility_services", "facility_id,service_name"),
       fetchAll("facility_insurance", "facility_id,insurance_name"),
       fetchAll("facility_age_groups", "facility_id,age_group"),
       fetchAll("facility_accreditations", "facility_id,accreditation_type"),
+      fetchAll(
+        "public_facility_programs",
+        "facility_id,name,description,level_of_care,length_text,display_order",
+        "order=display_order.asc,created_at.asc",
+      ),
+      fetchAll(
+        "public_facility_amenities",
+        "facility_id,amenity_name,is_highlighted,display_order",
+        "order=is_highlighted.desc,display_order.asc",
+      ),
+      fetchAll(
+        "public_facility_staff",
+        "facility_id,name,job_title,bio,photo_url,display_order",
+        "order=display_order.asc",
+      ),
+      fetchAll(
+        "public_facility_accreditations",
+        "facility_id,accreditation_type,issuing_authority,verification_url,is_highlighted",
+        "is_highlighted=eq.true",
+      ),
     ]);
   } catch (err) {
     console.error(`[facility-prerender] ${err.message}`);
@@ -826,14 +992,38 @@ async function main() {
   console.log(
     `[facility-prerender] loaded ${facilities.length} facilities, ` +
       `${svcRows.length} services, ${insRows.length} insurance, ` +
-      `${ageRows.length} ages, ${accRows.length} accreditations`,
+      `${ageRows.length} ages, ${accRows.length} accreditations, ` +
+      `${programRows.length} programs, ${amenityRows.length} amenities, ` +
+      `${staffRows.length} staff, ${highlightedAccRows.length} highlighted accreds (Pro-only)`,
   );
+
+  // Bucket rich rows by facility_id — bucketBy only keeps a single
+  // string field, so for the structured tables (programs / amenities /
+  // staff / highlighted accreds) we group manually with the full row
+  // shape preserved.
+  function bucketByFull(rows, keyField) {
+    const m = new Map();
+    for (const r of rows) {
+      const k = r[keyField];
+      if (!k) continue;
+      if (!m.has(k)) m.set(k, []);
+      m.get(k).push(r);
+    }
+    return m;
+  }
 
   const kids = {
     services: bucketBy(svcRows, "facility_id", "service_name"),
     insurance: bucketBy(insRows, "facility_id", "insurance_name"),
     ageGroups: bucketBy(ageRows, "facility_id", "age_group"),
     accreditations: bucketBy(accRows, "facility_id", "accreditation_type"),
+    // Pro-only buckets — empty Map.get() returns undefined → render
+    // helper short-circuits with no output, so Free facilities skip
+    // the rich sections without an explicit isPro branch.
+    programs: bucketByFull(programRows, "facility_id"),
+    amenities: bucketByFull(amenityRows, "facility_id"),
+    staff: bucketByFull(staffRows, "facility_id"),
+    highlightedAccreds: bucketByFull(highlightedAccRows, "facility_id"),
   };
 
   await mkdir(centerDir, { recursive: true });
