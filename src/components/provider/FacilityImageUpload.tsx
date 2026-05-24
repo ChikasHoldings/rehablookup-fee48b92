@@ -69,33 +69,47 @@ export function FacilityImageUpload({
     }
 
     try {
-      // Compress the image
+      // Compress the image (canvas re-encode to webp). This already
+      // rejects non-decodable files client-side; the edge function below
+      // re-verifies the bytes server-side.
       setUploadProgress("Compressing...");
       const compressedFile = await compressImage(file, type);
 
-      // Upload to storage
+      // Upload through validate-and-upload: magic-byte verifies the
+      // (compressed) bytes server-side, enforces the image allowlist +
+      // 10MB cap, and writes via the service role. Server-side check is
+      // authoritative — the client-declared type is never the only gate.
       setUploadProgress("Uploading...");
       const fileName = `${userId}/${facilityId}/${type}/${Date.now()}.webp`;
 
-      const { error: uploadError } = await supabase.storage
-        .from("facility-images")
-        .upload(fileName, compressedFile, { upsert: true });
+      const uploadForm = new FormData();
+      uploadForm.append("file", compressedFile, `${Date.now()}.webp`);
+      uploadForm.append("kind", "gallery");
+      uploadForm.append("path", fileName);
+      uploadForm.append("upsert", "true");
 
-      if (uploadError) {
-        console.error("Upload error:", uploadError);
+      const { data: uploadResult, error: fnError } = await supabase.functions.invoke(
+        "validate-and-upload",
+        { body: uploadForm },
+      );
+      if (fnError) {
         toast({
           title: "Upload failed",
-          description: uploadError.message,
+          description: "Couldn't reach the upload service. Check your connection and try again.",
+          variant: "destructive",
+        });
+        return null;
+      }
+      if (!uploadResult?.ok || !uploadResult?.publicUrl) {
+        toast({
+          title: "Upload failed",
+          description: uploadResult?.error || "The image was rejected. Please use a JPG, PNG, or WebP under 10MB.",
           variant: "destructive",
         });
         return null;
       }
 
-      const { data: urlData } = supabase.storage
-        .from("facility-images")
-        .getPublicUrl(fileName);
-
-      return urlData.publicUrl;
+      return uploadResult.publicUrl as string;
     } catch (error) {
       console.error("Processing error:", error);
       toast({

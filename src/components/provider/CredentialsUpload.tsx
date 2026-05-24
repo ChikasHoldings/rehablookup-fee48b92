@@ -261,24 +261,33 @@ export function CredentialsUpload({ facilityId, userId }: CredentialsUploadProps
 
     try {
       // Generate a unique filename. Path layout `<userId>/<facilityId>/...`
-      // matches the RLS predicate on the facility-credentials bucket which
-      // requires (storage.foldername(name))[1] = auth.uid()::text.
+      // matches the edge function's ownership check (foldername[1] = uid).
       const fileExt = selectedFile.name.split('.').pop();
       const fileName = `${userId}/${facilityId}/credentials/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
-      // Upload to the PRIVATE facility-credentials bucket. License/insurance
-      // PDFs were previously written to the public facility-images bucket and
-      // accessible via getPublicUrl — that's now a private bucket with signed
-      // URLs generated on render.
-      const { error: uploadError } = await supabase.storage
-        .from("facility-credentials")
-        .upload(fileName, selectedFile, {
-          cacheControl: "3600",
-          upsert: false,
-        });
+      // Upload through validate-and-upload: it magic-byte verifies the
+      // file content server-side (not the client-declared MIME), enforces
+      // the credential allowlist (PDF + image) + 10MB cap, and writes via
+      // the service role. Direct client writes to facility-credentials are
+      // now blocked by a RESTRICTIVE storage policy, so this is the only
+      // path — a mislabeled file can't reach the bucket.
+      const uploadForm = new FormData();
+      uploadForm.append("file", selectedFile);
+      uploadForm.append("kind", "credential");
+      uploadForm.append("path", fileName);
+      uploadForm.append("upsert", "false");
 
-      if (uploadError) {
-        throw uploadError;
+      const { data: uploadResult, error: fnError } = await supabase.functions.invoke(
+        "validate-and-upload",
+        { body: uploadForm },
+      );
+      if (fnError) {
+        throw new Error("Couldn't reach the upload service. Check your connection and try again.");
+      }
+      if (!uploadResult?.ok) {
+        // Validation rejection (wrong type, too large, etc.). Nothing was
+        // written to storage, so there's no orphaned file to clean up.
+        throw new Error(uploadResult?.error || "The file was rejected. Please upload a valid PDF or image under 10MB.");
       }
 
       const categoryLabel = DOCUMENT_CATEGORIES.find(c => c.value === selectedCategory)?.label || 'Other';
@@ -293,11 +302,13 @@ export function CredentialsUpload({ facilityId, userId }: CredentialsUploadProps
           document_name: `${sanitizedName} (${categoryLabel})`,
           document_url: "",
           storage_path: fileName,
-          document_type: selectedFile.type,
+          document_type: (uploadResult.detectedMime as string) || selectedFile.type,
           status: 'pending',
         } as never);
 
       if (dbError) {
+        // Roll back the uploaded object so no orphaned file is left
+        // pointing at a record that failed to persist.
         await supabase.storage.from("facility-credentials").remove([fileName]);
         throw dbError;
       }
