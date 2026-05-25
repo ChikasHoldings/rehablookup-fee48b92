@@ -1,7 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 
-import { assertCronSecret } from "../_shared/cron-auth.ts";
-const VERSION = "5.0.0";
+const VERSION = "5.1.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -186,15 +185,41 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
-  const __cronAuth = assertCronSecret(req);
-  if (!__cronAuth.ok) return __cronAuth.response;
+
+  // AUTH: this function is invoked by the admin console (advisors driving a
+  // placement case) and by the seeker confirming their chosen provider — it is
+  // NOT a pg_cron job. It therefore verifies the caller's JWT and authorizes
+  // either an active admin OR the seeker who owns the inquiry. (It was gated by
+  // assertCronSecret until v5.1.0, which mis-classified it as cron-triggered
+  // and 401'd every real caller.)
+  const authHeader = req.headers.get("Authorization") || req.headers.get("authorization");
+  if (!authHeader || !authHeader.toLowerCase().startsWith("bearer ")) {
+    return new Response(
+      JSON.stringify({ error: "Missing authorization header", requestId, _version: VERSION }),
+      { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
+  }
 
   try {
     logStep(requestId, "Function started", { version: VERSION });
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Verify the caller's identity from the JWT — never trust the request body.
+    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+      auth: { persistSession: false },
+    });
+    const { data: { user }, error: userErr } = await userClient.auth.getUser();
+    if (userErr || !user) {
+      return new Response(
+        JSON.stringify({ error: "Invalid or expired session", requestId, _version: VERSION }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
 
     const { inquiryId, trigger, actorId, actorType = "system" }: TransitionRequest = await req.json();
 
@@ -207,15 +232,29 @@ Deno.serve(async (req) => {
 
     logStep(requestId, "Processing", { inquiryId, trigger });
 
-    // Fetch current status + advisor assignment
+    // Fetch current status + advisor assignment + owner (for authorization).
     const { data: inquiry, error: inquiryError } = await supabase
       .from("concierge_inquiries")
-      .select("id, status, assigned_advisor_id")
+      .select("id, status, assigned_advisor_id, user_id")
       .eq("id", inquiryId)
       .single();
 
     if (inquiryError || !inquiry) {
       throw new Error("Inquiry not found: " + inquiryError?.message);
+    }
+
+    // Authorize: an active admin, or the seeker who owns this inquiry.
+    const { data: isAdmin } = await userClient.rpc("has_role", {
+      _user_id: user.id,
+      _role: "admin",
+    });
+    const isOwner = !!inquiry.user_id && inquiry.user_id === user.id;
+    if (!isAdmin && !isOwner) {
+      logStep(requestId, "Forbidden — caller is neither admin nor inquiry owner", { userId: user.id });
+      return new Response(
+        JSON.stringify({ error: "Forbidden", requestId, _version: VERSION }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
     // Safety net: ensure an advisor is assigned before walking past `advisor_assigned`.

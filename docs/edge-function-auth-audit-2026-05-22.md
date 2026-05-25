@@ -99,6 +99,13 @@ Future cleanup: migrate all 28 functions to `_shared/require-admin.ts` for a sin
 
 Platform setting: `verify_jwt = false`. Each function calls `assertCronSecret(req)` from `_shared/cron-auth.ts` as its first non-CORS action. The secret is stored in Supabase Vault under key `cron_secret` and surfaced as `Deno.env.CRON_SECRET`. The pg_cron job adds `X-Cron-Secret: <secret>` to its `pg_net.http_post` call.
 
+> **Correction (v5.1.0):** `auto-status-transition` was listed below in error —
+> it is NOT scheduled in pg_cron and is invoked only by clients (the admin
+> console and the seeker confirming a provider). The cron-secret gate 401'd
+> every real caller, stalling the placement status machine. It has been
+> reclassified as an authenticated-user function (`verify_jwt = true` +
+> in-code admin/owner authorization) and removed from the cron allow-list.
+
 `auto-status-transition`, `calculate-ranking-scores`, `check-brute-force-alerts`, `check-churn-alerts`, `check-not-found-alerts`, `check-provider-health-alerts`, `cleanup-audit-logs`, `cleanup-orphan-storage`, `cleanup-rate-limit-logs`, `drain-addon-waitlist`, `placement-cron`, `process-onboarding-emails`, `process-provider-drip`, `process-seeker-drip`, `process-seeker-followup-reminders`, `retry-failed-payments`, `revenue-enforcement-cron`, `samhsa-import-batch`, `send-dunning-emails`, `send-new-facility-alerts`, `send-profile-reminders`, `send-provider-weekly-digest`, `send-renewal-reminder`, `send-retention-outreach`, `send-saved-search-alerts`, `send-seeker-weekly-digest`, `send-subscription-alerts`, `send-marketing-followup`, `signup-rollback-cleanup`.
 
 ### Vault setup

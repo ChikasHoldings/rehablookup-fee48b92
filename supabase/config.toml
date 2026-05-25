@@ -460,7 +460,7 @@ verify_jwt = true
 # ═════════════════════════════════════════════════════════════════════════════
 
 [functions.auto-status-transition]
-verify_jwt = false
+verify_jwt = true
 
 [functions.calculate-ranking-scores]
 verify_jwt = false
