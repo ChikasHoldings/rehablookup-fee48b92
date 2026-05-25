@@ -130,7 +130,12 @@ Deno.serve(async (req) => {
     // Check if this is a Pro subscription.
     // BUGFIX: The previous `|| !!subscription` made every subscriber appear as Pro
     // regardless of product. Now we strictly check the product ID list.
-    const isPro = PRO_PRODUCT_IDS.includes(productId);
+    // Status gate: only active/trialing count as Pro — matches useProStatus,
+    // the has_active_pro RLS, and useFacilitySubscriptionTier (all active-only).
+    // Without it, a past_due provider reported isPro:true here while every other
+    // gate locked them, a latent money/correctness desync.
+    const isPro = PRO_PRODUCT_IDS.includes(productId)
+      && (subscription.status === "active" || subscription.status === "trialing");
 
     logStep("Determined subscription status", { 
       isPro,

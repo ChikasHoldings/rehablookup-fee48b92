@@ -152,7 +152,11 @@ export default function MarketingFeatured() {
           </div>
         </div>
 
-        {!isPro ? (
+        {/* Only show the locked/upgrade preview when there's no active add-on
+            to manage. A past_due provider whose Pro lapsed but whose Featured
+            add-on is still active (and still billing) must keep access to
+            manage/cancel it — gating on isPro alone locked them out. */}
+        {!isPro && !hasFeatured ? (
           <LockedFeaturePreview
             title="Featured Placements"
             subtitle="Phone-rotation on our highest-traffic pages"

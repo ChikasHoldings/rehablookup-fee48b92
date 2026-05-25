@@ -157,7 +157,11 @@ export default function MarketingConcierge() {
             queue is empty. */}
         <ConciergeIntroductionResponder facilityId={facilityId} />
 
-        {!isPro ? (
+        {/* Only show the locked/upgrade preview when there's no active add-on
+            to manage. A past_due provider whose Pro lapsed but whose Concierge
+            add-on is still active (and still billing) must keep access to
+            manage/cancel it — gating on isPro alone locked them out. */}
+        {!isPro && !hasConcierge ? (
           <LockedFeaturePreview
             title="Concierge Partner"
             subtitle="Prominent surfacing when our human advisors match clients"
