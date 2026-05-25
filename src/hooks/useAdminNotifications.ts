@@ -29,11 +29,11 @@ export function useAdminNotifications() {
         .limit(100);
 
       if (error) {
-        console.error('[useAdminNotifications] Fetch error:', error);
-        logAdminError("useAdminNotifications", "fetch_notifications", error, { queryKey: "admin-notifications" });
-        return [];
+        // Surface the failure to React Query so the page's error banner fires.
+        // Returning [] here masked outages as a false "all caught up" state.
+        throw error;
       }
-      
+
       return (data || []) as AdminNotification[];
     },
     staleTime: 30 * 1000,

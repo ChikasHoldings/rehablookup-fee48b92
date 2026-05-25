@@ -27,7 +27,7 @@
  * admins never reach this component.
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -686,9 +686,8 @@ function AdminClaimsReviewPanel() {
               const isResolved = ["approved", "rejected", "withdrawn"].includes(claim.status);
 
               return (
-                <>
+                <Fragment key={claim.id}>
                   <TableRow
-                    key={claim.id}
                     className="cursor-pointer hover:bg-muted/40"
                     onClick={() => toggleExpand(claim)}
                   >
@@ -888,7 +887,7 @@ function AdminClaimsReviewPanel() {
                       </TableCell>
                     </TableRow>
                   )}
-                </>
+                </Fragment>
               );
             })}
           </TableBody>

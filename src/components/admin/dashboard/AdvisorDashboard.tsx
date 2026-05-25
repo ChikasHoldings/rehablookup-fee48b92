@@ -144,9 +144,10 @@ export function AdvisorDashboard() {
     onSuccess: (_data, caseId) => {
       toast.success("Case claimed! Opening placement workflow...");
       invalidateDashboard();
-      // Auto-open the case detail sheet on the placement tab
+      // Auto-open the case detail sheet on the matching tab (where the
+      // advisor picks facilities — the detail sheet has no "placement" tab).
       setSelectedCaseId(caseId);
-      setInitialDetailTab("placement");
+      setInitialDetailTab("matching");
     },
     onError: (err: Error) => {
       toast.error("Failed to claim case: " + err.message);
@@ -181,8 +182,11 @@ export function AdvisorDashboard() {
         reviewing: inBucket(["intake_reviewed", "advisor_assigned"]),
         matching: inBucket(["matching_providers", "provider_prequalification", "providers_accepted"]),
         introsSent: inBucket(["presented_to_seeker"]),
-        inContact: inBucket(["seeker_selected", "admission_in_progress"]),
-        placed: inBucket(["admitted", "billed", "completed"]),
+        inContact: inBucket(["admission_in_progress"]),
+        // `seeker_selected` is the live terminal "placed" status (client chose a
+        // facility); keep it here so the advisor's placement count matches the
+        // main Placements workspace KPI.
+        placed: inBucket(["seeker_selected", "admitted", "billed", "completed"]),
         closed: inBucket(["closed"]),
       };
     },
@@ -265,11 +269,13 @@ export function AdvisorDashboard() {
 
       if (!myInquiries || myInquiries.length === 0) return { pending: 0, scheduled: 0 };
 
+      // Tour statuses are requested/proposed/confirmed/completed/cancelled.
+      // "Pending" = awaiting action (requested or proposed); "scheduled" = confirmed.
       const [pending, scheduled] = await Promise.all([
         supabase.from("concierge_tour_requests").select("id", { count: "exact", head: true })
-          .in("inquiry_id", myInquiries.map(i => i.id)).eq("status", "pending"),
+          .in("inquiry_id", myInquiries.map(i => i.id)).in("status", ["requested", "proposed"]),
         supabase.from("concierge_tour_requests").select("id", { count: "exact", head: true })
-          .in("inquiry_id", myInquiries.map(i => i.id)).eq("status", "scheduled"),
+          .in("inquiry_id", myInquiries.map(i => i.id)).eq("status", "confirmed"),
       ]);
       return {
         pending: pending.count || 0,

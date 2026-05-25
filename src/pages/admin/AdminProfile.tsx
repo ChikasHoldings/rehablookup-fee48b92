@@ -432,7 +432,7 @@ export default function AdminProfile() {
                 <Shield className="h-5 w-5 text-success" />
               </div>
               <div>
-                <p className="font-medium">Account Status: Active</p>
+                <p className="font-medium">Account Status: {profile?.status === "suspended" ? "Suspended" : profile?.status === "pending_password_reset" ? "Password Reset Required" : "Active"}</p>
                 <p className="text-sm text-muted-foreground">
                   Last login: {profile?.last_login_at 
                     ? format(new Date(profile.last_login_at), "PPp")
@@ -789,20 +789,20 @@ export default function AdminProfile() {
                 <SelectValue placeholder="Select frequency" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="instant">Instant (Real-time)</SelectItem>
                 <SelectItem value="daily">Daily Digest</SelectItem>
                 <SelectItem value="weekly">Weekly Summary</SelectItem>
+                <SelectItem value="monthly">Monthly Summary</SelectItem>
                 <SelectItem value="never">Never (Disable all emails)</SelectItem>
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
-              {notificationPrefs.email_digest_frequency === 'instant' && 
-                "You'll receive emails immediately as events occur."}
-              {notificationPrefs.email_digest_frequency === 'daily' && 
+              {notificationPrefs.email_digest_frequency === 'daily' &&
                 "You'll receive a daily summary email with all events."}
-              {notificationPrefs.email_digest_frequency === 'weekly' && 
+              {notificationPrefs.email_digest_frequency === 'weekly' &&
                 "You'll receive a weekly summary email with all events."}
-              {notificationPrefs.email_digest_frequency === 'never' && 
+              {notificationPrefs.email_digest_frequency === 'monthly' &&
+                "You'll receive a monthly summary email with all events."}
+              {notificationPrefs.email_digest_frequency === 'never' &&
                 "You won't receive any email notifications."}
             </p>
           </div>

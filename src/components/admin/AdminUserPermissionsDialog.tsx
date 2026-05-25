@@ -261,7 +261,7 @@ export function AdminUserPermissionsDialog({
 
             <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
               {Object.entries(ADMIN_PERMISSIONS).map(([key, { label, description }]) => {
-                const isSuperAdminOnly = key === "users" || key === "settings" || key === "audit_log" || key === "security_logs";
+                const isSuperAdminOnly = key === "users" || key === "settings" || key === "audit_log" || key === "security_logs" || key === "back_office";
                 const isSuperAdmin = adminRole === "super_admin";
                 const isDisabled = isSuperAdmin || (isSuperAdminOnly && !isSuperAdmin);
                 

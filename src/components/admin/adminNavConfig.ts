@@ -179,7 +179,11 @@ const advisorNav: NavSection[] = [
       // that page (Network tab is admin-only). Analytics lives in
       // the global /admin/analytics surface.
       { to: "/admin/concierge", icon: UserPlus, label: "Placements", permission: "placements", countKey: "placements" },
-      { to: "/admin/analytics", icon: CreditCard, label: "Analytics", permission: "placements" },
+      // Visibility must match the route gate (/admin/analytics requires the
+      // `analytics` permission). Advisors are `analytics:false` by default, so
+      // this item is hidden for them and only appears once granted — no
+      // AccessDenied dead-end.
+      { to: "/admin/analytics", icon: BarChart3, label: "Analytics", permission: "analytics" },
     ],
   },
   {

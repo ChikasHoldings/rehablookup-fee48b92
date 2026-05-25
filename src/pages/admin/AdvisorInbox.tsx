@@ -416,7 +416,7 @@ export default function AdvisorInbox() {
                         </div>
                       )}
                       <p className={`text-[10px] mt-1 ${isAdmin ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
-                        {msg.sender_type === "admin" ? "You" : msg.sender_type === "user" ? "Client" : "Facility"} • {format(new Date(msg.created_at), "MMM d, h:mm a")}
+                        {msg.sender_type === "admin" || msg.sender_type === "advisor" ? "You" : msg.sender_type === "seeker" || msg.sender_type === "user" ? "Client" : "Facility"} • {format(new Date(msg.created_at), "MMM d, h:mm a")}
                       </p>
                     </div>
                   </div>

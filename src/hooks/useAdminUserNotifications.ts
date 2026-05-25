@@ -82,8 +82,9 @@ export function useAdminUserNotifications() {
         .limit(50);
 
       if (error) {
-        logAdminError("useAdminUserNotifications", "fetch_notifications", error, { queryKey: "admin-user-notifications" });
-        return [];
+        // Surface to React Query (the useEffect below logs it) instead of
+        // masking an outage as an empty notification list.
+        throw error;
       }
       return (data || []) as AdminUserNotification[];
     },
