@@ -342,8 +342,9 @@ export function useProviderReviews() {
           reviewId,
           facilityId: review.facility_id,
           providerId: user.id,
-          reason,
-          details: details?.trim() || null,
+          // The function reads `disputeReason` (not `reason`); sending the
+          // wrong key dropped the reason from the admin email + notification.
+          disputeReason: reason,
         },
       })
       .catch((err) => console.error('Failed to send dispute notification:', err));

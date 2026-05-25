@@ -141,6 +141,10 @@ export function useFacilityReviews(facilityId: string) {
     if (enrichedReviews.length > 0) {
       const avg = enrichedReviews.reduce((sum, r) => sum + r.rating, 0) / enrichedReviews.length;
       setAverageRating(Math.round(avg * 10) / 10);
+    } else {
+      // Reset so a facility whose last review was removed doesn't keep showing
+      // a stale star summary (consumers that read averageRating alone).
+      setAverageRating(null);
     }
 
     setIsLoading(false);
