@@ -15,6 +15,7 @@ import {
   Target
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { TIER_PRICING } from "@/lib/billingPricing";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -250,10 +251,11 @@ export function FeaturedAnalyticsDashboard() {
       const avgCTR = totalImpressions > 0 ? (totalClicks / totalImpressions) * 100 : 0;
       const avgConversion = totalClicks > 0 ? (totalLeads / totalClicks) * 100 : 0;
       
-      // Estimate Featured Add-On MRR: $599/mo per active Featured subscriber
-      // (canonical pricing — see _shared/featured-addon.ts and the marketing
-      // pages). Monthly figure; annualize by multiplying by 12 if needed.
-      const estimatedRevenue = featuredIds.length * 599;
+      // This pool is the Pro homepage-featured rotation (proFacilityIds), so the
+      // revenue it represents is Pro MRR — Pro is $99/mo (canonical TIER_PRICING).
+      // Previously this multiplied the Pro count by the $599 Featured add-on
+      // price, overstating revenue ~6x and mislabeling it.
+      const estimatedRevenue = featuredIds.length * (TIER_PRICING.pro.monthlyCents / 100);
 
       // Calculate comparison metrics
       const avgLeadsPerProvider = featuredIds.length > 0 ? totalLeads / featuredIds.length : 0;

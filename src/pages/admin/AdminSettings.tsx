@@ -70,6 +70,7 @@ import { BlockedIdentifiersDialog } from "@/components/admin/BlockedIdentifiersD
 import { SecurityAlertsPanel } from "@/components/admin/SecurityAlertsPanel";
 import { RecentNotificationsPanel } from "@/components/admin/RecentNotificationsPanel";
 import { DataHealthMonitor } from "@/components/admin/DataHealthMonitor";
+import { ScheduledJobsHealthCard } from "@/components/admin/ScheduledJobsHealthCard";
 
 // Define which tabs each role can access
 type SettingsTab = "general" | "security" | "notifications" | "data";
@@ -2495,6 +2496,9 @@ export default function AdminSettings() {
 
           {/* Data Health Monitor */}
           <DataHealthMonitor />
+
+          {/* Scheduled jobs / edge-function health */}
+          <ScheduledJobsHealthCard />
 
           <div className="grid gap-6 lg:grid-cols-2">
             {/* Storage */}

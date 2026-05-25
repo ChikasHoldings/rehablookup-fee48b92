@@ -635,7 +635,7 @@ export function AdvisorDashboard() {
           )}
           {messageStats?.unread && messageStats.unread > 0 && (
             <Button variant="ghost" className="justify-start h-auto py-2.5 px-3 hover:bg-warning/10" asChild>
-              <Link to="/admin/inbox">
+              <Link to="/admin/concierge?tab=inbox">
                 <MessageCircle className="h-5 w-5 text-warning mr-3 shrink-0" />
                 <div className="flex flex-col items-start min-w-0">
                   <span className="text-sm font-medium">Unread Messages</span>
@@ -665,7 +665,7 @@ export function AdvisorDashboard() {
             </Link>
           </Button>
           <Button variant="ghost" className="justify-start h-auto py-2.5 px-3 hover:bg-info/10" asChild>
-            <Link to="/admin/inbox">
+            <Link to="/admin/concierge?tab=inbox">
               <Inbox className="h-5 w-5 text-info mr-3 shrink-0" />
               <div className="flex flex-col items-start min-w-0">
                 <span className="text-sm font-medium">Advisor Inbox</span>
@@ -674,7 +674,7 @@ export function AdvisorDashboard() {
             </Link>
           </Button>
           <Button variant="ghost" className="justify-start h-auto py-2.5 px-3 hover:bg-primary/10" asChild>
-            <Link to="/admin/provider-directory">
+            <Link to="/admin/concierge?tab=directory">
               <Building2 className="h-5 w-5 text-primary mr-3 shrink-0" />
               <div className="flex flex-col items-start min-w-0">
                 <span className="text-sm font-medium">Provider Directory</span>
