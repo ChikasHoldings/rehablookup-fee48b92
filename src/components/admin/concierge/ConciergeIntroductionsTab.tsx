@@ -9,6 +9,16 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -42,6 +52,7 @@ const RESPONSE_STATUS = {
 export function ConciergeIntroductionsTab({ caseData, onRefresh }: ConciergeIntroductionsTabProps) {
   const { adminRole } = useAdminAuth();
   const [disclosingTo, setDisclosingTo] = useState<string | null>(null);
+  const [confirmDiscloseId, setConfirmDiscloseId] = useState<string | null>(null);
   const [selectedFacilityIds, setSelectedFacilityIds] = useState<Set<string>>(new Set());
 
   // Clinical criteria snapshot for the EKRA audit + partner-status geo match.
@@ -472,7 +483,7 @@ export function ConciergeIntroductionsTab({ caseData, onRefresh }: ConciergeIntr
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => disclosePIIMutation.mutate(intro.id)}
+                                onClick={() => setConfirmDiscloseId(intro.id)}
                                 disabled={disclosingTo === intro.id}
                                 className="gap-1"
                               >
@@ -509,6 +520,39 @@ export function ConciergeIntroductionsTab({ caseData, onRefresh }: ConciergeIntr
           )}
         </CardContent>
       </Card>
+
+      {/* Confirm before disclosing PII — irreversible, writes the disclosure
+          audit log and reveals the seeker's name/email/phone to the facility. */}
+      <AlertDialog
+        open={!!confirmDiscloseId}
+        onOpenChange={(o) => {
+          if (!o && !disclosePIIMutation.isPending) setConfirmDiscloseId(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Disclose patient info to this facility?</AlertDialogTitle>
+            <AlertDialogDescription className="text-sm">
+              This reveals the client's name, email, and phone to the facility and is
+              logged for compliance. It can't be undone. Only disclose after the
+              provider has confirmed interest and you've verified the match.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={disclosePIIMutation.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (confirmDiscloseId) disclosePIIMutation.mutate(confirmDiscloseId);
+              }}
+              disabled={disclosePIIMutation.isPending}
+              className="gap-2"
+            >
+              {disclosePIIMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              Disclose patient info
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

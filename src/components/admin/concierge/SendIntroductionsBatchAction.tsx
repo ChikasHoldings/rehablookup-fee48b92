@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -93,7 +93,9 @@ export function SendIntroductionsBatchAction({
 
   const [rejectedNonPartners, setRejectedNonPartners] = useState<RejectedNonPartner[]>(initialRejected);
   // Keep state in sync with surfaced/selected/partners changes.
-  useMemo(() => {
+  // (useEffect, not useMemo — this performs a state update, which must not
+  // happen during render.)
+  useEffect(() => {
     setRejectedNonPartners((prev) => {
       const idsToKeep = new Set(initialRejected.map((r) => r.facility_id));
       const preserved = prev.filter((r) => idsToKeep.has(r.facility_id));

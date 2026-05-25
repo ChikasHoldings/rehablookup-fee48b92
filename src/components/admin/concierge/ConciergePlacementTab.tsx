@@ -71,7 +71,10 @@ export function ConciergePlacementTab({ caseData, onRefresh }: ConciergePlacemen
       return data;
     },
     onSuccess: (data) => {
-      toast.success(`Found ${data.matchCount || 0} placement options`);
+      // Optional-chain the result: the function can resolve with an empty body
+      // (no JSON), and a throw here would skip setIsRunning(false) below,
+      // leaving the button stuck on "Placing…".
+      toast.success(`Found ${data?.matchCount ?? 0} placement options`);
       onRefresh();
       setIsRunning(false);
     },

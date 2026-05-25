@@ -54,7 +54,7 @@ function getStatusOptions(currentStatus: string, isAdvisor: boolean) {
   const uniqueKeys = [...new Set(allKeys)];
 
   const advisorAllowed = new Set([
-    "intake_reviewed", "advisor_assigned", "matching_providers",
+    "intake_reviewed", "advisor_assigned", "matching_providers", "matched",
     "provider_prequalification", "providers_accepted",
     "presented_to_seeker", "seeker_selected",
   ]);

@@ -135,7 +135,8 @@ export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSh
             <SheetTitle className="text-xl">{caseData.user_name}</SheetTitle>
             <div className="flex items-center gap-2">
               <Badge variant="outline" className={PIPELINE_STATUS_CONFIG[caseData.status]?.color || "bg-muted text-muted-foreground"}>
-                {PIPELINE_STATUS_CONFIG[caseData.status]?.label || caseData.status}
+                {PIPELINE_STATUS_CONFIG[caseData.status]?.label
+                  || caseData.status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
               </Badge>
             </div>
           </div>

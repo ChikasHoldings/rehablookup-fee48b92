@@ -232,20 +232,33 @@ export default function AdminConcierge() {
   // the schema rather than a hand-maintained column list that drifted out
   // of sync before (the old list referenced abandoned_cart_email_sent_at,
   // a column that has never existed on this table).
-  const { data: selectedCase } = useQuery({
+  const { data: selectedCase, isFetching: caseFetching } = useQuery({
     queryKey: ["admin-concierge-case-detail", selectedCaseId],
     queryFn: async () => {
       if (!selectedCaseId) return undefined;
+      // maybeSingle (not single): a stale ?case= bookmark to a deleted or
+      // out-of-scope (RLS-hidden) row must not 500 — it returns null so we can
+      // surface "not found" and close the sheet instead of leaving it stuck open.
       const { data, error } = await supabase
         .from("concierge_inquiries")
         .select("*")
         .eq("id", selectedCaseId)
-        .single();
+        .maybeSingle();
       if (error) throw error;
       return data;
     },
     enabled: !!selectedCaseId,
   });
+
+  // A ?case= bookmark (or a just-deleted/RLS-hidden case) can resolve to no
+  // row. maybeSingle returns null in that case; close the sheet and tell the
+  // user instead of leaving it open on an empty payload.
+  useEffect(() => {
+    if (selectedCaseId && !caseFetching && selectedCase === null) {
+      toast.error("That case couldn't be found — it may have been removed.");
+      setSelectedCaseId(null);
+    }
+  }, [selectedCaseId, caseFetching, selectedCase]);
 
   const getAdvisorName = (advisorId: string | null) => {
     if (!advisorId) return "—";

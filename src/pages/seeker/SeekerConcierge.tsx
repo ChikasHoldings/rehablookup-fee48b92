@@ -555,8 +555,8 @@ export default function SeekerConcierge() {
   }
 
   // ========== STATE B & C: Case exists ==========
-   const showMatchedFacilities = selectedCase && 
-    ["matching_providers", "provider_prequalification", "providers_accepted", "presented_to_seeker", "seeker_selected", "admission_in_progress"].includes(selectedCase.status);
+   const showMatchedFacilities = selectedCase &&
+    ["matching_providers", "matched", "provider_prequalification", "providers_accepted", "presented_to_seeker", "seeker_selected", "admission_in_progress"].includes(selectedCase.status);
   // Brokerage model: admin confirms placement on behalf of both parties
   // Show provider review when seeker can select from interested facilities
   const showProviderReview = selectedCase?.status === "presented_to_seeker" || selectedCase?.status === "seeker_selected";

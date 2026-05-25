@@ -90,7 +90,7 @@ export function SeekerProviderReviewCard({ inquiryId, onConfirmed }: SeekerProvi
         .from("concierge_inquiries")
         .select("seeker_confirmed, seeker_confirmed_at, placed_facility_id, insurance_carrier")
         .eq("id", inquiryId)
-        .single();
+        .maybeSingle();
       if (error) throw error;
       return data;
     },
