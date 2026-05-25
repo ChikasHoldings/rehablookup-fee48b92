@@ -94,7 +94,10 @@ export function MessagesTab({ caseData }: MessagesTabProps) {
   // Realtime subscription for new messages across all threads
   useEffect(() => {
     const channel = supabase
-      .channel(`admin-case-messages-${caseData.id}`)
+      // Per-mount random suffix so the case-sheet remounting (or a thread
+      // selection changing this effect's deps) doesn't collide with a cached
+      // channel of the same name and throw on .on() after subscribe().
+      .channel(`admin-case-messages-${caseData.id}-${Math.random().toString(36).slice(2, 10)}`)
       .on(
         "postgres_changes",
         {

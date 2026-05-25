@@ -145,24 +145,32 @@ export default function AdvisorInbox() {
 
       if (attachment) {
         setUploading(true);
-        const ext = attachment.name.split(".").pop();
-        const filePath = `${selectedThread.inquiry_id}/${Date.now()}.${ext}`;
-        const { error: uploadErr } = await supabase.storage
-          .from("concierge-attachments")
-          .upload(filePath, attachment);
-        if (uploadErr) throw uploadErr;
-        const { data: urlData } = supabase.storage
-          .from("concierge-attachments")
-          .getPublicUrl(filePath);
-        attachmentUrl = urlData.publicUrl;
-        attachmentName = attachment.name;
-        setUploading(false);
+        try {
+          const ext = attachment.name.split(".").pop();
+          const filePath = `${selectedThread.inquiry_id}/${Date.now()}.${ext}`;
+          const { error: uploadErr } = await supabase.storage
+            .from("concierge-attachments")
+            .upload(filePath, attachment);
+          if (uploadErr) throw uploadErr;
+          // concierge-attachments is a PRIVATE bucket — a public URL 403s.
+          // Use a long-lived signed URL (matches MessagesTab/useFileAttachment).
+          const { data: signedData, error: signedErr } = await supabase.storage
+            .from("concierge-attachments")
+            .createSignedUrl(filePath, 60 * 60 * 24 * 365);
+          if (signedErr || !signedData?.signedUrl) throw new Error("Failed to generate attachment URL");
+          attachmentUrl = signedData.signedUrl;
+          attachmentName = attachment.name;
+        } finally {
+          setUploading(false);
+        }
       }
 
       const { error } = await supabase.from("concierge_messages").insert({
         thread_id: selectedThread.id,
         sender_id: user.id,
-        sender_type: "admin",
+        // "advisor" matches MessagesTab + the seeker UI's own-message check and
+        // the send-message-notifications senderType enum ("admin" was wrong).
+        sender_type: "advisor",
         content: newMessage.trim() || `[Attachment: ${attachmentName}]`,
         attachment_url: attachmentUrl,
         attachment_name: attachmentName,
@@ -177,6 +185,25 @@ export default function AdvisorInbox() {
           admin_last_read_at: new Date().toISOString(),
         })
         .eq("id", selectedThread.id);
+
+      // Deliver the email/push to the seeker or facility — the insert above only
+      // persists the message. Without this, messages sent from the cross-case
+      // inbox reached no one. Soft-fail so delivery issues don't fail the send.
+      const notificationType = selectedThread.thread_type === "advisor"
+        ? "message_to_seeker"
+        : "message_to_facility";
+      try {
+        await supabase.functions.invoke("send-message-notifications", {
+          body: {
+            notificationType,
+            threadId: selectedThread.id,
+            messageContent: newMessage.trim() || `Sent an attachment: ${attachmentName}`,
+            senderType: "advisor",
+          },
+        });
+      } catch (notifErr) {
+        console.warn("[AdvisorInbox] message notification failed", notifErr);
+      }
     },
     onSuccess: () => {
       setNewMessage("");

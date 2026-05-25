@@ -88,12 +88,13 @@ export const FacilityTourRequestModal = forwardRef<HTMLDivElement, FacilityTourR
           // Fire-and-forget — never block the user's confirmation on the email.
           void supabase.functions
             .invoke("send-tour-notifications", {
+              // The function takes { type, tourId } and reads facility/inquiry
+              // from the tour row. The prior { tourRequestId, event: "requested" }
+              // shape 400'd every time (silently, since this is fire-and-forget),
+              // so the facility never got the tour-requested email/SMS.
               body: {
-                tourRequestId: insertedRow?.id,
-                facilityId,
-                inquiryId: inquiry.id,
-                event: "requested",
-                tourType,
+                type: "tour_requested",
+                tourId: insertedRow?.id,
               },
             })
             .catch((err) =>

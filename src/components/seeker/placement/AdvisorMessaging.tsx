@@ -132,7 +132,10 @@ export function AdvisorMessaging({ inquiryId }: AdvisorMessagingProps) {
     if (!thread?.id) return;
 
     const channel = supabase
-      .channel(`advisor-messages-${thread.id}`)
+      // Per-mount random suffix so a remount (tab switch in /concierge) doesn't
+      // collide with the still-cached channel of the same name and throw
+      // "cannot add postgres_changes callbacks after subscribe()".
+      .channel(`advisor-messages-${thread.id}-${Math.random().toString(36).slice(2, 10)}`)
       .on(
         "postgres_changes",
         {

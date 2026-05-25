@@ -124,13 +124,13 @@ export function InquiryDetailPanel({ inquiry }: InquiryDetailPanelProps) {
         // "facility_contacted_you" email. Earlier this branch always
         // hit send-seeker-emails, so a provider acknowledging a tour
         // request silently sent the wrong template.
-        const isTour = inquiry.inquiry_type === "tour_request";
-        const fnName = isTour ? "send-tour-notifications" : "send-seeker-emails";
-        const body = isTour
-          ? { type: "tour_proposed", leadId: inquiry.id }
-          : { type: "facility_contacted_you", leadId: inquiry.id };
+        // A lead "tour_request" is NOT a concierge_tour_requests row, so
+        // send-tour-notifications (which looks a tour up by id) can't resolve a
+        // lead id — that path 400'd/404'd silently and the seeker got nothing.
+        // Route all lead acknowledgements through send-seeker-emails, which
+        // reliably notifies the seeker (generic copy beats no email).
         void supabase.functions
-          .invoke(fnName, { body })
+          .invoke("send-seeker-emails", { body: { type: "facility_contacted_you", leadId: inquiry.id } })
           .catch((err) => {
             // Best-effort: the status update itself succeeded; only the
             // seeker notification stumbled. Surface a non-blocking
@@ -138,7 +138,7 @@ export function InquiryDetailPanel({ inquiry }: InquiryDetailPanelProps) {
             // manual follow-up rather than the silent log we used to
             // emit. (Network panel still captures the actual error for
             // ops triage.)
-            console.warn(`[InquiryDetailPanel] ${fnName} failed`, err);
+            console.warn(`[InquiryDetailPanel] send-seeker-emails failed`, err);
             toast.warning(
               "Status saved, but we couldn't send the client notification. Reach out directly to confirm.",
             );
