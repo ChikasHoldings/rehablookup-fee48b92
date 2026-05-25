@@ -34,7 +34,7 @@ interface FlagReviewDialogProps {
   review: ProviderReview | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (reviewId: string, reason: string, details?: string) => Promise<{ error: any }>;
+  onSubmit: (reviewId: string, reason: string, details?: string) => Promise<{ error: { message: string } | null }>;
 }
 
 export const FlagReviewDialog = memo(function FlagReviewDialog({ review, open, onOpenChange, onSubmit }: FlagReviewDialogProps) {

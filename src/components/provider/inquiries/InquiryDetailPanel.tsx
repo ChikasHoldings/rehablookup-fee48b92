@@ -6,6 +6,7 @@ import {
   PhoneCall, CheckCircle, XCircle, Copy, ExternalLink, Calendar, Loader2, FileText,
   Clock, Shield, Heart, DollarSign, AlertTriangle, Users, RotateCcw
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { ResponseTemplatesDrawer } from "@/components/provider/inquiries/ResponseTemplatesDrawer";
 import { EmailLeadDialog } from "@/components/provider/leads/EmailLeadDialog";
 import { Button } from "@/components/ui/button";
@@ -550,7 +551,7 @@ export function InquiryDetailPanel({ inquiry }: InquiryDetailPanelProps) {
   );
 }
 
-function DetailRow({ icon: Icon, label, value }: { icon: any; label: string; value: string }) {
+function DetailRow({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: string }) {
   return (
     <div className="flex items-start gap-3">
       <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">

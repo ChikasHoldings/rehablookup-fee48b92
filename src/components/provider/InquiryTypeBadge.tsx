@@ -59,8 +59,3 @@ export function InquiryTypeBadge({ type, size = "sm", className }: InquiryTypeBa
     </Badge>
   );
 }
-
-export function getInquiryTypeLabel(type: InquiryType | string | null | undefined): string {
-  const inquiryType = (type || 'request_info') as InquiryType;
-  return INQUIRY_CONFIG[inquiryType]?.label || "Request Info";
-}

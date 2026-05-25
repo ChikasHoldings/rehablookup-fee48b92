@@ -329,11 +329,11 @@ export function CredentialsUpload({ facilityId, userId }: CredentialsUploadProps
       if (fileInput) fileInput.value = '';
       
       queryClient.invalidateQueries({ queryKey: ["facility-credentials-docs", facilityId] });
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error uploading document:", error);
       toast({
         title: "Upload failed",
-        description: error.message || "Failed to upload document. Please try again.",
+        description: (error instanceof Error ? error.message : "") || "Failed to upload document. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -370,11 +370,11 @@ export function CredentialsUpload({ facilityId, userId }: CredentialsUploadProps
       });
 
       queryClient.invalidateQueries({ queryKey: ["facility-credentials-docs", facilityId] });
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error deleting document:", error);
       toast({
         title: "Failed to delete",
-        description: error.message || "Please try again.",
+        description: (error instanceof Error ? error.message : "") || "Please try again.",
         variant: "destructive",
       });
     }

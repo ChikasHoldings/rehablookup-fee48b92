@@ -189,9 +189,9 @@ export function AccreditationVerificationCard({
       setSelectedFile(null);
       if (fileInputRef.current) fileInputRef.current.value = '';
       onUpdate();
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error saving details:", error);
-      toast({ title: "Error", description: error.message || "Failed to save details", variant: "destructive" });
+      toast({ title: "Error", description: (error instanceof Error ? error.message : "") || "Failed to save details", variant: "destructive" });
     } finally {
       setIsSaving(false);
       setIsUploading(false);

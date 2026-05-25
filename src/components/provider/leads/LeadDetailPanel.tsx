@@ -55,7 +55,8 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { getStatusOptions, type LeadStatus } from "./LeadStatusBadge";
+import { type LeadStatus } from "./LeadStatusBadge";
+import { getStatusOptions } from "./leadStatusOptions";
 import { EmailLeadDialog } from "./EmailLeadDialog";
 
 import { cn } from "@/lib/utils";

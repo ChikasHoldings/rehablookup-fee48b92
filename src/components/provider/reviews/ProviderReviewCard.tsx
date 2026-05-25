@@ -42,9 +42,9 @@ function formatReviewDate(iso: string | null | undefined): string {
 interface ProviderReviewCardProps {
   review: ProviderReview;
   showFacility?: boolean;
-  onSubmitResponse: (reviewId: string, text: string) => Promise<{ error: any }>;
-  onUpdateResponse: (responseId: string, text: string) => Promise<{ error: any }>;
-  onDeleteResponse: (responseId: string) => Promise<{ error: any }>;
+  onSubmitResponse: (reviewId: string, text: string) => Promise<{ error: { message: string } | null }>;
+  onUpdateResponse: (responseId: string, text: string) => Promise<{ error: { message: string } | null }>;
+  onDeleteResponse: (responseId: string) => Promise<{ error: { message: string } | null }>;
   onFlagReview: (review: ProviderReview) => void;
 }
 

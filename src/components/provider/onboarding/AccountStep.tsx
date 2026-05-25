@@ -42,9 +42,10 @@ export function AccountStep({ onAdvance }: { onAdvance: () => void }) {
   // `?returnTo=`, so Login can route them back to the same wizard
   // entry point with the claim deep link intact.
   const signInHref = useMemo(() => {
+    const query = searchParams.toString();
     const here =
       typeof window !== "undefined"
-        ? window.location.pathname + window.location.search
+        ? window.location.pathname + (query ? `?${query}` : "")
         : "/provider/onboarding";
     const sanitized = safeReturnTo(here) ?? "/provider/onboarding";
     return `/login?returnTo=${encodeURIComponent(sanitized)}`;

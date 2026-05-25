@@ -108,6 +108,9 @@ function ProviderShellContent() {
       };
       checkProvider();
     }
+    // location.* is read only to build the post-login redirect URL at the
+    // moment of redirect — this guard must not re-run as the user navigates.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [role, isRoleLoading, isAuthenticated, navigate]);
 
   // Set Sentry user context when authenticated as provider

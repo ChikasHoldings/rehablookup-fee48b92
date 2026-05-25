@@ -197,8 +197,9 @@ export default function ProviderDashboardPage() {
       }
     })();
     return () => { cancelled = true; };
-    // Only react to the profile object identity flipping — don't
-    // re-run on every render.
+    // Only react to the onboarding flag flipping — intentionally not depending
+    // on the whole profile object or queryClient so this runs once on completion.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.onboarding_completed_at]);
 
   // Fetch recent leads from the PII-safe view. Pro providers see full

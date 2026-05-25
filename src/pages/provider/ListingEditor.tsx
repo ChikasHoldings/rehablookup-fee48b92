@@ -154,7 +154,7 @@ const validateField = (field: string, value: string | null): string | null => {
       return null;
     case "phone":
       if (!trimmedValue) return "Phone number is required";
-      if (!/^[\d\s\-\(\)\+]{10,}$/.test(trimmedValue)) return "Enter a valid phone number";
+      if (!/^[\d\s()+-]{10,}$/.test(trimmedValue)) return "Enter a valid phone number";
       return null;
     case "email":
       if (trimmedValue && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedValue)) {
@@ -720,10 +720,10 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
         setIsSaving(false);
         return;
       }
-    } catch (validationErr: any) {
+    } catch (validationErr) {
       toast({
         title: "Validation Error",
-        description: validationErr.message || "Please fix the highlighted errors before saving.",
+        description: (validationErr instanceof Error ? validationErr.message : "") || "Please fix the highlighted errors before saving.",
         variant: "destructive",
       });
       setHasChanges(true);
@@ -1171,11 +1171,12 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
         title: "Code sent!",
         description: `Check ${facility.reply_email} for your verification code.`,
       });
-    } catch (error: any) {
-      setVerificationError(error.message);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "Couldn't send the code. Try again.";
+      setVerificationError(msg);
       toast({
         title: "Failed to send code",
-        description: error.message,
+        description: msg,
         variant: "destructive",
       });
     } finally {
@@ -1223,11 +1224,12 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
         title: "Email verified!",
         description: "Your reply email has been verified. You can now send emails to leads.",
       });
-    } catch (error: any) {
-      setVerificationError(error.message);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "Verification failed. Try again.";
+      setVerificationError(msg);
       toast({
         title: "Verification failed",
-        description: error.message,
+        description: msg,
         variant: "destructive",
       });
     } finally {

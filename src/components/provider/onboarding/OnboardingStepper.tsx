@@ -3,7 +3,6 @@ import { cn } from "@/lib/utils";
 import {
   VISIBLE_STEPS,
   canReach,
-  stepIndex,
   type OnboardingStep,
 } from "@/hooks/useProviderOnboardingState";
 
@@ -109,6 +108,3 @@ export function OnboardingStepper({
     </nav>
   );
 }
-
-// stepIndex is exported above for reuse; re-export here as a convenience.
-export { stepIndex };

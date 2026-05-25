@@ -144,7 +144,7 @@ function HighlightedText({ text, query }: { text: string; query: string }) {
   const tokens = useMemo(() => {
     const sanitized = sanitizeQuery(query).toLowerCase();
     if (sanitized.length < MIN_QUERY_LENGTH) return [] as string[];
-    const parts = sanitized.split(/[\s,/.\-]+/).filter((t) => t.length >= 2);
+    const parts = sanitized.split(/[\s,/.-]+/).filter((t) => t.length >= 2);
     // Always include the full sanitized query so "denver recovery"
     // also highlights the contiguous phrase if it appears.
     return [sanitized, ...parts];
