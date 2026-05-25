@@ -28,7 +28,6 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 
-import { assertCronSecret } from "../_shared/cron-auth.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
@@ -46,8 +45,10 @@ function jsonResponse(body: unknown, status = 200) {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
-  const __cronAuth = assertCronSecret(req);
-  if (!__cronAuth.ok) return __cronAuth.response;
+  // NOTE: this is a CLIENT-invoked endpoint (the signing-up user calls it after
+  // a partial signup), NOT a cron job — it authenticates the caller via their
+  // JWT below. It was previously gated by assertCronSecret, which 401'd every
+  // real caller and made the rollback path permanently dead.
   if (req.method !== "POST") {
     return jsonResponse({ error: "method_not_allowed" }, 405);
   }
@@ -112,7 +113,8 @@ Deno.serve(async (req) => {
   //    individually irrelevant for a facility-less account). Errors
   //    here are warnings, not fatal — the auth user delete below is
   //    what really frees the email.
-  const { error: profileErr } = await admin.from("profiles").delete().eq("id", userId);
+  // profiles.id is a random uuid PK; the auth user maps via profiles.user_id.
+  const { error: profileErr } = await admin.from("profiles").delete().eq("user_id", userId);
   if (profileErr) {
     console.warn("[signup-rollback-cleanup] profile delete failed (non-fatal)", profileErr);
   }

@@ -541,7 +541,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.signup-rollback-cleanup]
-verify_jwt = false
+verify_jwt = true
 
 # verify_jwt=false so the function can do its own auth: the body
 # explicitly calls supabase.auth.getUser() against the caller's

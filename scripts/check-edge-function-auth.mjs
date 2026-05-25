@@ -155,7 +155,10 @@ const CRON_NAMES = new Set([
   "send-seeker-weekly-digest",
   "send-subscription-alerts",
   "send-marketing-followup",
-  "signup-rollback-cleanup",
+  // signup-rollback-cleanup removed: it is NOT cron-scheduled — it's invoked by
+  // the signing-up user (caller-JWT authenticated) to roll back a partial
+  // signup. The cron-secret gate 401'd every real caller. Reclassified as an
+  // authenticated-user function (verify_jwt = true + in-code JWT check).
   // sync-google-reviews has DUAL auth: X-Cron-Secret for the nightly
   // batch refresh, and a per-provider JWT path for the ad-hoc single-
   // facility sync fired from /provider/reviews. The audit's

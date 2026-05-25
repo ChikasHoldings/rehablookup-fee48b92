@@ -20,8 +20,10 @@ interface UpgradeDialogProps {
    *  fired. Surfaces in the modal copy so the upgrade pitch is
    *  contextual ("Add a 6th photo" → mention extra-photo limit). */
   feature?: "photos" | "video" | null;
-  /** Where to return after a successful Pro upgrade. Defaults to
-   *  the wizard's build step, which is the most common entry point. */
+  /** Where to return after a successful Pro upgrade. Defaults to the
+   *  wizard's PLAN step, which is the only onboarding step that handles
+   *  `?checkout=success` (confirms the subscription + completes onboarding).
+   *  Returning to a step without that handler strands the paid user. */
   returnTo?: string;
 }
 
@@ -33,9 +35,10 @@ const FEATURE_HEADLINES: Record<NonNullable<UpgradeDialogProps["feature"]>, stri
 /**
  * Plan-upgrade modal triggered when a Free user hits a Pro-only
  * feature. Reuses the same create-checkout edge fn the Plan picker
- * (Section 7) calls. Stripe Checkout's success_url + cancel_url
- * point back to /provider/onboarding so the wizard resumes at the
- * build step with the user's draft intact.
+ * (Section 7) calls. Stripe Checkout's success_url + cancel_url point
+ * back to the onboarding PLAN step, which is the step that handles
+ * `?checkout=success` — it confirms the subscription and completes
+ * onboarding. (Returning to the build step left the paid user stranded.)
  */
 export function UpgradeDialog({ open, onOpenChange, feature, returnTo }: UpgradeDialogProps) {
   const [busy, setBusy] = useState(false);
@@ -46,7 +49,7 @@ export function UpgradeDialog({ open, onOpenChange, feature, returnTo }: Upgrade
     setBusy(true);
     try {
       const origin = window.location.origin;
-      const target = returnTo ?? "/provider/onboarding?step=build";
+      const target = returnTo ?? "/provider/onboarding?step=plan";
       const successUrl = `${origin}${target}${target.includes("?") ? "&" : "?"}checkout=success&session_id={CHECKOUT_SESSION_ID}`;
       const cancelUrl = `${origin}${target}${target.includes("?") ? "&" : "?"}checkout=cancel`;
       const { data, error } = await supabase.functions.invoke("create-checkout", {

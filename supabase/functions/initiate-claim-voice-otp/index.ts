@@ -82,7 +82,6 @@ Deno.serve(async (req) => {
     const TWILIO_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
     const TWILIO_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
     const TWILIO_FROM = Deno.env.get("TWILIO_PHONE_NUMBER");
-    const PUBLIC_APP_URL = Deno.env.get("PUBLIC_APP_URL") || "https://rehablookup.com";
 
     if (!SUPABASE_URL || !SUPABASE_ANON || !SUPABASE_SRK) {
       return json(500, { error: "Server misconfigured", code: "SERVER_MISCONFIGURED" });
@@ -197,7 +196,11 @@ Deno.serve(async (req) => {
     // callback that reads the code; we pass the OTP row id as a query
     // param so the callback can authoritatively look it up without
     // trusting any other parameter.
-    const twimlUrl = `${PUBLIC_APP_URL}/functions/v1/twilio-voice-otp-twiml?otp_id=${encodeURIComponent(inserted.id)}`;
+    // Twilio fetches TwiML from the edge-functions host (twilio-voice-otp-twiml
+    // is a verify_jwt=false webhook). It must be SUPABASE_URL, NOT the app
+    // domain — rehablookup.com does not proxy /functions/v1/*, so the prior
+    // PUBLIC_APP_URL form 404'd and the call read no code.
+    const twimlUrl = `${SUPABASE_URL}/functions/v1/twilio-voice-otp-twiml?otp_id=${encodeURIComponent(inserted.id)}`;
     const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_SID}/Calls.json`;
     const authString = btoa(`${TWILIO_SID}:${TWILIO_TOKEN}`);
 

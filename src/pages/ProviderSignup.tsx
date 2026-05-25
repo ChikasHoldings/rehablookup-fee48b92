@@ -12,6 +12,7 @@ import { ProviderValueProp } from "@/components/conversion/ProviderValueProp";
 import { Footer } from "@/components/layout/Footer";
 import { BackToTop } from "@/components/ui/back-to-top";
 import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 import { supabase } from "@/integrations/supabase/client";
 import { analytics } from "@/lib/analytics";
 // EmailVerificationStep import removed in phase W — the unified wizard
@@ -480,6 +481,11 @@ export default function ProviderSignup({
           title: "Account Exists",
           description: "This email is registered as a personal account. Please sign in with your personal account or use a different email for your facility.",
           variant: "destructive",
+          action: (
+            <ToastAction altText="Go to sign in" onClick={() => navigate("/login")}>
+              Sign in
+            </ToastAction>
+          ),
         });
         submittingRef.current = false;
         setIsSubmitting(false);
@@ -524,6 +530,11 @@ export default function ProviderSignup({
             title: "Account Exists",
             description: "An account with this email already exists. Please sign in instead.",
             variant: "destructive",
+            action: (
+              <ToastAction altText="Go to sign in" onClick={() => navigate("/login")}>
+                Sign in
+              </ToastAction>
+            ),
           });
         } else {
           toast({ title: "Signup Failed", description: msg, variant: "destructive" });
@@ -1273,7 +1284,7 @@ export default function ProviderSignup({
         open={upgradeOpen}
         onOpenChange={setUpgradeOpen}
         feature="photos"
-        returnTo={embedded ? "/provider/onboarding?step=build" : "/provider/onboarding/new-listing"}
+        returnTo={embedded ? "/provider/onboarding?step=plan" : "/provider/onboarding/new-listing"}
       />
       <div className={cn(embedded ? "" : "container px-4 md:px-6")}>
         {/* Value proposition — shown only on step 1 to motivate sign-up.
