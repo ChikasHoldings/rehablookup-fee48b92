@@ -155,6 +155,13 @@ export const FacilityTourRequestModal = forwardRef<HTMLDivElement, FacilityTourR
     setStep("form");
     setPreferredDates([]);
     setNotes("");
+    // Reset identity fields to their prefill defaults too. This modal is a
+    // long-lived mount on CenterProfile, so without this, reopening (e.g. on a
+    // shared device) would show the previous user's name/email/phone.
+    setName(prefillData ? `${prefillData.firstName} ${prefillData.lastName}`.trim() : "");
+    setEmail(prefillData?.email || "");
+    setPhone(prefillData?.phone || "");
+    setTourType("in_person");
     onClose();
   };
 
@@ -240,7 +247,7 @@ export const FacilityTourRequestModal = forwardRef<HTMLDivElement, FacilityTourR
                       mode="single"
                       selected={undefined}
                       onSelect={handleDateSelect}
-                      disabled={(date) => date < new Date()}
+                      disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
                       modifiers={{ selected: preferredDates }}
                       modifiersStyles={{
                         selected: { backgroundColor: "hsl(var(--primary))", color: "white" },

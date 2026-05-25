@@ -1,9 +1,10 @@
 import { useEffect, useRef } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
+import { ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
 import logoImage from "@/assets/logo-header.webp";
-import { LeadIntakeForm } from "@/components/lead-intake";
 
 // Configure your vertical video here (9:16 aspect ratio recommended). Leave
 // `videoId` empty to hide the video block entirely. Previously held a
@@ -121,9 +122,21 @@ export default function SocialLanding() {
             </section>
           )}
           
-          {/* Lead Intake Form - Same as Get Help page */}
-          <section>
-            <LeadIntakeForm />
+          {/* CTA into the concierge intake. This is a generic "find treatment"
+              landing with no specific facility, so it must NOT use the
+              facility-required LeadIntakeForm (which dead-ends on submit with
+              "select a treatment center"). Route to the facility-less concierge
+              intake instead, preserving UTM/campaign params for attribution. */}
+          <section className="text-center space-y-3 pt-2">
+            <Button asChild size="lg" className="w-full sm:w-auto h-12 px-8 text-base">
+              <Link to={`/concierge/intake${searchParams.toString() ? `?${searchParams.toString()}` : ""}`}>
+                Find Treatment Options
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              Free &amp; confidential — takes about 2 minutes.
+            </p>
           </section>
         </div>
       </main>

@@ -258,7 +258,7 @@ export function LeadDetailDrawer({ lead, open, onOpenChange }: LeadDetailDrawerP
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {getStatusOptions().map((option) => (
+                    {getStatusOptions(lead.status as LeadStatus).map((option) => (
                       <SelectItem key={option.value} value={option.value}>
                         {option.label}
                       </SelectItem>
