@@ -19,6 +19,17 @@ import {
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
@@ -91,7 +102,6 @@ function SavedSearchCard({ s }: { s: SavedSearch }) {
   };
 
   const onDelete = async () => {
-    if (!confirm("Delete this saved search? Email alerts will stop.")) return;
     try {
       await remove.mutateAsync(s.id);
       toast.success("Saved search removed");
@@ -184,15 +194,36 @@ function SavedSearchCard({ s }: { s: SavedSearch }) {
                 Run search
               </Link>
             </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={onDelete}
-              className="text-muted-foreground hover:text-rose-600"
-              aria-label="Delete saved search"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-muted-foreground hover:text-rose-600"
+                  aria-label="Delete saved search"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete this saved search?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    "{s.name}" will be removed and its email alerts will stop.
+                    You can save it again any time.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Keep it</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={onDelete}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Delete search
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
       </CardContent>

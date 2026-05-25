@@ -500,7 +500,8 @@ function NavigateDualDiagnosisRehabNearMe() {
 // ============================================================
 // Legacy slug redirects — backlink rescue
 // ============================================================
-// Preserve full sub-path on rename. Example: /seeker/dashboard → /client/dashboard
+// Preserve full sub-path on the /seeker → /account rename. Example:
+// /seeker/requests → /account/requests
 function SeekerToClientRedirect() {
   const { "*": rest } = useParams();
   const tail = rest ? `/${rest}` : "";
@@ -1403,8 +1404,8 @@ const AppInner = () => {
               <Route path="help" element={<SeekerHelp />} />
               <Route path="concierge" element={<SeekerConcierge />} />
               <Route path="concierge/:inquiryId" element={<SeekerConcierge />} />
-              {/* /seeker/international retired 2026-05-20 with the paid international placement product. */}
-              <Route path="international" element={<Navigate to="/seeker/concierge" replace />} />
+              {/* /account/international retired 2026-05-20 with the paid international placement product. */}
+              <Route path="international" element={<Navigate to="/account/concierge" replace />} />
               <Route path="insurance-verifications" element={<SeekerInsuranceVerifications />} />
               <Route path="saved-searches" element={<SeekerSavedSearches />} />
               <Route path="*" element={<Navigate to="/account" replace />} />

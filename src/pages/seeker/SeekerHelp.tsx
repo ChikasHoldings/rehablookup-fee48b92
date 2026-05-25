@@ -34,7 +34,7 @@ const faqs = [
   },
   {
     question: "How do I contact a treatment center?",
-    answer: "On any facility's profile page, you can use the contact form to send your information directly to the facility. You can also use our Treatment Placement Service for personalized guidance to providers who meet your specific needs."
+    answer: "On any facility's profile page, use the contact form to send a confidential inquiry. You can also use our free Concierge placement service for personalized guidance to providers who fit your needs."
   },
   {
     question: "Can I save facilities to review later?",

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -213,6 +214,9 @@ export function InquiryDetailModal({ open, onOpenChange, leadId }: Omit<InquiryD
       <DialogContent className="w-[95vw] max-w-xl max-h-[85vh] p-0 overflow-hidden">
         <DialogHeader className="px-5 pt-5 pb-0">
           <DialogTitle className="text-lg font-display">Inquiry Details</DialogTitle>
+          <DialogDescription className="sr-only">
+            The status and details of your submitted inquiry.
+          </DialogDescription>
         </DialogHeader>
 
         <ScrollArea className="max-h-[calc(85vh-60px)]">

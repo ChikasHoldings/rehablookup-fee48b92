@@ -72,8 +72,11 @@ export function useSavedSearches() {
   // snappy for same-tab writes.
   useEffect(() => {
     if (!user) return;
+    // Per-instance random suffix: this hook is also called by every
+    // SavedSearchCard, so a shared channel name would collide ("cannot add
+    // postgres_changes callbacks after subscribe") on the 2nd+ mount.
     const channel = supabase
-      .channel(`saved-searches-${user.id}`)
+      .channel(`saved-searches-${user.id}-${Math.random().toString(36).slice(2, 10)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "saved_searches", filter: `user_id=eq.${user.id}` },

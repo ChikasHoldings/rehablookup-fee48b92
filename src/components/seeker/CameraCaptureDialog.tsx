@@ -130,6 +130,9 @@ export function CameraCaptureDialog({
       .then((blob) => {
         onCapture(blob);
         onOpenChange(false);
+      })
+      .catch(() => {
+        setError("Couldn't process that photo. Please retake it.");
       });
   }, [capturedImage, onCapture, onOpenChange]);
 

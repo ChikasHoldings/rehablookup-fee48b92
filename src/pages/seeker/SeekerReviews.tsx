@@ -476,10 +476,12 @@ export default function SeekerReviews() {
           description: "Your review has been updated and will reappear once moderated.",
         });
         fetchReviews(userId);
+        // Close only on success — a failed save keeps the dialog open so the
+        // user's in-progress edits aren't lost on a transient error.
+        setEditingReview(null);
       }
     } finally {
       setIsSaving(false);
-      setEditingReview(null);
     }
   };
 
