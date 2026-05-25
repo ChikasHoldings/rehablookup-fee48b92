@@ -89,9 +89,9 @@ export function TwoFactorEnforcementDialog({
 
       setStep("recovery");
       toast.success("2FA verified successfully!");
-    } catch (err: any) {
+    } catch (err) {
       console.error("Error verifying MFA:", err);
-      toast.error(err?.message || "Invalid verification code. Please try again.");
+      toast.error((err instanceof Error ? err.message : "") || "Invalid verification code. Please try again.");
       setVerifyCode("");
     } finally {
       setIsVerifying(false);

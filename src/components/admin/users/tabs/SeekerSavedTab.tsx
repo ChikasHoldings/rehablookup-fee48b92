@@ -37,7 +37,7 @@ export function SeekerSavedTab({ userId }: SeekerSavedTabProps) {
   return (
     <div className="p-5 space-y-3">
       <p className="text-sm text-muted-foreground">{favorites.length} saved facilit{favorites.length === 1 ? "y" : "ies"}</p>
-      {favorites.map((fav: any) => (
+      {favorites.map((fav) => (
         <div key={fav.id} className="p-3 rounded-lg border bg-card flex items-center justify-between gap-3 hover:bg-muted/50 transition-colors">
           <div className="flex items-center gap-3 min-w-0">
             <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">

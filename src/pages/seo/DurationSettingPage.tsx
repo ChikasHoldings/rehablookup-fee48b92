@@ -193,7 +193,7 @@ export default function DurationSettingPage() {
   const pageTitle = isStatePage ? `${config.title} in ${stateData!.name}` : config.title;
   const canonicalPath = isStatePage ? `/${slug}/${stateSlug}` : `/${slug}`;
 
-  const structuredData: any[] = [{
+  const structuredData: object[] = [{
     "@context": "https://schema.org",
     "@type": "MedicalWebPage",
     name: pageTitle,

@@ -94,7 +94,7 @@ export function AdminUserPermissionsDialog({
     if (!user) return;
 
     try {
-      const promises: Promise<any>[] = [];
+      const promises: Promise<unknown>[] = [];
       
       // Update role if changed
       if (adminRole !== user.admin_role) {

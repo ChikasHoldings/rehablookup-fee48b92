@@ -50,17 +50,6 @@ const COUNTRY_DATA = [
   { code: "+254", country: "KE", name: "Kenya", flag: "🇰🇪" },
 ];
 
-// Map ISO codes to dial codes for auto-detection
-export const ISO_TO_DIAL_CODE: Record<string, string> = {
-  US: "+1", CA: "+1", GB: "+44", AU: "+61", DE: "+49", FR: "+33",
-  NL: "+31", IE: "+353", MX: "+52", BR: "+55", AE: "+971", SA: "+966",
-  IN: "+91", JP: "+81", KR: "+82", SG: "+65", CH: "+41", SE: "+46",
-  NO: "+47", ES: "+34", IT: "+39", CN: "+86", RU: "+7", ZA: "+27",
-  NZ: "+64", PL: "+48", AT: "+43", BE: "+32", DK: "+45", FI: "+358", 
-  PT: "+351", PH: "+63", MY: "+60", TH: "+66", VN: "+84", EG: "+20",
-  NG: "+234", KE: "+254",
-};
-
 export interface FlagPhoneInputProps {
   countryCode: string;
   phoneNumber: string;

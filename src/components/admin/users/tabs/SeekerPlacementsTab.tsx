@@ -45,7 +45,7 @@ export function SeekerPlacementsTab({ userId }: SeekerPlacementsTabProps) {
 
       if (!inqs?.length) return [];
 
-      const inquiryIds = inqs.map((i: any) => i.id);
+      const inquiryIds = inqs.map((i) => i.id);
 
       // Parallel fetch: introductions, tours, rejected facilities
       const [introsRes, toursRes, rejectedRes] = await Promise.all([
@@ -62,20 +62,20 @@ export function SeekerPlacementsTab({ userId }: SeekerPlacementsTabProps) {
 
       // Collect all facility IDs
       const allFacilityIds = [
-        ...(introsRes.data || []).map((i: any) => i.facility_id),
-        ...(toursRes.data || []).map((t: any) => t.facility_id),
-        ...(rejectedRes.data || []).map((r: any) => r.facility_id),
-        ...inqs.filter((i: any) => i.placed_facility_id).map((i: any) => i.placed_facility_id),
+        ...(introsRes.data || []).map((i) => i.facility_id),
+        ...(toursRes.data || []).map((t) => t.facility_id),
+        ...(rejectedRes.data || []).map((r) => r.facility_id),
+        ...inqs.filter((i) => i.placed_facility_id).map((i) => i.placed_facility_id),
       ].filter(Boolean);
       const uniqueFacilityIds = [...new Set(allFacilityIds)];
 
-      const facilityMap: Record<string, any> = {};
+      const facilityMap: Record<string, { id: string; name: string; city: string; state: string; facility_type: string }> = {};
       if (uniqueFacilityIds.length) {
         const { data: facilities } = await supabase
           .from("facilities")
           .select("id, name, city, state, facility_type")
           .in("id", uniqueFacilityIds);
-        facilities?.forEach((f: any) => { facilityMap[f.id] = f; });
+        facilities?.forEach((f) => { facilityMap[f.id] = f; });
       }
 
       // Fetch advisor names
@@ -86,22 +86,22 @@ export function SeekerPlacementsTab({ userId }: SeekerPlacementsTabProps) {
           .from("admin_user_profiles")
           .select("user_id, first_name, last_name, display_name")
           .in("user_id", advisorIds);
-        advisors?.forEach((a: any) => {
+        advisors?.forEach((a) => {
           advisorMap[a.user_id] = a.display_name || `${a.first_name || ""} ${a.last_name || ""}`.trim() || "Advisor";
         });
       }
 
-      return inqs.map((inq: any) => ({
+      return inqs.map((inq) => ({
         ...inq,
-        introductions: (introsRes.data || []).filter((i: any) => i.inquiry_id === inq.id).map((i: any) => ({
+        introductions: (introsRes.data || []).filter((i) => i.inquiry_id === inq.id).map((i) => ({
           ...i,
           facility: facilityMap[i.facility_id],
         })),
-        tourRequests: (toursRes.data || []).filter((t: any) => t.inquiry_id === inq.id).map((t: any) => ({
+        tourRequests: (toursRes.data || []).filter((t) => t.inquiry_id === inq.id).map((t) => ({
           ...t,
           facility: facilityMap[t.facility_id],
         })),
-        rejectedFacilities: (rejectedRes.data || []).filter((r: any) => r.inquiry_id === inq.id).map((r: any) => ({
+        rejectedFacilities: (rejectedRes.data || []).filter((r) => r.inquiry_id === inq.id).map((r) => ({
           ...r,
           facility: facilityMap[r.facility_id],
         })),
@@ -131,9 +131,9 @@ export function SeekerPlacementsTab({ userId }: SeekerPlacementsTabProps) {
 
   // Summary KPIs
   const totalCases = placements.length;
-  const activeCases = placements.filter((p: any) => !["closed", "cancelled"].includes(p.status)).length;
-  const admittedCases = placements.filter((p: any) => p.placement_confirmed || p.admission_status === "admitted").length;
-  const totalIntros = placements.reduce((acc: number, p: any) => acc + (p.introductions?.length || 0), 0);
+  const activeCases = placements.filter((p) => !["closed", "cancelled"].includes(p.status)).length;
+  const admittedCases = placements.filter((p) => p.placement_confirmed || p.admission_status === "admitted").length;
+  const totalIntros = placements.reduce((acc: number, p) => acc + (p.introductions?.length || 0), 0);
 
   return (
     <div className="p-5 space-y-4">
@@ -157,7 +157,7 @@ export function SeekerPlacementsTab({ userId }: SeekerPlacementsTabProps) {
         </div>
       </div>
 
-      {placements.map((placement: any) => (
+      {placements.map((placement) => (
         <div key={placement.id} className="rounded-xl border bg-card overflow-hidden">
           {/* Case Header */}
           <div className="p-4 border-b bg-muted/30">
@@ -238,7 +238,7 @@ export function SeekerPlacementsTab({ userId }: SeekerPlacementsTabProps) {
                 Provider Introductions ({placement.introductions.length})
               </h5>
               <div className="space-y-2">
-                {placement.introductions.map((intro: any) => (
+                {placement.introductions.map((intro) => (
                   <div key={intro.id} className="flex items-center justify-between gap-2 p-2 rounded-lg bg-muted/30">
                     <div className="flex items-center gap-2 min-w-0">
                       <Building2 className="h-4 w-4 text-primary flex-shrink-0" />
@@ -275,7 +275,7 @@ export function SeekerPlacementsTab({ userId }: SeekerPlacementsTabProps) {
                 Client Rejected ({placement.rejectedFacilities.length})
               </h5>
               <div className="flex flex-wrap gap-2">
-                {placement.rejectedFacilities.map((rej: any) => (
+                {placement.rejectedFacilities.map((rej) => (
                   <Badge key={rej.id} variant="outline" className="text-xs bg-destructive/5 text-destructive border-destructive/20 gap-1">
                     <XCircle className="h-3 w-3" />
                     {rej.facility?.name || "Unknown"}
@@ -292,7 +292,7 @@ export function SeekerPlacementsTab({ userId }: SeekerPlacementsTabProps) {
                 Tour Requests ({placement.tourRequests.length})
               </h5>
               <div className="space-y-2">
-                {placement.tourRequests.map((tour: any) => (
+                {placement.tourRequests.map((tour) => (
                   <div key={tour.id} className="flex items-center justify-between gap-2 p-2 rounded-lg bg-muted/30">
                     <div className="flex items-center gap-2 min-w-0">
                       <MapPin className="h-4 w-4 text-primary flex-shrink-0" />

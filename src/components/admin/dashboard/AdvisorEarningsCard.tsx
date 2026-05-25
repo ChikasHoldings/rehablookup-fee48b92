@@ -123,7 +123,7 @@ export function AdvisorEarningsCard() {
               <div>
                 <p className="text-xs font-medium text-muted-foreground mb-2">Recent Commissions</p>
                 <div className="space-y-1.5">
-                  {earnings.recentEntries.map((entry: any) => (
+                  {earnings.recentEntries.map((entry) => (
                     <div key={entry.id} className="flex items-center justify-between text-xs p-2 rounded border">
                       <div className="flex items-center gap-2">
                         <Badge

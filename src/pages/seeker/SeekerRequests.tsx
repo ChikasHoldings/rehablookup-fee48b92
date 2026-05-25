@@ -56,6 +56,15 @@ interface SubmittedRequest {
   provider_response_status: string | null;
 }
 
+interface RequestFacilityRow {
+  id: string;
+  name: string | null;
+  slug: string | null;
+  city: string | null;
+  state: string | null;
+  logo_url: string | null;
+}
+
 type FilterTab = "all" | "pending" | "responded";
 
 function RequestCardSkeleton() {
@@ -322,7 +331,7 @@ export default function SeekerRequests() {
       if (!leadsData || leadsData.length === 0) return [];
 
       const facilityIds = Array.from(new Set(pluckNonNull(leadsData as { facility_id: string | null }[], "facility_id")));
-      let facilitiesMap: Record<string, any> = {};
+      let facilitiesMap: Record<string, RequestFacilityRow> = {};
 
       if (facilityIds.length > 0) {
         // Surface facility-fetch errors too — without this, the names
@@ -335,11 +344,21 @@ export default function SeekerRequests() {
           console.warn("[SeekerRequests] facility join failed:", facErr.message);
         }
         if (facilitiesData) {
-          facilitiesMap = facilitiesData.reduce((acc, f) => { acc[f.id] = f; return acc; }, {} as Record<string, any>);
+          facilitiesMap = facilitiesData.reduce((acc, f) => { acc[f.id] = f; return acc; }, {} as Record<string, RequestFacilityRow>);
         }
       }
 
-      return leadsData.map((req: any) => {
+      return leadsData.map((req: {
+        id: string;
+        facility_id: string | null;
+        created_at: string;
+        status: string;
+        urgency: string | null;
+        preferred_contact: string;
+        provider_responded_at: string | null;
+        provider_response_status: string | null;
+        [k: string]: unknown;
+      }) => {
         const facility = req.facility_id ? facilitiesMap[req.facility_id] : null;
         return {
           id: req.id,
@@ -357,9 +376,9 @@ export default function SeekerRequests() {
           provider_response_status: req.provider_response_status,
         };
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error fetching requests:", error);
-      const msg = error?.message || "Could not load your inquiries. Please try again.";
+      const msg = error instanceof Error ? error.message : "Could not load your inquiries. Please try again.";
       setLoadError(msg);
       toast({ title: "Error loading inbox", description: msg, variant: "destructive" });
       return [];

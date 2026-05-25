@@ -340,6 +340,8 @@ export default function SeekerFacilityProfile() {
     });
   }, [facility?.id, facility?.slug, facility?.state, trackClickToCall, trackWebsiteClick]);
 
+  const facilityTypeForGa = (facility as { facilityType?: string | null })?.facilityType ?? null;
+
   useEffect(() => {
     if (facility?.id) {
       // provider_events (admin dashboard) — seeker-panel views still count
@@ -354,11 +356,11 @@ export default function SeekerFacilityProfile() {
         facility_name: facility.name ?? null,
         facility_state: facility.state ?? null,
         facility_city: facility.city ?? null,
-        facility_type: (facility as { facilityType?: string | null })?.facilityType ?? null,
+        facility_type: facilityTypeForGa,
         surface: "seeker_panel",
       });
     }
-  }, [facility?.id, facility?.slug, facility?.name, facility?.state, facility?.city, trackProfileView]);
+  }, [facility?.id, facility?.slug, facility?.name, facility?.state, facility?.city, facilityTypeForGa, trackProfileView]);
 
   const handleFavoriteClick = useCallback(() => {
     if (facility?.id) {

@@ -1,4 +1,4 @@
-import { createContext, useContext, useTransition, useCallback, ReactNode } from "react";
+import { createContext, useTransition, useCallback, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 
 interface NavigationContextType {
@@ -30,8 +30,6 @@ const NavigationContext = createContext<NavigationContextType | null>(null);
  * Suspense fallbacks render their loading state if a chunk is still
  * downloading.
  *
- * Consumers that want the transition-aware navigate can still opt in
- * via `const { navigateWithTransition } = useNavigation()`.
  */
 export function NavigationProvider({ children }: { children: ReactNode }) {
   const [isPending, startTransition] = useTransition();
@@ -55,12 +53,4 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
       {children}
     </NavigationContext.Provider>
   );
-}
-
-export function useNavigation() {
-  const context = useContext(NavigationContext);
-  if (!context) {
-    throw new Error("useNavigation must be used within NavigationProvider");
-  }
-  return context;
 }

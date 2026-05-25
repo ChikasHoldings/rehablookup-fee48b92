@@ -24,10 +24,10 @@ export function SeekerCommunicationsTab({ userId }: SeekerCommunicationsTabProps
   });
 
   const { data: messages, isLoading: msgsLoading } = useQuery({
-    queryKey: ["admin-seeker-messages", threads?.map((t: any) => t.id)],
+    queryKey: ["admin-seeker-messages", threads?.map((t) => t.id)],
     queryFn: async () => {
       if (!threads?.length) return [];
-      const threadIds = threads.map((t: any) => t.id);
+      const threadIds = threads.map((t) => t.id);
       const { data } = await supabase
         .from("concierge_messages")
         .select("id, thread_id, sender_type, sender_id, content, created_at, read_at, attachment_name")
@@ -43,7 +43,7 @@ export function SeekerCommunicationsTab({ userId }: SeekerCommunicationsTabProps
     queryKey: ["admin-seeker-emails", userId],
     queryFn: async () => {
       const { data: emailsData } = await supabase.rpc("get_seeker_emails_for_admin");
-      const userEmail = emailsData?.find((e: any) => e.user_id === userId)?.email;
+      const userEmail = emailsData?.find((e: { user_id: string; email: string | null }) => e.user_id === userId)?.email;
       if (!userEmail) return [];
 
       const { data } = await supabase
@@ -79,7 +79,7 @@ export function SeekerCommunicationsTab({ userId }: SeekerCommunicationsTabProps
   }
 
   const allComms = [
-    ...(messages || []).map((m: any) => ({
+    ...(messages || []).map((m) => ({
       id: m.id,
       type: "message" as const,
       content: m.content,
@@ -89,7 +89,7 @@ export function SeekerCommunicationsTab({ userId }: SeekerCommunicationsTabProps
       threadId: m.thread_id,
       attachment: m.attachment_name,
     })),
-    ...(emailEvents || []).map((e: any) => ({
+    ...(emailEvents || []).map((e) => ({
       id: e.id,
       type: "email" as const,
       content: `${e.email_type} — ${e.event_type}`,
@@ -140,15 +140,15 @@ export function SeekerCommunicationsTab({ userId }: SeekerCommunicationsTabProps
                 {comm.type === "email" ? "Email" : comm.senderType}
               </span>
               {comm.type === "email" && (
-                <Badge variant="outline" className="text-[10px] h-4">{(comm as any).eventType}</Badge>
+                <Badge variant="outline" className="text-[10px] h-4">{comm.eventType}</Badge>
               )}
               {!comm.read && comm.type === "message" && (
                 <Badge variant="secondary" className="text-[10px] h-4">Unread</Badge>
               )}
             </div>
             <p className="text-sm text-muted-foreground mt-0.5 line-clamp-2">{comm.content}</p>
-            {comm.type === "message" && (comm as any).attachment && (
-              <p className="text-xs text-primary mt-0.5">📎 {(comm as any).attachment}</p>
+            {comm.type === "message" && comm.attachment && (
+              <p className="text-xs text-primary mt-0.5">📎 {comm.attachment}</p>
             )}
           </div>
           <div className="text-right flex-shrink-0">

@@ -39,7 +39,7 @@ export function SeekerInquiriesTab({ userId }: SeekerInquiriesTabProps) {
     queryKey: ["admin-seeker-email", userId],
     queryFn: async () => {
       const { data } = await supabase.rpc("get_seeker_emails_for_admin");
-      return data?.find((e: any) => e.user_id === userId)?.email || null;
+      return data?.find((e: { user_id: string; email: string | null }) => e.user_id === userId)?.email || null;
     },
   });
 
@@ -73,18 +73,18 @@ export function SeekerInquiriesTab({ userId }: SeekerInquiriesTabProps) {
 
       // Enrich with facility names
       const facilityIds = [...new Set(pluckNonNull(data as { facility_id: string | null }[], "facility_id"))];
-      const fMap: Record<string, any> = {};
+      const fMap: Record<string, { id: string; name: string; city: string; state: string }> = {};
       if (facilityIds.length > 0) {
         const { data: facilities } = await supabase
           .from("facilities")
           .select("id, name, city, state")
           .in("id", facilityIds);
-        facilities?.forEach((f: any) => { fMap[f.id] = f; });
+        facilities?.forEach((f) => { fMap[f.id] = f; });
       }
 
       // Unlock state retired with the EKRA flat-fee refactor — lead_unlocks
       // table dropped. Every lead is visible to its facility owner.
-      return data.map((l: any) => ({
+      return data.map((l) => ({
         ...l,
         facility: fMap[l.facility_id] || null,
         unlock: null,
@@ -96,7 +96,7 @@ export function SeekerInquiriesTab({ userId }: SeekerInquiriesTabProps) {
   const loading = inqLoading || leadsLoading;
 
   // Filter
-  const filteredInquiries = (inquiries || []).filter((inq: any) => {
+  const filteredInquiries = (inquiries || []).filter((inq) => {
     if (statusFilter !== "all" && inq.status !== statusFilter) return false;
     if (search) {
       const s = search.toLowerCase();
@@ -106,7 +106,7 @@ export function SeekerInquiriesTab({ userId }: SeekerInquiriesTabProps) {
     return true;
   });
 
-  const filteredLeads = (directLeads || []).filter((lead: any) => {
+  const filteredLeads = (directLeads || []).filter((lead) => {
     if (statusFilter !== "all" && lead.status !== statusFilter) return false;
     if (search) {
       const s = search.toLowerCase();
@@ -118,7 +118,7 @@ export function SeekerInquiriesTab({ userId }: SeekerInquiriesTabProps) {
 
   // KPIs
   const totalAll = (inquiries?.length || 0) + (directLeads?.length || 0);
-  const placedCount = (inquiries || []).filter((i: any) => i.placement_confirmed || i.admission_status === "admitted").length;
+  const placedCount = (inquiries || []).filter((i) => i.placement_confirmed || i.admission_status === "admitted").length;
 
   if (loading) {
     return (
@@ -189,7 +189,7 @@ export function SeekerInquiriesTab({ userId }: SeekerInquiriesTabProps) {
                 Direct Facility Inquiries
                 <Badge variant="secondary" className="text-xs">{filteredLeads.length}</Badge>
               </h4>
-              {filteredLeads.map((lead: any) => (
+              {filteredLeads.map((lead) => (
                 <div key={lead.id} className="p-4 rounded-xl border bg-card hover:bg-muted/30 transition-colors">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
@@ -230,7 +230,7 @@ export function SeekerInquiriesTab({ userId }: SeekerInquiriesTabProps) {
                 Placement Inquiries
                 <Badge variant="secondary" className="text-xs">{filteredInquiries.length}</Badge>
               </h4>
-              {filteredInquiries.map((inquiry: any) => (
+              {filteredInquiries.map((inquiry) => (
                 <div key={inquiry.id} className="p-4 rounded-xl border bg-card hover:bg-muted/30 transition-colors">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">

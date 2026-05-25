@@ -212,7 +212,7 @@ export function CustomerRepDashboard() {
       created_by: user.id,
       subject: escalateSubject,
       description: escalateDescription,
-      priority: escalatePriority as any,
+      priority: escalatePriority as never,
       related_type: escalateTicketId ? "support_ticket" : null,
       related_id: escalateTicketId,
       status: "open",
@@ -387,7 +387,7 @@ export function CustomerRepDashboard() {
                 <div className="space-y-3"><Skeleton className="h-16 w-full" /><Skeleton className="h-16 w-full" /></div>
               ) : myTickets && myTickets.length > 0 ? (
                 <div className="space-y-2">
-                  {myTickets.map((ticket: any) => (
+                  {myTickets.map((ticket) => (
                     <div key={ticket.id} className="flex items-center justify-between p-3 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => setSelectedTicketId(ticket.id)}>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
@@ -464,7 +464,7 @@ export function CustomerRepDashboard() {
                 <div className="space-y-3"><Skeleton className="h-16 w-full" /><Skeleton className="h-16 w-full" /></div>
               ) : unassignedTickets && unassignedTickets.length > 0 ? (
                 <div className="space-y-2">
-                  {unassignedTickets.map((ticket: any) => (
+                  {unassignedTickets.map((ticket) => (
                     <div key={ticket.id} className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
@@ -523,7 +523,7 @@ export function CustomerRepDashboard() {
                   <div className="space-y-3"><Skeleton className="h-14 w-full" /><Skeleton className="h-14 w-full" /></div>
                 ) : pendingReviews && pendingReviews.length > 0 ? (
                   <div className="space-y-3">
-                    {pendingReviews.map((review: any) => (
+                    {pendingReviews.map((review) => (
                       <div key={review.id} className="flex items-start justify-between p-3 rounded-lg border bg-muted/30">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
@@ -630,7 +630,7 @@ export function CustomerRepDashboard() {
             <CardContent>
               {myEscalations && myEscalations.length > 0 ? (
                 <div className="space-y-2">
-                  {myEscalations.map((esc: any) => (
+                  {myEscalations.map((esc) => (
                     <div key={esc.id} className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">{esc.subject}</p>
@@ -756,7 +756,7 @@ export function CustomerRepDashboard() {
 
       {/* Support Ticket Detail Modal - inline open from dashboard */}
       <SupportTicketModal
-        ticket={selectedTicketId ? { id: selectedTicketId } as any : null}
+        ticket={selectedTicketId ? { id: selectedTicketId } as never : null}
         open={!!selectedTicketId}
         onOpenChange={(open) => { if (!open) { setSelectedTicketId(null); invalidateDashboard(); } }}
       />

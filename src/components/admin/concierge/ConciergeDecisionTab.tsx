@@ -118,7 +118,7 @@ export function ConciergeDecisionTab({ caseData }: ConciergeDecisionTabProps) {
           ) : (
             <div className="divide-y divide-border/50">
               {introductions.map((intro) => {
-                const facility = intro.facilities as any;
+                const facility = intro.facilities as { name?: string; city?: string; state?: string } | null;
                 const responseConfig = RESPONSE_CONFIG[intro.provider_response || "pending"];
                 const ResponseIcon = responseConfig.icon;
                 return (
@@ -165,7 +165,7 @@ export function ConciergeDecisionTab({ caseData }: ConciergeDecisionTabProps) {
           <CardContent className="py-2">
             <div className="divide-y divide-border/50">
               {rejections.map((rej) => {
-                const facility = rej.facilities as any;
+                const facility = rej.facilities as { name?: string; city?: string; state?: string } | null;
                 return (
                   <div key={rej.id} className="py-2 flex items-center justify-between">
                     <div>

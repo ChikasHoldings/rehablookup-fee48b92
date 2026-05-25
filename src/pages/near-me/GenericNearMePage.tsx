@@ -20,7 +20,7 @@ import {
   resourceLinks,
 } from "@/components/seo/InternalLinkingSection";
 
-export interface GenericNearMeConfig {
+interface GenericNearMeConfig {
   slug: string;
   label: string;
   serviceType: string;
@@ -35,7 +35,7 @@ export interface GenericNearMeConfig {
  * All near-me slugs that previously had no national landing page.
  * Each config provides unique, intent-specific content and FAQs.
  */
-export const genericNearMeConfigs: GenericNearMeConfig[] = [
+const genericNearMeConfigs: GenericNearMeConfig[] = [
   {
     slug: "emergency-rehab-near-me",
     label: "Emergency Rehab",

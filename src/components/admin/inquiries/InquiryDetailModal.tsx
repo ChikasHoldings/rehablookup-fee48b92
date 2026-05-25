@@ -24,12 +24,45 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { formatSourceLabel } from "@/lib/sourceLabels";
 
+interface InquiryLead {
+  id: string;
+  facility_id: string | null;
+  original_facility_id: string | null;
+  name: string;
+  email: string;
+  phone: string;
+  status: string;
+  created_at: string;
+  urgency: string | null;
+  level_of_care: string | null;
+  source: string | null;
+  location_city_state: string | null;
+  location_zip: string | null;
+  primary_substance: string[] | null;
+  insurance_type: string | null;
+  message: string | null;
+  inquiry_type: string | null;
+  who_seeking_help: string | null;
+  provider_response_status: string | null;
+  provider_responded_at: string | null;
+  quality_flag: string | null;
+  age_range: string | null;
+  gender: string | null;
+  preferred_contact: string;
+  assigned_at: string | null;
+  lead_expired_at: string | null;
+  exclusive_until?: string | null;
+  redistribution_status?: string | null;
+}
+
+type FacilitySummary = { id: string; name: string; city: string; state: string };
+
 interface InquiryDetailModalProps {
-  lead: any;
+  lead: InquiryLead | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  facilityMap: Map<string, any>;
-  facilities: Array<{ id: string; name: string; city: string; state: string }>;
+  facilityMap: Map<string, FacilitySummary>;
+  facilities: Array<FacilitySummary>;
   onLeadUpdated: () => void;
 }
 
@@ -155,7 +188,7 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
         updates.original_facility_id = previousFacilityId;
       }
 
-      const { error } = await (supabase.from("leads") as any).update(updates).eq("id", lead.id);
+      const { error } = await supabase.from("leads").update(updates as never).eq("id", lead.id);
       if (error) throw error;
 
       // Audit log so admins can trace cross-facility moves.
@@ -302,12 +335,12 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
   // Build activity timeline
   const timeline = useMemo(() => {
     if (!lead) return [];
-    const events: Array<{ date: string; label: string; detail?: string; icon: any; color: string }> = [];
+    const events: Array<{ date: string; label: string; detail?: string; icon: React.ElementType; color: string }> = [];
 
     events.push({ date: lead.created_at, label: "Inquiry Submitted", detail: `${lead.inquiry_type || "Request Info"} via ${formatSourceLabel(lead.source)}`, icon: MessageSquare, color: "bg-primary/10 text-primary" });
     if (lead.assigned_at) events.push({ date: lead.assigned_at, label: "Lead Created & Assigned", detail: assignedFacility?.name || "Facility", icon: Building2, color: "bg-chart-3/10 text-chart-3" });
 
-    distributions?.forEach((d: any) => {
+    distributions?.forEach((d) => {
       // Round-30 audit: facilityMap.get() returns undefined when the
       // referenced facility was deleted but the distribution row
       // survived. Was rendering literal "undefined" in the UI; now
@@ -507,7 +540,7 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
                   </h4>
                   {(distributions?.length || 0) > 0 ? (
                     <div className="space-y-2">
-                      {distributions!.map((d: any) => {
+                      {distributions!.map((d) => {
                         const dFac = facilityMap.get(d.facility_id);
                         return (
                           <div key={d.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
@@ -796,7 +829,7 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
                 </div>
                 {(leadNotes?.length || 0) > 0 ? (
                   <div className="space-y-2">
-                    {leadNotes!.map((note: any) => (
+                    {leadNotes!.map((note) => (
                       <div key={note.id} className="p-3 rounded-lg border bg-card">
                         <p className="text-sm">{note.note}</p>
                         <p className="text-xs text-muted-foreground mt-1.5">{format(new Date(note.created_at), "MMM d, yyyy h:mm a")}</p>
@@ -819,7 +852,7 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
 }
 
 // Reusable info card
-function InfoCard({ title, icon: Icon, rows }: { title: string; icon: any; rows: [string, any][] }) {
+function InfoCard({ title, icon: Icon, rows }: { title: string; icon: React.ElementType; rows: [string, React.ReactNode][] }) {
   return (
     <div className="p-4 rounded-xl border bg-card">
       <h4 className="font-semibold mb-3 flex items-center gap-2 text-sm">

@@ -17,7 +17,7 @@ import type { Facility } from "../ProviderListItem";
 
 interface ProviderContactTabProps {
   provider: Facility;
-  providerProfile: any;
+  providerProfile: { first_name: string | null; last_name: string | null; email: string | null } | null;
 }
 
 const MAX_SUBJECT_LENGTH = 200;

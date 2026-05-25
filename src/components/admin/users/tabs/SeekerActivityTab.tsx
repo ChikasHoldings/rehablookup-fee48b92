@@ -11,7 +11,7 @@ interface SeekerActivityTabProps {
   userId: string;
 }
 
-const eventIcons: Record<string, any> = {
+const eventIcons: Record<string, React.ElementType> = {
   signup: UserPlus,
   login: LogIn,
   logout: LogOut,
@@ -94,15 +94,15 @@ export function SeekerActivityTab({ userId }: SeekerActivityTabProps) {
 
   // Group by date
   const groupedByDate: Record<string, typeof activities> = {};
-  activities.forEach((activity: any) => {
+  activities.forEach((activity) => {
     const dateKey = format(new Date(activity.created_at), "yyyy-MM-dd");
     if (!groupedByDate[dateKey]) groupedByDate[dateKey] = [];
     groupedByDate[dateKey].push(activity);
   });
 
   // Summary KPIs
-  const loginCount = activities.filter((a: any) => a.event_type === "login" || a.event_type === "sign_in").length;
-  const uniqueTypes = [...new Set(activities.map((a: any) => a.event_type))].length;
+  const loginCount = activities.filter((a) => a.event_type === "login" || a.event_type === "sign_in").length;
+  const uniqueTypes = [...new Set(activities.map((a) => a.event_type))].length;
 
   return (
     <div className="p-5 space-y-5">
@@ -134,14 +134,14 @@ export function SeekerActivityTab({ userId }: SeekerActivityTabProps) {
           </div>
 
           <div className="relative space-y-0">
-            {(dayActivities as any[]).map((activity: any, index: number) => {
+            {dayActivities.map((activity, index) => {
               const IconComponent = eventIcons[activity.event_type] || Clock;
               const colorClass = eventColors[activity.event_type] || "bg-muted text-muted-foreground";
 
               return (
                 <div key={activity.id} className="flex gap-3 pb-4 relative group">
                   {/* Timeline line */}
-                  {index < (dayActivities as any[]).length - 1 && (
+                  {index < dayActivities.length - 1 && (
                     <div className="absolute left-[15px] top-8 bottom-0 w-px bg-border" />
                   )}
                   {/* Icon */}

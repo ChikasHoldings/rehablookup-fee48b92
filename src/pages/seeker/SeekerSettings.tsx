@@ -491,7 +491,7 @@ export default function SeekerSettings() {
     const cleanFirstName = sanitizePersonName(firstName);
     const cleanLastName = sanitizePersonName(lastName);
     const cleanPhone = formatPhoneE164(phone);
-    const cleanZipcode = zipcode.replace(/[^\d\-]/g, '').slice(0, 10);
+    const cleanZipcode = zipcode.replace(/[^\d-]/g, '').slice(0, 10);
     const cleanCity = sanitizeText(city, 100);
     const cleanState = sanitizeText(state, 50);
 

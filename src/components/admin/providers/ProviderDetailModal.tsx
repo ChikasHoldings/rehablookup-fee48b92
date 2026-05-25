@@ -11,7 +11,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
-import { type Facility, type ProSubscription, getStatusBadge } from "./ProviderListItem";
+import { type Facility, type ProSubscription } from "./ProviderListItem";
+import { getStatusBadge } from "./providerBadges";
 
 import { ProviderOverviewTab } from "./tabs/ProviderOverviewTab";
 import { ProviderFacilitiesTab } from "./tabs/ProviderFacilitiesTab";
@@ -122,7 +123,7 @@ export function ProviderDetailModal({
       if (!provider?.id) return { introductions: 0, placements: 0 };
       const [introResult, placementResult] = await Promise.all([
         supabase.from("concierge_introductions").select("id", { count: "exact", head: true }).eq("facility_id", provider.id),
-        (supabase as any).from("concierge_engagements").select("id", { count: "exact", head: true }).eq("facility_id", provider.id).in("status", ["admitted", "completed"]),
+        (supabase as never).from("concierge_engagements").select("id", { count: "exact", head: true }).eq("facility_id", provider.id).in("status", ["admitted", "completed"]),
       ]);
       return { introductions: introResult.count || 0, placements: placementResult.count || 0 };
     },

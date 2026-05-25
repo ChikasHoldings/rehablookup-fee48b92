@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 
 interface AuditLogEntry {
   actionType: string;
@@ -23,7 +24,7 @@ export function useAuditLog() {
         action_type: actionType,
         target_type: targetType,
         target_id: targetId || null,
-        details: (details || {}) as any,
+        details: (details || {}) as Json,
       }]);
     } catch (err) {
       console.error("[AUDIT] Failed to log action:", actionType, err);

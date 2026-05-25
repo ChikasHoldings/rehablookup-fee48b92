@@ -213,14 +213,14 @@ export function ToursTab({ caseData }: ToursTabProps) {
       eventType,
     }: {
       tourId: string;
-      updates: Record<string, any>;
+      updates: Record<string, unknown>;
       eventType: string;
     }) => {
       const { data: { user } } = await supabase.auth.getUser();
-      
-      const { error } = await (supabase
-        .from("concierge_tour_requests") as any)
-        .update(updates)
+
+      const { error } = await supabase
+        .from("concierge_tour_requests")
+        .update(updates as never)
         .eq("id", tourId);
 
       if (error) throw error;
@@ -321,7 +321,7 @@ export function ToursTab({ caseData }: ToursTabProps) {
       ) : (
         <ScrollArea className="h-[400px]">
           <div className="space-y-3">
-            {tours.map((tour: any) => {
+            {tours.map((tour) => {
               const statusConfig = STATUS_LABELS[tour.status] || {
                 label: tour.status,
                 variant: "secondary" as const,

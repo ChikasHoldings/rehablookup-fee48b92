@@ -94,10 +94,10 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
         .order("created_at", { ascending: false })
         .limit(10);
       if (!inqs?.length) return { status: "not_started", admitted: false };
-      const admitted = inqs.some((i: any) => i.placement_confirmed || i.admission_status === "admitted");
-      const placed = inqs.some((i: any) => i.placed_facility_id);
-      const matched = inqs.some((i: any) => ["matched", "introductions_sent", "in_contact"].includes(i.status));
-      const active = inqs.some((i: any) => ["reviewing", "matching"].includes(i.status));
+      const admitted = inqs.some((i) => i.placement_confirmed || i.admission_status === "admitted");
+      const placed = inqs.some((i) => i.placed_facility_id);
+      const matched = inqs.some((i) => ["matched", "introductions_sent", "in_contact"].includes(i.status));
+      const active = inqs.some((i) => ["reviewing", "matching"].includes(i.status));
       if (admitted) return { status: "admitted", admitted: true };
       if (placed) return { status: "accepted", admitted: false };
       if (matched) return { status: "matched", admitted: false };
@@ -117,7 +117,7 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
       let city: string | null = null, state: string | null = null, zipcode: string | null = null;
 
       const { data: emailsData } = await supabase.rpc("get_seeker_emails_for_admin");
-      const authEmail = emailsData?.find((e: any) => e.user_id === user.user_id)?.email;
+      const authEmail = emailsData?.find((e: { user_id: string; email: string | null }) => e.user_id === user.user_id)?.email;
       if (authEmail) { email = authEmail; sources.push("Account Signup"); }
 
       const { data: conciergeData } = await supabase.from("concierge_inquiries")
@@ -176,7 +176,7 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
         .eq("action_type", "seeker_note")
         .order("created_at", { ascending: false })
         .limit(1);
-      return (data?.[0]?.details as any)?.note || "";
+      return (data?.[0]?.details as { note?: string } | null)?.note || "";
     },
     enabled: !!user?.user_id && open,
   });

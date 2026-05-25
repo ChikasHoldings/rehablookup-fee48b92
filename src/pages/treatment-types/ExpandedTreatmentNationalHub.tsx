@@ -160,7 +160,7 @@ const ExpandedTreatmentNationalHub = ({ treatmentKey }: ExpandedTreatmentNationa
     { label: config.title },
   ];
 
-  const structuredData: any[] = [
+  const structuredData: object[] = [
     {
       "@context": "https://schema.org",
       "@type": "MedicalWebPage",

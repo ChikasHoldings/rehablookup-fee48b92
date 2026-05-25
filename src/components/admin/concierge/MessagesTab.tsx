@@ -22,6 +22,9 @@ import { MessageAttachment } from "@/components/shared/MessageAttachment";
 import type { Database } from "@/integrations/supabase/types";
 
 type ConciergeInquiry = Database["public"]["Tables"]["concierge_inquiries"]["Row"];
+type CaseThread = Database["public"]["Tables"]["concierge_threads"]["Row"] & {
+  facilities: { id: string; name: string; logo_url: string | null } | null;
+};
 
 interface MessagesTabProps {
   caseData: ConciergeInquiry;
@@ -30,7 +33,7 @@ interface MessagesTabProps {
 export function MessagesTab({ caseData }: MessagesTabProps) {
   const queryClient = useQueryClient();
   const { adminRole } = useAdminAuth();
-  const [selectedThread, setSelectedThread] = useState<any>(null);
+  const [selectedThread, setSelectedThread] = useState<CaseThread | null>(null);
   const [newMessage, setNewMessage] = useState("");
   const [attachment, setAttachment] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -99,7 +102,7 @@ export function MessagesTab({ caseData }: MessagesTabProps) {
           schema: "public",
           table: "concierge_messages",
         },
-        (payload: any) => {
+        (payload: { new: { thread_id?: string } }) => {
           // Refresh messages if it's in the selected thread
           if (selectedThread?.id && payload.new.thread_id === selectedThread.id) {
             queryClient.invalidateQueries({ queryKey: ["admin-thread-messages", selectedThread.id] });
@@ -299,7 +302,7 @@ export function MessagesTab({ caseData }: MessagesTabProps) {
 
   // Determine which facilities don't have threads yet
   const existingFacilityThreadIds = new Set(
-    threads?.filter((t: any) => t.thread_type === "facility").map((t: any) => t.facility_id) || []
+    threads?.filter((t) => t.thread_type === "facility").map((t) => t.facility_id) || []
   );
   const availableFacilities = matchedFacilities?.filter(f => !existingFacilityThreadIds.has(f.id)) || [];
 
@@ -380,7 +383,7 @@ export function MessagesTab({ caseData }: MessagesTabProps) {
         
         {threads && threads.length > 0 ? (
           <div className="space-y-2">
-            {threads.map((thread: any) => {
+            {threads.map((thread) => {
               const isAdvisorThread = thread.thread_type === "advisor";
               const hasUnread = thread.last_message_at && thread.admin_last_read_at
                 ? new Date(thread.last_message_at) > new Date(thread.admin_last_read_at)
@@ -503,7 +506,7 @@ export function MessagesTab({ caseData }: MessagesTabProps) {
           <div className="text-center py-8 text-muted-foreground">Loading...</div>
         ) : messages && messages.length > 0 ? (
           <div className="space-y-3">
-              {messages.map((msg: any) => (
+              {messages.map((msg) => (
                 <div
                   key={msg.id}
                   className={`flex ${msg.sender_type === "advisor" ? "justify-end" : "justify-start"}`}

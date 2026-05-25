@@ -26,16 +26,16 @@ export function SeekerReviewsTab({ userId }: SeekerReviewsTabProps) {
         .order("created_at", { ascending: false });
 
       const facilityIds = [...new Set(pluckNonNull(data as { facility_id: string | null }[] | null, "facility_id"))];
-      const facilityMap: Record<string, any> = {};
+      const facilityMap: Record<string, { id: string; name: string; city: string; state: string }> = {};
       if (facilityIds.length) {
         const { data: facilities } = await supabase
           .from("facilities")
           .select("id, name, city, state")
           .in("id", facilityIds);
-        facilities?.forEach((f: any) => { facilityMap[f.id] = f; });
+        facilities?.forEach((f) => { facilityMap[f.id] = f; });
       }
 
-      return (data || []).map((r: any) => ({ ...r, facility: facilityMap[r.facility_id] }));
+      return (data || []).map((r) => ({ ...r, facility: facilityMap[r.facility_id] }));
     },
   });
 
@@ -68,8 +68,8 @@ export function SeekerReviewsTab({ userId }: SeekerReviewsTabProps) {
   }
 
   // Detect suspicious patterns
-  const avgRating = reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviews.length;
-  const allSameRating = reviews.length > 2 && reviews.every((r: any) => r.rating === reviews[0].rating);
+  const avgRating = reviews.reduce((sum: number, r) => sum + r.rating, 0) / reviews.length;
+  const allSameRating = reviews.length > 2 && reviews.every((r) => r.rating === reviews[0].rating);
 
   return (
     <div className="p-5 space-y-4">
@@ -84,7 +84,7 @@ export function SeekerReviewsTab({ userId }: SeekerReviewsTabProps) {
           <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Avg Rating</p>
         </div>
         <div className="text-center px-4 border-l">
-          <p className="text-2xl font-bold">{reviews.filter((r: any) => r.status === "pending").length}</p>
+          <p className="text-2xl font-bold">{reviews.filter((r) => r.status === "pending").length}</p>
           <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Pending</p>
         </div>
         {allSameRating && (
@@ -94,7 +94,7 @@ export function SeekerReviewsTab({ userId }: SeekerReviewsTabProps) {
         )}
       </div>
 
-      {reviews.map((review: any) => (
+      {reviews.map((review) => (
         <div key={review.id} className="p-4 rounded-lg border bg-card">
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">

@@ -10,10 +10,10 @@ function makeMediaQuery(query: string): MediaQueryList {
     media: query,
     matches: matchMediaSync(query),
     onchange: null,
-    addListener: (cb: any) => listeners.add(cb),
-    removeListener: (cb: any) => listeners.delete(cb),
-    addEventListener: (_: string, cb: any) => listeners.add(cb),
-    removeEventListener: (_: string, cb: any) => listeners.delete(cb),
+    addListener: (cb: (e: MediaQueryListEvent) => void) => listeners.add(cb),
+    removeListener: (cb: (e: MediaQueryListEvent) => void) => listeners.delete(cb),
+    addEventListener: (_: string, cb: (e: MediaQueryListEvent) => void) => listeners.add(cb),
+    removeEventListener: (_: string, cb: (e: MediaQueryListEvent) => void) => listeners.delete(cb),
     dispatchEvent: () => true,
   } as MediaQueryList;
   return mq;
@@ -45,8 +45,8 @@ class IntersectionObserverStub {
   rootMargin = "";
   thresholds: number[] = [];
 }
-(global as any).IntersectionObserver = IntersectionObserverStub;
-(window as any).IntersectionObserver = IntersectionObserverStub;
+(global as { IntersectionObserver?: typeof IntersectionObserverStub }).IntersectionObserver = IntersectionObserverStub;
+(window as { IntersectionObserver?: typeof IntersectionObserverStub }).IntersectionObserver = IntersectionObserverStub;
 
 // Stub ResizeObserver (used by Radix UI primitives)
 class ResizeObserverStub {
@@ -54,11 +54,11 @@ class ResizeObserverStub {
   unobserve() {}
   disconnect() {}
 }
-(global as any).ResizeObserver = ResizeObserverStub;
-(window as any).ResizeObserver = ResizeObserverStub;
+(global as { ResizeObserver?: typeof ResizeObserverStub }).ResizeObserver = ResizeObserverStub;
+(window as { ResizeObserver?: typeof ResizeObserverStub }).ResizeObserver = ResizeObserverStub;
 
 // Stub scrollTo (jsdom warns)
-window.scrollTo = (() => {}) as any;
+window.scrollTo = (() => {}) as typeof window.scrollTo;
 
 // Stub scrollIntoView — jsdom does not implement it, but the lead-intake
 // flow calls it on every step transition.

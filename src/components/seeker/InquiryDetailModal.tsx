@@ -28,6 +28,7 @@ import {
   Calendar,
   Briefcase,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getFacilityPlaceholder } from "@/lib/facilityPlaceholder";
 
@@ -120,7 +121,7 @@ function getStatusInfo(status: string) {
   }
 }
 
-function DetailRow({ icon: Icon, label, value }: { icon: any; label: string; value: string | null | undefined }) {
+function DetailRow({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: string | null | undefined }) {
   if (!value) return null;
   return (
     <div className="flex items-start gap-3 py-2">
@@ -189,11 +190,11 @@ export function InquiryDetailModal({ open, onOpenChange, leadId }: Omit<InquiryD
               unlocked_at: leadData.provider_responded_at,
               facility_name: facilityData?.name || "Treatment Center",
               facility_slug: facilityData?.slug || null,
-              notes: (notesData || []).map((n: any) => n.note),
+              notes: (notesData || []).map((n: { note: string; [k: string]: unknown }) => n.note),
             });
           }
         }
-      } catch (err: any) {
+      } catch (err) {
         console.error("Error fetching inquiry details:", err);
         setError("Could not load inquiry details.");
       } finally {

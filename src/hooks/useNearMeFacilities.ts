@@ -59,7 +59,7 @@ export function useNearMeFacilities({
   // Build and rank facilities
   const facilities = useMemo(() => {
     let allFacilities: PublicFacility[] = [
-      ...treatmentCenters as any[],
+      ...(treatmentCenters as unknown as PublicFacility[]),
       ...approvedFacilities,
     ];
 

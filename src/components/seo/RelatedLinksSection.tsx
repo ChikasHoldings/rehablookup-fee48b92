@@ -109,14 +109,6 @@ export function RelatedLinksSection({
 }
 
 // Pre-built link sets for common use cases
-export const defaultTreatmentLinks: RelatedLink[] = [
-  { title: "Detox Programs", href: "/treatment-types/detox-programs" },
-  { title: "Inpatient Rehab", href: "/treatment-types/residential-inpatient" },
-  { title: "Outpatient Programs", href: "/treatment-types/outpatient-programs" },
-  { title: "Dual Diagnosis Treatment", href: "/treatment-types/dual-diagnosis-treatment" },
-  { title: "Alcohol Rehabilitation", href: "/treatment-types/alcohol-rehabilitation" },
-];
-
 export const defaultInsuranceLinks: RelatedLink[] = [
   { title: "Aetna Coverage", href: "/insurance/aetna-rehab" },
   { title: "Blue Cross Blue Shield", href: "/insurance/bcbs-treatment" },
@@ -124,12 +116,3 @@ export const defaultInsuranceLinks: RelatedLink[] = [
   { title: "UnitedHealthcare", href: "/insurance/united-healthcare-rehab" },
   { title: "Medicare Coverage", href: "/insurance/medicare-rehab" },
 ];
-
-export function getStateLocationLinks(stateSlug: string, stateName: string): RelatedLink[] {
-  return [
-    { title: `Detox in ${stateName}`, href: `/treatment-types/detox-programs/${stateSlug}` },
-    { title: `Inpatient Rehab in ${stateName}`, href: `/treatment-types/residential-inpatient/${stateSlug}` },
-    { title: `Outpatient in ${stateName}`, href: `/treatment-types/outpatient-programs/${stateSlug}` },
-    { title: `All Rehabs in ${stateName}`, href: `/rehab-centers/${stateSlug}` },
-  ];
-}

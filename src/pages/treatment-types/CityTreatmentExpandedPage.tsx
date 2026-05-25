@@ -178,7 +178,7 @@ const CityTreatmentExpandedPage = ({ treatmentKey }: CityTreatmentExpandedPagePr
   const density = getFacilityDensity(0); // Will be replaced by actual count from StateFacilitiesSection
   const urbanClass = getUrbanClassification(cityData.population);
 
-  const structuredData: any[] = [
+  const structuredData: object[] = [
     {
       "@context": "https://schema.org",
       "@type": "MedicalWebPage",

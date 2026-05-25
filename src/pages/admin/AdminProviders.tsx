@@ -238,7 +238,7 @@ export default function AdminProviders() {
     const csv = [
       headers.join(","),
       ...rows.map((r) => headers.map((h) => {
-        const v = String((r as any)[h] ?? "");
+        const v = String((r as Record<string, unknown>)[h] ?? "");
         return v.includes(",") || v.includes('"') || v.includes("\n") ? `"${v.replace(/"/g, '""')}"` : v;
       }).join(",")),
     ].join("\n");

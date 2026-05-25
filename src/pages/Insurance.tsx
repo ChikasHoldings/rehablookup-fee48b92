@@ -547,8 +547,9 @@ export default function Insurance() {
   const { data: approvedFacilities = [] } = useStaticFacilities();
   const insurerCounts = useMemo<Record<string, number>>(() => {
     const seen = new Set<string>();
-    const pool: any[] = [];
-    for (const f of approvedFacilities as any[]) {
+    type PoolFacility = { id: string; insuranceAccepted?: string[] | null };
+    const pool: PoolFacility[] = [];
+    for (const f of approvedFacilities as unknown as PoolFacility[]) {
       if (!seen.has(f.id)) {
         seen.add(f.id);
         pool.push(f);
@@ -562,7 +563,7 @@ export default function Insurance() {
     }
     const counts: Record<string, number> = {};
     for (const cfg of INSURER_MATCH_CONFIGS) {
-      counts[cfg.slug] = pool.filter((f: any) =>
+      counts[cfg.slug] = pool.filter((f) =>
         facilityMatchesInsurer(f.insuranceAccepted, cfg.keywords),
       ).length;
     }

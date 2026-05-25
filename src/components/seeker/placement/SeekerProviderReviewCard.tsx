@@ -118,8 +118,29 @@ export function SeekerProviderReviewCard({ inquiryId, onConfirmed }: SeekerProvi
 
       if (error) throw error;
 
-      const intros = (data || []).filter((intro: any) => intro.facilities);
-      const facilityIds = intros.map((i: any) => i.facilities.id);
+      type IntroRow = {
+        id: string;
+        facilities: {
+          id: string;
+          name: string;
+          city: string;
+          state: string;
+          slug: string;
+          logo_url: string | null;
+          gallery_urls: string[] | null;
+          facility_type: string;
+          description: string | null;
+          verified: boolean | null;
+          year_established: number | null;
+          [k: string]: unknown;
+        } | null;
+        [k: string]: unknown;
+      };
+
+      const intros = ((data || []) as IntroRow[]).filter((intro) => intro.facilities) as (IntroRow & {
+        facilities: NonNullable<IntroRow["facilities"]>;
+      })[];
+      const facilityIds = intros.map((i) => i.facilities.id);
 
       // Parallel fetch services & insurance for all facilities
       const [servicesRes, insuranceRes] = await Promise.all([
@@ -134,16 +155,16 @@ export function SeekerProviderReviewCard({ inquiryId, onConfirmed }: SeekerProvi
       const servicesByFacility: Record<string, string[]> = {};
       const insuranceByFacility: Record<string, string[]> = {};
 
-      (servicesRes.data || []).forEach((s: any) => {
+      (servicesRes.data || []).forEach((s: { facility_id: string; service_name: string; [k: string]: unknown }) => {
         if (!servicesByFacility[s.facility_id]) servicesByFacility[s.facility_id] = [];
         servicesByFacility[s.facility_id].push(s.service_name);
       });
-      (insuranceRes.data || []).forEach((i: any) => {
+      (insuranceRes.data || []).forEach((i: { facility_id: string; insurance_name: string; [k: string]: unknown }) => {
         if (!insuranceByFacility[i.facility_id]) insuranceByFacility[i.facility_id] = [];
         insuranceByFacility[i.facility_id].push(i.insurance_name);
       });
 
-      return intros.map((intro: any) => ({
+      return intros.map((intro) => ({
         id: intro.facilities.id,
         name: intro.facilities.name,
         city: intro.facilities.city,

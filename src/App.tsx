@@ -622,7 +622,7 @@ const AppInner = () => {
     if (!import.meta.env.DEV) return;
 
     const originalError = console.error;
-    console.error = (...args: any[]) => {
+    console.error = (...args: unknown[]) => {
       const first = args[0];
       if (
         typeof first === "string" &&

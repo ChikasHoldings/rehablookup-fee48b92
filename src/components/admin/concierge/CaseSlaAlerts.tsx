@@ -28,7 +28,7 @@ export interface SlaAlert {
 }
 
 /** Calculate SLA alerts for a concierge case */
-export function useCaseSlaAlerts(caseData: CaseSlaData | null | undefined): SlaAlert[] {
+function useCaseSlaAlerts(caseData: CaseSlaData | null | undefined): SlaAlert[] {
   return useMemo(() => {
     if (!caseData) return [];
     const alerts: SlaAlert[] = [];

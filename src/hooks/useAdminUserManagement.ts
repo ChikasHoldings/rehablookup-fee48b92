@@ -216,7 +216,7 @@ export function useAdminUserManagement() {
         return [];
       }
 
-      const adminUserIds = adminList.map((u: any) => u.user_id);
+      const adminUserIds = adminList.map((u: { user_id: string; [k: string]: unknown }) => u.user_id);
 
       // Get permissions
       const { data: permissions, error: permissionsError } = await supabase
@@ -237,7 +237,7 @@ export function useAdminUserManagement() {
         permissionsByUser[p.user_id][p.permission_key] = p.granted;
       });
 
-      return adminList.map((u: any) => {
+      return adminList.map((u: { user_id: string; [k: string]: unknown }) => {
         const userPermissions = permissionsByUser[u.user_id] || {};
         const adminRole = (u.admin_role as AdminRoleType) || "customer_rep";
 

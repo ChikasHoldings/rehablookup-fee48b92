@@ -16,16 +16,29 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Facility } from "../ProviderListItem";
-import { getSourceBadge, getClaimBadge } from "../ProviderListItem";
+import { getSourceBadge, getClaimBadge } from "../providerBadges";
+
+interface ProviderProfileSummary {
+  first_name: string | null;
+  last_name: string | null;
+  email: string | null;
+}
+
+interface FlaggedImageSummary {
+  id: string;
+  image_url: string;
+  image_type: string;
+  reason: string | null;
+}
 
 interface ProviderOverviewTabProps {
   provider: Facility;
-  proSubscription: any;
-  providerProfile: any;
+  proSubscription: { price_cents: number | null } | null;
+  providerProfile: ProviderProfileSummary | null;
   providerFacilities: Facility[];
-  providerLeads: any[];
+  providerLeads: unknown[];
   placementStats: { introductions: number; placements: number };
-  flaggedImages: any[];
+  flaggedImages: FlaggedImageSummary[];
   onStatusChange: (id: string, status: string) => void;
   onToggleVerified: (id: string, currentValue: boolean | null) => void;
   onToggleFeatured: (id: string, currentValue: boolean) => void;
@@ -464,7 +477,7 @@ export function ProviderOverviewTab({
   );
 }
 
-function KPICard({ icon: Icon, label, value, color, small }: { icon: any; label: string; value: string; color: string; small?: boolean }) {
+function KPICard({ icon: Icon, label, value, color, small }: { icon: React.ElementType; label: string; value: string; color: string; small?: boolean }) {
   return (
     <Card>
       <CardContent className={`${small ? "p-2.5" : "p-3"} text-center`}>
@@ -476,7 +489,7 @@ function KPICard({ icon: Icon, label, value, color, small }: { icon: any; label:
   );
 }
 
-function InfoRow({ icon: Icon, text, href }: { icon: any; text: string; href?: string }) {
+function InfoRow({ icon: Icon, text, href }: { icon: React.ElementType; text: string; href?: string }) {
   return (
     <div className="flex items-center gap-2 text-sm">
       <Icon className="h-4 w-4 text-muted-foreground shrink-0" />

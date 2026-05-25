@@ -581,7 +581,7 @@ export default function TherapyModalityPage() {
     );
   }
 
-  const structuredData: any[] = [
+  const structuredData: object[] = [
     {
       "@context": "https://schema.org",
       "@type": "MedicalWebPage",

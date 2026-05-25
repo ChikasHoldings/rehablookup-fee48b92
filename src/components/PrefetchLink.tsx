@@ -56,7 +56,7 @@ const routePrefetchMap: Record<string, () => Promise<unknown>> = {
 // Track which routes have been prefetched to avoid duplicate fetches
 const prefetchedRoutes = new Set<string>();
 
-export function prefetchRouteChunk(path: string) {
+function prefetchRouteChunk(path: string) {
   const normalizedPath = path.split("?")[0].split("#")[0];
   
   if (prefetchedRoutes.has(normalizedPath)) return;
@@ -90,7 +90,7 @@ export const PrefetchLink = forwardRef<HTMLAnchorElement, PrefetchLinkProps>(
         if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
 
         e.preventDefault();
-        onClick?.(e as any);
+        onClick?.(e);
 
         // Navigate inside a transition — React keeps the old UI visible
         // until the new lazy component's chunk is ready

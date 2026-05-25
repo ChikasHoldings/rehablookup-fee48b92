@@ -52,8 +52,8 @@ export default function SocialLanding() {
     // Analytics provider removed — Meta Pixel PageView removed.
     
     // Fire TikTok Pixel PageView
-    if (typeof window !== "undefined" && (window as any).ttq) {
-      (window as any).ttq.track("ViewContent");
+    if (typeof window !== "undefined" && (window as { ttq?: { track: (event: string) => void } }).ttq) {
+      (window as { ttq?: { track: (event: string) => void } }).ttq!.track("ViewContent");
     }
   }, []);
   

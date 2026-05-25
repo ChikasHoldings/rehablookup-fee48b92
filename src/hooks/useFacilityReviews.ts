@@ -58,7 +58,7 @@ export function useFacilityReviews(facilityId: string) {
       });
       if (error || data?.error) return { error: new Error(data?.error || 'Failed') };
       return { error: null };
-    } catch (e: any) { return { error: e }; }
+    } catch (e) { return { error: e instanceof Error ? e : new Error(String(e)) }; }
   }, [user?.email]);
 
   const fetchReviews = useCallback(async () => {
@@ -231,7 +231,7 @@ export function useFacilityReviews(facilityId: string) {
         rating,
         review_text: sanitized || null,
         reviewer_display_name: reviewerDisplayName
-      } as any)
+      } as never)
       .select()
       .single();
 
@@ -289,7 +289,7 @@ export function useFacilityReviews(facilityId: string) {
 
     const { data, error } = await supabase
       .from('facility_reviews')
-      .update(updatePayload as any)
+      .update(updatePayload as never)
       .eq('id', userReview.id)
       .select()
       .single();

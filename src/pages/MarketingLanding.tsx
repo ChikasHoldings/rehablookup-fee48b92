@@ -74,11 +74,11 @@ export default function MarketingLanding() {
       setLeadId(data.leadId);
       setMatchedFacilities(data.matchedFacilities || []);
       setSubmitted(true);
-    } catch (err: any) {
+    } catch (err) {
       console.error("Marketing lead submission failed:", err);
       toast({
         title: "Submission failed",
-        description: err.message || "Please try again",
+        description: (err instanceof Error ? err.message : "") || "Please try again",
         variant: "destructive",
       });
       throw err;

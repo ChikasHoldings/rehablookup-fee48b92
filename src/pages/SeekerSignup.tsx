@@ -326,8 +326,8 @@ export default function SeekerSignup() {
       setSignupEmail(trimmedEmail);
       setShowVerification(true);
       setResendCooldown(60);
-    } catch (error: any) {
-      toast.error(error.message || "Failed to create account");
+    } catch (error) {
+      toast.error((error instanceof Error ? error.message : "") || "Failed to create account");
     } finally {
       submittingRef.current = false;
       setIsSubmitting(false);
@@ -463,8 +463,8 @@ export default function SeekerSignup() {
       setResendCooldown(60);
       setVerificationCode(['', '', '', '', '', '']);
       inputRefs.current[0]?.focus();
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to resend code');
+    } catch (error) {
+      toast.error((error instanceof Error ? error.message : "") || 'Failed to resend code');
     } finally {
       setIsResending(false);
     }

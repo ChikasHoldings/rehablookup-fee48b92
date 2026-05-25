@@ -309,7 +309,7 @@ export function SuperAdminDashboard() {
           </div>
           {criticalEscalations.critical.length > 0 && (
             <div className="mt-3 space-y-1.5 border-t border-destructive/20 pt-3">
-              {criticalEscalations.critical.map((esc: any) => (
+              {criticalEscalations.critical.map((esc) => (
                 <div key={esc.id} className="flex items-center gap-2 text-xs">
                   <span className="h-1.5 w-1.5 rounded-full bg-destructive flex-shrink-0" />
                   <span className="font-medium truncate">{esc.subject}</span>
@@ -375,7 +375,7 @@ export function SuperAdminDashboard() {
                 { key: "closed", label: "Closed", color: "bg-muted text-muted-foreground border-border" },
               ].map(stage => (
                 <div key={stage.key} className={`text-center p-2 rounded-lg border ${stage.color}`}>
-                  <div className="text-base sm:text-lg font-bold tabular-nums">{(placementStats as any)[stage.key] || 0}</div>
+                  <div className="text-base sm:text-lg font-bold tabular-nums">{placementStats[stage.key] || 0}</div>
                   <div className="text-[9px] sm:text-[10px]">{stage.label}</div>
                 </div>
               ))}

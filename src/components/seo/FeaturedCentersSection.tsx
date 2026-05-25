@@ -6,9 +6,25 @@ import { useGeoLocation } from "@/hooks/useGeoLocation";
 import { getNearbyStates } from "@/lib/proximitySearch";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { treatmentCenters } from "@/data/treatmentCenters";
+import type { TreatmentCenter } from "@/data/treatmentCenters";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+
+type PoolFacility = TreatmentCenter & {
+  slug?: string | null;
+  isFromDatabase?: boolean;
+  logo_url?: string | null;
+  gallery_urls?: string[] | null;
+  hasFeaturedSubscription?: boolean;
+  isHomepageFeatured?: boolean;
+  isPro?: boolean;
+  verified?: boolean | null;
+  year_established?: number | null;
+  facilityType?: string | null;
+  calculatedRankingScore?: number;
+  [k: string]: unknown;
+};
 
 function getDailySeed(): number {
   const d = new Date();
@@ -32,7 +48,7 @@ function seededShuffle<T>(arr: T[], seed: number): T[] {
   return s;
 }
 
-function getProximityTier(facility: any, userState: string, userCity: string, nearbyStates: string[]): number {
+function getProximityTier(facility: PoolFacility, userState: string, userCity: string, nearbyStates: string[]): number {
   if (!userState) return 4;
   const fState = (facility.state || "").toUpperCase();
   const uState = userState.toUpperCase();
@@ -72,16 +88,16 @@ export function FeaturedCentersSection({
 
   const featuredCenters = useMemo(() => {
     // Build pool from DB facilities + static fallback
-    let pool: any[];
+    let pool: PoolFacility[];
 
-    const dbFeatured = approvedFacilities.filter(
-      (f: any) => f.isHomepageFeatured || f.hasFeaturedSubscription
+    const dbFeatured = (approvedFacilities as PoolFacility[]).filter(
+      (f) => f.isHomepageFeatured || f.hasFeaturedSubscription
     );
 
     if (dbFeatured.length > 0) {
       pool = [...dbFeatured];
     } else if (approvedFacilities.length > 0) {
-      pool = [...approvedFacilities].sort((a: any, b: any) => {
+      pool = [...(approvedFacilities as PoolFacility[])].sort((a, b) => {
         if (a.isPro !== b.isPro) return a.isPro ? -1 : 1;
         if (a.verified !== b.verified) return a.verified ? -1 : 1;
         return (b.calculatedRankingScore || 0) - (a.calculatedRankingScore || 0);
@@ -108,7 +124,7 @@ export function FeaturedCentersSection({
     const seed = getDailySeed();
 
     if (userState && !geo.isLoading) {
-      const tiers: Map<number, any[]> = new Map();
+      const tiers: Map<number, PoolFacility[]> = new Map();
       for (const f of pool) {
         const tier = getProximityTier(f, userState, userCity, nearbyStates);
         if (!tiers.has(tier)) tiers.set(tier, []);
@@ -254,7 +270,7 @@ export function FeaturedCentersSection({
             className="flex gap-3 sm:gap-4 md:gap-5 overflow-x-auto scroll-smooth px-4 py-4 sm:px-6 sm:py-5 md:px-8 md:py-6 snap-x snap-mandatory"
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
-            {featuredCenters.map((center: any) => (
+            {featuredCenters.map((center) => (
               <div key={center.id} className="flex-shrink-0 w-[280px] sm:w-[320px] md:w-[360px] snap-start" data-featured-card>
                 <TreatmentCenterCard
                   center={center}

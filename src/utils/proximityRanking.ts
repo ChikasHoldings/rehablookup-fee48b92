@@ -20,7 +20,7 @@ export interface RankableFacility {
   featured?: boolean;
   rating?: number | null;
   isPro?: boolean;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export enum ProximityTier {

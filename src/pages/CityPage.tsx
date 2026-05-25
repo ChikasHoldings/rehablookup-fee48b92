@@ -110,13 +110,13 @@ const CityPage = () => {
       return citiesMatch(center.city, cityData.name);
     }).sort((a, b) => {
       // Pro subscriptions first
-      const aPro = (a as any).isPro ? 1 : 0;
-      const bPro = (b as any).isPro ? 1 : 0;
+      const aPro = (a as { isPro?: boolean }).isPro ? 1 : 0;
+      const bPro = (b as { isPro?: boolean }).isPro ? 1 : 0;
       if (bPro !== aPro) return bPro - aPro;
       
       // Then by calculated ranking score
-      const aScore = (a as any).calculatedRankingScore || 0;
-      const bScore = (b as any).calculatedRankingScore || 0;
+      const aScore = (a as { calculatedRankingScore?: number }).calculatedRankingScore || 0;
+      const bScore = (b as { calculatedRankingScore?: number }).calculatedRankingScore || 0;
       if (bScore !== aScore) return bScore - aScore;
       
       // Fallback to name

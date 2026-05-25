@@ -15,7 +15,7 @@ export function useLeadContactTracking() {
         const session = await getCachedSession();
         if (!session) return;
 
-        await supabase.from("lead_contact_events" as any).insert({
+        await supabase.from("lead_contact_events" as never).insert({
           lead_id: leadId,
           facility_id: facilityId,
           provider_id: session.user.id,

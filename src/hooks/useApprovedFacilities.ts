@@ -278,7 +278,7 @@ export const useApprovedFacilities = () => {
         isFromDatabase: true,
         logo_url: facility.logo_url,
         gallery_urls: facility.gallery_urls,
-        calculatedRankingScore: (facility as any).calculated_ranking_score ?? 0,
+        calculatedRankingScore: (facility as { calculated_ranking_score?: number }).calculated_ranking_score ?? 0,
       };
     });
   }, [facilitiesQuery.data, homepageFeaturedIds, proIds]);

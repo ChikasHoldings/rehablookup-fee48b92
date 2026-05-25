@@ -197,7 +197,7 @@ export function ProviderAnalyticsTab({ provider, providerFacilities }: ProviderA
   );
 }
 
-function MetricCard({ icon: Icon, label, value }: { icon: any; label: string; value: number }) {
+function MetricCard({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: number }) {
   return (
     <Card>
       <CardContent className="p-2.5 text-center">

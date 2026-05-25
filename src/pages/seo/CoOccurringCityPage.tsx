@@ -6,7 +6,7 @@ import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { citiesMatch } from "@/lib/cityNameMatch";
 import { resolveCity } from "@/lib/cityLookup";
 import { treatmentCenters } from "@/data/treatmentCenters";
-import { coOccurringPages } from "@/pages/seo/CoOccurringPage";
+import { coOccurringPages } from "@/pages/seo/coOccurringPagesData";
 import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
 import { shouldEmitFAQSchema, validatePage } from "@/utils/seoPageValidator";
 
@@ -69,7 +69,7 @@ export default function CoOccurringCityPage() {
     answer: `${f.answer} Treatment programs in ${cityName}, ${stateName} provide specialized dual diagnosis care.`,
   }));
 
-  const structuredData: any[] = [
+  const structuredData: object[] = [
     {
       "@context": "https://schema.org",
       "@type": "MedicalWebPage",

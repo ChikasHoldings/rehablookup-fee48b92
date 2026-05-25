@@ -114,17 +114,43 @@ export interface MarketingLead {
   updated_at: string;
 }
 
+type FacilitySummary = { id: string; name: string; city: string; state: string };
+
+interface ConciergeInquirySummary {
+  id: string;
+  status: string;
+  created_at: string | null;
+  primary_concern: string | null;
+  level_of_care: string | null;
+}
+
+interface ReviewSummary {
+  id: string;
+  rating: number | null;
+  review_text: string | null;
+  status: string;
+  created_at: string | null;
+}
+
+interface LeadInquirySummary {
+  id: string;
+  status: string;
+  provider_response_status: string | null;
+  created_at: string | null;
+  facility: FacilitySummary | null;
+}
+
 interface LeadJourneyData {
   hasAccount: boolean;
   accountCreatedAt?: string;
   hasConcierge: boolean;
-  conciergeInquiries: any[];
+  conciergeInquiries: ConciergeInquirySummary[];
   hasReviews: boolean;
-  reviews: any[];
+  reviews: ReviewSummary[];
   hasFavorites: boolean;
   favoriteCount: number;
-  providerCommunications: any[];
-  leadInquiries: any[];
+  providerCommunications: LeadInquirySummary[];
+  leadInquiries: LeadInquirySummary[];
 }
 
 interface MarketingLeadProfileModalProps {
@@ -170,7 +196,7 @@ export function MarketingLeadProfileModal({
       };
 
       const { data: seekerEmails } = await supabase.rpc("get_seeker_emails_for_admin");
-      const matchingSeeker = seekerEmails?.find((s: any) =>
+      const matchingSeeker = seekerEmails?.find((s: { email: string | null; user_id: string }) =>
         s.email?.toLowerCase() === lead.email.toLowerCase()
       );
 
@@ -194,7 +220,7 @@ export function MarketingLeadProfileModal({
         .order("created_at", { ascending: false })
         .limit(50);
 
-      let reviews: any[] = [];
+      let reviews: ReviewSummary[] = [];
       let favoriteCount = 0;
       if (userId) {
         const { data: userReviews } = await supabase
@@ -220,7 +246,7 @@ export function MarketingLeadProfileModal({
         .limit(100);
 
       const facilityIds = [...new Set(pluckNonNull(leadInquiries, "facility_id"))];
-      const facilitiesMap: Record<string, any> = {};
+      const facilitiesMap: Record<string, FacilitySummary> = {};
 
       if (facilityIds.length > 0) {
         const { data: facilities } = await supabase
@@ -882,7 +908,7 @@ export function MarketingLeadProfileModal({
                         Provider Inquiries ({journeyData?.leadInquiries?.length})
                       </h3>
                       <div className="space-y-2">
-                        {journeyData?.leadInquiries?.map((inquiry: any) => (
+                        {journeyData?.leadInquiries?.map((inquiry) => (
                           <div key={inquiry.id} className="flex items-center justify-between p-3 rounded-lg border bg-card">
                             <div className="flex items-center gap-3">
                               <div className="h-8 w-8 rounded-lg bg-info/10 flex items-center justify-center">
@@ -917,7 +943,7 @@ export function MarketingLeadProfileModal({
                         Concierge Requests ({journeyData?.conciergeInquiries?.length})
                       </h3>
                       <div className="space-y-2">
-                        {journeyData?.conciergeInquiries?.map((inquiry: any) => (
+                        {journeyData?.conciergeInquiries?.map((inquiry) => (
                           <div key={inquiry.id} className="flex items-center justify-between p-3 rounded-lg border bg-card">
                             <div className="flex items-center gap-3">
                               <div className="h-8 w-8 rounded-lg bg-chart-3/10 flex items-center justify-center">
@@ -947,7 +973,7 @@ export function MarketingLeadProfileModal({
                         Reviews Written ({journeyData?.reviews?.length})
                       </h3>
                       <div className="space-y-2">
-                        {journeyData?.reviews?.map((review: any) => (
+                        {journeyData?.reviews?.map((review) => (
                           <div key={review.id} className="p-3 rounded-lg border bg-card">
                             <div className="flex items-center justify-between mb-2">
                               <div className="flex items-center gap-1">

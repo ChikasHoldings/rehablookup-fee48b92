@@ -9,7 +9,7 @@ export interface SeekerNotification {
   title: string;
   message: string;
   link: string | null;
-  metadata: Record<string, any> | null;
+  metadata: Record<string, unknown> | null;
   read: boolean;
   created_at: string;
 }

@@ -138,7 +138,7 @@ export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = 
         clearTimeout(searchTimeoutRef.current);
       }
     };
-  }, [searchQuery]);
+  }, [searchQuery, toast]);
 
   useEffect(() => {
     if (searchOpen && searchInputRef.current) {

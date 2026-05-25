@@ -13,8 +13,22 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 
+interface SeekerOverviewUser {
+  user_id: string;
+  phone_verified: boolean | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface SeekerActivitySummary {
+  conciergeInquiries?: Array<{ status: string }>;
+  reviews?: unknown[];
+  favorites?: unknown[];
+  activityLog?: unknown[];
+}
+
 interface SeekerOverviewTabProps {
-  user: any;
+  user: SeekerOverviewUser;
   email: string | null | undefined;
   phone: string | null | undefined;
   fullName: string | null | undefined;
@@ -23,7 +37,7 @@ interface SeekerOverviewTabProps {
   zipcode: string | null | undefined;
   isBanned: boolean;
   hasConcierge: boolean;
-  userActivity: any;
+  userActivity: SeekerActivitySummary | null | undefined;
   canModerateUsers: boolean;
   isSendingReset: boolean;
   onContactUser: () => void;
@@ -44,7 +58,7 @@ type PlacementJourneyStatus =
   | "admitted"
   | "closed";
 
-const journeyStatusConfig: Record<PlacementJourneyStatus, { label: string; color: string; icon: any }> = {
+const journeyStatusConfig: Record<PlacementJourneyStatus, { label: string; color: string; icon: React.ElementType }> = {
   not_started: { label: "Not Started", color: "bg-muted text-muted-foreground border-border", icon: Clock },
   intake_submitted: { label: "Intake Submitted", color: "bg-blue-500/10 text-blue-600 border-blue-500/30", icon: FileText },
   in_progress: { label: "In Progress", color: "bg-amber-500/10 text-amber-600 border-amber-500/30", icon: Clock },
@@ -80,8 +94,8 @@ export function SeekerOverviewTab({
         placed: 6, in_contact: 5, introductions_sent: 4, matched: 3, matching: 2, reviewing: 1, new: 0, closed: -1,
       };
 
-      const activeCases = inqs.filter((i: any) => i.status !== "closed");
-      const sortedCases = [...inqs].sort((a: any, b: any) => (statusPriority[b.status] || 0) - (statusPriority[a.status] || 0));
+      const activeCases = inqs.filter((i) => i.status !== "closed");
+      const sortedCases = [...inqs].sort((a, b) => (statusPriority[b.status] || 0) - (statusPriority[a.status] || 0));
       const topCase = sortedCases[0];
 
       // Determine journey status
@@ -100,7 +114,7 @@ export function SeekerOverviewTab({
 
       // Resolve placed facility
       let placedFacility = null;
-      const placedCase = inqs.find((i: any) => i.placed_facility_id);
+      const placedCase = inqs.find((i) => i.placed_facility_id);
       if (placedCase?.placed_facility_id) {
         const { data: fac } = await supabase
           .from("facilities")
@@ -135,9 +149,9 @@ export function SeekerOverviewTab({
 
   const totalInquiries = userActivity?.conciergeInquiries?.length || 0;
   const activePlacements = userActivity?.conciergeInquiries?.filter(
-    (i: any) => !["closed", "cancelled"].includes(i.status)
+    (i) => !["closed", "cancelled"].includes(i.status)
   ).length || 0;
-  const placedCount = placementData?.cases?.filter((c: any) => c.placement_confirmed || c.admission_status === "admitted").length || 0;
+  const placedCount = placementData?.cases?.filter((c) => c.placement_confirmed || c.admission_status === "admitted").length || 0;
 
   const journeyStatus = placementData?.journeyStatus || (hasConcierge ? "intake_submitted" : "not_started");
   const journeyConfig = journeyStatusConfig[journeyStatus as PlacementJourneyStatus];

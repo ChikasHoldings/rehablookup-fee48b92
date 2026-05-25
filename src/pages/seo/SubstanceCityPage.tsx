@@ -84,7 +84,7 @@ export default function SubstanceCityPage() {
     },
   ];
 
-  const structuredData: any[] = [
+  const structuredData: object[] = [
     {
       "@context": "https://schema.org",
       "@type": "MedicalWebPage",

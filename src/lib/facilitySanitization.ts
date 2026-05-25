@@ -59,7 +59,7 @@ export function sanitizeFacilityName(name: string): string {
  * Returns the type if valid, throws otherwise.
  */
 export function validateFacilityType(type: string): string {
-  if (!FACILITY_TYPE_VALUES.includes(type as any)) {
+  if (!(FACILITY_TYPE_VALUES as readonly string[]).includes(type)) {
     throw new Error(`Invalid facility type: "${type}"`);
   }
   return type;
@@ -69,7 +69,7 @@ export function validateFacilityType(type: string): string {
  * Validate state against the US states list.
  */
 export function validateState(state: string): string {
-  if (!US_STATES.includes(state as any)) {
+  if (!(US_STATES as readonly string[]).includes(state)) {
     throw new Error(`Invalid state: "${state}"`);
   }
   return state;
@@ -106,7 +106,7 @@ export function validateEmail(email: string | null | undefined): string | null {
  */
 export function validatePhone(phone: string): string {
   const trimmed = phone.trim();
-  if (!/^[\d\s\-\(\)\+]{7,30}$/.test(trimmed)) {
+  if (!/^[\d\s()+-]{7,30}$/.test(trimmed)) {
     throw new Error("Invalid phone number format");
   }
   return trimmed;

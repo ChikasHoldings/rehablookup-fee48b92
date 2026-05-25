@@ -380,7 +380,7 @@ export default function ProviderSignup({
     }
   }, [formData]);
 
-  const updateFormData = (field: string, value: any) => {
+  const updateFormData = (field: string, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -608,10 +608,10 @@ export default function ProviderSignup({
         sanitizedWebsite = sanitizeWebsite(formData.website);
         sanitizedDescription = sanitizeDescription(formData.description);
         validatedYear = validateYearEstablished(formData.yearEstablished);
-      } catch (validationError: any) {
+      } catch (validationError) {
         toast({
           title: "Validation Error",
-          description: validationError.message || "Please check your facility information.",
+          description: (validationError instanceof Error ? validationError.message : "") || "Please check your facility information.",
           variant: "destructive",
         });
         submittingRef.current = false;
@@ -723,7 +723,7 @@ export default function ProviderSignup({
               attempted_city: sanitizedCity,
               attempted_state: formData.state,
               postgres_error: facilityError.message,
-              postgres_code: (facilityError as any).code ?? null,
+              postgres_code: (facilityError as { code?: string }).code ?? null,
             },
           });
         } catch (notifyErr) {
@@ -1116,7 +1116,7 @@ export default function ProviderSignup({
       });
       navigate("/provider/onboarding?step=plan");
       return;
-    } catch (error: any) {
+    } catch (error) {
       console.error("Signup error:", error);
       toast({
         title: "Error",
@@ -1159,14 +1159,14 @@ export default function ProviderSignup({
           formData.facilityName.trim().length >= 2 &&
           formData.facilityName.trim().length <= 100 &&
           formData.facilityType &&
-          FACILITY_TYPE_VALUES.includes(formData.facilityType as any) &&
+          (FACILITY_TYPE_VALUES as readonly string[]).includes(formData.facilityType) &&
           phoneDigits >= 7 &&
           formData.address.trim().length >= 2 &&
           formData.address.trim().length <= 200 &&
           formData.city.trim().length >= 1 &&
           formData.city.trim().length <= 100 &&
           formData.state &&
-          US_STATES.includes(formData.state as any) &&
+          (US_STATES as readonly string[]).includes(formData.state) &&
           zipValid
         );
       }

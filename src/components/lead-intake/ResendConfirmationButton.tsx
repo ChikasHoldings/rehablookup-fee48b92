@@ -67,7 +67,7 @@ export function ResendConfirmationButton({
 
       // supabase-js surfaces non-2xx as `error`, but the JSON body is still
       // delivered in `data`. We look at both so 429 retry hints aren't lost.
-      const payload = (data ?? (error as any)?.context?.body) as
+      const payload = (data ?? (error as { context?: { body?: unknown } } | null)?.context?.body) as
         | { code?: string; retryAfterSeconds?: number; cooldownSeconds?: number; error?: { message?: string } }
         | undefined;
 

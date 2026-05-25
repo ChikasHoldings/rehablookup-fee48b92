@@ -136,7 +136,7 @@ export default function PaymentStatePage({ paymentType }: PaymentStatePageProps)
   const faqs = config.faqs(stateName);
   const sections = config.sections(stateName);
 
-  const structuredData: any[] = [{
+  const structuredData: object[] = [{
     "@context": "https://schema.org",
     "@type": "MedicalWebPage",
     name: pageTitle,

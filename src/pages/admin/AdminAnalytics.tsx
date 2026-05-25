@@ -71,12 +71,16 @@ const CHART_COLORS = {
 };
 
 // Custom tooltip component for charts - wrapped in forwardRef for recharts compatibility
-const CustomTooltip = forwardRef<HTMLDivElement, any>(({ active, payload, label }, ref) => {
+const CustomTooltip = forwardRef<HTMLDivElement, {
+  active?: boolean;
+  payload?: Array<{ color?: string; name?: string; value?: number | string }>;
+  label?: string | number;
+}>(({ active, payload, label }, ref) => {
   if (active && payload && payload.length) {
     return (
       <div ref={ref} className="bg-background border border-border rounded-lg shadow-lg p-3">
         <p className="font-medium text-sm mb-1">{label}</p>
-        {payload.map((entry: any, index: number) => (
+        {payload.map((entry, index: number) => (
           <p key={index} className="text-sm" style={{ color: entry.color }}>
             {entry.name}: <span className="font-semibold">{typeof entry.value === 'number' ? entry.value.toLocaleString() : entry.value}</span>
           </p>

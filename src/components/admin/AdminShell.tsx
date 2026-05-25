@@ -87,7 +87,7 @@ export function AdminShell() {
 
   // When impersonating, use impersonated role's permissions for sidebar/routing
   const effectiveIsSuperAdmin = isImpersonating ? false : isSuperAdmin;
-  const effectiveAdminRole = isImpersonating ? (impersonating?.role || "customer_rep") as any : adminRole;
+  const effectiveAdminRole = isImpersonating ? (impersonating?.role || "customer_rep") as never : adminRole;
   const effectiveHasPermission = isImpersonating
     ? (key: string) => impersonating?.permissions?.[key] === true
     : hasPermission;

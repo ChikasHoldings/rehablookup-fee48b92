@@ -408,10 +408,10 @@ export function ConciergeIntroductionsTab({ caseData, onRefresh }: ConciergeIntr
                     <div className="flex items-start justify-between">
                       <div>
                         <h4 className="font-medium">
-                          {(intro.facility as any)?.name || "Unknown Facility"}
+                          {(intro.facility as { name?: string; city?: string; state?: string } | null)?.name || "Unknown Facility"}
                         </h4>
                         <p className="text-sm text-muted-foreground">
-                          {(intro.facility as any)?.city}, {(intro.facility as any)?.state}
+                          {(intro.facility as { name?: string; city?: string; state?: string } | null)?.city}, {(intro.facility as { name?: string; city?: string; state?: string } | null)?.state}
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
                           Sent: {intro.sent_at ? format(new Date(intro.sent_at), "MMM d, yyyy h:mm a") : format(new Date(intro.created_at || Date.now()), "MMM d, yyyy h:mm a")}

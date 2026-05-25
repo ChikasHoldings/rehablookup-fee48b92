@@ -101,8 +101,8 @@ const RehabCenters = () => {
 
   const sorted = useMemo(() => {
     return [...allCenters].sort((a, b) => {
-      const aF = (a as any).hasFeaturedSubscription ? 1 : 0;
-      const bF = (b as any).hasFeaturedSubscription ? 1 : 0;
+      const aF = (a as { hasFeaturedSubscription?: boolean }).hasFeaturedSubscription ? 1 : 0;
+      const bF = (b as { hasFeaturedSubscription?: boolean }).hasFeaturedSubscription ? 1 : 0;
       if (bF !== aF) return bF - aF;
       if (b.featured !== a.featured) return b.featured ? 1 : -1;
       return b.rating - a.rating;
@@ -362,7 +362,7 @@ const RehabCenters = () => {
             pageSize: BROWSE_PAGE_SIZE,
             prevUrl: seoPrevUrl,
             nextUrl: seoNextUrl,
-            facilities: browsePaginated.slice(0, 10).map((c: any) => ({
+            facilities: browsePaginated.slice(0, 10).map((c: { name: string; city: string; state: string; slug: string; [k: string]: unknown }) => ({
               name: c.name,
               city: c.city,
               state: c.state,

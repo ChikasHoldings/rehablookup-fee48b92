@@ -62,10 +62,10 @@ export const ReportImageDialog = forwardRef<HTMLDivElement, ReportImageDialogPro
       onOpenChange(false);
       setReason("");
       setDetails("");
-    } catch (error: any) {
+    } catch (error) {
       console.error("Failed to report image:", error);
       toast.error("Failed to submit report", {
-        description: error.message || "Please try again later",
+        description: error instanceof Error ? error.message : "Please try again later",
       });
     } finally {
       setIsSubmitting(false);

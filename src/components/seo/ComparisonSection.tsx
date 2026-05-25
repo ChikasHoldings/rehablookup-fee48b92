@@ -16,7 +16,10 @@ const featureLabels = [
   "Verified Credentials",
 ];
 
-function hasFeature(f: any, feature: string): boolean {
+function hasFeature(
+  f: { treatmentTypes?: string[]; insuranceAccepted?: string[]; verified?: boolean | null; featured?: boolean; [k: string]: unknown },
+  feature: string,
+): boolean {
   const types = (f.treatmentTypes || []).map((t: string) => t.toLowerCase());
   const insurance = (f.insuranceAccepted || []);
   switch (feature) {

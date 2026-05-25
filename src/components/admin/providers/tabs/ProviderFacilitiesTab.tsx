@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import { type Facility, type ProSubscription, getStatusBadge } from "../ProviderListItem";
+import { type Facility, type ProSubscription } from "../ProviderListItem";
+import { getStatusBadge } from "../providerBadges";
 
 interface ProviderFacilitiesTabProps {
   provider: Facility;
@@ -123,7 +124,7 @@ function FacilityCard({ facility, isCurrent, isPro }: { facility: Facility; isCu
   );
 }
 
-function MetricChip({ icon: Icon, label, value }: { icon: any; label: string; value: number }) {
+function MetricChip({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: number }) {
   return (
     <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
       <Icon className="h-3 w-3" />

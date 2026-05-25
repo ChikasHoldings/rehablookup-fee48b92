@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -40,7 +41,7 @@ interface NetworkProvider {
   concierge_opted_in_at: string | null;
   concierge_terms_accepted_at: string | null;
   concierge_availability_status: string | null;
-  concierge_accepted_care_types: any;
+  concierge_accepted_care_types: Json;
   concierge_admissions_email: string | null;
   concierge_admissions_phone: string | null;
   user_id: string;

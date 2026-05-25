@@ -409,8 +409,8 @@ export default function ConciergeIntake() {
 
         if (city) { next.desiredCity = city; applied.city = true; }
         if (state) { next.desiredState = state; applied.state = true; }
-        if (zip && "desiredZip" in next && !(next as any).desiredZip) {
-          (next as any).desiredZip = zip;
+        if (zip && "desiredZip" in next && !(next as { desiredZip?: string }).desiredZip) {
+          (next as { desiredZip?: string }).desiredZip = zip;
           applied.zip = true;
         } else if (zip && !city && !state) {
           next.desiredCity = zip;

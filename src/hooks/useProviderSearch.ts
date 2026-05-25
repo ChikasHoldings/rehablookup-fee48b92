@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { fromLeadsProviderView } from "@/lib/leadsProviderView";
@@ -71,8 +71,8 @@ export function useProviderSearch(query: string, facilityId?: string) {
       ]);
       if (introsRes.error) throw introsRes.error;
       if (safeRes.error) throw safeRes.error;
-      const inquiryMap = new Map((safeRes.data || []).map((i: any) => [i.id, i]));
-      return (introsRes.data || []).map((intro: any) => ({
+      const inquiryMap = new Map((safeRes.data || []).map((i: { id: string; [k: string]: unknown }) => [i.id, i]));
+      return (introsRes.data || []).map((intro: { inquiry_id: string; [k: string]: unknown }) => ({
         ...intro,
         concierge_inquiries: inquiryMap.get(intro.inquiry_id) || null,
       }));
@@ -115,20 +115,25 @@ export function useProviderSearch(query: string, facilityId?: string) {
   // seeker demographic. Uses Unicode NFD then drops the combining
   // range; works on every modern browser since `String.normalize`
   // ships in Node 12+ / Chrome 67+ / Safari 10+.
-  const stripDiacritics = (s: string) =>
-    s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const stripDiacritics = useCallback(
+    (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, ""),
+    [],
+  );
 
   // True if EVERY whitespace-delimited token in the query appears
   // somewhere in any of the supplied haystack strings. Lets "John 555"
   // match a lead named "John Smith" with phone 555-1234 — the previous
   // monolithic `includes` only matched if the literal phrase appeared
   // verbatim. Empty haystacks short-circuit to false.
-  const tokensMatchAll = (tokens: string[], haystacks: string[]): boolean => {
-    if (tokens.length === 0) return true;
-    const joined = haystacks.filter(Boolean).map(stripDiacritics).join(" ").toLowerCase();
-    if (!joined) return false;
-    return tokens.every((t) => joined.includes(t));
-  };
+  const tokensMatchAll = useCallback(
+    (tokens: string[], haystacks: string[]): boolean => {
+      if (tokens.length === 0) return true;
+      const joined = haystacks.filter(Boolean).map(stripDiacritics).join(" ").toLowerCase();
+      if (!joined) return false;
+      return tokens.every((t) => joined.includes(t));
+    },
+    [stripDiacritics],
+  );
 
   // Filter and format results
   const results = useMemo(() => {
@@ -227,7 +232,7 @@ export function useProviderSearch(query: string, facilityId?: string) {
       listings: matchedListings,
       total: matchedLeads.length + matchedPages.length + matchedPlacements.length + matchedListings.length,
     };
-  }, [debouncedQuery, leads, placements, listings]);
+  }, [debouncedQuery, leads, placements, listings, tokensMatchAll, stripDiacritics]);
 
   return {
     results,

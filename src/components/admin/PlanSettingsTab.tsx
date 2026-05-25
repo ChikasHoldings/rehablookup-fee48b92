@@ -189,7 +189,7 @@ export function PlanSettingsTab() {
   // Create coupon mutation
   const createMutation = useMutation({
     mutationFn: async () => {
-      const body: any = {
+      const body: Record<string, unknown> = {
         action: "create_coupon",
         name: formData.name,
         duration: formData.duration,

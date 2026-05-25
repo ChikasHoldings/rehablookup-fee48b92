@@ -150,7 +150,7 @@ export default function AdminLogin() {
       if (preCheckError) {
         try {
           const errBody = typeof preCheckError === 'object' && 'context' in preCheckError
-            ? await (preCheckError as any).context?.json?.()
+            ? await (preCheckError as { context?: { json?: () => Promise<{ blocked?: boolean; message?: string }> } }).context?.json?.()
             : null;
           if (errBody?.blocked) {
             toast.error(errBody.message || "Your IP address has been blocked.");

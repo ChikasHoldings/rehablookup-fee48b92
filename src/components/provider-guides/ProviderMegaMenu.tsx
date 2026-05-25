@@ -179,6 +179,3 @@ export function ProviderMegaMenuMobile({ onNavigate }: MegaMenuProps) {
     </div>
   );
 }
-
-export const providerSEOPages = seoPages;
-export const providerQuickLinks = quickLinks;

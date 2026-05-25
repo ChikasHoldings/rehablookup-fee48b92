@@ -551,7 +551,7 @@ const CenterProfile = () => {
       facility_slug: facility.slug,
       facility_state: facility.state,
     });
-  }, [facility?.id, facility?.slug, facility?.state, facility?.name, trackClickToCall, trackWebsiteClick]);
+  }, [facility?.id, facility?.slug, facility?.state, trackClickToCall, trackWebsiteClick]);
 
   const handleRequestInfoOpen = useCallback((cta_location: string) => {
     // Always open the Message Center modal in-place. Previously the

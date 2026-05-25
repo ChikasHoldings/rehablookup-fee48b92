@@ -207,7 +207,7 @@ export default function AdminConcierge() {
     queryFn: async () => {
       if (!placedFacilityIds.length) return {};
       const { data } = await supabase.from("facilities").select("id, name, city, state").in("id", placedFacilityIds as string[]);
-      const map: Record<string, any> = {};
+      const map: Record<string, { id: string; name: string; city: string; state: string }> = {};
       data?.forEach(f => { map[f.id] = f; });
       return map;
     },

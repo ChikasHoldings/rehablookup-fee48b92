@@ -146,7 +146,7 @@ export default function CategoryHub() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const allArticles = articles ?? [];
+  const allArticles = useMemo(() => articles ?? [], [articles]);
 
   // Pillar = explicitly-curated slugs (preserve order), filtered to those that
   // are actually in the result set. The rest of the list is "everything else."

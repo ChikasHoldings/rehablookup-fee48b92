@@ -56,7 +56,8 @@ import {
   getNearbyStates,
   facilityMatchesLocation,
   PROXIMITY_TIER_ORDER,
-  type LocationMatch 
+  type LocationMatch,
+  type ProximityTier
 } from "@/lib/proximitySearch";
 import { useZipcodeLookup } from "@/hooks/useZipcodeLookup";
 import { useGeoLocation } from "@/hooks/useGeoLocation";
@@ -456,7 +457,7 @@ const SearchResults = () => {
 
     // Verified only filter
     if (verifiedOnly) {
-      results = results.filter((center) => (center as any).verified === true);
+      results = results.filter((center) => center.verified === true);
     }
 
     // Featured only filter
@@ -536,12 +537,12 @@ const SearchResults = () => {
         const proxB = getProximityScore(b);
         if (proxA !== proxB) return proxA - proxB;
         // Secondary: Pro/featured within tier
-        const proA = getPlanPriority(a as any);
-        const proB = getPlanPriority(b as any);
+        const proA = getPlanPriority(a);
+        const proB = getPlanPriority(b);
         if (proA !== proB) return proA - proB;
         // Tertiary: ranking score
-        const rA = (a as any).calculatedRankingScore || 0;
-        const rB = (b as any).calculatedRankingScore || 0;
+        const rA = a.calculatedRankingScore || 0;
+        const rB = b.calculatedRankingScore || 0;
         if (rA !== rB) return rB - rA;
         // Final: stable by ID
         return a.id.localeCompare(b.id);
@@ -553,24 +554,24 @@ const SearchResults = () => {
           const proxB = getProximityScore(b);
           if (proxA !== proxB) return proxA - proxB;
         }
-        const proA = getPlanPriority(a as any);
-        const proB = getPlanPriority(b as any);
+        const proA = getPlanPriority(a);
+        const proB = getPlanPriority(b);
         if (proA !== proB) return proA - proB;
         return a.id.localeCompare(b.id);
       }
 
       // For other sorts, Pro first then secondary
-      const proA = getPlanPriority(a as any);
-      const proB = getPlanPriority(b as any);
+      const proA = getPlanPriority(a);
+      const proB = getPlanPriority(b);
       if (proA !== proB) return proA - proB;
 
       switch (sortParam) {
         case "rating-high": {
-          const diff = ((b as any).calculatedRankingScore || 0) - ((a as any).calculatedRankingScore || 0);
+          const diff = (b.calculatedRankingScore || 0) - (a.calculatedRankingScore || 0);
           return diff !== 0 ? diff : a.id.localeCompare(b.id);
         }
         case "rating-low": {
-          const diff = ((a as any).calculatedRankingScore || 0) - ((b as any).calculatedRankingScore || 0);
+          const diff = (a.calculatedRankingScore || 0) - (b.calculatedRankingScore || 0);
           return diff !== 0 ? diff : a.id.localeCompare(b.id);
         }
         case "reviews": {
@@ -601,10 +602,11 @@ const SearchResults = () => {
       if (resolvedZipData) {
         match = enrichLocationMatchWithZip(match, resolvedZipData);
       }
-      results.forEach((r: any) => {
+      results.forEach((r) => {
         const { tier, reason } = getProximityTier(r, match!);
-        r._proximityTier = tier;
-        r._proximityReason = reason;
+        const annotated = r as typeof r & { _proximityTier?: ProximityTier; _proximityReason?: string };
+        annotated._proximityTier = tier;
+        annotated._proximityReason = reason;
       });
     }
 
@@ -1145,7 +1147,7 @@ const SearchResults = () => {
             name: c.name,
             city: c.city,
             state: c.state,
-            slug: 'slug' in c ? (c as any).slug : undefined,
+            slug: 'slug' in c ? c.slug ?? undefined : undefined,
           })),
         }) : undefined}
       />

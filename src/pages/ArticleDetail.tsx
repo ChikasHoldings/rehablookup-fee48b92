@@ -436,7 +436,7 @@ const ArticleDetail = () => {
 
   // Render content blocks from JSON structure
   const renderContent = () => {
-    return article.content.map((block: any, index: number) => {
+    return article.content.map((block: string | ContentBlock, index: number) => {
       const isAfterMidpoint = index === Math.floor(article.content.length / 2);
 
       // Handle legacy string-based content format

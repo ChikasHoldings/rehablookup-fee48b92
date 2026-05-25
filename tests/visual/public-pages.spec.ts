@@ -71,7 +71,8 @@ async function stabilise(pw: Page) {
     `,
   });
   await pw.evaluate(async () => {
-    if ((document as any).fonts?.ready) await (document as any).fonts.ready;
+    const docFonts = (document as { fonts?: { ready?: Promise<unknown> } }).fonts;
+    if (docFonts?.ready) await docFonts.ready;
   });
   // Trigger any in-view lazy-load and wait for the network to settle.
   await pw.evaluate(() => window.scrollTo(0, document.body.scrollHeight));

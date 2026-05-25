@@ -18,6 +18,7 @@ import { useGeoLocation } from "@/hooks/useGeoLocation";
 import { useCountUp } from "@/hooks/useCountUp";
 import { useDirectoryStats } from "@/hooks/useDirectoryStats";
 import { cn } from "@/lib/utils";
+import type { FAQItem } from "@/components/seo/PageFAQ";
 // Hero image moved to public folder for FCP optimization - preloaded in index.html
 // Using WebP for ~70% smaller file size
 const heroImage = "/hero-recovery.webp";
@@ -115,7 +116,7 @@ const Index = () => {
   const newCtaEnabled = useNewCtaSystem();
 
   // Lazy-loaded data for below-fold sections
-  const [homeFaqs, setHomeFaqs] = useState<any[]>([]);
+  const [homeFaqs, setHomeFaqs] = useState<FAQItem[]>([]);
 
   // Live directory stats — single source of truth shared with TrustRibbon.
   // The hook reads the build-time-inlined `<meta name="rl:stats">` for an

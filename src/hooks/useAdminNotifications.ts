@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { logAdminError } from "@/lib/adminErrorLogger";
+import type { Json } from "@/integrations/supabase/types";
 
 export interface AdminNotification {
   id: string;
@@ -223,7 +224,7 @@ export function useAdminNotifications() {
           type: notification.type,
           title: notification.title,
           message: notification.message,
-          metadata: (notification.metadata || {}) as any,
+          metadata: (notification.metadata || {}) as Json,
         }]);
       if (error) throw error;
     },

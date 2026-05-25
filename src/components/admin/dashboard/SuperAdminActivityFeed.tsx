@@ -96,7 +96,7 @@ export function SuperAdminActivityFeed() {
             </div>
           ) : activities && activities.length > 0 ? (
             <div className="divide-y">
-              {activities.map((activity: any) => {
+              {activities.map((activity) => {
                 const Icon = actionIcons[activity.action_type] || Activity;
                 const colorClass = actionColors[activity.action_type] || "bg-muted text-muted-foreground";
                 return (

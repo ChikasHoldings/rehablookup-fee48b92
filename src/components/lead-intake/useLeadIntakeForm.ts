@@ -310,10 +310,10 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
       });
       
       return true;
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Failed to send code",
-        description: error.message || "Please try again",
+        description: error instanceof Error ? error.message : "Please try again",
         variant: "destructive",
       });
       return false;
@@ -346,10 +346,10 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
       });
       
       return true;
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Verification failed",
-        description: error.message || "Invalid code",
+        description: error instanceof Error ? error.message : "Invalid code",
         variant: "destructive",
       });
       return false;
@@ -521,12 +521,12 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
       // NOTE: Seeker confirmation email is sent server-side by submit-qualified-lead.
       // Do NOT send a duplicate frontend email here.
       
-    } catch (error: any) {
+    } catch (error) {
       // Reset idempotency key so user can retry
       idempotencyKeyRef.current = null;
       toast({
         title: "Submission failed",
-        description: error.message || "Please try again",
+        description: error instanceof Error ? error.message : "Please try again",
         variant: "destructive",
       });
     } finally {

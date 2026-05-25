@@ -259,8 +259,8 @@ export default function ExpandedTreatmentHubPage() {
         )
       )
       .sort((a, b) => {
-        const aPro = (a as any).isPro ? 1 : 0;
-        const bPro = (b as any).isPro ? 1 : 0;
+        const aPro = (a as { isPro?: boolean }).isPro ? 1 : 0;
+        const bPro = (b as { isPro?: boolean }).isPro ? 1 : 0;
         if (bPro !== aPro) return bPro - aPro;
         if ((a.featured ? 1 : 0) !== (b.featured ? 1 : 0)) return (b.featured ? 1 : 0) - (a.featured ? 1 : 0);
         return a.name.localeCompare(b.name);
@@ -291,7 +291,7 @@ export default function ExpandedTreatmentHubPage() {
     );
   }
 
-  const structuredData: any[] = [
+  const structuredData: object[] = [
     {
       "@context": "https://schema.org",
       "@type": "MedicalWebPage",

@@ -35,7 +35,7 @@ export function SeekerAuditLogTab({ userId }: SeekerAuditLogTabProps) {
       if (adminAuditRes.error) console.error("Admin audit error:", adminAuditRes.error);
 
       const entries = [
-        ...(activityRes.data || []).map((a: any) => ({
+        ...(activityRes.data || []).map((a) => ({
           id: a.id,
           type: "user_activity",
           action: a.event_type,
@@ -45,7 +45,7 @@ export function SeekerAuditLogTab({ userId }: SeekerAuditLogTabProps) {
           userAgent: a.user_agent,
           actor: "seeker",
         })),
-        ...(adminAuditRes.data || []).map((a: any) => ({
+        ...(adminAuditRes.data || []).map((a) => ({
           id: a.id,
           type: "admin_action",
           action: a.action_type,
@@ -80,7 +80,7 @@ export function SeekerAuditLogTab({ userId }: SeekerAuditLogTabProps) {
     );
   }
 
-  const actionIcons: Record<string, any> = {
+  const actionIcons: Record<string, React.ElementType> = {
     signup: UserPlus, login: Eye, sign_in: Eye, profile_updated: Settings, profile_update: Settings,
     inquiry_submitted: MessageSquare, review_submitted: Star,
     ban: Ban, delete: Trash2, send_password_reset: KeyRound,
@@ -88,8 +88,8 @@ export function SeekerAuditLogTab({ userId }: SeekerAuditLogTabProps) {
   };
 
   // Summary
-  const adminActions = auditEntries.filter((e: any) => e.actor === "admin").length;
-  const userActions = auditEntries.filter((e: any) => e.actor === "seeker").length;
+  const adminActions = auditEntries.filter((e) => e.actor === "admin").length;
+  const userActions = auditEntries.filter((e) => e.actor === "seeker").length;
 
   return (
     <div className="p-5 space-y-4">
@@ -123,7 +123,7 @@ export function SeekerAuditLogTab({ userId }: SeekerAuditLogTabProps) {
               </tr>
             </thead>
             <tbody>
-              {auditEntries.map((entry: any) => {
+              {auditEntries.map((entry) => {
                 const Icon = actionIcons[entry.action] || FileText;
                 return (
                   <tr key={entry.id} className="border-b last:border-0 hover:bg-muted/20 transition-colors">

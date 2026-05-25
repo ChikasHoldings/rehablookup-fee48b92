@@ -30,8 +30,7 @@ import type { Lead } from "@/components/provider/leads/LeadDetailPanel";
 // it returns is generic, so we hand it `Lead` as the row type and the
 // rest of the chain stays type-safe.
 //
-// deno-lint-ignore no-explicit-any
-const supabaseRelaxed = supabase as any;
+const supabaseRelaxed = supabase as unknown as { from: (relation: string) => unknown };
 
 export function fromLeadsProviderView() {
   return supabaseRelaxed.from("leads_provider_view") as ReturnType<

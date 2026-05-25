@@ -66,7 +66,7 @@ export default function InsuranceStatePage() {
 
   const pageTitle = `${insurer.name} Rehab Coverage in ${stateConfig.state}`;
 
-  const structuredData: any[] = [
+  const structuredData: object[] = [
     {
       "@context": "https://schema.org",
       "@type": "WebPage",

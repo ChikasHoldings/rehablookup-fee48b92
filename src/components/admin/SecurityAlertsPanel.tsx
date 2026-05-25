@@ -18,6 +18,7 @@ import {
   Settings,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -89,7 +90,7 @@ export function SecurityAlertsPanel() {
 
       if (error) throw error;
       
-      const settings: Record<string, any> = {};
+      const settings: Record<string, unknown> = {};
       data?.forEach((s) => {
         settings[s.setting_key] = s.setting_value;
       });
@@ -122,7 +123,7 @@ export function SecurityAlertsPanel() {
 
   // Update alert threshold setting
   const updateAlertSetting = useMutation({
-    mutationFn: async ({ key, value }: { key: string; value: any }) => {
+    mutationFn: async ({ key, value }: { key: string; value: Json }) => {
       const { data: { user } } = await supabase.auth.getUser();
 
       const { error } = await supabase
@@ -179,9 +180,9 @@ export function SecurityAlertsPanel() {
       // Refresh data
       refetchAttempts();
       refetchBlocked();
-    } catch (error: any) {
+    } catch (error) {
       console.error("Security check error:", error);
-      toast.error("Security check failed", { description: error.message });
+      toast.error("Security check failed", { description: error instanceof Error ? error.message : "Unknown error" });
     } finally {
       setIsRunningCheck(false);
     }

@@ -356,8 +356,8 @@ export default function SeekerSearch() {
         }
       }
       // Within the same prox/sort bucket, Pro first then rating
-      const proA = getPlanPriority(a as any);
-      const proB = getPlanPriority(b as any);
+      const proA = getPlanPriority(a as Parameters<typeof getPlanPriority>[0]);
+      const proB = getPlanPriority(b as Parameters<typeof getPlanPriority>[0]);
       if (proA !== proB) return proA - proB;
       const rA = (a as unknown as { googleRating?: number }).googleRating || 0;
       const rB = (b as unknown as { googleRating?: number }).googleRating || 0;

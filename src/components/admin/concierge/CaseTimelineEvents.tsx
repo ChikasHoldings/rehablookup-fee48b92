@@ -25,7 +25,7 @@ interface CaseTimelineEventsProps {
   caseData: ConciergeInquiry;
 }
 
-const EVENT_CONFIG: Record<string, { icon: React.ComponentType<any>; label: string; color: string }> = {
+const EVENT_CONFIG: Record<string, { icon: React.ComponentType<{ className?: string }>; label: string; color: string }> = {
   case_created: { icon: FileText, label: "Case Created", color: "text-blue-500" },
   intake_submitted: { icon: FileText, label: "Intake Submitted", color: "text-blue-500" },
   status_changed: { icon: Clock, label: "Status Changed", color: "text-gray-500" },
@@ -84,7 +84,7 @@ export function CaseTimelineEvents({ caseData }: CaseTimelineEventsProps) {
     caseData.seeker_confirmed_at && { type: "seeker_confirmed", date: caseData.seeker_confirmed_at, data: {} },
     caseData.placement_confirmed_at && { type: "placement_complete", date: caseData.placement_confirmed_at, data: {} },
     caseData.closed_at && { type: "case_closed", date: caseData.closed_at, data: {} },
-  ].filter(Boolean) as Array<{ type: string; date: string; data: any }>;
+  ].filter(Boolean) as Array<{ type: string; date: string; data: Record<string, unknown> }>;
 
   // Merge dynamic events with static ones (avoiding duplicates)
   const allEvents = [
@@ -92,7 +92,7 @@ export function CaseTimelineEvents({ caseData }: CaseTimelineEventsProps) {
       id: e.id,
       type: e.event_type,
       date: e.created_at || "",
-      data: (e.event_data && typeof e.event_data === "object" && !Array.isArray(e.event_data) ? e.event_data : {}) as Record<string, any>,
+      data: (e.event_data && typeof e.event_data === "object" && !Array.isArray(e.event_data) ? e.event_data : {}) as Record<string, unknown>,
       actor: e.actor_type,
     })),
   ];

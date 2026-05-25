@@ -57,7 +57,7 @@ function toCardData(
 }
 
 interface ResponsiveListingGridProps {
-  facilities: any[];
+  facilities: Record<string, unknown>[];
   maxItems?: number;
   /** Forwarded to /concierge as prefill / attribution. */
   conciergeLocation?: string;
@@ -65,7 +65,7 @@ interface ResponsiveListingGridProps {
   conciergeInsurance?: string;
   conciergeSource?: string;
   /** When `facilities` is empty, render these as "nearby suggestions" instead of a blank state. */
-  nearbyFacilities?: any[];
+  nearbyFacilities?: Record<string, unknown>[];
   /** Label shown above nearby fallback (e.g. "Centers in nearby cities"). */
   nearbyLabel?: string;
 }
@@ -86,18 +86,18 @@ export function ResponsiveListingGrid({
   const [canScrollRight, setCanScrollRight] = useState(false);
 
   const items = facilities.slice(0, maxItems);
-  const nearbyItems = nearbyFacilities ?? [];
 
   // Batched child-data lookup — services / insurance / age groups /
   // accreditations for every visible card in 4 IN-list queries total.
   // Includes nearby items when the primary list is empty so the
   // fallback cards aren't blank either.
   const visibleIds = useMemo(() => {
+    const nearbyItems = nearbyFacilities ?? [];
     const set = new Set<string>();
     for (const f of items) if (f?.id) set.add(String(f.id));
     for (const f of nearbyItems) if (f?.id) set.add(String(f.id));
     return [...set];
-  }, [items, nearbyItems]);
+  }, [items, nearbyFacilities]);
   const { data: childData } = useFacilityChildData(visibleIds);
 
   const renderCard = (facility: Record<string, unknown>) => {

@@ -18,7 +18,7 @@ import {
 } from "@/components/seo/InternalLinkingSection";
 
 import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
-export interface SubstanceNearMeConfig {
+interface SubstanceNearMeConfig {
   slug: string;
   label: string;
   serviceType: string;
@@ -28,7 +28,7 @@ export interface SubstanceNearMeConfig {
   faqs: { question: string; answer: string }[];
 }
 
-export const substanceNearMeConfigs: SubstanceNearMeConfig[] = [
+const substanceNearMeConfigs: SubstanceNearMeConfig[] = [
   {
     slug: "cocaine-rehab-near-me",
     label: "Cocaine Rehab",

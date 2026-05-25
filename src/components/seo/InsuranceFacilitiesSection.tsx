@@ -6,6 +6,7 @@ import { useGeoLocation } from "@/hooks/useGeoLocation";
 import { getNearbyStates } from "@/lib/proximitySearch";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { treatmentCenters } from "@/data/treatmentCenters";
+import type { TreatmentCenter } from "@/data/treatmentCenters";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -14,6 +15,21 @@ import {
   facilityMatchesInsurer,
   getInsurerMatch,
 } from "@/lib/insurerMatchKeywords";
+
+type PoolFacility = TreatmentCenter & {
+  slug?: string | null;
+  isFromDatabase?: boolean;
+  logo_url?: string | null;
+  gallery_urls?: string[] | null;
+  hasFeaturedSubscription?: boolean;
+  isPro?: boolean;
+  verified?: boolean | null;
+  year_established?: number | null;
+  facilityType?: string | null;
+  calculatedRankingScore?: number;
+  insuranceAccepted?: string[];
+  [k: string]: unknown;
+};
 
 interface InsuranceFacilitiesSectionProps {
   /** Insurer slug from INSURER_MATCH_CONFIGS (e.g. "medicare", "aetna", "bcbs"). */
@@ -74,8 +90,8 @@ export function InsuranceFacilitiesSection({
 
     // Combine DB-approved + static fallback; dedupe by id.
     const seen = new Set<string>();
-    const pool: any[] = [];
-    for (const f of approvedFacilities as any[]) {
+    const pool: PoolFacility[] = [];
+    for (const f of approvedFacilities as PoolFacility[]) {
       if (!seen.has(f.id)) {
         seen.add(f.id);
         pool.push(f);
@@ -99,12 +115,12 @@ export function InsuranceFacilitiesSection({
       }
     }
 
-    const filtered = pool.filter((f: any) =>
+    const filtered = pool.filter((f) =>
       facilityMatchesInsurer(f.insuranceAccepted, insurer.keywords),
     );
 
     // Sort: Pro > verified > ranking score, then proximity tier
-    filtered.sort((a: any, b: any) => {
+    filtered.sort((a, b) => {
       if (a.isPro !== b.isPro) return a.isPro ? -1 : 1;
       if (a.verified !== b.verified) return a.verified ? -1 : 1;
       return (b.calculatedRankingScore || 0) - (a.calculatedRankingScore || 0);
@@ -112,7 +128,7 @@ export function InsuranceFacilitiesSection({
 
     let display = filtered;
     if (userState && !geo.isLoading) {
-      const tiers = new Map<number, any[]>();
+      const tiers = new Map<number, PoolFacility[]>();
       for (const f of filtered) {
         const tier = getProximityTier(f, userState, userCity, nearbyStates);
         if (!tiers.has(tier)) tiers.set(tier, []);
@@ -318,7 +334,7 @@ export function InsuranceFacilitiesSection({
             className="flex gap-3 sm:gap-4 md:gap-5 overflow-x-auto scroll-smooth px-4 py-4 sm:px-6 sm:py-5 md:px-8 md:py-6 snap-x snap-mandatory"
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
-            {matches.map((center: any) => (
+            {matches.map((center) => (
               <div
                 key={center.id}
                 className="flex-shrink-0 w-[280px] sm:w-[320px] md:w-[360px] snap-start"

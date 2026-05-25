@@ -28,7 +28,7 @@ interface Notification {
   message: string;
   read: boolean;
   created_at: string;
-  metadata: Record<string, any> | null;
+  metadata: Record<string, unknown> | null;
 }
 
 const getNotificationIcon = (type: string) => {
