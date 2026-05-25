@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export type AnalyticsRange = "last_7d" | "last_30d" | "last_90d" | "last_12m" | "custom";
@@ -80,6 +80,9 @@ export function useFacilityAnalytics(args: {
   return useQuery({
     queryKey: ["facility-analytics", facilityId, range, customStart ?? null, customEnd ?? null],
     enabled: !!facilityId,
+    // Keep prior data on screen while a new range / facility loads so the
+    // Subscription tab updates in place instead of flashing a skeleton.
+    placeholderData: keepPreviousData,
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
     queryFn: async (): Promise<FacilityAnalyticsResponse> => {

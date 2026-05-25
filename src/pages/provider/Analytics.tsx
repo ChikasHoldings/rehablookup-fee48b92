@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Popover,
   PopoverContent,
@@ -270,6 +271,35 @@ export default function ProviderAnalyticsPage() {
     clearDateFilter();
     setIsCalendarOpen(false);
   };
+
+  // Cold load (no cached facilities yet): render a stable skeleton rather than
+  // briefly mounting the tabs with an undefined facility id, which produced a
+  // "pick a facility" → skeleton → data flash on first paint. A warm load has
+  // cached facilities so facilitiesLoading is already false and this is skipped.
+  if (facilitiesLoading && approvedFacilities.length === 0) {
+    return (
+      <div className="min-h-full bg-slate-50">
+        <ProviderPageHeader
+          title="Analytics"
+          description="Track views, leads, and conversion across your listings."
+          icon={<BarChart3 className="h-4 w-4" />}
+        />
+        <div className="mx-auto max-w-5xl space-y-4 px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
+          <div className="flex justify-end gap-2">
+            <Skeleton className="h-9 w-40" />
+            <Skeleton className="h-9 w-28" />
+          </div>
+          <Skeleton className="h-9 w-full max-w-md" />
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-24 rounded-lg" />
+            ))}
+          </div>
+          <Skeleton className="h-64 w-full rounded-lg" />
+        </div>
+      </div>
+    );
+  }
 
   // Show a helpful empty state while facilities are loading or if none are approved yet
   if (!facilitiesLoading && approvedFacilities.length === 0) {

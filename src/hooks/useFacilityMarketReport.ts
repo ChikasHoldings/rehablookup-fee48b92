@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface MarketReportTopItem {
@@ -36,6 +36,9 @@ export function useFacilityMarketReport(
   return useQuery({
     queryKey: ["facility-market-report", facilityId, month ?? "current"],
     enabled: !!facilityId,
+    // Keep the prior month/facility on screen while a new selection loads so
+    // the panel updates in place instead of flashing a skeleton.
+    placeholderData: keepPreviousData,
     queryFn: async (): Promise<MarketReport | null> => {
       if (!facilityId) return null;
       const { data, error } = await supabase.rpc("get_facility_market_report", {

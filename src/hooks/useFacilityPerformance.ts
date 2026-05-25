@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export type Tier = "pro" | "free";
@@ -59,6 +59,9 @@ export function useFacilityPerformance(facilityId: string | undefined) {
   return useQuery({
     queryKey: ["facility-performance", facilityId],
     enabled: !!facilityId,
+    // Keep the prior facility's data on screen while a new facilityId loads
+    // so switching the filter updates in place instead of flashing a skeleton.
+    placeholderData: keepPreviousData,
     queryFn: async (): Promise<PerformanceSummary | null> => {
       const { data, error } = await supabase.rpc(
         "get_facility_performance_summary",

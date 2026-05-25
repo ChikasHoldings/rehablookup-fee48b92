@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -161,6 +161,9 @@ export function useCentralizedLeadAnalytics(dateRange?: DateRange, filterFacilit
       );
     },
     enabled: !facilitiesLoading && facilityIds.length > 0,
+    // Hold the prior result while a new date-range / facility filter loads so
+    // the dashboard updates in place rather than flashing to a skeleton.
+    placeholderData: keepPreviousData,
     staleTime: 1000 * 60 * 2,
     refetchOnWindowFocus: true,
     retry: 2,
