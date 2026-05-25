@@ -235,7 +235,16 @@ export function FacilityImageUpload({
       const urlParts = imageUrl.split("/facility-images/");
       if (urlParts.length > 1) {
         const filePath = urlParts[1];
-        await supabase.storage.from("facility-images").remove([filePath]);
+        const { error: removeError } = await supabase.storage
+          .from("facility-images")
+          .remove([filePath]);
+        // Non-fatal: removing the URL from the listing (below) is the user's
+        // intent and still succeeds; a failed storage delete just orphans the
+        // file, which the cleanup-orphan-storage job reclaims. Log so it's
+        // not a fully silent failure.
+        if (removeError) {
+          console.warn("[FacilityImageUpload] storage remove failed (file orphaned)", removeError.message);
+        }
       }
 
       const newImages = currentImages.filter((img) => img !== imageUrl);

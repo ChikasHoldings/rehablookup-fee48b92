@@ -1,4 +1,7 @@
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
+import { useEffect } from "react";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -28,6 +31,27 @@ export default function MarketingFeatured() {
   const { selectedFacility } = useSelectedFacility();
   const facilityId = selectedFacility?.id;
   const { data: subscription, isLoading, isError, refetch } = useFacilitySubscription(facilityId);
+
+  // Stripe redirects back here after an add-on checkout. The page otherwise
+  // gave no confirmation; surface success/cancel and refresh the add-on state.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const queryClient = useQueryClient();
+  useEffect(() => {
+    const status = searchParams.get("checkout");
+    if (status !== "success" && status !== "cancel") return;
+    if (status === "success") {
+      toast.success(
+        "Payment received — your Featured placement is activating. It'll appear here within a minute.",
+      );
+      queryClient.invalidateQueries({ queryKey: ["facility-subscription", facilityId] });
+    } else {
+      toast.info("Checkout canceled — no charge was made.");
+    }
+    const next = new URLSearchParams(searchParams);
+    next.delete("checkout");
+    next.delete("addon");
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams, queryClient, facilityId]);
 
   if (isLoading) {
     return (

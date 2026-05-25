@@ -233,7 +233,7 @@ export default function ProviderDashboardPage() {
   });
 
   // Fetch total leads count via SECURITY DEFINER RPC so counts are accurate regardless of view-level row filtering.
-  const { data: totalLeadsCount = 0 } = useQuery({
+  const { data: totalLeadsCount = 0, isError: totalLeadsErr } = useQuery({
     queryKey: ["total-leads-count", facilityId],
     queryFn: async (): Promise<number> => {
       if (!facilityId) return 0;
@@ -250,7 +250,7 @@ export default function ProviderDashboardPage() {
   // snoozed). The recent-leads query above only loads the 4 most-recent rows
   // for the dashboard feed, so without this dedicated count a provider with
   // 50+ leads would see "0 need follow-up" while many are stale.
-  const { data: urgentLeadsCount = 0 } = useQuery({
+  const { data: urgentLeadsCount = 0, isError: urgentLeadsErr } = useQuery({
     queryKey: ["urgent-leads-count", facilityId],
     queryFn: async (): Promise<number> => {
       if (!facilityId) return 0;
@@ -304,7 +304,7 @@ export default function ProviderDashboardPage() {
   });
 
   // Fetch total impressions count from provider_events
-  const { data: impressionCount = 0 } = useQuery({
+  const { data: impressionCount = 0, isError: impressionErr } = useQuery({
     queryKey: ["impression-count", facilityId],
     queryFn: async (): Promise<number> => {
       if (!facilityId) return 0;
@@ -358,7 +358,7 @@ export default function ProviderDashboardPage() {
   }, [facilityId, queryClient]);
 
   // Fetch review count
-  const { data: reviewCount = 0 } = useQuery({
+  const { data: reviewCount = 0, isError: reviewErr } = useQuery({
     queryKey: ["review-count", facilityId],
     queryFn: async (): Promise<number> => {
       if (!facilityId) return 0;
@@ -573,12 +573,14 @@ export default function ProviderDashboardPage() {
               />
               <MetricCard
                 title="Inquiries"
-                value={proStatus.isPro ? totalLeadsCount : "Pro"}
+                value={proStatus.isPro ? (totalLeadsErr ? "—" : totalLeadsCount) : "Pro"}
                 subtitle={
                   proStatus.isPro
-                    ? urgentLeadsCount > 0
-                      ? `${urgentLeadsCount} need follow-up`
-                      : "All caught up"
+                    ? totalLeadsErr || urgentLeadsErr
+                      ? "Couldn't load right now"
+                      : urgentLeadsCount > 0
+                        ? `${urgentLeadsCount} need follow-up`
+                        : "All caught up"
                     : "Upgrade to receive"
                 }
                 icon={Users}
@@ -605,8 +607,8 @@ export default function ProviderDashboardPage() {
               />
               <MetricCard
                 title="Reviews"
-                value={reviewCount}
-                subtitle={`${impressionCount.toLocaleString()} profile views`}
+                value={reviewErr ? "—" : reviewCount}
+                subtitle={impressionErr ? "Views unavailable" : `${impressionCount.toLocaleString()} profile views`}
                 icon={Star}
                 iconBg="bg-amber-100"
                 iconColor="text-amber-600"

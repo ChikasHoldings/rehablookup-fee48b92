@@ -1063,8 +1063,8 @@ export default function ProviderSignup({
 
       if (alreadyOnboarded) {
         toast({
-          title: "Listing published",
-          description: "Your new facility is live.",
+          title: "Facility submitted",
+          description: "Your new location is pending review — we'll publish it shortly.",
         });
         navigate("/provider/dashboard");
         return;

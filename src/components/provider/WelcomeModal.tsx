@@ -159,7 +159,8 @@ export function WelcomeModal() {
             You're all set, {firstName}
           </DialogTitle>
           <DialogDescription className="mt-1 text-sm text-slate-600">
-            Your facility is live on RehabLookup. Here's where to go next.
+            Your facility profile is in — we'll review it before it goes live.
+            Here's where to go next.
           </DialogDescription>
         </DialogHeader>
 

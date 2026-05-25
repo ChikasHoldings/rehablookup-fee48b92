@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useProviderReviews, ProviderReview } from '@/hooks/useProviderReviews';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -210,9 +211,12 @@ export default function ProviderReviews() {
       <div className="flex flex-col items-center justify-center py-16 px-4">
         <Building2 className="h-16 w-16 text-muted-foreground/30 mb-4" />
         <h2 className="text-xl font-semibold text-foreground mb-2">No Facilities Found</h2>
-        <p className="text-muted-foreground text-center max-w-md">
+        <p className="text-muted-foreground text-center max-w-md mb-4">
           You need to have at least one facility to view reviews.
         </p>
+        <Button asChild>
+          <Link to="/provider/add-location">Add your facility</Link>
+        </Button>
       </div>
     );
   }

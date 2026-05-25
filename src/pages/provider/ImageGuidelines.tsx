@@ -32,7 +32,7 @@ const ImageGuidelines = () => {
   ];
 
   const technicalRequirements = [
-    { label: "Maximum file size", value: "5MB per image" },
+    { label: "Maximum file size", value: "10MB per image" },
     { label: "Supported formats", value: "PNG, JPG, JPEG, WebP" },
     { label: "Recommended logo size", value: "512 x 512 pixels (square)" },
     { label: "Recommended gallery size", value: "1200 x 800 pixels minimum" },

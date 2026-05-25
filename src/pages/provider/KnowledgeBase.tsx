@@ -213,11 +213,11 @@ Quality images help families visualize your facility and make confident decision
   {
     id: "multiple-facilities",
     title: "Managing Multiple Facility Listings",
-    excerpt: "How Pro members manage up to 5 facilities from a single provider account.",
+    excerpt: "How to manage multiple facility listings from a single provider account.",
     content: `
 # Managing Multiple Facility Listings
 
-Pro members can manage up to 5 facility listings under one account.
+You can manage unlimited facility listings under a single provider account — there is no cap on any plan.
 
 ## Switching Between Facilities
 
@@ -232,9 +232,9 @@ Use the **facility selector dropdown** in the top header bar to switch between y
 
 ## Important Notes
 
-- Free accounts are limited to 1 facility listing
+- Listings are unlimited on every plan — add as many locations as you operate
 - Each facility has its own set of leads — they are never mixed
-- Pro subscription is account-wide ($99/mo flat), covering up to 5 facilities
+- Pro is a per-facility subscription ($99/mo flat) — upgrade each location you want Pro benefits on
 - Analytics can be viewed per-facility or rolled up across facilities
     `,
     category: "listing",
@@ -309,7 +309,7 @@ RehabLookup uses a flat-fee subscription model. There are no per-lead charges, n
 | Priority placement (+50 ranking) | Yes |
 | 10 photos + 1 facility video | Yes |
 | Marketing Hub (Featured + Concierge add-ons) | Yes |
-| Up to 5 facility listings | Yes |
+| Unlimited facility listings | Yes (any plan) |
 
 Cancel anytime from **Billing**.
 
@@ -533,7 +533,7 @@ All payments are processed securely via Stripe. We accept Visa, Mastercard, Amex
     content: `
 # Managing Your Subscription & Payments
 
-All billing management is available in **Settings > Billing**.
+All billing management is available on the **Billing** page (in the sidebar).
 
 ## Viewing Plan & Add-Ons
 

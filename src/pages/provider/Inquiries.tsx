@@ -463,7 +463,7 @@ export default function ProviderInquiriesPage() {
                     </Button>
                   ) : facilityIds.length === 0 ? (
                     <Button asChild size="sm">
-                      <Link to="/provider/listings?new=1">Create your first listing</Link>
+                      <Link to="/provider/add-location">Create your first listing</Link>
                     </Button>
                   ) : (
                     <div className="w-full max-w-sm rounded-lg border bg-muted/30 p-4 text-left space-y-3">
