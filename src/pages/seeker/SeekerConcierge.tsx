@@ -187,6 +187,13 @@ export default function SeekerConcierge() {
           assigned_advisor_id
         `)
         .eq("user_id", userId)
+        // Only SUBMITTED inquiries are real placement cases. An unsubmitted
+        // draft (intake_submitted_at IS NULL) — e.g. a save-placement-draft row
+        // later linked to this user by email — would otherwise make
+        // cases.length>=1 and render a dead "Submitted" status card with no way
+        // to finish the intake. Excluding drafts routes a draft-only user to the
+        // resumable intake form (STATE A) instead.
+        .not("intake_submitted_at", "is", null)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
