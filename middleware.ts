@@ -1,6 +1,17 @@
 /**
  * Vercel Edge Middleware — RehabLookup
  *
+ * CORE INVARIANT (May 2026 — Phase 5):
+ *   A non-crawler request (every human browser, on first load OR refresh, in
+ *   ANY circumstance) is ALWAYS rewritten to the SPA. Humans must NEVER be
+ *   served a prerendered SEO .html shell — that shell is a stripped-down,
+ *   design-divergent page meant only for crawlers, and serving it to humans
+ *   caused the "the design switches on reload" bug. Only `isCrawler` branches
+ *   may return prerenderRewrite()/og-share/notFound responses; every other
+ *   path must fall through to the human SPA handler at the bottom.
+ *   The /center/* and /resources/* (article) handlers previously served the
+ *   prerendered .html to everyone (no isCrawler gate) — that was the bug.
+ *
  * ROUTING FIX (May 2026 — Phase 4):
  *   Soft 404 fix for /center/* routes. Non-existent facility slugs now return
  *   HTTP 404 with a noindex HTML body to Googlebot, preventing crawl budget
@@ -164,13 +175,6 @@ function isArticleRoute(pathname: string): boolean {
   return false;
 }
 
-function isBrowserNavigation(request: Request): boolean {
-  const fetchDest = request.headers.get("sec-fetch-dest") || "";
-  const fetchMode = request.headers.get("sec-fetch-mode") || "";
-  const fetchUser = request.headers.get("sec-fetch-user") || "";
-  return fetchDest === "document" || fetchMode === "navigate" || fetchUser === "?1";
-}
-
 /**
  * Build the explicit rewrite URL for a prerendered path.
  * Without cleanUrls, Vercel will NOT auto-resolve /foo to dist/foo.html.
@@ -194,22 +198,22 @@ export default function middleware(request: Request) {
 
   // ── Article routes (/resources/<slug>, /providers/resources/<slug>) ────────
   if (isArticleRoute(pathname)) {
-    if (PRERENDERED.has(pathname)) {
-      // Pre-rendered .html file exists → rewrite explicitly to it.
-      // It has the correct page-specific canonical and OG image baked in.
-      return prerenderRewrite(pathname, url);
-    }
-    // No pre-rendered file yet (e.g., newly published article).
-    // Social crawlers need article-specific OG image → og-share function.
-    if (isSocialCrawler || (!isCrawler && !isBrowserNavigation(request))) {
-      const normalized = pathname.replace(/\/+$/, "") || "/";
-      return rewrite(`${OG_SHARE_URL}?path=${encodeURIComponent(normalized)}`);
-    }
-    // Googlebot on a new article without a pre-rendered file → SPA shell.
-    // React sets the correct canonical on hydration.
     if (isCrawler) {
+      // Crawlers: prerendered .html if it exists (correct canonical + OG baked
+      // in); else social crawlers get a dynamic OG card; else Googlebot gets the
+      // SPA shell and React sets the canonical on hydration.
+      if (PRERENDERED.has(pathname)) {
+        return prerenderRewrite(pathname, url);
+      }
+      if (isSocialCrawler) {
+        const normalized = pathname.replace(/\/+$/, "") || "/";
+        return rewrite(`${OG_SHARE_URL}?path=${encodeURIComponent(normalized)}`);
+      }
       return rewrite(new URL("/index.html", url));
     }
+    // Any non-crawler (every human browser, on first load or refresh, in any
+    // circumstance) falls through to the SPA handler below — humans only ever
+    // see the live React app, never the prerendered SEO shell.
   }
 
   // ── Facility profile routes (/center/<slug>) ────────────────────────────
@@ -217,18 +221,20 @@ export default function middleware(request: Request) {
   // Any /center/* URL not in the manifest is a non-existent or unapproved
   // facility — return HTTP 404 to Googlebot to prevent crawl budget waste.
   if (isCenterRoute(pathname)) {
-    if (PRERENDERED.has(pathname)) {
-      // Approved facility with prerendered HTML → serve it.
-      return prerenderRewrite(pathname, url);
-    }
-    // Non-existent or unapproved facility.
     if (isCrawler) {
-      // Return a real HTTP 404 with noindex to Googlebot.
-      // This stops Google indexing dead facility slugs.
+      // Crawlers only: approved facility → prerendered SEO HTML (correct
+      // canonical baked in); otherwise a real HTTP 404 with noindex so Google
+      // stops crawling dead/unapproved facility slugs.
+      if (PRERENDERED.has(pathname)) {
+        return prerenderRewrite(pathname, url);
+      }
       return centerNotFoundResponse();
     }
-    // Human visitors: let the SPA handle it — CenterProfile will render
-    // CenterNotFound with noindex and helpful recovery links.
+    // Human visitors ALWAYS get the SPA — never the stripped-down prerendered
+    // SEO shell. React renders the rich CenterProfile for approved facilities,
+    // or CenterNotFound (noindex + recovery links) for unapproved/missing
+    // slugs. Serving the static .html to humans here was the cause of the
+    // "design switches on refresh" bug.
     const target = new URL("/", url);
     target.search = url.search;
     return rewrite(target);
