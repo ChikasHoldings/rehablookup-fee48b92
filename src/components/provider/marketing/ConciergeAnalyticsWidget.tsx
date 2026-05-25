@@ -110,8 +110,8 @@ export function ConciergeAnalyticsWidget({ facilityId }: ConciergeAnalyticsWidge
             <p className="font-medium text-slate-900">No advisor introductions yet</p>
             <p className="text-muted-foreground mt-1 max-w-md mx-auto">
               When our advisors match a client to one of your covered geographies
-              and levels of care, the introduction will appear in your inquiries
-              feed and count here.
+              and levels of care, we'll notify your admissions team by email and
+              the introduction will count here.
             </p>
           </div>
         ) : (

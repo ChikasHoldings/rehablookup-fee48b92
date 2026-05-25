@@ -7,6 +7,12 @@ import { toast } from "sonner";
 
 interface SmsCallbackFallbackProps {
   draftId: string | null;
+  /**
+   * Resolves (creating if needed) the server-side draft and returns its id.
+   * The backend looks the case up by draft_id, so a draft must exist before
+   * we can queue a callback. Lets this path self-heal a failed step-5 save.
+   */
+  ensureDraft: () => Promise<string | null>;
   firstName: string;
   lastName: string;
   phone: string;
@@ -26,6 +32,7 @@ interface SmsCallbackFallbackProps {
  */
 export function SmsCallbackFallback({
   draftId,
+  ensureDraft,
   firstName,
   lastName,
   phone,
@@ -39,17 +46,25 @@ export function SmsCallbackFallback({
 
   const phoneDigits = (phone || "").replace(/\D/g, "");
   const phoneOk = phoneDigits.length >= 10;
-  const canSubmit = !!draftId && phoneOk && consent && !submitting;
+  // The draft is resolved at submit time (see handleSubmit), so it is NOT a
+  // gate on the button — otherwise a failed step-5 auto-save would leave this
+  // control silently disabled with no way forward.
+  const canSubmit = phoneOk && consent && !submitting;
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
     setSubmitting(true);
     try {
+      const resolvedDraftId = draftId ?? (await ensureDraft());
+      if (!resolvedDraftId) {
+        toast.error("We couldn't prepare your request. Please verify your email above or try again.");
+        return;
+      }
       const { data, error } = await supabase.functions.invoke(
         "request-concierge-sms-callback",
         {
           body: {
-            draftId,
+            draftId: resolvedDraftId,
             firstName: firstName.trim(),
             lastName: lastName.trim(),
             phone: phone.trim(),

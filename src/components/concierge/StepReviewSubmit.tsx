@@ -82,7 +82,7 @@ export function StepReviewSubmit({
 
       <div className="space-y-4">
         {/* Step 1: Who Needs Help */}
-        <SectionCard title="Who Needs Help" icon={User} step={1} onEdit={onEdit}>
+        <SectionCard title="Who Needs Help" icon={User} step={2} onEdit={onEdit}>
           <InfoRow label="Age Range" value={data.ageRange} />
           <InfoRow label="Gender" value={data.gender} />
           <InfoRow label="Location" value={`${data.city}, ${data.state}`} />
@@ -93,7 +93,7 @@ export function StepReviewSubmit({
         </SectionCard>
 
         {/* Step 2: Care Needs */}
-        <SectionCard title="Care Needs" icon={Heart} step={2} onEdit={onEdit}>
+        <SectionCard title="Care Needs" icon={Heart} step={3} onEdit={onEdit}>
           <InfoRow label="Primary Concern" value={data.primaryConcern} />
           <InfoRow label="Use Frequency" value={data.substanceUseFrequency} />
           <InfoRow label="Duration" value={data.substanceUseDuration} />
@@ -110,7 +110,7 @@ export function StepReviewSubmit({
         </SectionCard>
 
         {/* Step 3: Location & Preferences */}
-        <SectionCard title="Location & Preferences" icon={MapPin} step={3} onEdit={onEdit}>
+        <SectionCard title="Location & Preferences" icon={MapPin} step={4} onEdit={onEdit}>
           <InfoRow label="Desired Location" value={data.desiredCity ? `${data.desiredCity}, ${data.desiredState}` : data.desiredState} />
           <InfoRow label="Radius" value={`${data.radiusMiles} miles`} />
           <InfoRow label="Environment" value={data.preferredEnvironment} />
@@ -125,7 +125,7 @@ export function StepReviewSubmit({
         </SectionCard>
 
         {/* Step 4: Contact Information */}
-        <SectionCard title="Contact Information" icon={Phone} step={4} onEdit={onEdit}>
+        <SectionCard title="Contact Information" icon={Phone} step={1} onEdit={onEdit}>
           <InfoRow label="Name" value={fullName} />
           <InfoRow label="Phone" value={data.phone} />
           <InfoRow label="Email" value={data.email} />

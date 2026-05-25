@@ -18,6 +18,10 @@ import {
   sanitizeSource,
   type ConciergePrefillContext,
 } from "@/lib/conciergeAnalytics";
+import {
+  parseFunctionError,
+  getFriendlyErrorMessage,
+} from "@/lib/contracts/friendly-error-messages";
 
 // Step components — ordered to match the runtime step sequence
 //   1 StepName            (NEW — name + phone + email + best time)
@@ -683,27 +687,7 @@ export default function ConciergeIntake() {
     const newState = { verified: true, verifiedAt };
     setEmailVerification(newState);
     localStorage.setItem(EMAIL_VERIFICATION_KEY, JSON.stringify(newState));
-    // Auto-advance to phone verification step
-    setTimeout(() => {
-      setDirection(1);
-      setCurrentStep(6);
-      scrollToTopSmooth();
-    }, 800);
-  };
-
-  const handleEditEmail = () => {
-    // Clear email verification and go back to contact step
-    setEmailVerification({ verified: false, verifiedAt: null });
-    localStorage.removeItem(EMAIL_VERIFICATION_KEY);
-    setDirection(-1);
-    setCurrentStep(4);
-  };
-
-  const handlePhoneVerified = (verifiedAt: string) => {
-    const newState = { verified: true, verifiedAt };
-    setPhoneVerification(newState);
-    localStorage.setItem(PHONE_VERIFICATION_KEY, JSON.stringify(newState));
-    // Auto-advance to review step
+    // Auto-advance to the phone-verification step (step 7).
     setTimeout(() => {
       setDirection(1);
       setCurrentStep(7);
@@ -711,11 +695,32 @@ export default function ConciergeIntake() {
     }, 800);
   };
 
+  const handleEditEmail = () => {
+    // Email is captured on StepName (step 1) — send the user there to edit it.
+    setEmailVerification({ verified: false, verifiedAt: null });
+    localStorage.removeItem(EMAIL_VERIFICATION_KEY);
+    setDirection(-1);
+    setCurrentStep(1);
+  };
+
+  const handlePhoneVerified = (verifiedAt: string) => {
+    const newState = { verified: true, verifiedAt };
+    setPhoneVerification(newState);
+    localStorage.setItem(PHONE_VERIFICATION_KEY, JSON.stringify(newState));
+    // Auto-advance to the Review & Submit step (step 8).
+    setTimeout(() => {
+      setDirection(1);
+      setCurrentStep(8);
+      scrollToTopSmooth();
+    }, 800);
+  };
+
   const handleEditPhone = () => {
+    // Phone is captured on StepName (step 1) — send the user there to edit it.
     setPhoneVerification({ verified: false, verifiedAt: null });
     localStorage.removeItem(PHONE_VERIFICATION_KEY);
     setDirection(-1);
-    setCurrentStep(4);
+    setCurrentStep(1);
   };
 
   // Fires concierge_intake_started exactly once per mount, the first time the
@@ -890,6 +895,32 @@ export default function ConciergeIntake() {
     scrollToTopSmooth();
   };
 
+  // Ensures a server-side draft exists and returns its id. The draft is
+  // normally created at the step 5→6 transition, but that save is best-effort
+  // (errors are swallowed). The SMS-callback path REQUIRES a draft row to
+  // exist (the backend looks the case up by draft_id), so this lets that path
+  // self-heal a failed save instead of leaving its button silently disabled.
+  const ensureDraftSaved = async (): Promise<string | null> => {
+    if (draftId) return draftId;
+    try {
+      const { data: draftData } = await supabase.functions.invoke("save-placement-draft", {
+        body: {
+          intakeData: formData,
+          emailVerifiedAt: emailVerification.verifiedAt,
+          draftId: null,
+        },
+      });
+      if (draftData?.draftId) {
+        setDraftId(draftData.draftId);
+        localStorage.setItem(DRAFT_ID_KEY, draftData.draftId);
+        return draftData.draftId;
+      }
+    } catch (e) {
+      console.error("ensureDraftSaved failed:", e);
+    }
+    return null;
+  };
+
   // Free submit — replaces the old $29 Stripe checkout flow.
   const handleSubmitFree = async () => {
     if (isSubmitting) return;
@@ -955,7 +986,34 @@ export default function ConciergeIntake() {
       navigate(`/concierge/thank-you?channel=free&id=${data.inquiryId}`);
     } catch (err) {
       console.error("Submit error:", err);
-      toast.error("Failed to submit your request. Please try again.");
+      const { code } = await parseFunctionError(err);
+
+      // The server only honours a phone verification performed within the
+      // last 60 minutes, but the client-side cache is treated as valid for
+      // 24h. If the user lingered on the review step past that window, the
+      // submit is rejected with `phone_verification_required`. Route them
+      // back to re-verify (step 7) with a clear message instead of showing
+      // an opaque "Failed to submit".
+      if (code === "phone_verification_required") {
+        setPhoneVerification({ verified: false, verifiedAt: null });
+        localStorage.removeItem(PHONE_VERIFICATION_KEY);
+        setStepErrors({
+          phone: "Your phone verification expired. Please verify your number again.",
+        });
+        setIsSubmitting(false);
+        setDirection(-1);
+        setCurrentStep(7);
+        scrollToTopSmooth();
+        toast.error("Your phone verification expired — please verify your number again.");
+        return;
+      }
+
+      if (code) {
+        const friendly = getFriendlyErrorMessage(code);
+        toast.error(friendly.title, { description: friendly.description });
+      } else {
+        toast.error("Failed to submit your request. Please try again.");
+      }
       setIsSubmitting(false);
     }
   };
@@ -1016,6 +1074,7 @@ export default function ConciergeIntake() {
             {/* Optional SMS-callback escape hatch — bypasses email verify */}
             <SmsCallbackFallback
               draftId={draftId}
+              ensureDraft={ensureDraftSaved}
               firstName={formData.firstName}
               lastName={formData.lastName}
               phone={formData.phone}
@@ -1056,13 +1115,6 @@ export default function ConciergeIntake() {
       default:
         return null;
     }
-  };
-
-  // Determine if we can proceed from current step
-  const canProceed = () => {
-    if (currentStep === 6) return emailVerification.verified;
-    if (currentStep === 7) return phoneVerification.verified;
-    return true;
   };
 
   // Animation variants for step transitions

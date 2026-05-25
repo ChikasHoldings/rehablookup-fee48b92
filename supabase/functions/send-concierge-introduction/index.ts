@@ -223,7 +223,7 @@ Deno.serve(async (req) => {
     }
 
     const contactName = facility.concierge_admissions_contact || "Admissions Team";
-    const responseUrl = `https://rehablookup.com/provider/placement-network`;
+    const responseUrl = `https://rehablookup.com/provider/marketing/concierge`;
 
     // Format case details for email
     const levelOfCare = inquiry.level_of_care || "—";
@@ -415,7 +415,7 @@ Deno.serve(async (req) => {
         type: "placement_introduction",
         title: "New Placement Introduction",
         message: `A potential client (${levelOfCare}) has been matched to your facility. Review and respond in your Placement Network.`,
-        link: "/provider/placement-network",
+        link: "/provider/marketing/concierge",
         metadata: { inquiry_id: inquiryId, introduction_id: resolvedIntroductionId },
       });
     }
