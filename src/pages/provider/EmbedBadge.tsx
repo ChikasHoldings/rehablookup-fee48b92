@@ -26,6 +26,7 @@ import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { useProStatus } from "@/hooks/useProStatus";
 import { useToast } from "@/hooks/use-toast";
 import { EmbedAnalyticsCard } from "@/components/provider/embed/EmbedAnalyticsCard";
+import { LockedFeaturePreview } from "@/components/provider/LockedFeaturePreview";
 
 type WidgetType = "badge" | "reviews" | "gallery";
 type WidgetSize = "small" | "medium" | "large";
@@ -123,6 +124,80 @@ export default function EmbedBadgePage() {
         title="Facility pending approval"
         body="Embed widgets become available once your facility listing is approved. We'll send a notification when it's ready."
       />
+    );
+  }
+
+  // Embed widgets are a Pro benefit — consistent with the plan comparison,
+  // the Marketing "Brand assets" card, and the Dashboard tile. Free providers
+  // get a locked preview + upgrade CTA instead of working snippets.
+  if (!isPro) {
+    return (
+      <>
+        <Helmet>
+          <title>Embed Widgets | RehabLookup Provider</title>
+          <meta name="robots" content="noindex, nofollow" />
+        </Helmet>
+        <div className="min-h-full bg-slate-50">
+          <ProviderPageHeader
+            title="Embed widgets"
+            description="Drop a verified badge, reviews block, or photo gallery onto your website."
+            icon={<Code2 className="h-4 w-4" />}
+            backTo="/provider/marketing"
+            backLabel="Marketing"
+          />
+          <div className="mx-auto max-w-5xl px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
+            <LockedFeaturePreview
+              title="Embed widgets"
+              subtitle="Put your verified badge, reviews, and photo gallery on your own website."
+              tier="pro"
+              valueStatement={
+                <>
+                  Drop-in HTML widgets render your RehabLookup Verified badge,
+                  live reviews, and a photo carousel anywhere on your site — each
+                  links back to your profile to win more inquiries.
+                </>
+              }
+              bullets={[
+                "Verified badge with enhanced Pro styling",
+                "Live reviews block — aggregate rating + recent reviews",
+                "Photo carousel — up to 10 photos",
+              ]}
+              ctaLabel="Upgrade to Pro to unlock"
+              ctaTo="/provider/billing?upgrade=pro"
+            >
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                <WidgetPickerCard
+                  icon={ShieldCheck}
+                  iconColor="text-emerald-600"
+                  iconBg="bg-emerald-100"
+                  title="Verified Badge"
+                  description="Shows your verified status and links back to your profile."
+                  active={false}
+                  onClick={() => {}}
+                />
+                <WidgetPickerCard
+                  icon={MessageSquareQuote}
+                  iconColor="text-violet-600"
+                  iconBg="bg-violet-100"
+                  title="Reviews Widget"
+                  description="Aggregate rating + recent approved reviews. Updates live."
+                  active={false}
+                  onClick={() => {}}
+                />
+                <WidgetPickerCard
+                  icon={Images}
+                  iconColor="text-sky-600"
+                  iconBg="bg-sky-100"
+                  title="Photo Carousel"
+                  description="Auto-rotating gallery of your facility photos."
+                  active={false}
+                  onClick={() => {}}
+                />
+              </div>
+            </LockedFeaturePreview>
+          </div>
+        </div>
+      </>
     );
   }
 
