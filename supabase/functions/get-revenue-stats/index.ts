@@ -106,7 +106,6 @@ Deno.serve(async (req) => {
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
     let activeCount = 0;
-    let proCount = 0;
     let canceledLast30Days = 0;
     let newLast30Days = 0;
     let mrr = 0;
@@ -162,10 +161,6 @@ Deno.serve(async (req) => {
         activeCount++;
         mrr += monthlyAmount / 100;
 
-        if (plan === "pro") {
-          proCount++;
-        }
-
         // New subscription in last 30 days
         if (createdDate && createdDate > thirtyDaysAgo) {
           newLast30Days++;
@@ -201,6 +196,30 @@ Deno.serve(async (req) => {
         monthly_amount: monthlyAmount / 100,
       });
     }
+
+    // Dedupe by customer: a provider with Pro + add-ons (Featured/Concierge)
+    // owns multiple Stripe subscriptions but is ONE paying customer. Count
+    // customers, not line items, and treat every paying customer as Pro (the
+    // add-ons require a Pro base) — so there is no bogus "Free" bucket (truly
+    // free providers have no Stripe subscription and never appear here). This
+    // fixes the prior inflation where each add-on sub was counted as a separate
+    // customer, and Concierge subs were mislabeled "Free". MRR (summed per sub
+    // above) is unaffected.
+    const customerMap = new Map<string, typeof providerSubscriptions[number]>();
+    for (const s of providerSubscriptions) {
+      const ex = customerMap.get(s.customer_id);
+      if (!ex) {
+        customerMap.set(s.customer_id, { ...s, plan: "pro" });
+      } else {
+        ex.monthly_amount += s.monthly_amount;
+        if (s.status === "active") ex.status = "active";
+        if (new Date(s.current_period_end) > new Date(ex.current_period_end)) ex.current_period_end = s.current_period_end;
+        if (new Date(s.created) < new Date(ex.created)) ex.created = s.created;
+        ex.cancel_at_period_end = ex.cancel_at_period_end && s.cancel_at_period_end;
+      }
+    }
+    const customerSubscriptions = Array.from(customerMap.values());
+    const payingCustomers = customerSubscriptions.filter((c) => c.status === "active").length;
 
     // Calculate churn rate (canceled in last 30 days / active at start of period)
     const activeAtPeriodStart = activeCount + canceledLast30Days;
@@ -248,20 +267,22 @@ Deno.serve(async (req) => {
       ? Math.round(((currentRevenue - previousRevenue) / previousRevenue) * 100 * 10) / 10
       : currentRevenue > 0 ? 100 : 0;
 
-    // Free count = active subscriptions without Pro product (for display purposes, not actual Free tier)
-    const freeCount = activeCount - proCount;
-
+    // Every paying customer is Pro-based; add-ons (Featured/Concierge) are not a
+    // separate "Free" tier. Truly free providers have no Stripe subscription, so
+    // they never appear in this Stripe-derived dataset → free_count is 0 here.
+    // (Real free-vs-paid provider counts come from facility tier data, e.g. the
+    // AddonAdoptionCard, not from Stripe subscriptions.)
     const stats = {
-      total_subscriptions: allSubscriptions.length,
-      active_subscriptions: activeCount,
-      pro_count: proCount,
-      free_count: freeCount > 0 ? freeCount : 0,
+      total_subscriptions: customerSubscriptions.length,
+      active_subscriptions: payingCustomers,
+      pro_count: payingCustomers,
+      free_count: 0,
       mrr: Math.round(mrr * 100) / 100,
       mrr_growth: mrrGrowth,
       new_last_30_days: newLast30Days,
       canceled_last_30_days: canceledLast30Days,
       churn_rate: churnRate,
-      subscriptions: providerSubscriptions,
+      subscriptions: customerSubscriptions,
       recent_events: recentEvents.slice(0, 20),
       configured: true,
       // Legacy fields for backwards compatibility
@@ -269,7 +290,7 @@ Deno.serve(async (req) => {
       previousMonthRevenue: previousRevenue,
       percentChange: mrrGrowth,
       // Analytics page specific fields
-      activeSubscriptions: activeCount,
+      activeSubscriptions: payingCustomers,
       newSubscriptions: newLast30Days,
       revenue: currentRevenue,
       churnCount: canceledLast30Days,
@@ -277,10 +298,10 @@ Deno.serve(async (req) => {
       upgrades: recentEvents.filter(e => e.type === "upgrade").length,
       downgrades: recentEvents.filter(e => e.type === "downgrade").length,
       subscriptionsByPlan: {
-        free: freeCount > 0 ? freeCount : 0,
-        pro: proCount,
+        free: 0,
+        pro: payingCustomers,
       },
-      totalCustomers: providerSubscriptions.length,
+      totalCustomers: customerSubscriptions.length,
     };
 
     logStep("Stats calculated", { 

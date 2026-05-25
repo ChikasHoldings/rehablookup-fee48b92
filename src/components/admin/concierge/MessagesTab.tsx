@@ -462,7 +462,7 @@ export function MessagesTab({ caseData }: MessagesTabProps) {
   return (
     <div className="flex flex-col h-[400px]">
       <div className="flex items-center gap-3 pb-3 border-b">
-        <Button variant="ghost" size="icon" onClick={() => setSelectedThread(null)}>
+        <Button variant="ghost" size="icon" onClick={() => setSelectedThread(null)} aria-label="Back to conversations">
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1 min-w-0">
@@ -577,6 +577,7 @@ export function MessagesTab({ caseData }: MessagesTabProps) {
             size="icon"
             onClick={() => fileInputRef.current?.click()}
             disabled={sendMessageMutation.isPending || uploading}
+            aria-label="Attach file"
           >
             <Paperclip className="h-4 w-4" />
           </Button>
@@ -592,10 +593,11 @@ export function MessagesTab({ caseData }: MessagesTabProps) {
             }}
             className="min-h-[44px] max-h-[80px]"
           />
-          <Button 
-            onClick={handleSend} 
+          <Button
+            onClick={handleSend}
             disabled={(!newMessage.trim() && !attachment) || sendMessageMutation.isPending || uploading}
             size="icon"
+            aria-label="Send message"
           >
             {sendMessageMutation.isPending || uploading ? (
               <Loader2 className="h-4 w-4 animate-spin" />

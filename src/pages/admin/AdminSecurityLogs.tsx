@@ -1478,7 +1478,7 @@ export default function AdminSecurityLogs() {
                     const blocked = isIdentifierBlocked(activity.identifier);
                     return (
                       <div
-                        key={index}
+                        key={activity.identifier ?? index}
                         className={cn(
                           "flex items-center justify-between rounded-lg p-4 border",
                           blocked

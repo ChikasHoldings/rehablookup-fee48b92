@@ -9,7 +9,7 @@ import { AdminPageLoading } from "./AdminPageLoading";
 import { ForcePasswordChangeDialog } from "./ForcePasswordChangeDialog";
 import { TwoFactorEnforcementDialog } from "./TwoFactorEnforcementDialog";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { useSentryBreadcrumbs } from "@/hooks/useSentryBreadcrumbs";
 import { prefetchAdminPage, prefetchAdjacentPages } from "@/lib/adminPrefetch";
@@ -246,6 +246,7 @@ export function AdminShell() {
             side="left"
             className="w-[85vw] max-w-[300px] p-0 bg-white border-r border-slate-200 flex flex-col"
           >
+            <SheetTitle className="sr-only">Admin navigation menu</SheetTitle>
             <div className="p-4 border-b bg-gradient-to-r from-slate-900 to-slate-800 text-white flex-shrink-0">
               <span className="text-lg font-bold tracking-tight">Admin Menu</span>
               <p className="text-[10px] text-slate-400 mt-0.5 uppercase tracking-wider">

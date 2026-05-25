@@ -321,11 +321,11 @@ export default function AdminReviews() {
 
   useEffect(() => {
     const reviewsChannel = supabase
-      .channel('admin-reviews-live')
+      .channel(`admin-reviews-live-${Math.random().toString(36).slice(2, 8)}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'facility_reviews' }, () => invalidateAll())
       .subscribe();
     const disputesChannel = supabase
-      .channel('admin-disputes-live')
+      .channel(`admin-disputes-live-${Math.random().toString(36).slice(2, 8)}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'review_disputes' }, () => invalidateAll())
       .subscribe();
     return () => {

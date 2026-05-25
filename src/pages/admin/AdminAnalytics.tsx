@@ -176,7 +176,7 @@ export default function AdminAnalytics() {
 
     // Subscribe to provider_events table changes (primary analytics source)
     const viewsChannel = supabase
-      .channel('analytics-provider-events')
+      .channel(`analytics-provider-events-${Math.random().toString(36).slice(2, 8)}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'provider_events' },
@@ -188,7 +188,7 @@ export default function AdminAnalytics() {
 
     // Subscribe to facilities table changes
     const facilitiesChannel = supabase
-      .channel('analytics-facilities')
+      .channel(`analytics-facilities-${Math.random().toString(36).slice(2, 8)}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'facilities' },
@@ -1728,21 +1728,21 @@ export default function AdminAnalytics() {
                   <TableRow className="bg-muted/50 hover:bg-muted/50">
                     <TableHead className="font-semibold">State</TableHead>
                     <TableHead className="font-semibold">City</TableHead>
-                    <TableHead className="cursor-pointer hover:text-primary" onClick={() => handleSort("visitors")}>
+                    <TableHead className="cursor-pointer hover:text-primary" role="button" tabIndex={0} onClick={() => handleSort("visitors")} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleSort("visitors"); } }}>
                       <div className="flex items-center gap-1">
-                        Visitors 
+                        Visitors
                         <ArrowUpDown className={cn("h-3 w-3", sortConfig.key === "visitors" && "text-primary")} />
                       </div>
                     </TableHead>
-                    <TableHead className="cursor-pointer hover:text-primary" onClick={() => handleSort("clicks")}>
+                    <TableHead className="cursor-pointer hover:text-primary" role="button" tabIndex={0} onClick={() => handleSort("clicks")} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleSort("clicks"); } }}>
                       <div className="flex items-center gap-1">
-                        Clicks 
+                        Clicks
                         <ArrowUpDown className={cn("h-3 w-3", sortConfig.key === "clicks" && "text-primary")} />
                       </div>
                     </TableHead>
-                    <TableHead className="cursor-pointer hover:text-primary" onClick={() => handleSort("leads")}>
+                    <TableHead className="cursor-pointer hover:text-primary" role="button" tabIndex={0} onClick={() => handleSort("leads")} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleSort("leads"); } }}>
                       <div className="flex items-center gap-1">
-                        Leads 
+                        Leads
                         <ArrowUpDown className={cn("h-3 w-3", sortConfig.key === "leads" && "text-primary")} />
                       </div>
                     </TableHead>

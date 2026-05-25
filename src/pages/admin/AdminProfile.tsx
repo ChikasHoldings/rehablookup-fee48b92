@@ -193,7 +193,7 @@ export default function AdminProfile() {
     if (!userData?.id) return;
 
     const activityChannel = supabase
-      .channel('admin-profile-activity')
+      .channel(`admin-profile-activity-${Math.random().toString(36).slice(2, 8)}`)
       .on(
         'postgres_changes',
         {
@@ -209,7 +209,7 @@ export default function AdminProfile() {
       .subscribe();
 
     const sessionChannel = supabase
-      .channel('admin-profile-sessions')
+      .channel(`admin-profile-sessions-${Math.random().toString(36).slice(2, 8)}`)
       .on(
         'postgres_changes',
         {

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -42,12 +43,14 @@ export function ImagePreviewDialog({ imageUrl, onClose }: ImagePreviewDialogProp
   return (
     <Dialog open={!!imageUrl} onOpenChange={() => onClose()}>
       <DialogContent className="max-w-4xl p-0 overflow-hidden bg-black/95">
+        <DialogTitle className="sr-only">Image preview</DialogTitle>
         <div className="relative">
           <Button
             size="icon"
             variant="ghost"
             className="absolute top-2 right-2 z-10 text-white hover:bg-white/20"
             onClick={onClose}
+            aria-label="Close image preview"
           >
             <X className="h-5 w-5" />
           </Button>
@@ -88,10 +91,10 @@ export function FlagImageDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <div className="space-y-4">
-          <div className="flex items-center gap-2 text-destructive">
+          <DialogTitle className="flex items-center gap-2 text-destructive font-semibold">
             <Flag className="h-5 w-5" />
-            <h2 className="font-semibold">Flag Inappropriate Image</h2>
-          </div>
+            Flag Inappropriate Image
+          </DialogTitle>
           <p className="text-sm text-muted-foreground">
             Flag this image for review. The provider will be notified.
           </p>

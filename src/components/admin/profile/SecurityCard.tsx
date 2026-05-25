@@ -212,6 +212,7 @@ export function SecurityCard({ userId, userEmail }: SecurityCardProps) {
                         size="icon"
                         className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
                         onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                        aria-label={showCurrentPassword ? "Hide current password" : "Show current password"}
                       >
                         {showCurrentPassword ? (
                           <EyeOff className="h-4 w-4 text-muted-foreground" />
@@ -246,6 +247,7 @@ export function SecurityCard({ userId, userEmail }: SecurityCardProps) {
                         size="icon"
                         className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
                         onClick={() => setShowNewPassword(!showNewPassword)}
+                        aria-label={showNewPassword ? "Hide new password" : "Show new password"}
                       >
                         {showNewPassword ? (
                           <EyeOff className="h-4 w-4 text-muted-foreground" />
@@ -291,6 +293,7 @@ export function SecurityCard({ userId, userEmail }: SecurityCardProps) {
                         size="icon"
                         className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        aria-label={showConfirmPassword ? "Hide confirmed password" : "Show confirmed password"}
                       >
                         {showConfirmPassword ? (
                           <EyeOff className="h-4 w-4 text-muted-foreground" />
