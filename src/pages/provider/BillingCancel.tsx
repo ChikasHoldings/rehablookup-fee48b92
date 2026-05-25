@@ -85,7 +85,12 @@ export default function BillingCancel() {
     );
   }
 
-  if (!subscription || subscription.tier !== "pro" || subscription.status !== "active") {
+  // Allow cancellation for active AND payment-issue (past_due/unpaid) Pro subs.
+  // Billing.tsx shows the "Cancel subscription" CTA to all of these
+  // (isPro || isPaymentIssue) and Stripe can cancel a past_due subscription —
+  // gating on active-only stranded payment-issue users on a dead-end page.
+  const CANCELABLE_STATUSES = ["active", "past_due", "unpaid"];
+  if (!subscription || subscription.tier !== "pro" || !CANCELABLE_STATUSES.includes(subscription.status)) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-2xl space-y-4">
         <Helmet>

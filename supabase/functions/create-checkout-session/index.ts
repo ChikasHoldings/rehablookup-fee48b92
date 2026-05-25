@@ -285,10 +285,15 @@ Deno.serve(async (req) => {
       successPath = `/provider/billing?checkout=success&plan=pro&session_id={CHECKOUT_SESSION_ID}`;
       cancelPath = `/provider/billing?checkout=cancel`;
     } else if (product === "featured") {
-      successPath = `/provider/billing/placements?addon=featured&checkout=success&session_id={CHECKOUT_SESSION_ID}`;
+      // Point success straight at the marketing page that handles
+      // ?checkout=success (toast + subscription-cache invalidation). The
+      // legacy /provider/billing/placements route just <Navigate>s here and
+      // DROPS the query string, so the purchase was never confirmed and the
+      // page kept showing the pre-purchase state.
+      successPath = `/provider/marketing/featured?addon=featured&checkout=success&session_id={CHECKOUT_SESSION_ID}`;
       cancelPath = `/provider/marketing/featured?checkout=cancel`;
     } else {
-      successPath = `/provider/billing/concierge?addon=concierge&checkout=success&session_id={CHECKOUT_SESSION_ID}`;
+      successPath = `/provider/marketing/concierge?addon=concierge&checkout=success&session_id={CHECKOUT_SESSION_ID}`;
       cancelPath = `/provider/marketing/concierge?checkout=cancel`;
     }
 
