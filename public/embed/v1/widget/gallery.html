@@ -110,6 +110,9 @@
       justify-content: space-between;
       gap: 12px;
     }
+    /* Name/meta block — own styling (NOT .caption-brand, whose uppercase
+       transform would otherwise force the facility name to all-caps). */
+    .caption-text { min-width: 0; }
     [data-size="small"] .caption { padding: 10px 12px; }
     [data-size="large"] .caption { padding: 18px 20px; }
     .caption-name {
@@ -242,13 +245,13 @@
     </button>
     <div class="dots" id="dots" role="tablist" aria-label="Choose a photo"></div>
     <div class="caption">
-      <a id="caption-link" class="caption-brand" href="#" target="_top" rel="noopener" style="color:#fff; text-decoration:none;">
+      <a id="caption-link" class="caption-text" href="#" target="_blank" rel="noopener" style="color:#fff; text-decoration:none;">
         <div>
           <div class="caption-name" id="caption-name"></div>
           <div class="caption-meta" id="caption-meta"></div>
         </div>
       </a>
-      <a class="caption-brand" id="brand-link" href="#" target="_top" rel="noopener">
+      <a class="caption-brand" id="brand-link" href="#" target="_blank" rel="noopener">
         RehabLookup<span id="pro-pill" class="pro-pill" hidden>Pro</span>
       </a>
     </div>
@@ -439,8 +442,10 @@
     // Click anywhere on the photo → open the profile.
     viewport.addEventListener("click", function (e) {
       // Avoid hijacking control clicks
-      if (e.target.closest(".nav-btn,.dot,.caption-brand")) return;
-      window.top.location.href = profile;
+      if (e.target.closest(".nav-btn,.dot,.caption-brand,.caption-text")) return;
+      // Sandboxed iframe can't navigate top; open the profile in a new tab
+      // (allowed via the loader's allow-popups-to-escape-sandbox).
+      window.open(profile, "_blank", "noopener");
     });
 
     // Auto-advance

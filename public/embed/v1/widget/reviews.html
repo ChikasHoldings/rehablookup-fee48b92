@@ -152,7 +152,7 @@
       </div>
       <span class="count" id="agg-count"></span>
     </div>
-    <a id="brand" class="brand" href="#" target="_top" rel="noopener">
+    <a id="brand" class="brand" href="#" target="_blank" rel="noopener">
       <span id="brand-name"></span>
       <span id="brand-pro" class="pro-pill" hidden>Pro</span>
       <br>verified by RehabLookup
@@ -160,7 +160,7 @@
   </div>
   <div id="reviews" class="reviews"></div>
   <div class="footer">
-    <a id="read-more" class="read-more" href="#" target="_top" rel="noopener">Read all reviews →</a>
+    <a id="read-more" class="read-more" href="#" target="_blank" rel="noopener">Read all reviews →</a>
   </div>
 </div>
 
@@ -266,7 +266,7 @@
     document.getElementById("brand").href =
       data.profile_url + "?utm_source=embed&utm_medium=reviews&utm_campaign=widget";
     document.getElementById("read-more").href =
-      data.profile_url + "#reviews?utm_source=embed&utm_medium=reviews&utm_campaign=widget";
+      data.profile_url + "?utm_source=embed&utm_medium=reviews&utm_campaign=widget#reviews";
 
     if (data.is_pro) document.getElementById("brand-pro").hidden = false;
 

@@ -114,7 +114,10 @@
       padding: 1px 5px; border-radius: 999px;
       margin-left: 2px;
     }
-    [data-theme="dark"] .pro-pill,
+    [data-theme="dark"] .pro-pill {
+      color: #fbbf24;
+      background: rgba(245, 158, 11, .18);
+    }
     @media (prefers-color-scheme: dark) {
       [data-theme="auto"] .pro-pill {
         color: #fbbf24;
@@ -124,7 +127,7 @@
   </style>
 </head>
 <body>
-<a id="badge" class="badge" href="#" target="_top" rel="noopener" hidden>
+<a id="badge" class="badge" href="#" target="_blank" rel="noopener" hidden>
   <img id="logo" class="logo" alt="" referrerpolicy="no-referrer">
   <span class="body">
     <span id="line1" class="line1">
@@ -203,8 +206,9 @@
 
     var el = document.getElementById("badge");
     document.getElementById("name").textContent = escapeText(data.name);
+    var loc = [data.city, data.state].filter(Boolean).join(", ");
     document.getElementById("line2").textContent =
-      escapeText(data.city) + ", " + escapeText(data.state) + " · Verified by RehabLookup";
+      (loc ? loc + " · " : "") + "Verified by RehabLookup";
 
     if (data.logo_url) {
       var logo = document.getElementById("logo");
