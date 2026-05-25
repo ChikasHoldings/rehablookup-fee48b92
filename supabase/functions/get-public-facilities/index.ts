@@ -21,6 +21,27 @@ const logStep = (step: string, details?: unknown) => {
   console.log(`[GET-PUBLIC-FACILITIES] ${step}${detailsStr}`);
 };
 
+// Fetch EVERY row, paging past PostgREST's max-rows cap with .range(). Without
+// this, large tables (facilities ~3.8k, facility_services ~17k,
+// facility_insurance ~14k) are silently truncated to the API row limit
+// (default 1000) — which starved directory/city/state/treatment/insurance
+// pages of most facilities. Stops at the first short page.
+async function fetchAll<T>(
+  page: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>,
+  label: string,
+): Promise<T[]> {
+  const PAGE_SIZE = 1000;
+  const out: T[] = [];
+  for (let from = 0; ; from += PAGE_SIZE) {
+    const { data, error } = await page(from, from + PAGE_SIZE - 1);
+    if (error) throw new Error(`Failed to fetch ${label}: ${error.message}`);
+    if (!data || data.length === 0) break;
+    out.push(...data);
+    if (data.length < PAGE_SIZE) break;
+  }
+  return out;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -42,46 +63,46 @@ Deno.serve(async (req) => {
     // 2026-05-21.md §3). Pro-gated fields (phone/email/website) are masked
     // to null by the `public_facilities` view for non-Pro facilities; we
     // pass them through unchanged.
-    const { data: facilitiesData, error: facilitiesError } = await supabase
-      .from("public_facilities")
-      .select(`
-        id,
-        name,
-        slug,
-        city,
-        state,
-        zip_code,
-        address,
-        phone,
-        email,
-        website,
-        description,
-        featured,
-        featured_pinned,
-        verified,
-        facility_type,
-        bed_count,
-        gender_served,
-        logo_url,
-        gallery_urls,
-        year_established,
-        calculated_ranking_score,
-        listing_completeness_score,
-        response_rate_score,
-        accepts_international_patients,
-        hours_of_operation,
-        languages_spoken,
-        accessibility_features,
-        accepting_admissions,
-        is_claimed,
-        is_pro,
-        data_source
-      `);
-
-    if (facilitiesError) {
-      logStep("Error fetching facilities", { error: facilitiesError.message });
-      throw new Error(`Failed to fetch facilities: ${facilitiesError.message}`);
-    }
+    const facilitiesData = await fetchAll(
+      (from, to) =>
+        supabase
+          .from("public_facilities")
+          .select(`
+            id,
+            name,
+            slug,
+            city,
+            state,
+            zip_code,
+            address,
+            phone,
+            email,
+            website,
+            description,
+            featured,
+            featured_pinned,
+            verified,
+            facility_type,
+            bed_count,
+            gender_served,
+            logo_url,
+            gallery_urls,
+            year_established,
+            calculated_ranking_score,
+            listing_completeness_score,
+            response_rate_score,
+            accepts_international_patients,
+            hours_of_operation,
+            languages_spoken,
+            accessibility_features,
+            accepting_admissions,
+            is_claimed,
+            is_pro,
+            data_source
+          `)
+          .range(from, to),
+      "facilities",
+    );
 
     const facilityIds = pluckNonNull(facilitiesData, "id");
 
@@ -93,27 +114,32 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Fetch related data in parallel
-    const [servicesResult, insuranceResult] = await Promise.all([
-      supabase
-        .from("facility_services")
-        .select("facility_id, service_name")
-        .in("facility_id", facilityIds),
-      supabase
-        .from("facility_insurance")
-        .select("facility_id, insurance_name")
-        .in("facility_id", facilityIds),
+    // Fetch related data in parallel — fully paged past the API row cap. We
+    // page the whole tables rather than `.in(facilityIds)` with thousands of
+    // ids (which risks URL limits AND the same cap) and index by facility_id;
+    // lookups below only touch approved facilities, so extra rows are ignored.
+    const [servicesRows, insuranceRows] = await Promise.all([
+      fetchAll(
+        (from, to) =>
+          supabase.from("facility_services").select("facility_id, service_name").range(from, to),
+        "facility_services",
+      ),
+      fetchAll(
+        (from, to) =>
+          supabase.from("facility_insurance").select("facility_id, insurance_name").range(from, to),
+        "facility_insurance",
+      ),
     ]);
 
     // Create lookup maps
     const servicesMap = new Map<string, string[]>();
-    (servicesResult.data || []).forEach((s) => {
+    servicesRows.forEach((s) => {
       const existing = servicesMap.get(s.facility_id) || [];
       servicesMap.set(s.facility_id, [...existing, s.service_name]);
     });
 
     const insuranceMap = new Map<string, string[]>();
-    (insuranceResult.data || []).forEach((i) => {
+    insuranceRows.forEach((i) => {
       const existing = insuranceMap.get(i.facility_id) || [];
       insuranceMap.set(i.facility_id, [...existing, i.insurance_name]);
     });
