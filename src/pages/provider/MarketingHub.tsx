@@ -271,7 +271,7 @@ function PlanComparisonBlock() {
     { label: "Credential Kit (PDF cert + badge + social images)", free: false, pro: true },
     { label: "Send review-request emails to clients", free: false, pro: true },
     { label: "Performance analytics dashboard", free: "headline only", pro: "full" },
-    { label: "Multiple facility locations", free: "1", pro: "unlimited" },
+    { label: "Multiple facility locations", free: "unlimited", pro: "unlimited" },
     { label: "Featured placements add-on", free: false, pro: "available" },
     { label: "Concierge Partner add-on", free: false, pro: "available" },
   ];
