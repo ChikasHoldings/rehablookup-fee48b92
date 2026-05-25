@@ -120,7 +120,7 @@ Deno.serve(async (req) => {
     // ─── Load facility row, then enforce verified + Pro ──────────────
     const { data: facility, error: facilityErr } = await admin
       .from("facilities")
-      .select("id, name, slug, city, state, verified, claimed_at")
+      .select("id, name, slug, city, state, verified, claimed_at, suspended")
       .eq("id", facilityId)
       .eq("status", "approved")
       .maybeSingle();
@@ -129,6 +129,16 @@ Deno.serve(async (req) => {
       return json({ error: "Facility not found" }, 404);
     }
     const row = facility as FacilityRow;
+
+    // A suspended facility's verification is paused — don't mint a new
+    // Verified certificate / badge that could be redistributed while the
+    // listing is invisible.
+    if ((row as { suspended?: boolean }).suspended === true) {
+      return json(
+        { error: "Facility is suspended.", reason: "suspended" },
+        403,
+      );
+    }
 
     if (!row.verified) {
       return json(

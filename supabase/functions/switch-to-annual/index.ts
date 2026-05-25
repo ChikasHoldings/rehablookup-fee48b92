@@ -153,6 +153,20 @@ Deno.serve(async (req) => {
     });
   }
 
+  // Don't let a provider commit to a year of billing while the facility is
+  // suspended (listing invisible). Resolve the suspension first.
+  const { data: facRow } = await admin
+    .from("facilities")
+    .select("suspended")
+    .eq("id", sub.facility_id)
+    .maybeSingle();
+  if ((facRow as { suspended?: boolean } | null)?.suspended === true) {
+    return new Response(
+      JSON.stringify({ error: "Facility is suspended; resolve the suspension before changing billing.", code: "facility_suspended" }),
+      { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
+  }
+
   if (sub.billing_period !== "monthly") {
     return new Response(
       JSON.stringify({

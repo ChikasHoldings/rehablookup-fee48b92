@@ -816,6 +816,7 @@ export default function ProviderSettingsPage() {
                 Discard
               </Button>
               <Button
+                disabled={isSaving || isSavingNotifications}
                 onClick={async () => {
                   if (activeTab === 'profile') {
                     await handleSaveProfile();

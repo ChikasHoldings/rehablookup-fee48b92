@@ -155,10 +155,10 @@ export function CentralizedEngagementAnalytics({ dateRange, facilityId }: Centra
                     return (
                       <tr key={facility.facilityId} className="border-b last:border-b-0 hover:bg-muted/20 transition-colors">
                         <td className="px-3 py-2.5 font-medium text-foreground max-w-[180px] truncate">{facility.facilityName}</td>
-                        <td className="text-right px-3 py-2.5 text-muted-foreground">{facility.impressions.toLocaleString()}</td>
-                        <td className="text-right px-3 py-2.5 text-muted-foreground">{facility.profileViews.toLocaleString()}</td>
-                        <td className="text-right px-3 py-2.5 text-muted-foreground">{facility.clickToCalls.toLocaleString()}</td>
-                        <td className="text-right px-3 py-2.5 text-muted-foreground">{facility.websiteClicks.toLocaleString()}</td>
+                        <td className="text-right px-3 py-2.5 text-muted-foreground">{(facility.impressions ?? 0).toLocaleString()}</td>
+                        <td className="text-right px-3 py-2.5 text-muted-foreground">{(facility.profileViews ?? 0).toLocaleString()}</td>
+                        <td className="text-right px-3 py-2.5 text-muted-foreground">{(facility.clickToCalls ?? 0).toLocaleString()}</td>
+                        <td className="text-right px-3 py-2.5 text-muted-foreground">{(facility.websiteClicks ?? 0).toLocaleString()}</td>
                         <td className="text-right px-3 py-2.5">
                           <Badge variant="outline" className="text-xs px-1.5 py-0 bg-amber-500/10 text-amber-600 border-amber-200">
                             {facilityLeads}
