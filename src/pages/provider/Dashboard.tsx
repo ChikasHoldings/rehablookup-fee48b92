@@ -39,6 +39,7 @@ import { Lead } from "@/components/provider/leads/LeadDetailPanel";
 import { VerificationStateCard } from "@/components/provider/VerificationStateCard";
 import { DashboardPerformanceCard } from "@/components/provider/DashboardPerformanceCard";
 import { DashboardRecentActivity } from "@/components/provider/DashboardRecentActivity";
+import { DashboardListingHealthCard } from "@/components/provider/DashboardListingHealthCard";
 import { FeaturedAnalyticsWidget } from "@/components/provider/FeaturedAnalyticsWidget";
 import { ConciergeAnalyticsWidget } from "@/components/provider/marketing/ConciergeAnalyticsWidget";
 
@@ -746,6 +747,9 @@ export default function ProviderDashboardPage() {
               {/* Right column */}
               <div className="space-y-5">
                 {facilityId && <VerificationStateCard facilityId={facilityId} />}
+
+                {/* Listing health (completeness score + search ranking) */}
+                <DashboardListingHealthCard facilityId={facilityId} />
 
                 {/* Recent activity (notifications: reviews, inquiries, updates) */}
                 <DashboardRecentActivity />
