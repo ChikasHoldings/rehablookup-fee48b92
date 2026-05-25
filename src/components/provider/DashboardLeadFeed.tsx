@@ -20,7 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { LeadStatusBadge, type LeadStatus } from "@/components/provider/leads/LeadStatusBadge";
-import type { Lead } from "@/components/provider/leads/LeadDetailPanel";
+import type { Lead } from "@/components/provider/leads/types";
 
 interface DashboardLeadFeedProps {
   leads: Lead[];

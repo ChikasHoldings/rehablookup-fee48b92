@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { startOfMonth, subMonths, format, startOfDay, endOfDay, isWithinInterval, subDays } from "date-fns";
-import { Lead } from "@/components/provider/leads/LeadDetailPanel";
+import { Lead } from "@/components/provider/leads/types";
 import { fromLeadsProviderView } from "@/lib/leadsProviderView";
 
 // Re-export Lead for backwards compatibility

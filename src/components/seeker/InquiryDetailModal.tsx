@@ -344,6 +344,38 @@ export function InquiryDetailModal({ open, onOpenChange, leadId }: Omit<InquiryD
                   </div>
                 )}
 
+                {/* Non-new statuses get a context line + a recovery CTA for
+                    terminal states, so a closed/expired inquiry is never a
+                    dead-end showing just a status badge. */}
+                {!providerResponse && lead.status !== "new" && (
+                  <div className="rounded-xl border border-border bg-muted/40 p-4">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                      <h4 className="font-medium text-sm text-foreground">
+                        {lead.status === "in_progress" ? "In progress"
+                          : lead.status === "scheduled" ? "Visit scheduled"
+                          : lead.status === "admitted" ? "Admission in progress"
+                          : lead.status === "closed" ? "Inquiry closed"
+                          : lead.status === "expired" ? "Inquiry expired"
+                          : "Status update"}
+                      </h4>
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      {lead.status === "in_progress" ? "A specialist is working on your inquiry — you'll hear from the facility soon."
+                        : lead.status === "scheduled" ? "Your visit is scheduled. Check your email for the details."
+                        : lead.status === "admitted" ? "Great news — your admission is being arranged."
+                        : lead.status === "closed" ? "This inquiry has been closed. You can start a new search anytime."
+                        : lead.status === "expired" ? "This inquiry has expired. Browse treatment centers to start a new one."
+                        : "We'll keep you updated on this inquiry."}
+                    </p>
+                    {(lead.status === "closed" || lead.status === "expired") && (
+                      <Button asChild size="sm" variant="outline">
+                        <Link to="/search-results">Browse treatment centers</Link>
+                      </Button>
+                    )}
+                  </div>
+                )}
+
                 <Separator />
 
                 {/* Submission Details */}

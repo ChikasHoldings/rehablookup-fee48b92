@@ -12,7 +12,7 @@
  *
  *   This helper narrows the escape hatch to a single function, returns
  *   a chainable PostgrestQueryBuilder whose row type is the Lead
- *   interface from LeadDetailPanel, and keeps the select/eq/order
+ *   Lead interface from ./leads/types, and keeps the select/eq/order
  *   chain type-safe via PostgrestFilterBuilder's row-typed methods.
  *
  * Usage:
@@ -22,7 +22,7 @@
  *     .order("created_at", { ascending: false });
  */
 import { supabase } from "@/integrations/supabase/client";
-import type { Lead } from "@/components/provider/leads/LeadDetailPanel";
+import type { Lead } from "@/components/provider/leads/types";
 
 // The Supabase client strictly types `.from()` against the generated
 // Database type. The view isn't in that type, so we cast the client to

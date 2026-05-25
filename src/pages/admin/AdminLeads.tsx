@@ -153,8 +153,6 @@ export default function AdminLeads() {
   const [sortKey, setSortKey] = useState<string>(() => searchParams.get("sort") ?? "created_at:desc");
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<Lead | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
@@ -415,27 +413,6 @@ export default function AdminLeads() {
     if (serverErr) return serverErr;
     if (error instanceof Error) return error.message;
     return fallback;
-  };
-
-  const handleDeleteLead = async () => {
-    if (!deleteTarget) return;
-    setIsDeleting(true);
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error("Not authenticated");
-      const { data, error } = await supabase.functions.invoke("admin-delete-lead", {
-        body: { leadIds: [deleteTarget.id] },
-        headers: { Authorization: `Bearer ${session.access_token}` },
-      });
-      if (error || (data as { error?: string } | null)?.error) {
-        throw new Error(reasonFromInvoke(data, error, "Delete failed"));
-      }
-      invalidateAll(); toast.success("Lead deleted"); setDeleteTarget(null);
-    } catch (err) {
-      logError("delete_lead", err);
-      toast.error(`Failed to delete: ${err instanceof Error ? err.message : "Unknown error"}`);
-    }
-    finally { setIsDeleting(false); }
   };
 
   const handleBulkDelete = async () => {
@@ -983,21 +960,6 @@ export default function AdminLeads() {
         }}
       />
 
-      {/* Delete Confirmation */}
-      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Lead Permanently?</AlertDialogTitle>
-            <AlertDialogDescription>This will permanently delete <strong>{deleteTarget?.name}</strong> and all associated data.</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteLead} disabled={isDeleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              {isDeleting ? "Deleting…" : "Delete Permanently"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       {/* Bulk Delete */}
       <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>

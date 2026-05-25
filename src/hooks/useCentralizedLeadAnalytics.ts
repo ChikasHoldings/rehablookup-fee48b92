@@ -12,7 +12,7 @@ import {
   differenceInCalendarDays,
 } from "date-fns";
 import { useProviderFacilities } from "./useProviderFacilities";
-import { Lead } from "@/components/provider/leads/LeadDetailPanel";
+import { Lead } from "@/components/provider/leads/types";
 import { type DateRange } from "./useLeadAnalytics";
 
 export interface FacilityLeadBreakdown {

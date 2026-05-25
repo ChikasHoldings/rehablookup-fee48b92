@@ -35,7 +35,7 @@ import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { useFacilitySubscription } from "@/hooks/useFacilitySubscription";
 import { LeadDetailDrawer } from "@/components/provider/leads/LeadDetailDrawer";
 import { cn } from "@/lib/utils";
-import { Lead } from "@/components/provider/leads/LeadDetailPanel";
+import { Lead } from "@/components/provider/leads/types";
 import { VerificationStateCard } from "@/components/provider/VerificationStateCard";
 import { DashboardPerformanceCard } from "@/components/provider/DashboardPerformanceCard";
 import { DashboardRecentActivity } from "@/components/provider/DashboardRecentActivity";

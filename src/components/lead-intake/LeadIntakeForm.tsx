@@ -107,6 +107,7 @@ export function LeadIntakeForm({
     return (
       <LeadIntakeSuccess
         facilityName={facilityName}
+        facilityId={facilityId}
         firstName={formData.firstName}
         contact={{
           email: formData.email,

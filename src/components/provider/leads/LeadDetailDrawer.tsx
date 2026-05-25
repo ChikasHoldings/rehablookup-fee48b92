@@ -50,7 +50,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { LeadStatusBadge, type LeadStatus } from "./LeadStatusBadge";
 import { getStatusOptions } from "./leadStatusOptions";
 import { EmailLeadDialog } from "./EmailLeadDialog";
-import { Lead } from "./LeadDetailPanel";
+import { Lead } from "./types";
 import { useLeadContactTracking } from "@/hooks/useLeadContactTracking";
 
 interface LeadNote {
