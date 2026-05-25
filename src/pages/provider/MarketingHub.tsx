@@ -4,6 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { useFacilitySubscription } from "@/hooks/useFacilitySubscription";
 import { MarketingHubCards } from "@/components/provider/marketing/MarketingHubCards";
+import { MarketDemandCard } from "@/components/provider/marketing/MarketDemandCard";
 import { ProviderPageHeader } from "@/components/provider/ProviderPageHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
@@ -164,6 +165,13 @@ export default function MarketingHub() {
               actively-searching seekers. Each is independent of the Pro
               subscription and can be added or removed anytime.
             </p>
+            {selectedFacility?.state && (
+              <MarketDemandCard
+                state={selectedFacility.state}
+                city={selectedFacility.city ?? ""}
+                isPro={isPro}
+              />
+            )}
             {isPro && subscription ? (
               <MarketingHubCards subscription={subscription} />
             ) : (

@@ -20,9 +20,20 @@
 
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   AlertTriangle,
   ShieldCheck,
@@ -30,7 +41,7 @@ import {
   Upload,
   HelpCircle,
   Clock,
-  ChevronRight,
+  History,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -83,6 +94,59 @@ function recencyLabel(last: string | null): string {
   const d = new Date(last);
   if (Number.isNaN(d.getTime())) return "Verified";
   return `Verified · confirmed ${d.toLocaleDateString(undefined, { month: "short", year: "numeric" })}`;
+}
+
+function humanizeEventType(type: string): string {
+  return EVENT_LABEL[type] ?? type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+// resolution is free-text written by the monitoring engine / admins. We
+// classify the known states and humanize anything unrecognized so a new
+// status string never renders as a raw snake_case token.
+const OPEN_RESOLUTIONS = new Set([
+  "pending",
+  "notified",
+  "lapsed",
+  "pending_review",
+  "open",
+  "in_progress",
+]);
+const RESOLVED_RESOLUTIONS = new Set([
+  "resolved",
+  "cleared",
+  "auto_resolved",
+  "dismissed",
+  "confirmed",
+  "verified",
+]);
+
+function formatResolution(resolution: string | null): {
+  label: string;
+  tone: "open" | "resolved" | "neutral";
+} {
+  const r = (resolution ?? "").toLowerCase();
+  if (!r) return { label: "Open", tone: "open" };
+  const human = r.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  if (RESOLVED_RESOLUTIONS.has(r)) return { label: human, tone: "resolved" };
+  if (OPEN_RESOLUTIONS.has(r)) return { label: human, tone: "open" };
+  return { label: human, tone: "neutral" };
+}
+
+function resolutionPillClass(tone: "open" | "resolved" | "neutral"): string {
+  const base = "shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium ";
+  if (tone === "resolved") return base + "bg-emerald-100 text-emerald-700";
+  if (tone === "open") return base + "bg-amber-100 text-amber-700";
+  return base + "bg-slate-100 text-slate-600";
+}
+
+interface FullHistoryEvent {
+  id: string;
+  event_type: string;
+  severity: "soft" | "medium" | "hard";
+  resolution: string | null;
+  resolution_notes: string | null;
+  created_at: string;
+  resolved_at: string | null;
 }
 
 export function VerificationStateCard({
@@ -148,6 +212,19 @@ export function VerificationStateCard({
                 sources continuously.
               </p>
             </div>
+            <ReVerificationHistoryDialog
+              facilityId={facilityId}
+              trigger={
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 shrink-0 gap-1 px-2 text-xs text-emerald-700 hover:bg-emerald-500/10 hover:text-emerald-800 dark:text-emerald-400"
+                >
+                  <History className="h-3.5 w-3.5" aria-hidden />
+                  History
+                </Button>
+              }
+            />
           </div>
         </CardContent>
       </Card>
@@ -245,14 +322,150 @@ export function VerificationStateCard({
               Get help
             </Link>
           </Button>
-          <Button asChild size="sm" variant="ghost" className="h-7 text-xs">
-            <Link to="/provider/notifications?type=listings">
-              History
-              <ChevronRight className="h-3 w-3 ml-0.5" aria-hidden />
-            </Link>
-          </Button>
+          <ReVerificationHistoryDialog
+            facilityId={facilityId}
+            trigger={
+              <Button size="sm" variant="ghost" className="h-7 gap-1 text-xs">
+                <History className="h-3 w-3" aria-hidden />
+                Full history
+              </Button>
+            }
+          />
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+/**
+ * Full re-verification event log for one facility, shown in a dialog.
+ * Lazily fetches every event (newest first) only when opened, so the
+ * dashboard card stays cheap. Read access is owner-or-admin (RLS:
+ * re_verification_events_select_owner_or_admin).
+ */
+function ReVerificationHistoryDialog({
+  facilityId,
+  trigger,
+}: {
+  facilityId: string;
+  trigger: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["re-verification-history", facilityId],
+    enabled: open,
+    staleTime: 1000 * 60,
+    queryFn: async (): Promise<FullHistoryEvent[]> => {
+      const { data, error } = await supabase
+        .from("re_verification_events")
+        .select(
+          "id, event_type, severity, resolution, resolution_notes, created_at, resolved_at",
+        )
+        .eq("facility_id", facilityId)
+        .order("created_at", { ascending: false })
+        .limit(200);
+      if (error) throw error;
+      return (data ?? []) as FullHistoryEvent[];
+    },
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-base">
+            <History className="h-4 w-4 text-muted-foreground" aria-hidden />
+            Verification history
+          </DialogTitle>
+          <DialogDescription>
+            Every re-check signal recorded for this listing, newest first.
+            RehabLookup logs each one automatically — you can't be penalized
+            for a signal you've already resolved.
+          </DialogDescription>
+        </DialogHeader>
+
+        {isLoading ? (
+          <div className="space-y-2 py-2">
+            <Skeleton className="h-14 w-full" />
+            <Skeleton className="h-14 w-full" />
+            <Skeleton className="h-14 w-full" />
+          </div>
+        ) : isError ? (
+          <p className="py-8 text-center text-sm text-destructive">
+            Couldn't load history. Close this and try again.
+          </p>
+        ) : !data || data.length === 0 ? (
+          <div className="py-8 text-center">
+            <ShieldCheck className="mx-auto h-8 w-8 text-emerald-500/70" aria-hidden />
+            <p className="mt-2 text-sm font-medium">No re-check signals yet</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Nothing has flagged your listing for re-verification. New signals
+              will appear here as they happen.
+            </p>
+          </div>
+        ) : (
+          <ScrollArea className="-mr-3 max-h-[55vh] pr-3">
+            <ul className="space-y-2.5">
+              {data.map((e) => {
+                const r = formatResolution(e.resolution);
+                return (
+                  <li
+                    key={e.id}
+                    className="rounded-md border border-border/60 p-2.5"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <Badge
+                          variant={
+                            e.severity === "hard"
+                              ? "destructive"
+                              : e.severity === "medium"
+                                ? "secondary"
+                                : "outline"
+                          }
+                          className="h-4 shrink-0 text-[10px]"
+                        >
+                          {e.severity}
+                        </Badge>
+                        <span className="truncate text-sm font-medium">
+                          {humanizeEventType(e.event_type)}
+                        </span>
+                      </div>
+                      <span className={resolutionPillClass(r.tone)}>{r.label}</span>
+                    </div>
+                    <div className="mt-1 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                      <Clock className="h-3 w-3" aria-hidden />
+                      <span>
+                        {new Date(e.created_at).toLocaleDateString(undefined, {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </span>
+                      {e.resolved_at && (
+                        <span>
+                          · resolved{" "}
+                          {new Date(e.resolved_at).toLocaleDateString(undefined, {
+                            month: "short",
+                            day: "numeric",
+                          })}
+                        </span>
+                      )}
+                    </div>
+                    {e.resolution_notes && (
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {e.resolution_notes}
+                      </p>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </ScrollArea>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
