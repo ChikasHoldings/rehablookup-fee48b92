@@ -123,24 +123,15 @@ export default function CategoryHub() {
   const { slug } = useParams<{ slug: string }>();
   const category = getCategoryBySlug(slug);
 
-  // Unknown category → redirect to the resources hub. Avoids serving a thin
-  // 404 for a URL we never want indexed.
-  if (!category) {
-    return (
-      <NotFoundInPlace
-        title="Topic hub not found"
-        message="We don't have a topic hub for that category yet. Browse all guides in our resources hub."
-        backTo="/resources"
-        backLabel="Browse all resources"
-      />
-    );
-  }
-
-  const Icon = category.icon;
-
+  // Rules of Hooks: an unknown category must not change the number/order of
+  // hooks across renders, so every hook below runs unconditionally and guards
+  // on `category` internally (the query is gated with `enabled`). The
+  // not-found early return lives AFTER all hooks. `category` is a stable
+  // reference (static Map lookup), so the memos don't thrash.
   const { data: articles, isLoading } = useQuery({
-    queryKey: ["category-hub-articles", category.slug],
+    queryKey: ["category-hub-articles", category?.slug ?? "unknown"],
     queryFn: async (): Promise<DBArticle[]> => {
+      if (!category) return [];
       const { data, error } = await supabase
         .from("blog_articles")
         .select("id, slug, title, excerpt, category, category_label, read_time, image_url, featured, published_at")
@@ -151,6 +142,7 @@ export default function CategoryHub() {
       if (error) throw error;
       return (data ?? []) as DBArticle[];
     },
+    enabled: !!category,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -159,12 +151,12 @@ export default function CategoryHub() {
   // Pillar = explicitly-curated slugs (preserve order), filtered to those that
   // are actually in the result set. The rest of the list is "everything else."
   const pillarArticles = useMemo<DBArticle[]>(() => {
-    if (allArticles.length === 0 || category.pillarSlugs.length === 0) return [];
+    if (!category || allArticles.length === 0 || category.pillarSlugs.length === 0) return [];
     const bySlug = new Map(allArticles.map((a) => [a.slug, a] as const));
     return category.pillarSlugs
       .map((s) => bySlug.get(s))
       .filter((a): a is DBArticle => a !== undefined);
-  }, [allArticles, category.pillarSlugs]);
+  }, [allArticles, category]);
 
   const pillarSlugSet = useMemo(
     () => new Set(pillarArticles.map((a) => a.slug)),
@@ -178,16 +170,33 @@ export default function CategoryHub() {
 
   const relatedHubs = useMemo(
     () =>
-      category.relatedCategories
-        .map((s) => ALL_BLOG_CATEGORIES.find((c) => c.slug === s))
-        .filter((c): c is BlogCategory => c !== undefined),
-    [category.relatedCategories]
+      category
+        ? category.relatedCategories
+            .map((s) => ALL_BLOG_CATEGORIES.find((c) => c.slug === s))
+            .filter((c): c is BlogCategory => c !== undefined)
+        : [],
+    [category]
   );
 
   const schema = useMemo(
-    () => buildCategorySchema(category, allArticles),
+    () => (category ? buildCategorySchema(category, allArticles) : null),
     [category, allArticles]
   );
+
+  // Unknown category → thin-content-safe not-found. After all hooks so the
+  // hook order is identical on every render.
+  if (!category) {
+    return (
+      <NotFoundInPlace
+        title="Topic hub not found"
+        message="We don't have a topic hub for that category yet. Browse all guides in our resources hub."
+        backTo="/resources"
+        backLabel="Browse all resources"
+      />
+    );
+  }
+
+  const Icon = category.icon;
 
   return (
     <Layout>
@@ -195,7 +204,7 @@ export default function CategoryHub() {
         title={category.metaTitle}
         description={category.metaDescription}
         canonical={`/resources/category/${category.slug}`}
-        structuredData={schema}
+        structuredData={schema ?? undefined}
         breadcrumbs={[
           { name: "Home", url: "/" },
           { name: "Resources", url: "/resources" },
