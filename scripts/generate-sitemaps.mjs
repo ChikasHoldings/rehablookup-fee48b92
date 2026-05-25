@@ -238,6 +238,11 @@ async function generateSitemapFile({ type, fileName }, prerenderedPaths, stats, 
  * comment block at the top.
  */
 async function updateRobotsHeader(stats) {
+  // stats.kept === 0 means every fetchSitemap() threw and generateSitemapFile()
+  // preserved the existing committed sitemaps. Stamping "0 URLs" here would be a
+  // false claim contradicting the real sitemap.xml on disk (and bloats the header
+  // on every offline/no-DB build). Leave the last truthful line in place.
+  if (!stats || stats.kept === 0) return;
   const robotsPath = path.join(publicDir, "robots.txt");
   if (!(await fileExists(robotsPath))) return;
   const src = await readFile(robotsPath, "utf8");
