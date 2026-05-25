@@ -61,6 +61,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PhoneInput } from "@/components/ui/phone-input";
@@ -393,6 +394,9 @@ export default function AddLocationPage() {
         insertPayload.accepting_admissions = true;
       } else if (draft.accepting_admissions === "no") {
         insertPayload.accepting_admissions = false;
+      }
+      if (draft.accepts_international_patients) {
+        insertPayload.accepts_international_patients = true;
       }
       if (draft.year_established) {
         const y = Number(draft.year_established);
@@ -1036,6 +1040,22 @@ function Step1Identity({
           </SelectContent>
         </Select>
       </Field>
+      <Field
+        label="International patients"
+        hint="Shown on your public page so families searching from outside the US know you accept them."
+      >
+        <label className="flex items-center gap-2.5 cursor-pointer rounded-md border border-slate-200 px-3 py-2.5 hover:bg-slate-50">
+          <Checkbox
+            checked={draft.accepts_international_patients}
+            onCheckedChange={(c) =>
+              updateField("accepts_international_patients", c === true)
+            }
+          />
+          <span className="text-sm text-slate-700">
+            This facility accepts international patients
+          </span>
+        </label>
+      </Field>
     </div>
   );
 }
@@ -1303,6 +1323,7 @@ function Step6Review({
               ?.label ?? draft.accepting_admissions}
           </p>
         )}
+        {draft.accepts_international_patients && <p>Accepts international patients</p>}
       </ReviewSection>
 
       <ReviewSection title="Treatment details" onEdit={() => onEditStep(1)}>

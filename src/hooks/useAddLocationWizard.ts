@@ -27,6 +27,7 @@ export interface AddLocationDraft {
   bed_count: string;
   year_established: string;       // captured as text so empty is "", normalize on submit
   accepting_admissions: "" | "yes" | "no";
+  accepts_international_patients: boolean;
 
   // Step 2 — treatment details
   levels_of_care: string[];
@@ -78,6 +79,7 @@ export const INITIAL_DRAFT: AddLocationDraft = {
   bed_count: "",
   year_established: "",
   accepting_admissions: "",
+  accepts_international_patients: false,
   levels_of_care: [],
   services: [],
   treatment_approaches: [],
