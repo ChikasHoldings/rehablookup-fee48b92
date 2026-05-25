@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Mail,
   CheckCircle2,
@@ -104,6 +105,16 @@ function statusBadge(status: string) {
   }
 }
 
+type EmailLogRow = {
+  id: string;
+  email_id: string | null;
+  email_type: string | null;
+  event_type: string | null;
+  recipient_email: string | null;
+  event_data: unknown;
+  created_at: string;
+};
+
 export default function AdminEmailLogs() {
   const [searchParams, setSearchParams] = useSearchParams();
   const hydratedRef = useRef(false);
@@ -112,6 +123,7 @@ export default function AdminEmailLogs() {
   const [typeFilter, setTypeFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [copiedLink, setCopiedLink] = useState(false);
+  const [detailLog, setDetailLog] = useState<EmailLogRow | null>(null);
   const { page: pageOneBased, pageSize: PAGE_SIZE, totalPages, setPage: setPageOneBased, setPageSize } = usePagination({
     tableId: "admin-email-logs",
     defaultPageSize: 50,
@@ -542,7 +554,15 @@ export default function AdminEmailLogs() {
                     const eventData = log.event_data as Record<string, unknown> | null;
                     const errorMsg = eventData?.error as string | undefined;
                     return (
-                      <TableRow key={log.id}>
+                      <TableRow
+                        key={log.id}
+                        className="cursor-pointer hover:bg-muted/40"
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`View email event detail for ${log.recipient_email || "recipient"}`}
+                        onClick={() => setDetailLog(log as EmailLogRow)}
+                        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setDetailLog(log as EmailLogRow); } }}
+                      >
                         <TableCell>
                           <span className="text-xs font-mono bg-muted px-2 py-0.5 rounded">
                             {log.email_type?.replace(/_/g, " ") || "–"}
@@ -591,6 +611,38 @@ export default function AdminEmailLogs() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Row-click detail: full tracking-event payload */}
+      <Dialog open={!!detailLog} onOpenChange={(o) => !o && setDetailLog(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Email event detail</DialogTitle>
+            <DialogDescription>Full tracking-event payload for this delivery event.</DialogDescription>
+          </DialogHeader>
+          {detailLog && (
+            <div className="space-y-3 text-sm">
+              <div className="grid grid-cols-3 gap-x-3 gap-y-1.5">
+                <span className="text-muted-foreground">Type</span>
+                <span className="col-span-2 font-medium">{detailLog.email_type?.replace(/_/g, " ") || "—"}</span>
+                <span className="text-muted-foreground">Event</span>
+                <span className="col-span-2 font-medium">{detailLog.event_type || "—"}</span>
+                <span className="text-muted-foreground">Recipient</span>
+                <span className="col-span-2 font-mono break-all">{detailLog.recipient_email || "—"}</span>
+                <span className="text-muted-foreground">Email ID</span>
+                <span className="col-span-2 font-mono break-all">{detailLog.email_id || "—"}</span>
+                <span className="text-muted-foreground">Time</span>
+                <span className="col-span-2">{format(new Date(detailLog.created_at), "MMM d, yyyy HH:mm:ss")}</span>
+              </div>
+              <div>
+                <p className="text-muted-foreground mb-1">event_data</p>
+                <pre className="text-xs bg-muted rounded-md p-3 overflow-auto max-h-72 whitespace-pre-wrap break-all">
+                  {detailLog.event_data ? JSON.stringify(detailLog.event_data, null, 2) : "—"}
+                </pre>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

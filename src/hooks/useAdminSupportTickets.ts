@@ -43,6 +43,7 @@ export interface SupportTicketFilters {
   status?: string;
   source?: string;
   assignedTo?: string;
+  category?: string;
   search?: string;
 }
 
@@ -69,6 +70,10 @@ export function useAdminSupportTickets(filters: SupportTicketFilters = {}) {
         } else {
           query = query.eq("assigned_to", filters.assignedTo);
         }
+      }
+
+      if (filters.category && filters.category !== "all") {
+        query = query.eq("category", filters.category);
       }
 
       if (filters.search) {

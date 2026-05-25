@@ -158,6 +158,23 @@ export default function AdminSupport() {
     staleTime: 1000 * 60 * 5,
   });
 
+  // Distinct categories for the category filter. Queried unfiltered so the
+  // option list never collapses when a category filter is active.
+  const { data: categoryOptions = [] } = useQuery({
+    queryKey: ["admin-support-categories"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("support_tickets")
+        .select("category")
+        .not("category", "is", null);
+      if (error) throw error;
+      return Array.from(
+        new Set((data ?? []).map((r) => r.category).filter(Boolean) as string[]),
+      ).sort();
+    },
+    staleTime: 1000 * 60 * 5,
+  });
+
   const invalidateAll = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ["admin-support-tickets"] });
     queryClient.invalidateQueries({ queryKey: ["admin-support-global-counts"] });
@@ -246,11 +263,12 @@ export default function AdminSupport() {
     searchTerm !== "" ||
     (filters.status && filters.status !== "all") ||
     (filters.source && filters.source !== "all") ||
+    !!filters.category ||
     !!filters.assignedTo;
 
   const clearAllFilters = () => {
     setSearchTerm("");
-    setFilters({ status: "all", source: "all", assignedTo: undefined });
+    setFilters({ status: "all", source: "all", assignedTo: undefined, category: undefined });
     setSelectedIds(new Set());
   };
 
@@ -499,6 +517,24 @@ export default function AdminSupport() {
                   <SelectItem value="seeker_support">Client</SelectItem>
                 </SelectContent>
               </Select>
+              {categoryOptions.length > 0 && (
+                <Select
+                  value={filters.category || "all"}
+                  onValueChange={(value) =>
+                    setFilters({ ...filters, category: value === "all" ? undefined : value })
+                  }
+                >
+                  <SelectTrigger className="w-[130px] sm:w-[160px] h-9 text-xs sm:text-sm">
+                    <SelectValue placeholder="Category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Categories</SelectItem>
+                    {categoryOptions.map((c) => (
+                      <SelectItem key={c} value={c}>{c}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
               <Select
                 value={filters.assignedTo || "all"}
                 onValueChange={(value) =>

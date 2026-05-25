@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -78,9 +79,7 @@ export function EscalationDetailSheet({
 }: EscalationDetailSheetProps) {
   const { user, isSuperAdmin } = useAdminAuth();
   const queryClient = useQueryClient();
-  const [internalNote, setInternalNote] = useState("");
   const [resolutionNotes, setResolutionNotes] = useState("");
-  const [newStatus, setNewStatus] = useState("");
 
   // Fetch available managers/admins to assign
   const { data: assignableAdmins } = useQuery({
@@ -119,7 +118,6 @@ export function EscalationDetailSheet({
       auditContext: { surface: "escalation_detail_sheet" },
       onSuccess: () => {
         setResolutionNotes("");
-        setNewStatus("");
       },
     });
   };
@@ -197,13 +195,23 @@ export function EscalationDetailSheet({
               {escalation.related_type && (
                 <div className="col-span-2">
                   <p className="text-xs text-muted-foreground mb-1">Related to</p>
-                  <div className="flex items-center gap-1.5">
-                    <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground" />
-                    <span className="text-sm">{escalation.related_type}</span>
-                    {escalation.related_id && (
-                      <span className="text-xs text-muted-foreground font-mono">({escalation.related_id.slice(0, 8)}...)</span>
-                    )}
-                  </div>
+                  {escalation.related_type === "support_ticket" && escalation.related_id ? (
+                    <Link
+                      to={`/admin/support?ticket=${escalation.related_id}`}
+                      className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+                    >
+                      <ArrowUpRight className="h-3.5 w-3.5" />
+                      View support ticket
+                    </Link>
+                  ) : (
+                    <div className="flex items-center gap-1.5">
+                      <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span className="text-sm">{escalation.related_type.replace(/_/g, " ")}</span>
+                      {escalation.related_id && (
+                        <span className="text-xs text-muted-foreground font-mono">({escalation.related_id.slice(0, 8)}...)</span>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
