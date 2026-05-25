@@ -12,6 +12,7 @@ import { useFacilitySubscription } from "@/hooks/useFacilitySubscription";
 import { ConciergeMarketingDetail } from "@/components/provider/marketing/ConciergeMarketingDetail";
 import { ConciergeManagementPanel } from "@/components/provider/marketing/ConciergeManagementPanel";
 import { ConciergeAnalyticsWidget } from "@/components/provider/marketing/ConciergeAnalyticsWidget";
+import { ConciergeIntroductionResponder } from "@/components/provider/concierge/ConciergeIntroductionResponder";
 import { LockedFeaturePreview } from "@/components/provider/LockedFeaturePreview";
 import { ConciergeManagementSample } from "@/components/provider/concierge/ConciergeManagementSample";
 
@@ -150,6 +151,11 @@ export default function MarketingConcierge() {
             )}
           </div>
         </div>
+
+        {/* Introductions awaiting a response — surfaced to every tier (advisors
+            can match non-partner facilities too), and renders nothing when the
+            queue is empty. */}
+        <ConciergeIntroductionResponder facilityId={facilityId} />
 
         {!isPro ? (
           <LockedFeaturePreview

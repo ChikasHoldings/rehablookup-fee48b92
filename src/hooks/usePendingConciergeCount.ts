@@ -14,12 +14,15 @@ export function usePendingConciergeCount(facilityId?: string) {
       const session = await getCachedSession();
       if (!session) return 0;
 
-      // Count introductions that haven't been responded to yet
+      // Count introductions the provider hasn't acted on yet. New rows are
+      // inserted with provider_response='pending' (see send-concierge-
+      // introduction), so counting only NULL missed every real row; include
+      // null as defence-in-depth for any legacy rows.
       const { count, error } = await supabase
         .from("concierge_introductions")
         .select("*", { count: "exact", head: true })
         .eq("facility_id", facilityId)
-        .is("provider_response", null);
+        .or("provider_response.is.null,provider_response.eq.pending");
 
       if (error) {
         console.error("[usePendingConciergeCount] Error:", error.message);

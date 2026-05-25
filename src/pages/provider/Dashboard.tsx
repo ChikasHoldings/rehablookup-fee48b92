@@ -326,7 +326,7 @@ export default function ProviderDashboardPage() {
   // Auto-refresh impressions via realtime subscription.
   // Per-mount random suffix on the channel name so successive mounts
   // can't collide with an already-subscribed cached channel — same
-  // pattern as DashboardPlacementPanel + usePendingConciergeCount +
+  // pattern as ConciergeIntroductionResponder + usePendingConciergeCount +
   // useProviderData (the dashboard-crash fix). Without it the second
   // mount of the dashboard throws "cannot add postgres_changes
   // callbacks after subscribe()" and SEORouteBoundary catches it.
