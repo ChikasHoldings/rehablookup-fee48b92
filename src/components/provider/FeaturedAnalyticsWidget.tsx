@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { Eye, MousePointer, Users, TrendingUp, Star, ArrowUpRight, AlertCircle } from "lucide-react";
+import { Eye, Phone, TrendingUp, Star, ArrowUpRight, AlertCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useFacilitySubscription } from "@/hooks/useFacilitySubscription";
@@ -14,10 +14,8 @@ interface FeaturedAnalyticsWidgetProps {
 
 interface AnalyticsData {
   impressions: number;
-  clicks: number;
-  leads: number;
-  ctr: number;
-  conversionRate: number;
+  calls: number;
+  callRate: number;
 }
 
 export function FeaturedAnalyticsWidget({ facilityId }: FeaturedAnalyticsWidgetProps) {
@@ -27,45 +25,36 @@ export function FeaturedAnalyticsWidget({ facilityId }: FeaturedAnalyticsWidgetP
   const { data: analytics, isLoading, isError } = useQuery({
     queryKey: ["featured-analytics-provider", facilityId],
     queryFn: async (): Promise<AnalyticsData> => {
-      // Get last 30 days of analytics
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      const startDate = thirtyDaysAgo.toISOString().split("T")[0];
+      const since = new Date();
+      since.setDate(since.getDate() - 30);
+      const sinceIso = since.toISOString();
 
-      const { data, error } = await supabase
-        .from("featured_placement_analytics")
-        .select("event_type, event_count")
-        .eq("facility_id", facilityId)
-        .gte("event_date", startDate);
+      // Read the tables the public Featured surfaces actually write to (and
+      // that admin analytics reads): featured_impressions (occurred_at) and
+      // featured_phone_clicks (clicked_at). The old featured_placement_analytics
+      // table only ever received card "click" events — never impressions or
+      // lead_conversion — so this widget's headline metrics were structurally
+      // always zero. RLS scopes both tables to the facility owner.
+      const [impRes, callRes] = await Promise.all([
+        supabase
+          .from("featured_impressions")
+          .select("id", { count: "exact", head: true })
+          .eq("facility_id", facilityId)
+          .gte("occurred_at", sinceIso),
+        supabase
+          .from("featured_phone_clicks")
+          .select("id", { count: "exact", head: true })
+          .eq("facility_id", facilityId)
+          .gte("clicked_at", sinceIso),
+      ]);
+      if (impRes.error) throw impRes.error;
+      if (callRes.error) throw callRes.error;
 
-      if (error) throw error;
+      const impressions = impRes.count ?? 0;
+      const calls = callRes.count ?? 0;
+      const callRate = impressions > 0 ? (calls / impressions) * 100 : 0;
 
-      // Aggregate by event type
-      const totals = {
-        impression: 0,
-        click: 0,
-        lead_conversion: 0,
-      };
-
-      (data || []).forEach((row) => {
-        if (row.event_type in totals) {
-          totals[row.event_type as keyof typeof totals] += row.event_count;
-        }
-      });
-
-      const impressions = totals.impression;
-      const clicks = totals.click;
-      const leads = totals.lead_conversion;
-      const ctr = impressions > 0 ? (clicks / impressions) * 100 : 0;
-      const conversionRate = clicks > 0 ? (leads / clicks) * 100 : 0;
-
-      return {
-        impressions,
-        clicks,
-        leads,
-        ctr,
-        conversionRate,
-      };
+      return { impressions, calls, callRate };
     },
     enabled: !!facilityId && hasFeatured,
     staleTime: 5 * 60 * 1000,
@@ -108,8 +97,8 @@ export function FeaturedAnalyticsWidget({ facilityId }: FeaturedAnalyticsWidgetP
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {[1, 2, 3, 4].map((i) => (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            {[1, 2, 3].map((i) => (
               <Skeleton key={i} className="h-16" />
             ))}
           </div>
@@ -127,22 +116,15 @@ export function FeaturedAnalyticsWidget({ facilityId }: FeaturedAnalyticsWidgetP
       bgColor: "bg-blue-500/10",
     },
     {
-      label: "Clicks",
-      value: analytics?.clicks ?? 0,
-      icon: MousePointer,
+      label: "Calls",
+      value: analytics?.calls ?? 0,
+      icon: Phone,
       color: "text-emerald-600",
       bgColor: "bg-emerald-500/10",
     },
     {
-      label: "Leads",
-      value: analytics?.leads ?? 0,
-      icon: Users,
-      color: "text-purple-600",
-      bgColor: "bg-purple-500/10",
-    },
-    {
-      label: "CTR",
-      value: `${(analytics?.ctr ?? 0).toFixed(1)}%`,
+      label: "Call rate",
+      value: `${(analytics?.callRate ?? 0).toFixed(1)}%`,
       icon: TrendingUp,
       color: "text-amber-600",
       bgColor: "bg-amber-500/10",
@@ -168,7 +150,7 @@ export function FeaturedAnalyticsWidget({ facilityId }: FeaturedAnalyticsWidgetP
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {metrics.map((metric) => (
             <div
               key={metric.label}
@@ -189,20 +171,6 @@ export function FeaturedAnalyticsWidget({ facilityId }: FeaturedAnalyticsWidgetP
             the pages you're rotating in — give it 24 hours for the first
             impressions to land.
           </p>
-        )}
-
-        {analytics && analytics.conversionRate > 0 && (
-          <div className="flex items-center justify-between p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-emerald-600" />
-              <span className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
-                Conversion Rate
-              </span>
-            </div>
-            <span className="text-sm font-bold text-emerald-700 dark:text-emerald-400">
-              {analytics.conversionRate.toFixed(1)}%
-            </span>
-          </div>
         )}
 
         <Button variant="ghost" size="sm" className="w-full text-muted-foreground" asChild>
