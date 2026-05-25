@@ -13,6 +13,17 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface WaitlistRow {
   id: string;
@@ -80,7 +91,6 @@ export function MyWaitlistEntries({ facilityId, addonType }: Props) {
 
   async function cancel(id: string) {
     if (cancelingId) return;
-    if (!confirm("Leave the waitlist for this scope? You can re-join later.")) return;
     setCancelingId(id);
     try {
       const { error } = await supabase
@@ -193,20 +203,42 @@ export function MyWaitlistEntries({ facilityId, addonType }: Props) {
                   )}
                 </p>
               </div>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-8 gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10"
-                onClick={() => cancel(r.id)}
-                disabled={cancelingId === r.id}
-              >
-                {cancelingId === r.id ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <X className="h-3.5 w-3.5" />
-                )}
-                Leave
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-8 gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10"
+                    disabled={cancelingId === r.id}
+                  >
+                    {cancelingId === r.id ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <X className="h-3.5 w-3.5" />
+                    )}
+                    Leave
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Leave this waitlist?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      You'll give up your place in line for{" "}
+                      <span className="font-medium text-foreground">{scopeLabel(r)}</span>. You can
+                      re-join any time, but you'd start at the back of the queue.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Keep my spot</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => cancel(r.id)}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Leave waitlist
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </li>
           ))}
         </ul>

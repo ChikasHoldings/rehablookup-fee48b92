@@ -58,6 +58,16 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -567,19 +577,22 @@ export default function AddLocationPage() {
   }
 
   // Discard draft + reset
+  const [discardOpen, setDiscardOpen] = useState(false);
+  const doDiscard = useCallback(() => {
+    reset();
+    setActiveStep(0);
+    setStepErrors([]);
+    toast({ title: "Draft discarded" });
+  }, [reset, toast]);
+  // A pristine draft discards immediately; a draft with edits asks for
+  // confirmation via a styled dialog (replaces the native window.confirm).
   const handleDiscard = useCallback(() => {
-    if (
-      JSON.stringify(draft) === JSON.stringify(INITIAL_DRAFT) ||
-      window.confirm(
-        "Discard your draft? Everything you've entered will be deleted.",
-      )
-    ) {
-      reset();
-      setActiveStep(0);
-      setStepErrors([]);
-      toast({ title: "Draft discarded" });
+    if (JSON.stringify(draft) === JSON.stringify(INITIAL_DRAFT)) {
+      doDiscard();
+    } else {
+      setDiscardOpen(true);
     }
-  }, [draft, reset, toast]);
+  }, [draft, doDiscard]);
 
   if (!hydrated) {
     return (
@@ -771,6 +784,26 @@ export default function AddLocationPage() {
             >
               Discard draft
             </Button>
+            <AlertDialog open={discardOpen} onOpenChange={setDiscardOpen}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Discard your draft?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Everything you've entered for this location will be deleted.
+                    This can't be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Keep editing</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={doDiscard}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Discard draft
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
           <div>
             {activeStep < STEPS.length - 1 ? (
