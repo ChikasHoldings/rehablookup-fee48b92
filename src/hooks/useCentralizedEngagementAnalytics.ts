@@ -184,8 +184,11 @@ export function useCentralizedEngagementAnalytics(dateRange?: DateRange, filterF
       const websiteClickGrowth = hasAllTimeSelection ? 0 : calculateGrowth(periodWebsiteClicks, prevWebsiteClicks);
 
       const impressionToViewRate = periodImpressions > 0 ? Math.round((periodProfileViews / periodImpressions) * 100) : 0;
-      const viewToCallRate = periodListingViews > 0 ? Math.round((periodClickToCalls / periodListingViews) * 100) : 0;
-      const viewToWebsiteRate = periodListingViews > 0 ? Math.round((periodWebsiteClicks / periodListingViews) * 100) : 0;
+      // Denominator is profile views (not impressions+views) so this matches
+      // the on-screen funnel step impressions → profileViews → calls and the
+      // value CentralizedEngagementAnalytics renders. Keeps CSV == screen.
+      const viewToCallRate = periodProfileViews > 0 ? Math.round((periodClickToCalls / periodProfileViews) * 100) : 0;
+      const viewToWebsiteRate = periodProfileViews > 0 ? Math.round((periodWebsiteClicks / periodProfileViews) * 100) : 0;
 
       const facilityBreakdown: FacilityEngagementBreakdown[] = (summary.facilityBreakdown ?? [])
         .filter((f) => f.listingViews > 0 || f.clickToCalls > 0 || f.websiteClicks > 0)

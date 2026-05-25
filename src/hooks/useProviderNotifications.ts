@@ -106,10 +106,14 @@ export function useProviderNotifications() {
   // Real-time subscription for instant updates - filtered by user_id
   useEffect(() => {
     let channel: ReturnType<typeof supabase.channel> | null = null;
+    // Guards the async race: if the component unmounts during the awaited
+    // getUser() below, cleanup runs while `channel` is still null, so without
+    // this flag we'd create + subscribe a channel that never gets torn down.
+    let cancelled = false;
 
     const setupSubscription = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user || cancelled) return;
 
       channel = supabase
         .channel(`provider-notifications-realtime-${Math.random().toString(36).slice(2,8)}`)
@@ -210,6 +214,7 @@ export function useProviderNotifications() {
     setupSubscription();
 
     return () => {
+      cancelled = true;
       if (channel) {
         supabase.removeChannel(channel);
       }

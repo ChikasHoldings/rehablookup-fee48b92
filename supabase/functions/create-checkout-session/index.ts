@@ -144,7 +144,7 @@ Deno.serve(async (req) => {
 
     // ---- Authorization: caller must own the facility. ----
     const { data: facility, error: facilityErr } = await withTimeout(
-      svc.from("facilities").select("id, user_id").eq("id", facilityId).maybeSingle(),
+      svc.from("facilities").select("id, user_id, suspended").eq("id", facilityId).maybeSingle(),
       SUPABASE_TIMEOUT_MS,
       "facilities.lookup",
     );
@@ -155,6 +155,15 @@ Deno.serve(async (req) => {
     if (!facility) return json(404, { error: "Facility not found", code: "FACILITY_NOT_FOUND" });
     if ((facility as { user_id: string | null }).user_id !== userId) {
       return json(403, { error: "Not the owner of this facility", code: "NOT_OWNER" });
+    }
+    // A suspended facility is invisible on the directory — block any checkout
+    // so the provider isn't charged for Pro / add-ons that deliver nothing
+    // until an admin lifts the suspension.
+    if ((facility as { suspended?: boolean }).suspended === true) {
+      return json(403, {
+        error: "This facility is suspended. Contact support before purchasing a plan or add-on.",
+        code: "FACILITY_SUSPENDED",
+      });
     }
 
     // ---- Subscription state lookup (intent-specific). ----

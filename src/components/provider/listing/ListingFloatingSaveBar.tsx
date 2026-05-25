@@ -16,7 +16,7 @@ export function ListingFloatingSaveBar({
   onSave
 }: ListingFloatingSaveBarProps) {
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-20 z-40 flex justify-center px-4 lg:bottom-6">
+    <div className="pointer-events-none fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom)+0.75rem)] z-40 flex justify-center px-4 lg:bottom-6">
       <div
         className={cn(
           "pointer-events-auto flex max-w-full flex-wrap items-center justify-center gap-4 rounded-2xl border bg-card/95 px-5 py-3 shadow-xl backdrop-blur-md transition-all duration-300",

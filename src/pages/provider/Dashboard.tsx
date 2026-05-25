@@ -374,6 +374,29 @@ export default function ProviderDashboardPage() {
     staleTime: 1000 * 60 * 5,
   });
 
+  // Canonical server-computed completeness. Shares the EXACT query key + shape
+  // with DashboardListingHealthCard so the "Profile" KPI and the Listing Health
+  // card can never show two different completeness numbers on the same page.
+  const { data: completeness } = useQuery({
+    queryKey: ["listing-health", facilityId],
+    enabled: !!facilityId,
+    staleTime: 1000 * 60 * 5,
+    queryFn: async (): Promise<{ completeness: number } | null> => {
+      if (!facilityId) return null;
+      const { data, error } = await supabase
+        .from("facilities")
+        .select("listing_completeness_score")
+        .eq("id", facilityId)
+        .maybeSingle();
+      if (error) throw error;
+      return {
+        completeness:
+          (data as { listing_completeness_score: number | null } | null)
+            ?.listing_completeness_score ?? 0,
+      };
+    },
+  });
+
   // Compute missing fields
   const computeMissingFields = () => {
     if (!providerData?.facility) return [];
@@ -445,9 +468,14 @@ export default function ProviderDashboardPage() {
   const pendingCount = facilities?.filter((f) => f.status === "pending").length ?? 0;
   const PROFILE_CHECKS = 7;
   const missingFields = providerData?.facility ? computeMissingFields() : [];
-  const profilePct = providerData?.facility
+  // Headline % is the canonical server completeness score (same value the
+  // Listing Health card shows); the client missing-fields list is only a
+  // "quick wins" hint, never the basis for the percentage. Falls back to the
+  // client estimate only until the server score has loaded.
+  const clientProfilePct = providerData?.facility
     ? Math.max(0, Math.round(((PROFILE_CHECKS - missingFields.length) / PROFILE_CHECKS) * 100))
     : 0;
+  const profilePct = completeness?.completeness ?? clientProfilePct;
   const hasFeatured = subscription?.has_featured === true;
   const hasConcierge = subscription?.has_concierge_partner === true;
   const isVerified = (facility as { verified?: boolean } | undefined)?.verified === true;
@@ -595,7 +623,13 @@ export default function ProviderDashboardPage() {
               <MetricCard
                 title="Profile"
                 value={`${profilePct}%`}
-                subtitle={profilePct === 100 ? "Complete" : `${missingFields.length} item${missingFields.length !== 1 ? "s" : ""} left`}
+                subtitle={
+                  profilePct >= 100
+                    ? "Complete"
+                    : missingFields.length > 0
+                      ? `${missingFields.length} item${missingFields.length !== 1 ? "s" : ""} left`
+                      : "Finish to rank higher"
+                }
                 icon={FileEdit}
                 iconBg="bg-violet-100"
                 iconColor="text-violet-700"

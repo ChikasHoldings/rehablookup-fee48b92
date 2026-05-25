@@ -263,9 +263,9 @@ function FeaturedBreakdown({ rows, totalImpressions }: { rows: FacilityAnalytics
                 <tr key={`${r.placement_type}::${r.placement_value}`} className="border-b border-border/60 last:border-0">
                   <td className="py-2 px-2 text-muted-foreground capitalize">{r.placement_type}</td>
                   <td className="py-2 px-2 font-medium text-foreground">{r.placement_value}</td>
-                  <td className="py-2 px-2 text-right tabular-nums">{r.impressions.toLocaleString()}</td>
-                  <td className="py-2 px-2 text-right tabular-nums">{r.phone_clicks.toLocaleString()}</td>
-                  <td className="py-2 px-2 text-right tabular-nums">{r.ctr_pct.toFixed(2)}%</td>
+                  <td className="py-2 px-2 text-right tabular-nums">{(r.impressions ?? 0).toLocaleString()}</td>
+                  <td className="py-2 px-2 text-right tabular-nums">{(r.phone_clicks ?? 0).toLocaleString()}</td>
+                  <td className="py-2 px-2 text-right tabular-nums">{(r.ctr_pct ?? 0).toFixed(2)}%</td>
                   <td className="py-2 px-2 text-right">
                     {r.is_active
                       ? <Badge variant="outline" className="text-[10px] bg-emerald-50 text-emerald-700 border-emerald-200">Active</Badge>
