@@ -76,7 +76,9 @@ export function seoStyles() {
 }
 
 export function seoHeader() {
-  return `<header class="rl-header">
+  return `<script>/* SPA safety net: these prerendered pages are SEO shells served to crawlers. The edge middleware routes humans to the React app for clean URLs; this is defense-in-depth for the only bypass left — a human browser loading a shell via a direct ".html" URL. It bounces to the clean URL so the SPA renders. No-op for crawlers (they use clean URLs) and for shells already served at a clean URL. */
+(function(){try{var p=location.pathname||"";if(p.length>5&&p.slice(-5)===".html"){location.replace(p.slice(0,-5)+location.search+location.hash);}}catch(e){}})();</script>
+  <header class="rl-header">
     <div class="rl-container rl-header-row">
       <a href="/" class="rl-logo" aria-label="RehabLookup Home">RehabLookup</a>
       <nav class="rl-nav" aria-label="Primary">
