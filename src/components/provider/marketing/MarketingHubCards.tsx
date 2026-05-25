@@ -159,8 +159,8 @@ function ConciergeCard({ active, subscriptionId }: { active: boolean; subscripti
         </div>
 
         <p className="text-sm text-slate-700 leading-relaxed">
-          Prominent surfacing when our human advisors match seekers with
-          treatment. Non-partner alternatives always presented; seekers always
+          Prominent surfacing when our human advisors match clients with
+          treatment. Non-partner alternatives always presented; clients always
           pick. Calls go direct to your admissions line — never per-call,
           per-lead, or per-admission.
         </p>

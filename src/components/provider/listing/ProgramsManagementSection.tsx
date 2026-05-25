@@ -152,7 +152,7 @@ export function ProgramsManagementSection({ facilityId, isPro }: ProgramsManagem
         <div className="text-center py-10 text-muted-foreground border border-dashed rounded-lg">
           <p className="text-sm font-medium text-foreground">No programs added yet</p>
           <p className="text-xs mt-1">
-            Add your first program to give seekers a concrete picture of what
+            Add your first program to give clients a concrete picture of what
             you offer.
           </p>
         </div>
@@ -248,7 +248,7 @@ export function ProgramsManagementSection({ facilityId, isPro }: ProgramsManagem
             <DialogTitle>{editing ? "Edit program" : "Add a program"}</DialogTitle>
             <DialogDescription>
               Describe one treatment program at this facility. Add as many as
-              you offer — seekers see these on your public profile.
+              you offer — clients see these on your public profile.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-1">
@@ -342,7 +342,7 @@ export function ProgramsManagementSection({ facilityId, isPro }: ProgramsManagem
             <AlertDialogTitle>Delete this program?</AlertDialogTitle>
             <AlertDialogDescription>
               "{confirmDelete?.name}" will be removed from your profile.
-              Seekers viewing your listing will no longer see this program.
+              Clients viewing your listing will no longer see this program.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

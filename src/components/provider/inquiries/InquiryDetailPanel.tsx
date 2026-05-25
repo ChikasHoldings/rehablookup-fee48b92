@@ -140,7 +140,7 @@ export function InquiryDetailPanel({ inquiry }: InquiryDetailPanelProps) {
             // ops triage.)
             console.warn(`[InquiryDetailPanel] ${fnName} failed`, err);
             toast.warning(
-              "Status saved, but we couldn't send the seeker notification. Reach out directly to confirm.",
+              "Status saved, but we couldn't send the client notification. Reach out directly to confirm.",
             );
           });
       }

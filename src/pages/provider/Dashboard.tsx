@@ -790,77 +790,6 @@ export default function ProviderDashboardPage() {
                 {/* Recent activity (notifications: reviews, inquiries, updates) */}
                 <DashboardRecentActivity />
 
-                {/* Marketing & growth */}
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b py-3.5">
-                    <CardTitle className="text-sm font-semibold">Marketing &amp; growth</CardTitle>
-                    <Button asChild variant="ghost" size="sm" className="h-7 gap-1 text-xs text-[#1B365D]">
-                      <Link to="/provider/marketing">
-                        Open <ChevronRight className="h-3.5 w-3.5" />
-                      </Link>
-                    </Button>
-                  </CardHeader>
-                  <CardContent className="p-2">
-                    {[
-                      {
-                        icon: Megaphone,
-                        label: "Featured placements",
-                        href: "/provider/marketing/featured",
-                        active: hasFeatured,
-                        locked: !proStatus.isPro,
-                      },
-                      {
-                        icon: Users,
-                        label: "Concierge Partner",
-                        href: "/provider/marketing/concierge",
-                        active: hasConcierge,
-                        locked: !proStatus.isPro,
-                      },
-                      {
-                        icon: Code2,
-                        label: "Embed widgets",
-                        href: "/provider/embed-badge",
-                        active: false,
-                        locked: !proStatus.isPro || !isVerified,
-                      },
-                      {
-                        icon: ShieldCheck,
-                        label: "Credential kit",
-                        href: "/provider/credential-kit",
-                        active: false,
-                        locked: !proStatus.isPro || !isVerified,
-                      },
-                    ].map((row) => {
-                      const RowIcon = row.icon;
-                      return (
-                        <Link
-                          key={row.label}
-                          to={row.href}
-                          className="flex items-center gap-3 rounded-lg px-2.5 py-2.5 transition-colors hover:bg-slate-50"
-                        >
-                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100">
-                            <RowIcon className="h-4 w-4 text-slate-600" aria-hidden />
-                          </div>
-                          <span className="flex-1 truncate text-sm font-medium text-slate-800">
-                            {row.label}
-                          </span>
-                          {row.active ? (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
-                              <CheckCircle className="h-3 w-3" /> Active
-                            </span>
-                          ) : row.locked ? (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-400">
-                              <Lock className="h-3 w-3" /> Pro
-                            </span>
-                          ) : (
-                            <ChevronRight className="h-4 w-4 text-slate-300" aria-hidden />
-                          )}
-                        </Link>
-                      );
-                    })}
-                  </CardContent>
-                </Card>
-
                 {/* Upgrade card (Free only) */}
                 {!proStatus.isPro && (
                   <Card className="border-amber-200 bg-gradient-to-br from-amber-50 to-white">
@@ -895,40 +824,92 @@ export default function ProviderDashboardPage() {
                   </Card>
                 )}
 
-                {/* Quick links */}
-                <Card>
-                  <CardHeader className="border-b py-3.5">
-                    <CardTitle className="text-sm font-semibold">Quick links</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-2.5">
-                    <div className="grid grid-cols-2 gap-1.5">
-                      {[
-                        { label: "Listings", href: "/provider/listings", icon: FileEdit },
-                        { label: "Inquiries", href: "/provider/inquiries", icon: Users },
-                        { label: "Analytics", href: "/provider/analytics", icon: TrendingUp },
-                        { label: "Reviews", href: "/provider/reviews", icon: Star },
-                        { label: "Billing", href: "/provider/billing", icon: CreditCard },
-                        { label: "Help", href: "/provider/help", icon: AlertCircle },
-                      ].map((q) => {
-                        const QIcon = q.icon;
-                        return (
-                          <Button
-                            key={q.href}
-                            asChild
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 justify-start px-2.5 text-xs"
-                          >
-                            <Link to={q.href}>
-                              <QIcon className="mr-2 h-3.5 w-3.5" aria-hidden /> {q.label}
-                            </Link>
-                          </Button>
-                        );
-                      })}
-                    </div>
-                  </CardContent>
-                </Card>
               </div>
+            </div>
+
+            {/* Navigational cards — full-width band below the two columns so
+                the aside column doesn't run far taller than the main content. */}
+            <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+              {/* Marketing & growth */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b py-3.5">
+                  <CardTitle className="text-sm font-semibold">Marketing &amp; growth</CardTitle>
+                  <Button asChild variant="ghost" size="sm" className="h-7 gap-1 text-xs text-[#1B365D]">
+                    <Link to="/provider/marketing">
+                      Open <ChevronRight className="h-3.5 w-3.5" />
+                    </Link>
+                  </Button>
+                </CardHeader>
+                <CardContent className="grid gap-1 p-2 sm:grid-cols-2">
+                  {[
+                    { icon: Megaphone, label: "Featured placements", href: "/provider/marketing/featured", active: hasFeatured, locked: !proStatus.isPro },
+                    { icon: Users, label: "Concierge Partner", href: "/provider/marketing/concierge", active: hasConcierge, locked: !proStatus.isPro },
+                    { icon: Code2, label: "Embed widgets", href: "/provider/embed-badge", active: false, locked: !proStatus.isPro || !isVerified },
+                    { icon: ShieldCheck, label: "Credential kit", href: "/provider/credential-kit", active: false, locked: !proStatus.isPro || !isVerified },
+                  ].map((row) => {
+                    const RowIcon = row.icon;
+                    return (
+                      <Link
+                        key={row.label}
+                        to={row.href}
+                        className="flex items-center gap-3 rounded-lg px-2.5 py-2.5 transition-colors hover:bg-slate-50"
+                      >
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100">
+                          <RowIcon className="h-4 w-4 text-slate-600" aria-hidden />
+                        </div>
+                        <span className="flex-1 truncate text-sm font-medium text-slate-800">
+                          {row.label}
+                        </span>
+                        {row.active ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
+                            <CheckCircle className="h-3 w-3" /> Active
+                          </span>
+                        ) : row.locked ? (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-400">
+                            <Lock className="h-3 w-3" /> Pro
+                          </span>
+                        ) : (
+                          <ChevronRight className="h-4 w-4 text-slate-300" aria-hidden />
+                        )}
+                      </Link>
+                    );
+                  })}
+                </CardContent>
+              </Card>
+
+              {/* Quick links */}
+              <Card>
+                <CardHeader className="border-b py-3.5">
+                  <CardTitle className="text-sm font-semibold">Quick links</CardTitle>
+                </CardHeader>
+                <CardContent className="p-2.5">
+                  <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+                    {[
+                      { label: "Listings", href: "/provider/listings", icon: FileEdit },
+                      { label: "Inquiries", href: "/provider/inquiries", icon: Users },
+                      { label: "Analytics", href: "/provider/analytics", icon: TrendingUp },
+                      { label: "Reviews", href: "/provider/reviews", icon: Star },
+                      { label: "Billing", href: "/provider/billing", icon: CreditCard },
+                      { label: "Help", href: "/provider/help", icon: AlertCircle },
+                    ].map((q) => {
+                      const QIcon = q.icon;
+                      return (
+                        <Button
+                          key={q.href}
+                          asChild
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 justify-start px-2.5 text-xs"
+                        >
+                          <Link to={q.href}>
+                            <QIcon className="mr-2 h-3.5 w-3.5" aria-hidden /> {q.label}
+                          </Link>
+                        </Button>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </>
         )}

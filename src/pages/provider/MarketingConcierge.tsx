@@ -154,11 +154,11 @@ export default function MarketingConcierge() {
         {!isPro ? (
           <LockedFeaturePreview
             title="Concierge Partner"
-            subtitle="Prominent surfacing when our human advisors match seekers"
+            subtitle="Prominent surfacing when our human advisors match clients"
             tier="concierge"
             valueStatement={
               <>
-                When seekers call our concierge, advisors match them by clinical
+                When clients call our concierge, advisors match them by clinical
                 criteria first — <strong>never by who paid us</strong>. Concierge
                 Partners get a visual badge in our advisor tool so the advisor
                 naturally mentions you. Flat subscription; never per-call or

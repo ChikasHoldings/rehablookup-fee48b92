@@ -162,7 +162,7 @@ export default function MarketingHub() {
           <TabsContent value="visibility" className="space-y-3">
             <p className="text-xs sm:text-sm text-muted-foreground">
               Paid placement add-ons that put your facility in front of
-              actively-searching seekers. Each is independent of the Pro
+              actively-searching clients. Each is independent of the Pro
               subscription and can be added or removed anytime.
             </p>
             {selectedFacility?.state && (
@@ -434,7 +434,7 @@ function ConciergeCardLocked() {
           </div>
         </div>
         <p className="text-sm text-muted-foreground">
-          Prominent surfacing when our human advisors match seekers with
+          Prominent surfacing when our human advisors match clients with
           treatment. Capped 3-5 per major city. Non-partner alternatives are
           always presented. Calls go direct to your line.
         </p>

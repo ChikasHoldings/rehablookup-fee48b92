@@ -383,7 +383,7 @@ The Concierge Partner Add-On is a premium surface that puts your facility in fro
 
 ## How It Works
 
-1. **Family submits intake** — A seeker completes a detailed intake form (location, insurance, levels of care, urgency).
+1. **Family submits intake** — They complete a detailed intake form (location, insurance, levels of care, urgency).
 2. **An advisor reviews** — A RehabLookup care advisor reads the intake and shortlists facilities that fit the clinical and logistical criteria.
 3. **You receive an introduction** — Matched cases appear on the Inquiries page with full contact details. You also get an email + in-app notification.
 4. **You respond** — Mark each case Interested or Not interested. If interested, you can call/text the family directly.

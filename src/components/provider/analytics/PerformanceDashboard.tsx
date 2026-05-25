@@ -183,7 +183,7 @@ function FreeTeaser({ data }: { data: PerformanceSummary }) {
               <p className="mt-1 text-sm text-muted-foreground max-w-xl">
                 {data.last_30_days.profile_views > 0
                   ? `${data.last_30_days.profile_views.toLocaleString()} in the last 30 days · ${data.last_30_days.inquiries.toLocaleString()} ${data.last_30_days.inquiries === 1 ? "inquiry" : "inquiries"} so far.`
-                  : "When seekers view your profile, the numbers will appear here."}
+                  : "When clients view your profile, the numbers will appear here."}
               </p>
             </div>
             <Button asChild className="bg-[#1B365D] hover:bg-[#142a4a] gap-2 shrink-0 self-start sm:self-auto">

@@ -60,14 +60,14 @@ export function ConciergeMarketingDetail({ facilityId }: ConciergeMarketingDetai
           </div>
           <div>
             <h2 className="text-xl md:text-2xl font-bold text-slate-900">
-              Concierge Partner — prominent surfacing when our advisors match seekers
+              Concierge Partner — prominent surfacing when our advisors match clients
             </h2>
           </div>
         </div>
 
         <div className="space-y-4 text-sm md:text-base text-slate-700 leading-relaxed">
           <p>
-            When seekers call our concierge, our advisors match them by clinical
+            When clients call our concierge, our advisors match them by clinical
             criteria — insurance, level of care, geography, gender, language —
             <strong> never by who paid us</strong>. Among matched facilities,
             Concierge Partners get a visual badge in our advisors' tool so the
@@ -86,7 +86,7 @@ export function ConciergeMarketingDetail({ facilityId }: ConciergeMarketingDetai
             <ol className="space-y-2 text-sm text-slate-700 list-decimal list-inside marker:font-semibold marker:text-violet-700">
               <li>
                 We always present <strong>at least 2 non-partner alternatives</strong>{" "}
-                alongside any partner facilities. Seekers always choose which
+                alongside any partner facilities. Clients always choose which
                 facility to call.
               </li>
               <li>

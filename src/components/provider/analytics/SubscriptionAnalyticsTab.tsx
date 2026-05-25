@@ -317,7 +317,7 @@ function ConciergeBlock({
           <p className="text-xs text-muted-foreground">Avg response {row.response_avg_hours} hrs</p>
         </div>
         <div className="space-y-1">
-          <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Seeker chose you</p>
+          <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Client chose you</p>
           <p className="text-2xl font-bold text-foreground tabular-nums">{row.chosen}</p>
           <p className="text-xs text-muted-foreground">{chosenPct}% of presented</p>
         </div>
@@ -359,7 +359,7 @@ function FunnelBlock({ funnel, isPro }: { funnel: FacilityAnalyticsResponse["fun
     { label: "Phone clicks", value: funnel.phone_clicks },
     { label: isPro ? "Inquiries submitted" : "Concierge routed", value: funnel.inquiries_submitted },
     { label: isPro ? "Responded to" : "Provider responded", value: funnel.inquiries_responded },
-    { label: isPro ? "Marked converted" : "Seeker chose you", value: funnel.inquiries_converted },
+    { label: isPro ? "Marked converted" : "Client chose you", value: funnel.inquiries_converted },
   ];
   const max = Math.max(...steps.map((s) => s.value), 1);
 

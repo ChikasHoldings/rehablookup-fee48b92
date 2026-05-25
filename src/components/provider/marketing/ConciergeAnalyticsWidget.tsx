@@ -109,7 +109,7 @@ export function ConciergeAnalyticsWidget({ facilityId }: ConciergeAnalyticsWidge
           <div className="text-center py-6 text-sm">
             <p className="font-medium text-slate-900">No advisor introductions yet</p>
             <p className="text-muted-foreground mt-1 max-w-md mx-auto">
-              When our advisors match a seeker to one of your covered geographies
+              When our advisors match a client to one of your covered geographies
               and levels of care, the introduction will appear in your inquiries
               feed and count here.
             </p>
@@ -146,13 +146,13 @@ export function ConciergeAnalyticsWidget({ facilityId }: ConciergeAnalyticsWidge
                 icon={TrendingUp}
                 iconBg="bg-violet-500/10"
                 iconColor="text-violet-600"
-                label="Seeker contacted"
+                label="Client contacted"
                 value={data.seeker_contacted}
                 suffix={data.contact_rate ? `${data.contact_rate}%` : undefined}
               />
             </div>
             <p className="text-[11px] text-muted-foreground mt-4 leading-relaxed">
-              "Accepted" = you responded "interested" to the advisor. "Seeker
+              "Accepted" = you responded "interested" to the advisor. "Client
               contacted" = the family then reached out to your admissions line.
               Percentages show conversion at each stage.
             </p>

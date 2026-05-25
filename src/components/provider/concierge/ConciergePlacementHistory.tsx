@@ -66,7 +66,7 @@ export function ConciergePlacementHistory({ facilityId }: ConciergePlacementHist
             <History className="h-8 w-8 mx-auto mb-2 opacity-40" />
             <p>No placements yet.</p>
             <p className="text-xs mt-1">
-              When our advisors place a seeker at your facility and admission
+              When our advisors place a client at your facility and admission
               is confirmed, the case will appear here.
             </p>
           </div>
