@@ -270,6 +270,7 @@ function AdminClaimsReviewPanel() {
   // Reject modal
   const [rejectTarget, setRejectTarget] = useState<ClaimRow | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
+  const [approvalNotes, setApprovalNotes] = useState("");
   // Claim IDs where the side-effect notification email failed. The DB write
   // already committed, so we surface a per-row "Resend notification" button
   // and let the admin retry. Cleared when fetchClaims() refreshes.
@@ -540,6 +541,7 @@ function AdminClaimsReviewPanel() {
         claim,
         toStatus: "approved",
         validFromStatuses: ["pending", "under_review"],
+        extraFields: { decision_notes: approvalNotes.trim() || null },
         actionLabel: "claim_approved",
         // After the DB write, fire the approval email. The DB trigger has
         // already transferred ownership by the time we get here.
@@ -819,6 +821,17 @@ function AdminClaimsReviewPanel() {
                             </div>
                           )}
 
+                          {claim.decision_notes && (
+                            <div>
+                              <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+                                Internal decision notes
+                              </Label>
+                              <div className="text-sm mt-1 whitespace-pre-wrap rounded-md bg-background p-3 border">
+                                {claim.decision_notes}
+                              </div>
+                            </div>
+                          )}
+
                           {claim.reviewed_at && (
                             <div className="text-xs text-muted-foreground">
                               Reviewed {formatTimestamp(claim.reviewed_at)}
@@ -895,7 +908,7 @@ function AdminClaimsReviewPanel() {
       </div>
 
       {/* Approve confirmation */}
-      <AlertDialog open={!!approveTarget} onOpenChange={(open) => !open && setApproveTarget(null)}>
+      <AlertDialog open={!!approveTarget} onOpenChange={(open) => { if (!open) { setApproveTarget(null); setApprovalNotes(""); } }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Approve this claim?</AlertDialogTitle>
@@ -909,6 +922,17 @@ function AdminClaimsReviewPanel() {
               facility will be auto-rejected. This action is not easily reversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="approve-notes">Internal notes (optional)</Label>
+            <Textarea
+              id="approve-notes"
+              value={approvalNotes}
+              onChange={(e) => setApprovalNotes(e.target.value)}
+              placeholder="e.g. Verified license with the state board on 5/25. Internal only — not shown to the claimant."
+              rows={3}
+              maxLength={500}
+            />
+          </div>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={confirmApprove}>

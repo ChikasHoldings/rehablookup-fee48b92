@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
+import { PhoneCall } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 
 type ConciergeInquiry = Database["public"]["Tables"]["concierge_inquiries"]["Row"];
@@ -27,9 +28,18 @@ export function ConciergeIntakeTab({ caseData }: ConciergeIntakeTabProps) {
           <CardTitle className="text-sm font-medium">Contact Information</CardTitle>
         </CardHeader>
         <CardContent className="py-2 text-sm">
+          {caseData.sms_callback_requested_at && (
+            <div className="mb-2 flex items-center gap-2 rounded-md border border-info/30 bg-info/10 px-2.5 py-2 text-info">
+              <PhoneCall className="h-4 w-4 shrink-0" aria-hidden />
+              <span className="font-medium">
+                SMS callback requested {format(new Date(caseData.sms_callback_requested_at), "MMM d, h:mm a")}
+              </span>
+            </div>
+          )}
           <InfoRow label="Name" value={caseData.user_name} />
           <InfoRow label="Email" value={caseData.user_email} />
           <InfoRow label="Phone" value={caseData.user_phone} />
+          <InfoRow label="SMS Consent" value={caseData.sms_consent ? "Yes" : "No"} />
           <InfoRow label="Best Time to Call" value={caseData.best_time_to_call} />
           <InfoRow label="Alternative Contact" value={caseData.alternative_contact_name} />
           <InfoRow label="Alt. Phone" value={caseData.alternative_contact_phone} />

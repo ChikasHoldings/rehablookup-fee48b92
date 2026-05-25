@@ -529,6 +529,45 @@ export default function AdminReviews() {
     invalidateAll();
   };
 
+  // Reverse a moderation decision: bring a hidden/rejected review back to
+  // visible. Preserves admin_notes (the moderation history) and sends no email
+  // — this is a correction, not a fresh approval. Without this, a wrongly
+  // hidden/rejected review could only be deleted (a dead-end).
+  const handleRestore = async (reviewId: string) => {
+    setProcessingId(reviewId);
+    const { error } = await supabase
+      .from('facility_reviews')
+      .update({
+        status: 'approved',
+        reviewed_by: currentUserId,
+        reviewed_at: new Date().toISOString(),
+      })
+      .eq('id', reviewId);
+
+    setProcessingId(null);
+
+    if (error) {
+      toast.error(`Failed to restore review: ${error.message}`);
+      return;
+    }
+    const review = reviews.find((r) => r.id === reviewId);
+    if (review) {
+      auditLog({
+        actionType: 'review_restored',
+        targetType: 'review',
+        targetId: reviewId,
+        details: {
+          facility_id: review.facility_id,
+          facility_name: review.facility_name,
+          reviewer: review.reviewer_name,
+          from_status: review.status,
+        },
+      });
+    }
+    toast.success('Review restored to visible');
+    invalidateAll();
+  };
+
   const handleReject = async (reviewId: string) => {
     if (!adminNotes[reviewId]?.trim()) {
       toast.error('Please provide a reason for rejection');
@@ -1276,17 +1315,36 @@ export default function AdminReviews() {
                         )}
 
                         {review.status !== 'pending' && canModerateReviews && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-destructive hover:text-destructive"
-                            onClick={() => setDeleteConfirm({ id: review.id })}
-                            disabled={processingId === review.id}
-                            aria-label={`Delete review by ${review.reviewer_name}`}
-                          >
-                            <Trash2 className="h-3.5 w-3.5 mr-1.5" />
-                            Delete Review
-                          </Button>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {(review.status === 'hidden' || review.status === 'rejected') && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="gap-1.5"
+                                onClick={() => handleRestore(review.id)}
+                                disabled={processingId === review.id}
+                                aria-label={`Restore review by ${review.reviewer_name} to visible`}
+                              >
+                                {processingId === review.id ? (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                ) : (
+                                  <CheckCircle2 className="h-3.5 w-3.5" />
+                                )}
+                                Restore to visible
+                              </Button>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-destructive hover:text-destructive"
+                              onClick={() => setDeleteConfirm({ id: review.id })}
+                              disabled={processingId === review.id}
+                              aria-label={`Delete review by ${review.reviewer_name}`}
+                            >
+                              <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                              Delete Review
+                            </Button>
+                          </div>
                         )}
                       </CardContent>
                     </Card>
