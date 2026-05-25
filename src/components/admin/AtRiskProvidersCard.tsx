@@ -150,7 +150,7 @@ export const AtRiskProvidersCard = forwardRef<HTMLDivElement, object>(function A
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => refetch()}
+                    onClick={() => refetch()} aria-label="Refresh at-risk providers"
                     disabled={isFetching}
                   >
                     <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />

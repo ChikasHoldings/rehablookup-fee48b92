@@ -319,7 +319,7 @@ export const RetentionDashboard = forwardRef<HTMLDivElement, object>(function Re
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => refetch()}
+                onClick={() => refetch()} aria-label="Refresh retention data"
                 disabled={isFetching}
               >
                 <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />

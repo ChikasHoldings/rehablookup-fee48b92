@@ -344,7 +344,7 @@ export default function AdvisorInbox() {
     <div className="space-y-4">
       {/* Thread Header */}
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => setSelectedThread(null)}>
+        <Button variant="ghost" size="icon" onClick={() => setSelectedThread(null)} aria-label="Back to conversations">
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <Avatar className="h-9 w-9">
@@ -472,7 +472,7 @@ export default function AdvisorInbox() {
                 variant="outline"
                 size="icon"
                 className="h-9 w-9"
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => fileInputRef.current?.click()} aria-label="Attach file"
               >
                 <Paperclip className="h-4 w-4" />
               </Button>
@@ -480,7 +480,7 @@ export default function AdvisorInbox() {
                 size="icon"
                 className="h-9 w-9"
                 disabled={sendMessageMutation.isPending || uploading || (!newMessage.trim() && !attachment)}
-                onClick={() => sendMessageMutation.mutate()}
+                onClick={() => sendMessageMutation.mutate()} aria-label="Send message"
               >
                 {sendMessageMutation.isPending || uploading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />

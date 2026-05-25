@@ -197,7 +197,7 @@ export const RecentNotificationsPanel = forwardRef<HTMLDivElement>(function Rece
             <Button
               variant="ghost"
               size="icon"
-              onClick={handleRefresh}
+              onClick={handleRefresh} aria-label="Refresh notifications"
               disabled={isRefreshing}
             >
               <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />

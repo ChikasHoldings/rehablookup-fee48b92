@@ -671,7 +671,7 @@ export function MarketingLeadProfileModal({
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 sm:h-9 sm:w-9"
-                      onClick={() => handleCopy(lead.phone, "phone")}
+                      onClick={() => handleCopy(lead.phone, "phone")} aria-label="Copy phone number"
                     >
                       {copiedField === "phone" ? (
                         <Check className="h-4 w-4 text-success" />
@@ -698,7 +698,7 @@ export function MarketingLeadProfileModal({
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 sm:h-9 sm:w-9"
-                      onClick={() => handleCopy(lead.email, "email")}
+                      onClick={() => handleCopy(lead.email, "email")} aria-label="Copy email address"
                     >
                       {copiedField === "email" ? (
                         <Check className="h-4 w-4 text-success" />

@@ -229,7 +229,7 @@ export function IPWhitelistDialog({ trigger }: IPWhitelistDialogProps) {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-destructive hover:text-destructive"
-                        onClick={() => removeIP.mutate(item.ip)}
+                        onClick={() => removeIP.mutate(item.ip)} aria-label="Remove IP address"
                         disabled={removeIP.isPending}
                       >
                         {removeIP.isPending ? (
