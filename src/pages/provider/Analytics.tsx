@@ -553,6 +553,14 @@ export default function ProviderAnalyticsPage() {
         )}
         {activeTab === "overview" && (
           <div role="tabpanel" id="analytics-panel-overview" aria-labelledby="analytics-tab-overview" tabIndex={0} className="space-y-4 sm:space-y-6 focus-visible:outline-none">
+            {/* Lead with the rollup-backed facility performance: impressions,
+                profile views, click-to-call, website clicks (7d + WoW deltas),
+                the 30-day daily trend, traffic sources and market position —
+                so the default view shows full metrics, not just headline
+                engagement. Deeper drill-downs remain on their own tabs. */}
+            <PerformanceDashboard
+              facilityId={selectedFacilityId !== "all" ? selectedFacilityId : approvedFacilities[0]?.id}
+            />
             <Card>
               <CardContent className="p-3 sm:p-5">
                 <h2 className="text-sm font-semibold text-foreground mb-3 sm:mb-4">Engagement Overview</h2>

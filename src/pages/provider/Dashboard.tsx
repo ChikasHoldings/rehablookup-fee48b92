@@ -37,6 +37,10 @@ import { LeadDetailDrawer } from "@/components/provider/leads/LeadDetailDrawer";
 import { cn } from "@/lib/utils";
 import { Lead } from "@/components/provider/leads/LeadDetailPanel";
 import { VerificationStateCard } from "@/components/provider/VerificationStateCard";
+import { DashboardPerformanceCard } from "@/components/provider/DashboardPerformanceCard";
+import { DashboardRecentActivity } from "@/components/provider/DashboardRecentActivity";
+import { FeaturedAnalyticsWidget } from "@/components/provider/FeaturedAnalyticsWidget";
+import { ConciergeAnalyticsWidget } from "@/components/provider/marketing/ConciergeAnalyticsWidget";
 
 // Compact directory-style metric tile. Hairline border, white bg, no
 // shadow lift on hover — just a subtle border accent. Title sits as a
@@ -443,17 +447,9 @@ export default function ProviderDashboardPage() {
   const profilePct = providerData?.facility
     ? Math.max(0, Math.round(((PROFILE_CHECKS - missingFields.length) / PROFILE_CHECKS) * 100))
     : 0;
-  const memberSince = profile?.created_at
-    ? format(new Date(profile.created_at), "MMMM yyyy")
-    : null;
-  const renewalDate = subscription?.current_period_end
-    ? format(new Date(subscription.current_period_end), "MMM d, yyyy")
-    : null;
   const hasFeatured = subscription?.has_featured === true;
   const hasConcierge = subscription?.has_concierge_partner === true;
   const isVerified = (facility as { verified?: boolean } | undefined)?.verified === true;
-  const accountName =
-    [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || "Your account";
 
   return (
     <div className="min-h-full bg-slate-50">
@@ -621,72 +617,8 @@ export default function ProviderDashboardPage() {
             <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
               {/* Left column */}
               <div className="space-y-5 lg:col-span-2">
-                {/* Account & plan */}
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b py-3.5">
-                    <CardTitle className="text-sm font-semibold">Account &amp; plan</CardTitle>
-                    <Button asChild variant="ghost" size="sm" className="h-7 gap-1 text-xs text-[#1B365D]">
-                      <Link to="/provider/settings">
-                        Settings <ChevronRight className="h-3.5 w-3.5" />
-                      </Link>
-                    </Button>
-                  </CardHeader>
-                  <CardContent className="p-4 sm:p-5">
-                    <div className="grid grid-cols-1 gap-y-3 sm:grid-cols-2 sm:gap-x-6 text-sm">
-                      <div>
-                        <p className="text-xs uppercase tracking-wide text-slate-500">Name</p>
-                        <p className="mt-0.5 font-medium text-slate-900">{accountName}</p>
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-xs uppercase tracking-wide text-slate-500">Email</p>
-                        <p className="mt-0.5 truncate font-medium text-slate-900">{profile?.email ?? "—"}</p>
-                      </div>
-                      {memberSince && (
-                        <div>
-                          <p className="text-xs uppercase tracking-wide text-slate-500">Member since</p>
-                          <p className="mt-0.5 font-medium text-slate-900">{memberSince}</p>
-                        </div>
-                      )}
-                      <div>
-                        <p className="text-xs uppercase tracking-wide text-slate-500">Plan</p>
-                        <p className="mt-0.5 font-medium text-slate-900">
-                          {proStatus.isPro ? "Pro" : "Free"}
-                          {proStatus.isPro && subscription?.billing_period
-                            ? ` · ${subscription.billing_period === "annual" ? "Annual" : "Monthly"}`
-                            : ""}
-                        </p>
-                      </div>
-                    </div>
-
-                    {proStatus.isPro ? (
-                      <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-4">
-                        <p className="text-xs text-slate-600">
-                          {renewalDate ? `Renews ${renewalDate}` : "Active subscription"}
-                        </p>
-                        <Button asChild size="sm" variant="outline" className="gap-1.5">
-                          <Link to="/provider/billing">
-                            <CreditCard className="h-3.5 w-3.5" /> Manage billing
-                          </Link>
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50/60 p-3.5">
-                        <p className="text-sm font-medium text-slate-900">
-                          You're on the Free plan
-                        </p>
-                        <p className="mt-0.5 text-xs text-slate-600">
-                          Upgrade to Pro for inquiry delivery, analytics, a facility video,
-                          priority placement, and the RehabLookup Verified badge.
-                        </p>
-                        <Button asChild size="sm" className="mt-3 gap-1.5 bg-[#1B365D] hover:bg-[#142a4a]">
-                          <Link to="/provider/billing?upgrade=pro">
-                            <Sparkles className="h-3.5 w-3.5" /> Upgrade to Pro
-                          </Link>
-                        </Button>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                {/* Performance snapshot (impressions / views / calls / website) */}
+                <DashboardPerformanceCard facilityId={facilityId} />
 
                 {/* Your facilities */}
                 <Card>
@@ -804,11 +736,19 @@ export default function ProviderDashboardPage() {
                     </CardContent>
                   </Card>
                 ) : null}
+
+                {/* Featured / placement add-on performance (self-gated to the
+                    relevant add-on; renders nothing without it) */}
+                {facilityId && hasFeatured && <FeaturedAnalyticsWidget facilityId={facilityId} />}
+                {facilityId && hasConcierge && <ConciergeAnalyticsWidget facilityId={facilityId} />}
               </div>
 
               {/* Right column */}
               <div className="space-y-5">
                 {facilityId && <VerificationStateCard facilityId={facilityId} />}
+
+                {/* Recent activity (notifications: reviews, inquiries, updates) */}
+                <DashboardRecentActivity />
 
                 {/* Marketing & growth */}
                 <Card>
