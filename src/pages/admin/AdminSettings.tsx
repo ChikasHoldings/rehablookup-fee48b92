@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 import { logAdminAction, AdminAuditActions } from "@/hooks/useAdminAuditLog";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -90,7 +91,7 @@ interface SettingRowProps {
 interface PlatformSetting {
   id: string;
   setting_key: string;
-  setting_value: Record<string, any>;
+  setting_value: Json;
   description: string | null;
   updated_at: string;
   updated_by: string | null;
@@ -297,7 +298,7 @@ export default function AdminSettings() {
   }, [platformSettings, theme, setTheme]);
 
   // Helper to get a setting value
-  const getSetting = useCallback((key: string): any => {
+  const getSetting = useCallback((key: string): Json | undefined => {
     const setting = platformSettings?.[key];
     if (!setting) return undefined;
     // The value is stored as JSONB, extract the raw value
@@ -309,7 +310,7 @@ export default function AdminSettings() {
 
   // Update setting mutation - uses upsert to handle new settings
   const updateSetting = useMutation({
-    mutationFn: async ({ key, value }: { key: string; value: any }) => {
+    mutationFn: async ({ key, value }: { key: string; value: Json }) => {
       const { data: { user } } = await supabase.auth.getUser();
       
       const { error } = await supabase
@@ -488,7 +489,7 @@ export default function AdminSettings() {
   // Export data mutation
   const exportData = useMutation({
     mutationFn: async ({ type, format = "json" }: { type: "providers" | "leads" | "analytics" | "audit" | "subscriptions" | "notifications"; format?: "json" | "csv" }) => {
-      let data: any[] = [];
+      let data: unknown[] | { views: unknown[]; interactions: unknown[]; exportDate: string } = [];
       let filename = "";
       let csvHeaders: string[] = [];
 
@@ -533,7 +534,7 @@ export default function AdminSettings() {
               views: viewsResult.data || [],
               interactions: interactionsResult.data || [],
               exportDate: new Date().toISOString(),
-            } as any;
+            };
           }
           filename = `analytics-export-${new Date().toISOString().split('T')[0]}`;
           break;
@@ -592,7 +593,7 @@ export default function AdminSettings() {
       if (format === "csv" && Array.isArray(data)) {
         // CSV with formula-injection safe escape on every cell.
         const csvRows = [csvHeaders.map(csvCell).join(",")];
-        data.forEach((row: any) => {
+        data.forEach((row: Record<string, unknown>) => {
           const values = csvHeaders.map((header) => {
             const val = row[header];
             // Stringify nested objects (e.g. audit.details, notification.metadata)
@@ -620,8 +621,8 @@ export default function AdminSettings() {
       URL.revokeObjectURL(url);
 
       const recordCount = type === "analytics" && format === "json"
-        ? ((data as any).views?.length || 0) + ((data as any).interactions?.length || 0)
-        : (data as any[]).length;
+        ? ((data as { views?: unknown[]; interactions?: unknown[] }).views?.length || 0) + ((data as { views?: unknown[]; interactions?: unknown[] }).interactions?.length || 0)
+        : (data as unknown[]).length;
       
       // Log the export action
       await logAdminAction({
@@ -2026,9 +2027,9 @@ export default function AdminSettings() {
                           toast.success("Daily summary sent", {
                             description: response.data?.message || "Email delivered successfully"
                           });
-                        } catch (error: any) {
+                        } catch (error) {
                           toast.error("Failed to send daily summary", {
-                            description: error.message
+                            description: error instanceof Error ? error.message : String(error)
                           });
                         }
                       }}
@@ -2054,9 +2055,9 @@ export default function AdminSettings() {
                           toast.success("Weekly report sent", {
                             description: response.data?.message || "Email delivered successfully"
                           });
-                        } catch (error: any) {
+                        } catch (error) {
                           toast.error("Failed to send weekly report", {
-                            description: error.message
+                            description: error instanceof Error ? error.message : String(error)
                           });
                         }
                       }}

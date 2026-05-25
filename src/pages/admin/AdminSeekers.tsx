@@ -304,7 +304,7 @@ export default function AdminSeekers() {
     const csv = [
       headers.join(","),
       ...rows.map((r) => headers.map((h) => {
-        const v = String((r as any)[h] ?? "");
+        const v = String((r as Record<string, unknown>)[h] ?? "");
         return v.includes(",") || v.includes('"') || v.includes("\n") ? `"${v.replace(/"/g, '""')}"` : v;
       }).join(",")),
     ].join("\n");
@@ -394,17 +394,17 @@ export default function AdminSeekers() {
       const hasConciergeSet = new Set<string>();
       const conciergeMap = new Map<string, { city?: string; state?: string }>();
 
-      emailsRes.data?.forEach((item: any) => {
+      emailsRes.data?.forEach((item: { user_id?: string; email?: string }) => {
         if (item.user_id && item.email) emailMap.set(item.user_id, item.email);
       });
 
-      phonesRes.data?.forEach((item: any) => {
+      phonesRes.data?.forEach((item: { user_id?: string; phone?: string }) => {
         if (item.user_id && item.phone && !phoneMap.has(item.user_id)) {
           phoneMap.set(item.user_id, item.phone);
         }
       });
 
-      conciergeRes.data?.forEach((item: any) => {
+      conciergeRes.data?.forEach((item: { user_id?: string; preferred_city?: string; preferred_state?: string }) => {
         if (item.user_id) {
           hasConciergeSet.add(item.user_id);
           if (!conciergeMap.has(item.user_id)) {
@@ -416,7 +416,7 @@ export default function AdminSeekers() {
         }
       });
 
-      return profiles?.map((profile: any) => {
+      return profiles?.map((profile: UserProfile) => {
         const concierge = conciergeMap.get(profile.user_id);
         return {
           ...profile,
@@ -470,15 +470,15 @@ export default function AdminSeekers() {
 
       const counts: Record<string, { favorites: number; inquiries: number; reviews: number }> = {};
 
-      favRes.data?.forEach((item: any) => {
+      favRes.data?.forEach((item: { user_id: string }) => {
         if (!counts[item.user_id]) counts[item.user_id] = { favorites: 0, inquiries: 0, reviews: 0 };
         counts[item.user_id].favorites++;
       });
-      inqRes.data?.forEach((item: any) => {
+      inqRes.data?.forEach((item: { user_id: string }) => {
         if (!counts[item.user_id]) counts[item.user_id] = { favorites: 0, inquiries: 0, reviews: 0 };
         counts[item.user_id].inquiries++;
       });
-      revRes.data?.forEach((item: any) => {
+      revRes.data?.forEach((item: { user_id: string }) => {
         if (!counts[item.user_id]) counts[item.user_id] = { favorites: 0, inquiries: 0, reviews: 0 };
         counts[item.user_id].reviews++;
       });

@@ -9,6 +9,25 @@
  * queries. Adding a new tab is now one entry, not three.
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/integrations/supabase/types";
+
+// Minimal chainable shape for the `facilities` query the tab filters build up.
+// The real value is a Supabase PostgrestFilterBuilder, whose precise generics
+// the generator doesn't expose ergonomically; we model only the methods the
+// filters call. Every chain method returns the same shape, and awaiting the
+// builder resolves to the standard Postgrest result envelope.
+export interface ProviderQuery
+  extends PromiseLike<{ data: unknown; error: unknown; count?: number | null }> {
+  eq: (column: string, value: unknown) => ProviderQuery;
+  neq: (column: string, value: unknown) => ProviderQuery;
+  is: (column: string, value: unknown) => ProviderQuery;
+  not: (column: string, operator: string, value: unknown) => ProviderQuery;
+  in: (column: string, values: readonly unknown[]) => ProviderQuery;
+  or: (filters: string) => ProviderQuery;
+  select: (columns: string, options?: { count?: "exact"; head?: boolean }) => ProviderQuery;
+  order: (column: string, options?: { ascending?: boolean }) => ProviderQuery;
+  range: (from: number, to: number) => ProviderQuery;
+}
 
 // Columns selected from `facilities` for both the list and the count of the
 // admin Providers page. Keep this in sync with the `Facility` type in
@@ -35,9 +54,9 @@ export type AdminProvidersTab =
 // the prerequisite subquery returns an empty set, so we short-circuit instead
 // of issuing a `.in("id", [])` that some Supabase versions reject).
 export type TabFilter = (
-  query: any,
-  ctx: { supabase: SupabaseClient<any>; selectCols: string; range?: [number, number] },
-) => Promise<any> | any;
+  query: ProviderQuery,
+  ctx: { supabase: SupabaseClient<Database>; selectCols: string; range?: [number, number] },
+) => Promise<ProviderQuery | null> | ProviderQuery | null;
 
 // Each tab returns either the modified query or `null` (means "no results,
 // short-circuit"). All tabs share the same plumbing in AdminProviders.tsx.
@@ -92,7 +111,7 @@ export function applyProviderSearch<T>(query: T, raw: string): T {
   if (!raw) return query;
   const sanitized = raw.replace(/[%_\\]/g, "");
   if (!sanitized) return query;
-  return (query as any).or(
+  return (query as { or: (filters: string) => T }).or(
     `name.ilike.%${sanitized}%,city.ilike.%${sanitized}%,email.ilike.%${sanitized}%`,
   );
 }

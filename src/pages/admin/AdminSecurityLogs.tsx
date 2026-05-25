@@ -86,7 +86,7 @@ interface RateLimitLog {
   action_type: string;
   success: boolean | null;
   created_at: string;
-  metadata: Record<string, any> | null;
+  metadata: Record<string, unknown> | null;
 }
 
 interface SuspiciousActivity {
@@ -667,10 +667,10 @@ export default function AdminSecurityLogs() {
   }, []);
 
   // Extract IP from identifier (email or IP)
-  const extractIp = (identifier: string, metadata: Record<string, any> | null): string | null => {
+  const extractIp = (identifier: string, metadata: Record<string, unknown> | null): string | null => {
     // Check if metadata contains IP
-    if (metadata?.ip_address) return metadata.ip_address;
-    if (metadata?.ip) return metadata.ip;
+    if (metadata?.ip_address) return metadata.ip_address as string;
+    if (metadata?.ip) return metadata.ip as string;
     
     // Check if identifier itself is an IP
     const ipPattern = /^(\d{1,3}\.){3}\d{1,3}$/;

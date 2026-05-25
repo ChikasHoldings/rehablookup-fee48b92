@@ -29,10 +29,25 @@ import {
 
 type ThreadFilter = "all" | "seeker" | "facility" | "unread";
 
+interface InboxThread {
+  id: string;
+  inquiry_id: string;
+  thread_type: string;
+  facility_id: string | null;
+  last_message_at: string | null;
+  admin_last_read_at: string | null;
+  user_last_read_at: string | null;
+  facility_last_read_at: string | null;
+  facilities: { id: string; name: string; logo_url: string | null } | null;
+  caseName: string;
+  caseStatus: string;
+  hasUnread: string | boolean | null;
+}
+
 export default function AdvisorInbox() {
   const { user } = useAdminAuth();
   const queryClient = useQueryClient();
-  const [selectedThread, setSelectedThread] = useState<any>(null);
+  const [selectedThread, setSelectedThread] = useState<InboxThread | null>(null);
   const [newMessage, setNewMessage] = useState("");
   const [attachment, setAttachment] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -380,7 +395,7 @@ export default function AdvisorInbox() {
                 ))}
               </div>
             ) : messages && messages.length > 0 ? (
-              messages.map((msg: any) => {
+              messages.map((msg) => {
                 const isAdmin = msg.sender_type === "admin";
                 return (
                   <div
