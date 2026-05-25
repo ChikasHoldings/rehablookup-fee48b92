@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 
 import { assertCronSecret } from "../_shared/cron-auth.ts";
+import { requireAdmin } from "../_shared/require-admin.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
@@ -11,8 +12,15 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
-  const __cronAuth = assertCronSecret(req);
-  if (!__cronAuth.ok) return __cronAuth.response;
+  // Dual-auth: the scheduled pg_cron run carries X-Cron-Secret; the admin
+  // console "run now" button carries an admin JWT instead. Accept either.
+  if (req.headers.get("x-cron-secret")) {
+    const __cronAuth = assertCronSecret(req);
+    if (!__cronAuth.ok) return __cronAuth.response;
+  } else {
+    const __adminAuth = await requireAdmin(req);
+    if (!__adminAuth.ok) return __adminAuth.response;
+  }
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;

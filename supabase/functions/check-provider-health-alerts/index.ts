@@ -1,5 +1,6 @@
 import Stripe from "https://esm.sh/stripe@18.5.0?target=denonext";
 import { assertCronSecret } from "../_shared/cron-auth.ts";
+import { requireAdmin } from "../_shared/require-admin.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0?target=denonext";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
@@ -54,8 +55,15 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
-  const __cronAuth = assertCronSecret(req);
-  if (!__cronAuth.ok) return __cronAuth.response;
+  // Dual-auth: the scheduled pg_cron run carries X-Cron-Secret; the admin
+  // console "run now" button carries an admin JWT instead. Accept either.
+  if (req.headers.get("x-cron-secret")) {
+    const __cronAuth = assertCronSecret(req);
+    if (!__cronAuth.ok) return __cronAuth.response;
+  } else {
+    const __adminAuth = await requireAdmin(req);
+    if (!__adminAuth.ok) return __adminAuth.response;
+  }
 
   // POST-only enforcement
   if (req.method !== "POST") {
