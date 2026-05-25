@@ -117,17 +117,20 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Log the cleanup action
-    await supabase.from("admin_audit_log").insert({
-      admin_user_id: userData.user.id,
-      action_type: "storage_cleanup",
-      target_type: "storage",
-      details: {
+    // Record the cleanup. admin_audit_log requires a real admin_user_id, but
+    // this runs under cron (no user) or an admin manual trigger — so surface it
+    // via admin_notifications instead (mirrors cleanup-audit-logs).
+    await supabase.from("admin_notifications").insert({
+      type: "system_maintenance",
+      title: "Orphan storage cleanup",
+      message: `Checked ${totalChecked} files, deleted ${deletedCount} orphaned file(s).`,
+      metadata: {
         total_checked: totalChecked,
         orphans_found: orphanedFiles.length,
         deleted_count: deletedCount,
-        remaining_orphans: orphanedFiles.length - deletedCount,
+        remaining_orphans: Math.max(0, orphanedFiles.length - deletedCount),
         cleaned_at: new Date().toISOString(),
+        source: "cleanup-orphan-storage",
       },
     });
 
