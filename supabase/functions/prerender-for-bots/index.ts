@@ -344,6 +344,7 @@ interface FacilityRow {
   year_established: number | null;
   verified: boolean | null;
   accepts_international_patients: boolean | null;
+  is_pro?: boolean | null;
 }
 
 // Build a fully-crawlable HTML response for a treatment center profile.
@@ -682,13 +683,18 @@ async function generateFallbackHtml(path: string, supabase: ReturnType<typeof cr
   if (path.startsWith('/center/') && supabase) {
     const slug = path.replace('/center/', '').replace(/\/$/, '');
     try {
+      // Read from the public_facilities view (not the facilities table): it
+      // filters to status='approved' + not-suspended and Pro-masks verified /
+      // phone / website / video / tour, so the bot-rendered HTML matches what a
+      // visitor sees and never leaks Pro-only content. (The previous
+      // `.eq('status','active')` matched nothing — facilities use 'approved' —
+      // so this branch returned not-found for every facility page.)
       const { data: facility } = await supabase
-        .from('facilities')
+        .from('public_facilities')
         .select(
-          'id, name, description, city, state, address, zip_code, phone, website, logo_url, gallery_urls, facility_type, gender_served, bed_count, year_established, verified, accepts_international_patients'
+          'id, name, description, city, state, address, zip_code, phone, website, logo_url, gallery_urls, facility_type, gender_served, bed_count, year_established, verified, accepts_international_patients, is_pro'
         )
         .eq('slug', slug)
-        .eq('status', 'active')
         .maybeSingle();
 
       if (!facility) {
@@ -745,15 +751,10 @@ async function generateFallbackHtml(path: string, supabase: ReturnType<typeof cr
           }
         : null;
 
-      // Pro plan check — controls whether phone is exposed in prerendered HTML / JSON-LD.
-      const { data: proSub } = await supabase
-        .from('facility_subscriptions')
-        .select('id')
-        .eq('facility_id', facilityRow.id)
-        .eq('status', 'active')
-        .gt('current_period_end', new Date().toISOString())
-        .maybeSingle();
-      const isPro = !!proSub;
+      // is_pro comes straight off the public_facilities view (= has_active_pro).
+      // The view already Pro-masks verified/phone/website; this flag just drives
+      // the belt-and-suspenders conditional on the phone contact line.
+      const isPro = facilityRow.is_pro ?? false;
 
       return buildFacilityHtml(path, facilityRow, treatments, insurances, isPro, accreditations, rating);
     } catch (err) {

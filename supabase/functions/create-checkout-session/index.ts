@@ -306,6 +306,21 @@ Deno.serve(async (req) => {
       ...(product === "concierge" && levelsOfCareCsv ? { levels_of_care: levelsOfCareCsv } : {}),
     };
 
+    // EKRA safe-harbor framing at the point of payment for Concierge: make
+    // the flat-fee, non-exclusive nature explicit so the checkout itself
+    // reflects that this is a visibility subscription — never a per-lead,
+    // per-call, or per-admission referral fee — and that seekers are always
+    // shown non-partner alternatives.
+    const customText =
+      product === "concierge"
+        ? {
+            submit: {
+              message:
+                "Concierge Partner is a flat monthly subscription for prominent placement in advisor matches — never a per-lead, per-call, or per-admission fee. It is non-exclusive, and our advisors always present non-partner alternatives alongside your facility.",
+            },
+          }
+        : undefined;
+
     const session = await withTimeout(stripe.checkout.sessions.create(
       {
         ...(customerId
@@ -321,6 +336,7 @@ Deno.serve(async (req) => {
         subscription_data: {
           metadata: checkoutMetadata,
         },
+        ...(customText ? { custom_text: customText } : {}),
       },
       { idempotencyKey },
     ), STRIPE_TIMEOUT_MS, "stripe.checkout.sessions.create");
