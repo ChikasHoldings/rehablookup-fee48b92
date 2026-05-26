@@ -362,7 +362,7 @@ Deno.serve(async (req) => {
     // Fetch the inquiry details
     const { data: inquiry, error: inquiryError } = await supabase
       .from('concierge_inquiries')
-      .select('*')
+      .select('*') // no-star-ok: single inquiry row; scoring reads a broad, evolving set of clinical/geo fields
       .eq('id', inquiryId)
       .single();
 
