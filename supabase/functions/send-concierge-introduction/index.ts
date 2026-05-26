@@ -418,6 +418,25 @@ Deno.serve(async (req) => {
         link: "/provider/marketing/concierge",
         metadata: { inquiry_id: inquiryId, introduction_id: resolvedIntroductionId },
       });
+
+      // SMS channel — fire-and-forget. send-sms-notification enforces the
+      // provider's notification prefs, phone verification, TCPA opt-out, and
+      // daily budget, and no-ops gracefully when SMS isn't configured. We don't
+      // block the introduction (or its 200 response) on the SMS result.
+      try {
+        const smsMsg = `RehabLookup: A family was matched to your facility by our advisors (${levelOfCare}). Open your Placement Network to respond.`;
+        fetch(`${supabaseUrl}/functions/v1/send-sms-notification`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${supabaseKey}` },
+          body: JSON.stringify({
+            userId: facilityFull.user_id,
+            notificationType: "general",
+            data: { customMessage: smsMsg },
+          }),
+        }).catch((e) => logStep(requestId, "Warning: intro SMS dispatch failed", { error: String(e) }));
+      } catch (smsErr) {
+        logStep(requestId, "Warning: intro SMS setup failed", { error: String(smsErr) });
+      }
     }
 
     logStep(requestId, "Email sent successfully", { sentTo: recipientEmail, emailId: result.emailId });
