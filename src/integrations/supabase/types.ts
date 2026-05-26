@@ -7025,6 +7025,14 @@ export type Database = {
         Args: { p_city: string; p_name: string; p_state: string }
         Returns: string
       }
+      attest_concierge_eligibility: {
+        Args: { p_facility_id: string; p_license_number: string; p_accepts_emergency: boolean }
+        Returns: undefined
+      }
+      set_concierge_eligibility_revoked: {
+        Args: { p_facility_id: string; p_revoked: boolean; p_reason?: string }
+        Returns: undefined
+      }
       get_addon_waitlist_position: {
         Args: { p_waitlist_id: string }
         Returns: {

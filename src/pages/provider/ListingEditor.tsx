@@ -65,6 +65,7 @@ import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { ProviderTrustForm } from "@/components/provider/ProviderTrustForm";
 
 import { useProStatus } from "@/hooks/useProStatus";
+import { useFacilitySubscription } from "@/hooks/useFacilitySubscription";
 import { PLAN_LIMITS } from "@/lib/planLimits";
 import { FacilityPhoneVerifySection } from "@/components/provider/listing/FacilityPhoneVerifySection";
 import { cn } from "@/lib/utils";
@@ -284,6 +285,12 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
   // Use prop facilityId if provided, otherwise use selectedFacility
   const currentFacilityId = propFacilityId || selectedFacility?.id;
   const { data: proStatus } = useProStatus(currentFacilityId);
+  // International-patient acceptance is a Concierge-Partner-exclusive
+  // capability (mirrors the is_active_concierge_partner DB gate + trigger).
+  const { data: editorSubscription } = useFacilitySubscription(currentFacilityId);
+  const isConciergePartner =
+    editorSubscription?.has_concierge_partner === true &&
+    editorSubscription?.status === "active";
   
   // Gallery cap reflects the active plan — Free 5, Pro 10 (matches the
   // enforce_facility_plan_photo_cap server-side trigger). proStatus.isPro
@@ -646,7 +653,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
           logo_url: facility.logo_url,
           gallery_urls: facility.gallery_urls,
           year_established: facility.year_established,
-          accepts_international_patients: facility.accepts_international_patients,
+          accepts_international_patients: isConciergePartner ? facility.accepts_international_patients : false,
           hours_of_operation: facility.hours_of_operation,
           languages_spoken: facility.languages_spoken,
           accessibility_features: facility.accessibility_features,
@@ -812,7 +819,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
           logo_url: facility.logo_url,
           gallery_urls: facility.gallery_urls,
           year_established: facility.year_established,
-          accepts_international_patients: facility.accepts_international_patients,
+          accepts_international_patients: isConciergePartner ? facility.accepts_international_patients : false,
           hours_of_operation: facility.hours_of_operation,
           languages_spoken: facility.languages_spoken,
           accessibility_features: facility.accessibility_features,
@@ -1835,23 +1842,34 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
                         <Label className="text-sm font-medium flex items-center gap-2"><Globe className="h-4 w-4 text-primary" />Accept International Patients</Label>
-                        <p className="text-xs text-muted-foreground">Enable if you accept patients from outside the US</p>
+                        <p className="text-xs text-muted-foreground">
+                          {isConciergePartner
+                            ? "Enable if you accept patients from outside the US"
+                            : "Available to Concierge Partners — international exposure is part of the Concierge upgrade"}
+                        </p>
                       </div>
-                      {/* Hand-rolled `role="switch"` replaced with the
-                          shared <Switch /> primitive (24×44, accessible).
-                          Behavior is identical: toggles
-                          `accepts_international_patients` via updateField.
-                          Switching to the primitive gives the keyboard +
-                          screen-reader semantics for free. */}
+                      {/* International acceptance is a Concierge-Partner-only
+                          capability — the toggle is disabled for non-partners
+                          (a DB trigger also blocks enabling it server-side). */}
                       <Switch
-                        checked={facility.accepts_international_patients || false}
+                        checked={isConciergePartner && (facility.accepts_international_patients || false)}
                         onCheckedChange={(checked) => updateField("accepts_international_patients", checked)}
+                        disabled={!isConciergePartner}
                         aria-label="Accept International Patients"
                       />
                     </div>
-                    {facility.accepts_international_patients && (
+                    {!isConciergePartner ? (
+                      <div className="mt-3 p-3 rounded-md bg-violet-50 border border-violet-200 flex items-center justify-between gap-3">
+                        <p className="text-xs text-violet-800">
+                          Become a Concierge Partner to be featured on our international pages and accept patients from abroad.
+                        </p>
+                        <Button asChild size="sm" variant="outline" className="shrink-0 border-violet-300 text-violet-700 hover:bg-violet-100">
+                          <Link to="/provider/marketing/concierge">Learn more</Link>
+                        </Button>
+                      </div>
+                    ) : facility.accepts_international_patients ? (
                       <div className="mt-3 p-3 rounded-md bg-primary/5 border border-primary/10"><p className="text-xs text-primary">Your facility will be visible to international clients.</p></div>
-                    )}
+                    ) : null}
                   </div>
 
                   {/* ═══ PROFILE EXTRAS ═══

@@ -18,6 +18,7 @@ import { Loader2, X, ShieldCheck, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { AddConciergeGeoForm } from "@/components/provider/concierge/AddConciergeGeoForm";
+import { ConciergeEligibilityCard } from "@/components/provider/concierge/ConciergeEligibilityCard";
 import { ConciergePlacementHistory } from "@/components/provider/concierge/ConciergePlacementHistory";
 import { FeaturedManagementPanel } from "@/components/provider/marketing/FeaturedManagementPanel";
 import { MyWaitlistEntries } from "@/components/provider/MyWaitlistEntries";
@@ -113,6 +114,10 @@ export function ConciergeManagementPanel({ facilityId, subscription }: Concierge
 
   return (
     <div className="space-y-6">
+      {/* Eligibility gate — partners are only introduced to families once
+          they've attested (profile complete + license + emergency-accept). */}
+      <ConciergeEligibilityCard facilityId={facilityId} />
+
       <Card className="border-violet-200 bg-violet-50/40">
         <CardContent className="p-5 flex gap-3">
           <ShieldCheck className="h-5 w-5 mt-0.5 shrink-0 text-violet-700" aria-hidden />
