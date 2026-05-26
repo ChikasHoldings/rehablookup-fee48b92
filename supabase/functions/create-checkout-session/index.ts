@@ -354,8 +354,11 @@ Deno.serve(async (req) => {
     // Defensive: confirm the coupon is still VALID in Stripe before applying it.
     // A deleted / expired / fully-redeemed coupon would otherwise make
     // sessions.create throw and block the purchase entirely — we'd rather sell
-    // at full price than fail the checkout. Any error → drop the discount.
+    // at full price than fail the checkout. Any error → drop the discount and
+    // alert ops (the provider was shown a discount in the banner/popup but is
+    // about to be charged full price — don't let that fail silently).
     if (promoCoupon) {
+      let dropReason: string | null = null;
       try {
         const coupon = await withTimeout(
           stripe.coupons.retrieve(promoCoupon),
@@ -363,15 +366,25 @@ Deno.serve(async (req) => {
           "stripe.coupons.retrieve",
         );
         if (!coupon || (coupon as Stripe.Coupon).valid !== true) {
-          log("WARN", "promo coupon not valid; selling at full price", { promoCoupon });
-          promoCoupon = null;
-          validPromoId = null;
+          dropReason = "coupon is no longer valid (expired / max-redeemed / deleted)";
         }
       } catch (e) {
-        log("WARN", "promo coupon retrieve failed; selling at full price", {
-          promoCoupon,
-          error: e instanceof Error ? e.message : String(e),
-        });
+        dropReason = `coupon retrieve failed: ${e instanceof Error ? e.message : String(e)}`;
+      }
+      if (dropReason) {
+        log("WARN", "promo coupon dropped; selling at full price", { promoCoupon, validPromoId, dropReason });
+        // Best-effort ops alert so a broken coupon on a LIVE campaign is caught
+        // and fixed, rather than silently charging full price.
+        if (validPromoId) {
+          await svc.from("admin_notifications").insert({
+            type: "promo_coupon_invalid",
+            title: "Live promo coupon is broken",
+            message:
+              `A checkout for product '${product}' carried live promotion ${validPromoId}, but its Stripe coupon ` +
+              `(${promoCoupon}) ${dropReason}. The provider was charged full price. Fix or deactivate the campaign.`,
+            metadata: { promotion_id: validPromoId, stripe_coupon_id: promoCoupon, product } as Record<string, unknown>,
+          }).then(() => undefined, () => undefined);
+        }
         promoCoupon = null;
         validPromoId = null;
       }

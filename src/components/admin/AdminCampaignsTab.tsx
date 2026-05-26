@@ -129,7 +129,15 @@ export function AdminCampaignsTab() {
         ends_at: new Date(form.ends_at).toISOString(),
         active: true,
       });
-      if (insErr) throw insErr;
+      if (insErr) {
+        // The Stripe coupon was created above; if persisting the campaign
+        // failed, roll the coupon back (best-effort) so a retry doesn't pile up
+        // orphaned, unusable coupons in Stripe.
+        await supabase.functions
+          .invoke("manage-subscription", { body: { action: "delete_coupon", couponId } })
+          .catch(() => { /* best-effort cleanup — surfacing the insert error matters more */ });
+        throw insErr;
+      }
 
       toast.success("Campaign created.");
       setForm({ ...emptyForm });
