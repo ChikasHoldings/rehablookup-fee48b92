@@ -520,7 +520,7 @@ export default function ProviderDashboardPage() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-7xl space-y-5 px-3 py-5 sm:px-4 sm:py-6 md:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl space-y-5 px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
         {/* Signup recovery banner */}
         {showSignupRecovery && (
           <Card className="border-rose-300 bg-rose-50">
