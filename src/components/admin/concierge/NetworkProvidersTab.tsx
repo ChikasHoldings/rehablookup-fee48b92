@@ -1,10 +1,24 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 import { format } from "date-fns";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import {
   Table,
   TableBody,
@@ -44,6 +58,9 @@ interface NetworkProvider {
   concierge_accepted_care_types: Json;
   concierge_admissions_email: string | null;
   concierge_admissions_phone: string | null;
+  concierge_eligibility_attested_at: string | null;
+  concierge_eligibility_revoked_at: string | null;
+  concierge_eligibility_revoked_reason: string | null;
   user_id: string;
 }
 
@@ -55,6 +72,7 @@ const AVAILABILITY_CONFIG: Record<string, { label: string; variant: "default" | 
 };
 
 export function NetworkProvidersTab() {
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
@@ -78,7 +96,10 @@ export function NetworkProvidersTab() {
           concierge_availability_status,
           concierge_accepted_care_types,
           concierge_admissions_email,
-          concierge_admissions_phone
+          concierge_admissions_phone,
+          concierge_eligibility_attested_at,
+          concierge_eligibility_revoked_at,
+          concierge_eligibility_revoked_reason
         `)
         .eq("concierge_network_opted_in", true)
         .order("concierge_opted_in_at", { ascending: false });
@@ -219,6 +240,7 @@ export function NetworkProvidersTab() {
                 <TableHead>Provider</TableHead>
                 <TableHead>Location</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Introductions</TableHead>
                 <TableHead>Care Types</TableHead>
                 <TableHead>Placements</TableHead>
                 <TableHead>Payment</TableHead>
@@ -228,7 +250,7 @@ export function NetworkProvidersTab() {
             <TableBody>
               {filteredProviders?.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                     No network providers found
                   </TableCell>
                 </TableRow>
@@ -259,6 +281,14 @@ export function NetworkProvidersTab() {
                         ) : (
                           <Badge variant="outline">Not Set</Badge>
                         )}
+                      </TableCell>
+                      <TableCell>
+                        <EligibilityCell
+                          provider={provider}
+                          onChanged={() =>
+                            queryClient.invalidateQueries({ queryKey: ["admin-network-providers", statusFilter] })
+                          }
+                        />
                       </TableCell>
                       <TableCell>
                         {careTypes && careTypes.length > 0 ? (
@@ -309,6 +339,88 @@ export function NetworkProvidersTab() {
           </Table>
         </ScrollArea>
       </div>
+    </div>
+  );
+}
+
+/**
+ * Per-provider introduction-eligibility status + admin revoke/restore.
+ * "Introducible" = attested and not revoked. Revoke is sticky (the provider
+ * cannot self-undo); restore clears it. Backed by set_concierge_eligibility_revoked.
+ */
+function EligibilityCell({ provider, onChanged }: { provider: NetworkProvider; onChanged: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [reason, setReason] = useState("");
+  const isRevoked = !!provider.concierge_eligibility_revoked_at;
+  const isAttested = !!provider.concierge_eligibility_attested_at && !isRevoked;
+
+  const setRevoked = async (revoked: boolean, note?: string) => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const { error } = await supabase.rpc("set_concierge_eligibility_revoked", {
+        p_facility_id: provider.id,
+        p_revoked: revoked,
+        p_reason: note ?? undefined,
+      });
+      if (error) throw error;
+      toast.success(revoked ? "Eligibility revoked." : "Eligibility restored.");
+      setReason("");
+      onChanged();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Action failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      {isRevoked ? (
+        <Badge variant="outline" className="border-destructive/40 text-destructive text-xs">Revoked</Badge>
+      ) : isAttested ? (
+        <Badge className="bg-emerald-600 hover:bg-emerald-600 text-xs">Introducible</Badge>
+      ) : (
+        <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-800 text-xs">Pending</Badge>
+      )}
+
+      {isRevoked ? (
+        <Button size="sm" variant="ghost" className="h-7 text-xs" disabled={busy} onClick={() => setRevoked(false)}>
+          Restore
+        </Button>
+      ) : isAttested ? (
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button size="sm" variant="ghost" className="h-7 text-xs text-destructive hover:text-destructive" disabled={busy}>
+              Revoke
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Revoke introduction eligibility?</AlertDialogTitle>
+              <AlertDialogDescription>
+                {provider.name} will stop receiving advisor introductions until restored.
+                The provider cannot undo this themselves. Add a reason for the audit trail.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <Textarea
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="e.g., license could not be verified"
+              rows={2}
+            />
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => setRevoked(true, reason.trim() || undefined)}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Revoke
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      ) : null}
     </div>
   );
 }
