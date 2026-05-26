@@ -1,7 +1,7 @@
 import { useRef, useEffect, useState, Suspense } from "react";
 import { Outlet, useLocation, Link } from "react-router-dom";
 import { Menu, ShieldX, Eye, X } from "lucide-react";
-import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { useAdminAuth, routePermissionMap } from "@/hooks/useAdminAuth";
 import { AdminHeader } from "./AdminHeader";
 import { AdminSidebar } from "./AdminSidebar";
 import { AdminErrorBoundary } from "./AdminErrorBoundary";
@@ -93,22 +93,9 @@ export function AdminShell() {
     : hasPermission;
   const effectiveCanAccessRoute = isImpersonating
     ? (pathname: string) => {
-        const routeMap: Record<string, string> = {
-          "/admin": "dashboard", "/admin/dashboard": "dashboard",
-          "/admin/analytics": "analytics", "/admin/providers": "providers",
-          "/admin/leads": "leads", "/admin/seekers": "seekers",
-          "/admin/subscriptions": "subscriptions", "/admin/featured": "featured",
-          "/admin/users": "users", "/admin/audit-log": "audit_log",
-          "/admin/settings": "settings", "/admin/notifications": "notifications",
-          "/admin/profile": "dashboard", "/admin/reviews": "reviews",
-          "/admin/concierge": "placements", "/admin/support": "support",
-          "/admin/placement-revenue": "placements", "/admin/credentials": "providers",
-          "/admin/security-logs": "security_logs", "/admin/marketing": "leads",
-          "/admin/blog": "providers", "/admin/international": "placements",
-          "/admin/inbox": "placements", "/admin/escalations": "escalations",
-          "/admin/back-office": "back_office",
-          "/admin/email-logs": "security_logs",
-        };
+        // Single-sourced from useAdminAuth so the impersonation preview can't
+        // drift from the real route→permission map.
+        const routeMap = routePermissionMap;
         let permKey = routeMap[pathname];
         if (!permKey) {
           for (const [route, perm] of Object.entries(routeMap).sort((a, b) => b[0].length - a[0].length)) {

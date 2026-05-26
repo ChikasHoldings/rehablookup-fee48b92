@@ -60,7 +60,7 @@ function clearAdminCache() {
 }
 
 // Map routes to permission keys
-const routePermissionMap: Record<string, string> = {
+export const routePermissionMap: Record<string, string> = {
   "/admin": "dashboard",
   "/admin/dashboard": "dashboard",
   "/admin/analytics": "analytics",
@@ -88,6 +88,15 @@ const routePermissionMap: Record<string, string> = {
   "/admin/back-office": "back_office",
   "/admin/provider-directory": "placements",
   "/admin/email-logs": "security_logs",
+  // These admin routes were unmapped, so canAccessRoute fell through to its
+  // fail-open default and any admin role could reach them client-side (data is
+  // still RLS-gated, but the UI shouldn't surface them). Map to the same
+  // permission their nav items declare (claims = facility-ownership review,
+  // a providers task).
+  "/admin/insurance-verifications": "leads",
+  "/admin/re-verification": "providers",
+  "/admin/not-found-events": "audit_log",
+  "/admin/claims": "providers",
 };
 
 // Admin role type matching database enum

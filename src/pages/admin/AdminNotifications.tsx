@@ -201,7 +201,6 @@ export default function AdminNotifications() {
 
   const {
     notifications: globalNotifications,
-    unreadCount: globalUnreadCount,
     isLoading: globalLoading,
     error: globalError,
     markAsRead: markGlobalAsRead,
@@ -292,7 +291,11 @@ export default function AdminNotifications() {
     
     return (type: string) => {
       if (adminRole === "advisor") {
-        return ADVISOR_TYPES.has(type) || !LEAD_TYPES.has(type) && !SECURITY_ADMIN_TYPES.has(type);
+        // Allowlist: advisors see only placement + system + review notifications.
+        // The prior `ADVISOR_TYPES || !LEAD && !SECURITY` (where && binds tighter
+        // than ||) let EVERY non-lead/non-security type through — payments,
+        // subscriptions, churn, flagged images — defeating the intended scope.
+        return ADVISOR_TYPES.has(type);
       }
       // Customer reps don't see security-admin types
       if (adminRole === "customer_rep") {
@@ -308,7 +311,12 @@ export default function AdminNotifications() {
     ...userNotifications.map(n => ({ ...n, source: "personal" as const })),
   ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()), [globalNotifications, userNotifications, isRelevantNotification]);
 
-  const totalUnreadCount = globalUnreadCount + userUnreadCount;
+  // Count unread from the ROLE-FILTERED visible set so the badge matches the
+  // rows the admin actually sees. globalUnreadCount is unfiltered, so a
+  // non-super-admin's badge previously exceeded their visible unread rows.
+  const totalUnreadCount =
+    globalNotifications.filter((n) => isRelevantNotification(n.type) && !n.read).length +
+    userUnreadCount;
 
   // Memoize filtered notifications
   const filteredNotifications = useMemo(() => {
