@@ -169,6 +169,16 @@ export function ConciergeMarketingDetail({ facilityId }: ConciergeMarketingDetai
             <ArrowRight className="h-4 w-4 ml-auto" />
           </Button>
         </div>
+
+        <p className="text-xs text-slate-500 leading-relaxed pt-2">
+          <strong>Billed per location</strong>, separately from Pro — if you
+          operate multiple facilities, add Concierge to each one individually.
+          Buying Concierge for a facility that already has Featured
+          automatically retires that Featured add-on, so you're never charged
+          for both. You'll pick your advisor geographies and Featured
+          placements after checkout; if a city's partner slots are full, you'll
+          join a waitlist and we'll activate you as soon as one opens.
+        </p>
       </CardContent>
     </Card>
   );

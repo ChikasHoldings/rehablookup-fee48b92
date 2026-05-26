@@ -2,7 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Rotate3D, UserCheck, ArrowRight } from "lucide-react";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
+import { Rotate3D, UserCheck, ArrowRight, Building2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { fmtMoney, fmtMoneyWhole, TIER_PRICING } from "@/lib/billingPricing";
@@ -91,9 +92,23 @@ function FeaturedCard({ active, subscriptionId }: { active: boolean; subscriptio
         </div>
 
         <p className="text-sm text-slate-700 leading-relaxed">
-          Phone-rotation slots on homepage, state, city, search, treatment,
-          insurance, and article pages. Slot caps per geography keep your
-          rotation share meaningful.
+          Phone-rotation slots on the <strong>state, city, near-me,
+          treatment-type, and insurance pages for your area</strong>.{" "}
+          <InfoTooltip label="How Featured rotation works">
+            Every paying facility in a geo takes equal turns in the visible
+            Featured spots — no bidding, no per-click charges. Slot caps per
+            geography keep each facility's share meaningful. Calls go straight
+            to your line; we never intermediate.
+          </InfoTooltip>
+        </p>
+
+        <p className="inline-flex items-start gap-1.5 text-xs text-slate-500">
+          <Building2 className="h-3.5 w-3.5 shrink-0 mt-0.5 text-slate-400" aria-hidden />
+          <span>
+            Billed per location, separately from Pro — each facility you operate
+            needs its own Featured add-on. For national + homepage exposure,
+            upgrade to Concierge Partner.
+          </span>
         </p>
 
         {active ? (
@@ -159,10 +174,24 @@ function ConciergeCard({ active, subscriptionId }: { active: boolean; subscripti
         </div>
 
         <p className="text-sm text-slate-700 leading-relaxed">
-          Prominent surfacing when our human advisors match clients with
-          treatment. Non-partner alternatives always presented; clients always
-          pick. Calls go direct to your admissions line — never per-call,
-          per-lead, or per-admission.
+          The <strong>upgrade to Featured</strong>: national homepage +
+          international exposure and any extra geographies you pick, plus
+          prominent surfacing when our human advisors match clients.{" "}
+          <InfoTooltip label="How Concierge advisor matching works">
+            Advisors match clients by clinical fit — never by who paid. Partners
+            get a verified badge, and we always present at least two non-partner
+            alternatives; clients always pick. Calls go direct to your admissions
+            line — never per-call, per-lead, or per-admission.
+          </InfoTooltip>
+        </p>
+
+        <p className="inline-flex items-start gap-1.5 text-xs text-slate-500">
+          <Building2 className="h-3.5 w-3.5 shrink-0 mt-0.5 text-slate-400" aria-hidden />
+          <span>
+            Billed per location — includes Featured's local exposure, so it
+            replaces an active Featured add-on on the same facility (no double
+            charge).
+          </span>
         </p>
 
         {active ? (

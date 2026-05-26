@@ -133,10 +133,12 @@ export function FeaturedMarketingDetail({ facilityId }: FeaturedMarketingDetailP
         </div>
 
         <p className="text-xs text-slate-500 leading-relaxed pt-2">
-          Featured can be billed monthly OR annually, regardless of your Pro
-          subscription's interval. The two subscriptions renew independently.
-          You'll pick specific placement slots after checkout, with live
-          availability shown for each geo.
+          <strong>Billed per location</strong>, separately from Pro — if you
+          operate multiple facilities, add Featured to each one individually
+          (each gets its own local rotation). Featured can be billed monthly OR
+          annually regardless of your Pro interval; the two subscriptions renew
+          independently. You'll pick specific placement slots after checkout,
+          with live availability shown for each geo.
         </p>
       </CardContent>
     </Card>

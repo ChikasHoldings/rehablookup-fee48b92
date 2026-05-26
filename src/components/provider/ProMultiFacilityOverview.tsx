@@ -15,6 +15,8 @@ interface FacilitySummary {
   views: number;
   leads: number;
   newLeads: number;
+  hasFeatured: boolean;
+  hasConcierge: boolean;
 }
 
 interface ProMultiFacilityOverviewProps {
@@ -38,7 +40,7 @@ export function ProMultiFacilityOverview({ facilities }: ProMultiFacilityOvervie
       // Three concurrent batches of head:true counts (one round-trip per
       // count, but all 3N requests fire in a single Promise.all so the
       // wall-clock is bounded by the network depth rather than 3N).
-      const [viewCounts, leadTotals, newLeadCounts] = await Promise.all([
+      const [viewCounts, leadTotals, newLeadCounts, addonRows] = await Promise.all([
         Promise.all(
           facilityIds.map(fid =>
             supabase
@@ -65,20 +67,41 @@ export function ProMultiFacilityOverview({ facilities }: ProMultiFacilityOvervie
               .then((r: { count: number | null }) => ({ fid, count: r.count ?? 0 })),
           ),
         ),
+        // Add-on flags per facility — a single query (not per-facility) so the
+        // overview can show which LOCATIONS hold Featured / Concierge. Add-ons
+        // are purchased per location, so this is the at-a-glance status a
+        // multi-location provider needs.
+        supabase
+          .from("facility_subscriptions")
+          .select("facility_id, has_featured, has_concierge_partner")
+          .in("facility_id", facilityIds)
+          .then(r =>
+            (r.data ?? []) as Array<{
+              facility_id: string;
+              has_featured: boolean | null;
+              has_concierge_partner: boolean | null;
+            }>,
+          ),
       ]);
 
       const viewsByFacility = new Map(viewCounts.map(r => [r.fid, r.count]));
       const leadsByFacility = new Map(leadTotals.map(r => [r.fid, r.count]));
       const newLeadsByFacility = new Map(newLeadCounts.map(r => [r.fid, r.count]));
+      const addonByFacility = new Map(addonRows.map(r => [r.facility_id, r]));
 
-      return facilities.map(facility => ({
-        id: facility.id,
-        name: facility.name,
-        status: facility.status,
-        views: viewsByFacility.get(facility.id) ?? 0,
-        leads: leadsByFacility.get(facility.id) ?? 0,
-        newLeads: newLeadsByFacility.get(facility.id) ?? 0,
-      }));
+      return facilities.map(facility => {
+        const addon = addonByFacility.get(facility.id);
+        return {
+          id: facility.id,
+          name: facility.name,
+          status: facility.status,
+          views: viewsByFacility.get(facility.id) ?? 0,
+          leads: leadsByFacility.get(facility.id) ?? 0,
+          newLeads: newLeadsByFacility.get(facility.id) ?? 0,
+          hasFeatured: addon?.has_featured === true,
+          hasConcierge: addon?.has_concierge_partner === true,
+        };
+      });
     },
     enabled: facilities.length > 1,
     staleTime: 1000 * 60 * 3,
@@ -159,6 +182,17 @@ export function ProMultiFacilityOverview({ facilities }: ProMultiFacilityOvervie
                         {f.newLeads} new
                       </Badge>
                     )}
+                    {/* Add-on status — Concierge includes Featured, so it
+                        supersedes the Featured badge when both flags exist. */}
+                    {f.hasConcierge ? (
+                      <Badge variant="outline" className="text-[10px] h-4 px-1 border-violet-300 text-violet-700">
+                        Concierge
+                      </Badge>
+                    ) : f.hasFeatured ? (
+                      <Badge variant="outline" className="text-[10px] h-4 px-1 border-amber-300 text-amber-700">
+                        Featured
+                      </Badge>
+                    ) : null}
                   </div>
                 </div>
                 {f.views > 0 && (
@@ -170,6 +204,13 @@ export function ProMultiFacilityOverview({ facilities }: ProMultiFacilityOvervie
             ))
           )}
         </div>
+
+        <p className="mt-3 text-[11px] text-muted-foreground leading-relaxed">
+          Featured &amp; Concierge add-ons are purchased <strong>per location</strong>.{" "}
+          <Link to="/provider/marketing" className="text-primary hover:underline">
+            Manage add-ons →
+          </Link>
+        </p>
       </CardContent>
     </Card>
   );

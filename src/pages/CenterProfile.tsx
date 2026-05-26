@@ -5,7 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Layout } from "@/components/layout/Layout";
 import { StickyMobileCallBar } from "@/components/profile/StickyMobileCallBar";
 import { SEO, generateLocalBusinessSchema } from "@/components/SEO";
-import { normalizeSlug, resolveFacilitySlug } from "@/lib/slugUtils";
+import { normalizeSlug, resolveFacilitySlug, slugifyName } from "@/lib/slugUtils";
 import { RelatedLinksSection } from "@/components/seo/RelatedLinksSection";
 import { buildProfileRelatedLinks } from "@/lib/profileRelatedLinks";
 import { Button } from "@/components/ui/button";
@@ -1621,7 +1621,7 @@ const CenterProfile = () => {
           when the city bucket has no active Featured subscribers. */}
       <LandingFeaturedSection
         placement_type="city"
-        placement_value={facility.city ? facility.city.toLowerCase().replace(/\s+/g, "-") : null}
+        placement_value={facility.city ? slugifyName(facility.city) : null}
         slot_count={6}
         title={`More Featured Facilities in ${facility.city}`}
         subtitle="Other verified centers near here, sponsored by their providers."
