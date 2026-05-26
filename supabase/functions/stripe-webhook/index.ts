@@ -3228,18 +3228,106 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
         // here — they're shared on the facility_subscriptions row and now owned by
         // Concierge (the rotation pool accepts has_concierge_partner). Conditional
         // on activation success so we never strip Featured without Concierge live.
-        // NOTE: no auto-refund of the in-flight Featured period — a manual /
-        // proration refund is a documented follow-up.
         if (subscription.metadata?.supersede_featured === "true") {
           try {
             const { data: supSub } = await supabaseAdmin
               .from("facility_subscriptions")
-              .select("featured_stripe_subscription_id")
+              .select("id, featured_stripe_subscription_id")
               .eq("facility_id", addonFacilityId)
               .maybeSingle();
             const featuredSubId =
               (supSub as { featured_stripe_subscription_id: string | null } | null)
                 ?.featured_stripe_subscription_id ?? null;
+            const facSubId = (supSub as { id: string } | null)?.id ?? null;
+
+            // Prorated refund for the unused Featured period so the provider isn't
+            // double-charged when they upgrade mid-period. Monthly Featured gets no
+            // refund (standard SaaS — computeCancellationRefund returns 0); annual
+            // Featured is refunded the unused months. We source the period + interval
+            // from Stripe because our DB doesn't track Featured's own period_start /
+            // billing_period separately, and refund against the Featured sub's OWN
+            // charge (not the Pro charge). Idempotent via a subscription_cancellations
+            // row keyed on the Featured sub id, so webhook retries don't double-refund.
+            if (featuredSubId && facSubId) {
+              const supersedeReason = `supersede:featured:${featuredSubId}`;
+              try {
+                const { data: existingRefund } = await supabaseAdmin
+                  .from("subscription_cancellations")
+                  .select("id")
+                  .eq("subscription_id", facSubId)
+                  .eq("reason", supersedeReason)
+                  .maybeSingle();
+                if (!existingRefund) {
+                  const featuredSub = await stripe.subscriptions.retrieve(featuredSubId);
+                  const interval = featuredSub.items?.data?.[0]?.price?.recurring?.interval ?? "month";
+                  const billingPeriod = interval === "year" ? "annual" : "monthly";
+                  // Latest paid invoice → charge + amount actually paid for this sub.
+                  const invoices = await stripe.invoices.list({ subscription: featuredSubId, limit: 5 });
+                  let chargeId: string | null = null;
+                  let paidCents = 0;
+                  for (const inv of invoices.data) {
+                    if (inv.status === "paid" && inv.charge) {
+                      chargeId = typeof inv.charge === "string" ? inv.charge : inv.charge.id;
+                      paidCents = inv.amount_paid;
+                      break;
+                    }
+                  }
+                  const refund = computeCancellationRefund({
+                    billingPeriod,
+                    paidAmountCents: paidCents,
+                    fullMonthlyRateCents: TIER_PRICING.featured.fullMonthlyRateCents,
+                    periodStart: new Date(featuredSub.current_period_start * 1000),
+                    periodEnd: new Date(featuredSub.current_period_end * 1000),
+                  });
+                  let stripeRefundId: string | null = null;
+                  if (refund.refundCents > 0 && chargeId) {
+                    const refundObj = await stripe.refunds.create({
+                      charge: chargeId,
+                      amount: refund.refundCents,
+                      reason: "duplicate",
+                      metadata: {
+                        facility_id: addonFacilityId,
+                        scope: supersedeReason,
+                        note: "Prorated refund: Featured superseded by Concierge upgrade",
+                      },
+                    });
+                    stripeRefundId = refundObj.id;
+                    logStep("Supersede prorated Featured refund issued", {
+                      facilityId: addonFacilityId, refundCents: refund.refundCents, stripeRefundId,
+                    });
+                  }
+                  // Audit + idempotency row (recorded even for the 0-refund monthly
+                  // case so a retry short-circuits on the existence check above).
+                  await supabaseAdmin.from("subscription_cancellations").insert({
+                    subscription_id: facSubId,
+                    reason: supersedeReason,
+                    refund_amount_cents: refund.refundCents,
+                    charged_for_use_cents: refund.chargeForUseCents,
+                    full_monthly_rate_cents: TIER_PRICING.featured.fullMonthlyRateCents,
+                    months_used: refund.monthsUsed,
+                    paid_amount_cents: paidCents,
+                    stripe_refund_id: stripeRefundId,
+                    canceled_by: null,
+                  });
+                }
+              } catch (refundErr) {
+                console.error("[stripe-webhook] supersede prorated refund failed", refundErr);
+                await supabaseAdmin.from("admin_notifications").insert({
+                  type: "supersede_featured_refund_failed",
+                  title: "Featured supersede refund needs manual review",
+                  message:
+                    `Concierge upgrade superseded Featured for facility ${addonFacilityId}, ` +
+                    `but the automatic prorated refund failed. Review Featured subscription ` +
+                    `${featuredSubId} in Stripe and refund the unused (annual) period manually if owed.`,
+                  metadata: {
+                    facility_id: addonFacilityId,
+                    featured_stripe_subscription_id: featuredSubId,
+                    error: refundErr instanceof Error ? refundErr.message : String(refundErr),
+                  } as Record<string, unknown>,
+                }).then(() => undefined);
+              }
+            }
+
             if (featuredSubId) {
               try {
                 await stripe.subscriptions.cancel(featuredSubId);
