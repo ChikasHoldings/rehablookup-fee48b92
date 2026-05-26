@@ -170,14 +170,9 @@ Deno.serve(async (req) => {
   const partnerFacilityIds = selected_facility_ids.filter((id) => partnerSet.has(id));
   const nonPartnerSelectedIds = selected_facility_ids.filter((id) => !partnerSet.has(id));
 
-  // Non-partner candidates that were surfaced but NOT selected
-  const surfacedNonSelected = surfaced_candidate_ids.filter(
-    (id) => !selected_facility_ids.includes(id),
-  );
-  // We don't know which of those are partners without another lookup —
-  // but for the rule check we only care that REJECTED-non-partner reasons
-  // are present for each rejected non-partner. The UI sends those in
-  // rejected_non_partner_candidates already filtered to non-partners.
+  // Rejected non-partner candidates must each carry a reason (kept rule). The
+  // UI sends these in rejected_non_partner_candidates already filtered to
+  // non-partners.
   const rejectedIdsWithReasons = new Map(
     rejected_non_partner_candidates.map((r) => [r.facility_id, r.reason.trim()]),
   );
@@ -185,12 +180,10 @@ Deno.serve(async (req) => {
   // ── Apply EKRA rules ──
   const validationErrors: string[] = [];
 
-  // Rule 1: any partner in selection → consideration checkbox required
-  if (partnerFacilityIds.length > 0 && !advisor_confirmed_non_partner_consideration) {
-    validationErrors.push(
-      "You must confirm you considered non-partner alternatives before sending introductions.",
-    );
-  }
+  // Rule 1 (retired): under the partner-exclusive model, a partner-only
+  // introduction is the intended outcome, so we no longer block on a
+  // "considered non-partner alternatives" confirmation. The advisor's flag
+  // (if sent) is still recorded in the audit row for transparency.
 
   // Rule 2: each rejected non-partner must have a reason
   for (const [id, reason] of rejectedIdsWithReasons.entries()) {
@@ -199,19 +192,9 @@ Deno.serve(async (req) => {
     }
   }
 
-  // Rule 3: 100%-partner with no non-partners surfaced → second checkbox required
-  const allSelectedArePartners = partnerFacilityIds.length === selected_facility_ids.length;
-  const noNonPartnerCandidatesSurfaced =
-    surfacedNonSelected.length === 0 && nonPartnerSelectedIds.length === 0;
-  if (
-    allSelectedArePartners &&
-    noNonPartnerCandidatesSurfaced &&
-    !advisor_confirmed_no_non_partner_candidates
-  ) {
-    validationErrors.push(
-      "All selected facilities are Placement Partners. Confirm no non-partner facilities matched the seeker's clinical criteria.",
-    );
-  }
+  // Rule 3 (retired): a 100%-partner introduction is the expected outcome when
+  // enough partners qualify (pure-exclusive), so there's no confirmation gate.
+  // Non-partners reach families only via the matcher's tier fallback.
 
   // Rule 4: free-tier redirect must include the originating facility
   if (isFreeTierRedirect && originatingFacilityId && !selected_facility_ids.includes(originatingFacilityId)) {
@@ -230,37 +213,14 @@ Deno.serve(async (req) => {
     );
   }
 
-  // ── Auto-flag rules ──
-  // (a) 100%-partner outcome with the "no non-partners qualified" claim
-  const flag_a =
-    allSelectedArePartners && advisor_confirmed_no_non_partner_candidates;
-  // (b) >70% partner rate over advisor's last 20 introductions
-  const { data: recentAudits } = await admin
-    .from("concierge_introduction_audit")
-    .select("partner_facility_ids, introduced_facility_ids")
-    .eq("advisor_id", user.id)
-    .order("sent_at", { ascending: false })
-    .limit(20);
-  const totalRecent = (recentAudits ?? []).reduce(
-    (acc: number, r: { introduced_facility_ids: string[] }) => acc + (r.introduced_facility_ids?.length ?? 0),
-    0,
-  );
-  const partnerRecent = (recentAudits ?? []).reduce(
-    (acc: number, r: { partner_facility_ids: string[] }) => acc + (r.partner_facility_ids?.length ?? 0),
-    0,
-  );
-  const partnerRatio = totalRecent > 0 ? partnerRecent / totalRecent : 0;
-  const flag_b = totalRecent >= 10 && partnerRatio > 0.7;
-  // (c) free-tier redirect that somehow doesn't include the originating
-  //     facility — already rejected at validation, kept here for completeness.
-  const flag_c = false;
-
-  const flagged = flag_a || flag_b || flag_c;
-  const flagReason = flag_a
-    ? "100% Placement Partner selection with 'no non-partner candidates qualified' claim — verify clinical gap is genuine."
-    : flag_b
-      ? `Advisor's recent partner rate is ${(partnerRatio * 100).toFixed(0)}% over ${totalRecent} introductions — review for selection-pattern bias.`
-      : null;
+  // ── Auto-flag rules (retired for the partner-exclusive model) ──
+  // Partner-only introductions and a high advisor partner-rate are now the
+  // INTENDED outcome, not anomalies — the legacy 100%-partner and
+  // >70%-partner-rate flags would fire on essentially every case and bury any
+  // real signal. The audit row below still records the full partner
+  // composition + clinical snapshot for every introduction.
+  const flagged = false;
+  const flagReason: string | null = null;
 
   // ── Insert audit row ──
   const { data: inserted, error: insertErr } = await admin
