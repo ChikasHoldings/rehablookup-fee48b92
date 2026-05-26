@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { SEO } from "@/components/SEO";
 import { Layout } from "@/components/layout/Layout";
+import { FeaturedRail } from "@/components/featured/FeaturedRail";
 import { InternationalPageHero } from "./components";
 import { motion } from "framer-motion";
 import { ArrowRight, Shield, ChevronRight, Plane, FileText, Heart, Sparkles, Lock, Languages, Star, Clock, Building2 } from "lucide-react";
@@ -71,6 +72,18 @@ export default function RehabUSAFromUAE() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Featured Concierge Partners — paid advertising rotation. Self-hides
+          when no Concierge Partner holds an international placement. */}
+      <section className="py-10 md:py-12 bg-background">
+        <div className="container mx-auto px-4 max-w-6xl">
+          <FeaturedRail
+            placement_type="international"
+            placement_value="global"
+            title="Featured facilities accepting international patients"
+          />
         </div>
       </section>
 

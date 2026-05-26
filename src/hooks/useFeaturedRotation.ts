@@ -5,7 +5,7 @@ import { getOrCreateRotationSeed } from "@/lib/featuredSeed";
 
 export type PlacementType =
   | "homepage" | "state" | "city" | "search"
-  | "near_me" | "treatment" | "insurance" | "article";
+  | "near_me" | "treatment" | "insurance" | "international" | "article";
 
 export interface FeaturedRotationFacility {
   facility_id: string;

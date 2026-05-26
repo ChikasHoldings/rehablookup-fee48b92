@@ -34,7 +34,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const PLACEMENT_TYPES = ["homepage", "state", "city", "search", "near_me", "treatment", "insurance", "article"] as const;
+const PLACEMENT_TYPES = ["homepage", "state", "city", "search", "near_me", "treatment", "insurance", "international", "article"] as const;
 
 const RequestSchema = z.object({
   placement_type: z.enum(PLACEMENT_TYPES),
@@ -196,6 +196,9 @@ async function enrichFacilities(
  *   insurance                → JOIN facility_insurance on slug→insurance_name
  *   article                  → no fallback, return [] (article-specific
  *                              buckets don't have a natural facility filter)
+ *   international            → no fallback, return [] (international exposure
+ *                              is paid Concierge-only; never show free
+ *                              facilities on the international-facing pages)
  *
  * Selection is deterministic on (bucket, seed): we fetch the top
  * 30 candidates ordered by verified DESC, name ASC, then rotate

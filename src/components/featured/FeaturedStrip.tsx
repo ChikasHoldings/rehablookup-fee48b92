@@ -31,6 +31,7 @@ const DEFAULT_SLOTS_BY_TYPE: Record<PlacementType, number> = {
   treatment: 8,
   insurance: 8,
   search: 8,
+  international: 10,
   article: 6,
 };
 

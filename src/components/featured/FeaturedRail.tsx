@@ -23,6 +23,7 @@ const DEFAULT_SLOT_COUNT: Record<PlacementType, number> = {
   near_me: 3,
   treatment: 3,
   insurance: 5,
+  international: 6,
   article: 3,
 };
 
