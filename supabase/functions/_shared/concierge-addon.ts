@@ -224,6 +224,65 @@ export async function activateConciergePartner(
     }
   }
 
+  // 5. Concierge INCLUDES Featured exposure: seed featured_placements for the
+  //    national homepage + the facility's local state/city + the international
+  //    pages. The Phase-0 paywall guard accepts has_concierge_partner (set in
+  //    step 1), so these writes are authorized. Idempotent; failures are
+  //    non-fatal (core Concierge activation already succeeded).
+  {
+    const slugify = (s: string): string =>
+      s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+    const featuredSeeds: { type: string; value: string }[] = [
+      { type: "homepage", value: "national" },
+      { type: "international", value: "global" },
+    ];
+    if (fac.state && fac.state.trim().length > 0) {
+      const stateSlug = slugify(fac.state);
+      if (stateSlug.length >= 2 && stateSlug !== "unknown" && stateSlug !== "n-a") {
+        featuredSeeds.push({ type: "state", value: stateSlug });
+      }
+    }
+    if (fac.city && fac.city.trim().length > 0) {
+      const citySlug = slugify(fac.city);
+      if (citySlug.length >= 2 && citySlug !== "unknown" && citySlug !== "n-a") {
+        featuredSeeds.push({ type: "city", value: citySlug });
+      }
+    }
+    for (const seed of featuredSeeds) {
+      const { data: existingFp } = await supabase
+        .from("featured_placements")
+        .select("id, active")
+        .eq("facility_id", args.facilityId)
+        .eq("placement_type", seed.type)
+        .eq("placement_value", seed.value)
+        .maybeSingle();
+      if (existingFp) {
+        if ((existingFp as { active: boolean }).active === false) {
+          const { error: reErr } = await supabase
+            .from("featured_placements")
+            .update({
+              subscription_id: facSubId,
+              active: true,
+              activated_at: new Date().toISOString(),
+              deactivated_at: null,
+            })
+            .eq("id", (existingFp as { id: string }).id);
+          if (reErr) result.failed.push({ step: `featured_${seed.type}_reactivate`, error: reErr.message });
+        }
+      } else {
+        const { error: insErr } = await supabase.from("featured_placements").insert({
+          facility_id: args.facilityId,
+          subscription_id: facSubId,
+          placement_type: seed.type,
+          placement_value: seed.value,
+          active: true,
+          activated_at: new Date().toISOString(),
+        });
+        if (insErr) result.failed.push({ step: `featured_${seed.type}_insert`, error: insErr.message });
+      }
+    }
+  }
+
   return result;
 }
 

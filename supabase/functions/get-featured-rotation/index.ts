@@ -420,13 +420,16 @@ Deno.serve(async (req) => {
         sponsored_tagline
       ),
       facility_subscriptions!inner (
-        has_featured, status
+        has_featured, has_concierge_partner, status
       )
     `)
     .eq("active", true)
     .eq("placement_type", parsed.data.placement_type)
     .eq("placement_value", parsed.data.placement_value)
-    .eq("facility_subscriptions.has_featured", true)
+    // Featured holders OR Concierge Partners (Concierge includes Featured
+    // exposure + national/international). A canceled add-on drops out of
+    // rotation immediately because the inner join + this filter reject it.
+    .or("has_featured.eq.true,has_concierge_partner.eq.true", { referencedTable: "facility_subscriptions" })
     .eq("facility_subscriptions.status", "active")
     .order("activated_at", { ascending: true });
 
