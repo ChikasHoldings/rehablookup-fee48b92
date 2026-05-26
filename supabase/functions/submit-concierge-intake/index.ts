@@ -608,10 +608,13 @@ Deno.serve(async (req) => {
       // Check if auto-matching is enabled
       const { data: autoMatchSetting } = await supabase
         .from('platform_settings')
-        .select('value')
-        .eq('key', 'placement_auto_match_enabled')
-        .single();
-      const autoMatchEnabled = autoMatchSetting?.value !== 'false';
+        .select('setting_value')
+        .eq('setting_key', 'placement_auto_match_enabled')
+        .maybeSingle();
+      // Default OFF: concierge stays advisor-driven unless an admin explicitly
+      // enables automation (setting_value true). Avoids any auto-match /
+      // auto-email firing on intake without an opt-in.
+      const autoMatchEnabled = autoMatchSetting?.setting_value === true || autoMatchSetting?.setting_value === 'true';
 
       if (!autoMatchEnabled) {
         logStep(requestId, "Auto-matching disabled — case will need manual matching");
@@ -645,27 +648,28 @@ Deno.serve(async (req) => {
           // ─── AUTO-INTRODUCE: Send introductions to top matches ─────────────
           const { data: introSetting } = await supabase
             .from('platform_settings')
-            .select('value')
-            .eq('key', 'placement_auto_introduce_enabled')
-            .single();
-          const autoIntroEnabled = introSetting?.value !== 'false';
+            .select('setting_value')
+            .eq('setting_key', 'placement_auto_introduce_enabled')
+            .maybeSingle();
+          // Default OFF — matched providers are only auto-emailed when enabled.
+          const autoIntroEnabled = introSetting?.setting_value === true || introSetting?.setting_value === 'true';
 
           if (autoIntroEnabled) {
             const { data: maxSetting } = await supabase
               .from('platform_settings')
-              .select('value')
-              .eq('key', 'placement_auto_introduce_max')
-              .single();
-            const maxIntros = parseInt(maxSetting?.value || '5', 10);
+              .select('setting_value')
+              .eq('setting_key', 'placement_auto_introduce_max')
+              .maybeSingle();
+            const maxIntros = parseInt(String(maxSetting?.setting_value ?? '5'), 10);
             const facilityIds = matchResult.matchedFacilityIds.slice(0, maxIntros);
 
             // Calculate response deadline (default 72h)
             const { data: timeoutSetting } = await supabase
               .from('platform_settings')
-              .select('value')
-              .eq('key', 'placement_provider_response_timeout_hours')
-              .single();
-            const timeoutHours = parseInt(timeoutSetting?.value || '72', 10);
+              .select('setting_value')
+              .eq('setting_key', 'placement_provider_response_timeout_hours')
+              .maybeSingle();
+            const timeoutHours = parseInt(String(timeoutSetting?.setting_value ?? '72'), 10);
             const responseDeadline = new Date(Date.now() + timeoutHours * 60 * 60 * 1000).toISOString();
 
             let sentCount = 0;
