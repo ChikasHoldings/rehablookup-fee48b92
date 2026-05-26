@@ -164,25 +164,29 @@ Deno.serve(async (req) => {
           .limit(1);
 
         if (!recentAlert || recentAlert.length === 0) {
-          // Send SLA alert email to admins
+          // Send SLA alert email to admins. admin_user_profiles has no email
+          // column — resolve the address via auth.admin.getUserById, the same
+          // pattern send-admin-daily-summary uses.
           if (resend) {
-            const { data: admins } = await supabase
+            const { data: adminProfiles } = await supabase
               .from('admin_user_profiles')
-              .select('email')
-              .in('admin_role', ['super_admin', 'manager']);
+              .select('user_id')
+              .in('admin_role', ['super_admin', 'manager'])
+              .eq('status', 'active');
 
-            for (const admin of (admins || [])) {
-              if (admin.email) {
-                try {
-                  await sendEmailWithRetry(supabase, resend, {
-                    from: "RehabLookup Alerts <alerts@rehablookup.com>",
-                    to: [admin.email],
-                    subject: `⚠️ ${alertData.length} Placement Case(s) Stalled — Action Required`,
-                    html: slaAlertEmail(alertData),
-                  }, { emailType: "sla_alert", idempotencyKey: `sla-alert-${admin.email}-${new Date().toISOString().slice(0, 10)}` });
-                } catch (e) {
-                  log("WARN", "Failed to send SLA alert email", { email: admin.email, error: String(e) });
-                }
+            for (const profile of (adminProfiles || [])) {
+              try {
+                const { data: userData } = await supabase.auth.admin.getUserById(profile.user_id);
+                const adminEmail = userData?.user?.email;
+                if (!adminEmail) continue;
+                await sendEmailWithRetry(supabase, resend, {
+                  from: "RehabLookup Alerts <alerts@rehablookup.com>",
+                  to: [adminEmail],
+                  subject: `⚠️ ${alertData.length} Placement Case(s) Stalled — Action Required`,
+                  html: slaAlertEmail(alertData),
+                }, { emailType: "sla_alert", idempotencyKey: `sla-alert-${adminEmail}-${new Date().toISOString().slice(0, 10)}` });
+              } catch (e) {
+                log("WARN", "Failed to send SLA alert email", { userId: profile.user_id, error: String(e) });
               }
             }
           }
@@ -214,18 +218,23 @@ Deno.serve(async (req) => {
     try {
       const reminderThreshold = new Date(now.getTime() - SEEKER_REMINDER_HOURS * 60 * 60 * 1000).toISOString();
 
-      // Find cases in "presented_to_seeker" status for >48h without a reminder sent
+      // Cases sitting in "presented_to_seeker" for >48h. A case can
+      // legitimately linger here, so de-dup is handled per case below via the
+      // email idempotency key rather than a seeker_reminder_sent_at column
+      // (that column lives in an unapplied placement-automation migration, so
+      // we can't depend on it). We re-scan each run but only ever nudge once.
       const { data: pendingReview } = await supabase
         .from('concierge_inquiries')
-        .select('id, user_name, email, status, updated_at, seeker_reminder_sent_at')
+        .select('id, user_name, user_email, status, updated_at')
         .eq('status', 'presented_to_seeker')
         .lt('updated_at', reminderThreshold)
-        .is('seeker_reminder_sent_at', null)
-        .not('email', 'is', null)
+        .not('user_email', 'is', null)
         .limit(20);
 
       for (const inquiry of (pendingReview || [])) {
         try {
+          if (!resend || !inquiry.user_email) continue;
+
           // Count how many facilities are ready for review
           const { count } = await supabase
             .from('concierge_introductions')
@@ -236,32 +245,26 @@ Deno.serve(async (req) => {
           const facilitiesCount = count || 0;
           if (facilitiesCount === 0) continue;
 
-          // Send reminder email
-          if (resend && inquiry.email) {
-            const firstName = inquiry.user_name?.split(' ')[0] || 'there';
-            await sendEmailWithRetry(supabase, resend, {
-              from: "RehabLookup Concierge <concierge@rehablookup.com>",
-              to: [inquiry.email],
-              subject: `${firstName}, your treatment options are waiting`,
-              html: seekerReminderEmail(firstName, facilitiesCount),
-            }, { emailType: "seeker_reminder", idempotencyKey: `seeker-reminder-${inquiry.id}` });
+          // Idempotent on seeker-reminder-${id} (email_tracking_events), so a
+          // re-scan never produces a duplicate nudge.
+          const firstName = inquiry.user_name?.split(' ')[0] || 'there';
+          const sendResult = await sendEmailWithRetry(supabase, resend, {
+            from: "RehabLookup Concierge <concierge@rehablookup.com>",
+            to: [inquiry.user_email],
+            subject: `${firstName}, your treatment options are waiting`,
+            html: seekerReminderEmail(firstName, facilitiesCount),
+          }, { emailType: "seeker_reminder", idempotencyKey: `seeker-reminder-${inquiry.id}` });
+
+          // Only log + count the FIRST time the nudge actually goes out.
+          if (sendResult.success && !sendResult.deduplicated) {
+            await supabase.from('concierge_case_events').insert({
+              inquiry_id: inquiry.id,
+              event_type: 'seeker_reminder_sent',
+              event_data: { facilities_ready: facilitiesCount, auto: true },
+              actor_type: 'system',
+            });
+            results.seekerReminders++;
           }
-
-          // Mark reminder as sent
-          await supabase
-            .from('concierge_inquiries')
-            .update({ seeker_reminder_sent_at: now.toISOString() })
-            .eq('id', inquiry.id);
-
-          // Log event
-          await supabase.from('concierge_case_events').insert({
-            inquiry_id: inquiry.id,
-            event_type: 'seeker_reminder_sent',
-            event_data: { facilities_ready: facilitiesCount, auto: true },
-            actor_type: 'system',
-          });
-
-          results.seekerReminders++;
         } catch (e) {
           log("WARN", "Failed to send seeker reminder", { id: inquiry.id, error: String(e) });
         }

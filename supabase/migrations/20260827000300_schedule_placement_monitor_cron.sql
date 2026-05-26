@@ -25,8 +25,9 @@
 -- Idempotency:
 --   - SLA alerts dedup on a 12h window (no spam) and key the email by
 --     admin+date.
---   - Seeker reminders set seeker_reminder_sent_at so each case is nudged
---     once, and the email is keyed seeker-reminder-${inquiryId}.
+--   - Seeker reminders dedup on the email idempotency key
+--     seeker-reminder-${inquiryId} (email_tracking_events), so each case is
+--     nudged exactly once even though the function re-scans every run.
 --
 -- Calls via scheduled.call_edge_function so the service_role key from
 -- vault.decrypted_secrets is used — matches the pattern of the other
