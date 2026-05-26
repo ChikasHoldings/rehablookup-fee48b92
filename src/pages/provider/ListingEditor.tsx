@@ -339,13 +339,45 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
         .from("facilities")
         .select("id, user_id, name, slug, address, city, state, zip_code, phone, email, reply_email, reply_email_verified, reply_email_verified_at, website, description, facility_type, gender_served, bed_count, status, featured, logo_url, gallery_urls, year_established, accepts_international_patients, verified_phone, verified_phone_set_at, has_facility_verified_contact, hours_of_operation, languages_spoken, accessibility_features, accepting_admissions")
         .eq("id", currentFacilityId)
-        .eq("user_id", session.user.id)
         .maybeSingle();
 
       return data;
     },
     enabled: !!currentFacilityId,
   });
+
+  // Resolve the caller's role on THIS facility. The team feature grants
+  // owners + managers edit rights and viewers read-only access (enforced
+  // server-side: facilities_team_update / *_team_cud RLS = facility_role IN
+  // (owner, manager)). We mirror it here so a viewer gets a read-only view
+  // rather than editable controls whose saves RLS would silently reject
+  // (0 rows, no error).
+  const { data: editRole } = useQuery({
+    queryKey: ["facility-edit-role", currentFacilityId],
+    queryFn: async (): Promise<"owner" | "manager" | "viewer" | null> => {
+      const session = await getCachedSession();
+      if (!session || !currentFacilityId) return null;
+      const { data: f } = await supabase
+        .from("facilities")
+        .select("user_id")
+        .eq("id", currentFacilityId)
+        .maybeSingle();
+      if ((f as { user_id?: string } | null)?.user_id === session.user.id) return "owner";
+      const { data: tm } = await supabase
+        .from("facility_team_members")
+        .select("role")
+        .eq("facility_id", currentFacilityId)
+        .eq("user_id", session.user.id)
+        .eq("status", "active")
+        .maybeSingle();
+      return ((tm as { role?: "manager" | "viewer" } | null)?.role) ?? null;
+    },
+    enabled: !!currentFacilityId,
+  });
+  // Optimistic while the role query is in flight (owner is the common case);
+  // RLS is the real backstop and the manual-save path detects a denied write.
+  const canEdit = editRole === undefined || editRole === "owner" || editRole === "manager";
+  const isViewer = editRole === "viewer";
 
   // Fetch services
   const { data: services = [], refetch: refetchServices } = useQuery({
@@ -620,8 +652,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
           accessibility_features: facility.accessibility_features,
           accepting_admissions: facility.accepting_admissions,
         })
-        .eq("id", facility.id)
-        .eq("user_id", autoSaveSession.user.id);
+        .eq("id", facility.id);
 
       if (!error) {
         queryClient.setQueryData(["facility-listing", currentFacilityId], facility);
@@ -659,7 +690,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
 
   // Auto-save effect
   useEffect(() => {
-    if (hasChanges && facility) {
+    if (hasChanges && facility && canEdit) {
       if (autoSaveTimerRef.current) {
         clearTimeout(autoSaveTimerRef.current);
       }
@@ -674,12 +705,20 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
         clearTimeout(autoSaveTimerRef.current);
       }
     };
-  }, [hasChanges, facility, performAutoSave]);
+  }, [hasChanges, facility, performAutoSave, canEdit]);
 
   
 
   const handleSave = useCallback(async () => {
     if (!facility) return;
+    if (!canEdit) {
+      toast({
+        title: "View-only access",
+        description: "You have view-only access to this listing. Ask the facility owner for manager access to make changes.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     if (autoSaveTimerRef.current) {
       clearTimeout(autoSaveTimerRef.current);
@@ -754,7 +793,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
       !(facility as { profile_completion_celebrated?: boolean }).profile_completion_celebrated;
 
     try {
-      const { error } = await supabase
+      const { data: savedRows, error } = await supabase
         .from("facilities")
         .update({
           name: sanitizeFacilityName(facility.name),
@@ -781,16 +820,20 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
           ...(shouldCelebrate ? { profile_completion_celebrated: true } : {}),
         })
         .eq("id", facility.id)
-        .eq("user_id", saveSession.user.id);
+        .select("id");
 
-      if (error) {
+      // 0 rows + no error == RLS rejected the write (e.g. access changed
+      // mid-session). Never claim success on a write that didn't land.
+      if (error || !savedRows || savedRows.length === 0) {
         queryClient.setQueryData(["facility-listing", currentFacilityId], previousData);
         setFacility(previousData as Facility | null);
         setHasChanges(true);
         setShowSaved(false);
         toast({
-          title: "Error saving",
-          description: "Failed to save changes. Please try again.",
+          title: error ? "Error saving" : "Changes not saved",
+          description: error
+            ? "Failed to save changes. Please try again."
+            : "You may no longer have edit access to this listing, so your changes weren't saved.",
           variant: "destructive",
         });
       } else {
@@ -859,7 +902,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
       setIsSaving(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- validateAllFields is declared below; React runs callbacks after the full render so the forward reference is safe.
-  }, [facility, toast, queryClient, currentFacilityId, setFacility]);
+  }, [facility, canEdit, toast, queryClient, currentFacilityId, setFacility]);
 
   // Keyboard shortcut: Ctrl+S / Cmd+S
   useEffect(() => {
@@ -903,6 +946,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
   };
 
   const updateField = (field: keyof Facility, value: string | number | boolean | string[] | null) => {
+    if (!canEdit) return; // viewers are read-only — keep the form inert rather than letting edits build up that RLS would reject
     if (facility) {
       setFacility({ ...facility, [field]: value });
       setHasChanges(true);
@@ -1397,12 +1441,19 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
               Preview
             </Button>
           )}
-          <Button onClick={handleSave} disabled={isSaving || isAutoSaving || !hasChanges} size="sm" className="gap-1.5">
+          <Button onClick={handleSave} disabled={!canEdit || isSaving || isAutoSaving || !hasChanges} size="sm" className="gap-1.5">
             {isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
             Save
           </Button>
         </div>
       </div>
+
+      {isViewer && (
+        <div className="mb-6 flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <Eye className="h-4 w-4 shrink-0" aria-hidden />
+          <span>You have <strong>view-only</strong> access to this listing. Ask the facility owner for manager access to make changes.</span>
+        </div>
+      )}
 
       {/* ── Profile Progress Bar ── */}
       {profileCompletion.percentage < 100 && (
@@ -1992,7 +2043,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
       </div>
 
       {/* Floating Save Bar */}
-      <ListingFloatingSaveBar hasChanges={hasChanges} isSaving={isSaving} isAutoSaving={isAutoSaving} onSave={handleSave} />
+      {canEdit && <ListingFloatingSaveBar hasChanges={hasChanges} isSaving={isSaving} isAutoSaving={isAutoSaving} onSave={handleSave} />}
 
       {/* Preview Modal */}
       {facility?.slug && (
