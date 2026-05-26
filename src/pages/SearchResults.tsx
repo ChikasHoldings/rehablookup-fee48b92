@@ -33,7 +33,9 @@ import {
   Navigation,
   CreditCard,
   Share2,
-  Check
+  Check,
+  AlertCircle,
+  RefreshCw
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import supportSpecialistImg from "@/assets/support-specialist.png";
@@ -168,7 +170,7 @@ const SearchResults = () => {
   const selectedInsuranceTypes = useMemo(() => insuranceTypesParam ? insuranceTypesParam.split(",") : [], [insuranceTypesParam]);
   const selectedDistance = distanceParam || "";
 
-  const { data: approvedFacilities = [], isLoading } = useStaticFacilities();
+  const { data: approvedFacilities = [], isLoading, error: facilitiesError, refetch: refetchFacilities } = useStaticFacilities();
   const geo = useGeoLocation();
   const { lookup: lookupZipcode } = useZipcodeLookup();
   
@@ -1317,6 +1319,21 @@ const SearchResults = () => {
                 sortParam === "proximity"
               ) ? (
                 <SearchResultsLoading count={6} />
+              ) : facilitiesError ? (
+                // Distinguish a backend failure from a genuinely empty result —
+                // otherwise an outage looks like "no rehabs exist."
+                <div role="alert" className="rounded-xl border border-destructive/40 bg-destructive/5 p-6 text-center space-y-3">
+                  <AlertCircle className="h-8 w-8 text-destructive mx-auto" />
+                  <p className="text-sm font-medium text-foreground">
+                    We couldn't load treatment centers right now.
+                  </p>
+                  <p className="text-xs text-muted-foreground max-w-md mx-auto">
+                    This is a temporary issue on our end — your search is fine. Please try again in a moment.
+                  </p>
+                  <Button variant="outline" size="sm" onClick={() => refetchFacilities()} className="gap-1.5">
+                    <RefreshCw className="h-4 w-4" /> Try again
+                  </Button>
+                </div>
               ) : paginatedCenters.length > 0 ? (
                 <>
                   {/* Expanded search notice */}

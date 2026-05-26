@@ -8,11 +8,12 @@
 //  3. send a Resend digest if there are any matches and the cadence is due,
 //  4. stamp last_alert_sent_at + last_match_count.
 //
-// Matching mirrors the public search filters: state, facility_type, and
-// criteria.insuranceTypes / criteria.treatmentTypes / criteria.amenities.
-// We deliberately keep the SQL simple — a richer fuzzy match would belong in
-// a stored function later. The goal is "good enough alerts," not parity with
-// the live JS-side filter pipeline.
+// Matching is intentionally coarse: location (state/city) + facility_type only.
+// public_facilities does not project insurance/treatment/amenity relations, so
+// criteria.insuranceTypes / treatmentTypes / amenities are NOT applied here —
+// alerts surface "new/updated centers in your area + type", which is good
+// enough for a digest. Tightening to full filter parity would require exposing
+// those relations on the view (or a stored matching function) — a later change.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 import { assertCronSecret } from "../_shared/cron-auth.ts";
@@ -136,8 +137,12 @@ async function findMatches(
 ): Promise<MatchResult> {
   let q = supabase
     .from("public_facilities")
+    // public_facilities is defined WHERE status='approved', so its projected
+    // status is always 'approved' — the prior .eq("status","active") matched
+    // ZERO rows, so every saved-search alert silently sent nothing. Match the
+    // view's actual value (mirrors send-new-facility-alerts).
     .select("id, name, slug, city, state, facility_type, description, logo_url, created_at, updated_at", { count: "exact" })
-    .eq("status", "active")
+    .eq("status", "approved")
     .or(`created_at.gte.${since.toISOString()},updated_at.gte.${since.toISOString()}`)
     .order("updated_at", { ascending: false })
     .limit(MAX_FACILITIES_IN_EMAIL);
