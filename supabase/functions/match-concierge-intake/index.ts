@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 
-const VERSION = "1.0.2";
+const VERSION = "2.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -31,6 +31,10 @@ interface FacilityMatch {
   matchFactors: MatchFactors;
   city: string;
   state: string;
+  /** True when surfaced as an eligible Concierge/Placement Partner. */
+  isPartner?: boolean;
+  /** "partner" | "featured" | "pro" | "free" — provenance of the match. */
+  tier?: string;
 }
 
 // Scoring weights (total 100 points)
@@ -151,6 +155,145 @@ function getNearbyStates(state: string): string[] {
   return adjacentStates[state.toUpperCase()] || [];
 }
 
+// State normalization. `facilities.state` stores full names ("Arizona"),
+// `concierge_partner_facilities.geo_state` stores 2-letter codes ("AZ"), and an
+// inquiry's desired state can arrive in either form — so everything is reduced
+// to a 2-letter abbreviation before comparison.
+const STATE_NAME_TO_ABBR: Record<string, string> = {
+  alabama: "AL", alaska: "AK", arizona: "AZ", arkansas: "AR", california: "CA",
+  colorado: "CO", connecticut: "CT", delaware: "DE", "district of columbia": "DC",
+  florida: "FL", georgia: "GA", hawaii: "HI", idaho: "ID", illinois: "IL",
+  indiana: "IN", iowa: "IA", kansas: "KS", kentucky: "KY", louisiana: "LA",
+  maine: "ME", maryland: "MD", massachusetts: "MA", michigan: "MI", minnesota: "MN",
+  mississippi: "MS", missouri: "MO", montana: "MT", nebraska: "NE", nevada: "NV",
+  "new hampshire": "NH", "new jersey": "NJ", "new mexico": "NM", "new york": "NY",
+  "north carolina": "NC", "north dakota": "ND", ohio: "OH", oklahoma: "OK",
+  oregon: "OR", pennsylvania: "PA", "rhode island": "RI", "south carolina": "SC",
+  "south dakota": "SD", tennessee: "TN", texas: "TX", utah: "UT", vermont: "VT",
+  virginia: "VA", washington: "WA", "west virginia": "WV", wisconsin: "WI", wyoming: "WY",
+};
+const STATE_ABBR_TO_NAME: Record<string, string> = Object.fromEntries(
+  Object.entries(STATE_NAME_TO_ABBR).map(([name, abbr]) => [
+    abbr,
+    name.replace(/(^|\s)\w/g, (c) => c.toUpperCase()),
+  ]),
+);
+function toStateAbbr(s: string | null | undefined): string | null {
+  if (!s) return null;
+  const t = s.trim();
+  if (!t) return null;
+  if (t.length === 2) return t.toUpperCase();
+  return STATE_NAME_TO_ABBR[t.toLowerCase()] ?? null;
+}
+function toStateName(abbr: string | null | undefined): string | null {
+  if (!abbr) return null;
+  return STATE_ABBR_TO_NAME[abbr.toUpperCase()] ?? null;
+}
+
+// Desired level-of-care → accepted care-type tokens (mirrors the partner
+// concierge_partner_facilities.level_of_care vocabulary).
+const LOC_MAP: Record<string, string[]> = {
+  detox: ["detox"],
+  inpatient: ["inpatient", "residential"],
+  residential: ["inpatient", "residential"],
+  php: ["php"],
+  iop: ["iop"],
+  outpatient: ["outpatient", "iop"],
+  sober_living: ["sober_living"],
+};
+
+interface ScorableFacility {
+  state: string | null;
+  concierge_accepted_care_types: unknown;
+  concierge_accepted_insurance: unknown;
+  concierge_availability_status: string | null;
+  gender_served: string | null;
+  facility_insurance?: { insurance_name: string }[] | null;
+  facility_age_groups?: { age_group: string }[] | null;
+  facility_services?: { service_name: string }[] | null;
+}
+
+// Payment-blind clinical fit score (0-100). Shared by the partner pool and the
+// tier-fallback pool so both are ranked on the same clinical criteria.
+function scoreFacility(facility: ScorableFacility, inquiry: Record<string, unknown>): { score: number; factors: MatchFactors } {
+  // Location (max 35) — normalized to 2-letter codes so full-name vs abbr
+  // mismatches don't silently zero the score.
+  const desiredAbbr = toStateAbbr((inquiry.desired_location_state as string) || (inquiry.preferred_state as string));
+  const facilityAbbr = toStateAbbr(facility.state);
+  let locationScore: number;
+  if (desiredAbbr && facilityAbbr && desiredAbbr === facilityAbbr) {
+    locationScore = WEIGHTS.location;
+  } else if (desiredAbbr && facilityAbbr && getNearbyStates(desiredAbbr).includes(facilityAbbr)) {
+    locationScore = 25;
+  } else if (inquiry.willing_to_travel) {
+    locationScore = 15;
+  } else {
+    locationScore = 5;
+  }
+
+  // Care type (max 25)
+  const acceptedCareTypes = (facility.concierge_accepted_care_types as string[]) || [];
+  const desiredCare = (inquiry.level_of_care as string)?.toLowerCase();
+  const matchingCareTypes = LOC_MAP[desiredCare] || (desiredCare ? [desiredCare] : []);
+  let careTypeScore = 0;
+  if (matchingCareTypes.some((ct) => acceptedCareTypes.includes(ct))) {
+    careTypeScore = WEIGHTS.careType;
+  } else if (acceptedCareTypes.length > 0) {
+    careTypeScore = 8;
+  }
+
+  // Insurance (max 20)
+  const acceptedInsurance = (facility.concierge_accepted_insurance as string[]) || [];
+  const facilityInsuranceNames = (facility.facility_insurance || []).map((i) => i.insurance_name.toLowerCase());
+  const allInsurance = [...acceptedInsurance, ...facilityInsuranceNames];
+  let insuranceScore: number;
+  const paymentType = inquiry.payment_type as string;
+  if (paymentType === "self_pay" || paymentType === "self-pay") {
+    insuranceScore = WEIGHTS.insurance;
+  } else if (inquiry.insurance_carrier) {
+    const carrierLower = (inquiry.insurance_carrier as string).toLowerCase();
+    if (allInsurance.some((i) => i.toLowerCase().includes(carrierLower) || carrierLower.includes(i.toLowerCase()))) {
+      insuranceScore = WEIGHTS.insurance;
+    } else if (allInsurance.some((i) => i.includes("most") || i.includes("major"))) {
+      insuranceScore = 15;
+    } else {
+      insuranceScore = 6;
+    }
+  } else {
+    insuranceScore = 10;
+  }
+
+  // Availability (max 8)
+  let availabilityScore = 0;
+  if (facility.concierge_availability_status === "open") availabilityScore = WEIGHTS.availability;
+  else if (facility.concierge_availability_status === "limited") availabilityScore = 4;
+
+  const genderScore = scoreGender((inquiry.gender as string) ?? null, facility.gender_served);
+  const facilityAgeGroups = (facility.facility_age_groups || []).map((a) => a.age_group);
+  const ageScore = scoreAge((inquiry.age_range as string) ?? null, facilityAgeGroups);
+  const facilityServices = (facility.facility_services || []).map((s) => s.service_name);
+  const specializationsScore = scoreSpecializations(
+    (inquiry.detox_needed as string) ?? null,
+    inquiry.co_occurring_concerns,
+    facilityServices,
+  );
+
+  const score = Math.round(
+    locationScore + careTypeScore + insuranceScore + availabilityScore + genderScore + ageScore + specializationsScore,
+  );
+  return {
+    score,
+    factors: {
+      location: locationScore, careType: careTypeScore, insurance: insuranceScore,
+      availability: availabilityScore, gender: genderScore, age: ageScore, specializations: specializationsScore,
+    },
+  };
+}
+
+// Shared facility-detail select for scoring.
+const FACILITY_SELECT =
+  "id, name, city, state, facility_type, gender_served, concierge_accepted_care_types, concierge_accepted_insurance, concierge_availability_status, concierge_eligibility_attested_at, concierge_eligibility_revoked_at, facility_services (service_name), facility_insurance (insurance_name), facility_age_groups (age_group)";
+
 Deno.serve(async (req) => {
   const requestId = generateRequestId();
   
@@ -234,164 +377,127 @@ Deno.serve(async (req) => {
       paymentType: inquiry.payment_type 
     });
 
-    // Fetch all opted-in facilities with their services, insurance, and age groups
-    const { data: facilities, error: facilitiesError } = await supabase
-      .from('facilities')
-      .select(`
-        id,
-        name,
-        city,
-        state,
-        facility_type,
-        gender_served,
-        concierge_accepted_care_types,
-        concierge_accepted_insurance,
-        concierge_availability_status,
-        concierge_network_opted_in,
-        facility_services (service_name),
-        facility_insurance (insurance_name),
-        facility_age_groups (age_group)
-      `)
-      .eq('concierge_network_opted_in', true)
-      .eq('status', 'approved')
-      .neq('concierge_availability_status', 'full');
+    // ── Resolve the family's geography + clinical need ────────────────────
+    const familyAbbr = toStateAbbr((inquiry.desired_location_state as string) || (inquiry.preferred_state as string));
+    const familyCity = (((inquiry.desired_location_city as string) || (inquiry.preferred_city as string)) || "").trim().toLowerCase();
+    const desiredLoC = ((inquiry.level_of_care as string) || "").toLowerCase();
+    const mappedLoC = LOC_MAP[desiredLoC] || (desiredLoC ? [desiredLoC] : []);
 
-    if (facilitiesError) {
-      throw new Error(`Failed to fetch facilities: ${facilitiesError.message}`);
+    // ── PARTNER POOL (exclusive when ≥3 qualify) ──────────────────────────
+    // Only eligible Concierge/Placement Partners whose CHOSEN geography
+    // (state + optional city) and levels of care match the family. Partner
+    // geography is driven by concierge_partner_facilities, NOT the facility's
+    // physical location (a partner can pay to cover other states).
+    let partnerMatches: FacilityMatch[] = [];
+    if (familyAbbr) {
+      const { data: geoRows, error: geoErr } = await supabase
+        .from("concierge_partner_facilities")
+        .select("facility_id, geo_city, level_of_care")
+        .eq("active", true)
+        .eq("geo_state", familyAbbr);
+      if (geoErr) throw new Error(`Failed to fetch partner geos: ${geoErr.message}`);
+
+      const partnerIds = [...new Set(
+        (geoRows || [])
+          .filter((r) => {
+            const cityOk = !r.geo_city || (!!familyCity && (r.geo_city as string).trim().toLowerCase() === familyCity);
+            const loc = (r.level_of_care as string[]) || [];
+            const locOk = mappedLoC.length === 0 || loc.length === 0 || loc.some((l) => mappedLoC.includes(l.toLowerCase()));
+            return cityOk && locOk;
+          })
+          .map((r) => r.facility_id as string),
+      )];
+
+      if (partnerIds.length > 0) {
+        // Confirm each candidate is an APPROVED facility with an ACTIVE
+        // Concierge subscription that completed the eligibility attestation
+        // and isn't currently revoked (the introducibility gate).
+        const { data: partnerFacilities, error: pfErr } = await supabase
+          .from("facilities")
+          .select(`${FACILITY_SELECT}, facility_subscriptions!inner(has_concierge_partner, status)`)
+          .in("id", partnerIds)
+          .eq("status", "approved")
+          .neq("concierge_availability_status", "full")
+          .eq("facility_subscriptions.has_concierge_partner", true)
+          .eq("facility_subscriptions.status", "active");
+        if (pfErr) throw new Error(`Failed to fetch partner facilities: ${pfErr.message}`);
+
+        partnerMatches = (partnerFacilities || [])
+          .filter((f) => {
+            const attested = f.concierge_eligibility_attested_at as string | null;
+            const revoked = f.concierge_eligibility_revoked_at as string | null;
+            return !!attested && (!revoked || new Date(revoked) < new Date(attested));
+          })
+          .map((f) => {
+            const { score, factors } = scoreFacility(f as unknown as ScorableFacility, inquiry);
+            return { facilityId: f.id, facilityName: f.name, matchScore: score, matchFactors: factors, city: f.city, state: f.state, isPartner: true, tier: "partner" } as FacilityMatch;
+          })
+          .sort((a, b) => b.matchScore - a.matchScore);
+      }
     }
 
-    logStep(requestId, "Found opted-in facilities", { count: facilities?.length || 0 });
+    logStep(requestId, "Eligible partner matches", { count: partnerMatches.length });
 
-    if (!facilities || facilities.length === 0) {
+    // Pure-exclusive: when 3+ partners qualify, the family sees only partners.
+    const topMatches: FacilityMatch[] = partnerMatches.slice(0, 3);
+
+    // ── TIER FALLBACK (only when fewer than 3 partners) ───────────────────
+    // Fill remaining slots with clinically-matched NON-partners, ranked
+    // Featured → Pro → Free, so families always get up to 3 options even where
+    // partner coverage is thin. Facilities with an active Concierge sub are
+    // excluded here — they reach families only through the eligible-partner
+    // path above (the incentive to complete onboarding).
+    if (topMatches.length < 3) {
+      const needed = 3 - topMatches.length;
+      const targetAbbrs = [familyAbbr, ...(inquiry.willing_to_travel && familyAbbr ? getNearbyStates(familyAbbr) : [])].filter(Boolean) as string[];
+      const targetNames = [...new Set(targetAbbrs.map(toStateName).filter(Boolean) as string[])];
+      const excludeIds = new Set(topMatches.map((m) => m.facilityId));
+
+      if (targetNames.length > 0) {
+        const { data: fbFacilities, error: fbErr } = await supabase
+          .from("facilities")
+          .select(`${FACILITY_SELECT}, facility_subscriptions(has_featured, has_concierge_partner, tier, status)`)
+          .eq("status", "approved")
+          .neq("concierge_availability_status", "full")
+          .in("state", targetNames);
+        if (fbErr) throw new Error(`Failed to fetch fallback facilities: ${fbErr.message}`);
+
+        const fallback = (fbFacilities || [])
+          .filter((f) => !excludeIds.has(f.id))
+          .map((f) => {
+            const subs = (f.facility_subscriptions as Array<{ has_featured: boolean | null; has_concierge_partner: boolean | null; tier: string | null; status: string | null }>) || [];
+            const activeSub = subs.find((s) => s.status === "active");
+            return { f, activeSub };
+          })
+          // Active Concierge partners are handled by the partner pool only.
+          .filter(({ activeSub }) => !(activeSub?.has_concierge_partner))
+          .map(({ f, activeSub }) => {
+            let tier = "free";
+            let tierRank = 3;
+            if (activeSub?.has_featured) { tier = "featured"; tierRank = 1; }
+            else if (activeSub?.tier === "pro") { tier = "pro"; tierRank = 2; }
+            const { score, factors } = scoreFacility(f as unknown as ScorableFacility, inquiry);
+            return { facilityId: f.id, facilityName: f.name, matchScore: score, matchFactors: factors, city: f.city, state: f.state, isPartner: false, tier, tierRank };
+          })
+          .sort((a, b) => a.tierRank - b.tierRank || b.matchScore - a.matchScore)
+          .slice(0, needed)
+          .map(({ tierRank: _tierRank, ...rest }) => rest as FacilityMatch);
+
+        topMatches.push(...fallback);
+      }
+    }
+
+    if (topMatches.length === 0) {
       return new Response(
         JSON.stringify({ matched: false, matchedFacilityIds: [], matches: [], message: "No matching facilities available", requestId, _version: VERSION }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 },
       );
     }
 
-    // Score each facility
-    const scoredFacilities: FacilityMatch[] = [];
-
-    for (const facility of facilities) {
-      let locationScore = 0;
-      let careTypeScore = 0;
-      let insuranceScore = 0;
-      let availabilityScore = 0;
-
-      // Location scoring (max 35 points)
-      const desiredState = inquiry.desired_location_state?.toUpperCase() || inquiry.preferred_state?.toUpperCase();
-      const facilityState = facility.state?.toUpperCase();
-
-      if (desiredState === facilityState) {
-        locationScore = WEIGHTS.location;
-      } else if (desiredState && getNearbyStates(desiredState).includes(facilityState)) {
-        locationScore = 25;
-      } else if (inquiry.willing_to_travel) {
-        locationScore = 15;
-      } else {
-        locationScore = 5;
-      }
-
-      // Care type matching (max 25 points)
-      const acceptedCareTypes = (facility.concierge_accepted_care_types as string[]) || [];
-      const levelOfCareMap: Record<string, string[]> = {
-        'detox': ['detox'],
-        'inpatient': ['inpatient', 'residential'],
-        'residential': ['inpatient', 'residential'],
-        'php': ['php'],
-        'iop': ['iop'],
-        'outpatient': ['outpatient', 'iop'],
-        'sober_living': ['sober_living'],
-      };
-
-      const desiredCare = inquiry.level_of_care?.toLowerCase();
-      const matchingCareTypes = levelOfCareMap[desiredCare] || [desiredCare];
-      
-      if (matchingCareTypes.some(ct => acceptedCareTypes.includes(ct))) {
-        careTypeScore = WEIGHTS.careType;
-      } else if (acceptedCareTypes.length > 0) {
-        careTypeScore = 8; // Has care types but not matching
-      }
-
-      // Insurance matching (max 20 points)
-      const acceptedInsurance = (facility.concierge_accepted_insurance as string[]) || [];
-      const facilityInsuranceNames = (facility.facility_insurance || []).map(
-        (i: { insurance_name: string }) => i.insurance_name.toLowerCase()
-      );
-      const allInsurance = [...acceptedInsurance, ...facilityInsuranceNames];
-
-      if (inquiry.payment_type === 'self_pay' || inquiry.payment_type === 'self-pay') {
-        insuranceScore = WEIGHTS.insurance; // Self-pay always accepted
-      } else if (inquiry.insurance_carrier) {
-        const carrierLower = inquiry.insurance_carrier.toLowerCase();
-        if (allInsurance.some(i => i.toLowerCase().includes(carrierLower) || carrierLower.includes(i.toLowerCase()))) {
-          insuranceScore = WEIGHTS.insurance;
-        } else if (allInsurance.some(i => i.includes('most') || i.includes('major'))) {
-          insuranceScore = 15;
-        } else {
-          insuranceScore = 6;
-        }
-      } else {
-        insuranceScore = 10; // Unknown insurance
-      }
-
-      // Availability scoring (max 8 points)
-      if (facility.concierge_availability_status === 'open') {
-        availabilityScore = WEIGHTS.availability;
-      } else if (facility.concierge_availability_status === 'limited') {
-        availabilityScore = 4;
-      }
-
-      // Gender scoring (max 5 points)
-      const genderScore = scoreGender(inquiry.gender, facility.gender_served);
-
-      // Age scoring (max 4 points)
-      const facilityAgeGroups = (facility.facility_age_groups || []).map(
-        (a: { age_group: string }) => a.age_group
-      );
-      const ageScore = scoreAge(inquiry.age_range, facilityAgeGroups);
-
-      // Specializations scoring (max 3 points)
-      const facilityServices = (facility.facility_services || []).map(
-        (s: { service_name: string }) => s.service_name
-      );
-      const specializationsScore = scoreSpecializations(
-        inquiry.detox_needed,
-        inquiry.co_occurring_concerns,
-        facilityServices
-      );
-
-      const totalScore = Math.round(
-        locationScore + careTypeScore + insuranceScore + availabilityScore +
-        genderScore + ageScore + specializationsScore
-      );
-
-      scoredFacilities.push({
-        facilityId: facility.id,
-        facilityName: facility.name,
-        matchScore: totalScore,
-        matchFactors: {
-          location: locationScore,
-          careType: careTypeScore,
-          insurance: insuranceScore,
-          availability: availabilityScore,
-          gender: genderScore,
-          age: ageScore,
-          specializations: specializationsScore,
-        },
-        city: facility.city,
-        state: facility.state,
-      });
-    }
-
-    // Sort by score and take top 3
-    const topMatches = scoredFacilities
-      .sort((a, b) => b.matchScore - a.matchScore)
-      .slice(0, 3);
-
-    logStep(requestId, "Top matches found", { 
-      count: topMatches.length, 
-      topScore: topMatches[0]?.matchScore 
+    logStep(requestId, "Top matches found", {
+      count: topMatches.length,
+      partners: topMatches.filter((m) => m.isPartner).length,
+      topScore: topMatches[0]?.matchScore,
     });
 
     // Update the inquiry with matched facility IDs
@@ -400,6 +506,8 @@ Deno.serve(async (req) => {
       facilityId: m.facilityId,
       score: m.matchScore,
       factors: m.matchFactors,
+      isPartner: m.isPartner ?? false,
+      tier: m.tier ?? "free",
     }));
 
     // Fetch current status before updating
