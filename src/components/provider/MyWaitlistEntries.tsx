@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, X, BellOff, AlertCircle } from "lucide-react";
+import { Loader2, X, BellOff, AlertCircle, ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import {
   Card,
@@ -37,6 +38,7 @@ interface WaitlistRow {
   status: string;
   requested_at: string;
   invited_at: string | null;
+  expires_at: string | null;
   auto_invite_opt_out: boolean | null;
   facilities: { name: string } | null;
 }
@@ -70,7 +72,7 @@ export function MyWaitlistEntries({ facilityId, addonType }: Props) {
       let q = supabase
         .from("addon_waitlist")
         .select(
-          "id, addon_type, facility_id, scope_type, scope_value, geo_state, geo_city, level_of_care, status, requested_at, invited_at, auto_invite_opt_out, facilities!inner(name)",
+          "id, addon_type, facility_id, scope_type, scope_value, geo_state, geo_city, level_of_care, status, requested_at, invited_at, expires_at, auto_invite_opt_out, facilities!inner(name)",
         )
         .eq("requested_by", userId)
         .in("status", ["waiting", "invited"])
@@ -202,7 +204,32 @@ export function MyWaitlistEntries({ facilityId, addonType }: Props) {
                     </>
                   )}
                 </p>
+                {r.status === "invited" && r.expires_at && (
+                  <p className="mt-0.5 text-xs font-medium text-amber-700">
+                    Claim by {new Date(r.expires_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })} or this slot is offered to the next provider
+                  </p>
+                )}
               </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                {/* Invited rows: CTA to claim the slot before it expires */}
+                {r.status === "invited" && (
+                  <Button
+                    size="sm"
+                    asChild
+                    className="h-8 gap-1 bg-blue-600 hover:bg-blue-700 text-white text-xs"
+                  >
+                    <Link
+                      to={
+                        r.addon_type === "concierge"
+                          ? "/provider/marketing/concierge"
+                          : "/provider/marketing/featured"
+                      }
+                    >
+                      Claim slot
+                      <ArrowRight className="h-3 w-3" />
+                    </Link>
+                  </Button>
+                )}
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button
@@ -239,6 +266,7 @@ export function MyWaitlistEntries({ facilityId, addonType }: Props) {
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
+              </div>
             </li>
           ))}
         </ul>

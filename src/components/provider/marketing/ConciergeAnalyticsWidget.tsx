@@ -1,13 +1,23 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { Send, CheckCircle2, MessageCircle, TrendingUp, AlertCircle } from "lucide-react";
+import { Send, CheckCircle2, MessageCircle, TrendingUp, AlertCircle, DollarSign } from "lucide-react";
+import { TIER_PRICING } from "@/lib/billingPricing";
+import { cn } from "@/lib/utils";
 
 interface ConciergeAnalyticsWidgetProps {
   facilityId: string;
 }
+
+type Range = "7d" | "30d" | "90d";
+
+const RANGE_DAYS: Record<Range, number> = { "7d": 7, "30d": 30, "90d": 90 };
+const RANGE_LABEL: Record<Range, string> = { "7d": "7 days", "30d": "30 days", "90d": "90 days" };
+
+const MONTHLY_COST_DOLLARS = TIER_PRICING.concierge.monthlyCents / 100;
 
 interface AnalyticsRow {
   intros_received: number;
@@ -18,31 +28,16 @@ interface AnalyticsRow {
   contact_rate: number;
 }
 
-const WINDOW_DAYS = 30;
-
-/**
- * Concierge Partner performance summary for the Marketing Hub.
- * Pulls the last 30 days of concierge_introductions and surfaces:
- *   • Intros received        — how often advisors are surfacing this facility
- *   • Intros responded       — provider's own engagement rate
- *   • Intros accepted        — `provider_response === 'interested'`
- *   • Seekers contacted you  — `seeker_contacted = true`
- *
- * The numbers are derived from concierge_introductions only, scoped to
- * the calling provider's facility. EKRA-safe: no per-introduction fee
- * surface, no PII outside what the provider already has access to.
- */
 export function ConciergeAnalyticsWidget({ facilityId }: ConciergeAnalyticsWidgetProps) {
+  const [range, setRange] = useState<Range>("30d");
+
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["concierge-analytics-provider", facilityId],
+    queryKey: ["concierge-analytics-provider", facilityId, range],
     queryFn: async (): Promise<AnalyticsRow> => {
       const since = new Date();
-      since.setDate(since.getDate() - WINDOW_DAYS);
+      since.setDate(since.getDate() - RANGE_DAYS[range]);
       const sinceIso = since.toISOString();
 
-      // One read of the recent intro rows for this facility. RLS scopes
-      // the view to facility owners, so the .eq is defence-in-depth
-      // rather than the only filter.
       const { data: rows, error } = await supabase
         .from("concierge_introductions")
         .select("provider_response, provider_responded_at, seeker_contacted")
@@ -79,19 +74,40 @@ export function ConciergeAnalyticsWidget({ facilityId }: ConciergeAnalyticsWidge
     retry: 2,
   });
 
+  const costPerIntro =
+    data && data.intros_received > 0
+      ? (MONTHLY_COST_DOLLARS / data.intros_received).toFixed(0)
+      : null;
+  const costPerAccepted =
+    data && data.intros_accepted > 0
+      ? (MONTHLY_COST_DOLLARS / data.intros_accepted).toFixed(0)
+      : null;
+
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 flex-wrap gap-2">
         <div>
           <CardTitle className="text-base">Concierge performance</CardTitle>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Last {WINDOW_DAYS} days · advisor matching activity
+            Advisor matching activity
           </p>
         </div>
-        <Badge variant="outline" className="text-[10px] gap-1 border-violet-200 text-violet-700">
-          <TrendingUp className="h-3 w-3" />
-          Pro Add-on
-        </Badge>
+        <div className="flex items-center gap-1">
+          {(["7d", "30d", "90d"] as Range[]).map((r) => (
+            <button
+              key={r}
+              onClick={() => setRange(r)}
+              className={cn(
+                "rounded px-2 py-0.5 text-xs font-medium transition-colors",
+                range === r
+                  ? "bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300"
+                  : "text-muted-foreground hover:bg-muted",
+              )}
+            >
+              {r}
+            </button>
+          ))}
+        </div>
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -107,7 +123,7 @@ export function ConciergeAnalyticsWidget({ facilityId }: ConciergeAnalyticsWidge
           </div>
         ) : !data || data.intros_received === 0 ? (
           <div className="text-center py-6 text-sm">
-            <p className="font-medium text-slate-900">No advisor introductions yet</p>
+            <p className="font-medium text-slate-900">No advisor introductions yet in this window</p>
             <p className="text-muted-foreground mt-1 max-w-md mx-auto">
               When our advisors match a client to one of your covered geographies
               and levels of care, we'll notify your admissions team by email and
@@ -151,7 +167,33 @@ export function ConciergeAnalyticsWidget({ facilityId }: ConciergeAnalyticsWidge
                 suffix={data.contact_rate ? `${data.contact_rate}%` : undefined}
               />
             </div>
-            <p className="text-[11px] text-muted-foreground mt-4 leading-relaxed">
+
+            {/* ROI cost context */}
+            {(costPerIntro || costPerAccepted) && (
+              <div className="mt-3 rounded-lg border border-violet-200/60 bg-violet-50/40 p-3 space-y-1">
+                <p className="text-[11px] font-semibold text-violet-900 flex items-center gap-1.5">
+                  <DollarSign className="h-3 w-3" aria-hidden />
+                  Cost efficiency — {RANGE_LABEL[range]}
+                </p>
+                <div className="flex flex-wrap gap-x-4 gap-y-0.5">
+                  {costPerIntro && (
+                    <span className="text-xs text-violet-800">
+                      <span className="font-semibold">${costPerIntro}</span> per intro received
+                    </span>
+                  )}
+                  {costPerAccepted && (
+                    <span className="text-xs text-violet-800">
+                      <span className="font-semibold">${costPerAccepted}</span> per accepted intro
+                    </span>
+                  )}
+                </div>
+                <p className="text-[10px] text-violet-700/70">
+                  Based on ${MONTHLY_COST_DOLLARS.toLocaleString()}/mo subscription cost
+                </p>
+              </div>
+            )}
+
+            <p className="text-[11px] text-muted-foreground mt-3 leading-relaxed">
               "Accepted" = you responded "interested" to the advisor. "Client
               contacted" = the family then reached out to your admissions line.
               Percentages show conversion at each stage.

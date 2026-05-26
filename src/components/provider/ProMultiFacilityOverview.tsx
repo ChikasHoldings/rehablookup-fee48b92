@@ -60,7 +60,11 @@ export function ProMultiFacilityOverview({ facilities }: ProMultiFacilityOvervie
         ),
         Promise.all(
           facilityIds.map(fid =>
-            fromLeadsProviderView()
+            // Head-only count query — we don't consume rows, so we skip the
+            // fromLeadsProviderView() wrapper (whose return type doesn't expose
+            // the view's column names to the eq() filter chain in this context).
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (supabase as any).from("leads_provider_view")
               .select("id", { count: "exact", head: true })
               .eq("facility_id", fid)
               .eq("status", "new")

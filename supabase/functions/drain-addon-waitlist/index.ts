@@ -71,11 +71,15 @@ interface WaitlistRow {
   auto_invite_opt_out: boolean | null;
 }
 
+/** Days an invited row stays open before auto-expiry. */
+const INVITE_EXPIRY_DAYS = 7;
+
 function emailHtml(args: {
   facilityName: string;
   addonLabel: string;
   scopeLabel: string;
   manageUrl: string;
+  expiryDate: string;
 }): string {
   const safe = (s: string) => s.replace(/[<>&"']/g, (c) => `&#${c.charCodeAt(0)};`);
   return `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#f5f5f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
@@ -83,7 +87,7 @@ function emailHtml(args: {
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;">
 <tr><td style="background:#1B365D;padding:32px;text-align:center;">
 <p style="margin:0 0 4px 0;font-size:11px;color:rgba(255,255,255,0.8);text-transform:uppercase;letter-spacing:1.5px;">REHABLOOKUP</p>
-<h1 style="margin:0;font-size:22px;color:#ffffff;font-weight:600;">A slot just opened up</h1></td></tr>
+<h1 style="margin:0;font-size:22px;color:#ffffff;font-weight:600;">A slot just opened up — claim by ${safe(args.expiryDate)}</h1></td></tr>
 <tr><td style="padding:32px;">
 <p style="margin:0 0 16px 0;color:#111827;font-size:15px;line-height:1.6;">Hi there,</p>
 <p style="margin:0 0 16px 0;color:#374151;font-size:15px;line-height:1.6;">
@@ -91,17 +95,20 @@ You opted in to the waitlist for <strong>${safe(args.addonLabel)}</strong> on
 <strong>${safe(args.scopeLabel)}</strong> for <strong>${safe(args.facilityName)}</strong>. A
 slot has just freed up — you can claim it now.
 </p>
-<p style="margin:0 0 24px 0;color:#374151;font-size:15px;line-height:1.6;">
-Slots are first-come first-served, so don't wait — open your dashboard
-and complete the add-on flow.
+<div style="margin:0 0 24px 0;padding:16px;border-radius:8px;background:#fef3c7;border:1px solid #fbbf24;">
+<p style="margin:0;color:#92400e;font-size:14px;font-weight:600;">⏰ Claim by ${safe(args.expiryDate)}</p>
+<p style="margin:4px 0 0 0;color:#78350f;font-size:13px;line-height:1.5;">
+Slots are first-come first-served. If unclaimed after ${INVITE_EXPIRY_DAYS} days, this
+invitation expires and the slot is offered to the next provider in line.
 </p>
+</div>
 <table role="presentation" cellpadding="0" cellspacing="0" style="margin-bottom:24px;"><tr><td style="border-radius:8px;background:#1B365D;">
-<a href="${args.manageUrl}" style="display:inline-block;padding:14px 28px;font-size:15px;color:#ffffff;text-decoration:none;font-weight:600;">Open the manager</a>
+<a href="${args.manageUrl}" style="display:inline-block;padding:14px 28px;font-size:15px;color:#ffffff;text-decoration:none;font-weight:600;">Claim your slot now →</a>
 </td></tr></table>
 <p style="margin:0;color:#6b7280;font-size:13px;line-height:1.6;">
-If you no longer need this placement, no action is required — your
-waitlist entry will close automatically after we offer it to the next
-person in line.
+If you no longer want this placement, you can remove yourself from the waitlist
+via the dashboard — or simply do nothing and your invitation will expire on
+<strong>${safe(args.expiryDate)}</strong> so the next provider in line can be notified.
 </p></td></tr>
 <tr><td style="background:#1B365D;padding:20px 32px;text-align:center;">
 <p style="margin:0;color:rgba(255,255,255,0.7);font-size:11px;">© ${new Date().getFullYear()} RehabLookup. All rights reserved.</p>
@@ -151,6 +158,22 @@ Deno.serve(async (req) => {
     if (waitErr) {
       log("ERROR", "fetch waiting failed", { error: waitErr.message });
       return json(500, { error: "DB error", code: "FETCH_FAILED" });
+    }
+
+    // ── Auto-expire stale invited rows ────────────────────────────────────
+    // Invited rows whose expires_at has passed are closed so the slot is
+    // freed for the next provider in the queue on this drain tick.
+    const { data: expired, error: expireErr } = await svc
+      .from("addon_waitlist")
+      .update({ status: "expired", closed_at: new Date().toISOString() })
+      .eq("status", "invited")
+      .lt("expires_at", new Date().toISOString())
+      .not("expires_at", "is", null)
+      .select("id");
+    if (expireErr) {
+      log("WARN", "failed to expire stale invited rows", { error: expireErr.message });
+    } else {
+      log("INFO", `Expired ${(expired ?? []).length} stale invited rows`);
     }
 
     const stats = { considered: 0, invited: 0, slot_taken: 0, errors: 0, skipped: 0 };
@@ -205,18 +228,24 @@ Deno.serve(async (req) => {
         const baseUrl = SUPABASE_URL.includes("localhost") ? "http://localhost:8080" : "https://rehablookup.com";
         const manageUrl =
           row.addon_type === "featured"
-            ? `${baseUrl}/provider/billing/placements`
-            : `${baseUrl}/provider/billing/concierge`;
+            ? `${baseUrl}/provider/marketing/featured`
+            : `${baseUrl}/provider/marketing/concierge`;
+        const expiryDt = new Date();
+        expiryDt.setDate(expiryDt.getDate() + INVITE_EXPIRY_DAYS);
+        const expiryDate = expiryDt.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
 
         // Mark as invited BEFORE sending so a crash mid-send doesn't
         // get the user invited twice on the next cron tick. The partial
         // UNIQUE index already prevents duplicate open rows; we filter
         // on status='waiting' so a concurrent run picks a different row.
+        // expires_at powers both the auto-expiry check above and the
+        // "claim by" deadline displayed in the invite email.
         const { data: claimed, error: claimErr } = await svc
           .from("addon_waitlist")
           .update({
             status: "invited",
             invited_at: new Date().toISOString(),
+            expires_at: expiryDt.toISOString(),
           })
           .eq("id", row.id)
           .eq("status", "waiting")
@@ -231,8 +260,8 @@ Deno.serve(async (req) => {
         const sendRes = await (resend.emails as any).send({
           from: "RehabLookup <no-reply@rehablookup.com>",
           to: [recipient],
-          subject: `A ${addonLabel} slot opened for ${scopeLabel}`,
-          html: emailHtml({ facilityName, addonLabel, scopeLabel, manageUrl }),
+          subject: `A ${addonLabel} slot opened — claim by ${expiryDate}`,
+          html: emailHtml({ facilityName, addonLabel, scopeLabel, manageUrl, expiryDate }),
           // Resend idempotency: same waitlist id ⇒ same Resend message id
           // if the send is retried within Resend's dedup window.
           headers: { "Idempotency-Key": `addon-waitlist-invite:${row.id}` },

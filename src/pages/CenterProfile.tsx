@@ -111,6 +111,11 @@ interface FacilityData {
   facility_age_groups: { age_group: string }[];
   facility_credentials: { accreditations: string | null; licensing_info: string | null }[];
   facility_accreditations: { accreditation_type: string; verified: boolean }[];
+  // Extended profile fields (provider-enriched listings).
+  hours_of_operation?: string | null;
+  languages_spoken?: string[] | null;
+  accessibility_features?: string[] | null;
+  accepting_admissions?: boolean | null;
   // Optional claim-state flags. Populated when the row comes from the
   // public_facilities fallback path (slug not present in the static
   // snapshot, e.g. SAMHSA-imported listings). When set, the supplemental
@@ -523,11 +528,11 @@ const CenterProfile = () => {
         facility_name: facility.name,
         facility_state: facility.state,
         facility_city: facility.city,
-        facility_type: facility.facilityType ?? null,
+        facility_type: facility.facility_type ?? null,
         surface: "public",
       });
     }
-  }, [facility?.id, facility?.slug, facility?.name, facility?.state, facility?.city, facility?.facilityType, trackProfileView]);
+  }, [facility?.id, facility?.slug, facility?.name, facility?.state, facility?.city, facility?.facility_type, trackProfileView]);
 
   const scrollToContact = () => {
     contactFormRef.current?.scrollIntoView({ behavior: "smooth" });
