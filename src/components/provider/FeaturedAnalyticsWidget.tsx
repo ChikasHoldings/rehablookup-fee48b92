@@ -2,10 +2,9 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { Eye, Phone, TrendingUp, Star, ArrowUpRight, AlertCircle, DollarSign } from "lucide-react";
+import { Eye, Phone, Globe, MousePointerClick, Star, ArrowUpRight, AlertCircle, DollarSign, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useFacilitySubscription } from "@/hooks/useFacilitySubscription";
 import { TIER_PRICING } from "@/lib/billingPricing";
@@ -22,10 +21,35 @@ const RANGE_LABEL: Record<Range, string> = { "7d": "7 days", "30d": "30 days", "
 
 const MONTHLY_COST_DOLLARS = TIER_PRICING.featured.monthlyCents / 100;
 
+interface PlacePerf {
+  type: string;
+  value: string;
+  impressions: number;
+  calls: number;
+}
+
 interface AnalyticsData {
   impressions: number;
   calls: number;
+  views: number;
+  websiteVisits: number;
   callRate: number;
+  places: PlacePerf[];
+}
+
+// Human-readable label for a placement_type/placement_value pair.
+function placeLabel(type: string, value: string): string {
+  const titled = value.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  switch (type) {
+    case "state": return `${titled}`;
+    case "city": return `${titled}`;
+    case "near_me": return `${value.toUpperCase()} · near-me`;
+    case "treatment": return `${titled} · treatment`;
+    case "insurance": return `${titled} · insurance`;
+    case "homepage": return "National homepage";
+    case "international": return "International pages";
+    default: return titled;
+  }
 }
 
 export function FeaturedAnalyticsWidget({ facilityId }: FeaturedAnalyticsWidgetProps) {
@@ -40,7 +64,14 @@ export function FeaturedAnalyticsWidget({ facilityId }: FeaturedAnalyticsWidgetP
       since.setDate(since.getDate() - RANGE_DAYS[range]);
       const sinceIso = since.toISOString();
 
-      const [impRes, callRes] = await Promise.all([
+      // Active placements drive the per-place breakdown (bounded set).
+      const { data: placements } = await supabase
+        .from("featured_placements")
+        .select("placement_type, placement_value")
+        .eq("facility_id", facilityId)
+        .eq("active", true);
+
+      const [impRes, callRes, viewRes, webRes] = await Promise.all([
         supabase
           .from("featured_impressions")
           .select("id", { count: "exact", head: true })
@@ -51,15 +82,62 @@ export function FeaturedAnalyticsWidget({ facilityId }: FeaturedAnalyticsWidgetP
           .select("id", { count: "exact", head: true })
           .eq("facility_id", facilityId)
           .gte("clicked_at", sinceIso),
+        supabase
+          .from("provider_events")
+          .select("id", { count: "exact", head: true })
+          .eq("facility_id", facilityId)
+          .eq("event_type", "profile_view")
+          .eq("is_internal", false)
+          .eq("is_bot", false)
+          .gte("created_at", sinceIso),
+        supabase
+          .from("provider_events")
+          .select("id", { count: "exact", head: true })
+          .eq("facility_id", facilityId)
+          .eq("event_type", "website_click")
+          .eq("is_internal", false)
+          .eq("is_bot", false)
+          .gte("created_at", sinceIso),
       ]);
       if (impRes.error) throw impRes.error;
       if (callRes.error) throw callRes.error;
 
       const impressions = impRes.count ?? 0;
       const calls = callRes.count ?? 0;
+      const views = viewRes.count ?? 0;
+      const websiteVisits = webRes.count ?? 0;
       const callRate = impressions > 0 ? (calls / impressions) * 100 : 0;
 
-      return { impressions, calls, callRate };
+      // Per-place impressions + calls (where the facility actually performed).
+      const places: PlacePerf[] = await Promise.all(
+        (placements ?? []).map(async (p) => {
+          const [pi, pc] = await Promise.all([
+            supabase
+              .from("featured_impressions")
+              .select("id", { count: "exact", head: true })
+              .eq("facility_id", facilityId)
+              .eq("placement_type", p.placement_type)
+              .eq("placement_value", p.placement_value)
+              .gte("occurred_at", sinceIso),
+            supabase
+              .from("featured_phone_clicks")
+              .select("id", { count: "exact", head: true })
+              .eq("facility_id", facilityId)
+              .eq("placement_type", p.placement_type)
+              .eq("placement_value", p.placement_value)
+              .gte("clicked_at", sinceIso),
+          ]);
+          return {
+            type: p.placement_type,
+            value: p.placement_value,
+            impressions: pi.count ?? 0,
+            calls: pc.count ?? 0,
+          };
+        }),
+      );
+      places.sort((a, b) => b.impressions - a.impressions || b.calls - a.calls);
+
+      return { impressions, calls, views, websiteVisits, callRate, places };
     },
     enabled: !!facilityId && hasFeatured,
     staleTime: 5 * 60 * 1000,
@@ -107,8 +185,8 @@ export function FeaturedAnalyticsWidget({ facilityId }: FeaturedAnalyticsWidgetP
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-            {[1, 2, 3].map((i) => (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map((i) => (
               <Skeleton key={i} className="h-16" />
             ))}
           </div>
@@ -125,9 +203,7 @@ export function FeaturedAnalyticsWidget({ facilityId }: FeaturedAnalyticsWidgetP
             <div className="h-8 w-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
               <Star className="h-4 w-4 text-amber-500" />
             </div>
-            <div>
-              <CardTitle className="text-base">Featured Performance</CardTitle>
-            </div>
+            <CardTitle className="text-base">Featured Performance</CardTitle>
           </div>
           <div className="flex items-center gap-1">
             {(["7d", "30d", "90d"] as Range[]).map((r) => (
@@ -148,29 +224,12 @@ export function FeaturedAnalyticsWidget({ facilityId }: FeaturedAnalyticsWidgetP
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Primary metrics */}
-        <div className="grid grid-cols-3 gap-3">
-          <MetricBox
-            icon={Eye}
-            label="Impressions"
-            value={analytics?.impressions ?? 0}
-            color="text-blue-600"
-            bg="bg-blue-500/10"
-          />
-          <MetricBox
-            icon={Phone}
-            label="Calls"
-            value={analytics?.calls ?? 0}
-            color="text-emerald-600"
-            bg="bg-emerald-500/10"
-          />
-          <MetricBox
-            icon={TrendingUp}
-            label="Call rate"
-            value={`${(analytics?.callRate ?? 0).toFixed(1)}%`}
-            color="text-amber-600"
-            bg="bg-amber-500/10"
-          />
+        {/* Primary metrics — views, impressions, calls, website */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <MetricBox icon={Eye} label="Profile views" value={analytics?.views ?? 0} color="text-violet-600" bg="bg-violet-500/10" />
+          <MetricBox icon={MousePointerClick} label="Impressions" value={analytics?.impressions ?? 0} color="text-blue-600" bg="bg-blue-500/10" />
+          <MetricBox icon={Phone} label="Calls" value={analytics?.calls ?? 0} color="text-emerald-600" bg="bg-emerald-500/10" />
+          <MetricBox icon={Globe} label="Website visits" value={analytics?.websiteVisits ?? 0} color="text-amber-600" bg="bg-amber-500/10" />
         </div>
 
         {/* ROI cost context */}
@@ -178,21 +237,38 @@ export function FeaturedAnalyticsWidget({ facilityId }: FeaturedAnalyticsWidgetP
           <div className="rounded-lg border border-amber-200/60 bg-amber-50/40 p-3 space-y-1">
             <p className="text-[11px] font-semibold text-amber-900 flex items-center gap-1.5">
               <DollarSign className="h-3 w-3" aria-hidden />
-              Cost efficiency — {RANGE_LABEL[range]}
+              Cost efficiency — {RANGE_LABEL[range]} · {(analytics?.callRate ?? 0).toFixed(1)}% call rate
             </p>
             <div className="flex flex-wrap gap-x-4 gap-y-0.5">
               {costPerImpression && (
-                <span className="text-xs text-amber-800">
-                  <span className="font-semibold">${costPerImpression}</span> per impression
-                </span>
+                <span className="text-xs text-amber-800"><span className="font-semibold">${costPerImpression}</span> per impression</span>
               )}
               {costPerCall && (
-                <span className="text-xs text-amber-800">
-                  <span className="font-semibold">${costPerCall}</span> per call
-                </span>
+                <span className="text-xs text-amber-800"><span className="font-semibold">${costPerCall}</span> per call</span>
               )}
             </div>
             <p className="text-[10px] text-amber-700/70">Based on ${MONTHLY_COST_DOLLARS}/mo subscription cost</p>
+          </div>
+        )}
+
+        {/* Performance by place — where the facility's Featured slots ran */}
+        {analytics && analytics.places.length > 0 && (
+          <div className="rounded-lg border bg-card">
+            <p className="px-3 py-2 text-[11px] font-semibold text-slate-700 flex items-center gap-1.5 border-b">
+              <MapPin className="h-3 w-3 text-slate-400" aria-hidden />
+              Where you performed — {RANGE_LABEL[range]}
+            </p>
+            <ul className="divide-y divide-slate-100">
+              {analytics.places.map((p) => (
+                <li key={`${p.type}:${p.value}`} className="flex items-center justify-between gap-3 px-3 py-2">
+                  <span className="text-xs font-medium text-slate-800 truncate">{placeLabel(p.type, p.value)}</span>
+                  <span className="flex items-center gap-3 text-xs text-muted-foreground shrink-0 tabular-nums">
+                    <span className="inline-flex items-center gap-0.5"><MousePointerClick className="h-3 w-3" />{p.impressions.toLocaleString()}</span>
+                    <span className="inline-flex items-center gap-0.5"><Phone className="h-3 w-3" />{p.calls.toLocaleString()}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
           </div>
         )}
 
