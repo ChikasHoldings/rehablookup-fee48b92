@@ -168,18 +168,22 @@ export default function MarketingConcierge() {
         {!isPro && !hasConcierge ? (
           <LockedFeaturePreview
             title="Concierge Partner"
-            subtitle="Prominent surfacing when our human advisors match clients"
+            subtitle="The upgrade to Featured — national + international reach, plus advisor surfacing"
             tier="concierge"
             valueStatement={
               <>
-                When clients call our concierge, advisors match them by clinical
-                criteria first — <strong>never by who paid us</strong>. Concierge
-                Partners get a visual badge in our advisor tool so the advisor
+                Everything Featured does — local rotation across your state and
+                city — <strong>plus</strong> our national homepage, our
+                international pages, and any extra geographies you pick. On top
+                of that, when clients call our concierge, advisors match them by
+                clinical criteria first (<strong>never by who paid us</strong>)
+                and Concierge Partners get a visual badge so the advisor
                 naturally mentions you. Flat subscription; never per-call or
                 per-admission.
               </>
             }
             bullets={[
+              "National homepage + international pages + your state/city, plus extra geos you choose",
               "EKRA-compliant by design — at least 2 non-partner alternatives always presented alongside partners",
               "Capped at 3–5 facilities per major city (waitlist when full)",
               "Calls go directly to your admissions line — we never intermediate",

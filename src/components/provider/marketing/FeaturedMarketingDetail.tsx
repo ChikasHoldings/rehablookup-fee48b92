@@ -62,7 +62,7 @@ export function FeaturedMarketingDetail({ facilityId }: FeaturedMarketingDetailP
           </div>
           <div>
             <h2 className="text-xl md:text-2xl font-bold text-slate-900">
-              Featured Placements — phone-rotation on our highest-traffic pages
+              Featured Placements — phone-rotation on the local pages for your area
             </h2>
           </div>
         </div>

@@ -182,15 +182,16 @@ export default function MarketingFeatured() {
         ) : !isPro && !hasFeatured ? (
           <LockedFeaturePreview
             title="Featured Placements"
-            subtitle="Phone-rotation on our highest-traffic pages"
+            subtitle="Phone-rotation on the local pages for your area"
             tier="featured"
             valueStatement={
               <>
-                Featured rotates your facility through a fair pool on homepage,
-                state, city, search, treatment-type, insurance, and article
-                pages relevant to your operating geography. <strong>Flat-fee
+                Featured rotates your facility through a fair pool on the
+                state, city, and near-me pages for your area, plus the
+                treatment-type and insurance pages you match. <strong>Flat-fee
                 ad inventory</strong> — no bidding wars, no per-click charges,
-                calls go directly to your admissions line.
+                calls go directly to your admissions line. For national +
+                homepage exposure, upgrade to Concierge Partner.
               </>
             }
             bullets={[

@@ -390,15 +390,15 @@ function FeaturedCardLocked() {
           </div>
         </div>
         <p className="text-sm text-muted-foreground">
-          Phone-rotation slots on homepage, state, city, search, treatment,
-          insurance, and article pages. Slot caps per geography — fair
-          rotation, no bidding wars.
+          Phone-rotation slots on the state, city, near-me, treatment-type,
+          and insurance pages for your area. Every paying facility takes equal
+          turns — fair rotation, no bidding wars.
         </p>
         <ul className="text-xs text-muted-foreground space-y-0.5 ml-1">
-          <li>• {fmtMoneyWhole(TIER_PRICING.featured.monthlyCents)}/mo per geography</li>
+          <li>• {fmtMoneyWhole(TIER_PRICING.featured.monthlyCents)}/mo per location</li>
           <li>• Or {fmtMoney(TIER_PRICING.featured.annualCents)}/yr (15% off)</li>
-          <li>• Up to 5 facilities per slot, fair rotation</li>
-          <li>• Independent of Pro — add or remove anytime</li>
+          <li>• Slot caps per geo keep your rotation share meaningful</li>
+          <li>• For national + homepage exposure, upgrade to Concierge</li>
         </ul>
         <Button
           asChild
@@ -434,15 +434,16 @@ function ConciergeCardLocked() {
           </div>
         </div>
         <p className="text-sm text-muted-foreground">
-          Prominent surfacing when our human advisors match clients with
-          treatment. Capped 3-5 per major city. Non-partner alternatives are
-          always presented. Calls go direct to your line.
+          The upgrade to Featured: national homepage + international exposure
+          and any extra geographies you pick, plus prominent surfacing when our
+          human advisors match clients. Capped 3-5 per major city; non-partner
+          alternatives always presented; calls go direct to your line.
         </p>
         <ul className="text-xs text-muted-foreground space-y-0.5 ml-1">
-          <li>• {fmtMoneyWhole(TIER_PRICING.concierge.monthlyCents)}/mo per geography</li>
+          <li>• {fmtMoneyWhole(TIER_PRICING.concierge.monthlyCents)}/mo per location</li>
           <li>• Or {fmtMoney(TIER_PRICING.concierge.annualCents)}/yr (15% off)</li>
+          <li>• Includes all Featured exposure — replaces Featured (no double charge)</li>
           <li>• Geography-capped — no bidding wars</li>
-          <li>• Direct calls, no platform routing</li>
         </ul>
         <Button
           asChild

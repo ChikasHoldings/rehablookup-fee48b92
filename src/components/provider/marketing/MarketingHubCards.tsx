@@ -19,9 +19,11 @@ interface MarketingHubCardsProps {
  *   • ACTIVE state: live count of active placements/geos + Manage CTA
  *   • NOT ACTIVE state: pricing + Get/Become CTA
  *
- * Featured and Concierge are intentionally INDEPENDENT — buying or
- * managing one never affects the other. Each card routes to its own
- * detail page where the analytics + management UI live.
+ * Concierge is the mutually-exclusive UPGRADE to Featured: it includes
+ * all of Featured's local exposure plus national + international, so
+ * buying Concierge retires an active Featured add-on on the same facility
+ * (no double charge). Each card routes to its own detail page where the
+ * analytics + management UI live.
  */
 export function MarketingHubCards({ subscription }: MarketingHubCardsProps) {
   return (
