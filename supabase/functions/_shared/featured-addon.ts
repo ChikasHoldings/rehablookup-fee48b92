@@ -48,25 +48,22 @@ function slugify(input: string): string {
 
 function buildSeedPlacements(facility: FacilityRow): { type: string; value: string }[] {
   const out: { type: string; value: string }[] = [];
-  // National homepage pool — `"national"` matches the token used by
-  // src/pages/Index.tsx and src/lib/featuredBucket.ts.
-  out.push({ type: "homepage", value: "national" });
-  // State pool — only seed if state matches a US 2-letter code OR
-  // a longer US state name string (defensive against junk data).
-  // Round-31 audit: validate format so we don't pollute the state
-  // bucket with garbage placement_values.
+  // Featured is LOCAL/REGIONAL only — NO homepage/national seed. National +
+  // international exposure is reserved for the Concierge Partner upgrade. We
+  // seed the facility's own state + city pages, derived from its address.
+  // State pool — slugified to match what StatePage queries (stateData.slug)
+  // and what AddFeaturedPlacementForm derives, so the paid placement actually
+  // applies on the facility's own state page (UPPER(name) never matched the
+  // slug-keyed pages).
   if (facility.state && facility.state.trim().length > 0) {
-    const stateTrimmed = facility.state.trim().toUpperCase();
-    if (/^[A-Z]{2}$/.test(stateTrimmed) || /^[A-Z][A-Z\s.-]{1,30}$/.test(stateTrimmed)) {
-      out.push({ type: "state", value: stateTrimmed });
+    const stateSlug = slugify(facility.state);
+    if (stateSlug.length >= 2 && stateSlug !== "unknown" && stateSlug !== "n-a") {
+      out.push({ type: "state", value: stateSlug });
     }
   }
-  // City pool — slugified to match the resolveSearchBucket() output.
-  // Round-31 audit: skip if the slug is empty after sanitization
-  // (e.g. city="!!!" or "(Unknown)" → after sanitization could be
-  // empty or "unknown"). Empty slug would pollute the city bucket
-  // with a "" key. Also skip the literal "unknown" so misnamed
-  // facilities don't all share a placement bucket.
+  // City pool — slugified to match the resolveSearchBucket() / CityPage output.
+  // Skip empty/junk slugs so misnamed facilities don't share a "" / "unknown"
+  // bucket.
   if (facility.city && facility.city.trim().length > 0) {
     const citySlug = slugify(facility.city);
     if (citySlug.length >= 2 && citySlug !== "unknown" && citySlug !== "n-a") {

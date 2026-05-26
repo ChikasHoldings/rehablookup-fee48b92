@@ -1103,17 +1103,23 @@ function slugify(input: string): string {
 
 function buildSeedPlacements(facility: FacilityRow): { type: string; value: string }[] {
   const out: { type: string; value: string }[] = [];
-  // National homepage pool — `"national"` matches the token used by
-  // src/pages/Index.tsx and src/lib/featuredBucket.ts.
-  out.push({ type: "homepage", value: "national" });
-  // State pool — state is stored as a 2-letter abbreviation in
-  // facilities.state; the rotation accepts either form.
+  // Featured is LOCAL/REGIONAL only — NO homepage/national seed. National +
+  // international exposure is reserved for the Concierge Partner upgrade. We
+  // seed the facility's own state + city pages, derived from its address.
+  // State pool — slugified to match what StatePage queries (stateData.slug)
+  // and what AddFeaturedPlacementForm derives.
   if (facility.state && facility.state.trim().length > 0) {
-    out.push({ type: "state", value: facility.state.trim().toUpperCase() });
+    const stateSlug = slugify(facility.state);
+    if (stateSlug.length >= 2 && stateSlug !== "unknown" && stateSlug !== "n-a") {
+      out.push({ type: "state", value: stateSlug });
+    }
   }
-  // City pool — slugified to match the resolveSearchBucket() output.
+  // City pool — slugified to match the resolveSearchBucket() / CityPage output.
   if (facility.city && facility.city.trim().length > 0) {
-    out.push({ type: "city", value: slugify(facility.city) });
+    const citySlug = slugify(facility.city);
+    if (citySlug.length >= 2 && citySlug !== "unknown" && citySlug !== "n-a") {
+      out.push({ type: "city", value: citySlug });
+    }
   }
   return out;
 }
@@ -3029,7 +3035,7 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
             type: "featured_addon_active",
             title: "Featured is live",
             message:
-              "Your facility is now in the Featured rotation on the homepage, statewide directory, your city, and global search results.",
+              "Your facility is now in the Featured rotation across your state, city, and near-me pages. Upgrade to Concierge Partner for national + homepage exposure plus direct client placements.",
             metadata: { stripe_subscription_id: subscription.id },
           });
         }

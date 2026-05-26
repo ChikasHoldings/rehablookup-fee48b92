@@ -69,11 +69,12 @@ export function FeaturedMarketingDetail({ facilityId }: FeaturedMarketingDetailP
 
         <div className="space-y-4 text-sm md:text-base text-slate-700 leading-relaxed">
           <p>
-            Featured gets your facility into a fair rotation pool on homepage,
-            state, city, search, treatment-type, insurance, and article pages
-            relevant to your operating geography. Every paying facility in a
-            geo rotates through the visible slots — no bidding wars, no
-            per-click charges.
+            Featured gets your facility into a fair rotation pool on the pages
+            for <strong>your own area</strong> — your state, city, and near-me
+            pages, plus the treatment-type and insurance pages you match — so
+            nearby seekers see you first. Every paying facility in a geo rotates
+            through the visible slots — no bidding wars, no per-click charges.
+            <em> For national + homepage exposure, upgrade to Concierge Partner.</em>
           </p>
           <p>
             You pick which placements you want from a live availability list.

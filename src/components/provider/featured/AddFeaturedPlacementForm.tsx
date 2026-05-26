@@ -30,14 +30,16 @@ type PlacementType =
 // below) so a facility only ever Features in its real operating geography.
 const GEO_TYPES: ReadonlySet<string> = new Set(["state", "city", "near_me"]);
 
+// Featured is LOCAL/REGIONAL only: the provider can rotate on their own
+// state / city / near-me pages (+ treatment/insurance/article). Homepage
+// (national) and the global search pool are reserved for the Concierge
+// Partner upgrade, so they are intentionally NOT offered here.
 const PLACEMENT_TYPE_OPTIONS: { value: PlacementType; label: string; hint: string }[] = [
   { value: "state", label: "State page", hint: "Your facility's state (from its address)" },
   { value: "city", label: "City page", hint: "Your facility's city (from its address)" },
   { value: "near_me", label: "Near-me page", hint: "Your facility's state (from its address)" },
   { value: "treatment", label: "Treatment-type page", hint: "slug (e.g. medication-assisted)" },
   { value: "insurance", label: "Insurance page", hint: "slug (e.g. aetna)" },
-  { value: "homepage", label: "Homepage (national pool)", hint: "fixed value: national" },
-  { value: "search", label: "Search results (global pool)", hint: "fixed value: global" },
   { value: "article", label: "Article rotation", hint: "article slug" },
 ];
 
