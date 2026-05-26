@@ -42,6 +42,7 @@ import { DashboardRecentActivity } from "@/components/provider/DashboardRecentAc
 import { DashboardListingHealthCard } from "@/components/provider/DashboardListingHealthCard";
 import { FeaturedAnalyticsWidget } from "@/components/provider/FeaturedAnalyticsWidget";
 import { ConciergeAnalyticsWidget } from "@/components/provider/marketing/ConciergeAnalyticsWidget";
+import { FreeTierValueTeaser } from "@/components/provider/FreeTierValueTeaser";
 
 // Compact directory-style metric tile. Hairline border, white bg, no
 // shadow lift on hover — just a subtle border accent. Title sits as a
@@ -790,6 +791,11 @@ export default function ProviderDashboardPage() {
 
                 {/* Recent activity (notifications: reviews, inquiries, updates) */}
                 <DashboardRecentActivity />
+
+                {/* Quantified "what you're missing" teaser (Free only) */}
+                {!proStatus.isPro && facilityId && (
+                  <FreeTierValueTeaser facilityId={facilityId} />
+                )}
 
                 {/* Upgrade card (Free only) */}
                 {!proStatus.isPro && (
