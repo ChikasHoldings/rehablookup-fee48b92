@@ -5,6 +5,8 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { fmtMoney, fmtMoneyWhole, TIER_PRICING } from "@/lib/billingPricing";
+import { useActivePromotion } from "@/hooks/useActivePromotion";
+import { PromoCountdownBanner } from "@/components/provider/promo/PromoCountdownBanner";
 
 interface FeaturedMarketingDetailProps {
   facilityId: string;
@@ -25,6 +27,8 @@ interface FeaturedMarketingDetailProps {
  */
 export function FeaturedMarketingDetail({ facilityId }: FeaturedMarketingDetailProps) {
   const [submittingInterval, setSubmittingInterval] = useState<"monthly" | "annual" | null>(null);
+  const { promo } = useActivePromotion(facilityId);
+  const featuredPromoId = promo?.target_product === "featured" ? promo.id : null;
 
   const handlePurchase = async (interval: "monthly" | "annual") => {
     setSubmittingInterval(interval);
@@ -35,6 +39,7 @@ export function FeaturedMarketingDetail({ facilityId }: FeaturedMarketingDetailP
           intent: "add_addon",
           billing_period: interval,
           items: [{ product: "featured" }],
+          ...(featuredPromoId ? { promo_id: featuredPromoId } : {}),
         },
       });
       if (error) throw error;
@@ -56,6 +61,7 @@ export function FeaturedMarketingDetail({ facilityId }: FeaturedMarketingDetailP
   return (
     <Card>
       <CardContent className="p-6 md:p-8 space-y-6">
+        <PromoCountdownBanner facilityId={facilityId} targets={["featured"]} />
         <div className="flex items-start gap-4">
           <div className="h-12 w-12 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
             <Rotate3D className="h-6 w-6 text-amber-700" aria-hidden />

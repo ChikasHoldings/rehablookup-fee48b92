@@ -5,6 +5,7 @@ import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { useFacilitySubscription } from "@/hooks/useFacilitySubscription";
 import { MarketingHubCards } from "@/components/provider/marketing/MarketingHubCards";
 import { MarketDemandCard } from "@/components/provider/marketing/MarketDemandCard";
+import { PromoCountdownBanner } from "@/components/provider/promo/PromoCountdownBanner";
 import { ProviderPageHeader } from "@/components/provider/ProviderPageHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
@@ -139,6 +140,7 @@ export default function MarketingHub() {
       />
 
       <div className="mx-auto max-w-6xl px-4 py-5 sm:px-6 sm:py-6 lg:px-8 space-y-5">
+        <PromoCountdownBanner facilityId={facilityId} />
         {!isPro && <UpgradeBanner />}
 
         <Tabs defaultValue="visibility" className="w-full">

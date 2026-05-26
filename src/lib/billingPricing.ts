@@ -50,6 +50,17 @@ export function fmtMoney(cents: number | null | undefined): string {
   return `$${(cents / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
+/**
+ * Apply a promo percentage to a cents amount for DISPLAY (strikethrough +
+ * discounted). The actual charge is handled by the Stripe coupon at checkout;
+ * this just mirrors it so the UI shows the same number. Returns the original
+ * amount unchanged when there's no valid percent.
+ */
+export function applyPromoPercent(cents: number, percent: number | null | undefined): number {
+  if (!percent || percent <= 0 || percent >= 100) return cents;
+  return Math.round((cents * (100 - percent)) / 100);
+}
+
 /** "Pro + Concierge" / "Pro + Featured" / "Pro" / "Free" */
 export function tierComboLabel(flags: {
   tier: string | null;

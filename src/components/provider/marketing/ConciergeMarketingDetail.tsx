@@ -5,6 +5,8 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { fmtMoney, fmtMoneyWhole, TIER_PRICING } from "@/lib/billingPricing";
+import { useActivePromotion } from "@/hooks/useActivePromotion";
+import { PromoCountdownBanner } from "@/components/provider/promo/PromoCountdownBanner";
 
 interface ConciergeMarketingDetailProps {
   facilityId: string;
@@ -23,6 +25,8 @@ interface ConciergeMarketingDetailProps {
  */
 export function ConciergeMarketingDetail({ facilityId }: ConciergeMarketingDetailProps) {
   const [submittingInterval, setSubmittingInterval] = useState<"monthly" | "annual" | null>(null);
+  const { promo } = useActivePromotion(facilityId);
+  const conciergePromoId = promo?.target_product === "concierge" ? promo.id : null;
 
   const handlePurchase = async (interval: "monthly" | "annual") => {
     setSubmittingInterval(interval);
@@ -33,6 +37,7 @@ export function ConciergeMarketingDetail({ facilityId }: ConciergeMarketingDetai
           intent: "add_addon",
           billing_period: interval,
           items: [{ product: "concierge" }],
+          ...(conciergePromoId ? { promo_id: conciergePromoId } : {}),
         },
       });
       if (error) throw error;
@@ -54,6 +59,7 @@ export function ConciergeMarketingDetail({ facilityId }: ConciergeMarketingDetai
   return (
     <Card>
       <CardContent className="p-6 md:p-8 space-y-6">
+        <PromoCountdownBanner facilityId={facilityId} targets={["concierge"]} />
         <div className="flex items-start gap-4">
           <div className="h-12 w-12 rounded-xl bg-violet-100 flex items-center justify-center shrink-0">
             <UserCheck className="h-6 w-6 text-violet-700" aria-hidden />

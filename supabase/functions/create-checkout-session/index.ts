@@ -104,6 +104,9 @@ Deno.serve(async (req) => {
       // subscription metadata so activateConciergePartner uses the
       // chosen levels instead of seeding all DEFAULT_LEVELS_OF_CARE.
       levels_of_care?: string[];
+      // Optional active-promotion id; the server re-validates it and
+      // auto-applies the promo's Stripe coupon (never trusts a client coupon).
+      promo_id?: string;
     };
     try { body = await req.json(); } catch { return json(400, { error: "Invalid JSON", code: "BAD_JSON" }); }
 
@@ -124,6 +127,7 @@ Deno.serve(async (req) => {
           .slice(0, 12)
       : [];
     const levelsOfCareCsv = levelsOfCareArr.length > 0 ? levelsOfCareArr.join(",") : null;
+    const promoId = String(body.promo_id ?? "").trim();
 
     if (!UUID_REGEX.test(facilityId)) return json(400, { error: "facility_id must be a valid UUID", code: "INVALID_FACILITY_ID" });
     if (intent !== "initial_subscription" && intent !== "add_addon") {
@@ -314,7 +318,40 @@ Deno.serve(async (req) => {
       cancelPath = `/provider/marketing/concierge?checkout=cancel`;
     }
 
-    const idempotencyKey = `create-checkout:${userId}:${facilityId}:${reuseTag}:${billingPeriod}:${Math.floor(Date.now() / (5 * 60 * 1000))}`;
+    // ---- Promo discount resolution (server-validated; never trust a client coupon). ----
+    // If the caller passed a promo_id, confirm it's a LIVE promotion whose
+    // target_product matches what's being purchased, then auto-apply its Stripe
+    // coupon. Anything invalid/expired/mismatched silently falls through to full price.
+    let promoCoupon: string | null = null;
+    let validPromoId: string | null = null;
+    if (promoId && UUID_REGEX.test(promoId)) {
+      const { data: promoRow } = await withTimeout(
+        svc.from("promotions")
+          .select("id, stripe_coupon_id, target_product, active, starts_at, ends_at")
+          .eq("id", promoId)
+          .maybeSingle(),
+        SUPABASE_TIMEOUT_MS,
+        "promotions.lookup",
+      );
+      const p = promoRow as {
+        id: string; stripe_coupon_id: string | null; target_product: string;
+        active: boolean; starts_at: string; ends_at: string;
+      } | null;
+      const nowMs = Date.now();
+      if (
+        p && p.active && p.stripe_coupon_id &&
+        p.target_product === product &&
+        new Date(p.starts_at).getTime() <= nowMs &&
+        new Date(p.ends_at).getTime() > nowMs
+      ) {
+        promoCoupon = p.stripe_coupon_id;
+        validPromoId = p.id;
+      } else {
+        log("INFO", "promo_id ignored (not a live, product-matched promo)", { promoId, product });
+      }
+    }
+
+    const idempotencyKey = `create-checkout:${userId}:${facilityId}:${reuseTag}:${billingPeriod}:${promoCoupon ?? "nopromo"}:${Math.floor(Date.now() / (5 * 60 * 1000))}`;
 
     const checkoutMetadata = {
       type: reuseTag,
@@ -338,6 +375,8 @@ Deno.serve(async (req) => {
       // Tell the webhook to supersede (cancel + refund) the existing Featured
       // add-on when this Concierge upgrade activates (mutual exclusivity).
       ...(supersedeFeatured ? { supersede_featured: "true" } : {}),
+      // Campaign attribution — lets the webhook tag the conversion to the promo.
+      ...(validPromoId ? { promotion_id: validPromoId } : {}),
     };
 
     // EKRA safe-harbor framing at the point of payment for Concierge: make
@@ -370,6 +409,9 @@ Deno.serve(async (req) => {
         subscription_data: {
           metadata: checkoutMetadata,
         },
+        // Auto-apply the validated promo coupon (mutually exclusive with
+        // allow_promotion_codes; campaign CTAs apply the discount frictionlessly).
+        ...(promoCoupon ? { discounts: [{ coupon: promoCoupon }] } : {}),
         ...(customText ? { custom_text: customText } : {}),
       },
       { idempotencyKey },

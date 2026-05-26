@@ -26,6 +26,8 @@ import { SwitchToMonthlyAtRenewalBanner } from "@/components/provider/billing/Sw
 import { ProUpgradeChoices } from "@/components/provider/subscription/ProUpgradeChoices";
 import { BillingDetailsCard } from "@/components/provider/billing/BillingDetailsCard";
 import { fmtMoney, TIER_PRICING } from "@/lib/billingPricing";
+import { useActivePromotion } from "@/hooks/useActivePromotion";
+import { PromoCountdownBanner } from "@/components/provider/promo/PromoCountdownBanner";
 
 /**
  * Validate a Stripe URL returned by an edge function before we hand it
@@ -59,6 +61,8 @@ export default function ProviderSubscription() {
   const navigate = useNavigate();
   const { selectedFacility } = useSelectedFacility();
   const facilityId = selectedFacility?.id;
+  const { promo: activePromo } = useActivePromotion(facilityId);
+  const proPromoId = activePromo?.target_product === "pro" ? activePromo.id : null;
   const [searchParams, setSearchParams] = useSearchParams();
   const isCheckoutReturn = searchParams.get("checkout") === "success";
 
@@ -205,6 +209,7 @@ export default function ProviderSubscription() {
           intent: "initial_subscription",
           billing_period: interval,
           items: [{ product: "pro" }],
+          ...(proPromoId ? { promo_id: proPromoId } : {}),
         },
       });
       if (error) {
@@ -444,6 +449,7 @@ export default function ProviderSubscription() {
           </>
         ) : (
           <>
+            <PromoCountdownBanner facilityId={facilityId} targets={["pro"]} />
             <FreeSubscriptionCard />
             <ProUpgradeChoices onChoose={handleProUpgrade} />
           </>

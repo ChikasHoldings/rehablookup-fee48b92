@@ -47,6 +47,69 @@ export type Database = {
         }
         Relationships: []
       }
+      promotions: {
+        Row: {
+          active: boolean
+          audience: string
+          created_at: string
+          created_by: string | null
+          cta_label: string | null
+          discount_duration_months: number | null
+          discount_percent: number | null
+          ends_at: string
+          headline: string
+          id: string
+          name: string
+          starts_at: string
+          stripe_coupon_id: string | null
+          subcopy: string | null
+          target_product: string
+          urgency_label: string | null
+        }
+        Insert: {
+          active?: boolean
+          audience: string
+          created_at?: string
+          created_by?: string | null
+          cta_label?: string | null
+          discount_duration_months?: number | null
+          discount_percent?: number | null
+          ends_at: string
+          headline: string
+          id?: string
+          name: string
+          starts_at?: string
+          stripe_coupon_id?: string | null
+          subcopy?: string | null
+          target_product: string
+          urgency_label?: string | null
+        }
+        Update: {
+          active?: boolean
+          audience?: string
+          created_at?: string
+          created_by?: string | null
+          cta_label?: string | null
+          discount_duration_months?: number | null
+          discount_percent?: number | null
+          ends_at?: string
+          headline?: string
+          id?: string
+          name?: string
+          starts_at?: string
+          stripe_coupon_id?: string | null
+          subcopy?: string | null
+          target_product?: string
+          urgency_label?: string | null
+        }
+        Relationships: []
+      }
+      promotion_dismissals: {
+        Row: { promotion_id: string; user_id: string; dismissed_at: string }
+        Insert: { promotion_id: string; user_id: string; dismissed_at?: string }
+        Update: { promotion_id?: string; user_id?: string; dismissed_at?: string }
+        Relationships: []
+      }
       addon_waitlist: {
         Row: {
           addon_type: string
@@ -7031,6 +7094,14 @@ export type Database = {
       }
       set_concierge_eligibility_revoked: {
         Args: { p_facility_id: string; p_revoked: boolean; p_reason?: string }
+        Returns: undefined
+      }
+      get_active_promotion: {
+        Args: { p_audience: string }
+        Returns: Json
+      }
+      dismiss_promotion: {
+        Args: { p_promotion_id: string }
         Returns: undefined
       }
       get_addon_waitlist_position: {

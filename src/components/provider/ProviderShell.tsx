@@ -7,6 +7,7 @@ import { ProviderSidebar } from "./ProviderSidebar";
 import { MobileBottomNav } from "./MobileBottomNav";
 import { ProviderErrorBoundary } from "./ProviderErrorBoundary";
 import { WelcomeModal } from "./WelcomeModal";
+import { ConversionPromoPopup } from "./promo/ConversionPromoPopup";
 import { DunningBanner } from "./DunningBanner";
 import { useToast } from "@/hooks/use-toast";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
@@ -366,6 +367,9 @@ function ProviderShellContent() {
             onboarding_completed_at is set, so it's a no-op for every
             other render of every other provider page. */}
         <WelcomeModal />
+        {/* One-time conversion promo (Free→Pro / Pro→add-on). Self-gates on a
+            live campaign for the provider's tier + once-per-campaign dismissal. */}
+        <ConversionPromoPopup />
       </div>
 
       {/* Row 3 — Mobile Bottom Navigation (in-flow, not fixed) */}
