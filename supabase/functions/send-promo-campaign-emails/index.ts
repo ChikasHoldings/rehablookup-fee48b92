@@ -173,7 +173,7 @@ Deno.serve(async (req) => {
       return json(500, { error: "DB error" });
     }
 
-    const stats = { promos: 0, sent: 0, errors: 0 };
+    const stats = { promos: 0, sent: 0, skipped: 0, errors: 0 };
 
     for (const promo of (promos ?? []) as Promo[]) {
       stats.promos++;
@@ -191,6 +191,20 @@ Deno.serve(async (req) => {
       }
 
       for (const row of (cohort ?? []) as { user_id: string; email: string; first_name: string | null }[]) {
+        // Claim-first: insert the send record BEFORE sending (idempotent on the
+        // PK). The cohort RPC already excludes claimed rows; claiming up front
+        // closes the gap where a send succeeds but the record write fails and
+        // the next run re-sends (spam). A duplicate-key error means a concurrent
+        // tick already took this provider → skip.
+        const { error: claimErr } = await svc.from("promotion_email_sends").insert({
+          promotion_id: promo.id,
+          user_id: row.user_id,
+          milestone,
+        });
+        if (claimErr) {
+          stats.skipped++;
+          continue;
+        }
         try {
           const unsubUrl = `${SITE_URL}/api/provider-emails/unsubscribe?u=${btoa(row.user_id)}`;
           const { subject, html } = buildEmail({
@@ -210,14 +224,12 @@ Deno.serve(async (req) => {
               metadata: { promotion_id: promo.id, milestone, target: promo.target_product },
             },
           );
-          // Record the send so this milestone isn't repeated for this provider.
-          await svc.from("promotion_email_sends").insert({
-            promotion_id: promo.id,
-            user_id: row.user_id,
-            milestone,
-          });
           stats.sent++;
         } catch (err) {
+          // Roll back the claim so a transient failure retries on the next run
+          // rather than silently dropping the email.
+          await svc.from("promotion_email_sends").delete()
+            .eq("promotion_id", promo.id).eq("user_id", row.user_id).eq("milestone", milestone);
           log("ERROR", "send failed", { promoId: promo.id, userId: row.user_id, error: err instanceof Error ? err.message : String(err) });
           stats.errors++;
         }

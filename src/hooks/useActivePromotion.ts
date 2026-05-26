@@ -32,15 +32,19 @@ export interface ActivePromotion {
 export function useActivePromotion(facilityId?: string) {
   const { data: subscription } = useFacilitySubscription(facilityId);
 
-  const isPro = subscription?.tier === "pro" && subscription?.status === "active";
+  const isProTier = subscription?.tier === "pro";
+  const isActivePro = isProTier && subscription?.status === "active";
   const hasAddon =
     subscription?.has_featured === true || subscription?.has_concierge_partner === true;
 
+  // Truly free → upsell Pro. Active Pro without an add-on → upsell add-on.
+  // A past_due Pro (or Pro that already holds an add-on) is NOT a promo
+  // target — don't surface an "upgrade to Pro" offer while billing is lapsed.
   const audience: PromoAudience | null = !subscription
     ? null
-    : !isPro
+    : !isProTier
       ? "free"
-      : !hasAddon
+      : isActivePro && !hasAddon
         ? "pro"
         : null;
 

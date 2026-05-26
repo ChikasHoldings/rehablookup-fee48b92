@@ -351,6 +351,32 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Defensive: confirm the coupon is still VALID in Stripe before applying it.
+    // A deleted / expired / fully-redeemed coupon would otherwise make
+    // sessions.create throw and block the purchase entirely — we'd rather sell
+    // at full price than fail the checkout. Any error → drop the discount.
+    if (promoCoupon) {
+      try {
+        const coupon = await withTimeout(
+          stripe.coupons.retrieve(promoCoupon),
+          STRIPE_TIMEOUT_MS,
+          "stripe.coupons.retrieve",
+        );
+        if (!coupon || (coupon as Stripe.Coupon).valid !== true) {
+          log("WARN", "promo coupon not valid; selling at full price", { promoCoupon });
+          promoCoupon = null;
+          validPromoId = null;
+        }
+      } catch (e) {
+        log("WARN", "promo coupon retrieve failed; selling at full price", {
+          promoCoupon,
+          error: e instanceof Error ? e.message : String(e),
+        });
+        promoCoupon = null;
+        validPromoId = null;
+      }
+    }
+
     const idempotencyKey = `create-checkout:${userId}:${facilityId}:${reuseTag}:${billingPeriod}:${promoCoupon ?? "nopromo"}:${Math.floor(Date.now() / (5 * 60 * 1000))}`;
 
     const checkoutMetadata = {
