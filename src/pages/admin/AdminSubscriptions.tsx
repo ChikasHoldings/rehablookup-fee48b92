@@ -21,6 +21,7 @@ import {
   Sliders,
   Star,
   Download,
+  Megaphone,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -57,6 +58,7 @@ import { RetentionDashboard } from "@/components/admin/RetentionDashboard";
 import { SubscriptionDetailModal } from "@/components/admin/SubscriptionDetailModal";
 import { PlanSettingsTab } from "@/components/admin/PlanSettingsTab";
 import { AddonCapsTab } from "@/components/admin/AddonCapsTab";
+import { AdminCampaignsTab } from "@/components/admin/AdminCampaignsTab";
 import { FeaturedPlacementTab } from "@/components/admin/FeaturedPlacementTab";
 import { PaginationFooter } from "@/components/common/PaginationFooter";
 import { usePagination } from "@/hooks/usePagination";
@@ -168,7 +170,7 @@ type EnrichedSubscription = {
   leads_this_month: number;
 };
 
-const VALID_TABS = ["overview", "subscriptions", "featured", "retention", "caps", "settings"] as const;
+const VALID_TABS = ["overview", "subscriptions", "featured", "retention", "caps", "campaigns", "settings"] as const;
 type ValidTab = typeof VALID_TABS[number];
 
 export default function AdminSubscriptions() {
@@ -442,7 +444,7 @@ export default function AdminSubscriptions() {
 
       <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
         <div className="overflow-x-auto">
-          <TabsList className="inline-flex w-auto min-w-full sm:min-w-0 sm:grid sm:w-full sm:max-w-4xl sm:grid-cols-6">
+          <TabsList className="inline-flex w-auto min-w-full sm:min-w-0 sm:grid sm:w-full sm:max-w-4xl sm:grid-cols-7">
             <TabsTrigger value="overview" aria-label="Overview" className="flex items-center gap-1.5 text-xs sm:text-sm">
               <LayoutDashboard className="h-4 w-4" />
               <span className="hidden sm:inline">Overview</span>
@@ -462,6 +464,10 @@ export default function AdminSubscriptions() {
             <TabsTrigger value="caps" aria-label="Add-on caps" className="flex items-center gap-1.5 text-xs sm:text-sm">
               <Sliders className="h-4 w-4" />
               <span className="hidden sm:inline">Caps</span>
+            </TabsTrigger>
+            <TabsTrigger value="campaigns" aria-label="Campaigns" className="flex items-center gap-1.5 text-xs sm:text-sm">
+              <Megaphone className="h-4 w-4" />
+              <span className="hidden sm:inline">Campaigns</span>
             </TabsTrigger>
             <TabsTrigger value="settings" aria-label="Plan settings" className="flex items-center gap-1.5 text-xs sm:text-sm">
               <Settings2 className="h-4 w-4" />
@@ -808,6 +814,10 @@ export default function AdminSubscriptions() {
         </TabsContent>
 
         {/* ═══════ Caps Tab ═══════ */}
+        <TabsContent value="campaigns" className="space-y-6">
+          <AdminCampaignsTab />
+        </TabsContent>
+
         <TabsContent value="caps" className="space-y-6">
           <AddonCapsTab />
         </TabsContent>
