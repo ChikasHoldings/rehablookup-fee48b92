@@ -156,6 +156,7 @@ Deno.serve(async (req) => {
         }
         const r = result as {
           request_id: string;
+          facility_id: string;
           recipient_name: string;
           recipient_email: string;
           facility_name: string;

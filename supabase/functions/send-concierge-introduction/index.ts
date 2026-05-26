@@ -212,12 +212,17 @@ Deno.serve(async (req) => {
     const recipientEmail = facility.concierge_admissions_email || facility.reply_email || facility.email;
     
     if (!recipientEmail) {
+      // Surface as a non-2xx so the batch caller counts it as a failure to
+      // retry/fix, rather than a 200 that's silently tallied as "sent". The
+      // partner genuinely can't be reached by the primary channel without an
+      // email on file — an admin needs to add one.
       console.log("[SEND-CONCIERGE-INTRODUCTION] No email configured for facility:", facility.name);
-      return new Response(JSON.stringify({ 
-        success: false, 
-        message: "No email configured for this facility" 
+      return new Response(JSON.stringify({
+        success: false,
+        error: "No email configured for this facility",
+        code: "NO_EMAIL",
       }), {
-        status: 200,
+        status: 422,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -419,23 +424,32 @@ Deno.serve(async (req) => {
         metadata: { inquiry_id: inquiryId, introduction_id: resolvedIntroductionId },
       });
 
-      // SMS channel — fire-and-forget. send-sms-notification enforces the
-      // provider's notification prefs, phone verification, TCPA opt-out, and
-      // daily budget, and no-ops gracefully when SMS isn't configured. We don't
-      // block the introduction (or its 200 response) on the SMS result.
+      // SMS channel — best-effort, but AWAITED with a bounded timeout so it
+      // actually dispatches (an un-awaited fetch can be cut off when the
+      // isolate suspends on return, silently dropping the SMS) while a slow or
+      // down SMS service can't delay/break the introduction. send-sms-notification
+      // enforces the provider's prefs, phone verification, TCPA opt-out, and
+      // daily budget, and no-ops gracefully when SMS isn't configured.
       try {
         const smsMsg = `RehabLookup: A family was matched to your facility by our advisors (${levelOfCare}). Open your Placement Network to respond.`;
-        fetch(`${supabaseUrl}/functions/v1/send-sms-notification`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${supabaseKey}` },
-          body: JSON.stringify({
-            userId: facilityFull.user_id,
-            notificationType: "general",
-            data: { customMessage: smsMsg },
-          }),
-        }).catch((e) => logStep(requestId, "Warning: intro SMS dispatch failed", { error: String(e) }));
+        const smsCtrl = new AbortController();
+        const smsTimer = setTimeout(() => smsCtrl.abort(), 5000);
+        try {
+          await fetch(`${supabaseUrl}/functions/v1/send-sms-notification`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${supabaseKey}` },
+            body: JSON.stringify({
+              userId: facilityFull.user_id,
+              notificationType: "general",
+              data: { customMessage: smsMsg },
+            }),
+            signal: smsCtrl.signal,
+          });
+        } finally {
+          clearTimeout(smsTimer);
+        }
       } catch (smsErr) {
-        logStep(requestId, "Warning: intro SMS setup failed", { error: String(smsErr) });
+        logStep(requestId, "Warning: intro SMS dispatch failed (non-fatal)", { error: String(smsErr) });
       }
     }
 

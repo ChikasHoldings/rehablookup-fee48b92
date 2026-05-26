@@ -424,9 +424,13 @@ Deno.serve(async (req) => {
 
         partnerMatches = (partnerFacilities || [])
           .filter((f) => {
+            // Sticky-revoke — MUST mirror is_eligible_concierge_partner exactly:
+            // attested AND not currently revoked. (An admin revoke stays in
+            // effect until lifted; re-attestation while revoked is blocked by
+            // attest_concierge_eligibility, so the two never diverge.)
             const attested = f.concierge_eligibility_attested_at as string | null;
             const revoked = f.concierge_eligibility_revoked_at as string | null;
-            return !!attested && (!revoked || new Date(revoked) < new Date(attested));
+            return !!attested && !revoked;
           })
           .map((f) => {
             const { score, factors } = scoreFacility(f as unknown as ScorableFacility, inquiry);
