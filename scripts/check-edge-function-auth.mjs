@@ -138,6 +138,7 @@ const CRON_NAMES = new Set([
   "cleanup-rate-limit-logs",
   "drain-addon-waitlist",
   "placement-cron",
+  "placement-monitor",
   "process-onboarding-emails",
   "process-provider-drip",
   "process-seeker-drip",
