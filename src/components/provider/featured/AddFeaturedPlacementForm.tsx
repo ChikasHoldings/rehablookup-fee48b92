@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Loader2, Plus, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -114,6 +115,34 @@ export function AddFeaturedPlacementForm({
   const [type, setType] = useState<PlacementType | "">("");
   const [rawValue, setRawValue] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Deep-link claim: arriving from a waitlist "Claim slot" link
+  // (?claim=featured&ctype=<type>&cvalue=<value>) auto-opens the dialog with
+  // the invited scope pre-selected so the provider confirms in one step. We
+  // consume the params (replace, no history entry) so the dialog doesn't
+  // re-open on later renders. Runs once on mount.
+  useEffect(() => {
+    if (isConcierge) return; // the Featured surface handles claim=featured only
+    if (searchParams.get("claim") !== "featured") return;
+    const ctype = searchParams.get("ctype");
+    const cvalue = searchParams.get("cvalue");
+    if (ctype && PLACEMENT_TYPE_OPTIONS.some((o) => o.value === ctype)) {
+      setType(ctype as PlacementType);
+      // Geo types are address-locked (value auto-derives); fixed-value types
+      // need no input. Only seed rawValue for free-text types (treatment/insurance).
+      if (cvalue && !GEO_TYPES.has(ctype) && !(ctype in FIXED_VALUE)) {
+        setRawValue(cvalue);
+      }
+      setOpen(true);
+    }
+    const next = new URLSearchParams(searchParams);
+    next.delete("claim");
+    next.delete("ctype");
+    next.delete("cvalue");
+    setSearchParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // In Featured mode the facility's own address drives every geo placement —
   // we never let the provider hand-type a state/city, so they can't Feature in

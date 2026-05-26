@@ -116,6 +116,22 @@ export function MyWaitlistEntries({ facilityId, addonType }: Props) {
     return `${r.geo_state ?? "?"}${r.geo_city ? "/" + r.geo_city : " (statewide)"}`;
   }
 
+  // Deep-link to the add-on manager with the invited scope pre-filled so the
+  // add-placement / add-geo dialog opens ready to confirm (see the claim
+  // useEffect in AddFeaturedPlacementForm / AddConciergeGeoForm).
+  function claimHref(r: WaitlistRow): string {
+    if (r.addon_type === "concierge") {
+      const p = new URLSearchParams({ claim: "concierge" });
+      if (r.geo_state) p.set("cstate", r.geo_state);
+      if (r.geo_city) p.set("ccity", r.geo_city);
+      return `/provider/marketing/concierge?${p.toString()}`;
+    }
+    const p = new URLSearchParams({ claim: "featured" });
+    if (r.scope_type) p.set("ctype", r.scope_type);
+    if (r.scope_value) p.set("cvalue", r.scope_value);
+    return `/provider/marketing/featured?${p.toString()}`;
+  }
+
   if (isLoading) {
     return (
       <Card>
@@ -218,13 +234,7 @@ export function MyWaitlistEntries({ facilityId, addonType }: Props) {
                     asChild
                     className="h-8 gap-1 bg-blue-600 hover:bg-blue-700 text-white text-xs"
                   >
-                    <Link
-                      to={
-                        r.addon_type === "concierge"
-                          ? "/provider/marketing/concierge"
-                          : "/provider/marketing/featured"
-                      }
-                    >
+                    <Link to={claimHref(r)}>
                       Claim slot
                       <ArrowRight className="h-3 w-3" />
                     </Link>

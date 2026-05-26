@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Loader2, Plus, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -65,6 +66,29 @@ export function AddConciergeGeoForm({
   const [locs, setLocs] = useState<Set<string>>(new Set());
   const [ekraAck, setEkraAck] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Deep-link claim: arriving from a waitlist "Claim slot" link
+  // (?claim=concierge&cstate=<abbr>&ccity=<city>) auto-opens the dialog with
+  // the invited geography pre-filled. Levels of care + the EKRA acknowledgement
+  // still require an explicit choice. Consumes the params so the dialog doesn't
+  // re-open on later renders. Runs once on mount.
+  useEffect(() => {
+    if (searchParams.get("claim") !== "concierge") return;
+    const cstate = searchParams.get("cstate");
+    const ccity = searchParams.get("ccity");
+    if (cstate && US_STATE_ABBRS.some((s) => s.code === cstate)) {
+      setState(cstate);
+      if (ccity) setCity(ccity);
+      setOpen(true);
+    }
+    const next = new URLSearchParams(searchParams);
+    next.delete("claim");
+    next.delete("cstate");
+    next.delete("ccity");
+    setSearchParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const { data: availability, isFetching: availabilityLoading } = useQuery({
     queryKey: ["concierge-availability", state, city.trim()],
