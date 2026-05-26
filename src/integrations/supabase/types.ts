@@ -1852,6 +1852,11 @@ export type Database = {
           concierge_admissions_phone: string | null
           concierge_agreement_preference: string | null
           concierge_availability_status: string | null
+          concierge_accepts_emergency: boolean
+          concierge_eligibility_attested_at: string | null
+          concierge_eligibility_revoked_at: string | null
+          concierge_eligibility_revoked_reason: string | null
+          concierge_license_number: string | null
           concierge_network_opted_in: boolean | null
           concierge_notes: string | null
           concierge_opted_in_at: string | null
@@ -1922,6 +1927,11 @@ export type Database = {
           concierge_admissions_phone?: string | null
           concierge_agreement_preference?: string | null
           concierge_availability_status?: string | null
+          concierge_accepts_emergency?: boolean
+          concierge_eligibility_attested_at?: string | null
+          concierge_eligibility_revoked_at?: string | null
+          concierge_eligibility_revoked_reason?: string | null
+          concierge_license_number?: string | null
           concierge_network_opted_in?: boolean | null
           concierge_notes?: string | null
           concierge_opted_in_at?: string | null
@@ -1992,6 +2002,11 @@ export type Database = {
           concierge_admissions_phone?: string | null
           concierge_agreement_preference?: string | null
           concierge_availability_status?: string | null
+          concierge_accepts_emergency?: boolean
+          concierge_eligibility_attested_at?: string | null
+          concierge_eligibility_revoked_at?: string | null
+          concierge_eligibility_revoked_reason?: string | null
+          concierge_license_number?: string | null
           concierge_network_opted_in?: boolean | null
           concierge_notes?: string | null
           concierge_opted_in_at?: string | null
