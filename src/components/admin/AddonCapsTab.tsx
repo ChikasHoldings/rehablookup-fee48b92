@@ -57,6 +57,7 @@ const PLACEMENT_TYPES = [
   "near_me",
   "treatment",
   "insurance",
+  "international",
   "article",
 ] as const;
 

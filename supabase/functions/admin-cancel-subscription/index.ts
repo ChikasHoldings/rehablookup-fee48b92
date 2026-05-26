@@ -775,6 +775,11 @@ export async function cancelSubscriptionAndRefund(
     if (c.rowId) rowIds.push(c.rowId);
 
     await deactivateConciergePartner(supabase, subscription.id);
+    // Concierge INCLUDES Featured exposure — its activation seeds
+    // featured_placements (homepage/national, international/global, state,
+    // city). Deactivate them too so they stop rotating and stop counting
+    // against placement caps once Concierge is canceled.
+    await deactivateFeaturedPlacements(supabase, subscription.id);
     await supabase
       .from("facility_subscriptions")
       .update({ has_concierge_partner: false, updated_at: new Date().toISOString() })

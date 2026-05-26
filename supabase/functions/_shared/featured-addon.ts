@@ -211,7 +211,7 @@ export async function deactivateFeaturedAddon(
 
   let query = supabase
     .from("facility_subscriptions")
-    .select("id, facility_id, has_featured");
+    .select("id, facility_id, has_featured, has_concierge_partner");
   if (args.facilityId) {
     query = query.eq("facility_id", args.facilityId);
   } else if (args.stripeSubscriptionId) {
@@ -230,6 +230,7 @@ export async function deactivateFeaturedAddon(
   }
 
   const facSubId = (facSubRow as { id: string }).id;
+  const hasConcierge = (facSubRow as { has_concierge_partner: boolean }).has_concierge_partner === true;
 
   const { error: flagErr } = await supabase
     .from("facility_subscriptions")
@@ -243,6 +244,16 @@ export async function deactivateFeaturedAddon(
     result.failed.push({ step: "flag_clear", error: flagErr.message });
   } else {
     result.has_featured_cleared = true;
+  }
+
+  // Concierge Partner is the mutually-exclusive upgrade that INCLUDES Featured
+  // exposure and OWNS the shared featured_placements rows (homepage/national,
+  // international, state, city) for this subscription. When Featured is being
+  // retired BECAUSE Concierge superseded it, the Featured Stripe sub's
+  // subscription.deleted event must NOT deactivate those placements — Concierge
+  // still needs them. Only deactivate when Concierge is not (also) active.
+  if (hasConcierge) {
+    return result;
   }
 
   const { data: deactivatedRows, error: placeErr } = await supabase

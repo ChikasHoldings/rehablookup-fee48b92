@@ -560,13 +560,13 @@ async function deactivateFeaturedPlacements(supabase: SupabaseClient, subscripti
   if (error) console.error("[cancel-subscription] deactivateFeaturedPlacements failed", error);
 }
 
-async function deactivateConciergePartner(supabase: SupabaseClient, subscriptionId: string): Promise<void> {
+async function deactivateConciergeGeosForSub(supabase: SupabaseClient, subscriptionId: string): Promise<void> {
   const { error } = await supabase
     .from("concierge_partner_facilities")
     .update({ active: false, deactivated_at: new Date().toISOString() })
     .eq("subscription_id", subscriptionId)
     .eq("active", true);
-  if (error) console.error("[cancel-subscription] deactivateConciergePartner failed", error);
+  if (error) console.error("[cancel-subscription] deactivateConciergeGeosForSub failed", error);
 }
 
 /**
@@ -677,7 +677,7 @@ export async function cancelSubscriptionAndRefund(
 
     // 4) Deactivate dependent rows
     await deactivateFeaturedPlacements(supabase, subscription.id);
-    await deactivateConciergePartner(supabase, subscription.id);
+    await deactivateConciergeGeosForSub(supabase, subscription.id);
 
     // 5) Mark subscription cancelled
     await supabase
@@ -727,7 +727,12 @@ export async function cancelSubscriptionAndRefund(
     if (c.stripeRefundId) refundIds.push(c.stripeRefundId);
     if (c.rowId) rowIds.push(c.rowId);
 
-    await deactivateConciergePartner(supabase, subscription.id);
+    await deactivateConciergeGeosForSub(supabase, subscription.id);
+    // Concierge INCLUDES Featured exposure — its activation seeds
+    // featured_placements (homepage/national, international/global, state,
+    // city). Deactivate them too so they stop rotating and stop counting
+    // against placement caps once Concierge is canceled.
+    await deactivateFeaturedPlacements(supabase, subscription.id);
     await supabase
       .from("facility_subscriptions")
       .update({ has_concierge_partner: false, updated_at: new Date().toISOString() })
@@ -1031,7 +1036,7 @@ export async function deactivateConciergePartner(
 
   let query = supabase
     .from("facility_subscriptions")
-    .select("id, facility_id, has_concierge_partner");
+    .select("id, facility_id, has_concierge_partner, has_featured");
   if (args.facilityId) {
     query = query.eq("facility_id", args.facilityId);
   } else if (args.stripeSubscriptionId) {
@@ -1050,6 +1055,7 @@ export async function deactivateConciergePartner(
   }
 
   const facSubId = (facSubRow as { id: string }).id;
+  const hasFeatured = (facSubRow as { has_featured: boolean }).has_featured === true;
 
   const { error: flagErr } = await supabase
     .from("facility_subscriptions")
@@ -1075,6 +1081,23 @@ export async function deactivateConciergePartner(
     result.failed.push({ step: "partner_rows_deactivate", error: partnerErr.message });
   } else {
     result.partner_rows_deactivated = (deactivatedRows ?? []).length;
+  }
+
+  // Concierge activation also seeds featured_placements (homepage/national,
+  // international/global, state, city) — its included advertising exposure.
+  // Deactivate those on cancel so they stop rotating AND stop counting against
+  // placement caps (get_placement_availability counts active rows regardless
+  // of the subscription flags). Skip if Featured is (still) active and thus
+  // owns the shared rows — mutually exclusive in practice, but guard anyway.
+  if (!hasFeatured) {
+    const { error: fpErr } = await supabase
+      .from("featured_placements")
+      .update({ active: false, deactivated_at: new Date().toISOString() })
+      .eq("subscription_id", facSubId)
+      .eq("active", true);
+    if (fpErr) {
+      result.failed.push({ step: "featured_placements_deactivate", error: fpErr.message });
+    }
   }
 
   return result;
@@ -1320,7 +1343,7 @@ export async function deactivateFeaturedAddon(
 
   let query = supabase
     .from("facility_subscriptions")
-    .select("id, facility_id, has_featured");
+    .select("id, facility_id, has_featured, has_concierge_partner");
   if (args.facilityId) {
     query = query.eq("facility_id", args.facilityId);
   } else if (args.stripeSubscriptionId) {
@@ -1339,6 +1362,7 @@ export async function deactivateFeaturedAddon(
   }
 
   const facSubId = (facSubRow as { id: string }).id;
+  const hasConcierge = (facSubRow as { has_concierge_partner: boolean }).has_concierge_partner === true;
 
   const { error: flagErr } = await supabase
     .from("facility_subscriptions")
@@ -1352,6 +1376,16 @@ export async function deactivateFeaturedAddon(
     result.failed.push({ step: "flag_clear", error: flagErr.message });
   } else {
     result.has_featured_cleared = true;
+  }
+
+  // Concierge Partner is the mutually-exclusive upgrade that INCLUDES Featured
+  // exposure and OWNS the shared featured_placements rows (homepage/national,
+  // international, state, city) for this subscription. When Featured is being
+  // retired BECAUSE Concierge superseded it, the Featured Stripe sub's
+  // subscription.deleted event must NOT deactivate those placements — Concierge
+  // still needs them. Only deactivate when Concierge is not (also) active.
+  if (hasConcierge) {
+    return result;
   }
 
   const { data: deactivatedRows, error: placeErr } = await supabase

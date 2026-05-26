@@ -294,13 +294,13 @@ async function deactivateFeaturedPlacements(supabase: SupabaseClient, subscripti
   if (error) console.error("[cancel-subscription] deactivateFeaturedPlacements failed", error);
 }
 
-async function deactivateConciergePartner(supabase: SupabaseClient, subscriptionId: string): Promise<void> {
+async function deactivateConciergeGeosForSub(supabase: SupabaseClient, subscriptionId: string): Promise<void> {
   const { error } = await supabase
     .from("concierge_partner_facilities")
     .update({ active: false, deactivated_at: new Date().toISOString() })
     .eq("subscription_id", subscriptionId)
     .eq("active", true);
-  if (error) console.error("[cancel-subscription] deactivateConciergePartner failed", error);
+  if (error) console.error("[cancel-subscription] deactivateConciergeGeosForSub failed", error);
 }
 
 /**
@@ -411,7 +411,7 @@ export async function cancelSubscriptionAndRefund(
 
     // 4) Deactivate dependent rows
     await deactivateFeaturedPlacements(supabase, subscription.id);
-    await deactivateConciergePartner(supabase, subscription.id);
+    await deactivateConciergeGeosForSub(supabase, subscription.id);
 
     // 5) Mark subscription cancelled
     await supabase
@@ -508,7 +508,12 @@ export async function cancelSubscriptionAndRefund(
     if (c.stripeRefundId) refundIds.push(c.stripeRefundId);
     if (c.rowId) rowIds.push(c.rowId);
 
-    await deactivateConciergePartner(supabase, subscription.id);
+    await deactivateConciergeGeosForSub(supabase, subscription.id);
+    // Concierge INCLUDES Featured exposure — its activation seeds
+    // featured_placements (homepage/national, international/global, state,
+    // city). Deactivate them too so they stop rotating and stop counting
+    // against placement caps once Concierge is canceled.
+    await deactivateFeaturedPlacements(supabase, subscription.id);
     await supabase
       .from("facility_subscriptions")
       .update({ has_concierge_partner: false, updated_at: new Date().toISOString() })
