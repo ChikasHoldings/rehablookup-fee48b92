@@ -161,20 +161,40 @@ Deno.serve(async (req) => {
     }
 
     // ── Auto-expire stale invited rows ────────────────────────────────────
-    // Invited rows whose expires_at has passed are closed so the slot is
-    // freed for the next provider in the queue on this drain tick.
-    const { data: expired, error: expireErr } = await svc
+    // Invited rows are closed (freeing the slot for the next provider on this
+    // tick) when their expires_at has passed. A second pass defensively expires
+    // rows invited by a path that didn't stamp expires_at (e.g. an admin manual
+    // flip) once their invited_at is older than INVITE_EXPIRY_DAYS. Two simple
+    // UPDATEs rather than one .or() so the ISO-timestamp values can't trip the
+    // PostgREST filter parser.
+    const nowIso = new Date().toISOString();
+    const fallbackThreshold = new Date();
+    fallbackThreshold.setDate(fallbackThreshold.getDate() - INVITE_EXPIRY_DAYS);
+    let expiredCount = 0;
+    const { data: expiredByDate, error: expireErr } = await svc
       .from("addon_waitlist")
-      .update({ status: "expired", closed_at: new Date().toISOString() })
+      .update({ status: "expired", closed_at: nowIso })
       .eq("status", "invited")
-      .lt("expires_at", new Date().toISOString())
-      .not("expires_at", "is", null)
+      .lt("expires_at", nowIso)
       .select("id");
     if (expireErr) {
-      log("WARN", "failed to expire stale invited rows", { error: expireErr.message });
+      log("WARN", "failed to expire stale invited rows (by expires_at)", { error: expireErr.message });
     } else {
-      log("INFO", `Expired ${(expired ?? []).length} stale invited rows`);
+      expiredCount += (expiredByDate ?? []).length;
     }
+    const { data: expiredFallback, error: expireFallbackErr } = await svc
+      .from("addon_waitlist")
+      .update({ status: "expired", closed_at: nowIso })
+      .eq("status", "invited")
+      .is("expires_at", null)
+      .lt("invited_at", fallbackThreshold.toISOString())
+      .select("id");
+    if (expireFallbackErr) {
+      log("WARN", "failed to expire stale invited rows (null expires_at fallback)", { error: expireFallbackErr.message });
+    } else {
+      expiredCount += (expiredFallback ?? []).length;
+    }
+    log("INFO", `Expired ${expiredCount} stale invited rows`);
 
     const stats = { considered: 0, invited: 0, slot_taken: 0, errors: 0, skipped: 0 };
 
