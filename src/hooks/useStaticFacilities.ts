@@ -27,6 +27,11 @@ export interface PublicFacility extends TreatmentCenter {
   gallery_urls: string[] | null;
   isPro?: boolean;
   isClaimed?: boolean;
+  /** Raw paid/editorial Featured signal (facilities.featured), kept SEPARATE
+   *  from the `featured` display field (which is `featured || isPro` for badge
+   *  purposes). Used by the search-results 4-tier sort to rank true Featured
+   *  above plain Pro. */
+  isFeaturedPaid?: boolean;
   verified?: boolean | null;
   year_established?: number | null;
   facilityType?: string | null;
@@ -179,6 +184,9 @@ export const useStaticFacilities = () => {
       featuredPinned: facility.featuredPinned,
       isPro,
       isClaimed: facility.isClaimed,
+      // Raw Featured signal (NOT collapsed with isPro) so the search-results
+      // sort can rank true paid/editorial Featured above plain Pro-claimed.
+      isFeaturedPaid: facility.featured === true,
       isHomepageFeatured,
       planTier,
       verified: facility.verified,

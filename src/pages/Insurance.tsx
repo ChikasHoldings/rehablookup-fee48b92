@@ -3,6 +3,7 @@ import { PageFAQ } from "@/components/seo/PageFAQ";
 import { insuranceFaqs } from "@/data/pageFaqs";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
+import { HomepageGeoFeaturedRail } from "@/components/featured/HomepageGeoFeaturedRail";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -637,6 +638,10 @@ export default function Insurance() {
           </div>
         </div>
       </section>
+
+      {/* Featured facilities — geo-aware paid rotation; self-hides when the
+          visitor's state / nearby / national pools are all empty. */}
+      <HomepageGeoFeaturedRail />
 
       {/* Major Insurance Providers */}
       <section className="py-10 md:py-14">

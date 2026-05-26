@@ -17,6 +17,32 @@ interface FacilityWithPlan {
   name?: string;
 }
 
+interface FacilityWithRank {
+  /** Raw paid/editorial Featured signal (NOT the `featured || isPro` display
+   *  flag). Concierge holders also surface here once their featured signal is
+   *  present. */
+  isFeaturedPaid?: boolean;
+  isPro?: boolean;
+  isClaimed?: boolean;
+}
+
+/**
+ * Four-tier organic rank for the search-results ordering. Lower = higher.
+ *   0  paid/editorial Featured (true ad inventory — also fed by the rails)
+ *   1  Pro-claimed (subscriber, not Featured)
+ *   2  free-claimed (claimed listing, no Pro)
+ *   3  unclaimed
+ *
+ * Proximity is the PRIMARY sort on location searches; this rank is the
+ * secondary tie-break within each distance band (see SearchResults).
+ */
+export function getPlanRank(facility: FacilityWithRank): number {
+  if (facility.isFeaturedPaid) return 0;
+  if (facility.isPro) return 1;
+  if (facility.isClaimed) return 2;
+  return 3;
+}
+
 /**
  * Get the numeric priority for a plan tier.
  * Lower number = higher priority (shows first)

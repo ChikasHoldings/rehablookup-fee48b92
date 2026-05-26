@@ -65,7 +65,7 @@ import { useZipcodeLookup } from "@/hooks/useZipcodeLookup";
 import { useGeoLocation } from "@/hooks/useGeoLocation";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { getPlanPriority } from "@/lib/facilityPlanSort";
+import { getPlanRank } from "@/lib/facilityPlanSort";
 import { analytics } from "@/lib/analytics";
 import {
   TREATMENT_FILTERS,
@@ -544,10 +544,10 @@ const SearchResults = () => {
         const proxA = getProximityScore(a);
         const proxB = getProximityScore(b);
         if (proxA !== proxB) return proxA - proxB;
-        // Secondary: Pro/featured within tier
-        const proA = getPlanPriority(a);
-        const proB = getPlanPriority(b);
-        if (proA !== proB) return proA - proB;
+        // Secondary: 4-tier organic rank (Featured → Pro → free-claimed → unclaimed)
+        const rankA = getPlanRank(a);
+        const rankB = getPlanRank(b);
+        if (rankA !== rankB) return rankA - rankB;
         // Tertiary: ranking score
         const rA = a.calculatedRankingScore || 0;
         const rB = b.calculatedRankingScore || 0;
@@ -562,16 +562,20 @@ const SearchResults = () => {
           const proxB = getProximityScore(b);
           if (proxA !== proxB) return proxA - proxB;
         }
-        const proA = getPlanPriority(a);
-        const proB = getPlanPriority(b);
-        if (proA !== proB) return proA - proB;
+        const rankA = getPlanRank(a);
+        const rankB = getPlanRank(b);
+        if (rankA !== rankB) return rankA - rankB;
+        // Tie-break on ranking score before ID for consistency with proximity.
+        const rA = a.calculatedRankingScore || 0;
+        const rB = b.calculatedRankingScore || 0;
+        if (rA !== rB) return rB - rA;
         return a.id.localeCompare(b.id);
       }
 
-      // For other sorts, Pro first then secondary
-      const proA = getPlanPriority(a);
-      const proB = getPlanPriority(b);
-      if (proA !== proB) return proA - proB;
+      // For other sorts, 4-tier organic rank first then the chosen secondary
+      const rankA = getPlanRank(a);
+      const rankB = getPlanRank(b);
+      if (rankA !== rankB) return rankA - rankB;
 
       switch (sortParam) {
         case "rating-high": {

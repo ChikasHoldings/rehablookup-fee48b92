@@ -9,6 +9,7 @@ import { SearchForm } from "@/components/search/SearchForm";
 import { NoResultsConciergeCTA } from "@/components/search/NoResultsConciergeCTA";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { TreatmentCenterCardSkeletonGrid } from "@/components/skeletons/TreatmentCenterCardSkeleton";
+import { HomepageGeoFeaturedRail } from "@/components/featured/HomepageGeoFeaturedRail";
 import { PaginationFooter } from "@/components/common/PaginationFooter";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
@@ -449,6 +450,10 @@ const RehabCenters = () => {
           </div>
         </div>
       </section>
+
+      {/* Featured facilities — geo-aware paid rotation; self-hides when the
+          visitor's state / nearby / national pools are all empty. */}
+      <HomepageGeoFeaturedRail />
 
       {/* Top Rated Programs */}
       <section className="bg-background py-10 md:py-14">
