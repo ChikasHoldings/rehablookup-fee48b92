@@ -42,6 +42,7 @@ export function notificationIconCompact(type: string): React.ReactNode {
     concierge_tour_confirmed: <Calendar className="h-4 w-4 text-success" />,
     concierge_tour_cancelled: <Calendar className="h-4 w-4 text-destructive" />,
     concierge_message_received: <Send className="h-4 w-4 text-primary" />,
+    placement_intro: <UserCheck className="h-4 w-4 text-primary" />,
   };
   return map[type] || <Bell className="h-4 w-4 text-muted-foreground" />;
 }
@@ -74,6 +75,7 @@ export function notificationIconLarge(type: string): React.ReactNode {
     concierge_tour_confirmed: <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-success" />,
     concierge_tour_cancelled: <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-destructive" />,
     concierge_message_received: <Send className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />,
+    placement_intro: <UserCheck className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />,
   };
   return map[type] || <Bell className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />;
 }
@@ -109,6 +111,7 @@ const TYPE_ROUTES: Record<string, string> = {
   concierge_tour_proposed: "/account/concierge",
   concierge_tour_confirmed: "/account/concierge",
   concierge_tour_cancelled: "/account/concierge",
+  placement_intro: "/account/concierge",
   // Facility / saved flow
   saved_facility: "/account/saved",
   facility_update: "/account/saved",

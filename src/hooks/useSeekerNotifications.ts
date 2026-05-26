@@ -281,7 +281,15 @@ export function useSeekerNotifications() {
             seenNotificationSideEffects.delete(deletedId);
           }
         )
-        .subscribe();
+        .subscribe((status, err) => {
+          // Mirror useProviderNotifications: if realtime degrades (network blip,
+          // outage, channel error), refetch so the bell + page don't sit on
+          // stale data with no live updates and no recovery short of reload.
+          if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+            console.warn("[useSeekerNotifications] realtime subscription degraded", { status, err });
+            void fetchNotifications();
+          }
+        });
     };
 
     setupSubscription();

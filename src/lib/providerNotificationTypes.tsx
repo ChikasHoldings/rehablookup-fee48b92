@@ -128,6 +128,9 @@ export const NOTIFICATION_TYPES: Record<string, NotificationTypeEntry> = {
   review_received: { label: "Review", icon: reviewIcon, route: "/provider/reviews", category: "system" },
   review_pending: { label: "Review Pending", icon: <MessageSquare className="h-5 w-5 text-amber-500" />, route: "/provider/reviews", category: "system" },
   system: { label: "System", icon: <Settings className="h-5 w-5 text-muted-foreground" />, route: "/provider/dashboard", category: "system" },
+  // admin_message: an admin contacting the provider (send-admin-notification).
+  // Route to the notification center where the full message is readable.
+  admin_message: { label: "Message from Admin", icon: <MessageSquare className="h-5 w-5 text-blue-500" />, route: "/provider/notifications", category: "system" },
 };
 
 export const FALLBACK_ENTRY: NotificationTypeEntry = {

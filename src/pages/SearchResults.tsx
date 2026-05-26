@@ -95,14 +95,13 @@ function getStoredUserId(): string | null {
 
 const ITEMS_PER_PAGE = 12;
 
-type SortOption = "proximity" | "featured" | "rating-high" | "rating-low" | "name-asc" | "name-desc" | "reviews";
+type SortOption = "proximity" | "featured" | "rating-high" | "rating-low" | "name-asc" | "name-desc";
 
 const sortOptions: { value: SortOption; label: string }[] = [
   { value: "proximity", label: "Nearest First" },
   { value: "featured", label: "Featured First" },
   { value: "rating-high", label: "Highest Rated" },
   { value: "rating-low", label: "Lowest Rated" },
-  { value: "reviews", label: "Most Reviews" },
   { value: "name-asc", label: "Name (A-Z)" },
   { value: "name-desc", label: "Name (Z-A)" },
 ];
@@ -141,7 +140,14 @@ const SearchResults = () => {
   const stateParam = searchParams.get("state") || ""; // Support direct state filtering from near-me pages
   const queryParam = searchParams.get("q") || ""; // Free-text search from header/seeker
   const currentPage = parseInt(searchParams.get("page") || "1", 10);
-  const sortParam = (searchParams.get("sort") as SortOption) || "proximity";
+  // Normalize unknown/removed sorts (e.g. a stale ?sort=reviews bookmark — the
+  // review sort was removed pending review-count data on public_facilities) to
+  // the default, so the Select doesn't render blank and the switch doesn't hit
+  // a no-op.
+  const rawSort = searchParams.get("sort");
+  const sortParam: SortOption = sortOptions.some((o) => o.value === rawSort)
+    ? (rawSort as SortOption)
+    : "proximity";
   
   // Resolve the Featured rail's placement bucket from the active
   // filters. The memo only depends on the params the resolver reads;
@@ -575,21 +581,6 @@ const SearchResults = () => {
         case "rating-low": {
           const diff = (a.calculatedRankingScore || 0) - (b.calculatedRankingScore || 0);
           return diff !== 0 ? diff : a.id.localeCompare(b.id);
-        }
-        case "reviews": {
-          // Real "Most Reviews" sort using googleReviewCount from the
-          // public snapshot (which already merges Google + platform review
-          // signals into a single count). Previous version was a no-op
-          // localeCompare stub. Falls back to ranking score for ties so
-          // the sort stays stable when many facilities share the same
-          // count (very common for zero-review small towns).
-          const ra = (a as { googleReviewCount?: number | null }).googleReviewCount ?? 0;
-          const rb = (b as { googleReviewCount?: number | null }).googleReviewCount ?? 0;
-          if (ra !== rb) return rb - ra;
-          const scoreA = ((a as { calculatedRankingScore?: number }).calculatedRankingScore) ?? 0;
-          const scoreB = ((b as { calculatedRankingScore?: number }).calculatedRankingScore) ?? 0;
-          if (scoreA !== scoreB) return scoreB - scoreA;
-          return a.id.localeCompare(b.id);
         }
         case "name-asc": return a.name.localeCompare(b.name);
         case "name-desc": return b.name.localeCompare(a.name);
