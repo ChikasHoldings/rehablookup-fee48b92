@@ -69,7 +69,7 @@ function MetricCard({
   isLoading?: boolean;
 }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-shadow hover:shadow">
+    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-shadow hover:shadow">
       <div className="flex items-start justify-between">
         <p className="text-[13px] font-semibold uppercase tracking-wide text-slate-500">
           {title}
@@ -89,7 +89,7 @@ function MetricCard({
         <p className="mt-1.5 truncate text-[13px] text-slate-500">{subtitle}</p>
       )}
       {action && (
-        <div className="mt-3 border-t border-slate-100 pt-3">
+        <div className="mt-2.5 border-t border-slate-100 pt-2.5">
           <Button
             variant="ghost"
             size="sm"
@@ -550,7 +550,7 @@ export default function ProviderDashboardPage() {
         {isLoading && !facility ? (
           <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
             {[0, 1, 2, 3].map((i) => (
-              <div key={i} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div key={i} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
                 <Skeleton className="h-4 w-20" />
                 <Skeleton className="mt-3 h-9 w-16" />
                 <Skeleton className="mt-2 h-3 w-24" />
