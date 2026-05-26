@@ -208,10 +208,27 @@ Deno.serve(async (req) => {
       if (product === "featured" && (facSub as { has_featured: boolean }).has_featured === true) {
         return json(409, { error: "Featured is already active on this facility.", code: "ALREADY_ACTIVE" });
       }
+      // Mutual exclusivity: Concierge Partner is the upgrade that already
+      // INCLUDES Featured exposure, so a facility can't hold both. Block
+      // buying Featured while Concierge is active.
+      if (product === "featured" && (facSub as { has_concierge_partner: boolean }).has_concierge_partner === true) {
+        return json(409, {
+          error: "Concierge Partner already includes Featured exposure. Downgrade Concierge first if you only want Featured.",
+          code: "CONCIERGE_ACTIVE",
+        });
+      }
       if (product === "concierge" && (facSub as { has_concierge_partner: boolean }).has_concierge_partner === true) {
         return json(409, { error: "Concierge is already active on this facility.", code: "ALREADY_ACTIVE" });
       }
+      // Concierge while Featured is allowed — it's an upgrade. The webhook
+      // supersedes (cancels + refunds) the Featured add-on on activation; we
+      // flag it on the subscription metadata so the webhook knows to do so.
     }
+    const supersedeFeatured =
+      intent === "add_addon" &&
+      product === "concierge" &&
+      !!facSub &&
+      (facSub as { has_featured?: boolean }).has_featured === true;
 
     // ---- Resolve Stripe price by lookup key ----
     const lookupKey = LOOKUP_KEYS[product][billingPeriod];
@@ -318,6 +335,9 @@ Deno.serve(async (req) => {
       // can seed concierge_partner_facilities with the user's chosen
       // levels rather than the broad DEFAULT.
       ...(product === "concierge" && levelsOfCareCsv ? { levels_of_care: levelsOfCareCsv } : {}),
+      // Tell the webhook to supersede (cancel + refund) the existing Featured
+      // add-on when this Concierge upgrade activates (mutual exclusivity).
+      ...(supersedeFeatured ? { supersede_featured: "true" } : {}),
     };
 
     // EKRA safe-harbor framing at the point of payment for Concierge: make

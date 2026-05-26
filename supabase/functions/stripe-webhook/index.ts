@@ -3185,6 +3185,59 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
           });
         }
 
+        // Mutual-exclusivity supersede: this Concierge upgrade was bought while
+        // Featured was active (flagged at checkout via metadata.supersede_featured).
+        // Concierge activation SUCCEEDED above and already carries the local
+        // state/city placements (same facility_subscriptions row) plus national +
+        // international, so retire the now-redundant Featured add-on to stop
+        // double-billing. We intentionally do NOT deactivate featured_placements
+        // here — they're shared on the facility_subscriptions row and now owned by
+        // Concierge (the rotation pool accepts has_concierge_partner). Conditional
+        // on activation success so we never strip Featured without Concierge live.
+        // NOTE: no auto-refund of the in-flight Featured period — a manual /
+        // proration refund is a documented follow-up.
+        if (subscription.metadata?.supersede_featured === "true") {
+          try {
+            const { data: supSub } = await supabaseAdmin
+              .from("facility_subscriptions")
+              .select("featured_stripe_subscription_id")
+              .eq("facility_id", addonFacilityId)
+              .maybeSingle();
+            const featuredSubId =
+              (supSub as { featured_stripe_subscription_id: string | null } | null)
+                ?.featured_stripe_subscription_id ?? null;
+            if (featuredSubId) {
+              try {
+                await stripe.subscriptions.cancel(featuredSubId);
+              } catch (cancelErr) {
+                console.error("[stripe-webhook] supersede: Featured Stripe cancel failed", cancelErr);
+              }
+            }
+            await supabaseAdmin
+              .from("facility_subscriptions")
+              .update({
+                has_featured: false,
+                featured_stripe_subscription_id: null,
+                featured_current_period_end: null,
+                updated_at: new Date().toISOString(),
+              })
+              .eq("facility_id", addonFacilityId);
+            await supabaseAdmin.from("subscription_events").insert({
+              event_type: "featured_superseded_by_concierge",
+              stripe_event_id: event.id,
+              stripe_customer_id: customerId,
+              stripe_subscription_id: subscription.id,
+              facility_id: addonFacilityId,
+              plan_tier: null,
+              status: subscription.status,
+              metadata: { superseded_featured_stripe_subscription_id: featuredSubId },
+            });
+            logStep("Featured superseded by Concierge upgrade", { facilityId: addonFacilityId, featuredSubId });
+          } catch (supErr) {
+            console.error("[stripe-webhook] supersede-featured cleanup failed", supErr);
+          }
+        }
+
         const { data: facSubProvider } = await supabaseAdmin
           .from("facility_subscriptions")
           .select("provider_id")
@@ -3197,7 +3250,7 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
             type: "concierge_addon_active",
             title: "Concierge Partner is live",
             message:
-              "Your facility is now a Concierge Partner. Our advisors will surface your listing with a verified-partner badge when seekers match your geography and level of care.",
+              "Your facility is now a Concierge Partner — featured nationally on our homepage, across your state and city pages, and on our international pages, plus surfaced to our advisors with a verified-partner badge when seekers match your geography and level of care.",
             metadata: { stripe_subscription_id: subscription.id },
           });
         }
