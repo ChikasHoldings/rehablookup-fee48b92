@@ -17,6 +17,8 @@ export interface FacilitySubscriptionRow {
   discount_applied_cents: number | null;
   period_start: string | null;
   current_period_end: string | null;
+  featured_current_period_end: string | null;
+  concierge_current_period_end: string | null;
   current_monthly_period_start: string | null;
   cancel_at_period_end: boolean | null;
   switch_to_monthly_at_renewal: boolean | null;
@@ -42,6 +44,8 @@ const SELECT = [
   "discount_applied_cents",
   "period_start",
   "current_period_end",
+  "featured_current_period_end",
+  "concierge_current_period_end",
   "current_monthly_period_start",
   "cancel_at_period_end",
   "switch_to_monthly_at_renewal",

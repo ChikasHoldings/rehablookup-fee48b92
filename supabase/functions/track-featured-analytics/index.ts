@@ -77,32 +77,17 @@ Deno.serve(async (req) => {
 
     const today = new Date().toISOString().split("T")[0];
 
-    const { data: existing } = await supabaseClient
-      .from("featured_placement_analytics")
-      .select("id, event_count")
-      .eq("facility_id", facility_id)
-      .eq("event_type", event_type)
-      .eq("event_date", today)
-      .maybeSingle();
-
-    if (existing) {
-      const { error: updateError } = await supabaseClient
-        .from("featured_placement_analytics")
-        .update({ event_count: existing.event_count + 1, metadata: body.metadata && typeof body.metadata === "object" ? body.metadata : {} })
-        .eq("id", existing.id);
-      if (updateError) throw updateError;
-    } else {
-      const { error: insertError } = await supabaseClient
-        .from("featured_placement_analytics")
-        .insert({
-          facility_id: facility_id as string,
-          event_type: event_type as string,
-          event_date: today,
-          event_count: 1,
-          metadata: body.metadata && typeof body.metadata === "object" ? body.metadata : {}
-        });
-      if (insertError) throw insertError;
-    }
+    // Atomic upsert-increment (INSERT ... ON CONFLICT DO UPDATE event_count+1).
+    // The prior select-then-update/insert raced under concurrent events for the
+    // same (facility_id, event_type, event_date): lost increments or a unique-
+    // index collision on the insert.
+    const { error: rpcError } = await supabaseClient.rpc("increment_featured_event", {
+      p_facility_id: facility_id as string,
+      p_event_type: event_type as string,
+      p_event_date: today,
+      p_metadata: body.metadata && typeof body.metadata === "object" ? body.metadata : {},
+    });
+    if (rpcError) throw rpcError;
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200,

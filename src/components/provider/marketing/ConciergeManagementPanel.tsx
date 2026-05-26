@@ -79,8 +79,13 @@ export function ConciergeManagementPanel({ facilityId, subscription }: Concierge
     staleTime: 1000 * 30,
   });
 
-  const periodEndStr = subscription.current_period_end
-    ? new Date(subscription.current_period_end).toLocaleDateString("en-US", {
+  // Concierge bills independently of Pro — base the "re-claim before {date}"
+  // promise on the Concierge add-on's own period, falling back to the Pro
+  // period for rows not yet backfilled by the webhook.
+  const conciergePeriodEnd =
+    subscription.concierge_current_period_end ?? subscription.current_period_end;
+  const periodEndStr = conciergePeriodEnd
+    ? new Date(conciergePeriodEnd).toLocaleDateString("en-US", {
         month: "long", day: "numeric", year: "numeric",
       })
     : "your period end";

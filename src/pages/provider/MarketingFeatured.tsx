@@ -105,8 +105,13 @@ export default function MarketingFeatured() {
 
   const isPro = subscription?.tier === "pro" && subscription?.status === "active";
   const hasFeatured = subscription?.has_featured === true;
-  const periodEndStr = subscription?.current_period_end
-    ? new Date(subscription.current_period_end).toLocaleDateString("en-US", {
+  // The Featured add-on bills independently of Pro — use its own period end,
+  // falling back to the Pro period for rows activated before that column was
+  // backfilled by the webhook.
+  const featuredPeriodEnd =
+    subscription?.featured_current_period_end ?? subscription?.current_period_end;
+  const periodEndStr = featuredPeriodEnd
+    ? new Date(featuredPeriodEnd).toLocaleDateString("en-US", {
         month: "long", day: "numeric", year: "numeric",
       })
     : null;
@@ -135,8 +140,7 @@ export default function MarketingFeatured() {
               </h1>
               {hasFeatured && periodEndStr && (
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Paid through {periodEndStr}
-                  {subscription?.billing_period === "monthly" ? " (monthly)" : " (annual)"}.
+                  Paid through {periodEndStr}.
                   {" "}
                   <Link to="/provider/billing" className="underline-offset-2 hover:underline">
                     Manage billing

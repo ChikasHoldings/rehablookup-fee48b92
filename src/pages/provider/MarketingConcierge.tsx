@@ -107,8 +107,12 @@ export default function MarketingConcierge() {
 
   const isPro = subscription?.tier === "pro" && subscription?.status === "active";
   const hasConcierge = subscription?.has_concierge_partner === true;
-  const periodEndStr = subscription?.current_period_end
-    ? new Date(subscription.current_period_end).toLocaleDateString("en-US", {
+  // The Concierge add-on bills independently of Pro — use its own period end,
+  // falling back to the Pro period for rows not yet backfilled by the webhook.
+  const conciergePeriodEnd =
+    subscription?.concierge_current_period_end ?? subscription?.current_period_end;
+  const periodEndStr = conciergePeriodEnd
+    ? new Date(conciergePeriodEnd).toLocaleDateString("en-US", {
         month: "long", day: "numeric", year: "numeric",
       })
     : null;

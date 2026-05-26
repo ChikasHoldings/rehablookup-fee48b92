@@ -111,6 +111,8 @@ export async function activateConciergePartner(
     .update({
       has_concierge_partner: true,
       concierge_stripe_subscription_id: args.stripeSubscriptionId,
+      // Persist the add-on sub's own period (it bills independently of Pro).
+      concierge_current_period_end: args.currentPeriodEnd,
       updated_at: new Date().toISOString(),
     })
     .eq("id", facSubId);

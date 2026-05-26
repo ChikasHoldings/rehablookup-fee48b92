@@ -115,6 +115,8 @@ export async function activateFeaturedAddon(
     .update({
       has_featured: true,
       featured_stripe_subscription_id: args.stripeSubscriptionId,
+      // Persist the add-on sub's own period (it bills independently of Pro).
+      featured_current_period_end: args.currentPeriodEnd,
       updated_at: new Date().toISOString(),
     })
     .eq("id", facSubId);

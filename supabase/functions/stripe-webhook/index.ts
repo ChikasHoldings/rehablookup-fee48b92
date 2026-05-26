@@ -845,6 +845,8 @@ export async function activateConciergePartner(
     .update({
       has_concierge_partner: true,
       concierge_stripe_subscription_id: args.stripeSubscriptionId,
+      // Persist the add-on sub's own period (it bills independently of Pro).
+      concierge_current_period_end: args.currentPeriodEnd,
       updated_at: new Date().toISOString(),
     })
     .eq("id", facSubId);
@@ -1155,6 +1157,8 @@ export async function activateFeaturedAddon(
     .update({
       has_featured: true,
       featured_stripe_subscription_id: args.stripeSubscriptionId,
+      // Persist the add-on sub's own period (it bills independently of Pro).
+      featured_current_period_end: args.currentPeriodEnd,
       updated_at: new Date().toISOString(),
     })
     .eq("id", facSubId);
@@ -2391,6 +2395,21 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
           updated_at: new Date().toISOString(),
         })
         .eq("stripe_subscription_id", subscription.id);
+
+      // Add-on subscriptions (Featured/Concierge) are SEPARATE Stripe subs that
+      // renew independently and store their period in their own column. The
+      // update above keys on the Pro stripe_subscription_id, so an add-on's
+      // renewal event would otherwise leave its period stale. These two updates
+      // are no-ops for the Pro sub (its id isn't in the add-on columns) and
+      // refresh the add-on period when it's an add-on sub that renewed.
+      await supabaseAdmin
+        .from("facility_subscriptions")
+        .update({ featured_current_period_end: currentPeriodEnd, updated_at: new Date().toISOString() })
+        .eq("featured_stripe_subscription_id", subscription.id);
+      await supabaseAdmin
+        .from("facility_subscriptions")
+        .update({ concierge_current_period_end: currentPeriodEnd, updated_at: new Date().toISOString() })
+        .eq("concierge_stripe_subscription_id", subscription.id);
 
       if (updateError) {
         logStep("Error updating subscription", { error: updateError.message });
