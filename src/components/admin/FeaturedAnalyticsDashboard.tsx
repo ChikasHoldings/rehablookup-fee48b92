@@ -108,7 +108,6 @@ export function FeaturedAnalyticsDashboard() {
       const days = getDaysFromRange(dateRange);
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - days);
-      const startDateStr = startDate.toISOString().split("T")[0];
 
       // Fetch Pro subscriber facilities
       const { data: featuredResponse, error: featuredErr } = await supabase.functions.invoke("get-featured-facilities");
@@ -134,22 +133,17 @@ export function FeaturedAnalyticsDashboard() {
         };
       }
 
-      // Fetch analytics events
-      const { data: analyticsData, error: analyticsErr } = await supabase
-        .from("featured_placement_analytics")
-        .select("id, facility_id, event_date, event_type, event_count, metadata")
-        .in("facility_id", featuredIds)
-        .gte("event_date", startDateStr);
-      if (analyticsErr) throw analyticsErr;
-
-      // Fetch facility profile views from provider_events (excludes impressions)
-      const { data: viewsData, error: viewsErr } = await supabase
-        .from("provider_events")
-        .select("facility_id")
-        .in("facility_id", featuredIds)
-        .eq("event_type", "profile_view").eq("is_internal", false).eq("is_bot", false)
-        .gte("created_at", startDate.toISOString());
-      if (viewsErr) throw viewsErr;
+      // Real per-facility impressions + phone clicks — the SAME tables the
+      // provider widget + get-facility-analytics use. Replaces the old read
+      // from featured_placement_analytics, which never receives impression
+      // rows; the dashboard then fabricated impressions (days*50) and used a
+      // profile-view "click proxy", showing invented numbers that diverged
+      // from every other Featured surface.
+      const { data: poolAnalytics, error: poolErr } = await supabase.rpc(
+        "get_featured_pool_analytics",
+        { p_facility_ids: featuredIds, p_since: startDate.toISOString() },
+      );
+      if (poolErr) throw poolErr;
 
       // Fetch leads for conversions
       const { data: leadsData, error: leadsErr } = await supabase
@@ -183,23 +177,12 @@ export function FeaturedAnalyticsDashboard() {
         });
       });
 
-      // Process analytics events
-      analyticsData?.forEach(event => {
-        const metrics = metricsMap.get(event.facility_id);
+      // Apply measured impressions + phone clicks per facility.
+      (poolAnalytics ?? []).forEach((row: { facility_id: string; impressions: number; phone_clicks: number }) => {
+        const metrics = metricsMap.get(row.facility_id);
         if (metrics) {
-          if (event.event_type === "impression") {
-            metrics.impressions += event.event_count;
-          } else if (event.event_type === "click") {
-            metrics.clicks += event.event_count;
-          }
-        }
-      });
-
-      // Use provider_events as click proxy if no click data
-      viewsData?.forEach(view => {
-        const metrics = metricsMap.get(view.facility_id);
-        if (metrics && metrics.clicks === 0) {
-          metrics.clicks += 1;
+          metrics.impressions = Number(row.impressions) || 0;
+          metrics.clicks = Number(row.phone_clicks) || 0;
         }
       });
 
@@ -213,25 +196,8 @@ export function FeaturedAnalyticsDashboard() {
         }
       });
 
-      // Track whether *any* facility has real impression data so the
-      // UI can disclose when CTR is based on the fallback estimate
-      // instead of measured rows. Previously the page silently
-      // inflated impressions with a hardcoded 50/day fudge that
-      // distorted every downstream KPI (CTR especially).
-      let anyMeasuredImpression = false;
-      metricsMap.forEach((metrics) => {
-        if (metrics.impressions > 0) anyMeasuredImpression = true;
-      });
-
-      // Calculate rates. Estimated-impression fallback only runs if
-      // NO real data exists at all — otherwise we trust measured rows.
-      // The estimate is clearly labeled in the UI when it kicks in.
-      const useEstimate = !anyMeasuredImpression;
+      // Compute rates from measured data only — no synthetic estimate.
       metricsMap.forEach(metrics => {
-        if (useEstimate && metrics.impressions === 0) {
-          // 6 default homepage slots * ~daily impressions per slot
-          metrics.impressions = Math.round(days * 50);
-        }
         metrics.ctr = metrics.impressions > 0
           ? (metrics.clicks / metrics.impressions) * 100
           : 0;
@@ -272,7 +238,9 @@ export function FeaturedAnalyticsDashboard() {
         avgLeadsPerProvider,
         topPerformer,
         subscriberCount: featuredIds.length,
-        impressionsAreMeasured: !useEstimate,
+        // Impressions are now always read from the real featured_impressions
+        // table (no synthetic estimate), so they're always "measured".
+        impressionsAreMeasured: true,
       };
     },
     staleTime: 1000 * 60 * 2, // 2 min stale time for faster updates
@@ -335,21 +303,6 @@ export function FeaturedAnalyticsDashboard() {
         </AlertDescription>
       </Alert>
 
-      {/* Estimated-impressions disclosure — fires only when no
-          impression events exist in the window, so the page falls
-          back to a 50/day-per-facility estimate. Without this banner
-          admins could mistake the estimate for measured data. */}
-      {data.subscriberCount > 0 && !data.impressionsAreMeasured && (
-        <Alert className="bg-amber-50 border-amber-200" role="status">
-          <Info className="h-4 w-4 text-amber-600" />
-          <AlertDescription className="text-amber-800">
-            <strong>Impressions are estimated</strong> — no impression events were
-            tracked in this period, so impressions and CTR are derived from a
-            50/day-per-facility baseline. Click counts, lead counts, and conversion
-            rates are measured from real events.
-          </AlertDescription>
-        </Alert>
-      )}
 
       {/* Header with date range selector and refresh */}
       <div className="flex items-center justify-between">
