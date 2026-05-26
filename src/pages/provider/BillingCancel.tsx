@@ -60,6 +60,12 @@ export default function BillingCancel() {
       .then(({ data, error }) => {
         if (cancelled) return;
         if (error) throw error;
+        // Some edge functions return a classified error in the 200 body
+        // (`data.error`) rather than a non-2xx status. Don't cast that as
+        // preview data — downstream `.pieces` access would crash the page.
+        if (data && (data as { error?: string }).error) {
+          throw new Error((data as { error?: string }).error || "Failed to compute refund");
+        }
         setPreview(data as CancellationPreviewData);
       })
       .catch((err) => {

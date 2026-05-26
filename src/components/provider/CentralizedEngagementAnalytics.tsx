@@ -120,7 +120,7 @@ export function CentralizedEngagementAnalytics({ dateRange, facilityId }: Centra
       )}
 
       {/* Per-Facility Breakdown */}
-      {hasMultipleFacilities && analytics && (
+      {hasMultipleFacilities && analytics && analytics.facilityBreakdown && (
         <div className="space-y-2">
           <div className="flex items-center gap-1.5">
             <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
@@ -151,7 +151,7 @@ export function CentralizedEngagementAnalytics({ dateRange, facilityId }: Centra
                 </thead>
                 <tbody>
                   {analytics.facilityBreakdown.map((facility) => {
-                    const facilityLeads = leadAnalytics?.facilityBreakdown.find(f => f.facilityId === facility.facilityId)?.totalLeads || 0;
+                    const facilityLeads = leadAnalytics?.facilityBreakdown?.find(f => f.facilityId === facility.facilityId)?.totalLeads || 0;
                     return (
                       <tr key={facility.facilityId} className="border-b last:border-b-0 hover:bg-muted/20 transition-colors">
                         <td className="px-3 py-2.5 font-medium text-foreground max-w-[180px] truncate">{facility.facilityName}</td>

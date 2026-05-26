@@ -91,7 +91,7 @@ export function LeadDetailDrawer({ lead, open, onOpenChange }: LeadDetailDrawerP
     name: lead.name,
     email: lead.email,
     phone: lead.phone,
-    initials: lead.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase(),
+    initials: (lead.name?.trim() || "?").split(" ").map(n => n[0] ?? "").join("").slice(0, 2).toUpperCase(),
   } : null;
 
   // Fetch notes for this lead

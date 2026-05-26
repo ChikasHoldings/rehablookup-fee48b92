@@ -413,12 +413,18 @@ export default function ProviderSettingsPage() {
     };
 
     try {
-      // Use upsert for atomic, race-condition-free save
-      const { error } = await supabase
+      // Use upsert for atomic, race-condition-free save. Select back the row
+      // so a silent RLS denial (0 rows, no error) surfaces as a failure rather
+      // than a false "saved" toast.
+      const { data: savedRows, error } = await supabase
         .from("notification_preferences")
-        .upsert(preferences, { onConflict: "user_id" });
+        .upsert(preferences, { onConflict: "user_id" })
+        .select("user_id");
 
       if (error) throw error;
+      if (!savedRows || savedRows.length === 0) {
+        throw new Error("Couldn't save your notification preferences. Please try again.");
+      }
 
       setNotificationsSaved(true);
       queryClient.invalidateQueries({ queryKey: ["notification-preferences"] });

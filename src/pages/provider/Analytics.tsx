@@ -155,7 +155,7 @@ export default function ProviderAnalyticsPage() {
       rows.push(["Per-facility breakdown (period)"]);
       rows.push(["Facility", "Impressions", "Profile Views", "Calls", "Website", "Inquiries"]);
       engagementData.facilityBreakdown.forEach((f) => {
-        const facilityLeads = leadData?.facilityBreakdown.find(lf => lf.facilityId === f.facilityId)?.totalLeads || 0;
+        const facilityLeads = leadData?.facilityBreakdown?.find(lf => lf.facilityId === f.facilityId)?.totalLeads || 0;
         rows.push([
           f.facilityName,
           String(f.impressions),

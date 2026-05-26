@@ -68,7 +68,7 @@ export function CancellationPreview({ data }: CancellationPreviewProps) {
         </p>
 
         <div className="rounded-md border border-slate-200 bg-slate-50/60 p-3 font-mono text-xs leading-6 overflow-x-auto">
-          {data.pieces.map((piece) => (
+          {(data.pieces ?? []).map((piece) => (
             <div key={piece.tier} className="mb-3 last:mb-0">
               <div className="font-sans font-semibold text-slate-900 text-sm not-italic mb-1">
                 {TIER_LABEL[piece.tier]}
@@ -83,7 +83,7 @@ export function CancellationPreview({ data }: CancellationPreviewProps) {
               </div>
             </div>
           ))}
-          {data.pieces.length > 1 && (
+          {(data.pieces?.length ?? 0) > 1 && (
             <div className="border-t border-slate-300 pt-2 mt-2 font-semibold">
               Total refund:                    {fmtMoney(data.total_refund_cents).padStart(12)}
             </div>
