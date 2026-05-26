@@ -24,20 +24,46 @@ type PlacementType =
   | "near_me"
   | "treatment"
   | "insurance"
+  | "international"
   | "article";
 
-// Geo placement types are locked to the facility's own address (derived
-// below) so a facility only ever Features in its real operating geography.
+type Mode = "featured" | "concierge";
+
+// Geo placement types that, in Featured mode, are locked to the facility's
+// own address (derived below) so a facility only ever Features in its real
+// operating geography. In Concierge mode these become free-form (the partner
+// pays for national reach and may target any geography).
 const GEO_TYPES: ReadonlySet<string> = new Set(["state", "city", "near_me"]);
+
+// Types whose placement_value is fixed (no user input) — homepage is always
+// "national", search/international are always "global".
+const FIXED_VALUE: Record<string, string> = {
+  homepage: "national",
+  search: "global",
+  international: "global",
+};
 
 // Featured is LOCAL/REGIONAL only: the provider can rotate on their own
 // state / city / near-me pages (+ treatment/insurance/article). Homepage
-// (national) and the global search pool are reserved for the Concierge
-// Partner upgrade, so they are intentionally NOT offered here.
-const PLACEMENT_TYPE_OPTIONS: { value: PlacementType; label: string; hint: string }[] = [
+// (national), the international pages, and the global search pool are reserved
+// for the Concierge Partner upgrade, so they are NOT offered in Featured mode.
+const FEATURED_OPTIONS: { value: PlacementType; label: string; hint: string }[] = [
   { value: "state", label: "State page", hint: "Your facility's state (from its address)" },
   { value: "city", label: "City page", hint: "Your facility's city (from its address)" },
   { value: "near_me", label: "Near-me page", hint: "Your facility's state (from its address)" },
+  { value: "treatment", label: "Treatment-type page", hint: "slug (e.g. medication-assisted)" },
+  { value: "insurance", label: "Insurance page", hint: "slug (e.g. aetna)" },
+  { value: "article", label: "Article rotation", hint: "article slug" },
+];
+
+// Concierge is the national upgrade: homepage + international fixed slots, plus
+// manual state/city/near-me entry for ANY geography (not address-locked).
+const CONCIERGE_OPTIONS: { value: PlacementType; label: string; hint: string }[] = [
+  { value: "homepage", label: "Homepage (national)", hint: "National homepage rotation" },
+  { value: "international", label: "International pages", hint: "Global international rotation" },
+  { value: "state", label: "State page", hint: "Any US state (e.g. California)" },
+  { value: "city", label: "City page", hint: "Any city (e.g. Los Angeles)" },
+  { value: "near_me", label: "Near-me page", hint: "2-letter state abbr (e.g. CA)" },
   { value: "treatment", label: "Treatment-type page", hint: "slug (e.g. medication-assisted)" },
   { value: "insurance", label: "Insurance page", hint: "slug (e.g. aetna)" },
   { value: "article", label: "Article rotation", hint: "article slug" },
@@ -55,8 +81,7 @@ function normalizeValue(type: PlacementType, raw: string): string {
   const trimmed = raw.trim();
   // near_me matches the public near-me pages, which pass a 2-letter abbr.
   if (type === "near_me") return trimmed.toUpperCase();
-  if (type === "homepage") return "national";
-  if (type === "search") return "global";
+  if (type in FIXED_VALUE) return FIXED_VALUE[type];
   // state + city match the dedicated state/city pages, which pass a slug
   // (StatePage/CityPage pass stateData.slug / cityData.slug). Treatment /
   // insurance / article are slugs too.
@@ -67,26 +92,36 @@ interface Props {
   facilityId: string;
   subscriptionId: string;
   onAdded: () => void;
+  /**
+   * "featured" (default): geo placements are derived from + locked to the
+   * facility address, and only local/regional page types are offered.
+   * "concierge": national homepage + international are unlocked and the
+   * provider may target ANY state/city manually (national upgrade tier).
+   */
+  mode?: Mode;
 }
 
 export function AddFeaturedPlacementForm({
   facilityId,
   subscriptionId,
   onAdded,
+  mode = "featured",
 }: Props) {
   const queryClient = useQueryClient();
+  const isConcierge = mode === "concierge";
+  const PLACEMENT_TYPE_OPTIONS = isConcierge ? CONCIERGE_OPTIONS : FEATURED_OPTIONS;
   const [open, setOpen] = useState(false);
   const [type, setType] = useState<PlacementType | "">("");
   const [rawValue, setRawValue] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  // The facility's own address drives every geo placement. We never let the
-  // provider hand-type a state/city, so they can't Feature in a geography
-  // they aren't located in (and the stored value always matches the format
-  // the public state/city/near-me pages query by).
+  // In Featured mode the facility's own address drives every geo placement —
+  // we never let the provider hand-type a state/city, so they can't Feature in
+  // a geography they aren't located in. Concierge mode pays for national reach,
+  // so that lock is lifted and the address lookup isn't needed.
   const { data: facilityGeo, isLoading: geoLoading } = useQuery({
     queryKey: ["facility-geo-for-featured", facilityId],
-    enabled: !!facilityId,
+    enabled: !!facilityId && !isConcierge,
     queryFn: async (): Promise<{ state: string | null; city: string | null } | null> => {
       const { data, error } = await supabase
         .from("facilities")
@@ -124,19 +159,23 @@ export function AddFeaturedPlacementForm({
   const geoReady = (t: string): boolean =>
     t === "city" ? !!facilityCitySlug : !!facilityStateAbbr;
 
+  // Geo types are address-locked only in Featured mode.
+  const isLockedGeoType = (t: string): boolean => !isConcierge && GEO_TYPES.has(t);
+  const isFixedValueType = (t: string): boolean => t in FIXED_VALUE;
+
   const reset = () => {
     setType("");
     setRawValue("");
   };
 
-  const valueRequired = type !== "homepage" && type !== "search";
+  const valueRequired = !!type && !isFixedValueType(type);
 
   const resolvedValue = !type
     ? ""
-    : GEO_TYPES.has(type)
+    : isLockedGeoType(type)
       ? derivedGeoValue(type)
-      : !valueRequired
-        ? type === "homepage" ? "national" : "global"
+      : isFixedValueType(type)
+        ? FIXED_VALUE[type]
         : rawValue.trim().length > 0
           ? normalizeValue(type as PlacementType, rawValue)
           : "";
@@ -164,7 +203,7 @@ export function AddFeaturedPlacementForm({
   const canSubmit =
     type !== "" &&
     (!valueRequired ||
-      (GEO_TYPES.has(type) ? geoReady(type) : rawValue.trim().length > 0)) &&
+      (isLockedGeoType(type) ? geoReady(type) : rawValue.trim().length > 0)) &&
     !submitting &&
     !slotsFull;
 
@@ -251,7 +290,8 @@ export function AddFeaturedPlacementForm({
   }
 
   const activeOption = PLACEMENT_TYPE_OPTIONS.find((o) => o.value === type);
-  const isGeoType = !!type && GEO_TYPES.has(type);
+  const lockedGeo = isLockedGeoType(type);
+  const fixedValue = isFixedValueType(type);
 
   return (
     <form
@@ -260,7 +300,7 @@ export function AddFeaturedPlacementForm({
     >
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-slate-900">
-          Add a Featured placement
+          {isConcierge ? "Add an advertising placement" : "Add a Featured placement"}
         </h3>
         <Button
           type="button"
@@ -276,15 +316,25 @@ export function AddFeaturedPlacementForm({
         </Button>
       </div>
 
-      {/* Location context — every geo placement is scoped to this address. */}
-      {facilityGeo && (facilityGeo.state || facilityGeo.city) && (
+      {/* Location context — in Featured mode every geo placement is scoped to
+          this address. Concierge mode targets any geography, so we instead
+          explain the national reach. */}
+      {isConcierge ? (
         <p className="inline-flex items-center gap-1.5 text-xs text-slate-500">
           <MapPin className="h-3.5 w-3.5 text-slate-400" aria-hidden />
-          Featuring for{" "}
-          <strong className="text-slate-700">
-            {[facilityGeo.city, facilityGeo.state].filter(Boolean).join(", ")}
-          </strong>
+          Concierge Partner — feature nationally, internationally, and in any
+          state or city you choose.
         </p>
+      ) : (
+        facilityGeo && (facilityGeo.state || facilityGeo.city) && (
+          <p className="inline-flex items-center gap-1.5 text-xs text-slate-500">
+            <MapPin className="h-3.5 w-3.5 text-slate-400" aria-hidden />
+            Featuring for{" "}
+            <strong className="text-slate-700">
+              {[facilityGeo.city, facilityGeo.state].filter(Boolean).join(", ")}
+            </strong>
+          </p>
+        )
       )}
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -294,8 +344,8 @@ export function AddFeaturedPlacementForm({
             value={type}
             onValueChange={(v) => {
               setType(v as PlacementType);
-              // Geo types derive their value from the address; manual types
-              // (treatment / insurance / article) start blank.
+              // Geo types derive their value from the address (Featured) or
+              // expect manual entry (Concierge); reset the input either way.
               setRawValue("");
             }}
             disabled={submitting}
@@ -315,11 +365,11 @@ export function AddFeaturedPlacementForm({
         <div>
           <Label className="text-xs font-medium text-slate-700">
             Value
-            {(!valueRequired || isGeoType) && (
+            {(fixedValue || lockedGeo) && (
               <span className="text-slate-400 font-normal"> (auto)</span>
             )}
           </Label>
-          {isGeoType ? (
+          {lockedGeo ? (
             geoLoading ? (
               <div className="mt-1 inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500">
                 <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
@@ -347,10 +397,10 @@ export function AddFeaturedPlacementForm({
           ) : (
             <>
               <Input
-                value={!valueRequired ? (type === "homepage" ? "national" : "global") : rawValue}
+                value={fixedValue ? FIXED_VALUE[type] : rawValue}
                 onChange={(e) => setRawValue(e.target.value)}
                 placeholder={activeOption?.hint ?? "Pick a page type first"}
-                disabled={submitting || !valueRequired || !type}
+                disabled={submitting || fixedValue || !type}
                 className="mt-1"
               />
               {activeOption && (

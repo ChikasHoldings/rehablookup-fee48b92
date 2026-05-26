@@ -33,10 +33,13 @@ export const TIER_PRICING: Record<TierKey, TierPricing> = {
   },
 };
 
-export const BUNDLE_MONTHLY_CENTS = 9900 + 59900 + 100000;       // 169800 = $1,698/mo
-export const BUNDLE_ANNUAL_CENTS = 100980 + 610860 + 1020000;    // 1731840 = $17,318.40/yr
+// The top spend is now Pro + Concierge ($1,099/mo) — Concierge is a
+// mutually-exclusive upgrade that already includes Featured exposure, so a
+// Pro + Featured + Concierge bundle no longer exists.
+export const BUNDLE_MONTHLY_CENTS = 9900 + 100000;       // 109900 = $1,099/mo
+export const BUNDLE_ANNUAL_CENTS = 100980 + 1020000;     // 1120980 = $11,209.80/yr
 
-/** Whole-dollar format: `$99` or `$1,698`. */
+/** Whole-dollar format: `$99` or `$1,099`. */
 export function fmtMoneyWhole(cents: number): string {
   return `$${Math.round(cents / 100).toLocaleString("en-US")}`;
 }
@@ -47,15 +50,16 @@ export function fmtMoney(cents: number | null | undefined): string {
   return `$${(cents / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-/** "Pro + Featured + Concierge" / "Pro + Featured" / "Pro" / "Free" */
+/** "Pro + Concierge" / "Pro + Featured" / "Pro" / "Free" */
 export function tierComboLabel(flags: {
   tier: string | null;
   has_featured: boolean | null;
   has_concierge_partner: boolean | null;
 }): string {
   if (flags.tier !== "pro") return "Free";
-  if (flags.has_featured && flags.has_concierge_partner) return "Pro + Featured + Concierge";
-  if (flags.has_featured) return "Pro + Featured";
+  // Concierge is the mutually-exclusive upgrade that already includes Featured
+  // exposure, so it supersedes the Featured label if both flags are ever set.
   if (flags.has_concierge_partner) return "Pro + Concierge";
+  if (flags.has_featured) return "Pro + Featured";
   return "Pro";
 }

@@ -39,12 +39,19 @@ const PLACEMENT_TYPE_LABEL: Record<string, string> = {
   near_me: "Near-me",
   treatment: "Treatment-type page",
   insurance: "Insurance page",
+  international: "International pages",
   article: "Article rotation",
 };
 
 interface FeaturedManagementPanelProps {
   facilityId: string;
   subscription: FacilitySubscriptionRow;
+  /**
+   * "featured" (default): local/regional placements only, address-locked.
+   * "concierge": national + international + any-geography placements, used by
+   * the Concierge management surface to manage the partner's ad exposure.
+   */
+  mode?: "featured" | "concierge";
 }
 
 /**
@@ -59,8 +66,9 @@ interface FeaturedManagementPanelProps {
  *   • Add-placement form (live availability + slot picker)
  *   • Waitlist entries (geos the provider is queued for)
  */
-export function FeaturedManagementPanel({ facilityId, subscription }: FeaturedManagementPanelProps) {
+export function FeaturedManagementPanel({ facilityId, subscription, mode = "featured" }: FeaturedManagementPanelProps) {
   const queryClient = useQueryClient();
+  const isConcierge = mode === "concierge";
 
   const [confirmRemove, setConfirmRemove] = useState<FeaturedPlacementRow | null>(null);
   const [removing, setRemoving] = useState(false);
@@ -269,10 +277,13 @@ export function FeaturedManagementPanel({ facilityId, subscription }: FeaturedMa
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0">
-          <CardTitle className="text-base">Active placements</CardTitle>
+          <CardTitle className="text-base">
+            {isConcierge ? "Advertising placements" : "Active placements"}
+          </CardTitle>
           <AddFeaturedPlacementForm
             facilityId={facilityId}
             subscriptionId={subscription.id}
+            mode={mode}
             onAdded={() =>
               queryClient.invalidateQueries({
                 queryKey: ["featured-placements", subscription.id],
@@ -296,11 +307,14 @@ export function FeaturedManagementPanel({ facilityId, subscription }: FeaturedMa
           ) : !placements || placements.length === 0 ? (
             <div className="text-center py-8">
               <p className="font-medium text-slate-900">
-                You have no active Featured placements yet.
+                {isConcierge
+                  ? "You have no active advertising placements yet."
+                  : "You have no active Featured placements yet."}
               </p>
               <p className="mt-1 text-sm text-slate-600">
-                Use "Add a placement" above to pick state, city, treatment, or
-                insurance pages to rotate on.
+                {isConcierge
+                  ? 'Use "Add a placement" above to rotate on the national homepage, our international pages, or any state, city, treatment, or insurance page.'
+                  : 'Use "Add a placement" above to pick state, city, treatment, or insurance pages to rotate on.'}
               </p>
             </div>
           ) : (

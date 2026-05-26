@@ -19,6 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { AddConciergeGeoForm } from "@/components/provider/concierge/AddConciergeGeoForm";
 import { ConciergePlacementHistory } from "@/components/provider/concierge/ConciergePlacementHistory";
+import { FeaturedManagementPanel } from "@/components/provider/marketing/FeaturedManagementPanel";
 import { MyWaitlistEntries } from "@/components/provider/MyWaitlistEntries";
 import type { FacilitySubscriptionRow } from "@/hooks/useFacilitySubscription";
 
@@ -221,6 +222,31 @@ export function ConciergeManagementPanel({ facilityId, subscription }: Concierge
         {periodEndStr}; removing opens the slot for another facility immediately.
         You can re-claim before {periodEndStr} at no additional charge.
       </p>
+
+      {/* Advertising exposure (featured_placements) — distinct from the
+          advisor-surfacing geographies above. Concierge includes national
+          homepage + international + any-geography Featured rotation, managed
+          here in concierge mode (national/international unlocked, manual geo
+          entry). The webhook auto-seeds homepage/national, the home state +
+          city, and international on activation; partners broaden reach here. */}
+      <div className="space-y-2 pt-2">
+        <div className="border-t border-slate-200 pt-5">
+          <h3 className="text-base font-semibold text-slate-900">
+            Advertising exposure
+          </h3>
+          <p className="mt-1 text-sm text-slate-600">
+            Concierge Partner features your facility on the national homepage,
+            our international pages, and across your state and city — seeded
+            automatically when you upgraded. Add extra states, cities, or
+            treatment/insurance pages below to broaden your rotation.
+          </p>
+        </div>
+        <FeaturedManagementPanel
+          facilityId={facilityId}
+          subscription={subscription}
+          mode="concierge"
+        />
+      </div>
 
       <ConciergePlacementHistory facilityId={facilityId} />
 

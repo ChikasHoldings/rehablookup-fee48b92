@@ -60,12 +60,32 @@ export function ConciergeMarketingDetail({ facilityId }: ConciergeMarketingDetai
           </div>
           <div>
             <h2 className="text-xl md:text-2xl font-bold text-slate-900">
-              Concierge Partner — prominent surfacing when our advisors match clients
+              Concierge Partner — the upgrade: national + international exposure, plus advisor surfacing
             </h2>
           </div>
         </div>
 
         <div className="space-y-4 text-sm md:text-base text-slate-700 leading-relaxed">
+          <p>
+            Concierge Partner is the <strong>upgrade to Featured</strong>. You
+            get everything Featured does — rotation on your own state and city
+            pages — <strong>plus</strong> national reach the local tier doesn't
+            include. It replaces an active Featured add-on, so you're never
+            charged for both.
+          </p>
+
+          <div className="rounded-lg bg-violet-50/60 border border-violet-200/60 p-4">
+            <p className="font-semibold text-slate-900 mb-2">
+              Everything Featured, plus national reach
+            </p>
+            <ul className="space-y-1.5 text-sm text-slate-700 list-disc list-inside marker:text-violet-700">
+              <li>Rotation on our <strong>national homepage</strong></li>
+              <li>Exposure on our <strong>international pages</strong> (seekers from the UK, Canada, UAE, Europe, and Australia)</li>
+              <li>Your home state &amp; city, <strong>plus any extra states or cities you pick</strong></li>
+              <li>A verified-partner badge in our advisors' tool when seekers match your geography and level of care</li>
+            </ul>
+          </div>
+
           <p>
             When clients call our concierge, our advisors match them by clinical
             criteria — insurance, level of care, geography, gender, language —

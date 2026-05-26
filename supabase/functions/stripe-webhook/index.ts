@@ -3282,14 +3282,15 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
         if (flags.matched_new_lookup_keys) {
           planTier = flags.tier;
           const intervalSuffix = flags.billing_period === "monthly" ? "monthly" : "annual";
-          planName =
-            flags.has_featured && flags.has_concierge_partner
-              ? `Pro + Featured + Concierge (${intervalSuffix})`
-              : flags.has_featured
-                ? `Pro + Featured (${intervalSuffix})`
-                : flags.has_concierge_partner
-                  ? `Pro + Concierge (${intervalSuffix})`
-                  : `Pro (${intervalSuffix})`;
+          // Concierge is the mutually-exclusive upgrade that already includes
+          // Featured exposure, so it supersedes the Featured label if both
+          // flags are ever set (a Pro + Featured + Concierge combo no longer
+          // exists as a purchasable state).
+          planName = flags.has_concierge_partner
+            ? `Pro + Concierge (${intervalSuffix})`
+            : flags.has_featured
+              ? `Pro + Featured (${intervalSuffix})`
+              : `Pro (${intervalSuffix})`;
         } else if (priceItem?.price?.product) {
           const product = await stripe.products.retrieve(priceItem.price.product as string);
           planName = product.name;

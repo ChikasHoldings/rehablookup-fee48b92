@@ -105,6 +105,10 @@ export default function MarketingFeatured() {
 
   const isPro = subscription?.tier === "pro" && subscription?.status === "active";
   const hasFeatured = subscription?.has_featured === true;
+  // Concierge Partner is the mutually-exclusive upgrade that already INCLUDES
+  // Featured exposure (and is managed on the Concierge page), so a Concierge
+  // holder must not be shown the Featured purchase pitch — its CTA would 409.
+  const hasConcierge = subscription?.has_concierge_partner === true;
   // The Featured add-on bills independently of Pro — use its own period end,
   // falling back to the Pro period for rows activated before that column was
   // backfilled by the webhook.
@@ -156,11 +160,26 @@ export default function MarketingFeatured() {
           </div>
         </div>
 
-        {/* Only show the locked/upgrade preview when there's no active add-on
-            to manage. A past_due provider whose Pro lapsed but whose Featured
-            add-on is still active (and still billing) must keep access to
-            manage/cancel it — gating on isPro alone locked them out. */}
-        {!isPro && !hasFeatured ? (
+        {/* Concierge Partner supersedes Featured — surface that instead of a
+            purchase pitch (whose CTA would 409) and point to where the included
+            Featured exposure is now managed. Checked first so it wins even if
+            Pro has lapsed. */}
+        {hasConcierge ? (
+          <div className="rounded-lg border border-violet-200 bg-violet-50/50 p-6 space-y-3">
+            <h2 className="text-lg font-semibold text-slate-900">
+              Featured is included in your Concierge Partner plan
+            </h2>
+            <p className="text-sm text-slate-700 leading-relaxed">
+              Concierge Partner already features your facility on our national
+              homepage, our international pages, and across your state and city —
+              plus any extra geographies you choose. Manage all of it from your
+              Concierge Partner page.
+            </p>
+            <Button asChild className="bg-[#1B365D] hover:bg-[#142a4a] gap-1.5">
+              <Link to="/provider/marketing/concierge">Manage Concierge Partner</Link>
+            </Button>
+          </div>
+        ) : !isPro && !hasFeatured ? (
           <LockedFeaturePreview
             title="Featured Placements"
             subtitle="Phone-rotation on our highest-traffic pages"

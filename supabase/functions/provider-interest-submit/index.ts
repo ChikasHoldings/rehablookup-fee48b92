@@ -65,7 +65,9 @@ function tierLabel(t: string): string {
     case "pro": return "Pro ($99/mo)";
     case "pro_featured": return "Pro + Featured ($698/mo)";
     case "pro_concierge": return "Pro + Concierge ($1,099/mo)";
-    case "all": return "All (Pro + Featured + Concierge — $1,698/mo)";
+    // Concierge is now a mutually-exclusive upgrade that includes Featured, so
+    // the old three-way bundle no longer exists; "all" = Pro + Concierge.
+    case "all": return "Pro + Concierge — includes Featured ($1,099/mo)";
     default: return t;
   }
 }
