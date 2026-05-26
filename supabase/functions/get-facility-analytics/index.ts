@@ -179,10 +179,18 @@ Deno.serve(async (req) => {
     auditR,
     reviewsR,
   ] = await Promise.all([
-    admin.from("facility_views").select("id", { count: "exact", head: true })
-      .eq("facility_id", facilityId).gte("created_at", startIso).lte("created_at", endIso),
-    admin.from("facility_views").select("id", { count: "exact", head: true })
-      .eq("facility_id", facilityId).gte("created_at", prevStartIso).lte("created_at", prevEndIso),
+    // Profile views: provider_events.profile_view is the live source (written by
+    // useProviderEventTracking). facility_views has NO live writer (track-view is
+    // orphaned), so the prior read was structurally always zero. Exclude bot/
+    // internal traffic to match the facility_metrics_daily rollup + other tabs.
+    admin.from("provider_events").select("id", { count: "exact", head: true })
+      .eq("facility_id", facilityId).eq("event_type", "profile_view")
+      .eq("is_bot", false).eq("is_internal", false)
+      .gte("created_at", startIso).lte("created_at", endIso),
+    admin.from("provider_events").select("id", { count: "exact", head: true })
+      .eq("facility_id", facilityId).eq("event_type", "profile_view")
+      .eq("is_bot", false).eq("is_internal", false)
+      .gte("created_at", prevStartIso).lte("created_at", prevEndIso),
 
     hasFeatured
       ? admin.from("featured_impressions").select("id", { count: "exact", head: true })
@@ -193,10 +201,19 @@ Deno.serve(async (req) => {
           .eq("facility_id", facilityId).gte("occurred_at", prevStartIso).lte("occurred_at", prevEndIso)
       : Promise.resolve({ count: 0 } as { count: number | null }),
 
-    admin.from("featured_phone_clicks").select("id", { count: "exact", head: true })
-      .eq("facility_id", facilityId).gte("clicked_at", startIso).lte("clicked_at", endIso),
-    admin.from("featured_phone_clicks").select("id", { count: "exact", head: true })
-      .eq("facility_id", facilityId).gte("clicked_at", prevStartIso).lte("clicked_at", prevEndIso),
+    // Phone clicks: provider_events.click_to_call captures ALL tel clicks.
+    // featured_phone_clicks only captures clicks on Featured rotation cards, so
+    // non-Featured providers saw a structural zero here. Use the live source +
+    // bot/internal filter to match the rollup. (The Featured-specific phone-click
+    // breakdown below still reads featured_phone_clicks, which is correct.)
+    admin.from("provider_events").select("id", { count: "exact", head: true })
+      .eq("facility_id", facilityId).eq("event_type", "click_to_call")
+      .eq("is_bot", false).eq("is_internal", false)
+      .gte("created_at", startIso).lte("created_at", endIso),
+    admin.from("provider_events").select("id", { count: "exact", head: true })
+      .eq("facility_id", facilityId).eq("event_type", "click_to_call")
+      .eq("is_bot", false).eq("is_internal", false)
+      .gte("created_at", prevStartIso).lte("created_at", prevEndIso),
 
     // Pro = direct leads; Free = inquiries routed through concierge from this
     // facility's pages (originating_facility_id).
