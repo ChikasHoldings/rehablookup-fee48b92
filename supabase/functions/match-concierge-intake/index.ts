@@ -423,21 +423,40 @@ Deno.serve(async (req) => {
       .eq('id', inquiryId);
 
     if (updateError) {
-      logStep(requestId, "Warning: Failed to update inquiry", { error: updateError.message });
-    } else {
-      // Log status change event for timeline consistency
-      await supabase.from('concierge_case_events').insert({
-        inquiry_id: inquiryId,
-        event_type: 'status_changed',
-        event_data: { 
-          from_status: previousStatus, 
-          to_status: 'matched',
-          trigger: 'matches_completed',
-          match_count: topMatches.length,
-        },
-        actor_type: 'system',
-      });
+      // Persisting the match is not optional: submit-concierge-intake
+      // auto-introduces using the IDs in this response, and the admin tour
+      // UI / cron retry read matched_facility_ids off this row. If the write
+      // fails we must NOT report success — otherwise the caller introduces
+      // against in-memory IDs while the row stays unmatched (introductions
+      // exist, matched_facility_ids null). Fail loudly so the case falls back
+      // to the manual-matching path instead of silently going inconsistent.
+      logStep(requestId, "ERROR: Failed to persist matches", { error: updateError.message });
+      return new Response(
+        JSON.stringify({
+          success: false,
+          matched: false,
+          matchedFacilityIds: [],
+          matches: [],
+          error: `Failed to persist matches: ${updateError.message}`,
+          requestId,
+          _version: VERSION,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+      );
     }
+
+    // Log status change event for timeline consistency
+    await supabase.from('concierge_case_events').insert({
+      inquiry_id: inquiryId,
+      event_type: 'status_changed',
+      event_data: {
+        from_status: previousStatus,
+        to_status: 'matched',
+        trigger: 'matches_completed',
+        match_count: topMatches.length,
+      },
+      actor_type: 'system',
+    });
 
     // Send matches_found notification
     try {

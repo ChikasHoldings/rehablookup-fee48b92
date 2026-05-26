@@ -140,15 +140,19 @@ export function ToursTab({ caseData }: ToursTabProps) {
 
       const preferredDates = createDate ? [createDate.toISOString()] : [];
 
-      const { error } = await supabase.from("concierge_tour_requests").insert({
-        inquiry_id: caseData.id,
-        facility_id: createFacilityId,
-        user_id: caseData.user_id || user.id,
-        tour_type: createTourType,
-        preferred_dates: preferredDates,
-        notes: createNotes || null,
-        status: "requested",
-      });
+      const { data: insertedTour, error } = await supabase
+        .from("concierge_tour_requests")
+        .insert({
+          inquiry_id: caseData.id,
+          facility_id: createFacilityId,
+          user_id: caseData.user_id || user.id,
+          tour_type: createTourType,
+          preferred_dates: preferredDates,
+          notes: createNotes || null,
+          status: "requested",
+        })
+        .select("id")
+        .maybeSingle();
 
       if (error) throw error;
 
@@ -168,12 +172,10 @@ export function ToursTab({ caseData }: ToursTabProps) {
       let notifyOk = true;
       let notifyErrorMessage: string | null = null;
       try {
-        const { data: notifData, error: notifErr } = await supabase.functions.invoke("send-concierge-notifications", {
+        const { data: notifData, error: notifErr } = await supabase.functions.invoke("send-tour-notifications", {
           body: {
             type: "tour_requested",
-            inquiryId: caseData.id,
-            facilityId: createFacilityId,
-            metadata: { tour_type: createTourType },
+            tourId: insertedTour?.id,
           },
         });
         if (notifErr || notifData?.error) {

@@ -360,7 +360,9 @@ type NotificationType =
   | 'tour_completed'       // Both: Tour has been completed
   | 'admission_updated'    // Both: Admission status changed
   | 'move_in_scheduled'    // Both: Move-in date has been set
-  | 'moved_in';            // Both: Client has moved in
+  | 'moved_in'             // Both: Client has moved in
+  | 'seeker_cancelled'     // Admin/advisor: seeker cancelled their request
+  | 'case_closed_by_admin'; // Seeker: an admin closed your case
 
 interface NotificationRequest {
   type: NotificationType;
@@ -441,7 +443,7 @@ Deno.serve(async (req) => {
     }
 
     // Validate notification type
-    const validTypes = ['intake_received', 'matches_found', 'introductions_sent', 'facilities_ready_for_review', 'provider_interested', 'provider_declined', 'seeker_confirmed', 'seeker_rejected_provider', 'provider_confirmed', 'placement_complete', 'invoice_issued', 'invoice_paid', 'signup_prompt', 'advisor_claimed', 'tour_completed', 'admission_updated', 'move_in_scheduled', 'moved_in'];
+    const validTypes = ['intake_received', 'matches_found', 'introductions_sent', 'facilities_ready_for_review', 'provider_interested', 'provider_declined', 'seeker_confirmed', 'seeker_rejected_provider', 'provider_confirmed', 'placement_complete', 'invoice_issued', 'invoice_paid', 'signup_prompt', 'advisor_claimed', 'tour_completed', 'admission_updated', 'move_in_scheduled', 'moved_in', 'seeker_cancelled', 'case_closed_by_admin'];
     if (!validTypes.includes(type)) {
       throw new Error("Invalid notification type");
     }
@@ -567,6 +569,14 @@ Deno.serve(async (req) => {
 
       case 'moved_in':
         await sendAdmissionStageNotification(resend, inquiry, facility, supabase, results, 'moved_in', metadata);
+        break;
+
+      case 'seeker_cancelled':
+        await sendSeekerCancelledNotification(inquiry, supabase, results);
+        break;
+
+      case 'case_closed_by_admin':
+        await sendCaseClosedByAdminNotification(resend, inquiry, supabase, results, metadata);
         break;
     }
 
@@ -1250,6 +1260,91 @@ async function sendProviderDeclinedNotification(
   }
 
   results.push({ recipient: 'admin', notificationId: 'admin_declined_alert' });
+}
+
+// Seeker cancelled their own request — alert admins/advisors so they stop
+// working the case. No seeker email (they initiated the cancellation).
+async function sendSeekerCancelledNotification(
+  inquiry: InquiryData,
+  supabase: any,
+  results: Array<{ recipient: string; emailId?: string; notificationId?: string }>
+) {
+  const caseId = inquiry.id.slice(0, 8).toUpperCase();
+
+  await createAdminNotification(supabase, {
+    type: 'concierge_seeker_cancelled',
+    title: 'Seeker Cancelled Request',
+    message: `${inquiry.user_name} cancelled their placement request (Case #${caseId}). No further action needed.`,
+    link: '/admin/concierge',
+    metadata: { inquiry_id: inquiry.id },
+  });
+
+  results.push({ recipient: 'admin', notificationId: 'admin_cancel_alert' });
+}
+
+// Admin closed a case — notify the seeker (email + in-app) with the reason
+// so a closed case never goes dark on the seeker's side.
+async function sendCaseClosedByAdminNotification(
+  resend: Resend,
+  inquiry: InquiryData,
+  supabase: any,
+  results: Array<{ recipient: string; emailId?: string; notificationId?: string }>,
+  metadata?: Record<string, unknown>
+) {
+  const firstName = inquiry.user_name.split(' ')[0] || 'there';
+  const caseId = inquiry.id.slice(0, 8).toUpperCase();
+  const reason = typeof metadata?.reason === 'string' && metadata.reason.trim()
+    ? metadata.reason.trim()
+    : null;
+
+  const html = emailWrapper(`
+    ${emailHeader('Your Concierge Case Has Been Closed', `Case #${caseId}`, '📋')}
+    <tr>
+      <td style="padding: 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+        <p style="margin: 0 0 20px 0; font-size: 16px; color: #1a1a1a;">
+          Hi ${firstName},
+        </p>
+        <p style="margin: 0 0 24px 0; font-size: 15px; color: #4b5563; line-height: 1.6;">
+          Your RehabLookup Concierge case has been closed by our team.
+        </p>
+        ${reason ? infoBox(`<strong>Reason:</strong> ${reason}`) : ''}
+        <p style="margin: 24px 0; font-size: 15px; color: #4b5563; line-height: 1.6;">
+          If you still need help finding treatment, we're here for you — you can start a new request anytime, or simply reply to this email and we'll be glad to assist.
+        </p>
+        ${ctaButton('Start a New Request', 'https://rehablookup.com/concierge')}
+      </td>
+    </tr>
+    ${emailFooter()}
+  `);
+
+  const { emailId: emailData, error: emailError } = await sendEmailWithRetry(supabase, resend, {
+    from: "RehabLookup Concierge <no-reply@rehablookup.com>",
+    to: [inquiry.user_email],
+    subject: `Your Concierge Case Has Been Closed - Case #${caseId}`,
+    html,
+  }, {
+    emailType: "concierge_case_closed",
+    idempotencyKey: `concierge-case-closed-${inquiry.id}`,
+  });
+
+  if (!emailError) {
+    results.push({ recipient: inquiry.user_email, emailId: emailData });
+  }
+
+  if (inquiry.user_id) {
+    const { data: notif } = await supabase.from('seeker_notifications').insert({
+      user_id: inquiry.user_id,
+      type: 'concierge_case_closed',
+      title: 'Case Closed',
+      message: reason
+        ? `Your concierge case (Case #${caseId}) has been closed. Reason: ${reason}`
+        : `Your concierge case (Case #${caseId}) has been closed. You can start a new request anytime.`,
+      link: '/account/concierge',
+      metadata: { inquiry_id: inquiry.id, ...(metadata || {}) },
+    }).select('id').single();
+
+    if (notif) results.push({ recipient: inquiry.user_id, notificationId: notif.id });
+  }
 }
 
 // Signup prompt for seekers without an account
