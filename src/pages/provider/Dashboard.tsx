@@ -650,14 +650,18 @@ export default function ProviderDashboardPage() {
               />
             </div>
 
-            {/* ---- Main grid ---- */}
-            <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-              {/* Left column */}
-              <div className="space-y-5 lg:col-span-2">
-                {/* Performance snapshot (impressions / views / calls / website) */}
-                <DashboardPerformanceCard facilityId={facilityId} />
+            {/* Performance snapshot (impressions / views / calls / website) —
+                full-width hero strip above the card grid. */}
+            <DashboardPerformanceCard facilityId={facilityId} />
 
-                {/* Your facilities */}
+            {/* Balanced card grid. CSS multi-column (masonry) auto-equalizes
+                the two columns' heights so neither side leaves a big empty gap,
+                regardless of which cards render (Free vs Pro, with/without the
+                Featured/Concierge add-ons). break-inside-avoid keeps each card
+                whole; mb-5 supplies the vertical rhythm that space-y can't
+                inside a column flow. Single column below lg. */}
+            <div className="gap-5 lg:columns-2 [&>*]:mb-5 [&>*]:break-inside-avoid">
+              {/* Your facilities */}
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b py-3.5">
                     <CardTitle className="text-sm font-semibold">Your facilities</CardTitle>
@@ -778,10 +782,7 @@ export default function ProviderDashboardPage() {
                     relevant add-on; renders nothing without it) */}
                 {facilityId && hasFeatured && <FeaturedAnalyticsWidget facilityId={facilityId} />}
                 {facilityId && hasConcierge && <ConciergeAnalyticsWidget facilityId={facilityId} />}
-              </div>
 
-              {/* Right column */}
-              <div className="space-y-5">
                 {facilityId && <VerificationStateCard facilityId={facilityId} />}
 
                 {/* Listing health (completeness score + search ranking) */}
@@ -823,12 +824,9 @@ export default function ProviderDashboardPage() {
                     </CardContent>
                   </Card>
                 )}
-
-              </div>
             </div>
 
-            {/* Navigational cards — full-width band below the two columns so
-                the aside column doesn't run far taller than the main content. */}
+            {/* Navigational cards — full-width band below the balanced grid. */}
             <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
               {/* Marketing & growth */}
               <Card>
