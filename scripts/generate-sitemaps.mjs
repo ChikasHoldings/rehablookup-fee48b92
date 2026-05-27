@@ -34,6 +34,21 @@ const CANONICAL_HOST = "https://rehablookup.com";
 const projectUrl = (process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL ?? "https://mldbxpntzcjalgjmwnqa.supabase.co").replace(/\/$/, "");
 const sitemapFunctionUrl = `${projectUrl}/functions/v1/sitemap-facilities`;
 
+// The facilities sitemap mirrors the static /center/*.html profiles produced
+// by generate-facility-profiles-html.mjs. That script needs a Supabase anon
+// key and no-ops (keeps the committed HTML) when one isn't configured. The
+// sitemap-facilities edge function, however, is public and returns live data
+// even without a key — so in a creds-less environment (e.g. the SEO-validator
+// CI job, which intentionally passes no DB secrets) we'd refresh the sitemap
+// to the full live facility set while the /center HTML stayed at the committed
+// subset, desyncing the two and failing check:facility-sitemap-sync. Gate the
+// facilities refresh on the same key so both honor the "no-op without creds"
+// contract: CI keeps both committed (in sync); Vercel has the key so both
+// refresh live (in sync).
+const hasSupabaseAnonKey = Boolean(
+  process.env.SUPABASE_ANON_KEY ?? process.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+);
+
 const targets = [
   { type: "main", fileName: "sitemap.xml" },
   { type: "facilities", fileName: "sitemap-facilities.xml" },
@@ -217,6 +232,13 @@ function filterSitemapXml(xml, prerenderedPaths, stats, spaRoutes) {
 
 async function generateSitemapFile({ type, fileName }, prerenderedPaths, stats, spaRoutes) {
   const filePath = path.join(publicDir, fileName);
+  // Keep the committed facilities sitemap when no anon key is configured —
+  // see hasSupabaseAnonKey note above. Without this, the facilities sitemap
+  // desyncs from the no-op'd /center/*.html mirrors in creds-less CI.
+  if (type === "facilities" && !hasSupabaseAnonKey && (await fileExists(filePath))) {
+    console.warn(`[sitemap] no Supabase anon key; keeping committed ${fileName} (stays in sync with no-op'd facility HTML).`);
+    return;
+  }
   try {
     let xml = await fetchSitemap(type);
     // Sitemap-index files are meta — don't filter URLs, they list other sitemaps.
