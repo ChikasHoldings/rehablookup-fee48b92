@@ -22,6 +22,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { toast } from "sonner";
 
 import { InquiryListItem } from "@/components/provider/inquiries/InquiryListItem";
+import { RedirectedInquiries } from "@/components/provider/inquiries/RedirectedInquiries";
 import { PaginationFooter } from "@/components/common/PaginationFooter";
 import { usePagination } from "@/hooks/usePagination";
 import { InquiryDetailPanel } from "@/components/provider/inquiries/InquiryDetailPanel";
@@ -120,7 +121,9 @@ export default function ProviderInquiriesPage() {
     return map;
   }, [facilities]);
 
-  // Fetch all inquiries using leads_provider_view (PII-safe: masks locked lead contact info)
+  // Fetch all inquiries via leads_provider_view, scoped by RLS to the
+  // provider's own facilities. Lock/unlock is retired — leads are
+  // delivered with full contact, no PII masking.
   const { data: inquiries = [], isLoading, error: inquiriesError } = useQuery({
     queryKey: ["provider-inquiries", facilityIds],
     queryFn: async (): Promise<LeadWithFacility[]> => {
@@ -382,6 +385,10 @@ export default function ProviderInquiriesPage() {
             isMobile ? "w-full" : "w-[320px] flex-shrink-0 md:w-[360px] lg:w-[400px]"
           )}>
             <div className="flex-1 overflow-auto">
+              {/* Inquiries that came in on free/unclaimed listings and were
+                  routed to the concierge placement team. Self-hides for Pro
+                  facilities (their inquiries become exclusive leads). */}
+              <RedirectedInquiries facilityIds={facilityIds} />
               {isLoading ? (
                 // Render the same number of skeleton rows as the user's
                 // persisted page size, so the visible list height
