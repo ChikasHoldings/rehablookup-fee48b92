@@ -107,11 +107,19 @@ export function ConciergeIntroductionResponder({ facilityId }: ConciergeIntroduc
   const respond = useMutation({
     mutationFn: async ({ introId, response }: { introId: string; response: "interested" | "not_available" }) => {
       setPendingId(introId);
-      const { error } = await supabase
+      // .select().maybeSingle() so an RLS 0-row block (e.g. facility
+      // ownership transferred, or the intro already closed) surfaces as an
+      // error instead of a false "saved" toast.
+      const { data: updated, error } = await supabase
         .from("concierge_introductions")
         .update({ provider_response: response, provider_responded_at: new Date().toISOString() })
-        .eq("id", introId);
+        .eq("id", introId)
+        .select("id")
+        .maybeSingle();
       if (error) throw error;
+      if (!updated) {
+        throw new Error("This introduction couldn't be updated — it may have been reassigned or closed. Refresh and try again.");
+      }
       return response;
     },
     onSuccess: (response) => {

@@ -97,7 +97,10 @@ export function InquiryDetailPanel({ inquiry }: InquiryDetailPanelProps) {
       // BUGFIX: Scope update to both lead id AND facility_id for defence-in-depth.
       // RLS enforces this at the DB level, but explicit client-side scoping prevents
       // accidental cross-facility mutations if RLS policies are ever misconfigured.
-      const { error } = await supabase
+      // .select().maybeSingle() so a 0-row update (RLS no longer matches —
+      // e.g. a downgraded provider firing from a stale render) surfaces as
+      // an error instead of a false success that also emails the seeker.
+      const { data: updatedRow, error } = await supabase
         .from("leads")
         .update({
           provider_response_status: status === 'pending' ? null : status,
@@ -105,8 +108,13 @@ export function InquiryDetailPanel({ inquiry }: InquiryDetailPanelProps) {
           ...(notes !== undefined ? { provider_response_notes: notes || null } : {}),
         } as never)
         .eq("id", inquiry.id)
-        .eq("facility_id", inquiry.facility_id);
+        .eq("facility_id", inquiry.facility_id)
+        .select("id")
+        .maybeSingle();
       if (error) throw error;
+      if (!updatedRow) {
+        throw new Error("Couldn't update this lead — it may no longer be assigned to your facility. Refresh and try again.");
+      }
     },
     onSuccess: (_, { status }) => {
       // Targeted invalidation — the broad `["provider-inquiries"]` prefix
