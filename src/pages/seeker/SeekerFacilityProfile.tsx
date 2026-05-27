@@ -224,45 +224,19 @@ export default function SeekerFacilityProfile() {
       if (!loaded.facility) return null;
 
       const base = loaded.facility;
-      const fromFallback = !!loaded.flags; // fallback path always returns flags inline
 
-      // For fallback rows (typically SAMHSA-imported, unclaimed) skip the
-      // joined-table fetches and the Pro contact-details RPC. Those tables
-      // are empty for those rows and the view already returned phone/website
-      // with the right masking applied.
-      if (fromFallback) {
-        return {
-          ...base,
-          email: null,
-          facility_services: [],
-          facility_insurance: [],
-          facility_age_groups: [],
-          facility_credentials: [],
-          facility_accreditations: [],
-          is_claimed: loaded.flags?.is_claimed,
-          is_pro: loaded.flags?.is_pro,
-          is_premium_visible: loaded.flags?.is_premium_visible,
-        } as unknown as FacilityData;
-      }
-
-      // Snapshot path — fetch joined detail tables + Pro-gated contact
-      // RPC. The joined-tables fetch is shared with /center/[slug] via
-      // loadFacilityDetails so both pages stay in sync on column lists.
-      const facilityId = base.id;
-      const [joins, publicDataResult] = await Promise.all([
-        loadFacilityDetails(facilityId),
-        supabase.rpc("get_public_facility_data", { facility_id: facilityId }).maybeSingle(),
-      ]);
-      const publicData = publicDataResult.data as
-        | { phone?: string | null; email?: string | null; website?: string | null }
-        | null;
+      // Always fetch the joined detail tables (shared with /center/[slug] via
+      // loadFacilityDetails) so the seeker profile shows the same Services /
+      // Insurance / Age groups / Accreditations as the public page. The view
+      // (public_facilities) already returns phone/website with the right
+      // masking; email is PII not exposed on the view. Previously this was
+      // gated behind a `fromFallback` flag that was ALWAYS true (the loader
+      // always returns flags), so every seeker profile rendered empty joins.
+      const joins = await loadFacilityDetails(base.id);
 
       return {
         ...base,
-        // Pro-gated values override the snapshot's masked defaults.
-        phone: publicData?.phone || null,
-        email: publicData?.email || null,
-        website: publicData?.website || null,
+        email: null,
         ...joins,
         is_claimed: loaded.flags?.is_claimed,
         is_pro: loaded.flags?.is_pro,

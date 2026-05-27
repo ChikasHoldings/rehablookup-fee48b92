@@ -504,8 +504,9 @@ function NavigateDualDiagnosisRehabNearMe() {
 // /seeker/requests → /account/requests
 function SeekerToClientRedirect() {
   const { "*": rest } = useParams();
+  const loc = useLocation();
   const tail = rest ? `/${rest}` : "";
-  return <Navigate to={`/account${tail}`} replace />;
+  return <Navigate to={`/account${tail}${loc.search}`} replace />;
 }
 
 // /facility/:slug and /profile/:slug → canonical /center/:slug

@@ -350,6 +350,15 @@ export default function ConciergeIntake() {
           wisconsin: "WI", wyoming: "WY", "district of columbia": "DC",
         };
         const STATE_CODES = new Set(Object.values(US_STATES));
+        // peelState resolves to a 2-letter code, but the Step-4 state dropdown's
+        // options are full names — so a prefilled code (e.g. "CA") matched no
+        // option and rendered blank. Map code → full name to prefill correctly.
+        const CODE_TO_NAME: Record<string, string> = Object.fromEntries(
+          Object.entries(US_STATES).map(([name, code]) => [
+            code,
+            name.replace(/\b\w/g, (c) => c.toUpperCase()),
+          ]),
+        );
         const ZIP_RE = /\b(\d{5})(?:-\d{4})?\b/;
 
         const raw = loc.trim();
@@ -412,7 +421,7 @@ export default function ConciergeIntake() {
         }
 
         if (city) { next.desiredCity = city; applied.city = true; }
-        if (state) { next.desiredState = state; applied.state = true; }
+        if (state) { next.desiredState = CODE_TO_NAME[state] ?? state; applied.state = true; }
         if (zip && "desiredZip" in next && !(next as { desiredZip?: string }).desiredZip) {
           (next as { desiredZip?: string }).desiredZip = zip;
           applied.zip = true;
