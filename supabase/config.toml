@@ -248,7 +248,7 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.submit-international-intake]
-verify_jwt = true
+verify_jwt = false
 
 [functions.verify-code]
 verify_jwt = true
@@ -258,6 +258,9 @@ verify_jwt = true
 
 [functions.verify-admission]
 verify_jwt = true
+
+[functions.create-international-checkout]
+verify_jwt = false
 
 [functions.create-checkout]
 verify_jwt = true
@@ -299,7 +302,7 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.save-international-placement-draft]
-verify_jwt = true
+verify_jwt = false
 
 [functions.respond-international-case]
 verify_jwt = true
