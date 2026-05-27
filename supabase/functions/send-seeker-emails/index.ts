@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 import { Resend } from "https://esm.sh/resend@2.0.0?target=denonext";
 import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
+import { sendSms } from "../_shared/twilio-sms.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -361,6 +362,37 @@ Deno.serve(async (req) => {
         metadata: metadata || {},
       });
       logStep("In-app notification created", { type, seekerId });
+    }
+
+    // SMS to the seeker when a facility responds — TCPA-gated. Only fires
+    // for an account-holder whose phone is VERIFIED and who explicitly
+    // opted into SMS (and hasn't replied STOP). Guests / unverified /
+    // opted-out get email + in-app only. Best-effort: never blocks the
+    // email response that already succeeded above.
+    if (type === "facility_contacted_you" && seekerId && seekerProfile) {
+      const twilioSid = Deno.env.get("TWILIO_ACCOUNT_SID");
+      const twilioToken = Deno.env.get("TWILIO_AUTH_TOKEN");
+      const twilioFrom = Deno.env.get("TWILIO_PHONE_NUMBER");
+      const phoneVerified = seekerProfile.phone_verified === true && !!seekerProfile.phone;
+      const smsConsented = !!seekerProfile.sms_opted_in_at && !seekerProfile.sms_opted_out_at;
+      if (twilioSid && twilioToken && twilioFrom && phoneVerified && smsConsented) {
+        const facilityName = (metadata?.facilityName as string) || "A treatment center";
+        try {
+          const smsResult = await sendSms(
+            supabase,
+            { accountSid: twilioSid, authToken: twilioToken, fromNumber: twilioFrom },
+            {
+              to: seekerProfile.phone as string,
+              body: `RehabLookup: ${facilityName} responded to your inquiry. See your email or rehablookup.com/account/requests for details. Reply STOP to opt out.`,
+              userId: seekerId,
+              notificationType: "facility_contacted_you",
+            },
+          );
+          logStep("Seeker SMS attempt", { sent: smsResult.sent, reason: smsResult.reason });
+        } catch (smsErr) {
+          logStep("Seeker SMS failed (non-blocking)", { error: String(smsErr) });
+        }
+      }
     }
 
     logStep("Email sent successfully", { type, to: seekerEmail, resendId: emailResult });
