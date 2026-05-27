@@ -519,8 +519,9 @@ export default function AdminProviders() {
         finalUpdates.verified = true;
       }
 
-      const { error } = await supabase.from("facilities").update(finalUpdates).eq("id", id);
+      const { data: updatedFacility, error } = await supabase.from("facilities").update(finalUpdates).eq("id", id).select("id").maybeSingle();
       if (error) throw error;
+      if (!updatedFacility) throw new Error("Facility not found or the update was blocked.");
 
       // 2. Send approval email when status transitions to approved. Return
       //    the send status so onSuccess can warn admins on failure.

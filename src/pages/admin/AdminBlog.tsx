@@ -354,8 +354,9 @@ export default function AdminBlog() {
       if (status === "published" && !article?.published_at) {
         updateData.published_at = new Date().toISOString();
       }
-      const { error } = await supabase.from("blog_articles").update(updateData as never).eq("id", id);
+      const { data: updated, error } = await supabase.from("blog_articles").update(updateData as never).eq("id", id).select("id").maybeSingle();
       if (error) throw error;
+      if (!updated) throw new Error("Article not found or the update was blocked.");
       if (previousStatus !== status) {
         await logAdminAction({
           actionType: AdminAuditActions.BLOG_ARTICLE_STATUS_CHANGED,

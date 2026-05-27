@@ -309,11 +309,14 @@ export default function AdminInsuranceVerifications() {
         if (user?.id) patch.assigned_admin_id = user.id;
       }
 
-      const { error } = await supabase
+      const { data: updated, error } = await supabase
         .from("insurance_verification_requests")
         .update(patch as never)
-        .eq("id", input.id);
+        .eq("id", input.id)
+        .select("id")
+        .maybeSingle();
       if (error) throw error;
+      if (!updated) throw new Error("Verification request not found or the update was blocked.");
 
       // Audit log captures every field that changed, not just status.
       // The previous version logged only `status` — coverage_summary
