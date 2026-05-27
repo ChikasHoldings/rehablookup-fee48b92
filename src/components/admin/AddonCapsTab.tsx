@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { logAdminAction, AdminAuditActions } from "@/hooks/useAdminAuditLog";
 import {
   Card,
   CardContent,
@@ -261,6 +262,11 @@ function WaitlistCard() {
       toast.error(error.message);
       return;
     }
+    void logAdminAction({
+      actionType: AdminAuditActions.WAITLIST_ENTRY_INVITED,
+      targetType: "addon_waitlist",
+      targetId: id,
+    });
     toast.success("Marked as invited");
     queryClient.invalidateQueries({ queryKey: ["admin-waitlist", addonFilter] });
   }
@@ -274,6 +280,11 @@ function WaitlistCard() {
       toast.error(error.message);
       return;
     }
+    void logAdminAction({
+      actionType: AdminAuditActions.WAITLIST_ENTRY_FULFILLED,
+      targetType: "addon_waitlist",
+      targetId: id,
+    });
     toast.success("Marked as fulfilled");
     queryClient.invalidateQueries({ queryKey: ["admin-waitlist", addonFilter] });
   }
@@ -287,6 +298,11 @@ function WaitlistCard() {
       toast.error(error.message);
       return;
     }
+    void logAdminAction({
+      actionType: AdminAuditActions.WAITLIST_ENTRY_EXPIRED,
+      targetType: "addon_waitlist",
+      targetId: id,
+    });
     toast.success("Marked expired");
     queryClient.invalidateQueries({ queryKey: ["admin-waitlist", addonFilter] });
   }
@@ -624,6 +640,11 @@ function PlacementCapEditableRow({
         .eq("placement_type", row.placement_type)
         .eq("placement_value", row.placement_value);
       if (error) throw error;
+      void logAdminAction({
+        actionType: AdminAuditActions.PLACEMENT_CAP_DELETED,
+        targetType: "placement_cap",
+        details: { placement_type: row.placement_type, placement_value: row.placement_value },
+      });
       toast.success("Cap deleted");
       onChanged();
     } catch (err) {
@@ -1029,6 +1050,11 @@ function ConciergeCapEditableRow({
         .eq("geo_state", row.geo_state)
         .eq("geo_city", row.geo_city);
       if (error) throw error;
+      void logAdminAction({
+        actionType: AdminAuditActions.CONCIERGE_CAP_DELETED,
+        targetType: "concierge_geo_cap",
+        details: { geo_state: row.geo_state, geo_city: row.geo_city },
+      });
       toast.success("Cap deleted");
       onChanged();
     } catch (err) {

@@ -602,6 +602,9 @@ export function ConciergeInlineIntake({ userEmail, userName, userPhone, userId }
           rows={4}
           maxLength={2000}
         />
+        {formData.notes.length > 1800 && (
+          <p className="text-xs text-muted-foreground text-right">{formData.notes.length}/2000</p>
+        )}
       </div>
 
       {/* Summary */}

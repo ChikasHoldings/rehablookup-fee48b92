@@ -192,6 +192,7 @@ export default function AdminReviews() {
     data: reviews = [],
     isLoading: reviewsLoading,
     isFetching: reviewsFetching,
+    isError: reviewsError,
     refetch: refetchReviews,
   } = useQuery({
     queryKey: ['admin-reviews-all'],
@@ -1177,6 +1178,19 @@ export default function AdminReviews() {
               <div className="space-y-4">
                 {[1, 2, 3].map((i) => <ReviewCardSkeleton key={i} />)}
               </div>
+            ) : reviewsError ? (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <AlertTriangle className="h-12 w-12 text-destructive/40 mx-auto mb-4" />
+                  <p className="font-medium text-foreground">Couldn't load reviews</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Something went wrong fetching reviews. This is not an empty queue.
+                  </p>
+                  <Button variant="outline" size="sm" className="mt-4 gap-1.5" onClick={() => refetchReviews()}>
+                    <RefreshCw className="h-3.5 w-3.5" /> Retry
+                  </Button>
+                </CardContent>
+              </Card>
             ) : filteredReviews.length === 0 ? (
               <Card>
                 <CardContent className="py-12 text-center">

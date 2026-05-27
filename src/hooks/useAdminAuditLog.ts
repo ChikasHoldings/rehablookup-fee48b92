@@ -135,4 +135,11 @@ export const AdminAuditActions = {
   // Marketing lead actions
   MARKETING_LEAD_DELETED: "marketing_lead_deleted",
   MARKETING_LEADS_BULK_DELETED: "marketing_leads_bulk_deleted",
+
+  // Add-on caps + waitlist actions
+  WAITLIST_ENTRY_INVITED: "waitlist_entry_invited",
+  WAITLIST_ENTRY_FULFILLED: "waitlist_entry_fulfilled",
+  WAITLIST_ENTRY_EXPIRED: "waitlist_entry_expired",
+  PLACEMENT_CAP_DELETED: "placement_cap_deleted",
+  CONCIERGE_CAP_DELETED: "concierge_cap_deleted",
 } as const;
