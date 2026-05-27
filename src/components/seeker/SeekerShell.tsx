@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useAuthReady } from "@/hooks/useAuthReady";
 import { prefetchAdjacentRoutes, preloadSeekerPages } from "@/lib/routePrefetch";
+import { capitalizeName } from "@/lib/textCase";
 import { scrollContainerToTop } from "@/hooks/useScrollToTop";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
@@ -211,7 +212,7 @@ export function SeekerShell() {
     }
   }, [navigate, toast, queryClient]);
 
-  const displayName = profile?.first_name || profile?.display_name || userEmail?.split('@')[0];
+  const displayName = capitalizeName(profile?.first_name || profile?.display_name || userEmail?.split('@')[0]);
 
   // Show loading skeleton while auth/profile/role is resolving.
   // We wait for BOTH profile and userRole so admins/providers don't briefly

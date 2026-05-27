@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Pin, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { slugToLabel } from "@/lib/textCase";
 
 interface OriginatingFacilityBannerProps {
   /** The free-tier-redirect inquiry's originating facility id. Null →
@@ -130,7 +131,7 @@ export function OriginatingFacilityBanner({
             <ul className="mt-1 space-y-0.5 text-amber-800">
               {!locMatch && seekerLoC && (
                 <li>
-                  Doesn't appear to offer <strong>{intake.level_of_care}</strong>.
+                  Doesn't appear to offer <strong>{slugToLabel(intake.level_of_care)}</strong>.
                 </li>
               )}
               {!insuranceMatch && seekerInsurance && (

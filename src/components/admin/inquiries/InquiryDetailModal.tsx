@@ -23,6 +23,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { formatSourceLabel } from "@/lib/sourceLabels";
+import { capitalizeName, slugToLabel } from "@/lib/textCase";
 
 interface InquiryLead {
   id: string;
@@ -379,7 +380,7 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
             </Avatar>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <DialogTitle className="text-lg">{lead.name}</DialogTitle>
+                <DialogTitle className="text-lg">{capitalizeName(lead.name)}</DialogTitle>
                 {lead.urgency === "immediate" && (
                   <Badge variant="destructive" className="gap-1 h-5 text-xs"><Zap className="h-3 w-3" />Urgent</Badge>
                 )}
@@ -449,10 +450,10 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Seeker */}
                   <InfoCard title="Client Details" icon={User} rows={[
-                    ["Name", lead.name], ["Email", lead.email], ["Phone", lead.phone],
+                    ["Name", capitalizeName(lead.name)], ["Email", lead.email], ["Phone", lead.phone],
                     ["Location", lead.location_city_state || lead.location_zip],
-                    ["Who Seeking", lead.who_seeking_help], ["Age Range", lead.age_range],
-                    ["Gender", lead.gender], ["Preferred Contact", lead.preferred_contact],
+                    ["Who Seeking", slugToLabel(lead.who_seeking_help)], ["Age Range", lead.age_range],
+                    ["Gender", slugToLabel(lead.gender)], ["Preferred Contact", slugToLabel(lead.preferred_contact)],
                   ]} />
                   {/* Facility + Provider */}
                   <InfoCard title="Facility & Provider" icon={Building2} rows={[
@@ -468,8 +469,8 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
                   <InfoCard title="Inquiry Details" icon={FileText} rows={[
                     ["Type", lead.inquiry_type === "request_callback" ? "Request Callback" : lead.inquiry_type === "tour_request" ? "Tour Request" : "Request Info"],
                     ["Source", formatSourceLabel(lead.source)],
-                    ["Urgency", lead.urgency], ["Level of Care", lead.level_of_care],
-                    ["Insurance", lead.insurance_type],
+                    ["Urgency", slugToLabel(lead.urgency)], ["Level of Care", slugToLabel(lead.level_of_care)],
+                    ["Insurance", slugToLabel(lead.insurance_type)],
                     ["Substances", lead.primary_substance?.join(", ")],
                     ["Submitted", format(new Date(lead.created_at), "MMM d, yyyy h:mm a")],
                   ]} />
@@ -517,8 +518,8 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
                     <h4 className="font-semibold mb-2 flex items-center gap-2 text-sm"><Handshake className="h-4 w-4 text-purple-600" />Converted to Placement</h4>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
                       <div><span className="text-muted-foreground block text-xs">Case ID</span><span className="font-mono text-xs">{relatedPlacement.id.slice(0, 8)}</span></div>
-                      <div><span className="text-muted-foreground block text-xs">Status</span><Badge variant="outline" className="text-xs mt-0.5">{relatedPlacement.status}</Badge></div>
-                      <div><span className="text-muted-foreground block text-xs">Concern</span><span className="text-xs">{relatedPlacement.primary_concern || "—"}</span></div>
+                      <div><span className="text-muted-foreground block text-xs">Status</span><Badge variant="outline" className="text-xs mt-0.5">{slugToLabel(relatedPlacement.status)}</Badge></div>
+                      <div><span className="text-muted-foreground block text-xs">Concern</span><span className="text-xs">{slugToLabel(relatedPlacement.primary_concern) || "—"}</span></div>
                     </div>
                   </div>
                 )}

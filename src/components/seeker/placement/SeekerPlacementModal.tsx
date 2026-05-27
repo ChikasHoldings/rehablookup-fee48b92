@@ -33,6 +33,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { AdvisorMessaging } from "./AdvisorMessaging";
+import { slugToLabel } from "@/lib/textCase";
 
 interface SeekerPlacementModalProps {
   caseData: {
@@ -57,7 +58,7 @@ interface SeekerPlacementModalProps {
 
 const formatLabel = (value: string | null | undefined, fallback = "—") => {
   if (!value) return fallback;
-  return value.replace(/[_-]/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+  return slugToLabel(value);
 };
 
 const formatUrgency = (urgency: string | null | undefined) => {
@@ -383,8 +384,8 @@ export function SeekerPlacementModal({ caseData, open, onOpenChange }: SeekerPla
                       <div key={ev.id} className="flex items-start gap-3 py-2">
                         <Activity className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
                         <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium capitalize">
-                            {ev.event_type.replace(/_/g, " ")}
+                          <p className="text-sm font-medium">
+                            {slugToLabel(ev.event_type)}
                           </p>
                         </div>
                         <span className="text-xs text-muted-foreground shrink-0">

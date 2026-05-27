@@ -3,6 +3,7 @@ import { MapPin, Phone, MessageSquare, ShieldCheck, Users, MessageCircle } from 
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { InquiryTypeBadge, type InquiryType } from "@/components/provider/InquiryTypeBadge";
+import { capitalizeName, slugToLabel } from "@/lib/textCase";
 
 interface InquiryListItemProps {
   inquiry: {
@@ -111,13 +112,13 @@ export function InquiryListItem({ inquiry, isSelected, onClick, unreadCount = 0 
         {inquiry.level_of_care && (
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <MessageSquare className="h-3 w-3 flex-shrink-0" />
-            <span className="truncate">{inquiry.level_of_care}</span>
+            <span className="truncate">{slugToLabel(inquiry.level_of_care)}</span>
           </div>
         )}
 
         {/* Contact preview */}
         <div className="flex items-center gap-3 text-xs text-muted-foreground pt-1">
-          <span className="font-medium truncate">{inquiry.name}</span>
+          <span className="font-medium truncate">{capitalizeName(inquiry.name)}</span>
           <span className="flex items-center gap-1">
             <Phone className="h-3 w-3" />
             {inquiry.phone}

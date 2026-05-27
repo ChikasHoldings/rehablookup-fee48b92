@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { pluckNonNull } from "@/lib/nullableRows";
+import { slugToLabel } from "@/lib/textCase";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
@@ -235,9 +236,9 @@ export function SeekerInquiriesTab({ userId }: SeekerInquiriesTabProps) {
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-semibold">{inquiry.primary_concern || "General Inquiry"}</p>
+                        <p className="font-semibold">{slugToLabel(inquiry.primary_concern) || "General Inquiry"}</p>
                         <Badge variant="outline" className={cn("text-xs", statusColors[inquiry.status] || "")}>
-                          {inquiry.status?.replace(/_/g, " ")}
+                          {slugToLabel(inquiry.status)}
                         </Badge>
                         {(inquiry.placement_confirmed || inquiry.admission_status === "admitted") && (
                           <Badge variant="outline" className="bg-success/10 text-success border-success/30 gap-1 text-xs">
@@ -246,8 +247,8 @@ export function SeekerInquiriesTab({ userId }: SeekerInquiriesTabProps) {
                         )}
                       </div>
                       <div className="flex flex-wrap gap-2 mt-2">
-                        {inquiry.level_of_care && <Badge variant="secondary" className="text-xs">{inquiry.level_of_care}</Badge>}
-                        {inquiry.timeline_urgency && <Badge variant="secondary" className="text-xs">Urgency: {inquiry.timeline_urgency}</Badge>}
+                        {inquiry.level_of_care && <Badge variant="secondary" className="text-xs">{slugToLabel(inquiry.level_of_care)}</Badge>}
+                        {inquiry.timeline_urgency && <Badge variant="secondary" className="text-xs">Urgency: {slugToLabel(inquiry.timeline_urgency)}</Badge>}
                         {inquiry.matched_facility_ids?.length > 0 && (
                           <Badge variant="outline" className="text-xs gap-1">
                             <Building2 className="h-3 w-3" />{inquiry.matched_facility_ids.length} matches

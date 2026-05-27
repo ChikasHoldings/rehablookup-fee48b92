@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
 import { PhoneCall } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
+import { capitalizeName, slugToLabel } from "@/lib/textCase";
 
 type ConciergeInquiry = Database["public"]["Tables"]["concierge_inquiries"]["Row"];
 
@@ -36,15 +37,15 @@ export function ConciergeIntakeTab({ caseData }: ConciergeIntakeTabProps) {
               </span>
             </div>
           )}
-          <InfoRow label="Name" value={caseData.user_name} />
+          <InfoRow label="Name" value={capitalizeName(caseData.user_name)} />
           <InfoRow label="Email" value={caseData.user_email} />
           <InfoRow label="Phone" value={caseData.user_phone} />
           <InfoRow label="SMS Consent" value={caseData.sms_consent ? "Yes" : "No"} />
-          <InfoRow label="Best Time to Call" value={caseData.best_time_to_call} />
+          <InfoRow label="Best Time to Call" value={slugToLabel(caseData.best_time_to_call)} />
           <InfoRow label="Alternative Contact" value={caseData.alternative_contact_name} />
           <InfoRow label="Alt. Phone" value={caseData.alternative_contact_phone} />
           <InfoRow label="Decision Maker" value={caseData.decision_maker_name} />
-          <InfoRow label="Relationship" value={caseData.relationship_to_seeker} />
+          <InfoRow label="Relationship" value={slugToLabel(caseData.relationship_to_seeker)} />
         </CardContent>
       </Card>
 
@@ -54,10 +55,10 @@ export function ConciergeIntakeTab({ caseData }: ConciergeIntakeTabProps) {
           <CardTitle className="text-sm font-medium">Care Needs</CardTitle>
         </CardHeader>
         <CardContent className="py-2 text-sm">
-          <InfoRow label="Level of Care" value={caseData.level_of_care} />
-          <InfoRow label="Primary Concern" value={caseData.primary_concern} />
-          <InfoRow label="Detox Needed" value={caseData.detox_needed} />
-          <InfoRow label="Timeline/Urgency" value={caseData.timeline_urgency} />
+          <InfoRow label="Level of Care" value={slugToLabel(caseData.level_of_care)} />
+          <InfoRow label="Primary Concern" value={slugToLabel(caseData.primary_concern)} />
+          <InfoRow label="Detox Needed" value={slugToLabel(caseData.detox_needed)} />
+          <InfoRow label="Timeline/Urgency" value={slugToLabel(caseData.timeline_urgency)} />
           <InfoRow label="Substance Use Duration" value={caseData.substance_use_duration} />
           <InfoRow label="Substance Use Frequency" value={caseData.substance_use_frequency} />
           <InfoRow label="Prior Treatment" value={caseData.prior_treatment_history ? "Yes" : "No"} />
@@ -117,9 +118,9 @@ export function ConciergeIntakeTab({ caseData }: ConciergeIntakeTabProps) {
             caseData.payment_type === "insurance" ? "Insurance" :
             caseData.payment_type === "self-pay" ? "Self-Pay / Private Pay" :
             caseData.payment_type === "unsure" ? "Not sure yet" :
-            caseData.payment_type
+            slugToLabel(caseData.payment_type)
           } />
-          <InfoRow label="Insurance Carrier" value={caseData.insurance_carrier} />
+          <InfoRow label="Insurance Carrier" value={capitalizeName(caseData.insurance_carrier)} />
           <InfoRow label="Member ID" value={caseData.insurance_member_id} />
           <InfoRow label="Group Number" value={caseData.insurance_group_number} />
           <InfoRow label="Benefits Verified" value={caseData.benefits_verified ? "Yes" : "No"} />

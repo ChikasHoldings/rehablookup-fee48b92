@@ -52,6 +52,7 @@ import { getStatusOptions } from "./leadStatusOptions";
 import { EmailLeadDialog } from "./EmailLeadDialog";
 import { Lead } from "./types";
 import { useLeadContactTracking } from "@/hooks/useLeadContactTracking";
+import { capitalizeName, slugToLabel } from "@/lib/textCase";
 
 interface LeadNote {
   id: string;
@@ -88,7 +89,7 @@ export function LeadDetailDrawer({ lead, open, onOpenChange }: LeadDetailDrawerP
   // EKRA flat-fee model: every lead is fully accessible to its facility
   // owner. Credit-based unlocks + Pro-gated PII reveal are retired.
   const displayInfo = lead ? {
-    name: lead.name,
+    name: capitalizeName(lead.name),
     email: lead.email,
     phone: lead.phone,
     initials: (lead.name?.trim() || "?").split(" ").map(n => n[0] ?? "").join("").slice(0, 2).toUpperCase(),
@@ -540,7 +541,7 @@ export function LeadDetailDrawer({ lead, open, onOpenChange }: LeadDetailDrawerP
                             <span className="text-xs text-muted-foreground">Level of Care</span>
                           </div>
                           <p className="text-sm font-medium capitalize">
-                            {lead.level_of_care === "not-sure" ? "Not sure" : lead.level_of_care}
+                            {lead.level_of_care === "not-sure" ? "Not sure" : slugToLabel(lead.level_of_care)}
                           </p>
                         </div>
                       )}
@@ -554,7 +555,7 @@ export function LeadDetailDrawer({ lead, open, onOpenChange }: LeadDetailDrawerP
                             {lead.insurance_type === "ppo" ? "PPO / Private" :
                              lead.insurance_type === "self-pay" ? "Self-Pay" :
                              lead.insurance_type === "not-sure" ? "Not sure" :
-                             lead.insurance_type}
+                             slugToLabel(lead.insurance_type)}
                             {lead.insurance_provider && ` (${lead.insurance_provider})`}
                           </p>
                         </div>

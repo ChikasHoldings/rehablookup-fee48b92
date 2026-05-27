@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useSeekerSession } from "@/hooks/useSeekerSession";
 import { validateTransition } from "@/lib/statusTransitions";
+import { capitalizeName, slugToLabel } from "@/lib/textCase";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -112,12 +113,37 @@ export default function SeekerConcierge() {
   // Use non-blocking session hook instead of supabase.auth.getUser()
   const { user: currentUser, userId, isReady } = useSeekerSession();
 
-  const userName = currentUser?.user_metadata?.full_name || 
-                   currentUser?.user_metadata?.name || 
-                   currentUser?.email?.split("@")[0] || 
-                   "User";
+  // Seeker name/phone live in seeker_profiles (written by signup + Settings),
+  // NOT auth user_metadata — reading metadata made the concierge intake +
+  // created case + "Review Your Information" show the email prefix ("jsmith")
+  // with a blank phone for nearly every seeker. Read the profile first.
+  const { data: seekerProfile } = useQuery({
+    queryKey: ["seeker-profile-basic", userId],
+    queryFn: async () => {
+      if (!userId) return null;
+      const { data } = await supabase
+        .from("seeker_profiles")
+        .select("first_name, last_name, display_name, phone")
+        .eq("user_id", userId)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!userId && isReady,
+    staleTime: 60000,
+  });
+
+  const profileFullName =
+    [seekerProfile?.first_name, seekerProfile?.last_name].filter(Boolean).join(" ").trim() ||
+    (seekerProfile?.display_name ?? "");
+  const userName = capitalizeName(
+    profileFullName ||
+      currentUser?.user_metadata?.full_name ||
+      currentUser?.user_metadata?.name ||
+      currentUser?.email?.split("@")[0] ||
+      "User",
+  );
   const userEmail = currentUser?.email || "";
-  const userPhone = currentUser?.user_metadata?.phone || "";
+  const userPhone = seekerProfile?.phone || currentUser?.user_metadata?.phone || "";
 
   // Auto-link unlinked inquiries to current user on login (by email match).
   // Hardened:
@@ -675,7 +701,7 @@ export default function SeekerConcierge() {
                   const dateLabel = date.toLocaleDateString(undefined, {
                     month: "short", day: "numeric", year: "numeric",
                   });
-                  const statusLabel = c.status.replace(/_/g, " ");
+                  const statusLabel = slugToLabel(c.status);
                   return (
                     <SelectItem key={c.id} value={c.id}>
                       <span className="font-mono text-xs mr-2">#{c.id.slice(0, 8).toUpperCase()}</span>

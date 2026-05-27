@@ -4,7 +4,7 @@
   "supabase/functions/send-marketing-followup/index.ts:62",
   "supabase/functions/send-marketing-followup/index.ts:90",
   "supabase/functions/send-review-notification/index.ts:97",
-  "supabase/functions/send-seeker-emails/index.ts:147",
-  "supabase/functions/send-seeker-emails/index.ts:152",
+  "supabase/functions/send-seeker-emails/index.ts:148",
+  "supabase/functions/send-seeker-emails/index.ts:153",
   "supabase/functions/verify-reply-email-code/index.ts:39"
 ]

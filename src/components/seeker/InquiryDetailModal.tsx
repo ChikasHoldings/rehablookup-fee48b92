@@ -32,6 +32,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getFacilityPlaceholder } from "@/lib/facilityPlaceholder";
+import { capitalizeName, slugToLabel } from "@/lib/textCase";
 import { LeadMessageThread } from "@/components/leads/LeadMessageThread";
 
 interface InquiryDetailModalProps {
@@ -399,17 +400,17 @@ export function InquiryDetailModal({ open, onOpenChange, leadId }: Omit<InquiryD
                     Your Submission
                   </h4>
                   <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-1">
-                    <DetailRow icon={User} label="Name" value={lead.name} />
+                    <DetailRow icon={User} label="Name" value={capitalizeName(lead.name)} />
                     <DetailRow icon={Mail} label="Email" value={lead.email} />
                     <DetailRow icon={Phone} label="Phone" value={lead.phone} />
                     <DetailRow icon={MapPin} label="Location" value={lead.location_city_state || lead.location_zip} />
                     <DetailRow
                       icon={Heart}
                       label="Seeking Help For"
-                      value={lead.who_seeking_help === "self" ? "Myself" : lead.who_seeking_help === "loved-one" ? "A Loved One" : lead.who_seeking_help}
+                      value={lead.who_seeking_help === "self" ? "Myself" : lead.who_seeking_help === "loved-one" ? "A Loved One" : slugToLabel(lead.who_seeking_help)}
                     />
                     <DetailRow icon={User} label="Age Range" value={lead.age_range} />
-                    <DetailRow icon={User} label="Gender" value={lead.gender} />
+                    <DetailRow icon={User} label="Gender" value={slugToLabel(lead.gender)} />
                     <DetailRow
                       icon={AlertCircle}
                       label="Urgency"
@@ -420,16 +421,16 @@ export function InquiryDetailModal({ open, onOpenChange, leadId }: Omit<InquiryD
                           ? "Within a week"
                           : lead.urgency === "flexible"
                           ? "Flexible"
-                          : lead.urgency
+                          : slugToLabel(lead.urgency)
                       }
                     />
-                    <DetailRow icon={Phone} label="Preferred Contact" value={lead.preferred_contact} />
+                    <DetailRow icon={Phone} label="Preferred Contact" value={slugToLabel(lead.preferred_contact)} />
                     <DetailRow
                       icon={Building2}
                       label="Level of Care"
-                      value={lead.level_of_care?.replace(/_/g, " ")}
+                      value={slugToLabel(lead.level_of_care)}
                     />
-                    <DetailRow icon={Shield} label="Insurance" value={lead.insurance_type} />
+                    <DetailRow icon={Shield} label="Insurance" value={slugToLabel(lead.insurance_type)} />
                     {lead.primary_substance && lead.primary_substance.length > 0 && (
                       <div className="flex items-start gap-3 py-2">
                         <Briefcase className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />

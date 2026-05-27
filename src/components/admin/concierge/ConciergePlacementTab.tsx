@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { Play, RefreshCw, MapPin, Building2, CheckCircle, XCircle, Loader2 } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
+import { capitalizeName, slugToLabel } from "@/lib/textCase";
 
 type ConciergeInquiry = Database["public"]["Tables"]["concierge_inquiries"]["Row"];
 
@@ -220,7 +221,7 @@ export function ConciergePlacementTab({ caseData, onRefresh }: ConciergePlacemen
             />
             <CriteriaItem
               label="Level of Care"
-              value={caseData.level_of_care}
+              value={slugToLabel(caseData.level_of_care)}
               matched={!!caseData.level_of_care}
             />
             <CriteriaItem
@@ -230,18 +231,18 @@ export function ConciergePlacementTab({ caseData, onRefresh }: ConciergePlacemen
                 caseData.payment_type === "insurance" ? "Insurance" :
                 caseData.payment_type === "self-pay" ? "Self-Pay / Private Pay" :
                 caseData.payment_type === "unsure" ? "Not sure yet" :
-                caseData.payment_type
+                slugToLabel(caseData.payment_type)
               }
               matched={!!caseData.payment_type}
             />
             <CriteriaItem
               label="Insurance"
-              value={caseData.insurance_carrier}
+              value={capitalizeName(caseData.insurance_carrier)}
               matched={!!caseData.insurance_carrier}
             />
             <CriteriaItem
               label="Gender"
-              value={caseData.gender}
+              value={slugToLabel(caseData.gender)}
               matched={!!caseData.gender}
             />
             <CriteriaItem

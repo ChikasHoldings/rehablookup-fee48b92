@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { pluckNonNull } from "@/lib/nullableRows";
+import { slugToLabel } from "@/lib/textCase";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -164,20 +165,20 @@ export function SeekerPlacementsTab({ userId }: SeekerPlacementsTabProps) {
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h4 className="font-semibold">{placement.primary_concern || "Placement Request"}</h4>
+                  <h4 className="font-semibold">{slugToLabel(placement.primary_concern) || "Placement Request"}</h4>
                   <Badge variant="outline" className={cn("text-xs", statusColors[placement.status] || "")}>
-                    {placement.status?.replace(/_/g, " ")}
+                    {slugToLabel(placement.status)}
                   </Badge>
                   {placement.admission_status && placement.admission_status !== "pending" && (
                     <Badge variant="outline" className={cn("text-xs", admissionStatusColors[placement.admission_status] || "")}>
-                      Admission: {placement.admission_status}
+                      Admission: {slugToLabel(placement.admission_status)}
                     </Badge>
                   )}
                 </div>
                 <div className="flex flex-wrap gap-3 mt-1.5 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{format(new Date(placement.created_at), "MMM d, yyyy")}</span>
-                  {placement.level_of_care && <span>{placement.level_of_care}</span>}
-                  {placement.timeline_urgency && <span>Urgency: {placement.timeline_urgency}</span>}
+                  {placement.level_of_care && <span>{slugToLabel(placement.level_of_care)}</span>}
+                  {placement.timeline_urgency && <span>Urgency: {slugToLabel(placement.timeline_urgency)}</span>}
                   {placement.advisorName && (
                     <span className="flex items-center gap-1"><User className="h-3 w-3" />Advisor: {placement.advisorName}</span>
                   )}
@@ -323,7 +324,7 @@ export function SeekerPlacementsTab({ userId }: SeekerPlacementsTabProps) {
           <div className="p-4 grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
             <div>
               <p className="text-muted-foreground">Tour Status</p>
-              <p className="font-medium mt-0.5 capitalize">{placement.tour_coordination_status?.replace(/_/g, " ") || "—"}</p>
+              <p className="font-medium mt-0.5">{slugToLabel(placement.tour_coordination_status) || "—"}</p>
             </div>
             {/* (Provider Fee field removed — per-admission fees were
                 retired during the monetization rebuild; the platform

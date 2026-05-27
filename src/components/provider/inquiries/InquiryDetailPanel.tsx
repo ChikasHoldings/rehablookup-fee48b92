@@ -22,6 +22,7 @@ import { useProStatus } from "@/hooks/useProStatus";
 import { Link } from "react-router-dom";
 import { Lock } from "lucide-react";
 import { LeadMessageThread } from "@/components/leads/LeadMessageThread";
+import { capitalizeName, slugToLabel } from "@/lib/textCase";
 
 type ResponseStatus = 'pending' | 'contacted' | 'responded' | 'closed';
 
@@ -185,7 +186,7 @@ export function InquiryDetailPanel({ inquiry }: InquiryDetailPanelProps) {
 
   const currentStatus = (inquiry.provider_response_status || 'pending') as ResponseStatus;
   // PII is exposed directly from leads_provider_view to the facility owner.
-  const displayName = inquiry.name;
+  const displayName = capitalizeName(inquiry.name);
   const displayEmail = inquiry.email;
   const displayPhone = inquiry.phone;
 
@@ -450,25 +451,25 @@ export function InquiryDetailPanel({ inquiry }: InquiryDetailPanelProps) {
           </h3>
           <div className="grid gap-3">
             {inquiry.level_of_care && (
-              <DetailRow icon={MessageSquare} label="Level of Care" value={inquiry.level_of_care} />
+              <DetailRow icon={MessageSquare} label="Level of Care" value={slugToLabel(inquiry.level_of_care)} />
             )}
             {inquiry.who_seeking_help && (
-              <DetailRow icon={User} label="Seeking Help For" value={inquiry.who_seeking_help} />
+              <DetailRow icon={User} label="Seeking Help For" value={slugToLabel(inquiry.who_seeking_help)} />
             )}
             {inquiry.relationship_to_patient && (
-              <DetailRow icon={Users} label="Relationship to Patient" value={inquiry.relationship_to_patient} />
+              <DetailRow icon={Users} label="Relationship to Patient" value={slugToLabel(inquiry.relationship_to_patient)} />
             )}
             {inquiry.urgency && (
-              <DetailRow icon={AlertTriangle} label="Urgency / Timeline" value={inquiry.urgency} />
+              <DetailRow icon={AlertTriangle} label="Urgency / Timeline" value={slugToLabel(inquiry.urgency)} />
             )}
             {inquiry.readiness_level && (
-              <DetailRow icon={Clock} label="Readiness Level" value={inquiry.readiness_level} />
+              <DetailRow icon={Clock} label="Readiness Level" value={slugToLabel(inquiry.readiness_level)} />
             )}
             {inquiry.preferred_contact && (
-              <DetailRow icon={Phone} label="Preferred Contact Method" value={inquiry.preferred_contact} />
+              <DetailRow icon={Phone} label="Preferred Contact Method" value={slugToLabel(inquiry.preferred_contact)} />
             )}
             {inquiry.best_time_to_call && (
-              <DetailRow icon={Clock} label="Best Time to Call" value={inquiry.best_time_to_call} />
+              <DetailRow icon={Clock} label="Best Time to Call" value={slugToLabel(inquiry.best_time_to_call)} />
             )}
             {inquiry.source && (
               <DetailRow icon={ExternalLink} label="Source" value={formatSourceLabel(inquiry.source)} />
@@ -494,7 +495,7 @@ export function InquiryDetailPanel({ inquiry }: InquiryDetailPanelProps) {
                   <DetailRow icon={User} label="Age Range" value={inquiry.age_range} />
                 )}
                 {inquiry.gender && (
-                  <DetailRow icon={User} label="Gender" value={inquiry.gender} />
+                  <DetailRow icon={User} label="Gender" value={slugToLabel(inquiry.gender)} />
                 )}
                 {inquiry.location_zip && (
                   <DetailRow icon={MapPin} label="ZIP Code" value={inquiry.location_zip} />
@@ -517,19 +518,19 @@ export function InquiryDetailPanel({ inquiry }: InquiryDetailPanelProps) {
                   <DetailRow icon={AlertTriangle} label="Primary Substance(s)" value={inquiry.primary_substance.join(", ")} />
                 )}
                 {inquiry.dual_diagnosis && (
-                  <DetailRow icon={Heart} label="Dual Diagnosis" value={inquiry.dual_diagnosis} />
+                  <DetailRow icon={Heart} label="Dual Diagnosis" value={slugToLabel(inquiry.dual_diagnosis)} />
                 )}
                 {inquiry.co_occurring_conditions && inquiry.co_occurring_conditions.length > 0 && (
                   <DetailRow icon={Heart} label="Co-occurring Conditions" value={inquiry.co_occurring_conditions.join(", ")} />
                 )}
                 {inquiry.previous_treatment && (
-                  <DetailRow icon={Clock} label="Previous Treatment" value={inquiry.previous_treatment} />
+                  <DetailRow icon={Clock} label="Previous Treatment" value={slugToLabel(inquiry.previous_treatment)} />
                 )}
                 {inquiry.previous_treatment_details && (
                   <DetailRow icon={FileText} label="Treatment Details" value={inquiry.previous_treatment_details} />
                 )}
                 {inquiry.special_needs && inquiry.special_needs.length > 0 && (
-                  <DetailRow icon={Shield} label="Special Needs" value={inquiry.special_needs.join(", ")} />
+                  <DetailRow icon={Shield} label="Special Needs" value={inquiry.special_needs.map(slugToLabel).join(", ")} />
                 )}
               </div>
             </div>
@@ -546,13 +547,13 @@ export function InquiryDetailPanel({ inquiry }: InquiryDetailPanelProps) {
               </h3>
               <div className="grid gap-3">
                 {inquiry.insurance_type && (
-                  <DetailRow icon={Shield} label="Insurance Type" value={inquiry.insurance_type} />
+                  <DetailRow icon={Shield} label="Insurance Type" value={slugToLabel(inquiry.insurance_type)} />
                 )}
                 {inquiry.insurance_provider && (
-                  <DetailRow icon={Shield} label="Insurance Provider" value={inquiry.insurance_provider} />
+                  <DetailRow icon={Shield} label="Insurance Provider" value={capitalizeName(inquiry.insurance_provider)} />
                 )}
                 {inquiry.budget_preference && (
-                  <DetailRow icon={DollarSign} label="Budget Preference" value={inquiry.budget_preference} />
+                  <DetailRow icon={DollarSign} label="Budget Preference" value={slugToLabel(inquiry.budget_preference)} />
                 )}
               </div>
             </div>

@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { slugToLabel } from "@/lib/textCase";
 
 interface PlacementStatusCardProps {
   caseData: {
@@ -210,7 +211,7 @@ export function PlacementStatusCard({ caseData }: PlacementStatusCardProps) {
               <DetailItem 
                 icon={<Users className="h-3 w-3" />}
                 label="Care Type"
-                value={caseData.level_of_care.replace(/_/g, ' ')}
+                value={slugToLabel(caseData.level_of_care)}
               />
             )}
             <DetailItem 
@@ -218,13 +219,13 @@ export function PlacementStatusCard({ caseData }: PlacementStatusCardProps) {
               label="Payment"
               value={caseData.payment_type === "insurance" 
                 ? caseData.insurance_carrier || "Insurance"
-                : caseData.payment_type?.replace(/_/g, ' ') || "Not set"}
+                : slugToLabel(caseData.payment_type) || "Not set"}
             />
             {caseData.timeline_urgency && (
               <DetailItem 
                 icon={<Calendar className="h-3 w-3" />}
                 label="Timeline"
-                value={caseData.timeline_urgency.replace(/_/g, ' ')}
+                value={slugToLabel(caseData.timeline_urgency)}
               />
             )}
             {(caseData.preferred_city || caseData.preferred_state) && (
