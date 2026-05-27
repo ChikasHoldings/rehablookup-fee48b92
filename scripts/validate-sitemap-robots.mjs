@@ -41,7 +41,13 @@ const CANONICAL_HOST = "https://rehablookup.com";
 // --------------------------------------------------------------------------
 const REQUIRED_HUBS = [
   "/",
-  "/rehab-centers",
+  // NOTE: "/rehab-centers" is intentionally NOT listed — it is a 301 redirect
+  // to /search-results (see vercel.json). generate-sitemaps.mjs strips all
+  // redirect sources from the sitemap (a redirected URL in a sitemap is a GSC
+  // "Page with redirect" error), so requiring it here is self-contradictory:
+  // the regenerated sitemap can never contain it. The canonical listing page
+  // is /search-results. If /rehab-centers should become a standalone indexable
+  // hub, remove its redirect in vercel.json first, then re-add it here.
   "/treatment-types",
   "/locations",
   "/insurance",
