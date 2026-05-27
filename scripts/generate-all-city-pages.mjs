@@ -34,6 +34,12 @@ import {
   SHARED_HEADER_HTML,
   SHARED_FOOTER_HTML,
 } from "./_unique-content.mjs";
+import {
+  fetchAllFacilities,
+  groupByStateCity,
+  renderFacilityList,
+  citySlug,
+} from "./_facility-data.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "..");
@@ -109,7 +115,7 @@ function renderNearbyCities(city, allCitiesInState) {
     </section>`;
 }
 
-function renderPage(city, allCitiesInState) {
+function renderPage(city, allCitiesInState, facilities = []) {
   const urlPath = `/rehab-centers/${city.stateSlug}/${city.citySlug}`;
   const canonical = `${BASE_URL}${urlPath}`;
   const title = `Rehab Centers in ${city.cityName}, ${city.stateAbbr}`;
@@ -197,6 +203,8 @@ function renderPage(city, allCitiesInState) {
     <h1>${escHtml(title)}</h1>
     <p>Browse the ${escHtml(city.stateName)} addiction-treatment directory for ${escHtml(popText)}. ${escHtml(cityDescription)} This page lists the treatment levels, insurance coverage, and state oversight relevant to ${escHtml(city.cityName)} residents.</p>
 
+    ${renderFacilityList(facilities, `${city.cityName}, ${city.stateAbbr}`)}
+
     ${renderStateFactBox(city.stateName, city.stateSlug)}
     ${renderStateSignature(city.stateName, city.stateSlug)}
 
@@ -222,18 +230,30 @@ function renderPage(city, allCitiesInState) {
 </html>`;
 }
 
-function main() {
+async function main() {
   const states = parseLocationSeoData();
+  // Inject real local facilities (with /center/ links) so each city page is
+  // substantive + unique, not templated boilerplate. Fetched once, matched
+  // per city. Fail-soft: empty match leaves the existing copy untouched.
+  const allFacilities = await fetchAllFacilities();
+  const byCity = groupByStateCity(allFacilities);
   let written = 0;
+  let withFacilities = 0;
   for (const state of states) {
     for (const city of state.cities) {
+      const key = `${city.stateSlug}/${citySlug(city.cityName)}`;
+      const cityFacilities = byCity.get(key) || [];
+      if (cityFacilities.length > 0) withFacilities++;
       const outPath = path.join(publicDir, "rehab-centers", city.stateSlug, `${city.citySlug}.html`);
       fs.mkdirSync(path.dirname(outPath), { recursive: true });
-      fs.writeFileSync(outPath, renderPage(city, state.cities));
+      fs.writeFileSync(outPath, renderPage(city, state.cities, cityFacilities));
       written++;
     }
   }
-  console.log(`City page generator: wrote ${written} unique-content pages.`);
+  console.log(`City page generator: wrote ${written} pages (${withFacilities} with live facility listings).`);
 }
 
-main();
+main().catch((err) => {
+  console.error("city-page generator failed:", err);
+  process.exit(1);
+});
