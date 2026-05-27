@@ -367,9 +367,13 @@ async function ensureFacilityHtmlInSitemap() {
   const htmlSlugs = (await readdir(centerDir))
     .filter((f) => f.endsWith(".html"))
     .map((f) => f.slice(0, -".html".length))
-    // Mirror the check's slug shape; skip anything non-canonical so we never
-    // inject a malformed <loc> that another validator would reject.
-    .filter((s) => /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(s));
+    // Use the filename slug verbatim — generate-facility-profiles-html writes
+    // `${slug}.html` and the sync check reads the filename as-is (no slug
+    // validation), so we must match it exactly. Facility slugs are URL-safe by
+    // construction and may contain consecutive hyphens (e.g. "c-a-s-a--warren").
+    // Only skip stems with characters that would break the URL or XML so we
+    // never emit a malformed <loc>.
+    .filter((s) => s.length > 0 && !/[<>&"'\s/?#]/.test(s));
 
   if (htmlSlugs.length === 0) return;
 
