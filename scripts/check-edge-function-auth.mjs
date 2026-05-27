@@ -148,6 +148,8 @@ const CRON_NAMES = new Set([
   "samhsa-import-batch",
   "send-dunning-emails",
   "send-new-facility-alerts",
+  "send-placement-review-requests",
+  "send-promo-campaign-emails",
   "send-profile-reminders",
   "send-provider-weekly-digest",
   "send-renewal-reminder",

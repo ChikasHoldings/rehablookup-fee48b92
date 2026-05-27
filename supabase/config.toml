@@ -495,6 +495,12 @@ verify_jwt = false
 [functions.placement-monitor]
 verify_jwt = false
 
+[functions.send-placement-review-requests]
+verify_jwt = false
+
+[functions.send-promo-campaign-emails]
+verify_jwt = false
+
 [functions.process-onboarding-emails]
 verify_jwt = false
 
