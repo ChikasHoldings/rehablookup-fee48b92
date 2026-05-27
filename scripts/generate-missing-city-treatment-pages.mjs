@@ -35,6 +35,12 @@ import {
   SHARED_HEADER_HTML,
   SHARED_FOOTER_HTML,
 } from "./_unique-content.mjs";
+import {
+  fetchAllFacilities,
+  groupByStateCity,
+  renderFacilityList,
+  citySlug,
+} from "./_facility-data.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "..");
@@ -359,7 +365,7 @@ function renderCityOtherIntents(citySlug, currentPrefix) {
     </section>`;
 }
 
-function renderPage({ prefix, city }) {
+function renderPage({ prefix, city, facilities = [] }) {
   const meta = prefixMeta(prefix);
   const { label, hub, intent } = meta;
   const stateSlug = city.stateSlug || stateSlugForAbbr(city.stateAbbr);
@@ -440,6 +446,8 @@ function renderPage({ prefix, city }) {
       <p>${intent}</p>
     </section>
 
+    ${renderFacilityList(facilities, `${city.city}, ${city.stateAbbr}`)}
+
     ${renderStateFactBox(stateName, stateSlug)}
     ${renderStateSignature(stateName, stateSlug)}
 
@@ -463,18 +471,32 @@ function renderPage({ prefix, city }) {
 </html>`;
 }
 
-function main() {
+async function main() {
   const prefixes = parsePrefixes();
   const cities = parseTopCities();
+  // Inject real local facilities (with /center/ links) so each page carries
+  // unique, substantive content instead of templated boilerplate — the fix
+  // for GSC "soft 404 / thin / crawled-not-indexed". Fetched once; matched
+  // per city. Fail-soft: an empty list (no facilities / offline build) falls
+  // back to the existing rich copy via renderFacilityList returning "".
+  const facilities = await fetchAllFacilities();
+  const byCity = groupByStateCity(facilities);
   let written = 0;
+  let withFacilities = 0;
   for (const prefix of prefixes) {
     for (const city of cities) {
+      const key = `${city.stateSlug || stateSlugForAbbr(city.stateAbbr)}/${citySlug(city.city)}`;
+      const cityFacilities = byCity.get(key) || [];
+      if (cityFacilities.length > 0) withFacilities++;
       const outPath = path.join(publicDir, `${prefix}${city.slug}.html`);
-      fs.writeFileSync(outPath, renderPage({ prefix, city }));
+      fs.writeFileSync(outPath, renderPage({ prefix, city, facilities: cityFacilities }));
       written++;
     }
   }
-  console.log(`city-treatment generator: prefixes=${prefixes.length}, cities=${cities.length}, wrote ${written} unique-content pages.`);
+  console.log(`city-treatment generator: prefixes=${prefixes.length}, cities=${cities.length}, wrote ${written} pages (${withFacilities} with live facility listings).`);
 }
 
-main();
+main().catch((err) => {
+  console.error("city-treatment generator failed:", err);
+  process.exit(1);
+});
