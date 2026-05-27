@@ -18,6 +18,9 @@ import { toast } from "sonner";
 import { InquiryTypeBadge, type InquiryType } from "@/components/provider/InquiryTypeBadge";
 import { formatSourceLabel } from "@/lib/sourceLabels";
 import { useLeadContactTracking } from "@/hooks/useLeadContactTracking";
+import { useProStatus } from "@/hooks/useProStatus";
+import { Link } from "react-router-dom";
+import { Lock } from "lucide-react";
 
 type ResponseStatus = 'pending' | 'contacted' | 'responded' | 'closed';
 
@@ -64,6 +67,12 @@ interface InquiryDetailPanelProps {
 export function InquiryDetailPanel({ inquiry }: InquiryDetailPanelProps) {
   const queryClient = useQueryClient();
   const { trackContact } = useLeadContactTracking();
+  const { data: proStatus } = useProStatus(inquiry.facility_id);
+  // Non-Pro (including downgraded) facilities are view-only: the provider
+  // can see the lead but can't respond through the app. Optimistic —
+  // treat as allowed until the tier query resolves so the common (Pro)
+  // case never flashes the gate; only an explicit `isPro === false` locks it.
+  const canRespond = proStatus?.isPro !== false;
   const [responseNotes, setResponseNotes] = useState("");
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
   // Track which specific status button is in-flight so the spinner only
@@ -81,6 +90,9 @@ export function InquiryDetailPanel({ inquiry }: InquiryDetailPanelProps) {
 
   const updateStatus = useMutation({
     mutationFn: async ({ status, notes }: { status: ResponseStatus; notes?: string }) => {
+      // Defence-in-depth: non-Pro facilities are view-only. The UI hides
+      // the controls, but guard here too so a stale render can't fire.
+      if (!canRespond) throw new Error("Upgrade to Pro to respond to leads");
       // BUGFIX: Scope update to both lead id AND facility_id for defence-in-depth.
       // RLS enforces this at the DB level, but explicit client-side scoping prevents
       // accidental cross-facility mutations if RLS policies are ever misconfigured.
@@ -264,6 +276,7 @@ export function InquiryDetailPanel({ inquiry }: InquiryDetailPanelProps) {
                     size="sm"
                     className="gap-1.5"
                     onClick={() => setEmailDialogOpen(true)}
+                    disabled={!canRespond}
                     aria-label={`Send email to ${displayName}`}
                   >
                     <Mail className="h-4 w-4" />
@@ -281,17 +294,19 @@ export function InquiryDetailPanel({ inquiry }: InquiryDetailPanelProps) {
               <ExternalLink className="h-3 w-3" />
               Open in your email app instead
             </a>
-            {/* Response Templates */}
-            <ResponseTemplatesDrawer
-              leadName={displayName}
-              facilityName={inquiry.facility_name}
-              trigger={
-                <Button variant="outline" size="sm" className="w-full gap-1.5 mt-2">
-                  <FileText className="h-3.5 w-3.5" />
-                  Use Response Template
-                </Button>
-              }
-            />
+            {/* Response Templates — Pro-only (responding through the app) */}
+            {canRespond && (
+              <ResponseTemplatesDrawer
+                leadName={displayName}
+                facilityName={inquiry.facility_name}
+                trigger={
+                  <Button variant="outline" size="sm" className="w-full gap-1.5 mt-2">
+                    <FileText className="h-3.5 w-3.5" />
+                    Use Response Template
+                  </Button>
+                }
+              />
+            )}
           </div>
 
           {/* Platform email send — templated, tracked, with per-template
@@ -299,12 +314,32 @@ export function InquiryDetailPanel({ inquiry }: InquiryDetailPanelProps) {
               the dashboard lead drawer uses, now available here too. */}
           <EmailLeadDialog
             lead={{ id: inquiry.id, name: displayName, email: displayEmail }}
-            open={emailDialogOpen}
+            open={emailDialogOpen && canRespond}
             onOpenChange={setEmailDialogOpen}
             facilityId={inquiry.facility_id}
           />
 
-        {/* Status Management */}
+        {/* Status Management — Pro-only. Non-Pro facilities (incl.
+            downgraded) can view the lead but not respond through the app. */}
+        {!canRespond ? (
+          <div className="rounded-lg border border-amber-200 bg-amber-50/60 p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-100">
+                <Lock className="h-4 w-4 text-amber-600" aria-hidden />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-slate-900">Responding is a Pro feature</p>
+                <p className="text-xs text-slate-600 mt-0.5">
+                  You can view this inquiry's full details. Upgrade to Pro to respond,
+                  track status, and send messages from the app.
+                </p>
+                <Button asChild size="sm" className="mt-2.5 gap-1.5 bg-[#1B365D] hover:bg-[#142a4a]">
+                  <Link to="/provider/billing?upgrade=pro">Upgrade to Pro</Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+        ) : (
         <div className="space-y-3">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
               Response Status
@@ -386,6 +421,7 @@ export function InquiryDetailPanel({ inquiry }: InquiryDetailPanelProps) {
               )}
             </div>
           </div>
+        )}
 
         <Separator />
 
