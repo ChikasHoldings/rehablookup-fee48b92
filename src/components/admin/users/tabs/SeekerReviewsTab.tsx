@@ -1,6 +1,7 @@
 import { pluckNonNull } from "@/lib/nullableRows";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,6 +16,8 @@ interface SeekerReviewsTabProps {
 
 export function SeekerReviewsTab({ userId }: SeekerReviewsTabProps) {
   const queryClient = useQueryClient();
+  const { hasPermission } = useAdminAuth();
+  const canModerateReviews = hasPermission("reviews");
 
   const { data: reviews, isLoading } = useQuery({
     queryKey: ["admin-seeker-reviews", userId],
@@ -122,23 +125,25 @@ export function SeekerReviewsTab({ userId }: SeekerReviewsTabProps) {
               <span className="text-xs text-muted-foreground whitespace-nowrap">
                 {formatDistanceToNow(new Date(review.created_at), { addSuffix: true })}
               </span>
-              <div className="flex gap-1">
-                {review.status === "pending" && (
-                  <Button variant="ghost" size="sm" className="h-7 px-2 text-success" onClick={() => updateReviewStatus.mutate({ reviewId: review.id, status: "approved" })}>
-                    <CheckCircle className="h-3.5 w-3.5" />
-                  </Button>
-                )}
-                {review.status !== "flagged" && (
-                  <Button variant="ghost" size="sm" className="h-7 px-2 text-warning" onClick={() => updateReviewStatus.mutate({ reviewId: review.id, status: "flagged" })}>
-                    <Flag className="h-3.5 w-3.5" />
-                  </Button>
-                )}
-                {review.status !== "rejected" && (
-                  <Button variant="ghost" size="sm" className="h-7 px-2 text-destructive" onClick={() => updateReviewStatus.mutate({ reviewId: review.id, status: "rejected" })}>
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                )}
-              </div>
+              {canModerateReviews && (
+                <div className="flex gap-1">
+                  {review.status === "pending" && (
+                    <Button variant="ghost" size="sm" className="h-7 px-2 text-success" onClick={() => updateReviewStatus.mutate({ reviewId: review.id, status: "approved" })}>
+                      <CheckCircle className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
+                  {review.status !== "flagged" && (
+                    <Button variant="ghost" size="sm" className="h-7 px-2 text-warning" onClick={() => updateReviewStatus.mutate({ reviewId: review.id, status: "flagged" })}>
+                      <Flag className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
+                  {review.status !== "rejected" && (
+                    <Button variant="ghost" size="sm" className="h-7 px-2 text-destructive" onClick={() => updateReviewStatus.mutate({ reviewId: review.id, status: "rejected" })}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import {
   Card,
   CardContent,
@@ -218,6 +219,8 @@ interface WaitlistRow {
 
 function WaitlistCard() {
   const queryClient = useQueryClient();
+  const { adminRole } = useAdminAuth();
+  const canManage = adminRole === "super_admin" || adminRole === "manager";
   const [addonFilter, setAddonFilter] = useState<string>("__all__");
 
   const { data: rows, isLoading } = useQuery({
@@ -357,7 +360,7 @@ function WaitlistCard() {
                       </Badge>
                     </td>
                     <td className="px-3 py-2 text-right space-x-1">
-                      {r.status === "waiting" && (
+                      {canManage && r.status === "waiting" && (
                         <Button
                           size="sm"
                           variant="ghost"
@@ -367,7 +370,7 @@ function WaitlistCard() {
                           Mark invited
                         </Button>
                       )}
-                      {r.status === "invited" && (
+                      {canManage && r.status === "invited" && (
                         <Button
                           size="sm"
                           variant="ghost"
@@ -377,14 +380,16 @@ function WaitlistCard() {
                           Mark fulfilled
                         </Button>
                       )}
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
-                        onClick={() => expire(r.id)}
-                      >
-                        Expire
-                      </Button>
+                      {canManage && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => expire(r.id)}
+                        >
+                          Expire
+                        </Button>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -541,6 +546,8 @@ function PlacementCapEditableRow({
   used: number;
   onChanged: () => void;
 }) {
+  const { adminRole } = useAdminAuth();
+  const canManage = adminRole === "super_admin" || adminRole === "manager";
   const [maxSlots, setMaxSlots] = useState(String(row.max_slots));
   const [notes, setNotes] = useState(row.notes ?? "");
   const [saving, setSaving] = useState(false);
@@ -627,33 +634,37 @@ function PlacementCapEditableRow({
         />
       </td>
       <td className="px-3 py-2 text-right">
-        <div className="inline-flex gap-1">
-          <Button
-            size="sm"
-            variant="ghost"
-            disabled={!dirty || !valid || saving}
-            onClick={save}
-            className="h-8 gap-1.5"
-          >
-            {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
-            Save
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            disabled={deleting}
-            onClick={del}
-            className="h-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-          >
-            {deleting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
-          </Button>
-        </div>
+        {canManage && (
+          <div className="inline-flex gap-1">
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={!dirty || !valid || saving}
+              onClick={save}
+              className="h-8 gap-1.5"
+            >
+              {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
+              Save
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={deleting}
+              onClick={del}
+              className="h-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+            >
+              {deleting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
+            </Button>
+          </div>
+        )}
       </td>
     </tr>
   );
 }
 
 function AddPlacementCapForm({ onAdded }: { onAdded: () => void }) {
+  const { adminRole } = useAdminAuth();
+  const canManage = adminRole === "super_admin" || adminRole === "manager";
   const [open, setOpen] = useState(false);
   const [type, setType] = useState<string>("");
   const [value, setValue] = useState("");
@@ -704,6 +715,8 @@ function AddPlacementCapForm({ onAdded }: { onAdded: () => void }) {
       setSubmitting(false);
     }
   }
+
+  if (!canManage) return null;
 
   if (!open) {
     return (
@@ -918,6 +931,8 @@ function ConciergeCapEditableRow({
   used: number;
   onChanged: () => void;
 }) {
+  const { adminRole } = useAdminAuth();
+  const canManage = adminRole === "super_admin" || adminRole === "manager";
   const [maxSlots, setMaxSlots] = useState(String(row.max_slots));
   const [notes, setNotes] = useState(row.notes ?? "");
   const [saving, setSaving] = useState(false);
@@ -1012,33 +1027,37 @@ function ConciergeCapEditableRow({
         />
       </td>
       <td className="px-3 py-2 text-right">
-        <div className="inline-flex gap-1">
-          <Button
-            size="sm"
-            variant="ghost"
-            disabled={!dirty || !valid || saving}
-            onClick={save}
-            className="h-8 gap-1.5"
-          >
-            {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
-            Save
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            disabled={deleting}
-            onClick={del}
-            className="h-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-          >
-            {deleting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
-          </Button>
-        </div>
+        {canManage && (
+          <div className="inline-flex gap-1">
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={!dirty || !valid || saving}
+              onClick={save}
+              className="h-8 gap-1.5"
+            >
+              {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
+              Save
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={deleting}
+              onClick={del}
+              className="h-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+            >
+              {deleting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
+            </Button>
+          </div>
+        )}
       </td>
     </tr>
   );
 }
 
 function AddConciergeCapForm({ onAdded }: { onAdded: () => void }) {
+  const { adminRole } = useAdminAuth();
+  const canManage = adminRole === "super_admin" || adminRole === "manager";
   const [open, setOpen] = useState(false);
   const [state, setState] = useState("");
   const [city, setCity] = useState("");
@@ -1090,6 +1109,8 @@ function AddConciergeCapForm({ onAdded }: { onAdded: () => void }) {
       setSubmitting(false);
     }
   }
+
+  if (!canManage) return null;
 
   if (!open) {
     return (

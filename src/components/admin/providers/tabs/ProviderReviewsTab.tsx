@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { Star, Flag, CheckCircle, AlertTriangle, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,6 +17,8 @@ interface ProviderReviewsTabProps {
 
 export function ProviderReviewsTab({ provider, providerFacilities }: ProviderReviewsTabProps) {
   const queryClient = useQueryClient();
+  const { hasPermission } = useAdminAuth();
+  const canModerateReviews = hasPermission("reviews");
   const facilityIds = providerFacilities?.map((f) => f.id) || [provider.id];
 
   const { data: reviews, isLoading } = useQuery({
@@ -121,18 +124,20 @@ export function ProviderReviewsTab({ provider, providerFacilities }: ProviderRev
 
                 <div className="flex items-center justify-between pt-2 border-t">
                   <span className="text-xs text-muted-foreground">{facilityName(review.facility_id)} • {review.helpful_count} helpful votes</span>
-                  <div className="flex gap-1.5">
-                    {review.status !== "approved" && (
-                      <Button size="sm" variant="outline" className="h-7 text-xs text-emerald-600" onClick={() => updateReviewStatus.mutate({ id: review.id, status: "approved" })}>
-                        <CheckCircle className="h-3 w-3 mr-1" />Approve
-                      </Button>
-                    )}
-                    {review.status !== "rejected" && (
-                      <Button size="sm" variant="outline" className="h-7 text-xs text-destructive" onClick={() => updateReviewStatus.mutate({ id: review.id, status: "rejected" })}>
-                        <Flag className="h-3 w-3 mr-1" />Reject
-                      </Button>
-                    )}
-                  </div>
+                  {canModerateReviews && (
+                    <div className="flex gap-1.5">
+                      {review.status !== "approved" && (
+                        <Button size="sm" variant="outline" className="h-7 text-xs text-emerald-600" onClick={() => updateReviewStatus.mutate({ id: review.id, status: "approved" })}>
+                          <CheckCircle className="h-3 w-3 mr-1" />Approve
+                        </Button>
+                      )}
+                      {review.status !== "rejected" && (
+                        <Button size="sm" variant="outline" className="h-7 text-xs text-destructive" onClick={() => updateReviewStatus.mutate({ id: review.id, status: "rejected" })}>
+                          <Flag className="h-3 w-3 mr-1" />Reject
+                        </Button>
+                      )}
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

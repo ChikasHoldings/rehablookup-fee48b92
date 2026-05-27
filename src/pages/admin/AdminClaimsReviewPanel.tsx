@@ -80,6 +80,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 
 type ClaimStatus = "pending" | "under_review" | "approved" | "rejected" | "withdrawn";
 type StatusFilter = "pending" | "under_review" | "resolved" | "all";
@@ -256,6 +257,9 @@ function formatTimestamp(iso: string): string {
 }
 
 function AdminClaimsReviewPanel() {
+  const { adminRole } = useAdminAuth();
+  // Approve transfers facility ownership — restrict to super_admin/manager.
+  const canApproveClaims = adminRole === "super_admin" || adminRole === "manager";
   const [claims, setClaims] = useState<ClaimRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -432,14 +436,18 @@ function AdminClaimsReviewPanel() {
   async function markVerificationComplete(claim: ClaimRow) {
     setActionPending(claim.id);
     try {
-      const { error: updErr } = await supabase
+      const { data: updated, error: updErr } = await supabase
         .from("facility_claim_requests")
         .update({
           verification_status: "verified",
           verified_at: new Date().toISOString(),
         })
-        .eq("id", claim.id);
+        .eq("id", claim.id)
+        .select("id");
       if (updErr) throw updErr;
+      if (!updated || updated.length === 0) {
+        throw new Error("Update was blocked — the claim may have been actioned by another admin. Refresh to see current status.");
+      }
       toast.success("Verification marked complete");
       await fetchClaims();
     } catch (err) {
@@ -868,32 +876,36 @@ function AdminClaimsReviewPanel() {
                                     Mark verification complete
                                   </Button>
                                 )}
-                              <Button
-                                size="sm"
-                                disabled={
-                                  actionPending === claim.id ||
-                                  claim.verification_status !== "verified"
-                                }
-                                onClick={() => setApproveTarget(claim)}
-                                title={
-                                  claim.verification_status === "verified"
-                                    ? undefined
-                                    : "Verification must be complete before approving."
-                                }
-                              >
-                                Approve
-                              </Button>
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                disabled={actionPending === claim.id}
-                                onClick={() => {
-                                  setRejectTarget(claim);
-                                  setRejectionReason("");
-                                }}
-                              >
-                                Reject
-                              </Button>
+                              {canApproveClaims && (
+                                <Button
+                                  size="sm"
+                                  disabled={
+                                    actionPending === claim.id ||
+                                    claim.verification_status !== "verified"
+                                  }
+                                  onClick={() => setApproveTarget(claim)}
+                                  title={
+                                    claim.verification_status === "verified"
+                                      ? undefined
+                                      : "Verification must be complete before approving."
+                                  }
+                                >
+                                  Approve
+                                </Button>
+                              )}
+                              {canApproveClaims && (
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  disabled={actionPending === claim.id}
+                                  onClick={() => {
+                                    setRejectTarget(claim);
+                                    setRejectionReason("");
+                                  }}
+                                >
+                                  Reject
+                                </Button>
+                              )}
                             </div>
                           )}
                         </div>

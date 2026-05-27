@@ -5,6 +5,7 @@ import {
   Award, FileText, CheckCircle, XCircle, BadgeCheck, ExternalLink,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -50,6 +51,8 @@ async function resolveDocUrls<T extends { storage_path?: string | null; document
 
 export function ProviderCredentialsTab({ provider, providerFacilities }: ProviderCredentialsTabProps) {
   const queryClient = useQueryClient();
+  const { hasPermission } = useAdminAuth();
+  const canManageProviders = hasPermission("providers");
   const facilityIds = providerFacilities?.map((f) => f.id) || [provider.id];
   const [rejectDocId, setRejectDocId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
@@ -149,7 +152,8 @@ export function ProviderCredentialsTab({ provider, providerFacilities }: Provide
                       <div className="flex items-center gap-3">
                         <Checkbox
                           checked={!!acc.verified}
-                          onCheckedChange={(checked) => updateAccreditationVerification.mutate({ accreditationId: acc.id, verified: !!checked })}
+                          disabled={!canManageProviders}
+                          onCheckedChange={(checked) => canManageProviders && updateAccreditationVerification.mutate({ accreditationId: acc.id, verified: !!checked })}
                         />
                         <div>
                           <p className="font-medium">{acc.accreditation_type}</p>
@@ -235,7 +239,7 @@ export function ProviderCredentialsTab({ provider, providerFacilities }: Provide
                         <ExternalLink className="h-3.5 w-3.5 mr-1" />View
                       </a>
                     </Button>
-                    {doc.status === "pending" && (
+                    {doc.status === "pending" && canManageProviders && (
                       <>
                         <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" onClick={async () => {
                           const { data: { user } } = await supabase.auth.getUser();
