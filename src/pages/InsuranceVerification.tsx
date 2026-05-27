@@ -279,22 +279,22 @@ export default function InsuranceVerification() {
                 <div className="grid sm:grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label htmlFor="firstName">First name *</Label>
-                    <Input id="firstName" autoComplete="given-name" value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
+                    <Input id="firstName" autoComplete="given-name" value={firstName} onChange={(e) => setFirstName(e.target.value)} required maxLength={100} />
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="lastName">Last name *</Label>
-                    <Input id="lastName" autoComplete="family-name" value={lastName} onChange={(e) => setLastName(e.target.value)} required />
+                    <Input id="lastName" autoComplete="family-name" value={lastName} onChange={(e) => setLastName(e.target.value)} required maxLength={100} />
                   </div>
                 </div>
 
                 <div className="grid sm:grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label htmlFor="phone">Phone *</Label>
-                    <Input id="phone" type="tel" autoComplete="tel" placeholder="(555) 555-5555" value={phone} onChange={(e) => setPhone(e.target.value)} required />
+                    <Input id="phone" type="tel" autoComplete="tel" placeholder="(555) 555-5555" value={phone} onChange={(e) => setPhone(e.target.value)} required maxLength={32} />
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="email">Email *</Label>
-                    <Input id="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                    <Input id="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required maxLength={255} />
                   </div>
                 </div>
 
@@ -342,18 +342,18 @@ export default function InsuranceVerification() {
                 <div className="grid sm:grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label htmlFor="member">Member ID</Label>
-                    <Input id="member" value={memberId} onChange={(e) => setMemberId(e.target.value)} placeholder="On the front of your card" />
+                    <Input id="member" value={memberId} onChange={(e) => setMemberId(e.target.value)} placeholder="On the front of your card" maxLength={100} />
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="group">Group number</Label>
-                    <Input id="group" value={groupNumber} onChange={(e) => setGroupNumber(e.target.value)} placeholder="Optional" />
+                    <Input id="group" value={groupNumber} onChange={(e) => setGroupNumber(e.target.value)} placeholder="Optional" maxLength={100} />
                   </div>
                 </div>
 
                 <div className="grid sm:grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label htmlFor="policy-name">Policy holder name</Label>
-                    <Input id="policy-name" value={policyHolderName} onChange={(e) => setPolicyHolderName(e.target.value)} placeholder="If not you" />
+                    <Input id="policy-name" value={policyHolderName} onChange={(e) => setPolicyHolderName(e.target.value)} placeholder="If not you" maxLength={200} />
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="relationship">Relationship to policy holder</Label>
@@ -413,11 +413,11 @@ export default function InsuranceVerification() {
                 <div className="grid sm:grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label htmlFor="state">Preferred state</Label>
-                    <Input id="state" value={preferredState} onChange={(e) => setPreferredState(e.target.value)} placeholder="Optional" />
+                    <Input id="state" value={preferredState} onChange={(e) => setPreferredState(e.target.value)} placeholder="Optional" maxLength={50} />
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="city">Preferred city</Label>
-                    <Input id="city" value={preferredCity} onChange={(e) => setPreferredCity(e.target.value)} placeholder="Optional" />
+                    <Input id="city" value={preferredCity} onChange={(e) => setPreferredCity(e.target.value)} placeholder="Optional" maxLength={100} />
                   </div>
                 </div>
 
@@ -429,7 +429,11 @@ export default function InsuranceVerification() {
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder="Special needs, current medications, prior treatment history…"
                     rows={3}
+                    maxLength={2000}
                   />
+                  {notes.length > 1800 && (
+                    <p className="text-xs text-muted-foreground text-right">{notes.length}/2000</p>
+                  )}
                 </div>
               </section>
 

@@ -163,7 +163,7 @@ export default function AdminBlog() {
         .from("blog_articles")
         .select("id, title, slug, excerpt, author, category, category_label, status, featured, image_url, read_time, published_at, created_at, updated_at")
         .order("updated_at", { ascending: false })
-        .limit(500);
+        .limit(200);
 
       if (categoryFilter !== "all") query = query.eq("category", categoryFilter);
       if (statusFilter !== "all") query = query.eq("status", statusFilter);

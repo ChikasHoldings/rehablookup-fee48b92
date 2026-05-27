@@ -683,7 +683,7 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
         <CommandInput 
           placeholder={isAdvisor ? "Search cases, pages..." : "Search providers, leads, or pages..."} 
           value={searchQuery}
-          onValueChange={setSearchQuery}
+          onValueChange={(val) => setSearchQuery(val.slice(0, 128))}
         />
         <CommandList>
           {isSearching && (

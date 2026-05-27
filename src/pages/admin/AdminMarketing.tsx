@@ -165,7 +165,7 @@ export default function AdminMarketing() {
         .from("marketing_leads")
         .select("id, first_name, last_name, email, phone, status, source, primary_substance, insurance_type, insurance_provider, level_of_care, location_city_state, location_zip, urgency, created_at, updated_at, converted_to_concierge, converted_at, admin_notes, followup_email_sent, followup_email_sent_at, message, who_seeking_help, utm_source, utm_medium, utm_campaign, utm_content, utm_term, landing_page, facilities_requested, matched_facility_ids, age_range, gender, previous_treatment, dual_diagnosis, employment_status, preferred_contact, co_occurring_conditions")
         .order("created_at", { ascending: false })
-        .limit(500);
+        .limit(200);
 
       if (statusFilter === "converted") {
         query = query.eq("converted_to_concierge", true);

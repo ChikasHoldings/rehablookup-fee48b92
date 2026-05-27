@@ -15,6 +15,16 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -222,6 +232,7 @@ function WaitlistCard() {
   const { adminRole } = useAdminAuth();
   const canManage = adminRole === "super_admin" || adminRole === "manager";
   const [addonFilter, setAddonFilter] = useState<string>("__all__");
+  const [confirmExpireId, setConfirmExpireId] = useState<string | null>(null);
 
   const { data: rows, isLoading } = useQuery({
     queryKey: ["admin-waitlist", addonFilter],
@@ -267,8 +278,7 @@ function WaitlistCard() {
     queryClient.invalidateQueries({ queryKey: ["admin-waitlist", addonFilter] });
   }
 
-  async function expire(id: string) {
-    if (!confirm("Mark this waitlist entry as expired? The provider sees their entry close.")) return;
+  async function doExpire(id: string) {
     const { error } = await supabase
       .from("addon_waitlist")
       .update({ status: "expired", closed_at: new Date().toISOString() })
@@ -385,7 +395,7 @@ function WaitlistCard() {
                           size="sm"
                           variant="ghost"
                           className="h-7 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
-                          onClick={() => expire(r.id)}
+                          onClick={() => setConfirmExpireId(r.id)}
                         >
                           Expire
                         </Button>
@@ -399,6 +409,26 @@ function WaitlistCard() {
         )}
       </CardContent>
     </Card>
+
+    <AlertDialog open={!!confirmExpireId} onOpenChange={(open) => { if (!open) setConfirmExpireId(null); }}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Expire waitlist entry?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This will mark the entry as expired. The provider will see their entry close.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            onClick={() => { if (confirmExpireId) doExpire(confirmExpireId); setConfirmExpireId(null); }}
+          >
+            Expire
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
 
@@ -552,6 +582,7 @@ function PlacementCapEditableRow({
   const [notes, setNotes] = useState(row.notes ?? "");
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [confirmDel, setConfirmDel] = useState(false);
 
   const dirty =
     Number(maxSlots) !== row.max_slots || (notes ?? "") !== (row.notes ?? "");
@@ -583,9 +614,8 @@ function PlacementCapEditableRow({
     }
   }
 
-  async function del() {
+  async function doDel() {
     if (deleting) return;
-    if (!confirm(`Delete cap for ${row.placement_type}=${row.placement_value}? Future inserts will fall back to the type-level average.`)) return;
     setDeleting(true);
     try {
       const { error } = await supabase
@@ -650,7 +680,7 @@ function PlacementCapEditableRow({
               size="sm"
               variant="ghost"
               disabled={deleting}
-              onClick={del}
+              onClick={() => setConfirmDel(true)}
               className="h-8 text-destructive hover:text-destructive hover:bg-destructive/10"
             >
               {deleting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
@@ -658,6 +688,25 @@ function PlacementCapEditableRow({
           </div>
         )}
       </td>
+      <AlertDialog open={confirmDel} onOpenChange={setConfirmDel}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete placement cap?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Delete cap for {row.placement_type}={row.placement_value}? Future inserts will fall back to the type-level average.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => { setConfirmDel(false); doDel(); }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </tr>
   );
 }
@@ -937,6 +986,7 @@ function ConciergeCapEditableRow({
   const [notes, setNotes] = useState(row.notes ?? "");
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [confirmDel, setConfirmDel] = useState(false);
 
   const dirty =
     Number(maxSlots) !== row.max_slots || (notes ?? "") !== (row.notes ?? "");
@@ -969,14 +1019,8 @@ function ConciergeCapEditableRow({
     }
   }
 
-  async function del() {
+  async function doDel() {
     if (deleting) return;
-    if (
-      !confirm(
-        `Delete cap for ${row.geo_state}/${row.geo_city}? Future inserts will fall back to the statewide default.`,
-      )
-    )
-      return;
     setDeleting(true);
     try {
       const { error } = await supabase
@@ -1043,7 +1087,7 @@ function ConciergeCapEditableRow({
               size="sm"
               variant="ghost"
               disabled={deleting}
-              onClick={del}
+              onClick={() => setConfirmDel(true)}
               className="h-8 text-destructive hover:text-destructive hover:bg-destructive/10"
             >
               {deleting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
@@ -1051,6 +1095,25 @@ function ConciergeCapEditableRow({
           </div>
         )}
       </td>
+      <AlertDialog open={confirmDel} onOpenChange={setConfirmDel}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete concierge geo cap?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Delete cap for {row.geo_state}/{row.geo_city === "*" ? "(statewide)" : row.geo_city}? Future inserts will fall back to the statewide default.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => { setConfirmDel(false); doDel(); }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </tr>
   );
 }

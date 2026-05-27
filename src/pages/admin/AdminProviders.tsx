@@ -841,6 +841,7 @@ export default function AdminProviders() {
             aria-label="Search providers by name, city, or email"
             type="search"
             autoComplete="off"
+            maxLength={128}
           />
         </div>
         <div className="flex flex-wrap gap-2">

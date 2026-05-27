@@ -611,6 +611,7 @@ export default function AdminSeekers() {
                 value={searchInput}
                 onChange={(e) => { setSearchInput(e.target.value); setCurrentPage(1); }}
                 className="pl-9"
+                maxLength={128}
               />
             </div>
             <div className="flex gap-2 flex-wrap">
