@@ -4,9 +4,11 @@ import { Button } from "@/components/ui/button";
 
 interface AccessDeniedProps {
   requiredRole: "provider" | "admin";
+  title?: string;
+  message?: string;
 }
 
-export function AccessDenied({ requiredRole }: AccessDeniedProps) {
+export function AccessDenied({ requiredRole, title, message }: AccessDeniedProps) {
   const label = requiredRole === "admin" ? "admin account" : "provider account";
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-6">
@@ -16,10 +18,9 @@ export function AccessDenied({ requiredRole }: AccessDeniedProps) {
             <ShieldOff className="h-7 w-7 text-destructive" aria-hidden />
           </div>
         </div>
-        <h1 className="text-2xl font-bold text-foreground">Access denied</h1>
+        <h1 className="text-2xl font-bold text-foreground">{title ?? "Access denied"}</h1>
         <p className="text-muted-foreground">
-          This area requires a {label}. Sign in with the correct account to
-          continue.
+          {message ?? `This area requires a ${label}. Sign in with the correct account to continue.`}
         </p>
         <div className="flex justify-center gap-3">
           <Button asChild>

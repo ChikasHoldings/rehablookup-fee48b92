@@ -20,6 +20,9 @@ interface Profile {
   /** profiles.plan mirror — 'free' | 'pro'. Lets components avoid an
    *  extra useProStatus call when they only need the tier. */
   plan: "free" | "pro" | null;
+  /** Account-level status. 'active' for normal accounts; 'suspended' blocks
+   *  dashboard access in ProviderShell. */
+  status: string | null;
 }
 
 interface Facility {
@@ -131,7 +134,7 @@ export function useProviderData(facilityId?: string) {
         // Fetch profile
         supabase
           .from("profiles")
-          .select("first_name, last_name, email, phone, job_title, primary_contact_name, timezone, phone_verified, phone_verified_at, onboarding_completed_at, plan")
+          .select("first_name, last_name, email, phone, job_title, primary_contact_name, timezone, phone_verified, phone_verified_at, onboarding_completed_at, plan, status")
           .eq("user_id", session.user.id)
           .maybeSingle(),
         // Fetch facility

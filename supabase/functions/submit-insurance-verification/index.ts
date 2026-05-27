@@ -181,6 +181,22 @@ Deno.serve(async (req) => {
       });
     }
 
+    // ── Deduplication: prevent duplicate submissions within 10 minutes ──────
+    // The rate limit above caps volume but doesn't block two concurrent
+    // requests with identical (email, carrier) arriving in the same second —
+    // both see recentCount=0 and both insert.  A 10-minute window dedup
+    // catches that without breaking legitimate re-submissions later.
+    const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+    const { count: recentDupeCount } = await adminClient
+      .from("insurance_verification_requests")
+      .select("id", { count: "exact", head: true })
+      .eq("email", email)
+      .eq("carrier", carrier)
+      .gte("created_at", tenMinutesAgo);
+    if ((recentDupeCount ?? 0) > 0) {
+      return json(200, { success: true, requestId: null, _version: VERSION, deduplicated: true });
+    }
+
     // ── Insert ───────────────────────────────────────────────────
     const { data: inserted, error: insertErr } = await adminClient
       .from("insurance_verification_requests")
