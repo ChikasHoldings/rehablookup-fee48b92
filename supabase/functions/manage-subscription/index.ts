@@ -166,6 +166,24 @@ Deno.serve(async (req) => {
       throw new Error("Subscription ID or Customer ID is required");
     }
 
+    // Destructive billing writes require Super Admin or Manager tier.
+    // The outer check only verifies role='admin' (any admin staff); this
+    // second check prevents customer_rep / advisor from canceling or pausing
+    // any subscription they happen to know the ID of.
+    const BILLING_WRITE_ACTIONS = ["cancel", "cancel_immediately", "pause", "resume", "reactivate", "delete_coupon", "deactivate_promo_code"];
+    if (BILLING_WRITE_ACTIONS.includes(action)) {
+      const { data: adminProfile } = await supabaseClient
+        .from("admin_user_profiles")
+        .select("admin_role")
+        .eq("user_id", adminUser.id)
+        .maybeSingle();
+      const tier = adminProfile?.admin_role;
+      if (tier !== "super_admin" && tier !== "manager") {
+        throw new Error("Unauthorized: Billing management requires Super Admin or Manager role");
+      }
+      logStep("Billing tier verified", { adminId: adminUser.id, tier });
+    }
+
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
 

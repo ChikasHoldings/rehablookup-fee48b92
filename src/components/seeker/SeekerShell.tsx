@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { UserCircle2 } from "lucide-react";
+import { AccessDenied } from "@/components/provider/AccessDenied";
 
 // Preload all seeker pages on module load for instant navigation
 preloadSeekerPages();
@@ -153,23 +154,25 @@ export function SeekerShell() {
     prefetchAdjacentRoutes(location.pathname);
   }, [location.pathname]);
 
-  // Redirect admins/providers away from seeker panel
-  // We check the user's actual role from the DB, not route hints
-  const { data: userRole } = useQuery({
+  // Redirect admins/providers away from seeker panel; also fetch account
+  // status so suspended seekers are blocked before reaching the dashboard.
+  const { data: roleAndStatus } = useQuery({
     queryKey: ['shell-role-check', userId],
     queryFn: async () => {
       if (!userId) return null;
       const [adminResult, providerResult] = await Promise.all([
         supabase.rpc("has_role", { _user_id: userId, _role: "admin" }),
-        supabase.from("profiles").select("id").eq("user_id", userId).maybeSingle(),
+        supabase.from("profiles").select("id, status").eq("user_id", userId).maybeSingle(),
       ]);
-      if (adminResult.data === true) return "admin";
-      if (providerResult.data) return "provider";
-      return "seeker";
+      const role = adminResult.data === true ? "admin" : providerResult.data ? "provider" : "seeker";
+      const status = (providerResult.data as { id: string; status?: string | null } | null)?.status ?? null;
+      return { role, status };
     },
     enabled: isReady && !!userId,
     staleTime: 30000,
   });
+  const userRole = roleAndStatus?.role;
+  const profileStatus = roleAndStatus?.status;
 
   useEffect(() => {
     if (!isReady || !userRole || hasRedirected.current) return;
@@ -228,6 +231,18 @@ export function SeekerShell() {
 
   // Hide shell during redirect
   if (userRole === "admin" || userRole === "provider" || hasRedirected.current) return null;
+
+  // Suspended account — block dashboard access, same as ProviderShell.
+  // Only fires once profileStatus is resolved (null means still loading).
+  if (profileStatus === "suspended") {
+    return (
+      <AccessDenied
+        requiredRole="provider"
+        title="Account suspended"
+        message="Your account has been suspended. Please contact support for assistance."
+      />
+    );
+  }
 
   return (
     <div

@@ -481,7 +481,7 @@ export default function AdminReviews() {
       .trim()
       .slice(0, 2000);
 
-    const { error } = await supabase
+    const { data: approvedRow, error } = await supabase
       .from('facility_reviews')
       .update({
         status: 'approved',
@@ -489,12 +489,14 @@ export default function AdminReviews() {
         reviewed_by: currentUserId,
         reviewed_at: new Date().toISOString(),
       })
-      .eq('id', reviewId);
+      .eq('id', reviewId)
+      .select('id')
+      .maybeSingle();
 
     setProcessingId(null);
 
-    if (error) {
-      toast.error(`Failed to approve review: ${error.message}`);
+    if (error || !approvedRow) {
+      toast.error(error ? `Failed to approve review: ${error.message}` : 'Review not found or already deleted');
       return;
     }
     const review = reviews.find((r) => r.id === reviewId);
@@ -535,19 +537,21 @@ export default function AdminReviews() {
   // hidden/rejected review could only be deleted (a dead-end).
   const handleRestore = async (reviewId: string) => {
     setProcessingId(reviewId);
-    const { error } = await supabase
+    const { data: restoredRow, error } = await supabase
       .from('facility_reviews')
       .update({
         status: 'approved',
         reviewed_by: currentUserId,
         reviewed_at: new Date().toISOString(),
       })
-      .eq('id', reviewId);
+      .eq('id', reviewId)
+      .select('id')
+      .maybeSingle();
 
     setProcessingId(null);
 
-    if (error) {
-      toast.error(`Failed to restore review: ${error.message}`);
+    if (error || !restoredRow) {
+      toast.error(error ? `Failed to restore review: ${error.message}` : 'Review not found or already deleted');
       return;
     }
     const review = reviews.find((r) => r.id === reviewId);
@@ -580,7 +584,7 @@ export default function AdminReviews() {
       .trim()
       .slice(0, 2000);
 
-    const { error } = await supabase
+    const { data: rejectedRow, error } = await supabase
       .from('facility_reviews')
       .update({
         status: 'rejected',
@@ -588,12 +592,14 @@ export default function AdminReviews() {
         reviewed_by: currentUserId,
         reviewed_at: new Date().toISOString(),
       })
-      .eq('id', reviewId);
+      .eq('id', reviewId)
+      .select('id')
+      .maybeSingle();
 
     setProcessingId(null);
 
-    if (error) {
-      toast.error(`Failed to reject review: ${error.message}`);
+    if (error || !rejectedRow) {
+      toast.error(error ? `Failed to reject review: ${error.message}` : 'Review not found or already deleted');
       return;
     }
     const review = reviews.find((r) => r.id === reviewId);
