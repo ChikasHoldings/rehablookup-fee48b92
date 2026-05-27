@@ -2136,6 +2136,7 @@ export type Database = {
           issuing_authority: string | null
           notes: string | null
           rejection_reason: string | null
+          storage_path: string | null
           verification_number: string | null
           verification_url: string | null
           verified: boolean | null
@@ -2154,6 +2155,7 @@ export type Database = {
           issuing_authority?: string | null
           notes?: string | null
           rejection_reason?: string | null
+          storage_path?: string | null
           verification_number?: string | null
           verification_url?: string | null
           verified?: boolean | null
@@ -2172,6 +2174,7 @@ export type Database = {
           issuing_authority?: string | null
           notes?: string | null
           rejection_reason?: string | null
+          storage_path?: string | null
           verification_number?: string | null
           verification_url?: string | null
           verified?: boolean | null

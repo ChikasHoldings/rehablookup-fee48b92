@@ -28,6 +28,26 @@ interface ProviderCredentialsTabProps {
   providerFacilities?: Facility[];
 }
 
+// Resolve a viewable URL for a credential / accreditation row. Docs uploaded
+// to the private facility-credentials bucket store a storage_path and need a
+// short-lived signed URL (admins can read via the facility_credentials_admin_read
+// storage policy); legacy rows keep a directly-openable public document_url.
+async function resolveDocUrls<T extends { storage_path?: string | null; document_url?: string | null }>(
+  rows: T[],
+): Promise<(T & { display_url: string })[]> {
+  return Promise.all(
+    rows.map(async (r) => {
+      if (r.storage_path) {
+        const { data: signed } = await supabase.storage
+          .from("facility-credentials")
+          .createSignedUrl(r.storage_path, 60 * 60);
+        return { ...r, display_url: signed?.signedUrl ?? "" };
+      }
+      return { ...r, display_url: r.document_url ?? "" };
+    }),
+  );
+}
+
 export function ProviderCredentialsTab({ provider, providerFacilities }: ProviderCredentialsTabProps) {
   const queryClient = useQueryClient();
   const facilityIds = providerFacilities?.map((f) => f.id) || [provider.id];
@@ -39,10 +59,10 @@ export function ProviderCredentialsTab({ provider, providerFacilities }: Provide
     queryFn: async () => {
       const { data } = await supabase
         .from("facility_accreditations")
-        .select("id, facility_id, accreditation_type, issuing_authority, verification_number, verified, verified_at, expiry_date, document_url, document_name, notes, created_at")
+        .select("id, facility_id, accreditation_type, issuing_authority, verification_number, verified, verified_at, expiry_date, document_url, document_name, storage_path, notes, created_at")
         .in("facility_id", facilityIds)
         .order("created_at", { ascending: true });
-      return data || [];
+      return resolveDocUrls(data ?? []);
     },
   });
 
@@ -51,10 +71,10 @@ export function ProviderCredentialsTab({ provider, providerFacilities }: Provide
     queryFn: async () => {
       const { data } = await supabase
         .from("facility_credential_documents")
-        .select("id, facility_id, document_type, document_name, document_url, status, uploaded_at, verified_at, verified_by, rejection_reason")
+        .select("id, facility_id, document_type, document_name, document_url, storage_path, status, uploaded_at, verified_at, verified_by, rejection_reason")
         .in("facility_id", facilityIds)
         .order("uploaded_at", { ascending: false });
-      return data || [];
+      return resolveDocUrls(data ?? []);
     },
   });
 
@@ -145,7 +165,7 @@ export function ProviderCredentialsTab({ provider, providerFacilities }: Provide
                         <Badge variant="outline" className="text-muted-foreground">Pending</Badge>
                       )}
                     </div>
-                    {(acc.verification_number || acc.document_url) && (
+                    {(acc.verification_number || acc.display_url) && (
                       <div className="pl-9 pt-2 border-t border-dashed space-y-1.5 text-sm">
                         {acc.verification_number && (
                           <div className="flex items-center gap-2">
@@ -158,11 +178,11 @@ export function ProviderCredentialsTab({ provider, providerFacilities }: Provide
                             )}
                           </div>
                         )}
-                        {acc.document_url && (
+                        {acc.display_url && (
                           <div className="flex items-center gap-2">
                             <span className="text-muted-foreground">Doc:</span>
                             <Button size="sm" variant="outline" className="h-7" asChild>
-                              <a href={acc.document_url} target="_blank" rel="noopener noreferrer">
+                              <a href={acc.display_url} target="_blank" rel="noopener noreferrer">
                                 <FileText className="h-3 w-3 mr-1" />{acc.document_name || "View Certificate"}
                               </a>
                             </Button>
@@ -211,7 +231,7 @@ export function ProviderCredentialsTab({ provider, providerFacilities }: Provide
                   </div>
                   <div className="flex items-center gap-2">
                     <Button size="sm" variant="outline" asChild>
-                      <a href={doc.document_url} target="_blank" rel="noopener noreferrer">
+                      <a href={doc.display_url} target="_blank" rel="noopener noreferrer">
                         <ExternalLink className="h-3.5 w-3.5 mr-1" />View
                       </a>
                     </Button>

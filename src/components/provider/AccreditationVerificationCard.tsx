@@ -42,6 +42,7 @@ interface Accreditation {
   verification_url: string | null;
   document_url: string | null;
   document_name: string | null;
+  storage_path: string | null;
   issuing_authority: string | null;
   notes: string | null;
   rejection_reason: string | null;
@@ -82,7 +83,7 @@ export function AccreditationVerificationCard({
   const isChecked = !!accreditation;
   const isVerified = accreditation?.verified === true;
   const isRejected = accreditation?.rejection_reason != null;
-  const hasDetails = !!(accreditation?.verification_number || accreditation?.document_url);
+  const hasDetails = !!(accreditation?.verification_number || accreditation?.document_url || accreditation?.storage_path);
 
   const handleToggle = async (checked: boolean) => {
     try {
@@ -147,38 +148,46 @@ export function AccreditationVerificationCard({
     if (!accreditation) return;
     
     setIsSaving(true);
-    let documentUrl = accreditation.document_url;
     let documentName = accreditation.document_name;
+    let storagePath = accreditation.storage_path;
 
     try {
-      // Upload document if selected
+      // Upload document if selected. Route through validate-and-upload so the
+      // file is magic-byte verified server-side and written to the PRIVATE
+      // facility-credentials bucket (which allows PDFs + images). The public
+      // facility-images bucket rejects PDFs and would expose certificates.
       if (selectedFile) {
         setIsUploading(true);
         const fileExt = selectedFile.name.split('.').pop();
         const fileName = `${userId}/${facilityId}/accreditations/${accreditationType.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}.${fileExt}`;
 
-        const { error: uploadError } = await supabase.storage
-          .from("facility-images")
-          .upload(fileName, selectedFile, { cacheControl: "3600", upsert: false });
+        const uploadForm = new FormData();
+        uploadForm.append("file", selectedFile);
+        uploadForm.append("kind", "credential");
+        uploadForm.append("path", fileName);
+        uploadForm.append("upsert", "false");
 
-        if (uploadError) throw uploadError;
+        const { data: uploadResult, error: fnError } = await supabase.functions.invoke(
+          "validate-and-upload",
+          { body: uploadForm },
+        );
+        if (fnError) throw new Error("Couldn't reach the upload service. Check your connection and try again.");
+        if (!uploadResult?.ok) throw new Error(uploadResult?.error || "The file was rejected. Please upload a valid PDF or image under 10MB.");
 
-        const { data: urlData } = supabase.storage
-          .from("facility-images")
-          .getPublicUrl(fileName);
-
-        documentUrl = urlData.publicUrl;
+        storagePath = fileName;
         documentName = selectedFile.name;
         setIsUploading(false);
       }
 
-      // Update accreditation record
+      // Update accreditation record. New uploads live in private storage
+      // (storage_path); document_url is cleared so render code signs a URL.
       const { error } = await supabase
         .from("facility_accreditations")
         .update({
           verification_number: verificationNumber.trim() || null,
           notes: notes.trim() || null,
-          document_url: documentUrl,
+          storage_path: storagePath,
+          document_url: storagePath ? null : accreditation.document_url,
           document_name: documentName,
         })
         .eq("id", accreditation.id);
@@ -199,12 +208,17 @@ export function AccreditationVerificationCard({
   };
 
   const handleRemoveDocument = async () => {
-    if (!accreditation?.document_url) return;
-    
+    if (!accreditation?.document_url && !accreditation?.storage_path) return;
+
     try {
+      if (accreditation.storage_path) {
+        // Best-effort delete of the private object; the row update below is
+        // the source of truth for whether a document is attached.
+        await supabase.storage.from("facility-credentials").remove([accreditation.storage_path]);
+      }
       const { error } = await supabase
         .from("facility_accreditations")
-        .update({ document_url: null, document_name: null })
+        .update({ document_url: null, document_name: null, storage_path: null })
         .eq("id", accreditation.id);
 
       if (error) throw error;
@@ -214,6 +228,23 @@ export function AccreditationVerificationCard({
       console.error("Error removing document:", error);
       toast({ title: "Error", description: "Failed to remove document", variant: "destructive" });
     }
+  };
+
+  // Open the uploaded document. Private-bucket docs (storage_path) need a
+  // short-lived signed URL; legacy rows keep a directly-openable public URL.
+  const openDocument = async () => {
+    if (accreditation?.storage_path) {
+      const { data, error } = await supabase.storage
+        .from("facility-credentials")
+        .createSignedUrl(accreditation.storage_path, 60 * 60);
+      if (error || !data?.signedUrl) {
+        toast({ title: "Couldn't open document", description: "Please try again.", variant: "destructive" });
+        return;
+      }
+      window.open(data.signedUrl, "_blank");
+      return;
+    }
+    if (accreditation?.document_url) window.open(accreditation.document_url, "_blank");
   };
 
   const getStatusBadge = () => {
@@ -327,7 +358,7 @@ export function AccreditationVerificationCard({
               <div className="space-y-1.5">
                 <Label className="text-xs font-medium">{config.documentLabel}</Label>
                 
-                {accreditation?.document_url ? (
+                {(accreditation?.document_url || accreditation?.storage_path) ? (
                   <div className="flex items-center gap-2 p-2 rounded-md border bg-muted/30">
                     <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                     <span className="text-xs truncate flex-1">
@@ -337,7 +368,7 @@ export function AccreditationVerificationCard({
                       variant="ghost"
                       size="sm"
                       className="h-7 w-7 p-0"
-                      onClick={() => window.open(accreditation.document_url!, '_blank')}
+                      onClick={openDocument}
                     >
                       <ExternalLink className="h-3.5 w-3.5" />
                     </Button>
