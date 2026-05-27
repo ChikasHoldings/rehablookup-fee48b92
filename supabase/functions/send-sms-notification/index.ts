@@ -227,7 +227,11 @@ Deno.serve(async (req) => {
         if (data?.levelOfCare) {
           messageBody += `. Seeking ${data.levelOfCare}`;
         }
-        if (data?.urgency === "within_24_hours" || data?.urgency === "emergency") {
+        // The lead intake form stores urgency as immediate/within-week/flexible;
+        // older payloads used within_24_hours/emergency. Match all "now" variants
+        // so the most urgent leads actually get the URGENT marker.
+        const urgencyVal = String(data?.urgency || "").toLowerCase();
+        if (["immediate", "immediately", "urgent", "within_24_hours", "emergency"].includes(urgencyVal)) {
           messageBody += `. URGENT - needs immediate care`;
         }
         messageBody += `. Login to view details.`;

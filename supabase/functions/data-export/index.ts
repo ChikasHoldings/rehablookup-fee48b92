@@ -10,11 +10,13 @@ Deno.serve(async (req: Request) => {
     return new Response('ok', { headers: corsHeaders });
   }
 
-  // Security: require export secret
+  // Security: require export secret. Fail closed if the env var is unset —
+  // never fall back to a hardcoded secret (this endpoint can dump any table,
+  // PII, and auth users via the service-role key).
   const exportSecret = req.headers.get('x-export-secret');
-  const EXPORT_SECRET = Deno.env.get('SMOKE_CRON_SECRET') || 'Peaceonearth99@';
-  
-  if (exportSecret !== EXPORT_SECRET) {
+  const EXPORT_SECRET = Deno.env.get('SMOKE_CRON_SECRET');
+
+  if (!EXPORT_SECRET || exportSecret !== EXPORT_SECRET) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }

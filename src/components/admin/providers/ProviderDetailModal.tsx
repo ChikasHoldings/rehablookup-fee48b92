@@ -121,11 +121,13 @@ export function ProviderDetailModal({
     queryKey: ["admin-provider-placement-stats", provider?.id],
     queryFn: async () => {
       if (!provider?.id) return { introductions: 0, placements: 0 };
-      const [introResult, placementResult] = await Promise.all([
-        supabase.from("concierge_introductions").select("id", { count: "exact", head: true }).eq("facility_id", provider.id),
-        (supabase as never).from("concierge_engagements").select("id", { count: "exact", head: true }).eq("facility_id", provider.id).in("status", ["admitted", "completed"]),
-      ]);
-      return { introductions: introResult.count || 0, placements: placementResult.count || 0 };
+      // The pay-per-admission `concierge_engagements` table was retired with the
+      // EKRA flat-fee model, so placements are no longer tracked here.
+      const { count: introCount } = await supabase
+        .from("concierge_introductions")
+        .select("id", { count: "exact", head: true })
+        .eq("facility_id", provider.id);
+      return { introductions: introCount || 0, placements: 0 };
     },
     enabled: !!provider?.id && open,
   });
