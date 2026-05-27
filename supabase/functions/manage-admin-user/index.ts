@@ -421,6 +421,26 @@ Deno.serve(async (req) => {
           throw new Error("Cannot delete the last admin user");
         }
 
+        // Prevent deleting the last super_admin — no other admin can restore
+        // the tier, making the platform unrecoverable without direct DB access.
+        const { data: targetAdminProfile } = await supabase
+          .from("admin_user_profiles")
+          .select("admin_role")
+          .eq("user_id", targetUserId)
+          .maybeSingle();
+
+        if (targetAdminProfile?.admin_role === "super_admin") {
+          const { count: otherSuperAdminCount } = await supabase
+            .from("admin_user_profiles")
+            .select("*", { count: "exact", head: true })
+            .eq("admin_role", "super_admin")
+            .neq("user_id", targetUserId);
+
+          if ((otherSuperAdminCount ?? 0) === 0) {
+            throw new Error("Cannot delete the last Super Admin. Promote another admin to Super Admin first.");
+          }
+        }
+
         // Delete from admin_user_permissions
         await supabase
           .from("admin_user_permissions")
@@ -536,6 +556,19 @@ Deno.serve(async (req) => {
           .single();
 
         const oldRole = currentAdminProfile?.admin_role || "customer_rep";
+
+        // Prevent demoting the last super_admin — same recovery concern as delete.
+        if (oldRole === "super_admin" && newRole !== "super_admin") {
+          const { count: otherSuperAdminCount } = await supabase
+            .from("admin_user_profiles")
+            .select("*", { count: "exact", head: true })
+            .eq("admin_role", "super_admin")
+            .neq("user_id", targetUserId);
+
+          if ((otherSuperAdminCount ?? 0) === 0) {
+            throw new Error("Cannot demote the last Super Admin. Promote another admin to Super Admin first.");
+          }
+        }
 
         // Update admin_role in admin_user_profiles (this is the actual role)
         const { error: updateError } = await supabase
