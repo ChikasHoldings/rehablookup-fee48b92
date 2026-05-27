@@ -21,6 +21,7 @@ import { useLeadContactTracking } from "@/hooks/useLeadContactTracking";
 import { useProStatus } from "@/hooks/useProStatus";
 import { Link } from "react-router-dom";
 import { Lock } from "lucide-react";
+import { LeadMessageThread } from "@/components/leads/LeadMessageThread";
 
 type ResponseStatus = 'pending' | 'contacted' | 'responded' | 'closed';
 
@@ -421,6 +422,15 @@ export function InquiryDetailPanel({ inquiry }: InquiryDetailPanelProps) {
               )}
             </div>
           </div>
+        )}
+
+        {/* Two-way message thread (Pro only). Non-Pro sees the upgrade
+            prompt above instead. */}
+        {canRespond && (
+          <>
+            <Separator />
+            <LeadMessageThread leadId={inquiry.id} viewerType="provider" counterpartName={displayName} />
+          </>
         )}
 
         <Separator />

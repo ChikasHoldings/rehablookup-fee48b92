@@ -32,6 +32,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getFacilityPlaceholder } from "@/lib/facilityPlaceholder";
+import { LeadMessageThread } from "@/components/leads/LeadMessageThread";
 
 interface InquiryDetailModalProps {
   open: boolean;
@@ -374,6 +375,19 @@ export function InquiryDetailModal({ open, onOpenChange, leadId }: Omit<InquiryD
                       </Button>
                     )}
                   </div>
+                )}
+
+                {/* Two-way message thread with the facility. Active
+                    inquiries only — closed/expired show the recovery CTA. */}
+                {lead.status !== "closed" && lead.status !== "expired" && (
+                  <>
+                    <Separator />
+                    <LeadMessageThread
+                      leadId={lead.id}
+                      viewerType="seeker"
+                      counterpartName={facility?.name}
+                    />
+                  </>
                 )}
 
                 <Separator />
