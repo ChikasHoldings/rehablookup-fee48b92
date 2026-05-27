@@ -119,6 +119,7 @@ const ANON_NAMES = new Set([
   // Retired tombstones — return 410 Gone for everything. Safe to leave
   // without JWT since they have no side effects.
   "retry-failed-payments",
+  "placement-cron",
 ]);
 
 // Bucket E: cron-triggered (X-Cron-Secret enforced in code)
@@ -137,7 +138,6 @@ const CRON_NAMES = new Set([
   "cleanup-orphan-storage",
   "cleanup-rate-limit-logs",
   "drain-addon-waitlist",
-  "placement-cron",
   "placement-monitor",
   "process-onboarding-emails",
   "process-provider-drip",

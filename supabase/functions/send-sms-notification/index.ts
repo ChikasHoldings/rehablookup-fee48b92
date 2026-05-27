@@ -48,6 +48,21 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Internal-only: invoked exclusively by other edge functions with the
+    // service-role key. verify_jwt is false (callers don't carry a user JWT),
+    // so we MUST assert the service-role bearer here — otherwise the open
+    // endpoint is an SMS relay: an unauthenticated POST could text any
+    // SMS-opted-in user arbitrary content via the "general" customMessage.
+    const callerBearer = (req.headers.get("Authorization") || req.headers.get("authorization") || "")
+      .replace(/^Bearer\s+/i, "");
+    if (callerBearer !== supabaseServiceKey) {
+      logStep("Forbidden — caller is not service-role", { requestId });
+      return new Response(
+        JSON.stringify({ error: "Forbidden", requestId }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     if (!twilioAccountSid || !twilioAuthToken || !twilioPhoneNumber) {
       logStep("Twilio credentials not configured", { requestId });
       return new Response(

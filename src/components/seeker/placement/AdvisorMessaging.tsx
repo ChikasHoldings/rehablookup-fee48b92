@@ -115,11 +115,16 @@ export function AdvisorMessaging({ inquiryId }: AdvisorMessagingProps) {
     if (!thread?.id || !messages || messages.length === 0) return;
     
     const markAsRead = async () => {
-      await supabase
+      const { error } = await supabase
         .from("concierge_threads")
         .update({ user_last_read_at: new Date().toISOString() })
         .eq("id", thread.id);
-      
+      // Only refresh the unread badge if the read actually persisted —
+      // otherwise it would clear visually then re-appear on refetch.
+      if (error) {
+        console.warn("[AdvisorMessaging] mark-as-read failed", error.message);
+        return;
+      }
       queryClient.invalidateQueries({ queryKey: ["unread-advisor-count"] });
     };
     
