@@ -315,6 +315,7 @@ function WaitlistCard() {
   }
 
   return (
+    <>
     <Card>
       <CardHeader>
         <CardTitle className="text-base">Open waitlist queue</CardTitle>
@@ -445,6 +446,7 @@ function WaitlistCard() {
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+    </>
   );
 }
 
