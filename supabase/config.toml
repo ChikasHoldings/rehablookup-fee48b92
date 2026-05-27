@@ -209,6 +209,11 @@ verify_jwt = false
 [functions.send-lead-email]
 verify_jwt = false
 
+# Client-invoked by the authenticated provider/seeker; the function also
+# re-verifies the JWT and authorizes the sender (Pro provider / lead owner).
+[functions.send-lead-message]
+verify_jwt = true
+
 [functions.send-credential-notification]
 verify_jwt = false
 
