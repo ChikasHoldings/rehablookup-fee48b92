@@ -354,7 +354,7 @@ export function VerifyEmailStep({ onAdvance }: { onAdvance: () => void }) {
           onClick={handleChangeEmail}
         >
           <ArrowLeft className="h-3.5 w-3.5" aria-hidden />
-          Back
+          Use a different email
         </Button>
       </div>
     </div>
