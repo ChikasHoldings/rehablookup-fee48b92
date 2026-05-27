@@ -120,6 +120,7 @@ const ANON_NAMES = new Set([
   // without JWT since they have no side effects.
   "retry-failed-payments",
   "placement-cron",
+  "send-payment-reminder",
 ]);
 
 // Bucket E: cron-triggered (X-Cron-Secret enforced in code)
