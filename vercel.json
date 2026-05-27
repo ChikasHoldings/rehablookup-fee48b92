@@ -102,6 +102,11 @@
       "statusCode": 301
     },
     {
+      "source": "/international/thank-you",
+      "destination": "/concierge/thank-you",
+      "statusCode": 301
+    },
+    {
       "source": "/lp/social",
       "destination": "/",
       "statusCode": 301
@@ -172,6 +177,11 @@
       "statusCode": 301
     },
     {
+      "source": "/provider/onboarding/new-listing",
+      "destination": "/provider/onboarding?action=add-listing",
+      "statusCode": 301
+    },
+    {
       "source": "/provider/signup",
       "destination": "/provider/onboarding",
       "statusCode": 301
@@ -204,6 +214,11 @@
     {
       "source": "/rehab-in-usa-for-uk-patients",
       "destination": "/us-rehab/uk-patients",
+      "statusCode": 301
+    },
+    {
+      "source": "/rehab-score",
+      "destination": "/editorial-policy",
       "statusCode": 301
     },
     {
@@ -349,6 +364,16 @@
     {
       "source": "/resources/signs-of-addiction",
       "destination": "/resources/youth-addiction-warning-signs",
+      "statusCode": 301
+    },
+    {
+      "source": "/resources/family-support-guide",
+      "destination": "/resources/how-to-support-someone-in-recovery",
+      "statusCode": 301
+    },
+    {
+      "source": "/resources/non-12-step-alternatives",
+      "destination": "/resources/rehab-vs-aa-na",
       "statusCode": 301
     },
     {

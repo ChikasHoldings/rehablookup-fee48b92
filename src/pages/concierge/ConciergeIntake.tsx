@@ -264,7 +264,15 @@ const STEP_CONFIG = [
 
 const TOTAL_STEPS = STEP_CONFIG.length;
 
-export default function ConciergeIntake() {
+interface ConciergeIntakeProps {
+  // "international" routes the submission through the same free placement
+  // pipeline but tags the resulting inquiry so ops can filter international
+  // cases. Driven by the route (/international/apply), not user input.
+  variant?: "domestic" | "international";
+}
+
+export default function ConciergeIntake({ variant = "domestic" }: ConciergeIntakeProps = {}) {
+  const isInternational = variant === "international";
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [currentStep, setCurrentStep] = useState(1);
@@ -866,6 +874,7 @@ export default function ConciergeIntake() {
                 intakeData: formData,
                 emailVerifiedAt: null,
                 draftId: draftId,
+                isInternational,
               },
             });
             if (draftData?.draftId) {
@@ -917,6 +926,7 @@ export default function ConciergeIntake() {
           intakeData: formData,
           emailVerifiedAt: emailVerification.verifiedAt,
           draftId: null,
+          isInternational,
         },
       });
       if (draftData?.draftId) {
@@ -963,6 +973,7 @@ export default function ConciergeIntake() {
             intakeData: formData,
             emailVerifiedAt: emailVerification.verifiedAt,
             draftId: draftId,
+            isInternational,
           },
         });
         if (draftData?.draftId) {
@@ -978,6 +989,7 @@ export default function ConciergeIntake() {
           intakeData: formData,
           emailVerifiedAt: emailVerification.verifiedAt,
           phoneVerifiedAt: phoneVerification.verifiedAt,
+          isInternational,
         },
       });
 
@@ -1145,7 +1157,7 @@ export default function ConciergeIntake() {
   return (
     <>
       <Helmet>
-        <title>Placement Request | RehabLookup</title>
+        <title>{isInternational ? "International Placement Request | RehabLookup" : "Placement Request | RehabLookup"}</title>
         <meta name="description" content="Complete your intake form to be placed with the right treatment programs." />
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>

@@ -181,12 +181,21 @@ Deno.serve(async (req) => {
       }
     }
 
-    const { intakeData, userId: passedUserId, emailVerifiedAt, phoneVerifiedAt } = await req.json() as {
+    const { intakeData, userId: passedUserId, emailVerifiedAt, phoneVerifiedAt, isInternational, clientCountry } = await req.json() as {
       intakeData: IntakeData;
       userId?: string;
       emailVerifiedAt?: string | null;
       phoneVerifiedAt?: string | null;
+      isInternational?: boolean;
+      clientCountry?: string;
     };
+
+    // International placements run through the same free concierge pipeline
+    // as domestic ones; the only difference is they're tagged so ops can
+    // filter/segment them. The flag is route-driven (the /international intake
+    // sets it) — there's no separate paid product anymore.
+    const intlFlag = isInternational === true;
+    const intlCountry = intlFlag ? sanitizeString(clientCountry, 100) || null : null;
 
     // Validate required fields
     if (!intakeData) {
@@ -406,6 +415,8 @@ Deno.serve(async (req) => {
       referral_source: sanitizeString((intakeData as FullIntakeData).referralSource, 100) || (effectiveUserId ? 'account_concierge' : 'public_concierge'),
       hipaa_consent: intakeData.hipaaConsent,
       intake_data: {
+        is_international: intlFlag,
+        client_country: intlCountry,
         age_range: sanitizeString(intakeData.ageRange, 50),
         gender: sanitizeString(intakeData.gender, 50),
         preferred_language: sanitizeString((intakeData as FullIntakeData).preferredLanguage, 50),
@@ -485,9 +496,12 @@ Deno.serve(async (req) => {
 
     // Create admin notification so admins see new placements in the dashboard
     try {
+      const intlTag = intlFlag ? `🌍 International${intlCountry ? ` (${intlCountry})` : ''} — ` : '';
       await supabase.from('admin_notifications').insert({
         type: 'concierge_intake',
-        title: isCrisis ? '🚨 CRISIS — New Placement Request' : 'New Placement Request',
+        title: isCrisis
+          ? `🚨 CRISIS — New Placement Request`
+          : `${intlTag}New Placement Request`,
         message: `New concierge placement from ${sanitizedName} — ${sanitizeString(intakeData.primaryConcern, 100) || 'General'} | ${sanitizeString(intakeData.desiredState, 50) || 'No state pref'} | ${sanitizeString(intakeData.timeline, 50) || 'Flexible'}`,
         metadata: {
           inquiry_id: inquiryId,
@@ -498,6 +512,8 @@ Deno.serve(async (req) => {
           payment_type: sanitizeString(intakeData.paymentType, 50),
           desired_state: sanitizeString(intakeData.desiredState, 50),
           crisis_flag: isCrisis,
+          is_international: intlFlag,
+          client_country: intlCountry,
         },
       });
       logStep(requestId, "Admin notification created", { crisis: isCrisis });

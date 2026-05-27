@@ -1,4 +1,4 @@
-import { access, mkdir, readFile, writeFile } from "node:fs/promises";
+import { access, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -341,6 +341,73 @@ async function ensureExtrasInIndex() {
   console.log("[sitemap] merged sitemap-extras.xml into sitemap-index.xml");
 }
 
+/**
+ * Reconcile sitemap-facilities.xml with the static /center/*.html mirrors.
+ *
+ * The facilities sitemap is fetched from the `sitemap-facilities` edge function
+ * (rich entries: lastmod, changefreq, priority, image:image). The static HTML
+ * mirrors are produced separately by generate-facility-profiles-html.mjs from
+ * the `public_facilities` view. These two server-side sources can disagree on
+ * exactly which facilities they include, which trips check-facility-sitemap-sync
+ * — whose FATAL direction is "a /center/*.html file with no sitemap <loc>".
+ *
+ * Rather than couple the two queries, we make the sitemap a guaranteed superset
+ * of the generated HTML: append a minimal <url> entry for any /center slug that
+ * has an HTML mirror but isn't already in the sitemap. This preserves the rich
+ * edge-fn entries (so we keep image sitemaps / accurate lastmod for the
+ * facilities it knows about) while ensuring every static page is discoverable.
+ * Runs in every environment off local files, so CI (no rich fetch) and Vercel
+ * (full rich fetch) both end up consistent.
+ */
+async function ensureFacilityHtmlInSitemap() {
+  const centerDir = path.join(publicDir, "center");
+  const sitemapPath = path.join(publicDir, "sitemap-facilities.xml");
+  if (!(await fileExists(centerDir)) || !(await fileExists(sitemapPath))) return;
+
+  const htmlSlugs = (await readdir(centerDir))
+    .filter((f) => f.endsWith(".html"))
+    .map((f) => f.slice(0, -".html".length))
+    // Use the filename slug verbatim — generate-facility-profiles-html writes
+    // `${slug}.html` and the sync check reads the filename as-is (no slug
+    // validation), so we must match it exactly. Facility slugs are URL-safe by
+    // construction and may contain consecutive hyphens (e.g. "c-a-s-a--warren").
+    // Only skip stems with characters that would break the URL or XML so we
+    // never emit a malformed <loc>.
+    .filter((s) => s.length > 0 && !/[<>&"'\s/?#]/.test(s));
+
+  if (htmlSlugs.length === 0) return;
+
+  let xml = await readFile(sitemapPath, "utf8");
+  const existing = new Set();
+  const locRe = /<loc>\s*([^<\s]+)\s*<\/loc>/g;
+  let m;
+  while ((m = locRe.exec(xml)) !== null) {
+    const mm = m[1].match(/\/center\/([^/?#]+)\/?$/);
+    if (mm) existing.add(mm[1]);
+  }
+
+  const missing = htmlSlugs.filter((s) => !existing.has(s));
+  if (missing.length === 0) return;
+
+  const today = new Date().toISOString().slice(0, 10);
+  const blocks = missing
+    .map(
+      (slug) =>
+        `  <url>\n    <loc>${CANONICAL_HOST}/center/${slug}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.80</priority>\n  </url>\n`,
+    )
+    .join("");
+
+  if (/<\/urlset>\s*$/.test(xml)) {
+    xml = xml.replace(/<\/urlset>\s*$/, `${blocks}</urlset>\n`);
+  } else {
+    xml = `${xml}\n${blocks}`;
+  }
+  await writeFile(sitemapPath, xml, "utf8");
+  console.log(
+    `[sitemap] reconciled sitemap-facilities.xml: appended ${missing.length} /center URL(s) present as static HTML but missing from the edge-fn sitemap`,
+  );
+}
+
 async function main() {
   await mkdir(publicDir, { recursive: true });
 
@@ -354,6 +421,10 @@ async function main() {
   for (const target of targets) {
     await generateSitemapFile(target, prerenderedPaths, stats, spaRoutes);
   }
+
+  // Guarantee every static /center/*.html mirror has a sitemap entry — see
+  // the function note. Must run after the facilities sitemap is written.
+  await ensureFacilityHtmlInSitemap();
 
   // Drop sitemap-extras URLs that the regen has just re-introduced into
   // sitemap.xml; also strip any robots-blocked paths. Runs AFTER the
