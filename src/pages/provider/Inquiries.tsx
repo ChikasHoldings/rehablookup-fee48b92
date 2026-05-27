@@ -23,6 +23,7 @@ import { toast } from "sonner";
 
 import { InquiryListItem } from "@/components/provider/inquiries/InquiryListItem";
 import { RedirectedInquiries } from "@/components/provider/inquiries/RedirectedInquiries";
+import { useLeadUnreadCounts } from "@/hooks/useLeadUnreadCounts";
 import { PaginationFooter } from "@/components/common/PaginationFooter";
 import { usePagination } from "@/hooks/usePagination";
 import { InquiryDetailPanel } from "@/components/provider/inquiries/InquiryDetailPanel";
@@ -96,6 +97,7 @@ export default function ProviderInquiriesPage() {
   const queryClient = useQueryClient();
   const { facilities } = useProviderFacilities();
   const isMobile = useIsMobile();
+  const { data: unreadCounts = {} } = useLeadUnreadCounts("provider");
 
   // Sync status filter from URL param on mount
   useEffect(() => {
@@ -499,6 +501,7 @@ export default function ProviderInquiriesPage() {
                       inquiry={inquiry}
                       isSelected={selectedInquiry?.id === inquiry.id}
                       onClick={() => handleSelectInquiry(inquiry)}
+                      unreadCount={unreadCounts[inquiry.id] ?? 0}
                     />
                   ))}
                   {filteredInquiries.length > pageSize && (

@@ -14,13 +14,17 @@ export interface LeadMessage {
   sender_type: "provider" | "seeker";
   sender_id: string | null;
   body: string;
+  read_at: string | null;
   created_at: string;
 }
 
-// `lead_messages` isn't in the generated Database types yet, so narrow the
-// escape hatch to a single typed accessor (same pattern as
-// fromLeadsProviderView) instead of casting the whole chain to `any`.
-const supabaseRelaxed = supabase as unknown as { from: (relation: string) => unknown };
+// `lead_messages` + mark_lead_messages_read aren't in the generated Database
+// types yet, so narrow the escape hatch to single typed accessors (same
+// pattern as fromLeadsProviderView) instead of casting whole chains to `any`.
+const supabaseRelaxed = supabase as unknown as {
+  from: (relation: string) => unknown;
+  rpc: (fn: string, args?: Record<string, unknown>) => Promise<{ error: unknown }>;
+};
 function fromLeadMessages() {
   return supabaseRelaxed.from("lead_messages") as ReturnType<
     typeof supabase.from<"facility_reviews", LeadMessage>
@@ -50,7 +54,7 @@ export function LeadMessageThread({ leadId, viewerType, counterpartName }: LeadM
     queryKey: ["lead-messages", leadId],
     queryFn: async (): Promise<LeadMessage[]> => {
       const { data, error } = await fromLeadMessages()
-        .select("id, lead_id, sender_type, sender_id, body, created_at")
+        .select("id, lead_id, sender_type, sender_id, body, read_at, created_at")
         .eq("lead_id", leadId)
         .order("created_at", { ascending: true });
       if (error) throw error;
@@ -59,6 +63,20 @@ export function LeadMessageThread({ leadId, viewerType, counterpartName }: LeadM
     enabled: !!leadId,
     staleTime: 1000 * 30,
   });
+
+  // Mark the other party's messages read when this viewer sees the thread.
+  // Self-terminates: after the RPC + refetch, read_at is set so the guard
+  // below is false. Funneled through a SECURITY DEFINER RPC (no client
+  // UPDATE policy on lead_messages).
+  useEffect(() => {
+    if (!leadId || messages.length === 0) return;
+    const hasUnreadFromOther = messages.some((m) => m.sender_type !== viewerType && !m.read_at);
+    if (!hasUnreadFromOther) return;
+    void supabaseRelaxed.rpc("mark_lead_messages_read", { p_lead_id: leadId }).then(() => {
+      queryClient.invalidateQueries({ queryKey: ["lead-unread-counts"] });
+      queryClient.invalidateQueries({ queryKey: ["lead-messages", leadId] });
+    });
+  }, [messages, leadId, viewerType, queryClient]);
 
   useEffect(() => {
     if (!leadId) return;
@@ -134,6 +152,7 @@ export function LeadMessageThread({ leadId, viewerType, counterpartName }: LeadM
                     )}
                   >
                     {formatDistanceToNow(new Date(m.created_at), { addSuffix: true })}
+                    {mine && m.read_at ? " · Read" : ""}
                   </p>
                 </div>
               </div>

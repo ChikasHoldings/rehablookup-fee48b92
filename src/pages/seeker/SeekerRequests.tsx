@@ -21,6 +21,7 @@ import {
   Filter,
   ShieldCheck,
   Bookmark,
+  MessageCircle,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AuthPrompt } from "@/components/seeker/AuthPrompt";
 import { SeekerRequestForm } from "@/components/seeker/SeekerRequestForm";
 import { useSeekerSession } from "@/hooks/useSeekerSession";
+import { useLeadUnreadCounts } from "@/hooks/useLeadUnreadCounts";
 import { InquiryDetailModal } from "@/components/seeker/InquiryDetailModal";
 
 interface SubmittedRequest {
@@ -139,7 +141,7 @@ function formatFullDate(dateString: string) {
   });
 }
 
-function RequestCard({ request, onClick, isNew }: { request: SubmittedRequest; onClick: () => void; isNew: boolean }) {
+function RequestCard({ request, onClick, isNew, unreadCount = 0 }: { request: SubmittedRequest; onClick: () => void; isNew: boolean; unreadCount?: number }) {
   const [logoError, setLogoError] = useState(false);
   const hasLogo = request.facility_logo_url && !logoError;
   const hasProviderResponse = !!request.provider_responded_at || request.provider_response_status === "responded";
@@ -186,6 +188,12 @@ function RequestCard({ request, onClick, isNew }: { request: SubmittedRequest; o
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
+              {unreadCount > 0 && (
+                <Badge className="bg-primary text-primary-foreground border-0 text-xs gap-1">
+                  <MessageCircle className="h-3 w-3" />
+                  {unreadCount}
+                </Badge>
+              )}
               {getStatusBadge(request.status)}
             </div>
           </div>
@@ -213,6 +221,7 @@ function RequestCard({ request, onClick, isNew }: { request: SubmittedRequest; o
 
 export default function SeekerRequests() {
   const { email, userId, isAuthenticated, isReady } = useSeekerSession();
+  const { data: unreadCounts = {} } = useLeadUnreadCounts("seeker", isAuthenticated);
   const [searchParams, setSearchParams] = useSearchParams();
   const hydratedRef = useRef(false);
 
@@ -756,6 +765,7 @@ export default function SeekerRequests() {
                     request={request}
                     onClick={() => handleOpenDetail(request.id)}
                     isNew={isNew}
+                    unreadCount={unreadCounts[request.id] ?? 0}
                   />
                 );
               })

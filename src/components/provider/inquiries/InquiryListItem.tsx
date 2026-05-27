@@ -1,5 +1,5 @@
 import { formatDistanceToNow, differenceInHours } from "date-fns";
-import { MapPin, Phone, MessageSquare, ShieldCheck, Users } from "lucide-react";
+import { MapPin, Phone, MessageSquare, ShieldCheck, Users, MessageCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { InquiryTypeBadge, type InquiryType } from "@/components/provider/InquiryTypeBadge";
@@ -21,9 +21,10 @@ interface InquiryListItemProps {
   };
   isSelected: boolean;
   onClick: () => void;
+  unreadCount?: number;
 }
 
-export function InquiryListItem({ inquiry, isSelected, onClick }: InquiryListItemProps) {
+export function InquiryListItem({ inquiry, isSelected, onClick, unreadCount = 0 }: InquiryListItemProps) {
   const isRedistributed = inquiry.source === "redistributed" || inquiry.source === "rerouted";
   const hoursOld = differenceInHours(new Date(), new Date(inquiry.created_at));
   const isExclusive = !isRedistributed && hoursOld < 24;
@@ -90,6 +91,12 @@ export function InquiryListItem({ inquiry, isSelected, onClick }: InquiryListIte
               )}
             >
               {inquiry.urgency}
+            </Badge>
+          )}
+          {unreadCount > 0 && (
+            <Badge className="text-xs px-1.5 py-0 gap-1 bg-primary hover:bg-primary">
+              <MessageCircle className="h-3 w-3" />
+              {unreadCount} new
             </Badge>
           )}
         </div>

@@ -12,6 +12,8 @@
 // helpers. Provider SMS goes through send-sms-notification (provider prefs);
 // seeker SMS through the twilio-sms helper gated on verified + opt-in.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
+import { Resend } from "https://esm.sh/resend@2.0.0?target=denonext";
+import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
 import { sendSms } from "../_shared/twilio-sms.ts";
 
 const corsHeaders = {
@@ -27,6 +29,31 @@ function json(status: number, body: unknown) {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
+}
+
+const escapeHtml = (s: string) =>
+  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+function messageEmailHtml(opts: {
+  heading: string;
+  intro: string;
+  preview: string;
+  ctaUrl: string;
+  ctaLabel: string;
+}): string {
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#f4f6f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:32px 16px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 2px 14px rgba(0,0,0,0.07);">
+  <tr><td style="background:#1B365D;padding:24px 28px;"><h1 style="margin:0;color:#fff;font-size:18px;">${opts.heading}</h1></td></tr>
+  <tr><td style="padding:24px 28px;">
+    <p style="margin:0 0 14px;color:#475569;font-size:15px;line-height:1.6;">${opts.intro}</p>
+    <div style="background:#f8fafc;border-left:3px solid #1B365D;border-radius:8px;padding:14px 16px;color:#334155;font-size:14px;line-height:1.5;">${opts.preview}</div>
+    <table role="presentation" cellpadding="0" cellspacing="0" style="margin:22px 0 0;"><tr><td style="background:#1B365D;border-radius:8px;">
+      <a href="${opts.ctaUrl}" style="display:inline-block;padding:12px 26px;color:#fff;font-size:14px;font-weight:600;text-decoration:none;">${opts.ctaLabel}</a>
+    </td></tr></table>
+  </td></tr>
+</table></td></tr></table></body></html>`;
 }
 
 Deno.serve(async (req) => {
@@ -175,6 +202,26 @@ Deno.serve(async (req) => {
           }
         } catch (_e) { /* non-fatal */ }
       }
+
+      // Email nudge to the seeker (idempotent per message so a retry can't
+      // double-send). Goes to the lead email even for guest leads.
+      const resendKey = Deno.env.get("RESEND_API_KEY");
+      if (resendKey && lead.email) {
+        try {
+          await sendEmailWithRetry(admin, new Resend(resendKey), {
+            from: "RehabLookup <no-reply@rehablookup.com>",
+            to: [String(lead.email)],
+            subject: `New message from ${facilityName}`,
+            html: messageEmailHtml({
+              heading: "You have a new message",
+              intro: `${escapeHtml(facilityName)} sent you a message about your inquiry:`,
+              preview: escapeHtml(preview),
+              ctaUrl: "https://rehablookup.com/account/requests",
+              ctaLabel: "View & reply",
+            }),
+          }, { emailType: "lead_message", idempotencyKey: `lead-msg-${msg.id}-seeker` });
+        } catch (_e) { /* non-fatal */ }
+      }
     } else {
       // Seeker → provider.
       if (facility?.user_id) {
@@ -202,6 +249,33 @@ Deno.serve(async (req) => {
             }),
           });
         } catch (_e) { /* non-fatal */ }
+
+        // Email nudge to the provider (idempotent per message).
+        const resendKey = Deno.env.get("RESEND_API_KEY");
+        if (resendKey) {
+          try {
+            const { data: prof } = await admin
+              .from("profiles")
+              .select("email")
+              .eq("user_id", facility.user_id)
+              .maybeSingle();
+            const providerEmail = (prof?.email as string | undefined) || null;
+            if (providerEmail) {
+              await sendEmailWithRetry(admin, new Resend(resendKey), {
+                from: "RehabLookup <no-reply@rehablookup.com>",
+                to: [providerEmail],
+                subject: `New message from ${lead.name || "a client"}`,
+                html: messageEmailHtml({
+                  heading: "You have a new message",
+                  intro: `${escapeHtml(lead.name || "A client")} replied on their inquiry${facilityName ? ` at ${escapeHtml(facilityName)}` : ""}:`,
+                  preview: escapeHtml(preview),
+                  ctaUrl: `https://rehablookup.com/provider/inquiries?lead=${leadId}`,
+                  ctaLabel: "View & reply",
+                }),
+              }, { emailType: "lead_message", idempotencyKey: `lead-msg-${msg.id}-provider` });
+            }
+          } catch (_e) { /* non-fatal */ }
+        }
       }
     }
 
