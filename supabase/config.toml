@@ -228,6 +228,9 @@ verify_jwt = false
 [functions.retry-failed-payments]
 verify_jwt = false
 
+[functions.send-payment-reminder]
+verify_jwt = false
+
 # ═════════════════════════════════════════════════════════════════════════════
 # BUCKET C — Authenticated user (verify_jwt = true)
 # ═════════════════════════════════════════════════════════════════════════════
