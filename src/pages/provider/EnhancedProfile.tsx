@@ -291,14 +291,16 @@ function AccreditationHighlightPanel({
       });
       return;
     }
-    const { error } = await supabase
+    const { data: saved, error } = await supabase
       .from("facility_accreditations")
       .update({ is_highlighted: !row.is_highlighted })
-      .eq("id", row.id);
-    if (error) {
+      .eq("id", row.id)
+      .select("id")
+      .maybeSingle();
+    if (error || !saved) {
       toast({
         title: "Couldn't update highlight",
-        description: error.message,
+        description: error?.message ?? "You don't have permission to edit this accreditation.",
         variant: "destructive",
       });
       return;

@@ -157,9 +157,12 @@ export function ClaimEngineStatePanel({
     }>("initiate-claim-voice-otp", { body: { claimRequestId: claimId } });
     setVoiceCalling(false);
     if (error || data?.error || !data?.maskedPhone) {
+      // The edge function returns its specific message as a non-2xx body,
+      // which supabase-js exposes on error.context (not error.message).
+      const ctx = (error as { context?: { error?: string } } | null)?.context;
       toast({
         title: "Voice call couldn't be placed",
-        description: data?.error || error?.message || "Try SMS or email verification.",
+        description: ctx?.error || data?.error || "Try SMS or email verification.",
         variant: "destructive",
       });
       return;
@@ -186,12 +189,15 @@ export function ClaimEngineStatePanel({
     });
     setVoiceVerifying(false);
     if (error || data?.error) {
-      const remaining = data?.attemptsRemaining;
+      // "Incorrect code" comes back as a 401 body (with attemptsRemaining)
+      // on error.context — error.message is just the generic non-2xx string.
+      const ctx = (error as { context?: { error?: string; attemptsRemaining?: number } } | null)?.context;
+      const remaining = ctx?.attemptsRemaining ?? data?.attemptsRemaining;
+      const msg = ctx?.error || data?.error || "Incorrect code. Please try again.";
       toast({
         title: "Couldn't verify code",
         description:
-          (data?.error || error?.message) +
-          (typeof remaining === "number" ? ` (${remaining} attempts left)` : ""),
+          msg + (typeof remaining === "number" ? ` (${remaining} attempts left)` : ""),
         variant: "destructive",
       });
       return;

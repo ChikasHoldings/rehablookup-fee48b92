@@ -106,6 +106,36 @@ export function useFacilityPrograms(facilityId: string | undefined) {
       toast({ title: "Couldn't update program", description: err.message, variant: "destructive" }),
   });
 
+  // Swap the display_order of two adjacent programs in a single mutation so
+  // a reorder fires one toast (on failure) and always re-syncs the list with
+  // the DB — the previous two-independent-mutate approach double-toasted and
+  // could leave display_order desynced if only one update landed.
+  const reorderProgram = useMutation({
+    mutationFn: async ({
+      a,
+      b,
+    }: {
+      a: { id: string; display_order: number };
+      b: { id: string; display_order: number };
+    }) => {
+      const { error: e1 } = await supabase
+        .from("facility_programs")
+        .update({ display_order: b.display_order })
+        .eq("id", a.id);
+      if (e1) throw e1;
+      const { error: e2 } = await supabase
+        .from("facility_programs")
+        .update({ display_order: a.display_order })
+        .eq("id", b.id);
+      if (e2) throw e2;
+    },
+    onError: (err: Error) =>
+      toast({ title: "Couldn't reorder programs", description: err.message, variant: "destructive" }),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["facility-programs", facilityId] });
+    },
+  });
+
   const deleteProgram = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("facility_programs").delete().eq("id", id);
@@ -119,7 +149,7 @@ export function useFacilityPrograms(facilityId: string | undefined) {
       toast({ title: "Couldn't remove program", description: err.message, variant: "destructive" }),
   });
 
-  return { programs, isLoading, error, refetch, createProgram, updateProgram, deleteProgram };
+  return { programs, isLoading, error, refetch, createProgram, updateProgram, reorderProgram, deleteProgram };
 }
 
 // Public-facing read — uses the Pro-gated view so a Free facility's

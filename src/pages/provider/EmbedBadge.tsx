@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import {
@@ -25,6 +26,7 @@ import { cn } from "@/lib/utils";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { useProStatus } from "@/hooks/useProStatus";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { EmbedAnalyticsCard } from "@/components/provider/embed/EmbedAnalyticsCard";
 import { LockedFeaturePreview } from "@/components/provider/LockedFeaturePreview";
 
@@ -95,6 +97,24 @@ export default function EmbedBadgePage() {
   const { data: proStatus } = useProStatus(selectedFacility?.id);
   const isPro = proStatus?.isPro ?? false;
   const { toast } = useToast();
+
+  // `verified` isn't part of the SelectedFacilityContext payload, so read
+  // it directly — otherwise the Verified Badge widget stays locked for
+  // every provider (even verified ones) because the field is undefined.
+  const { data: facilityVerified } = useQuery({
+    queryKey: ["embed-badge-facility-verified", selectedFacility?.id],
+    enabled: !!selectedFacility?.id,
+    staleTime: 60 * 1000,
+    queryFn: async (): Promise<boolean> => {
+      const { data, error } = await supabase
+        .from("facilities")
+        .select("verified")
+        .eq("id", selectedFacility!.id)
+        .maybeSingle();
+      if (error) throw error;
+      return (data as { verified?: boolean } | null)?.verified === true;
+    },
+  });
 
   const [activeWidget, setActiveWidget] = useState<WidgetType>("badge");
   const [size, setSize] = useState<WidgetSize>("medium");
@@ -201,7 +221,7 @@ export default function EmbedBadgePage() {
     );
   }
 
-  const isVerified = (selectedFacility as { verified?: boolean }).verified === true;
+  const isVerified = facilityVerified === true;
   const badgeLocked = !isVerified;
 
   const snippet = buildSnippet({

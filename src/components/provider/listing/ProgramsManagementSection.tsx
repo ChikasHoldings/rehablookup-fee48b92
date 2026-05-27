@@ -62,7 +62,7 @@ const LENGTH_MAX = 60;
  * from a blank slate after upgrading.
  */
 export function ProgramsManagementSection({ facilityId, isPro }: ProgramsManagementSectionProps) {
-  const { programs, isLoading, createProgram, updateProgram, deleteProgram } =
+  const { programs, isLoading, createProgram, updateProgram, reorderProgram, deleteProgram } =
     useFacilityPrograms(facilityId);
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -118,11 +118,12 @@ export function ProgramsManagementSection({ facilityId, isPro }: ProgramsManagem
     const idx = programs.findIndex((p) => p.id === row.id);
     const swapWith = direction === "up" ? programs[idx - 1] : programs[idx + 1];
     if (!swapWith) return;
-    // Two swaps so display_order stays unique-ish; the column has no
-    // unique constraint, but we keep the values monotonic so the public
-    // ordering stays deterministic.
-    updateProgram.mutate({ id: row.id, data: { display_order: swapWith.display_order } });
-    updateProgram.mutate({ id: swapWith.id, data: { display_order: row.display_order } });
+    // Single mutation swaps both display_order values, so the reorder is
+    // one operation (one toast on failure) and the list always re-syncs.
+    reorderProgram.mutate({
+      a: { id: row.id, display_order: row.display_order },
+      b: { id: swapWith.id, display_order: swapWith.display_order },
+    });
   };
 
   return (

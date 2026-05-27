@@ -317,13 +317,38 @@ Deno.serve(async (req) => {
   // stay attached to the monthly sub until it actually rolls off.
   // The webhook will re-tag them to the new subscription_id when the
   // annual sub's `created` event arrives.
-  await admin
+  const { error: flagErr } = await admin
     .from("facility_subscriptions")
     .update({
       cancel_at_period_end: true,
       updated_at: new Date().toISOString(),
     })
     .eq("id", sub.id);
+  if (flagErr) {
+    // Advisory flag only — Step 1's cancel_at_period_end change fires a
+    // customer.subscription.updated webhook that reconciles this row, so we
+    // don't fail the switch. Log + alert so a stuck flag stays observable.
+    console.error("[switch-to-annual] cancel_at_period_end flag update failed", flagErr);
+    try {
+      await admin.from("admin_notifications").insert({
+        type: "switch_to_annual_flag_failed",
+        title: "Annual switch flag update failed",
+        message:
+          `switch-to-annual could not set cancel_at_period_end on facility_subscription ${sub.id} ` +
+          `(user=${user.id}, monthly=${sub.stripe_subscription_id}, annual=${annualSub.id}). ` +
+          `Error: ${flagErr.message}. The subscription webhook should reconcile; verify the Billing page shows the scheduled cancellation.`,
+        metadata: {
+          facility_subscription_id: sub.id,
+          user_id: user.id,
+          monthly_subscription_id: sub.stripe_subscription_id,
+          annual_subscription_id: annualSub.id,
+          last_error: flagErr.message,
+        } as Record<string, unknown>,
+      });
+    } catch (adminErr) {
+      console.error("[switch-to-annual] admin_notifications insert failed", adminErr);
+    }
+  }
 
   return new Response(
     JSON.stringify({

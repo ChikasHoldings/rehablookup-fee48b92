@@ -54,14 +54,19 @@ export function MediaUrlsSection({
     if (!canSave) return;
     setSaving(true);
     try {
-      const { error } = await supabase
+      const { data: saved, error } = await supabase
         .from("facilities")
         .update({
           video_url: video.trim() || null,
           virtual_tour_url: tour.trim() || null,
         })
-        .eq("id", facilityId);
+        .eq("id", facilityId)
+        .select("id")
+        .maybeSingle();
       if (error) throw error;
+      // RLS can drop the update to 0 rows without erroring; treat a missing
+      // returned row as a failure instead of a false "saved" toast.
+      if (!saved) throw new Error("You don't have permission to edit this facility.");
       toast({
         title: "Media URLs saved",
         description: isPro

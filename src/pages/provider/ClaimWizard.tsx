@@ -746,28 +746,47 @@ function Step2YourRole({
         const ctx = (error as { context?: { error?: string; code?: string } })
           .context;
         const code = ctx?.code;
+        if (code === "CLAIM_ALREADY_PENDING") {
+          // The function couldn't return the existing claim id (rare race
+          // where its 23505 re-lookup missed). Recover it directly so the
+          // user continues to verification instead of being stuck retrying.
+          const { data: sessionData } = await supabase.auth.getSession();
+          const uid = sessionData.session?.user?.id;
+          let recoveredId: string | undefined;
+          if (uid) {
+            const { data: existingClaim } = await supabase
+              .from("facility_claim_requests")
+              .select("id")
+              .eq("facility_id", facilityId)
+              .eq("claimant_user_id", uid)
+              .in("status", ["pending", "under_review"])
+              .order("created_at", { ascending: false })
+              .limit(1)
+              .maybeSingle();
+            recoveredId = existingClaim?.id;
+          }
+          if (recoveredId) {
+            analytics.ctaClick("claim_submitted_step2", "claim_wizard");
+            toast.success("You already have a claim in progress — let's verify your ownership.");
+            onSubmitted(recoveredId);
+            return;
+          }
+          toast.error("You already have a claim in progress, but we couldn't load it just now. Please try again in a moment.");
+          return;
+        }
         const friendly =
-          code === "CLAIM_ALREADY_PENDING"
-            ? "You already have a pending claim for this facility. Continuing where you left off."
-            : code === "FACILITY_ALREADY_CLAIMED"
+          code === "FACILITY_ALREADY_CLAIMED"
             ? "This facility has already been claimed by another owner."
             : code === "FACILITY_NOT_FOUND"
             ? "We couldn't find this facility. It may have been removed."
             : ctx?.error ?? error.message ?? "Submission failed. Please try again.";
         toast.error(friendly);
-        // CLAIM_ALREADY_PENDING is informational — advance anyway so the
-        // user can pick up at later steps. The edge function is idempotent
-        // and will return the existing claim id on subsequent calls.
-        if (code !== "CLAIM_ALREADY_PENDING") {
-          setSubmitting(false);
-          return;
-        }
+        return;
       }
 
       const claimRequestId = data?.claimRequestId;
       if (!claimRequestId) {
         toast.error("Submission succeeded but the claim id wasn't returned. Please retry.");
-        setSubmitting(false);
         return;
       }
 

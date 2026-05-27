@@ -242,7 +242,7 @@ export function FeaturedManagementPanel({ facilityId, subscription, mode = "feat
                 id="sponsored-tagline"
                 value={tagline}
                 onChange={(e) => setTagline(e.target.value)}
-                maxLength={140}
+                maxLength={120}
                 rows={3}
                 placeholder="e.g., 24-hour admissions. Detox + IOP. Insurance verified in 30 minutes."
                 className="resize-none"

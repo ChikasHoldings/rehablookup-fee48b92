@@ -101,6 +101,8 @@ export function FeaturedAnalyticsWidget({ facilityId }: FeaturedAnalyticsWidgetP
       ]);
       if (impRes.error) throw impRes.error;
       if (callRes.error) throw callRes.error;
+      if (viewRes.error) throw viewRes.error;
+      if (webRes.error) throw webRes.error;
 
       const impressions = impRes.count ?? 0;
       const calls = callRes.count ?? 0;
@@ -127,6 +129,8 @@ export function FeaturedAnalyticsWidget({ facilityId }: FeaturedAnalyticsWidgetP
               .eq("placement_value", p.placement_value)
               .gte("clicked_at", sinceIso),
           ]);
+          if (pi.error) throw pi.error;
+          if (pc.error) throw pc.error;
           return {
             type: p.placement_type,
             value: p.placement_value,
