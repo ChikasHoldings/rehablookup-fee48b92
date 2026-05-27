@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
       return errorResponse("Invalid request body", 400, corsHeaders);
     }
 
-    const { intakeData, emailVerifiedAt, draftId: existingDraftId } = body;
+    const { intakeData, emailVerifiedAt, draftId: existingDraftId, isInternational, clientCountry } = body;
 
     if (!intakeData || typeof intakeData !== "object") {
       logStep("ERROR: Missing intake data");
@@ -137,6 +137,12 @@ Deno.serve(async (req) => {
 
     // Build the intake_data JSON with comprehensive sanitization
     const fullIntakeData = {
+      // International placement marker — tags the draft so the SMS-callback
+      // path (which preserves intake_data) keeps the international flag, and
+      // so ops can filter international cases. Route-driven, not user input.
+      is_international: isInternational === true,
+      client_country: isInternational === true ? sanitizeString(clientCountry as string, 100) || null : null,
+
       // Step 1: Who needs help
       age_range: sanitizeString(sanitizedData.ageRange as string, 50),
       gender: sanitizeString(sanitizedData.gender as string, 50),

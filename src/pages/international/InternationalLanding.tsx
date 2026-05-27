@@ -91,7 +91,7 @@ const STEPS = [
 const FAQ_ITEMS = [
   {
     question: "How much does placement cost?",
-    answer: "We charge a $99 service fee to begin your placement. This fee ensures we can dedicate personalized attention to every case, connecting you with the right facilities, verifying clinical fit, and coordinating directly with admissions teams on your behalf. It also filters out casual inquiries so our advisors can focus on clients who are serious about treatment. Best of all, the $99 is fully refunded when you're admitted to a facility through our service.",
+    answer: "Our placement service is completely free for clients and families. There is no fee to submit your intake or to be matched with treatment facilities. We're able to offer this at no cost because participating treatment centers fund the platform — your placement guidance stays independent and free.",
   },
   {
     question: "Do you work with luxury and executive programs?",
@@ -103,7 +103,7 @@ const FAQ_ITEMS = [
   },
   {
     question: "What happens after I complete the application?",
-    answer: "After submitting your application and payment, you'll receive a confirmation email. Within 24 hours, a placement advisor will review your case and begin identifying suitable treatment options. You'll receive personalized recommendations and next steps via email or phone.",
+    answer: "After submitting your intake, you'll receive a confirmation email. Within 24 hours, a placement advisor will review your case and begin identifying suitable treatment options. You'll receive personalized recommendations and next steps via email or phone.",
   },
   {
     question: "Is RehabLookup a treatment provider?",
@@ -126,16 +126,15 @@ export default function InternationalLanding() {
         canonical="/international"
         keywords={["international rehab", "US addiction treatment", "global rehab placement", "travel for treatment", "executive rehab", "luxury rehab USA"]}
         structuredData={[
-          // Service schema with the actual $99 deposit so Google sees the
-          // price-disclosure pattern. Mirrors the Concierge landing's
-          // Service+Offer setup (which advertises price=0).
+          // Free placement service — mirrors the Concierge landing's
+          // Service+Offer setup (price=0).
           {
             "@context": "https://schema.org",
             "@type": "Service",
             name: "International Treatment Placement",
             serviceType: "Addiction Treatment Placement",
             description:
-              "Concierge placement service that matches international clients with vetted U.S. addiction treatment centers. $99 placement deposit, fully refunded on admission.",
+              "Free concierge placement service that matches international clients with vetted U.S. addiction treatment centers.",
             provider: {
               "@type": "Organization",
               name: "RehabLookup",
@@ -148,11 +147,11 @@ export default function InternationalLanding() {
             },
             offers: {
               "@type": "Offer",
-              price: "99",
+              price: "0",
               priceCurrency: "USD",
               availability: "https://schema.org/InStock",
               description:
-                "Placement deposit. Fully refunded the day the client checks in to the recommended facility.",
+                "Free placement service for international clients and families.",
               url: "https://rehablookup.com/international/apply",
             },
           },
@@ -203,17 +202,15 @@ export default function InternationalLanding() {
                   Expert placement into America's finest treatment centers. We handle everything—from placement to admission—so you can focus on recovery.
                 </p>
 
-                {/* Price disclosure surfaced above the fold. Previously the
-                    $99 fee was buried in FAQ #1, so seekers completed the
-                    11-step intake before discovering the cost — high drop-off
-                    + trust risk. */}
+                {/* Free service — surfaced above the fold so international
+                    clients know there's no cost before starting the intake. */}
                 <div className="flex flex-wrap items-center justify-center gap-2 mb-6 text-sm text-white/80">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 border border-white/20 px-3 py-1">
-                    <span className="font-semibold text-white">$99</span>
-                    <span>placement deposit</span>
-                  </span>
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-400/15 border border-emerald-400/30 px-3 py-1 text-emerald-100">
-                    Fully refunded on admission
+                    <span className="font-semibold">100% free</span>
+                    <span>placement service</span>
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 border border-white/20 px-3 py-1">
+                    No fee, ever
                   </span>
                 </div>
 
@@ -223,12 +220,12 @@ export default function InternationalLanding() {
                   asChild
                 >
                   <Link to="/international/apply">
-                    Start application
+                    Start your free intake
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>
                 </Button>
                 <p className="mt-3 text-xs text-white/60">
-                  Pay $99 to reserve placement. We refund the full amount the day you check in.
+                  Free for clients and families. No placement fee, no deposit.
                 </p>
               </motion.div>
             </div>
@@ -252,7 +249,7 @@ export default function InternationalLanding() {
                     <CheckCircle2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-accent shrink-0" />
                     <span className="text-lg sm:text-xl md:text-2xl font-bold">100%</span>
                   </div>
-                  <p className="text-xs sm:text-sm text-primary-foreground/80">Money-Back Guarantee</p>
+                  <p className="text-xs sm:text-sm text-primary-foreground/80">Free Placement Service</p>
                 </div>
               </div>
             </div>
