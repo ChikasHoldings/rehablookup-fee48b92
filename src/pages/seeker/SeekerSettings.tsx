@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 import { Separator } from "@/components/ui/separator";
-import { extractErrorMessage } from "@/lib/extractErrorMessage";
+import { getFriendlyErrorString } from "@/lib/contracts/friendly-error-messages";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -774,7 +774,7 @@ export default function SeekerSettings() {
       if (error || data?.error) {
         toast({
           title: "Error sending verification",
-          description: extractErrorMessage(data ?? error, "Failed to send verification code"),
+          description: await getFriendlyErrorString(data ?? error, "Failed to send verification code"),
           variant: "destructive"
         });
       } else {
@@ -823,15 +823,10 @@ export default function SeekerSettings() {
       });
 
       if (response.error) {
-        // supabase.functions.invoke surfaces a FunctionsHttpError; pull
-        // the JSON body's `error` field when present for a meaningful
-        // toast (e.g. "This account has elevated roles ...").
-        const ctx = response.error as { context?: { body?: string }; message?: string };
-        let backendMsg = "";
-        try {
-          backendMsg = ctx.context?.body ? (JSON.parse(ctx.context.body)?.error || "") : "";
-        } catch { /* body wasn't JSON */ }
-        throw new Error(backendMsg || ctx.message || "Failed to delete account");
+        // FunctionsHttpError: the JSON body lives on error.context (a Response),
+        // so parse it for the meaningful reason (e.g. "This account has elevated
+        // roles and cannot be self-deleted") instead of the generic non-2xx string.
+        throw new Error(await getFriendlyErrorString(response.error, "Failed to delete account"));
       }
 
       toast({

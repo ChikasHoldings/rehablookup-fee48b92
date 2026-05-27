@@ -81,6 +81,19 @@ export function getFriendlyErrorMessage(
  *   3. A non-2xx envelope returned as `data` (some functions resolve instead
  *      of rejecting).
  */
+function pickEnvelope(o: Record<string, unknown>): { code?: string; message?: string } {
+  const code = typeof o.code === "string" && o.code.trim() ? o.code : undefined;
+  // Our edge functions are inconsistent: some return { message }, most return
+  // { error: "<human text>" }, a few mirror it as { reason }. Surface whichever
+  // descriptive string is present so callers show the real reason, not a
+  // generic "non-2xx" string.
+  const message =
+    (typeof o.message === "string" && o.message.trim() ? o.message : undefined) ??
+    (typeof o.error === "string" && o.error.trim() ? o.error : undefined) ??
+    (typeof o.reason === "string" && o.reason.trim() ? o.reason : undefined);
+  return { code, message };
+}
+
 export async function parseFunctionError(
   errorOrData: unknown,
 ): Promise<{ code?: string; message?: string }> {
@@ -88,32 +101,26 @@ export async function parseFunctionError(
 
   const obj = errorOrData as Record<string, unknown>;
 
-  // Direct envelope shape (e.g. data returned with success:false).
-  if (typeof obj.code === "string") {
-    return {
-      code: obj.code,
-      message: typeof obj.message === "string" ? obj.message : undefined,
-    };
-  }
-
-  // Supabase FunctionsHttpError exposes the original Response on `context`.
+  // Supabase FunctionsHttpError exposes the original Response on `context`;
+  // the real JSON envelope lives there. The top-level `.message` is only the
+  // generic "Edge Function returned a non-2xx status code", so read context
+  // FIRST and don't fall back to that generic string.
   const ctx = obj.context;
   if (ctx && typeof ctx === "object" && "json" in ctx) {
     try {
       const body = await (ctx as Response).clone().json();
-      if (body && typeof body === "object" && typeof body.code === "string") {
-        return {
-          code: body.code,
-          message:
-            typeof body.message === "string" ? body.message : undefined,
-        };
+      if (body && typeof body === "object") {
+        const picked = pickEnvelope(body as Record<string, unknown>);
+        if (picked.code || picked.message) return picked;
       }
     } catch {
       // body wasn't JSON — fall through
     }
+    return {};
   }
 
-  return {};
+  // Plain envelope (data returned with success:false, or a thrown app error).
+  return pickEnvelope(obj);
 }
 
 /**
@@ -124,4 +131,20 @@ export async function getFriendlyMessageForError(
 ): Promise<FriendlyMessage> {
   const { code } = await parseFunctionError(errorOrData);
   return getFriendlyErrorMessage(code);
+}
+
+/**
+ * Convenience for single-line toasts: returns the server's own descriptive
+ * message when present, else a code-mapped friendly description, else the
+ * given fallback. Use in async catch blocks where `error.context` (a Response)
+ * holds the real reason that `error.message` / extractErrorMessage can't see.
+ */
+export async function getFriendlyErrorString(
+  errorOrData: unknown,
+  fallback: string = DEFAULT_MESSAGE.description,
+): Promise<string> {
+  const { code, message } = await parseFunctionError(errorOrData);
+  if (message && message.trim()) return message;
+  if (code) return getFriendlyErrorMessage(code).description;
+  return fallback;
 }

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { extractErrorMessage } from "@/lib/extractErrorMessage";
+import { getFriendlyErrorString } from "@/lib/contracts/friendly-error-messages";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, CheckCircle, Phone, Shield, ArrowLeft, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -72,11 +72,11 @@ export function StepPhoneVerification({
         setCooldown(60);
         toast.success("Verification code sent via SMS");
       } else {
-        throw new Error(extractErrorMessage(data, "Failed to send code"));
+        toast.error(await getFriendlyErrorString(data, "Couldn't send the code. Please try again."));
       }
     } catch (err) {
       console.error("Send SMS code error:", err);
-      toast.error(extractErrorMessage(err, "Failed to send verification code. Please try again."));
+      toast.error(await getFriendlyErrorString(err, "Couldn't send the code. Please try again."));
     } finally {
       setIsSending(false);
     }
@@ -98,12 +98,12 @@ export function StepPhoneVerification({
         onVerified(verifiedAtTime);
         toast.success("Phone verified successfully!");
       } else {
-        toast.error(extractErrorMessage(data, "Invalid code. Please try again."));
+        toast.error(await getFriendlyErrorString(data, "Invalid code. Please try again."));
         setOtpValue("");
       }
     } catch (err) {
       console.error("Verify SMS code error:", err);
-      toast.error(extractErrorMessage(err, "Verification failed. Please try again."));
+      toast.error(await getFriendlyErrorString(err, "Invalid code. Please try again."));
       setOtpValue("");
     } finally {
       setIsVerifying(false);

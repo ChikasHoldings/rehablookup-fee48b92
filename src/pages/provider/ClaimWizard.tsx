@@ -74,6 +74,7 @@ import { WizardStepper } from "@/components/provider/WizardStepper";
 import { useFacilityBySlug, type FacilityBaseData } from "@/hooks/useFacilityBySlug";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { parseFunctionError } from "@/lib/contracts/friendly-error-messages";
 import {
   AlertCircle,
   AlertTriangle,
@@ -743,9 +744,7 @@ function Step2YourRole({
       });
 
       if (error) {
-        const ctx = (error as { context?: { error?: string; code?: string } })
-          .context;
-        const code = ctx?.code;
+        const { code, message } = await parseFunctionError(error);
         if (code === "CLAIM_ALREADY_PENDING") {
           // The function couldn't return the existing claim id (rare race
           // where its 23505 re-lookup missed). Recover it directly so the
@@ -779,7 +778,7 @@ function Step2YourRole({
             ? "This facility has already been claimed by another owner."
             : code === "FACILITY_NOT_FOUND"
             ? "We couldn't find this facility. It may have been removed."
-            : ctx?.error ?? error.message ?? "Submission failed. Please try again.";
+            : message ?? "Submission failed. Please try again.";
         toast.error(friendly);
         return;
       }

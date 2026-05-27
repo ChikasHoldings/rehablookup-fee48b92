@@ -18,6 +18,7 @@ import {
 import { CheckCircle2, ShieldCheck, Lock, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { getFriendlyErrorString } from "@/lib/contracts/friendly-error-messages";
 import { analytics } from "@/lib/analytics";
 import { TOPIC_HERO_IMAGES } from "@/data/locationImages";
 
@@ -137,11 +138,11 @@ export default function InsuranceVerification() {
       );
 
       if (error) {
-        toast.error(error.message || "Could not submit. Please call us instead.");
+        toast.error(await getFriendlyErrorString(error, "Could not submit. Please call us instead."));
         return;
       }
       if (data?.error) {
-        toast.error(data.error);
+        toast.error(await getFriendlyErrorString(data, "Could not submit. Please call us instead."));
         return;
       }
       setRequestRef(String(data?.requestId ?? "").slice(0, 8).toUpperCase());

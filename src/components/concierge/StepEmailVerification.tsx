@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { extractErrorMessage } from "@/lib/extractErrorMessage";
+import { getFriendlyErrorString } from "@/lib/contracts/friendly-error-messages";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, CheckCircle, Mail, Shield, ArrowLeft, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -58,11 +58,11 @@ export function StepEmailVerification({
         setCooldown(60); // 60 second cooldown
         toast.success("Verification code sent to your email");
       } else {
-        throw new Error(extractErrorMessage(data, "Failed to send code"));
+        toast.error(await getFriendlyErrorString(data, "Couldn't send the code. Please try again."));
       }
     } catch (err) {
       console.error("Send code error:", err);
-      toast.error("Failed to send verification code. Please try again.");
+      toast.error(await getFriendlyErrorString(err, "Couldn't send the code. Please try again."));
     } finally {
       setIsSending(false);
     }
@@ -84,12 +84,12 @@ export function StepEmailVerification({
         onVerified(verifiedAtTime);
         toast.success("Email verified successfully!");
       } else {
-        toast.error(extractErrorMessage(data, "Invalid code. Please try again."));
+        toast.error(await getFriendlyErrorString(data, "Invalid code. Please try again."));
         setOtpValue("");
       }
     } catch (err) {
       console.error("Verify code error:", err);
-      toast.error("Verification failed. Please try again.");
+      toast.error(await getFriendlyErrorString(err, "Invalid code. Please try again."));
       setOtpValue("");
     } finally {
       setIsVerifying(false);

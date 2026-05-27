@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { getFriendlyErrorString } from "@/lib/contracts/friendly-error-messages";
 
 interface Attempt {
   id: string;
@@ -157,12 +158,11 @@ export function ClaimEngineStatePanel({
     }>("initiate-claim-voice-otp", { body: { claimRequestId: claimId } });
     setVoiceCalling(false);
     if (error || data?.error || !data?.maskedPhone) {
-      // The edge function returns its specific message as a non-2xx body,
-      // which supabase-js exposes on error.context (not error.message).
-      const ctx = (error as { context?: { error?: string } } | null)?.context;
+      // The edge function's specific reason is a non-2xx body on
+      // error.context (a Response); getFriendlyErrorString parses it.
       toast({
         title: "Voice call couldn't be placed",
-        description: ctx?.error || data?.error || "Try SMS or email verification.",
+        description: await getFriendlyErrorString(error ?? data, "Try SMS or email verification."),
         variant: "destructive",
       });
       return;
@@ -189,15 +189,11 @@ export function ClaimEngineStatePanel({
     });
     setVoiceVerifying(false);
     if (error || data?.error) {
-      // "Incorrect code" comes back as a 401 body (with attemptsRemaining)
-      // on error.context — error.message is just the generic non-2xx string.
-      const ctx = (error as { context?: { error?: string; attemptsRemaining?: number } } | null)?.context;
-      const remaining = ctx?.attemptsRemaining ?? data?.attemptsRemaining;
-      const msg = ctx?.error || data?.error || "Incorrect code. Please try again.";
+      // The reason ("Incorrect code", etc.) is a non-2xx body on
+      // error.context (a Response); getFriendlyErrorString parses it.
       toast({
         title: "Couldn't verify code",
-        description:
-          msg + (typeof remaining === "number" ? ` (${remaining} attempts left)` : ""),
+        description: await getFriendlyErrorString(error ?? data, "Incorrect code. Please try again."),
         variant: "destructive",
       });
       return;
