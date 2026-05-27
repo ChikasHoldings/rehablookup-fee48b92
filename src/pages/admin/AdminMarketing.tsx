@@ -158,7 +158,7 @@ export default function AdminMarketing() {
 
   // Fetch marketing leads — list view, applies status filter server-side
   // (the others are applied client-side for instant UI).
-  const { data: leads = [], isLoading, isFetching, refetch } = useQuery({
+  const { data: leads = [], isLoading, isFetching, isError: leadsError, refetch } = useQuery({
     queryKey: ["admin-marketing-leads", statusFilter],
     queryFn: async () => {
       let query = supabase
@@ -663,6 +663,14 @@ export default function AdminMarketing() {
                       <TableCell><Skeleton className="h-4 w-24" /></TableCell>
                     </TableRow>
                   ))
+                ) : leadsError ? (
+                  <TableRow>
+                    <TableCell colSpan={9} className="text-center py-12 text-destructive">
+                      <Megaphone className="h-10 w-10 mx-auto mb-3 opacity-40" />
+                      <p className="font-medium">Failed to load marketing leads</p>
+                      <p className="text-xs mt-1 text-muted-foreground">Check your connection and try refreshing</p>
+                    </TableCell>
+                  </TableRow>
                 ) : filteredLeads.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={9} className="text-center py-12 text-muted-foreground">

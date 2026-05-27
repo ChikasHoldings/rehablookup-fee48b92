@@ -112,10 +112,14 @@ export function TwoFactorSetupDialog({
 
       if (response.error) {
         console.error("Error generating recovery codes:", response.error);
-        toast.error("Failed to generate recovery codes");
-      } else {
-        setRecoveryCodes(response.data.codes || []);
+        toast.error("Failed to generate recovery codes. Please try again.");
+        // Don't set mfa_enabled or advance to recovery — the user has no codes.
+        // They can retry: the TOTP factor is already enrolled so the next
+        // "Verify & Enable" click will re-challenge and retry code generation.
+        return;
       }
+
+      setRecoveryCodes(response.data.codes || []);
 
       // Update admin_user_profiles to mark MFA as enabled and log audit
       const { data: { user } } = await supabase.auth.getUser();
@@ -124,7 +128,7 @@ export function TwoFactorSetupDialog({
           .from("admin_user_profiles")
           .update({ mfa_enabled: true })
           .eq("user_id", user.id);
-        
+
         await logAdminAction({
           actionType: AdminAuditActions.MFA_ENABLED,
           targetType: "admin_profile",

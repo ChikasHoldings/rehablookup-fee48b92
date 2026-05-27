@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { logAdminError } from "@/lib/adminErrorLogger";
+import { getFriendlyErrorString } from "@/lib/contracts/friendly-error-messages";
 
 // 4-tier admin role system
 export type AdminRoleType = "super_admin" | "manager" | "customer_rep" | "advisor";
@@ -297,7 +298,10 @@ export function useAdminUserManagement() {
         },
       });
 
-      if (response.error) throw new Error(response.error.message);
+      if (response.error) {
+        const msg = await getFriendlyErrorString(response.error, "Failed to create admin user");
+        throw new Error(msg);
+      }
       return response.data;
     },
     onSuccess: (data) => {
@@ -330,7 +334,10 @@ export function useAdminUserManagement() {
         body: data,
       });
 
-      if (response.error) throw new Error(response.error.message);
+      if (response.error) {
+        const msg = await getFriendlyErrorString(response.error, "Action failed");
+        throw new Error(msg);
+      }
       return response.data;
     },
     onSuccess: (data, variables) => {

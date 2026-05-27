@@ -54,7 +54,7 @@ export default function AdvisorProviderDirectory() {
 
   const [selectedProvider, setSelectedProvider] = useState<ProviderRow | null>(null);
 
-  const { data: providers, isLoading } = useQuery({
+  const { data: providers, isLoading, isError: providersError } = useQuery({
     // Namespaced under admin-concierge-directory so the embedded
     // Directory tab inside the Placements workspace doesn't collide
     // with any other `advisor-providers` cache elsewhere.
@@ -162,6 +162,12 @@ export default function AdvisorProviderDirectory() {
           {[1, 2, 3, 4, 5].map((i) => (
             <Skeleton key={i} className="h-20 w-full rounded-xl" />
           ))}
+        </div>
+      ) : providersError ? (
+        <div className="text-center py-16 text-muted-foreground">
+          <Building2 className="h-12 w-12 mx-auto mb-4 opacity-30" />
+          <p className="text-lg font-medium text-destructive">Failed to load providers</p>
+          <p className="text-sm mt-1">Check your connection and try refreshing</p>
         </div>
       ) : !providers?.length ? (
         <div className="text-center py-16 text-muted-foreground">

@@ -423,7 +423,7 @@ export default function AdvisorInbox() {
               </div>
             ) : messages && messages.length > 0 ? (
               messages.map((msg) => {
-                const isAdmin = msg.sender_type === "admin";
+                const isAdmin = msg.sender_type === "admin" || msg.sender_type === "advisor";
                 return (
                   <div
                     key={msg.id}

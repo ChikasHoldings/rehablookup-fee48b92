@@ -312,13 +312,46 @@ export function DataHealthMonitor() {
         </div>
 
         {/* Health Summary */}
-        <div className="flex items-center gap-2 p-3 rounded-lg bg-emerald-50 border border-emerald-100">
-          <CheckCircle className="h-4 w-4 text-emerald-600 shrink-0" />
-          <p className="text-sm text-emerald-700">
-            All systems operational. Database connection stable with {connectionStats?.latency || 0}ms latency.
-            {tableStats && tableStats.length > 0 && ` Monitoring ${tableStats.length} tables with ${getTotalRows().toLocaleString()} total records.`}
-          </p>
-        </div>
+        {!loadingStats && tableStats && (() => {
+          const errorCount = tableStats.filter(t => t.status === "error").length;
+          const warnCount = tableStats.filter(t => t.status === "warning").length;
+          const connBad = connectionStats?.status === "error";
+          const connWarn = connectionStats?.status === "warning";
+          if (errorCount > 0 || connBad) {
+            return (
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 border border-red-100">
+                <CheckCircle className="h-4 w-4 text-red-500 shrink-0" />
+                <p className="text-sm text-red-700">
+                  {errorCount > 0
+                    ? `${errorCount} table${errorCount > 1 ? "s" : ""} reporting errors.`
+                    : "Database connection error."}{" "}
+                  Check table statistics above.
+                </p>
+              </div>
+            );
+          }
+          if (warnCount > 0 || connWarn) {
+            return (
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-50 border border-amber-100">
+                <CheckCircle className="h-4 w-4 text-amber-500 shrink-0" />
+                <p className="text-sm text-amber-700">
+                  {warnCount > 0
+                    ? `${warnCount} table${warnCount > 1 ? "s" : ""} may be slow or stale.`
+                    : `High database latency (${connectionStats?.latency || 0}ms).`}
+                </p>
+              </div>
+            );
+          }
+          return (
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-emerald-50 border border-emerald-100">
+              <CheckCircle className="h-4 w-4 text-emerald-600 shrink-0" />
+              <p className="text-sm text-emerald-700">
+                All systems operational. Database connection stable with {connectionStats?.latency || 0}ms latency.
+                {` Monitoring ${tableStats.length} tables with ${getTotalRows().toLocaleString()} total records.`}
+              </p>
+            </div>
+          );
+        })()}
       </CardContent>
     </Card>
   );

@@ -78,8 +78,11 @@ export function AdvisorAssignmentCard({ caseData, onRefresh }: AdvisorAssignment
           query = query.eq("assigned_advisor_id", caseData.assigned_advisor_id);
         }
 
-        const { error } = await query;
+        const { data: updatedRow, error } = await query.select("id").maybeSingle();
         if (error) throw error;
+        if (!updatedRow) {
+          throw new Error("Assignment changed by another user — please refresh and try again.");
+        }
 
         // Log event
         const { data: { user } } = await supabase.auth.getUser();

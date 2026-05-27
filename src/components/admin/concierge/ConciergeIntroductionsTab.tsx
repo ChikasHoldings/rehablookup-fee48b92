@@ -168,7 +168,7 @@ export function ConciergeIntroductionsTab({ caseData, onRefresh }: ConciergeIntr
     // stay in sync. The audit row and email sends were already issued by the
     // batch action itself.
     const { data: { user } } = await supabase.auth.getUser();
-    await supabase.functions.invoke("auto-status-transition", {
+    const { error: transitionError } = await supabase.functions.invoke("auto-status-transition", {
       body: {
         inquiryId: caseData.id,
         trigger: "introduction_sent",
@@ -176,13 +176,19 @@ export function ConciergeIntroductionsTab({ caseData, onRefresh }: ConciergeIntr
         actorType: getCaseEventActorType(adminRole),
       },
     });
+    if (transitionError) {
+      console.warn("[ConciergeIntroductionsTab] auto-status-transition failed:", transitionError);
+    }
 
     const sentCount = selectedFacilityIds.size;
     const priorCount = caseData.introductions_sent_count || 0;
-    await supabase
+    const { error: countError } = await supabase
       .from("concierge_inquiries")
       .update({ introductions_sent_count: priorCount + sentCount })
       .eq("id", caseData.id);
+    if (countError) {
+      console.warn("[ConciergeIntroductionsTab] failed to update introductions_sent_count:", countError);
+    }
 
     // Send the "introductions sent" notification to the seeker. The
     // intros themselves were already issued by the batch action +
@@ -218,16 +224,19 @@ export function ConciergeIntroductionsTab({ caseData, onRefresh }: ConciergeIntr
       response: string;
       notes?: string;
     }) => {
-      const { error } = await supabase
+      const { data: updatedRow, error } = await supabase
         .from("concierge_introductions")
         .update({
           provider_response: response,
           provider_responded_at: new Date().toISOString(),
           provider_notes: notes,
         })
-        .eq("id", introId);
+        .eq("id", introId)
+        .select("id")
+        .maybeSingle();
 
       if (error) throw error;
+      if (!updatedRow) throw new Error("Update was blocked — you may not have permission to modify this introduction.");
 
       // If interested, trigger auto-status transition with granular actor.
       if (response === "interested") {
@@ -261,15 +270,18 @@ export function ConciergeIntroductionsTab({ caseData, onRefresh }: ConciergeIntr
       const intro = introductions?.find((i) => i.id === introId);
       const facility = intro?.facility as { id: string; name: string } | undefined;
 
-      const { error } = await supabase
+      const { data: updatedRow, error } = await supabase
         .from("concierge_introductions")
         .update({
           admin_disclosed_pii_at: new Date().toISOString(),
           disclosed_by_admin_id: user.id,
         })
-        .eq("id", introId);
+        .eq("id", introId)
+        .select("id")
+        .maybeSingle();
 
       if (error) throw error;
+      if (!updatedRow) throw new Error("Disclosure was blocked — you may not have permission to update this introduction.");
 
       // Log the disclosure event to case events
       await supabase.from("concierge_case_events").insert({

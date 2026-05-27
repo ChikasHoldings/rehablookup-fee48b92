@@ -100,11 +100,18 @@ export function useEscalationTransition() {
         }
       }
 
-      const { error } = await supabase
+      const { data: updatedRow, error } = await supabase
         .from("admin_escalations")
         .update(payload as never)
-        .eq("id", id);
+        .eq("id", id)
+        .select("id")
+        .maybeSingle();
       if (error) throw error;
+      if (!updatedRow) {
+        throw new Error(
+          "Update was blocked — you must be the creator, assignee, or a super admin to modify this escalation.",
+        );
+      }
 
       // Always write audit log.
       if (user?.id) {
