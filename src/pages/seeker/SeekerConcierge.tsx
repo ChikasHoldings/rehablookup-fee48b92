@@ -555,14 +555,26 @@ export default function SeekerConcierge() {
   }
 
   // ========== STATE B & C: Case exists ==========
-   const showMatchedFacilities = selectedCase &&
-    ["matching_providers", "matched", "provider_prequalification", "providers_accepted", "presented_to_seeker", "seeker_selected", "admission_in_progress"].includes(selectedCase.status);
-  // Brokerage model: admin confirms placement on behalf of both parties
-  // Show provider review when seeker can select from interested facilities
-  const showProviderReview = selectedCase?.status === "presented_to_seeker" || selectedCase?.status === "seeker_selected";
+  // The paid admission flow (admission_in_progress → admitted → billed →
+  // completed) was retired in the 2026-05 rebuild; cases now terminate at
+  // `seeker_selected` — the "Placed" state that auto-status-transition
+  // stamps with placement_confirmed=true. Treat it as a successful
+  // placement so the seeker sees their chosen facility and can leave
+  // feedback. admitted/billed/completed remain only for legacy rows.
+  const isPlaced = selectedCase?.status === "seeker_selected";
   const isTerminalSuccess = ["admitted", "billed", "completed"].includes(selectedCase?.status || "");
+  const isPlacedOrAdmitted = isPlaced || isTerminalSuccess;
+  // Keep seeker_selected here so PlacementTabs (which hosts the advisor
+  // messaging thread — the ONLY seeker↔advisor channel) stays mounted
+  // while admission is being finalized off-platform.
+  const showMatchedFacilities = selectedCase &&
+    ["matching_providers", "matched", "provider_prequalification", "providers_accepted", "presented_to_seeker", "seeker_selected", "admission_in_progress"].includes(selectedCase.status);
+  // Show provider review only while the seeker is actively choosing. Once
+  // placed (seeker_selected), the placed-facility card below takes over,
+  // but PlacementTabs still renders (showMatchedFacilities) for advisor chat.
+  const showProviderReview = selectedCase?.status === "presented_to_seeker";
   const isClosed = selectedCase?.status === "closed";
-  const showFeedback = isTerminalSuccess && !selectedCase?.seeker_feedback && !feedbackSubmitted;
+  const showFeedback = isPlacedOrAdmitted && !selectedCase?.seeker_feedback && !feedbackSubmitted;
   const hasMatches = matchedFacilities && matchedFacilities.length > 0;
 
   return (
@@ -712,7 +724,7 @@ export default function SeekerConcierge() {
         )}
 
         {/* Placed / Admitted Facility */}
-        {isTerminalSuccess && placedFacility && (
+        {isPlacedOrAdmitted && placedFacility && (
           <div className="space-y-4">
             <PlacementConfirmationCard type="confirmed" facilityName={placedFacility.name} />
             <Card className="overflow-hidden">
@@ -783,7 +795,7 @@ export default function SeekerConcierge() {
         )}
 
         {/* Seeker confirmed, awaiting admin final confirmation */}
-        {selectedCase?.seeker_confirmed && !selectedCase.placement_confirmed && !isTerminalSuccess && (
+        {selectedCase?.seeker_confirmed && !selectedCase.placement_confirmed && !isPlacedOrAdmitted && (
           <>
             <PlacementConfirmationCard type="awaiting_admin" />
             <AdmissionStatusCard

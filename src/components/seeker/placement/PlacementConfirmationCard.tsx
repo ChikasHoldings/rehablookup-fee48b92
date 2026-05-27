@@ -32,7 +32,7 @@ export function PlacementConfirmationCard({ type, facilityName }: PlacementConfi
                   <Sparkles className="h-5 w-5" />
                 </h3>
                 <p className="text-emerald-100 mt-1">
-                  Congratulations! You've been admitted to {facilityName || "your chosen facility"}.
+                  Congratulations! You've been placed with {facilityName || "your chosen facility"}. Your advisor is finalizing your admission details.
                 </p>
               </div>
             </div>

@@ -43,7 +43,7 @@ const STATUS_CONFIG: Record<string, { label: string; icon: typeof Clock; color: 
   provider_prequalification: { label: "Verifying Providers", icon: Users, color: "text-primary", bgColor: "bg-primary" },
   providers_accepted: { label: "Providers Confirmed", icon: Users, color: "text-primary", bgColor: "bg-primary" },
   presented_to_seeker: { label: "Options Ready for Review", icon: Send, color: "text-primary", bgColor: "bg-primary" },
-  seeker_selected: { label: "Selection Made", icon: Eye, color: "text-primary", bgColor: "bg-primary" },
+  seeker_selected: { label: "Successfully Placed", icon: CheckCircle, color: "text-success", bgColor: "bg-success" },
   admission_in_progress: { label: "Admission in Progress", icon: Building2, color: "text-primary", bgColor: "bg-primary" },
   admitted: { label: "Successfully Placed", icon: CheckCircle, color: "text-success", bgColor: "bg-success" },
   billed: { label: "Successfully Placed", icon: CheckCircle, color: "text-success", bgColor: "bg-success" },
@@ -72,11 +72,14 @@ const GUIDED_STEPS = [
     statuses: ["matching_providers", "provider_prequalification", "providers_accepted", "matching", "matched", "introductions_sent"],
     description: "Treatment centers have been identified for you" },
   { key: "review", label: "Review Options", shortLabel: "Review", icon: Eye,
-    statuses: ["presented_to_seeker", "seeker_selected", "in_contact", "confirming"],
+    statuses: ["presented_to_seeker", "in_contact", "confirming"],
     description: "Review and choose your treatment center" },
-  { key: "admission", label: "Admission", shortLabel: "Admission", icon: Home,
-    statuses: ["admission_in_progress", "admitted", "billed", "completed"],
-    description: "✅ Admission successful — your placement is confirmed" },
+  // Terminal step. The workflow now ends at `seeker_selected` ("Placed");
+  // admission_in_progress/admitted/billed/completed are legacy states kept
+  // for historical rows but no longer reached by new cases.
+  { key: "admission", label: "Placed", shortLabel: "Placed", icon: Home,
+    statuses: ["seeker_selected", "admission_in_progress", "admitted", "billed", "completed"],
+    description: "✅ Your placement is confirmed — your advisor is finalizing admission" },
 ];
 
 function getGuidedStepIndex(status: string): number {
@@ -122,14 +125,14 @@ export function PlacementStatusCard({ caseData }: PlacementStatusCardProps) {
               </div>
             </div>
             
-            {["admitted", "billed", "completed"].includes(caseData.status) && (
+            {["seeker_selected", "admitted", "billed", "completed"].includes(caseData.status) && (
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 className="flex items-center gap-1 px-2 py-1 sm:px-3 sm:py-1.5 bg-success/10 rounded-full shrink-0"
               >
                 <Sparkles className="h-3 w-3 sm:h-4 sm:w-4 text-success" />
-                <span className="text-xs sm:text-sm font-medium text-success">✅ Admission Successful</span>
+                <span className="text-xs sm:text-sm font-medium text-success">✅ Placement Confirmed</span>
               </motion.div>
             )}
           </div>
