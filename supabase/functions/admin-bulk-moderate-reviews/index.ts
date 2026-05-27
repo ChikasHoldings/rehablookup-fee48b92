@@ -207,11 +207,15 @@ Deno.serve(async (req) => {
           update.disputed = false;
         }
 
-        const { error: updateErr } = await adminClient
+        const { data: updatedRows, error: updateErr } = await adminClient
           .from("facility_reviews")
           .update(update)
-          .eq("id", id);
+          .eq("id", id)
+          .select("id");
         if (updateErr) throw new Error(updateErr.message);
+        if (!updatedRows || updatedRows.length === 0) {
+          throw new Error(`Review ${id} not found or update was blocked`);
+        }
 
         await adminClient.from("admin_audit_log").insert({
           admin_user_id: user.id,

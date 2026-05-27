@@ -512,7 +512,7 @@ export default function ProviderSettingsPage() {
         return;
       }
 
-      const { error } = await supabase
+      const { data: updatedProfile, error } = await supabase
         .from("profiles")
         .update({
           first_name: sanitizedFirstName,
@@ -522,9 +522,12 @@ export default function ProviderSettingsPage() {
           primary_contact_name: sanitizedContactName,
           timezone: profile.timezone,
         })
-        .eq("user_id", session.user.id);
+        .eq("user_id", session.user.id)
+        .select("user_id")
+        .maybeSingle();
 
       if (error) throw error;
+      if (!updatedProfile) throw new Error("Profile not found or update was blocked");
 
       logActivity.mutate({
         userId: session.user.id,

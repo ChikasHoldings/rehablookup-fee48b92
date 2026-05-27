@@ -650,16 +650,22 @@ export default function AdminReviews() {
       return;
     }
 
-    const { error } = await supabase
+    const { data: deletedReview, error } = await supabase
       .from('facility_reviews')
       .delete()
-      .eq('id', deleteConfirm.id);
+      .eq('id', deleteConfirm.id)
+      .select('id')
+      .maybeSingle();
 
     setProcessingId(null);
     setDeleteConfirm(null);
 
     if (error) {
       toast.error(`Failed to delete review: ${error.message}`);
+      return;
+    }
+    if (!deletedReview) {
+      toast.error('Review not found or already deleted');
       return;
     }
     auditLog({
@@ -687,14 +693,17 @@ export default function AdminReviews() {
     setProcessingId(dispute.id);
     try {
       // 1. Hide the review (+ clear disputed flag in the same update).
-      const { error: hideErr } = await supabase
+      const { data: hiddenRow, error: hideErr } = await supabase
         .from('facility_reviews')
         .update({ status: 'hidden', disputed: false, updated_at: new Date().toISOString() })
-        .eq('id', dispute.review_id);
+        .eq('id', dispute.review_id)
+        .select('id')
+        .maybeSingle();
       if (hideErr) throw new Error(`Failed to hide review: ${hideErr.message}`);
+      if (!hiddenRow) throw new Error('Review not found or already deleted — cannot uphold dispute');
 
       // 2. Mark the dispute as upheld.
-      const { error: disputeErr } = await supabase
+      const { data: upheldRow, error: disputeErr } = await supabase
         .from('review_disputes')
         .update({
           status: 'upheld',
@@ -702,8 +711,11 @@ export default function AdminReviews() {
           resolved_by: currentUserId,
           resolved_at: new Date().toISOString(),
         })
-        .eq('id', dispute.id);
+        .eq('id', dispute.id)
+        .select('id')
+        .maybeSingle();
       if (disputeErr) throw new Error(`Failed to mark dispute upheld: ${disputeErr.message}`);
+      if (!upheldRow) throw new Error('Dispute not found or already resolved');
 
       auditLog({
         actionType: 'dispute_upheld',
@@ -729,7 +741,7 @@ export default function AdminReviews() {
   const handleDismissDispute = async (dispute: DisputeWithDetails) => {
     setProcessingId(dispute.id);
     try {
-      const { error: disputeErr } = await supabase
+      const { data: dismissedRow, error: disputeErr } = await supabase
         .from('review_disputes')
         .update({
           status: 'dismissed',
@@ -737,8 +749,11 @@ export default function AdminReviews() {
           resolved_by: currentUserId,
           resolved_at: new Date().toISOString(),
         })
-        .eq('id', dispute.id);
+        .eq('id', dispute.id)
+        .select('id')
+        .maybeSingle();
       if (disputeErr) throw new Error(`Failed to dismiss dispute: ${disputeErr.message}`);
+      if (!dismissedRow) throw new Error('Dispute not found or already resolved');
 
       const { error: clearErr } = await supabase
         .from('facility_reviews')
