@@ -117,6 +117,24 @@ function csvCell(value: unknown): string {
   return `"${prefixed.replace(/"/g, '""')}"`;
 }
 
+// Safe typed readers for JSONB platform-setting values. The generated DB
+// types expose `setting_value` as `Json`, so a direct `.field` access or
+// string coercion doesn't type-check. These narrow at runtime and fall back.
+function asString(value: Json | undefined, fallback: string): string {
+  return typeof value === "string" ? value : fallback;
+}
+function asNumber(value: Json | undefined, fallback: number): number {
+  return typeof value === "number" ? value : fallback;
+}
+function asBool(value: Json | undefined, fallback: boolean): boolean {
+  return typeof value === "boolean" ? value : fallback;
+}
+function jsonField(value: Json | undefined, key: string): Json | undefined {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as { [k: string]: Json | undefined })[key]
+    : undefined;
+}
+
 const SettingRow = forwardRef<HTMLDivElement, SettingRowProps>(
   ({ icon, title, description, children }, ref) => (
     <div 
@@ -290,11 +308,9 @@ export default function AdminSettings() {
 
   // Sync theme mode from settings when loaded
   useEffect(() => {
-    if (platformSettings?.theme_mode?.setting_value?.mode) {
-      const savedTheme = platformSettings.theme_mode.setting_value.mode;
-      if (savedTheme !== theme) {
-        setTheme(savedTheme);
-      }
+    const savedTheme = asString(jsonField(platformSettings?.theme_mode?.setting_value, "mode"), "");
+    if (savedTheme && savedTheme !== theme) {
+      setTheme(savedTheme);
     }
   }, [platformSettings, theme, setTheme]);
 
@@ -339,7 +355,7 @@ export default function AdminSettings() {
       
       // If theme was changed, apply it
       if (result?.key === "theme_mode") {
-        setTheme(result.value?.mode || "light");
+        setTheme(asString(jsonField(result.value, "mode"), "light"));
       }
     },
     onError: (error: Error) => {
@@ -745,14 +761,14 @@ export default function AdminSettings() {
   });
 
   // Get settings values
-  const maintenanceEnabled = platformSettings?.maintenance_mode?.setting_value?.enabled ?? false;
-  const apiRateLevel = platformSettings?.api_rate_limiting?.setting_value?.level ?? "default";
-  const sessionTimeout = platformSettings?.session_timeout?.setting_value?.minutes?.toString() ?? "30";
-  const timestampFormat = platformSettings?.timestamp_display?.setting_value?.format ?? "relative";
-  const backupRetentionDays = platformSettings?.backup_retention_days?.setting_value?.days?.toString() ?? "30";
-  const auditLogRetentionDays = platformSettings?.audit_log_retention_days?.setting_value?.days?.toString() ?? "90";
-  const themeMode = platformSettings?.theme_mode?.setting_value?.mode ?? "light";
-  const compactMode = platformSettings?.compact_mode?.setting_value?.enabled ?? false;
+  const maintenanceEnabled = asBool(jsonField(platformSettings?.maintenance_mode?.setting_value, "enabled"), false);
+  const apiRateLevel = asString(jsonField(platformSettings?.api_rate_limiting?.setting_value, "level"), "default");
+  const sessionTimeout = asNumber(jsonField(platformSettings?.session_timeout?.setting_value, "minutes"), 30).toString();
+  const timestampFormat = asString(jsonField(platformSettings?.timestamp_display?.setting_value, "format"), "relative");
+  const backupRetentionDays = asNumber(jsonField(platformSettings?.backup_retention_days?.setting_value, "days"), 30).toString();
+  const auditLogRetentionDays = asNumber(jsonField(platformSettings?.audit_log_retention_days?.setting_value, "days"), 90).toString();
+  const themeMode = asString(jsonField(platformSettings?.theme_mode?.setting_value, "mode"), "light");
+  const compactMode = asBool(jsonField(platformSettings?.compact_mode?.setting_value, "enabled"), false);
 
   // Storage calculations
   const storageUsed = storageData?.totalUsed ?? 0;
@@ -829,7 +845,7 @@ export default function AdminSettings() {
       )}
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as SettingsTab)} className="space-y-6">
         <TabsList className={cn(
           "grid w-full max-w-2xl",
           allowedTabs.length === 2 ? "grid-cols-2" : 
@@ -1946,7 +1962,7 @@ export default function AdminSettings() {
                     <div className="space-y-3">
                       <Label>Daily Summary Time</Label>
                       <Select 
-                        value={getSetting('daily_summary_time') || '09:00'}
+                        value={asString(getSetting('daily_summary_time'), '09:00')}
                         onValueChange={(value) => updateSetting.mutate({ 
                           key: 'daily_summary_time', 
                           value 
@@ -1985,7 +2001,7 @@ export default function AdminSettings() {
                     <div className="space-y-3">
                       <Label>Weekly Report Day</Label>
                       <Select 
-                        value={getSetting('weekly_report_day') || 'monday'}
+                        value={asString(getSetting('weekly_report_day'), 'monday')}
                         onValueChange={(value) => updateSetting.mutate({ 
                           key: 'weekly_report_day', 
                           value 
@@ -2167,7 +2183,7 @@ export default function AdminSettings() {
                     <div className="space-y-3">
                       <Label>Notification Recipients</Label>
                       <Select 
-                        value={getSetting('digest_recipients') || 'all_admins'}
+                        value={asString(getSetting('digest_recipients'), 'all_admins')}
                         onValueChange={(value) => updateSetting.mutate({ 
                           key: 'digest_recipients', 
                           value 
@@ -2246,7 +2262,7 @@ export default function AdminSettings() {
                     description="Automatically mark notifications as read after viewing"
                   >
                     <Select 
-                      value={getSetting('auto_mark_read_delay') || '5'}
+                      value={asString(getSetting('auto_mark_read_delay'), '5')}
                       onValueChange={(value) => updateSetting.mutate({ 
                         key: 'auto_mark_read_delay', 
                         value 
@@ -2272,7 +2288,7 @@ export default function AdminSettings() {
                     description="Automatically remove notifications older than"
                   >
                     <Select 
-                      value={getSetting('notification_retention_days') || '30'}
+                      value={asString(getSetting('notification_retention_days'), '30')}
                       onValueChange={(value) => updateSetting.mutate({ 
                         key: 'notification_retention_days', 
                         value 
@@ -2337,7 +2353,7 @@ export default function AdminSettings() {
                         getSetting('daily_summary_enabled') ? "text-success/80" : "text-muted-foreground"
                       )}>
                         {getSetting('daily_summary_enabled') 
-                          ? `Sends at ${getSetting('daily_summary_time') || '09:00'}` 
+                          ? `Sends at ${asString(getSetting('daily_summary_time'), '09:00')}` 
                           : 'Not scheduled'}
                       </p>
                     </div>
@@ -2365,7 +2381,7 @@ export default function AdminSettings() {
                         getSetting('weekly_report_enabled') ? "text-success/80" : "text-muted-foreground"
                       )}>
                         {getSetting('weekly_report_enabled') 
-                          ? `Sends every ${(getSetting('weekly_report_day') || 'monday').charAt(0).toUpperCase() + (getSetting('weekly_report_day') || 'monday').slice(1)}` 
+                          ? `Sends every ${asString(getSetting('weekly_report_day'), 'monday').charAt(0).toUpperCase() + asString(getSetting('weekly_report_day'), 'monday').slice(1)}` 
                           : 'Not scheduled'}
                       </p>
                     </div>
@@ -2398,7 +2414,7 @@ export default function AdminSettings() {
                           }</li>
                           <li>• Browser notifications: {getSetting('browser_notifications') ? 'Enabled' : 'Disabled'}</li>
                           <li>• Sound notifications: {getSetting('notification_sound') !== false ? 'Enabled' : 'Disabled'}</li>
-                          <li>• Notification retention: {getSetting('notification_retention_days') || '30'} days</li>
+                          <li>• Notification retention: {asString(getSetting('notification_retention_days'), '30')} days</li>
                         </ul>
                       </div>
                     </div>
