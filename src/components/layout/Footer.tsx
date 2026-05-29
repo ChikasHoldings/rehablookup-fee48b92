@@ -300,7 +300,7 @@ export const Footer = memo(function Footer() {
             </div>
             <div className="flex flex-col sm:flex-row gap-2.5 shrink-0">
               <Link
-                to="/concierge"
+                to="/concierge/intake"
                 className="inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-accent-foreground shadow-sm hover:bg-accent/90 transition-all duration-150"
               >
                 Get Matched Now <ArrowRight className="h-3.5 w-3.5" />
