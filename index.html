@@ -237,34 +237,6 @@
 
 
 
-    <!-- Meta Pixel Code - deferred to avoid blocking FCP.
-         INTAKE-ROUTE GATING (Phase 3.3, 2026-05-23):
-         The Pixel is suppressed on /concierge*, /insurance-verification,
-         /contact, /request-help*, and the seeker /verify* flows. Firing
-         on those routes sends addiction-treatment intent signals to an
-         ad network — a compliance risk (FTC + 42 CFR Part 2 spirit
-         even where Part 2 doesn't technically attach to a directory).
-         The sitewide pixel decision is left to the team; this only
-         silences the highest-risk routes. -->
-    <script>
-    // Define fbq stub immediately so any early calls are safely queued (prevents "fbq is not defined" errors)
-    !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[]}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
-    // Intake-route check — kept in sync with the noscript <img> tag below
-    // and with the SPA NavigationContext route change handler. Update both
-    // places if this list changes.
-    window.__rlPixelSuppressed = (function(){
-      var p = location.pathname || '/';
-      return /^\/(concierge|insurance-verification|contact|request-help|verify-insurance|vob|placement-help)(\/|$)/.test(p);
-    })();
-    function loadMetaPixel(){
-      if(window._fbqLoaded)return;
-      if(window.__rlPixelSuppressed)return;
-      window._fbqLoaded=!0;
-      var t=document.createElement('script');t.async=!0;t.src='https://connect.facebook.net/en_US/fbevents.js';var s=document.getElementsByTagName('script')[0];s.parentNode.insertBefore(t,s);t.onload=function(){try{fbq('init','4282740695271005');fbq('track','PageView')}catch(e){}}
-    }
-    if('requestIdleCallback' in window){requestIdleCallback(loadMetaPixel,{timeout:4000})}else{setTimeout(loadMetaPixel,2000)}
-    </script>
-    <!-- End Meta Pixel Code -->
 
     <!-- Google Analytics 4 — measurement ID injected at build time from
          VITE_GA_MEASUREMENT_ID by the inject-ga-measurement-id plugin
@@ -295,10 +267,6 @@
          intentionally does NOT render its own duplicate (axe-clean
          top 20 routes, 2026-05-22). -->
     <a href="#main" class="skip-link">Skip to main content</a>
-    <!-- Meta Pixel noscript fallback (must be in body) -->
-    <noscript><img height="1" width="1" style="display:none"
-    src="https://www.facebook.com/tr?id=4282740695271005&ev=PageView&noscript=1"
-    /></noscript>
     <div id="root">
       <!-- Minimal skeleton – just matches page background to avoid any flash -->
       <div id="ssr-skeleton" aria-hidden="true" style="min-height:100vh;background:hsl(220 30% 97%)"></div>
