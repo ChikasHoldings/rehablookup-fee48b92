@@ -19,6 +19,11 @@ dist-ssr
 .env.*
 !.env.example
 
+# Script-generated reports — outputs of scripts/check-broken-links.mjs and
+# scripts/crawl-live-404s.mjs. Regenerated locally / in CI; don't track.
+broken-links-report.md
+crawl-404-report.md
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

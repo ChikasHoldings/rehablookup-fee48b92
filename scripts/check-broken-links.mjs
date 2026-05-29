@@ -62,8 +62,6 @@ const EXTERNAL_ALLOW_LIST = new Set([
   "fonts.gstatic.com",
   "www.google.com",
   "www.googletagmanager.com",
-  "connect.facebook.net",
-  "static.hotjar.com",
   "cdn.jsdelivr.net",
   "unpkg.com",
 ]);

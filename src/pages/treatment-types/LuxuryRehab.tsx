@@ -193,7 +193,7 @@ export default function LuxuryRehab() {
             </p>
             <div className="flex flex-wrap items-center justify-center gap-3">
               <Button asChild variant="hero-light" size="lg">
-                <Link to="/concierge">
+                <Link to="/concierge/intake">
                   <Phone className="h-4 w-4 mr-1" />
                   Get Matched Now
                 </Link>

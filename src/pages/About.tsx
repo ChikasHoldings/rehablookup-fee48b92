@@ -179,7 +179,7 @@ const About = () => {
             </div>
             <div className="flex items-center gap-2.5 text-muted-foreground md:gap-3">
               <Users className="h-5 w-5 md:h-6 md:w-6 text-accent" />
-              <span>10,000+ Families Helped</span>
+              <span>100% Free for Families</span>
             </div>
           </div>
         </div>
@@ -432,7 +432,7 @@ const About = () => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
             {[
               { value: STATS.facilities, label: "Verified Facilities", sub: STATS.states },
-              { value: "10K+", label: "Families Helped", sub: "Monthly connections" },
+              { value: STATS.firstResponse, label: "First Response", sub: "Within 1 business hour" },
               { value: "51", label: "Jurisdictions", sub: "All 50 states + D.C." },
               { value: STATS.freeForSeekers, label: "Free for Seekers", sub: "No fees, no upsells" },
             ].map((stat) => (

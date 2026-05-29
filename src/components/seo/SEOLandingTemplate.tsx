@@ -403,7 +403,7 @@ export function SEOLandingTemplate({
                 </p>
                 <div className="flex flex-wrap items-center justify-center gap-3">
                   <Button asChild variant="default">
-                    <Link to="/concierge">Get Matched Now</Link>
+                    <Link to="/concierge/intake">Get Matched Now</Link>
                   </Button>
                   <Button asChild variant="outline">
                     <Link to="/search-results">Browse Nationwide</Link>

@@ -12,7 +12,7 @@ const BENEFITS: Benefit[] = [
     icon: Users,
     title: "Reach Clients Actively Seeking Help",
     description:
-      "15,000+ monthly visitors search RehabLookup for treatment options. Your listing puts you in front of high-intent clients at the exact moment they need you.",
+      "Families search RehabLookup every day for treatment options. Your listing puts you in front of high-intent clients at the exact moment they need you.",
   },
   {
     icon: TrendingUp,

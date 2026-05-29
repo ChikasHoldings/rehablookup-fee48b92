@@ -1,4 +1,4 @@
-Contact: mailto:Security@rehablookup.com
+Contact: mailto:security@rehablookup.com
 Expires: 2027-04-07T00:00:00.000Z
 Preferred-Languages: en
 Canonical: https://rehablookup.com/.well-known/security.txt
