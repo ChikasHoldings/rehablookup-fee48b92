@@ -4,6 +4,7 @@ import { aboutFaqs } from "@/data/pageFaqs";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
+import { STATS } from "@/lib/copy/stats";
 import {
   Heart,
   Shield,
@@ -430,10 +431,10 @@ const About = () => {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
             {[
-              { value: "3,800+", label: "Verified Facilities", sub: "50 states + Washington, D.C." },
+              { value: STATS.facilities, label: "Verified Facilities", sub: STATS.states },
               { value: "10K+", label: "Families Helped", sub: "Monthly connections" },
               { value: "51", label: "Jurisdictions", sub: "All 50 states + D.C." },
-              { value: "100%", label: "Free for Seekers", sub: "No fees, no upsells" },
+              { value: STATS.freeForSeekers, label: "Free for Seekers", sub: "No fees, no upsells" },
             ].map((stat) => (
               <div key={stat.label} className="text-center p-5 rounded-xl bg-primary-foreground/5 border border-primary-foreground/10">
                 <div className="font-display text-3xl md:text-4xl font-bold text-accent tabular-nums mb-1">{stat.value}</div>

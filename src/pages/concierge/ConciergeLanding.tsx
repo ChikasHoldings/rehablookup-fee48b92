@@ -16,13 +16,12 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { 
+import {
   CheckCircle,
   Shield,
   Clock,
   HeartHandshake,
   ArrowRight,
-  Star,
   Users,
   MessageCircle,
   Sparkles,
@@ -31,13 +30,20 @@ import {
 } from "lucide-react";
 import conciergeHero from "@/assets/concierge-hero.jpg";
 import { TrustStrip } from "@/components/home/TrustStrip";
+import { STATS } from "@/lib/copy/stats";
 
 
-const STATS = [
-  { value: "500+", label: "Families Helped", icon: Users },
-  { value: "1,000+", label: "Partner Facilities", icon: Building2 },
-  { value: "24hr", label: "Avg Response Time", icon: Clock },
-  { value: "4.9", label: "Client Rating", icon: Star },
+// Stat card config. Values come from the centralized STATS module so
+// concierge/About/etc. stay in sync. The "4.9 Client Rating" card was removed
+// because we don't have AggregateRating schema or a verifiable review corpus
+// to back it; "Partner Facilities" was rebranded to "Verified Facilities" with
+// the real count; and "24hr Avg Response Time" was replaced with
+// "< 1 hour First Response" to match the body copy's own "within 1 business
+// hour" promise.
+const STAT_CARDS = [
+  { value: STATS.freeForSeekers, label: "Free for families", icon: Users },
+  { value: STATS.facilities, label: "Verified Facilities", icon: Building2 },
+  { value: STATS.firstResponse, label: "First Response", icon: Clock },
 ];
 
 const FAQ_ITEMS = [
@@ -216,8 +222,8 @@ export default function ConciergeLanding() {
           {/* Stats Bar - Solid Primary Background */}
           <section className="border-b border-border bg-primary text-primary-foreground py-2.5 md:py-4">
             <div className="container px-4 md:px-6 lg:px-8">
-              <div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-4 text-center max-w-4xl mx-auto">
-                {STATS.map((stat) => (
+              <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-3 text-center max-w-4xl mx-auto">
+                {STAT_CARDS.map((stat) => (
                   <div key={stat.label} className="px-1">
                     <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-0.5">
                       <stat.icon className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-accent shrink-0" />
