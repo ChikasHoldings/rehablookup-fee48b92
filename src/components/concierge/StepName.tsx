@@ -79,6 +79,8 @@ export function StepName({ data, errors, onChange }: Props) {
             onChange={(e) => onChange({ firstName: sanitizeName(e.target.value) })}
             placeholder="Enter your first name"
             maxLength={100}
+            autoComplete="given-name"
+            required
             className={inputClass("firstName")}
             autoFocus
           />
@@ -97,6 +99,8 @@ export function StepName({ data, errors, onChange }: Props) {
             onChange={(e) => onChange({ lastName: sanitizeName(e.target.value) })}
             placeholder="Enter your last name"
             maxLength={100}
+            autoComplete="family-name"
+            required
             className={inputClass("lastName")}
           />
           {errors.lastName && (
@@ -112,6 +116,9 @@ export function StepName({ data, errors, onChange }: Props) {
           <Input
             id="phone"
             type="tel"
+            inputMode="tel"
+            autoComplete="tel"
+            pattern="[\d\s\-\(\)\+]{10,}"
             value={data.phone}
             onChange={(e) => onChange({ phone: formatPhone(e.target.value) })}
             placeholder="(555) 123-4567"
@@ -130,6 +137,8 @@ export function StepName({ data, errors, onChange }: Props) {
           <Input
             id="email"
             type="email"
+            autoComplete="email"
+            inputMode="email"
             value={data.email}
             onChange={(e) => onChange({ email: formatEmailInput(e.target.value) })}
             placeholder="you@example.com"
