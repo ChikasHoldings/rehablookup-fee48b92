@@ -140,7 +140,7 @@ const MedicalDisclaimer = () => {
               <h3 className="font-bold text-foreground mb-2">Questions About This Disclaimer?</h3>
               <p className="text-sm text-muted-foreground">
                 If you have questions about this medical disclaimer or our services, please contact us at{" "}
-                <a href="mailto:Support@rehablookup.com" className="text-primary hover:underline">Support@rehablookup.com</a>.
+                <a href="mailto:help@rehablookup.com" className="text-primary hover:underline">help@rehablookup.com</a>.
               </p>
             </div>
 

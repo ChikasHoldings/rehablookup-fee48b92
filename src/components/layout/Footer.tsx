@@ -300,7 +300,7 @@ export const Footer = memo(function Footer() {
             </div>
             <div className="flex flex-col sm:flex-row gap-2.5 shrink-0">
               <Link
-                to="/concierge"
+                to="/concierge/intake"
                 className="inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-accent-foreground shadow-sm hover:bg-accent/90 transition-all duration-150"
               >
                 Get Matched Now <ArrowRight className="h-3.5 w-3.5" />
@@ -452,10 +452,10 @@ export const Footer = memo(function Footer() {
             {/* Right: Social + Contact */}
             <div className="flex items-center justify-center gap-3">
               <a
-                href="mailto:Support@rehablookup.com"
+                href="mailto:help@rehablookup.com"
                 className="text-xs text-primary-foreground/70 hover:text-primary-foreground/90 transition-colors hidden sm:inline-flex items-center gap-1"
               >
-                <Mail className="h-3 w-3" /> Support@rehablookup.com
+                <Mail className="h-3 w-3" /> help@rehablookup.com
               </a>
               <div className="h-3.5 w-px bg-primary-foreground/10 hidden sm:block" />
               <div className="flex items-center gap-1">

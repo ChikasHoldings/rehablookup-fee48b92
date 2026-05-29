@@ -1,7 +1,7 @@
 /* TEAM */
 Company: RehabLookup, Inc.
 Site: https://rehablookup.com
-Contact: Support@rehablookup.com
+Contact: help@rehablookup.com
 Location: United States
 
 /* SITE */

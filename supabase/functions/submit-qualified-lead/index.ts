@@ -779,7 +779,7 @@ function getSeekerConfirmationEmail(
               </table>
 
               <p style="margin: 0 0 16px 0; color: #374151; font-size: 14px; line-height: 1.6;">
-                <strong>Haven't heard back?</strong> If 48 hours pass without a response, reply to this email or contact us at <a href="mailto:Support@rehablookup.com" style="color: #0f766e; text-decoration: none;">Support@rehablookup.com</a> and we'll help connect you with another provider.
+                <strong>Haven't heard back?</strong> If 48 hours pass without a response, reply to this email or contact us at <a href="mailto:help@rehablookup.com" style="color: #0f766e; text-decoration: none;">help@rehablookup.com</a> and we'll help connect you with another provider.
               </p>
               <p style="margin: 0; color: #6b7280; font-size: 13px; line-height: 1.6;">
                 Your information is kept confidential and is only shared with the treatment center you contacted.

@@ -1,0 +1,36 @@
+# RehabLookup
+
+> Verified directory of 3,800+ addiction treatment facilities across the United
+> States. Free concierge placement, insurance verification, and recovery resources.
+> Not a treatment provider. Confidential, 24/7 support at 214-639-6420.
+
+## Treatment finders
+- [Drug & Alcohol Rehab Directory](https://rehablookup.com/): Search facilities by location, type, and insurance
+- [Free Concierge Placement](https://rehablookup.com/concierge): Hand-matched placement within 24–48 hours
+- [Browse by State](https://rehablookup.com/rehab-centers/california): State-level directory (50 states + DC)
+
+## Treatment types
+- [Medical Detox](https://rehablookup.com/treatment-types/detox-programs)
+- [Inpatient / Residential](https://rehablookup.com/treatment-types/residential-inpatient)
+- [Outpatient (IOP/PHP)](https://rehablookup.com/treatment-types/outpatient-programs)
+- [Dual Diagnosis](https://rehablookup.com/treatment-types/dual-diagnosis-treatment)
+- [Medication-Assisted Treatment](https://rehablookup.com/treatment-types/drug-addiction-treatment)
+
+## Insurance coverage
+- [Aetna](https://rehablookup.com/insurance/aetna-rehab)
+- [Blue Cross Blue Shield](https://rehablookup.com/insurance/bcbs-treatment)
+- [Cigna](https://rehablookup.com/insurance/cigna-rehab)
+- [United Healthcare](https://rehablookup.com/insurance/united-healthcare-rehab)
+- [Medicaid](https://rehablookup.com/insurance/medicaid-rehab)
+- [Medicare](https://rehablookup.com/insurance/medicare-rehab)
+
+## Recovery education
+- [Signs of Addiction](https://rehablookup.com/resources/youth-addiction-warning-signs)
+- [Understanding Levels of Care](https://rehablookup.com/resources/understanding-levels-of-care)
+- [Free & Low-Cost Rehab](https://rehablookup.com/free-rehab-options)
+
+## Optional
+- [About](https://rehablookup.com/about)
+- [Privacy Policy](https://rehablookup.com/privacy-policy)
+- [HIPAA Notice](https://rehablookup.com/notice-of-privacy-practices)
+- [Contact](mailto:help@rehablookup.com)

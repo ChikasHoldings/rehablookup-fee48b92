@@ -337,10 +337,10 @@ export default function SeekerHelp() {
                   <div>
                     <h3 className="font-medium text-foreground">Email Support</h3>
                     <a 
-                      href="mailto:Support@rehablookup.com"
+                      href="mailto:help@rehablookup.com"
                       className="text-sm text-primary hover:underline"
                     >
-                      Support@rehablookup.com
+                      help@rehablookup.com
                     </a>
                     <p className="text-xs text-muted-foreground mt-0.5">We typically respond within 24 hours</p>
                   </div>

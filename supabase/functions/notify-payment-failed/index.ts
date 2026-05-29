@@ -430,7 +430,7 @@ Deno.serve(async (req) => {
     }
 
     // Admin email
-    const adminEmail = "Support@rehablookup.com";
+    const adminEmail = "help@rehablookup.com";
     const adminEmailHtml = `
 <!DOCTYPE html>
 <html>
@@ -583,7 +583,7 @@ Deno.serve(async (req) => {
               </table>
               
               <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #94a3b8; line-height: 1.6;">
-                Questions? Contact us at <a href="mailto:Support@rehablookup.com" style="color: #1B365D; text-decoration: none; font-weight: 500;">Support@rehablookup.com</a> or visit our <a href="https://rehablookup.com/provider/help" style="color: #1B365D; text-decoration: none; font-weight: 500;">help center</a>.
+                Questions? Contact us at <a href="mailto:help@rehablookup.com" style="color: #1B365D; text-decoration: none; font-weight: 500;">help@rehablookup.com</a> or visit our <a href="https://rehablookup.com/provider/help" style="color: #1B365D; text-decoration: none; font-weight: 500;">help center</a>.
               </p>
             </td>
           </tr>

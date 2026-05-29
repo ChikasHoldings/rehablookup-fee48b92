@@ -216,7 +216,7 @@ export function SEO({
     contactPoint: [
       {
         "@type": "ContactPoint",
-        email: "Support@rehablookup.com",
+        email: "help@rehablookup.com",
         contactType: "customer service",
         availableLanguage: ["English", "Spanish"],
         areaServed: "US",
@@ -229,7 +229,7 @@ export function SEO({
       },
       {
         "@type": "ContactPoint",
-        email: "Support@rehablookup.com",
+        email: "help@rehablookup.com",
         contactType: "sales",
         availableLanguage: ["English"],
         areaServed: "US",
@@ -327,7 +327,7 @@ export function SEO({
   };
 
   return (
-    <Helmet>
+    <Helmet prioritizeSeoTags>
       {/* Primary Meta Tags */}
       <html lang="en" />
       <title>{fullTitle}</title>

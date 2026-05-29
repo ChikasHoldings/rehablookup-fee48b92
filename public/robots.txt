@@ -370,9 +370,6 @@ Disallow: /functions/
 Disallow: /_vercel/
 Disallow: /.netlify/
 Disallow: /search?
-Disallow: /search-results
-Disallow: /search-results?*
-Disallow: /search-results/
 Disallow: /404
 Disallow: /404/
 Disallow: /*?utm_source=
