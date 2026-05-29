@@ -221,11 +221,10 @@ function ArticleNotFound({ slug }: { slug: string }) {
 function ArticleSkeleton() {
   return (
     <Layout>
-      <SEO 
-        title="Loading Article..."
-        description="Loading article content"
-        noindex={true}
-      />
+      {/* No <SEO> during loading — emitting a "Loading…" title would race
+          the success-branch SEO and briefly broadcast a non-real title to
+          crawlers and the tab. The previous route's tags persist until the
+          article-loaded SEO mounts. */}
       <div className="bg-gradient-to-b from-muted/60 via-muted/30 to-background py-12 md:py-16">
         <div className="container">
           <div className="max-w-4xl mx-auto">
