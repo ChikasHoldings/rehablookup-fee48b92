@@ -327,7 +327,7 @@ export function SEO({
   };
 
   return (
-    <Helmet>
+    <Helmet prioritizeSeoTags>
       {/* Primary Meta Tags */}
       <html lang="en" />
       <title>{fullTitle}</title>

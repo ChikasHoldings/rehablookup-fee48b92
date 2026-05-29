@@ -46,7 +46,6 @@
            sets the correct canonical via the <SEO /> component on hydration.
          DO NOT change this canonical to a relative URL — it must be absolute
          for the homepage. Per-route canonicals are set by the SEO component. -->
-    <link rel="canonical" href="https://rehablookup.com/" />
     <meta property="og:url" content="https://rehablookup.com/" />
     <meta property="og:title" content="Find Trusted Addiction Treatment Centers | RehabLookup" />
     <meta property="og:description" content="Search and connect with verified addiction treatment centers across the United States. Compare detox, inpatient, outpatient & dual diagnosis programs. Free insurance verification. Confidential help." />
@@ -233,153 +232,10 @@
       .ns-footer { border-top: 1px solid #e5e5e5; padding-top: 24px; margin-top: 40px; text-align: center; color: #666; }
     </style>
 
-    <!-- Structured Data - Organization with enhanced details -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "Organization",
-      "@id": "https://rehablookup.com/#organization",
-      "name": "RehabLookup",
-      "legalName": "RehabLookup, Inc.",
-      "url": "https://rehablookup.com",
-      "logo": {
-        "@type": "ImageObject",
-        "url": "https://rehablookup.com/logo.svg",
-        "width": 512,
-        "height": 512
-      },
-      "image": "https://rehablookup.com/og-image.jpg",
-      "description": "RehabLookup is a trusted directory service connecting individuals and families with verified addiction treatment centers across the United States. We help people find drug rehab, alcohol treatment, detox programs, and mental health services.",
-      "foundingDate": "2024",
-      "slogan": "Find the Right Path to Recovery",
-      "knowsAbout": ["Addiction Treatment", "Drug Rehabilitation", "Alcohol Recovery", "Mental Health Services", "Detox Programs", "Dual Diagnosis Treatment"],
-      "areaServed": {
-        "@type": "Country",
-        "name": "United States"
-      },
-      "contactPoint": [
-        {
-          "@type": "ContactPoint",
-          "telephone": "+12146396420",
-          "email": "help@rehablookup.com",
-          "contactType": "customer service",
-          "availableLanguage": ["English", "Spanish"],
-          "areaServed": "US",
-          "hoursAvailable": {
-            "@type": "OpeningHoursSpecification",
-            "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
-            "opens": "00:00",
-            "closes": "23:59"
-          }
-        }
-      ],
-      "sameAs": [
-        "https://facebook.com/rehablookup",
-        "https://twitter.com/rehablookup",
-        "https://linkedin.com/company/rehablookup",
-        "https://instagram.com/rehablookup"
-      ]
-    }
-    </script>
 
-    <!-- Structured Data - Website with Search -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "WebSite",
-      "@id": "https://rehablookup.com/#website",
-      "name": "RehabLookup",
-      "url": "https://rehablookup.com",
-      "description": "Find trusted addiction treatment centers near you. Search verified rehab facilities across the United States, compare programs, and get help today.",
-      "publisher": {"@id": "https://rehablookup.com/#organization"},
-      "inLanguage": "en-US",
-      "potentialAction": [
-        {
-          "@type": "SearchAction",
-          "target": {
-            "@type": "EntryPoint",
-            "urlTemplate": "https://rehablookup.com/rehab-centers?location={search_term_string}"
-          },
-          "query-input": "required name=search_term_string"
-        }
-      ]
-    }
-    </script>
 
-    <!-- Structured Data - MedicalWebPage -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "MedicalWebPage",
-      "name": "Find Addiction Treatment Centers Near You",
-      "description": "Search verified drug and alcohol rehab centers across the United States. Compare treatment options and find the right recovery program.",
-      "about": {
-        "@type": "MedicalCondition",
-        "name": "Substance Use Disorder",
-        "alternateName": ["Drug Addiction", "Alcohol Addiction", "Chemical Dependency", "Substance Abuse"]
-      },
-      "audience": {
-        "@type": "PeopleAudience",
-        "audienceType": "Patients and families seeking addiction treatment"
-      },
-      "specialty": ["Addiction Medicine", "Psychiatry", "Behavioral Health"],
-      "lastReviewed": "2026-04-05",
-      "reviewedBy": {
-        "@type": "Organization",
-        "name": "RehabLookup Medical Advisory Board"
-      }
-    }
-    </script>
 
-    <!-- Structured Data - Service -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "Service",
-      "name": "Addiction Treatment Center Directory",
-      "serviceType": "Healthcare Directory",
-      "provider": {"@id": "https://rehablookup.com/#organization"},
-      "description": "Free service connecting individuals with verified addiction treatment centers nationwide. Compare facilities, verify insurance, and get confidential help.",
-      "areaServed": {
-        "@type": "Country",
-        "name": "United States"
-      },
-      "hasOfferCatalog": {
-        "@type": "OfferCatalog",
-        "name": "Treatment Options",
-        "itemListElement": [
-          {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Drug Rehabilitation"}},
-          {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Alcohol Treatment"}},
-          {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Detox Programs"}},
-          {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Inpatient Rehab"}},
-          {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Outpatient Programs"}},
-          {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Dual Diagnosis Treatment"}}
-        ]
-      },
-      "offers": {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "USD",
-        "description": "Free treatment center matching and insurance verification"
-      }
-    }
-    </script>
 
-    <!-- Structured Data - Breadcrumb for Homepage -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Home",
-          "item": "https://rehablookup.com"
-        }
-      ]
-    }
-    </script>
 
     <!-- Meta Pixel Code - deferred to avoid blocking FCP.
          INTAKE-ROUTE GATING (Phase 3.3, 2026-05-23):
