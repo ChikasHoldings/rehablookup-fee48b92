@@ -204,7 +204,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const resend = new Resend(resendApiKey);
     const emailResponse = await sendEmailWithRetry(supabaseAdmin, resend, {
       from: "RehabLookup <no-reply@rehablookup.com>",
-      to: ["Support@rehablookup.com"],
+      to: ["help@rehablookup.com"],
       subject: `[${subjectLabel}] Contact from ${escapeHtml(name.slice(0, 50))}`,
       html: emailHtml,
       replyTo: email,

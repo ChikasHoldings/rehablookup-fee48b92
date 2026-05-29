@@ -3544,7 +3544,7 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
           try {
             await sendEmailWithRetry(supabaseAdmin, resend, {
               from: "RehabLookup <no-reply@rehablookup.com>",
-              to: ["Support@rehablookup.com"],
+              to: ["help@rehablookup.com"],
               subject: `🎉 New Subscription - ${facilityName}`,
               html: `
                 <div style="font-family: Arial, Helvetica, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -3876,7 +3876,7 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
               try {
                 await sendEmailWithRetry(supabaseAdmin, resend, {
                   from: "RehabLookup <no-reply@rehablookup.com>",
-                  to: ["Support@rehablookup.com"],
+                  to: ["help@rehablookup.com"],
                   subject: `⚠️ Subscription Cancelled - ${facilities[0].name}`,
                   html: `
                     <div style="font-family: Arial, Helvetica, sans-serif; max-width: 600px; margin: 0 auto;">

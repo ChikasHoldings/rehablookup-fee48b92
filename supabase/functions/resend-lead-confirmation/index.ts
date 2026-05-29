@@ -417,7 +417,7 @@ function getSeekerConfirmationEmail(name: string, facilityName: string): string 
               </ul>
             </td></tr>
           </table>
-          <p style="margin:0 0 24px 0;color:#6b7280;font-size:14px;line-height:1.6;">Questions? Reach us at <a href="mailto:Support@rehablookup.com" style="color:#0f766e;text-decoration:none;">Support@rehablookup.com</a>.</p>
+          <p style="margin:0 0 24px 0;color:#6b7280;font-size:14px;line-height:1.6;">Questions? Reach us at <a href="mailto:help@rehablookup.com" style="color:#0f766e;text-decoration:none;">help@rehablookup.com</a>.</p>
         </td></tr>
         <tr><td style="background:#1B365D;padding:24px 32px;border-radius:0 0 12px 12px;text-align:center;">
           <p style="margin:0 0 12px 0;color:#ffffff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:14px;font-weight:600;">RehabLookup</p>

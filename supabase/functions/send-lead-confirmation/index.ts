@@ -210,7 +210,7 @@ function getConfirmationEmailHtml(leadFirstName: string): string {
                 </tr>
               </table>
               <p style="margin: 0 0 28px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; color: #6b7280; line-height: 1.6;">
-                If you have any questions, our support team is here to help at <a href="mailto:Support@rehablookup.com" style="color: #1B365D; text-decoration: none; font-weight: 500;">Support@rehablookup.com</a>.
+                If you have any questions, our support team is here to help at <a href="mailto:help@rehablookup.com" style="color: #1B365D; text-decoration: none; font-weight: 500;">help@rehablookup.com</a>.
               </p>
               <p style="margin: 0 0 6px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #4b5563;">Thank you for taking this step.</p>
               <p style="margin: 0 0 6px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #4b5563;">Warm regards,</p>
@@ -231,7 +231,7 @@ function getConfirmationEmailHtml(leadFirstName: string): string {
                         <td style="color: #64748b;">|</td>
                         <td style="padding: 0 12px;"><a href="https://rehablookup.com/terms-of-service" style="font-family: Arial; font-size: 13px; color: #93c5fd; text-decoration: none;">Terms of Service</a></td>
                         <td style="color: #64748b;">|</td>
-                        <td style="padding: 0 12px;"><a href="mailto:Support@rehablookup.com" style="font-family: Arial; font-size: 13px; color: #93c5fd; text-decoration: none;">Contact Us</a></td>
+                        <td style="padding: 0 12px;"><a href="mailto:help@rehablookup.com" style="font-family: Arial; font-size: 13px; color: #93c5fd; text-decoration: none;">Contact Us</a></td>
                       </tr>
                     </table>
                   </td>

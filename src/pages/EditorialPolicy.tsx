@@ -151,7 +151,7 @@ const EditorialPolicy = () => {
               We take accuracy seriously. If you identify an error or have concerns about any content on our platform:
             </p>
             <ul className="space-y-2 text-muted-foreground">
-              <li>Email our editorial team at <a href="mailto:Support@rehablookup.com" className="text-primary hover:underline">Support@rehablookup.com</a></li>
+              <li>Email our editorial team at <a href="mailto:help@rehablookup.com" className="text-primary hover:underline">help@rehablookup.com</a></li>
               <li>We investigate all reports within 48 hours</li>
               <li>Corrections are made promptly and noted on the affected content</li>
               <li>Significant corrections include a public note explaining the change</li>

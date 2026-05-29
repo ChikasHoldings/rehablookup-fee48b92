@@ -372,7 +372,7 @@ Deno.serve(async (req) => {
               </table>
               
               <p style="margin: 0; font-size: 14px; color: #64748b; line-height: 1.6;">
-                Questions? Contact your administrator at <a href="mailto:Support@rehablookup.com" style="color: #1B365D; text-decoration: none; font-weight: 500;">Support@rehablookup.com</a>.
+                Questions? Contact your administrator at <a href="mailto:help@rehablookup.com" style="color: #1B365D; text-decoration: none; font-weight: 500;">help@rehablookup.com</a>.
               </p>
             </td>
           </tr>

@@ -120,7 +120,7 @@ Deno.serve(async (req) => {
               <a href="https://rehablookup.com/provider/listing" style="display: inline-block; background-color: #1B365D; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-size: 16px; font-weight: 600;">Review Your Listing</a>
             </td></tr>
           </table>
-          <p style="margin: 0; color: #6b7280; font-size: 14px; line-height: 1.6;">If you have any questions, contact <a href="mailto:Support@rehablookup.com" style="color: #1B365D;">Support@rehablookup.com</a>.</p>
+          <p style="margin: 0; color: #6b7280; font-size: 14px; line-height: 1.6;">If you have any questions, contact <a href="mailto:help@rehablookup.com" style="color: #1B365D;">help@rehablookup.com</a>.</p>
         </td></tr>
         <tr><td style="background-color: #f9fafb; padding: 24px 40px; text-align: center; border-top: 1px solid #e5e7eb;">
           <p style="margin: 0; color: #9ca3af; font-size: 12px;">© ${new Date().getFullYear()} RehabLookup. All rights reserved.</p>

@@ -16,7 +16,7 @@ export const homeFaqs: FAQItem[] = [
 // ─── Contact Page ─────────────────────────────────────────────────────────────
 export const contactFaqs: FAQItem[] = [
   { question: "How quickly will RehabLookup respond to my message?", answer: "Our support team responds to most inquiries within 1–2 business days. For urgent treatment questions, we recommend using our placement service, which connects you with a specialist who can respond same-day." },
-  { question: "What's the best way to contact RehabLookup for treatment help?", answer: "If you're looking for treatment placement, use our free placement service for the fastest response. For general questions, partnership inquiries, or feedback, email us at Support@rehablookup.com." },
+  { question: "What's the best way to contact RehabLookup for treatment help?", answer: "If you're looking for treatment placement, use our free placement service for the fastest response. For general questions, partnership inquiries, or feedback, email us at help@rehablookup.com." },
   { question: "Can I speak with someone directly about a loved one's addiction?", answer: "Yes. Our placement specialists are trained to help families navigate the treatment process. Submit a placement request and a specialist will reach out to discuss options confidentially." },
   { question: "Does RehabLookup offer 24/7 emergency support?", answer: "RehabLookup is a directory and placement platform, not a crisis line. If you or someone you love is in immediate danger, call 988 (Suicide & Crisis Lifeline) or SAMHSA's free 24/7 helpline at 1-800-662-4357." },
   { question: "How can treatment providers list their facility on RehabLookup?", answer: "Treatment providers can apply to list their facility through our 'For Providers' page. All listings go through a verification process that checks licensing, accreditation, and operational status." },
@@ -88,7 +88,7 @@ export const aboutFaqs: FAQItem[] = [
   { question: "Who created RehabLookup?", answer: "RehabLookup was created to address the difficulty people face in finding legitimate, verified addiction treatment. Our team combines technology with healthcare expertise to connect clients with quality facilities." },
   { question: "Is RehabLookup affiliated with any treatment centers?", answer: "No. RehabLookup is an independent platform. We are not owned by or affiliated with any specific treatment center, ensuring unbiased results for every user." },
   { question: "How does RehabLookup make money?", answer: "RehabLookup offers premium listing features and placement services for treatment providers. Searchers always have free, unbiased access to the full directory." },
-  { question: "How can I provide feedback or report an issue?", answer: "You can reach us through our contact page or email Support@rehablookup.com. We take all feedback seriously and investigate any reports about listed facilities." },
+  { question: "How can I provide feedback or report an issue?", answer: "You can reach us through our contact page or email help@rehablookup.com. We take all feedback seriously and investigate any reports about listed facilities." },
 ];
 
 // ─── Cost Estimator ───────────────────────────────────────────────────────────
