@@ -274,7 +274,7 @@ const StatePage = () => {
                 <MapPin className="h-3.5 w-3.5" />
                 {stateData.abbreviation} · Treatment Directory
               </div>
-              <h1 className="font-display text-3xl font-bold tracking-tight text-white md:text-4xl lg:text-5xl">
+              <h1 className="font-display text-2xl font-bold tracking-tight text-white sm:text-3xl md:text-4xl lg:text-5xl">
                 Rehab Centers in {stateData.name}
               </h1>
               <p className="mt-3 text-base text-white/80 md:text-lg max-w-xl">
