@@ -120,16 +120,25 @@ export function ProvidersCTA() {
               under 10 minutes.
             </p>
 
-            {/* Compact 3-feature list — icon + label + 1-line body. */}
+            {/* Compact 3-feature list. On mobile each item is a single
+                row — icon on the left, title + body stacked on the right —
+                so the eye can scan three short stories straight down the
+                column. At sm+ the parent grid splits into 3 columns and
+                each item reverts to a vertical icon → title → body stack. */}
             <ul className="mt-7 grid gap-4 sm:grid-cols-3 sm:gap-5">
               {features.map(({ Icon, title, body }) => (
-                <li key={title} className="flex flex-col">
-                  <div className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 ring-1 ring-white/15">
+                <li
+                  key={title}
+                  className="flex flex-row items-start gap-3 sm:flex-col sm:gap-0"
+                >
+                  <div className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/10 ring-1 ring-white/15">
                     <Icon className="h-4.5 w-4.5 text-[#CDA223]" aria-hidden />
                   </div>
-                  <p className="mt-2.5 text-sm font-semibold text-white">{title}</p>
-                  {/* white/80 on #1B365D/#0E1F3A clears WCAG AA easily. */}
-                  <p className="mt-0.5 text-[13px] leading-snug text-white/80">{body}</p>
+                  <div className="min-w-0 sm:mt-2.5">
+                    <p className="text-sm font-semibold text-white">{title}</p>
+                    {/* white/80 on #1B365D/#0E1F3A clears WCAG AA easily. */}
+                    <p className="mt-0.5 text-[13px] leading-snug text-white/80">{body}</p>
+                  </div>
                 </li>
               ))}
             </ul>
