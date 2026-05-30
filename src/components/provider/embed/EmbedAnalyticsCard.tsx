@@ -80,7 +80,7 @@ export function EmbedAnalyticsCard({ facilityId }: EmbedAnalyticsCardProps) {
       </CardHeader>
       <CardContent className="space-y-5">
         {isLoading ? (
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 xs:grid-cols-3 gap-3">
             <Skeleton className="h-16" />
             <Skeleton className="h-16" />
             <Skeleton className="h-16" />
@@ -110,7 +110,7 @@ export function EmbedAnalyticsCard({ facilityId }: EmbedAnalyticsCardProps) {
         ) : (
           <>
             {/* Headline metrics */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 xs:grid-cols-3 gap-3">
               <Metric label="Last 7 days"  value={data.last_7_days} />
               <Metric label="Last 30 days" value={data.last_30_days} highlight />
               <Metric label="All-time"     value={data.total} />

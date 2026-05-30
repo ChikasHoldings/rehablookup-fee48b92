@@ -19,7 +19,12 @@ const SelectTrigger = React.forwardRef<
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
-      "flex h-8 w-full items-center justify-between rounded-md border border-input bg-background px-2.5 py-1 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
+      // Mobile sizing: h-10 (40px) hits a comfortable thumb target — the
+      // base h-8 (32px) is below the iOS HIG minimum (44px ideal, 40px
+      // borderline). md:h-8 restores the dense desktop look.
+      // text-base on mobile (>=16px) blocks iOS Safari's tap-to-focus
+      // auto-zoom; md:text-sm restores desktop density. See <Input>.
+      "flex h-10 md:h-8 w-full items-center justify-between rounded-md border border-input bg-background px-2.5 py-1 text-base md:text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
       className,
     )}
     {...props}

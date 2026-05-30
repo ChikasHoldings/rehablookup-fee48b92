@@ -249,7 +249,13 @@ export function SearchForm({
                 onKeyDown={handleKeyDown}
                 maxLength={200}
                 className={cn(
-                  "w-full bg-transparent text-[15px] font-medium text-foreground placeholder:text-muted-foreground/50 focus:outline-none",
+                  // text-base on mobile (>=16px) blocks iOS Safari's
+                  // tap-to-focus auto-zoom on this hero search input —
+                  // the page would zoom in on keyboard pop and never
+                  // snap back. md:text-[15px] preserves the original
+                  // typographic rhythm of the directory-style hero on
+                  // tablet/desktop where iOS zoom doesn't apply.
+                  "w-full bg-transparent text-base md:text-[15px] font-medium text-foreground placeholder:text-muted-foreground/50 focus:outline-none",
                   zipcodeData && !isZipcode && "text-green-700 dark:text-green-400"
                 )}
                 autoComplete="off"

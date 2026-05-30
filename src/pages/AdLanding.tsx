@@ -82,7 +82,7 @@ function LandingSuccessView({ firstName }: { firstName: string }) {
       <header className="py-6 px-4">
         <div className="max-w-3xl mx-auto">
           <Link to="/">
-            <img src={logoImage} alt="RehabLookup" className="h-10" />
+            <img src={logoImage} alt="RehabLookup" className="h-10 w-auto" width={219} height={40} />
           </Link>
         </div>
       </header>
@@ -270,7 +270,7 @@ export default function AdLanding() {
       {/* Minimal header with logo only */}
       <header className="py-6 px-4">
         <div className="max-w-2xl mx-auto">
-          <img src={logoImage} alt="RehabLookup" className="h-10" />
+          <img src={logoImage} alt="RehabLookup" className="h-10 w-auto" width={219} height={40} />
         </div>
       </header>
       

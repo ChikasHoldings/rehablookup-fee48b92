@@ -184,7 +184,11 @@ export const MultiSelectDropdown = forwardRef<HTMLDivElement, MultiSelectDropdow
                   value={filterQuery}
                   onChange={(e) => setFilterQuery(e.target.value)}
                   onKeyDown={handleFilterKeyDown}
-                  className="w-full h-9 pl-8 pr-3 rounded-lg border border-border/50 bg-muted/30 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/40 focus:bg-background transition-colors"
+                  // text-base on mobile (>=16px) blocks iOS Safari's
+                  // tap-to-focus auto-zoom; md:text-sm restores the
+                  // tighter desktop look. See <Input> primitive for
+                  // the project-wide pattern.
+                  className="w-full h-9 pl-8 pr-3 rounded-lg border border-border/50 bg-muted/30 text-base md:text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/40 focus:bg-background transition-colors"
                 />
               </div>
             </div>

@@ -89,7 +89,7 @@ export function ListingsLandingPage({ onEditListing, onAddListing }: ListingsLan
               new provider. Three tiles, each a small status pill so the
               hero stays visually quiet. */}
           {total > 0 && (
-            <div className="mt-6 grid grid-cols-3 gap-3 sm:max-w-2xl sm:gap-4">
+            <div className="mt-6 grid grid-cols-1 xs:grid-cols-3 gap-3 sm:max-w-2xl sm:gap-4">
               <StatTile
                 label="Live"
                 value={live}

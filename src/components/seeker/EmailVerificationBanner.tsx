@@ -164,7 +164,7 @@ export function EmailVerificationBanner({ email, onVerified }: EmailVerification
             <Button
               size="icon"
               variant="ghost"
-              className="h-7 w-7 sm:h-8 sm:w-8 text-yellow-800 dark:text-yellow-200 hover:bg-yellow-500/10 shrink-0"
+              className="h-9 w-9 sm:h-8 sm:w-8 text-yellow-800 dark:text-yellow-200 hover:bg-yellow-500/10 shrink-0"
               onClick={() => setIsDismissed(true)}
               aria-label="Dismiss"
             >

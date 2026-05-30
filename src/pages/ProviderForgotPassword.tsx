@@ -125,7 +125,7 @@ export default function ProviderForgotPassword() {
         <title>Forgot Password | RehabLookup</title>
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
-      <div className="flex min-h-screen flex-col bg-background">
+      <div className="flex min-h-screen flex-col bg-muted/30">
         <Header
           navLinks={providerNavLinks}
           ctaLink="/provider-signup"
@@ -133,31 +133,38 @@ export default function ProviderForgotPassword() {
           variant="provider"
         />
 
-        <main className="flex flex-1 items-center justify-center px-4 py-12">
-          <div className="w-full max-w-md animate-step-enter">
-            <div className="text-center mb-6">
-              {stage === "success" ? (
-                <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <CheckCircle className="h-7 w-7 text-primary" />
+        <main className="flex flex-1 items-center justify-center px-4 py-8 sm:px-6 sm:py-12">
+          <div className="w-full max-w-md animate-step-enter space-y-5">
+            <section className="rounded-2xl border border-border bg-card shadow-sm shadow-foreground/[0.03] p-6 sm:p-8">
+              {/* Card header — icon + title + subtitle */}
+              <div className="text-center mb-6">
+                <div
+                  className={`mx-auto w-14 h-14 rounded-full flex items-center justify-center ring-1 ${
+                    stage === "success"
+                      ? "bg-emerald-100 dark:bg-emerald-900/30 ring-emerald-200 dark:ring-emerald-800/60"
+                      : "bg-primary/10 ring-primary/15"
+                  }`}
+                >
+                  {stage === "email" && <Mail className="h-7 w-7 text-primary" />}
+                  {stage === "code" && <KeyRound className="h-7 w-7 text-primary" />}
+                  {stage === "success" && <CheckCircle className="h-7 w-7 text-emerald-600" />}
                 </div>
-              ) : null}
-              <h1 className="font-display text-2xl font-bold text-foreground">
-                {stage === "email"
-                  ? "Forgot Password?"
-                  : stage === "code"
-                    ? "Enter Your Code"
-                    : "Password Updated"}
-              </h1>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {stage === "email"
-                  ? "Enter your email and we'll send a 6-digit reset code."
-                  : stage === "code"
-                    ? `Sent a 6-digit code to ${email}. It expires in 15 minutes.`
-                    : "You can now sign in with your new password."}
-              </p>
-            </div>
+                <h1 className="mt-4 font-display text-xl sm:text-2xl font-bold text-foreground">
+                  {stage === "email"
+                    ? "Forgot password?"
+                    : stage === "code"
+                      ? "Enter your code"
+                      : "Password updated"}
+                </h1>
+                <p className="mt-1.5 text-sm text-muted-foreground">
+                  {stage === "email"
+                    ? "Enter your email and we'll send a 6-digit reset code."
+                    : stage === "code"
+                      ? `We sent a 6-digit code to ${email}. It expires in 15 minutes.`
+                      : "You can now sign in with your new password."}
+                </p>
+              </div>
 
-            <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
               {stage === "email" && (
                 <form onSubmit={handleSendCode} className="space-y-4">
                   <div className="space-y-1.5">
@@ -179,7 +186,7 @@ export default function ProviderForgotPassword() {
                     </div>
                   </div>
 
-                  <Button type="submit" className="w-full h-10 text-sm font-semibold" disabled={isLoading}>
+                  <Button type="submit" className="w-full h-11 text-sm font-semibold" disabled={isLoading}>
                     {isLoading ? "Sending..." : "Send 6-digit code"}
                     {!isLoading && <ArrowRight className="ml-2 h-4 w-4" />}
                   </Button>
@@ -232,7 +239,7 @@ export default function ProviderForgotPassword() {
                     {newPassword.length > 0 && <PasswordStrengthIndicator password={newPassword} />}
                   </div>
 
-                  <Button type="submit" className="w-full h-10 text-sm font-semibold" disabled={isLoading}>
+                  <Button type="submit" className="w-full h-11 text-sm font-semibold" disabled={isLoading}>
                     {isLoading ? "Updating..." : "Reset password"}
                   </Button>
 
@@ -253,22 +260,20 @@ export default function ProviderForgotPassword() {
               )}
 
               {stage === "success" && (
-                <div className="space-y-3">
-                  <Button className="w-full h-10 text-sm font-semibold" onClick={() => navigate("/login")}>
-                    Sign in
-                  </Button>
-                </div>
+                <Button className="w-full h-11 text-sm font-semibold" onClick={() => navigate("/login")}>
+                  Sign in
+                </Button>
               )}
-            </div>
+            </section>
 
-            <div className="mt-6 text-center">
-              <p className="text-sm text-muted-foreground">
+            {stage !== "success" && (
+              <p className="text-center text-sm text-muted-foreground">
                 Need help?{" "}
-                <Link to="/provider-support" className="text-primary hover:underline">
+                <Link to="/provider-support" className="text-primary font-medium hover:underline">
                   Contact support
                 </Link>
               </p>
-            </div>
+            )}
           </div>
         </main>
 

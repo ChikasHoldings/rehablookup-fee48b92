@@ -111,7 +111,7 @@ export default function MarketingLanding() {
         <header className="bg-white/95 backdrop-blur-md border-b border-border/30 sticky top-0 z-50 shadow-sm">
           <div className="container mx-auto px-4 md:px-6 lg:px-8 h-14 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <img src={headerLogo} alt="RehabLookup" className="h-7 sm:h-8 w-auto" />
+              <img src={headerLogo} alt="RehabLookup" className="h-7 sm:h-8 w-auto" width={197} height={36} />
             </div>
             <a
               href="tel:1-800-662-4357"
