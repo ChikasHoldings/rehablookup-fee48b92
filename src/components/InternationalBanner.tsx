@@ -80,14 +80,14 @@ export function InternationalBanner() {
             asChild
             size="sm"
             variant="secondary"
-            className="h-7 text-xs font-semibold whitespace-nowrap"
+            className="h-9 md:h-7 text-xs font-semibold whitespace-nowrap"
           >
             <Link to="/concierge">Talk to a Coordinator</Link>
           </Button>
 
           <button
             onClick={handleDismiss}
-            className="p-1 rounded hover:bg-primary-foreground/10 transition-colors"
+            className="flex h-9 w-9 md:h-7 md:w-7 items-center justify-center rounded hover:bg-primary-foreground/10 transition-colors"
             aria-label="Dismiss banner"
           >
             <X className="h-4 w-4" />
