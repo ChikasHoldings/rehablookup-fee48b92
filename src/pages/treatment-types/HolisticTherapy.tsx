@@ -287,33 +287,45 @@ const HolisticTherapy = () => {
             </h2>
           </div>
           <div className="mx-auto max-w-4xl">
+            {/* On mobile each step lays out as a single horizontal row —
+                64px number circle on the left, title + body stacked on the
+                right — so the eye can scan the three steps straight down
+                the column. At md+ the parent grid splits into 3 columns
+                and each step reverts to its original centered vertical
+                stack (circle → title → body). */}
             <div className="grid gap-6 md:grid-cols-3">
-              <div className="text-center">
-                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary text-2xl font-bold text-primary-foreground">
+              <div className="flex items-center gap-4 text-left md:block md:text-center">
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-primary text-2xl font-bold text-primary-foreground md:mx-auto md:mb-4">
                   1
                 </div>
-                <h3 className="mb-2 font-display text-lg font-semibold text-foreground">Assessment</h3>
-                <p className="text-sm text-muted-foreground">
-                  Your treatment team evaluates your physical, mental, emotional, and spiritual needs to create a personalized plan.
-                </p>
+                <div className="min-w-0">
+                  <h3 className="mb-2 font-display text-lg font-semibold text-foreground">Assessment</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Your treatment team evaluates your physical, mental, emotional, and spiritual needs to create a personalized plan.
+                  </p>
+                </div>
               </div>
-              <div className="text-center">
-                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary text-2xl font-bold text-primary-foreground">
+              <div className="flex items-center gap-4 text-left md:block md:text-center">
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-primary text-2xl font-bold text-primary-foreground md:mx-auto md:mb-4">
                   2
                 </div>
-                <h3 className="mb-2 font-display text-lg font-semibold text-foreground">Integration</h3>
-                <p className="text-sm text-muted-foreground">
-                  Holistic therapies are woven into your treatment schedule alongside clinical therapies and medical care.
-                </p>
+                <div className="min-w-0">
+                  <h3 className="mb-2 font-display text-lg font-semibold text-foreground">Integration</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Holistic therapies are woven into your treatment schedule alongside clinical therapies and medical care.
+                  </p>
+                </div>
               </div>
-              <div className="text-center">
-                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary text-2xl font-bold text-primary-foreground">
+              <div className="flex items-center gap-4 text-left md:block md:text-center">
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-primary text-2xl font-bold text-primary-foreground md:mx-auto md:mb-4">
                   3
                 </div>
-                <h3 className="mb-2 font-display text-lg font-semibold text-foreground">Continuation</h3>
-                <p className="text-sm text-muted-foreground">
-                  Learn practices you can continue after treatment to maintain balance and support long-term recovery.
-                </p>
+                <div className="min-w-0">
+                  <h3 className="mb-2 font-display text-lg font-semibold text-foreground">Continuation</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Learn practices you can continue after treatment to maintain balance and support long-term recovery.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
