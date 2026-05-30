@@ -78,14 +78,14 @@ export function AddonAdoptionCard() {
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 xs:grid-cols-3 gap-3">
             <Skeleton className="h-20" />
             <Skeleton className="h-20" />
             <Skeleton className="h-20" />
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 xs:grid-cols-3 gap-3">
               <TierTile
                 label="Pro"
                 price="$99/mo"
