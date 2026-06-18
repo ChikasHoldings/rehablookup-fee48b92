@@ -360,9 +360,15 @@ Deno.serve(async (req) => {
       } catch (_logErr) {
         // sms_outbound_log may not exist yet — non-fatal.
       }
+      // M5: surface a real send FAILURE as 5xx (not 200) so callers' retry
+      // loops actually re-attempt on a Twilio outage and monitoring can see it.
+      // Skip/no-op cases above (disabled, opted out, unverified, capped, not
+      // configured) intentionally stay 200 — they aren't failures. All current
+      // callers treat SMS as best-effort (try/catch or .ok retry), so a 5xx
+      // here never breaks their main flow.
       return new Response(
         JSON.stringify({ success: false, sent: false, reason: "Failed to send SMS", requestId }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
