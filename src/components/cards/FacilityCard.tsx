@@ -14,7 +14,7 @@
  */
 
 import { Link } from "react-router-dom";
-import { CheckCircle2, Phone, Heart, GitCompare, Star, ShieldCheck } from "lucide-react";
+import { CheckCircle2, Phone, Star, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // Subset of fields the card actually reads. Both PublicFacilitySnapshot
@@ -204,22 +204,6 @@ export function FacilityCard({
                 {facility.name}
               </Link>
             </h3>
-            <div className="flex shrink-0 items-center gap-1 text-slate-400">
-              <button
-                type="button"
-                aria-label="Save facility"
-                className="rounded p-1 hover:bg-slate-100"
-              >
-                <Heart className="h-4 w-4 hover:text-rose-500" />
-              </button>
-              <button
-                type="button"
-                aria-label="Add to compare"
-                className="rounded p-1 hover:bg-slate-100"
-              >
-                <GitCompare className="h-4 w-4 hover:text-emerald-600" />
-              </button>
-            </div>
           </div>
           <p className="mt-0.5 text-sm text-slate-600">
             {facility.city}, {facility.state}
