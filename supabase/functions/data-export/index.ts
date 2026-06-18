@@ -13,8 +13,13 @@ Deno.serve(async (req: Request) => {
   // Security: require export secret. Fail closed if the env var is unset —
   // never fall back to a hardcoded secret (this endpoint can dump any table,
   // PII, and auth users via the service-role key).
+  //
+  // Prefer a dedicated DATA_EXPORT_SECRET; fall back to the reused
+  // SMOKE_CRON_SECRET only until one is provisioned (M3). Once
+  // DATA_EXPORT_SECRET is set the cron secret stops working here, completing
+  // the dedicated-secret fix with no further code change.
   const exportSecret = req.headers.get('x-export-secret');
-  const EXPORT_SECRET = Deno.env.get('SMOKE_CRON_SECRET');
+  const EXPORT_SECRET = Deno.env.get('DATA_EXPORT_SECRET') ?? Deno.env.get('SMOKE_CRON_SECRET');
 
   if (!EXPORT_SECRET || exportSecret !== EXPORT_SECRET) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -117,7 +122,10 @@ Deno.serve(async (req: Request) => {
     });
 
   } catch (err) {
-    return new Response(JSON.stringify({ error: String(err) }), {
+    // Log the detail server-side (visible in function logs); never return it in
+    // the response body (M3 — was leaking String(err) with internal detail).
+    console.error('[data-export] unhandled error', err);
+    return new Response(JSON.stringify({ error: 'Internal error' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
