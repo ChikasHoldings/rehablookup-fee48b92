@@ -27,6 +27,40 @@ The risk is **latent, not live** — concentrated in three areas:
 
 ---
 
+## Resolution status — 2026-06-18 (branch `claude/exciting-gates-eh74zw`)
+
+> Added after the fix pass. Everything below this section is the original
+> point-in-time audit, unchanged.
+
+**All Critical + all High + 10 of 13 Medium findings are fixed, validated, and
+pushed.** DB migrations are applied live; **edge-function and frontend fixes are
+inert until deployed** (merge → deploy workflows + Vercel).
+
+| ID | Status | Notes |
+|---|---|---|
+| C1, C2 | ✅ Fixed | Cancellation now cancels the Stripe subscription; monthly cancel honors its contract. **Live only after edge deploy.** |
+| C3 | ✅ Fixed | `seed-blog-articles` requires admin. |
+| H1 | ✅ Fixed (DB live) | `anon` EXECUTE revoked on state-mutating SECURITY DEFINER RPCs. |
+| H2, H3, M13 | ✅ Fixed | Unauthenticated send/account endpoints rate-limited. |
+| H4, H5 | ✅ Fixed | Duplicate annual-subscription + duplicate add-on guards. |
+| H6, M7 | ✅ Fixed (DB live) | `past_due` grace keeps Pro benefits; status persisted. |
+| H7 | ✅ Fixed | Three admin-UI crash / silent-data-loss bugs. |
+| M1 | ✅ Fixed (DB live) | Per-IP, fail-open throttle on the account-existence oracle + RLS on the rate table. Verified end-to-end against prod. |
+| M4 | ✅ Fixed | Unsubscribe tokens HMAC-signed; legacy tokens accepted until **2026-07-31** (CAN-SPAM), then remove the legacy branch. |
+| M5 | ✅ Fixed | `send-sms-notification` returns 5xx on real send failure. |
+| M6 | ✅ Fixed (DB live) | Concierge gate: period guard + `past_due` grace. |
+| M8, M9 | ✅ Fixed | Entitlement + admin-permission hydration fail closed. |
+| M10 | ✅ Fixed | Dead FacilityCard buttons removed; AdminAnalytics `VALID_TABS` corrected. |
+| M3 | 🟡 Partial | 500 error-body leak fixed; secret now prefers `DATA_EXPORT_SECRET` (falls back to `SMOKE_CRON_SECRET` until provisioned). **Remaining:** bind the gate to an admin JWT identity — needs caller-context (browser vs script) confirmation first. |
+| M2 | ⏸️ Deferred | Ledger drift is systemic + operational — needs a deliberate reconcile, not a blind fix. Note: MCP `apply_migration` records under apply-time versions (`20260618*`), so this session's `20260829*` files look "unapplied" to `supabase db push` — but all five are idempotent (`create or replace` / `if not exists` / `revoke` / `enable rls`), so re-running them is harmless. |
+| 🟢 Low cluster | ⏸️ Deferred | Not addressed in this pass. |
+
+**Before launch:** deploy, then dry-run cancel / switch-to-annual / add-on
+purchase in Stripe **test mode**. Optionally provision `DATA_EXPORT_SECRET`
+(completes the M3 dedicated secret) and `UNSUBSCRIBE_TOKEN_SECRET` (hardens M4).
+
+---
+
 ## 2. What was verified live (so the findings can be trusted)
 
 - **Supabase project**: `ACTIVE_HEALTHY`, Postgres 17.6, region us-west-2.
