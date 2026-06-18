@@ -290,7 +290,11 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
   const { data: editorSubscription } = useFacilitySubscription(currentFacilityId);
   const isConciergePartner =
     editorSubscription?.has_concierge_partner === true &&
-    editorSubscription?.status === "active";
+    // Mirror the is_active_concierge_partner DB gate exactly: grace window
+    // (active OR past_due) + the add-on's own period must not have lapsed.
+    (editorSubscription?.status === "active" || editorSubscription?.status === "past_due") &&
+    (!editorSubscription?.concierge_current_period_end ||
+      new Date(editorSubscription.concierge_current_period_end) > new Date());
   
   // Gallery cap reflects the active plan — Free 5, Pro 10 (matches the
   // enforce_facility_plan_photo_cap server-side trigger). proStatus.isPro
