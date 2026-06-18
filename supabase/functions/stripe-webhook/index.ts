@@ -2601,6 +2601,25 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
       } else {
       logStep("Payment failed", { invoiceId: invoice.id, amountDue: invoice.amount_due });
 
+      // M7: reflect past_due in our DB right here. The status flip otherwise
+      // lives ONLY in customer.subscription.updated; if that event is missed,
+      // delayed, or out-of-order, the row would wrongly stay 'active' after a
+      // failed charge. Idempotent; the .neq guard avoids resurrecting an
+      // already-canceled sub. (has_active_pro keeps Pro during this grace
+      // window — teardown still happens on subscription.deleted.)
+      const failedSubId =
+        typeof (invoice as { subscription?: unknown }).subscription === "string"
+          ? (invoice as { subscription: string }).subscription
+          : ((invoice as { subscription?: { id?: string } }).subscription?.id ?? null);
+      if (failedSubId) {
+        const { error: pastDueErr } = await supabaseAdmin
+          .from("facility_subscriptions")
+          .update({ status: "past_due", updated_at: new Date().toISOString() })
+          .eq("stripe_subscription_id", failedSubId)
+          .neq("status", "canceled");
+        if (pastDueErr) logStep("WARN failed to set past_due on payment_failed", { error: pastDueErr.message });
+      }
+
       const customerId = invoice.customer as string;
       const customer = await stripe.customers.retrieve(customerId);
       

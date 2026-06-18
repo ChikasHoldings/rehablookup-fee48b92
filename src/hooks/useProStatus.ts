@@ -53,11 +53,15 @@ export function useProStatus(facilityId?: string) {
 
         if (!data) return DEFAULT_PRO_STATUS;
 
-        // Validate subscription is truly active
+        // Validate subscription is truly active. Mirrors the DB has_active_pro:
+        // `active` within its period, OR `past_due` (Stripe grace window — keep
+        // benefits while it auto-retries; teardown happens on cancellation).
         const now = new Date();
         const periodEnd = data.current_period_end ? new Date(data.current_period_end) : null;
         const isWithinPeriod = !periodEnd || periodEnd > now;
-        const isActive = data.status === 'active' && isWithinPeriod;
+        const isActive =
+          (data.status === 'active' && isWithinPeriod) ||
+          data.status === 'past_due';
 
         return {
           isPro: isActive,
