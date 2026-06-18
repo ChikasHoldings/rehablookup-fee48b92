@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 import { Resend } from "https://esm.sh/resend@2.0.0?target=denonext";
 import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
+import { checkRateLimit, logRateLimitAttempt, getRequestIdentifier, rateLimitResponse } from "../_shared/rate-limit.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -37,6 +38,15 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
+    // Rate limit this unauthenticated endpoint (sends a facility notification
+    // email per call) by source IP to prevent spam / Resend cost.
+    const rlId = getRequestIdentifier(req);
+    const rl = await checkRateLimit(supabase, {
+      identifier: rlId, actionType: "request_facility_from_marketing", maxAttempts: 10, windowMinutes: 60,
+    });
+    if (!rl.allowed) return rateLimitResponse(corsHeaders);
+    await logRateLimitAttempt(supabase, rlId, "request_facility_from_marketing", true);
+
     const body: RequestFacilityPayload = await req.json();
     
     if (!body.marketingLeadId || !body.facilityId) {
@@ -49,7 +59,11 @@ Deno.serve(async (req) => {
     // Fetch the marketing lead data
     const { data: marketingLead, error: fetchError } = await supabase
       .from("marketing_leads")
-      .select("*")
+      .select(
+        "id, first_name, last_name, email, phone, urgency, level_of_care, " +
+        "facilities_requested, dual_diagnosis, insurance_type, " +
+        "location_city_state, location_zip, message, primary_substance",
+      )
       .eq("id", body.marketingLeadId)
       .single();
 

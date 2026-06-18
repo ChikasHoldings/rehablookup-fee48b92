@@ -2,6 +2,7 @@ import { Resend } from "https://esm.sh/resend@2.0.0?target=denonext";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1?target=denonext";
 import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
 import { describeEmailInput } from "../_shared/email-input-diagnostics.ts";
+import { checkRateLimit, logRateLimitAttempt, getRequestIdentifier, rateLimitResponse } from "../_shared/rate-limit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -116,6 +117,22 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
+
+    // Rate limit: this is an unauthenticated endpoint that emails a
+    // caller-supplied address. Cap per source IP AND per target email so it
+    // can't be abused to bomb a victim or burn Resend quota (idempotency key
+    // embeds Date.now(), so repeats never dedup on their own).
+    const rlIp = getRequestIdentifier(req);
+    const ipRl = await checkRateLimit(supabaseAdmin, {
+      identifier: rlIp, actionType: "send_provider_support", maxAttempts: 5, windowMinutes: 60,
+    });
+    if (!ipRl.allowed) return rateLimitResponse(corsHeaders);
+    const emailRl = await checkRateLimit(supabaseAdmin, {
+      identifier: `email:${email}`, actionType: "send_provider_support", maxAttempts: 5, windowMinutes: 60,
+    });
+    if (!emailRl.allowed) return rateLimitResponse(corsHeaders);
+    await logRateLimitAttempt(supabaseAdmin, rlIp, "send_provider_support", true);
+    await logRateLimitAttempt(supabaseAdmin, `email:${email}`, "send_provider_support", true);
 
     const { data: ticketData, error: ticketError } = await supabaseAdmin.from('support_tickets').insert({
       source: 'provider_support',
