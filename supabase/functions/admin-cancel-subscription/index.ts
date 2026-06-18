@@ -317,6 +317,10 @@ interface FacilitySubscription {
   provider_id: string | null;
   stripe_subscription_id: string | null;
   stripe_customer_id: string | null;
+  /** Add-ons are billed as their own Stripe subscriptions, so cancelling
+   *  the Pro sub alone does NOT stop them — they must be stopped explicitly. */
+  featured_stripe_subscription_id: string | null;
+  concierge_stripe_subscription_id: string | null;
   status: string;
   tier: string;
   has_featured: boolean;
@@ -344,6 +348,65 @@ function stripeFromEnv(): Stripe {
   return new Stripe(Deno.env.get("STRIPE_SECRET_KEY") ?? "", {
     apiVersion: "2025-04-30.basil" as Stripe.LatestApiVersion,
   });
+}
+
+/**
+ * Stop a Stripe subscription so it STOPS BILLING. This is the core of a
+ * cancellation — refunds and DB flag updates are meaningless if Stripe keeps
+ * charging the card at the next renewal.
+ *
+ *   mode 'now'           → cancel immediately (annual self-cancel, admin
+ *                          cancel, and webhook teardown at period end).
+ *   mode 'at_period_end' → schedule cancellation for the period boundary so a
+ *                          monthly subscriber keeps the access they already
+ *                          paid for; Stripe fires subscription.deleted at the
+ *                          boundary, which the webhook turns into a full teardown.
+ *
+ * Idempotent: an already-canceled / no-longer-existing subscription (e.g. when
+ * this runs from the subscription.deleted webhook, where Stripe has already
+ * removed it) is treated as success. Never throws — returns ok=false and alerts
+ * an admin on a genuine Stripe error so the caller can decide whether to
+ * surface it rather than silently leaving the customer billed.
+ */
+async function stopStripeSubscription(
+  stripe: Stripe,
+  supabase: SupabaseClient,
+  subId: string | null,
+  mode: "now" | "at_period_end",
+): Promise<{ ok: boolean; alreadyGone: boolean }> {
+  if (!subId) return { ok: true, alreadyGone: true };
+  try {
+    if (mode === "now") {
+      await stripe.subscriptions.cancel(subId);
+    } else {
+      await stripe.subscriptions.update(subId, { cancel_at_period_end: true });
+    }
+    return { ok: true, alreadyGone: false };
+  } catch (err) {
+    const code = (err as { code?: string })?.code;
+    const msg = err instanceof Error ? err.message : String(err);
+    // Already canceled / no longer exists → nothing left to stop; treat as done.
+    if (
+      code === "resource_missing" ||
+      /no such subscription|already canceled|already cancelled/i.test(msg)
+    ) {
+      return { ok: true, alreadyGone: true };
+    }
+    console.error(
+      `[cancel-subscription] stopStripeSubscription(${mode}) failed for ${subId}`,
+      err,
+    );
+    await notifyAdmin(supabase, {
+      type: "subscription_stripe_cancel_failed",
+      title: `Stripe ${mode === "now" ? "cancellation" : "cancel-at-period-end"} failed`,
+      message:
+        `Could not ${mode === "now" ? "cancel" : "schedule cancellation for"} Stripe ` +
+        `subscription ${subId}. The customer may continue to be billed — manual ` +
+        `cancellation in the Stripe dashboard is required.`,
+      metadata: { stripe_subscription_id: subId, mode, error: msg },
+    });
+    return { ok: false, alreadyGone: false };
+  }
 }
 
 /**
@@ -560,13 +623,13 @@ async function deactivateFeaturedPlacements(supabase: SupabaseClient, subscripti
   if (error) console.error("[cancel-subscription] deactivateFeaturedPlacements failed", error);
 }
 
-async function deactivateConciergePartner(supabase: SupabaseClient, subscriptionId: string): Promise<void> {
+async function deactivateConciergeGeosForSub(supabase: SupabaseClient, subscriptionId: string): Promise<void> {
   const { error } = await supabase
     .from("concierge_partner_facilities")
     .update({ active: false, deactivated_at: new Date().toISOString() })
     .eq("subscription_id", subscriptionId)
     .eq("active", true);
-  if (error) console.error("[cancel-subscription] deactivateConciergePartner failed", error);
+  if (error) console.error("[cancel-subscription] deactivateConciergeGeosForSub failed", error);
 }
 
 /**
@@ -589,6 +652,12 @@ export async function cancelSubscriptionAndRefund(
     scope: CancelScope;
     reason?: string;
     triggeredBy?: string | null;
+    /** When true AND the subscriber is monthly, schedule cancellation at the
+     *  period boundary (keep access already paid for, no refund) instead of
+     *  cancelling immediately. Set by the provider self-cancel flow, whose UI
+     *  promises "you keep access until period end". Annual subscribers and the
+     *  webhook teardown ignore this and always cancel immediately. */
+    deferMonthlyToPeriodEnd?: boolean;
   },
 ): Promise<CancelResult> {
   const supabase = clientFromEnv();
@@ -597,7 +666,7 @@ export async function cancelSubscriptionAndRefund(
   const { data: subRow, error: subError } = await supabase
     .from("facility_subscriptions")
     .select(
-      "id, facility_id, provider_id, stripe_subscription_id, stripe_customer_id, status, tier, has_featured, has_concierge_partner, paid_amount_cents, price_cents, billing_period, period_start, current_period_end, canceled_at",
+      "id, facility_id, provider_id, stripe_subscription_id, stripe_customer_id, featured_stripe_subscription_id, concierge_stripe_subscription_id, status, tier, has_featured, has_concierge_partner, paid_amount_cents, price_cents, billing_period, period_start, current_period_end, canceled_at",
     )
     .eq("id", subscriptionId)
     .single();
@@ -632,6 +701,45 @@ export async function cancelSubscriptionAndRefund(
     : TIER_PRICING.concierge.discountedAnnualCents;
 
   if (options.scope === "all") {
+    // Monthly self-cancel: keep the access already paid for this period and
+    // stop Stripe from renewing. No refund (monthly is non-refundable by
+    // policy), no immediate deactivation. The full teardown (status=canceled,
+    // benefit revoke, facility suspend) runs when Stripe fires
+    // customer.subscription.deleted at the period boundary — the webhook routes
+    // that through the immediate path below. This is what makes the provider
+    // UI promise ("you keep access until period end") true.
+    if (isMonthly && options.deferMonthlyToPeriodEnd === true) {
+      const stopped = await stopStripeSubscription(
+        stripe, supabase, subscription.stripe_subscription_id, "at_period_end",
+      );
+      if (!stopped.ok) {
+        // Surface the failure so the caller can tell the user to retry, rather
+        // than confirming a cancellation Stripe never recorded (which would
+        // keep billing them). Nothing has been mutated yet at this point.
+        throw new Error(
+          "Could not schedule cancellation with Stripe; no changes applied. Please try again.",
+        );
+      }
+      if (subscription.has_featured) {
+        await stopStripeSubscription(
+          stripe, supabase, subscription.featured_stripe_subscription_id, "at_period_end",
+        );
+      }
+      if (subscription.has_concierge_partner) {
+        await stopStripeSubscription(
+          stripe, supabase, subscription.concierge_stripe_subscription_id, "at_period_end",
+        );
+      }
+      await supabase
+        .from("facility_subscriptions")
+        .update({ cancel_at_period_end: true, updated_at: new Date().toISOString() })
+        .eq("id", subscription.id);
+      // Access, placements, and flags all stay intact until period end; the
+      // webhook tears everything down on subscription.deleted. Refunds = 0.
+      result.totalRefundCents = 0;
+      return result;
+    }
+
     // 1) Pro
     const pro = await refundOnePiece({
       supabase, stripe, subscription,
@@ -675,9 +783,21 @@ export async function cancelSubscriptionAndRefund(
       if (c.rowId) rowIds.push(c.rowId);
     }
 
+    // 3.5) Stop every Stripe subscription so billing actually halts. Add-ons
+    // are separate Stripe subs, so cancelling Pro alone leaves them charging.
+    // Idempotent — an already-deleted sub (e.g. when this runs from the
+    // subscription.deleted webhook) is treated as success and no-ops.
+    await stopStripeSubscription(stripe, supabase, subscription.stripe_subscription_id, "now");
+    if (subscription.featured_stripe_subscription_id) {
+      await stopStripeSubscription(stripe, supabase, subscription.featured_stripe_subscription_id, "now");
+    }
+    if (subscription.concierge_stripe_subscription_id) {
+      await stopStripeSubscription(stripe, supabase, subscription.concierge_stripe_subscription_id, "now");
+    }
+
     // 4) Deactivate dependent rows
     await deactivateFeaturedPlacements(supabase, subscription.id);
-    await deactivateConciergePartner(supabase, subscription.id);
+    await deactivateConciergeGeosForSub(supabase, subscription.id);
 
     // 5) Mark subscription cancelled
     await supabase
@@ -685,6 +805,7 @@ export async function cancelSubscriptionAndRefund(
       .update({
         status: "canceled",
         canceled_at: new Date().toISOString(),
+        cancel_at_period_end: false,
         has_featured: false,
         has_concierge_partner: false,
         updated_at: new Date().toISOString(),
@@ -734,6 +855,8 @@ export async function cancelSubscriptionAndRefund(
     if (f.stripeRefundId) refundIds.push(f.stripeRefundId);
     if (f.rowId) rowIds.push(f.rowId);
 
+    // Stop the Featured add-on's own Stripe subscription so it stops billing.
+    await stopStripeSubscription(stripe, supabase, subscription.featured_stripe_subscription_id, "now");
     await deactivateFeaturedPlacements(supabase, subscription.id);
     await supabase
       .from("facility_subscriptions")
@@ -774,7 +897,9 @@ export async function cancelSubscriptionAndRefund(
     if (c.stripeRefundId) refundIds.push(c.stripeRefundId);
     if (c.rowId) rowIds.push(c.rowId);
 
-    await deactivateConciergePartner(supabase, subscription.id);
+    // Stop the Concierge add-on's own Stripe subscription so it stops billing.
+    await stopStripeSubscription(stripe, supabase, subscription.concierge_stripe_subscription_id, "now");
+    await deactivateConciergeGeosForSub(supabase, subscription.id);
     // Concierge INCLUDES Featured exposure — its activation seeds
     // featured_placements (homepage/national, international/global, state,
     // city). Deactivate them too so they stop rotating and stop counting
