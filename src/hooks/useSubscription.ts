@@ -25,37 +25,12 @@ const DEFAULT_SUBSCRIPTION: SubscriptionData = {
   cancel_at_period_end: false,
 };
 
-const SUBSCRIPTION_CACHE_KEY = "subscription_cache";
-const SUBSCRIPTION_CACHE_TTL = 1000 * 60 * 5; // 5 minutes
-
-// Get cached subscription from localStorage for instant loading
-function getCachedSubscription(): SubscriptionData | null {
-  try {
-    const cached = localStorage.getItem(SUBSCRIPTION_CACHE_KEY);
-    if (cached) {
-      const { data, timestamp } = JSON.parse(cached);
-      // Return cached data if not expired
-      if (Date.now() - timestamp < SUBSCRIPTION_CACHE_TTL) {
-        return data as SubscriptionData;
-      }
-    }
-  } catch {
-    // Ignore parse errors
-  }
-  return null;
-}
-
-// Save subscription to localStorage cache
-function cacheSubscription(data: SubscriptionData) {
-  try {
-    localStorage.setItem(SUBSCRIPTION_CACHE_KEY, JSON.stringify({
-      data,
-      timestamp: Date.now(),
-    }));
-  } catch {
-    // Ignore storage errors
-  }
-}
+// M8: NO localStorage persistence of subscription/entitlement state. A cached
+// isPro=true would survive a downgrade/cancel/expiry and keep asserting Pro in
+// the UI from client storage (and is trivially user-forgeable). Entitlement is
+// always resolved fresh from check-subscription; any error fails CLOSED to
+// Free. Server-side gates (has_active_pro / RLS) remain the source of truth, so
+// this only affects what the UI shows, never what the backend grants.
 
 export function useSubscription() {
   return useQuery({
@@ -76,23 +51,17 @@ export function useSubscription() {
         
         if (error) {
           console.error("[useSubscription] Error checking subscription:", error);
-          // Return cached data on error
-          return getCachedSubscription() || DEFAULT_SUBSCRIPTION;
+          // Fail closed to Free — never assert a stale Pro from client cache.
+          return DEFAULT_SUBSCRIPTION;
         }
-        
-        
-        const subscriptionData = data as SubscriptionData;
-        // Cache the result for instant future loads
-        cacheSubscription(subscriptionData);
-        return subscriptionData;
+
+        return data as SubscriptionData;
       } catch (err) {
         console.error("[useSubscription] Network error checking subscription:", err);
-        // Return cached data on network error
-        return getCachedSubscription() || DEFAULT_SUBSCRIPTION;
+        // Fail closed to Free.
+        return DEFAULT_SUBSCRIPTION;
       }
     },
-    // Use cached data for instant initial render
-    placeholderData: getCachedSubscription() || undefined,
     staleTime: 1000 * 60 * 5, // 5 minutes
     gcTime: 1000 * 60 * 60, // 1 hour cache
     refetchOnWindowFocus: true,
