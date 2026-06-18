@@ -5,14 +5,15 @@
 // profiles.unsubscribed_provider_emails_at = now() — the cron drain
 // then skips every future scheduled send for this user.
 //
-// Token format: base64(user_uuid). Lightweight on purpose — the
-// worst-case threat (someone unsubscribing a user without consent)
-// matches the user's expressed intent anyway. We don't surface a
-// confirmation flow; the click IS the consent.
+// Token format: HMAC-signed `<user_uuid>.<hex sig>` (see _shared/
+// unsubscribe-token.ts). Legacy bare-base64(user_uuid) tokens are still
+// accepted during a transition window so links in already-sent emails keep
+// working (M4). We don't surface a confirmation flow; the click IS the consent.
 //
 // verify_jwt: false — clicked from an email client, no session.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
+import { verifyUnsubscribeToken } from "../_shared/unsubscribe-token.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -53,14 +54,7 @@ Deno.serve(async (req) => {
     return htmlPage("Unsubscribe link is missing", `<p style="margin:0;color:#374151;font-size:14px;">No token in the URL. If you clicked an email link and landed here, please try the link again.</p>`);
   }
 
-  let userId: string | null = null;
-  try {
-    userId = atob(token);
-    // basic uuid sanity — 36 chars, dashes
-    if (!/^[0-9a-f-]{32,36}$/i.test(userId)) userId = null;
-  } catch {
-    userId = null;
-  }
+  const userId = await verifyUnsubscribeToken(token);
   if (!userId) {
     return htmlPage("Invalid unsubscribe link", `<p style="margin:0;color:#374151;font-size:14px;">We couldn't read the token. Please use the most recent email's unsubscribe link.</p>`);
   }
