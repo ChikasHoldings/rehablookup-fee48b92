@@ -59,22 +59,30 @@ interface EscalationsListProps {
   filterPriority?: string;
   searchQuery?: string;
   viewMode?: "cards" | "compact";
-  selectedIds: Set<string>;
-  onToggleSelect: (id: string) => void;
-  onSelectAllVisible: (ids: string[]) => void;
+  /** Selection props are optional: callers that render the list read-only
+   *  (e.g. the Back-Office "Escalation Queue" summary card) can omit them.
+   *  Defaults below keep `.has()` and the toggle callbacks safe so the card
+   *  never crashes when it has rows to show. */
+  selectedIds?: Set<string>;
+  onToggleSelect?: (id: string) => void;
+  onSelectAllVisible?: (ids: string[]) => void;
   /** Caller may seed a specific row open from a notification deep-link. */
   initialOpenId?: string | null;
   onInitialOpenConsumed?: () => void;
 }
+
+/** Shared empty selection used when a caller renders the list read-only.
+ *  Stable reference (never mutated — selection happens via the callbacks). */
+const EMPTY_SELECTED_IDS: Set<string> = new Set();
 
 export function EscalationsList({
   filterStatus = "all",
   filterPriority,
   searchQuery,
   viewMode = "cards",
-  selectedIds,
-  onToggleSelect,
-  onSelectAllVisible,
+  selectedIds = EMPTY_SELECTED_IDS,
+  onToggleSelect = () => {},
+  onSelectAllVisible = () => {},
   initialOpenId = null,
   onInitialOpenConsumed,
 }: EscalationsListProps) {

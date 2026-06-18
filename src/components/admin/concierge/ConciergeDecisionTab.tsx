@@ -17,6 +17,10 @@ const RESPONSE_CONFIG: Record<string, { label: string; icon: React.ElementType; 
   interested: { label: "Interested", icon: ThumbsUp, color: "text-success" },
   accepted: { label: "Accepted", icon: CheckCircle, color: "text-success" },
   declined: { label: "Declined", icon: ThumbsDown, color: "text-destructive" },
+  // Values persisted by the Introductions tab — must be mapped here or the
+  // lookup below returns undefined and crashes on `.icon`.
+  not_available: { label: "Not Available", icon: XCircle, color: "text-destructive" },
+  no_response: { label: "No Response", icon: MessageSquare, color: "text-muted-foreground" },
   pending: { label: "Pending", icon: Clock, color: "text-muted-foreground" },
 };
 
@@ -119,7 +123,7 @@ export function ConciergeDecisionTab({ caseData }: ConciergeDecisionTabProps) {
             <div className="divide-y divide-border/50">
               {introductions.map((intro) => {
                 const facility = intro.facilities as { name?: string; city?: string; state?: string } | null;
-                const responseConfig = RESPONSE_CONFIG[intro.provider_response || "pending"];
+                const responseConfig = RESPONSE_CONFIG[intro.provider_response || "pending"] ?? RESPONSE_CONFIG.pending;
                 const ResponseIcon = responseConfig.icon;
                 return (
                   <div key={intro.id} className="py-3 first:pt-1">
