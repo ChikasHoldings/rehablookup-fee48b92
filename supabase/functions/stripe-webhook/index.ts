@@ -806,6 +806,11 @@ export interface ActivateConciergeResult {
   network_opted_in_set: boolean;
   partner_rows_inserted: number;
   partner_rows_reactivated: number;
+  // H5: set to the INCOMING Stripe sub id when activation was refused because a
+  // DIFFERENT Concierge sub is already tracked for this facility (a duplicate
+  // purchase within the checkout→webhook window). The caller cancels + refunds
+  // this id so the orphaned live sub stops double-charging. null = no duplicate.
+  duplicateSubscriptionId: string | null;
   failed: { step: string; error: string }[];
 }
 
@@ -822,6 +827,7 @@ export async function activateConciergePartner(
     network_opted_in_set: false,
     partner_rows_inserted: 0,
     partner_rows_reactivated: 0,
+    duplicateSubscriptionId: null,
     failed: [],
   };
 
@@ -843,6 +849,23 @@ export async function activateConciergePartner(
   }
 
   const facSubId = (facSubRow as { id: string }).id;
+
+  // H5 duplicate-purchase orphan guard: Concierge is already active on a
+  // DIFFERENT Stripe subscription. Overwriting concierge_stripe_subscription_id
+  // would strand that live sub (untracked, still billing the provider). Keep
+  // the existing sub, hand the incoming duplicate back to the caller to cancel
+  // + refund, and stop — the existing sub already owns the partner rows. A
+  // re-run for the SAME sub id (Stripe retry) falls through to the idempotent path.
+  const existingConciergeSubId =
+    (facSubRow as { concierge_stripe_subscription_id: string | null }).concierge_stripe_subscription_id;
+  if (
+    (facSubRow as { has_concierge_partner: boolean }).has_concierge_partner === true &&
+    existingConciergeSubId &&
+    existingConciergeSubId !== args.stripeSubscriptionId
+  ) {
+    result.duplicateSubscriptionId = args.stripeSubscriptionId;
+    return result;
+  }
 
   // 1. Flip the partner flag + record the Stripe sub id.
   const { error: flagErr } = await supabase
@@ -1169,6 +1192,11 @@ export interface ActivateFeaturedResult {
   has_featured_set: boolean;
   placements_inserted: number;
   placements_reactivated: number;
+  // H5: set to the INCOMING Stripe sub id when activation was refused because a
+  // DIFFERENT Featured sub is already tracked for this facility (a duplicate
+  // purchase within the checkout→webhook window). The caller cancels + refunds
+  // this id so the orphaned live sub stops double-charging. null = no duplicate.
+  duplicateSubscriptionId: string | null;
   failed: { step: string; error: string }[];
 }
 
@@ -1217,6 +1245,7 @@ export async function activateFeaturedAddon(
     has_featured_set: false,
     placements_inserted: 0,
     placements_reactivated: 0,
+    duplicateSubscriptionId: null,
     failed: [],
   };
 
@@ -1238,6 +1267,23 @@ export async function activateFeaturedAddon(
   }
 
   const facSubId = (facSubRow as { id: string }).id;
+
+  // H5 duplicate-purchase orphan guard: Featured is already active on a
+  // DIFFERENT Stripe subscription. Overwriting featured_stripe_subscription_id
+  // would strand that live sub (untracked, still billing the provider). Keep
+  // the existing sub, hand the incoming duplicate back to the caller to cancel
+  // + refund, and stop — the existing sub already owns the placements. A re-run
+  // for the SAME sub id (Stripe retry) falls through to the idempotent path.
+  const existingFeaturedSubId =
+    (facSubRow as { featured_stripe_subscription_id: string | null }).featured_stripe_subscription_id;
+  if (
+    (facSubRow as { has_featured: boolean }).has_featured === true &&
+    existingFeaturedSubId &&
+    existingFeaturedSubId !== args.stripeSubscriptionId
+  ) {
+    result.duplicateSubscriptionId = args.stripeSubscriptionId;
+    return result;
+  }
 
   const { error: flagErr } = await supabase
     .from("facility_subscriptions")
@@ -1432,6 +1478,129 @@ export async function notifyFeaturedAddonPartialFailure(
     });
   } catch (err) {
     console.warn("[featured-addon] admin notification failed", err);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// H5: duplicate add-on purchase recovery.
+//
+// When a provider buys the same add-on twice inside the checkout→webhook
+// window (double-click, or re-buy before the first activation lands), Stripe
+// creates a second subscription. The first already delivers the placements, so
+// the second is pure double-billing. The activation helper refuses to overwrite
+// the tracked sub id (that would orphan the live original); this cancels + FULLY
+// refunds the redundant incoming sub. Idempotent via a subscription_cancellations
+// row keyed on the duplicate sub id, so Stripe retries never double-refund.
+// ─────────────────────────────────────────────────────────────────────────
+async function refundAndCancelDuplicateAddon(
+  stripe: Stripe,
+  supabase: SupabaseClient,
+  args: {
+    product: "featured" | "concierge";
+    facilityId: string;
+    facSubId: string | null;
+    duplicateSubId: string;
+    keptSubId: string | null;
+    stripeEventId: string | null;
+  },
+): Promise<void> {
+  const reason = `duplicate:${args.product}:${args.duplicateSubId}`;
+  try {
+    // Idempotency: skip if we've already recovered this duplicate sub.
+    if (args.facSubId) {
+      const { data: existing } = await supabase
+        .from("subscription_cancellations")
+        .select("id")
+        .eq("subscription_id", args.facSubId)
+        .eq("reason", reason)
+        .maybeSingle();
+      if (existing) return;
+    }
+
+    // Full refund of the duplicate's latest paid invoice — it delivered no
+    // incremental value (the kept sub already provides the add-on).
+    const invoices = await stripe.invoices.list({ subscription: args.duplicateSubId, limit: 5 });
+    let chargeId: string | null = null;
+    let paidCents = 0;
+    for (const inv of invoices.data) {
+      if (inv.status === "paid" && inv.charge) {
+        chargeId = typeof inv.charge === "string" ? inv.charge : inv.charge.id;
+        paidCents = inv.amount_paid;
+        break;
+      }
+    }
+    let stripeRefundId: string | null = null;
+    if (paidCents > 0 && chargeId) {
+      const refundObj = await stripe.refunds.create({
+        charge: chargeId,
+        amount: paidCents,
+        reason: "duplicate",
+        metadata: {
+          facility_id: args.facilityId,
+          scope: reason,
+          note: `Full refund: duplicate ${args.product} add-on purchase`,
+        },
+      });
+      stripeRefundId = refundObj.id;
+    }
+
+    // Cancel the redundant Stripe sub so it stops billing.
+    try {
+      await stripe.subscriptions.cancel(args.duplicateSubId);
+    } catch (cancelErr) {
+      console.error("[stripe-webhook] duplicate add-on Stripe cancel failed", cancelErr);
+    }
+
+    // Audit + idempotency row (written even for the 0-refund case so a retry
+    // short-circuits on the existence check above).
+    if (args.facSubId) {
+      await supabase.from("subscription_cancellations").insert({
+        subscription_id: args.facSubId,
+        reason,
+        refund_amount_cents: paidCents,
+        charged_for_use_cents: 0,
+        full_monthly_rate_cents: TIER_PRICING[args.product].fullMonthlyRateCents,
+        months_used: 0,
+        paid_amount_cents: paidCents,
+        stripe_refund_id: stripeRefundId,
+        canceled_by: null,
+      });
+    }
+
+    await supabase.from("admin_notifications").insert({
+      type: "duplicate_addon_refunded",
+      title: `Duplicate ${args.product} add-on auto-refunded`,
+      message:
+        `Facility ${args.facilityId} purchased the ${args.product} add-on twice. ` +
+        `Kept sub ${args.keptSubId ?? "?"}; canceled + refunded the duplicate ` +
+        `${args.duplicateSubId} ($${(paidCents / 100).toFixed(2)}` +
+        `${stripeRefundId ? "" : ", no paid charge found to refund"}).`,
+      metadata: {
+        facility_id: args.facilityId,
+        product: args.product,
+        kept_subscription_id: args.keptSubId,
+        duplicate_subscription_id: args.duplicateSubId,
+        refund_amount_cents: paidCents,
+        stripe_refund_id: stripeRefundId,
+        stripe_event_id: args.stripeEventId,
+      } as Record<string, unknown>,
+    });
+  } catch (err) {
+    console.error("[stripe-webhook] duplicate add-on refund/cancel failed", err);
+    await supabase.from("admin_notifications").insert({
+      type: "duplicate_addon_refund_failed",
+      title: `Duplicate ${args.product} add-on refund needs manual review`,
+      message:
+        `Facility ${args.facilityId} has a duplicate ${args.product} add-on ` +
+        `(sub ${args.duplicateSubId}), but the automatic cancel/refund failed. ` +
+        `Review in Stripe and cancel + refund the duplicate manually.`,
+      metadata: {
+        facility_id: args.facilityId,
+        product: args.product,
+        duplicate_subscription_id: args.duplicateSubId,
+        error: err instanceof Error ? err.message : String(err),
+      } as Record<string, unknown>,
+    }).then(() => undefined, () => undefined);
   }
 }
 
@@ -3081,6 +3250,31 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
           result: addonResult,
         });
 
+        // H5: a duplicate Featured purchase was detected — the helper KEPT the
+        // existing live sub and refused to overwrite it. Cancel + fully refund
+        // the redundant incoming sub, then stop (Featured is already live, so
+        // this is NOT an activation failure).
+        if (addonResult.duplicateSubscriptionId) {
+          const { data: keptRow } = await supabaseAdmin
+            .from("facility_subscriptions")
+            .select("id, featured_stripe_subscription_id")
+            .eq("facility_id", addonFacilityId)
+            .maybeSingle();
+          await refundAndCancelDuplicateAddon(stripe, supabaseAdmin, {
+            product: "featured",
+            facilityId: addonFacilityId,
+            facSubId: (keptRow as { id: string } | null)?.id ?? null,
+            duplicateSubId: addonResult.duplicateSubscriptionId,
+            keptSubId:
+              (keptRow as { featured_stripe_subscription_id: string | null } | null)
+                ?.featured_stripe_subscription_id ?? null,
+            stripeEventId: event.id,
+          });
+          return new Response(JSON.stringify({ received: true, duplicate_refunded: true }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
         // Round-31 audit fix: previously even a fully-failed activation
         // (e.g. no Pro subscription row exists) still wrote
         // 'featured_addon_activated' to subscription_events AND sent
@@ -3190,6 +3384,31 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
           stripeEventId: event.id,
           result: concierge,
         });
+
+        // H5: a duplicate Concierge purchase was detected — the helper KEPT the
+        // existing live sub and refused to overwrite it. Cancel + fully refund
+        // the redundant incoming sub, then stop (Concierge is already live, so
+        // this is NOT an activation failure).
+        if (concierge.duplicateSubscriptionId) {
+          const { data: keptRow } = await supabaseAdmin
+            .from("facility_subscriptions")
+            .select("id, concierge_stripe_subscription_id")
+            .eq("facility_id", addonFacilityId)
+            .maybeSingle();
+          await refundAndCancelDuplicateAddon(stripe, supabaseAdmin, {
+            product: "concierge",
+            facilityId: addonFacilityId,
+            facSubId: (keptRow as { id: string } | null)?.id ?? null,
+            duplicateSubId: concierge.duplicateSubscriptionId,
+            keptSubId:
+              (keptRow as { concierge_stripe_subscription_id: string | null } | null)
+                ?.concierge_stripe_subscription_id ?? null,
+            stripeEventId: event.id,
+          });
+          return new Response(JSON.stringify({ received: true, duplicate_refunded: true }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
 
         // Round-31 audit fix: don't write 'activated' event or send
         // "Concierge is live" notification if activation actually
