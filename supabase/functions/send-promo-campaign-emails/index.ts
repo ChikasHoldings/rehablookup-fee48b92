@@ -24,6 +24,7 @@ import { Resend } from "https://esm.sh/resend@2.0.0?target=denonext";
 import { assertCronSecret } from "../_shared/cron-auth.ts";
 import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
 import { TIER_PRICING } from "../_shared/subscription-math.ts";
+import { signUnsubscribeToken } from "../_shared/unsubscribe-token.ts";
 
 const VERSION = "1.0.0";
 const BATCH = 200;
@@ -206,7 +207,7 @@ Deno.serve(async (req) => {
           continue;
         }
         try {
-          const unsubUrl = `${SITE_URL}/api/provider-emails/unsubscribe?u=${btoa(row.user_id)}`;
+          const unsubUrl = `${SITE_URL}/api/provider-emails/unsubscribe?u=${await signUnsubscribeToken(row.user_id)}`;
           const { subject, html } = buildEmail({
             firstName: (row.first_name || "there").trim(),
             promo,

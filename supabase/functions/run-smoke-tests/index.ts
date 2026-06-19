@@ -48,8 +48,6 @@ type StepResult = {
   request?: RequestInfo;
   /** Captured response payload for diagnostics. */
   response?: ResponseInfo;
-  /** JS stack trace when the step threw. */
-  stack?: string;
 };
 
 // Full happy path through validate_concierge_status_transition.
@@ -234,13 +232,14 @@ async function timed<T>(
     };
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
-    const stack = e instanceof Error ? e.stack : undefined;
+    // Log full detail (incl. stack) server-side; never return the stack in the
+    // response body (L7 — was leaking error.stack to the caller).
+    console.error(`[run-smoke-tests] step "${name}" threw:`, e);
     return {
       name,
       ok: false,
       durationMs: Math.round(performance.now() - t0),
       error: message,
-      stack,
       request: ctx.request,
       response: ctx.response,
     };

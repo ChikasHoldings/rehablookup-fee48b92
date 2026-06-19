@@ -33,6 +33,11 @@ export interface ActivateFeaturedResult {
   has_featured_set: boolean;
   placements_inserted: number;
   placements_reactivated: number;
+  // H5: set to the INCOMING Stripe sub id when activation was refused because a
+  // DIFFERENT Featured sub is already tracked for this facility (a duplicate
+  // purchase within the checkout→webhook window). The caller cancels + refunds
+  // this id so the orphaned live sub stops double-charging. null = no duplicate.
+  duplicateSubscriptionId: string | null;
   failed: { step: string; error: string }[];
 }
 
@@ -85,6 +90,7 @@ export async function activateFeaturedAddon(
     has_featured_set: false,
     placements_inserted: 0,
     placements_reactivated: 0,
+    duplicateSubscriptionId: null,
     failed: [],
   };
 
@@ -106,6 +112,23 @@ export async function activateFeaturedAddon(
   }
 
   const facSubId = (facSubRow as { id: string }).id;
+
+  // H5 duplicate-purchase orphan guard: Featured is already active on a
+  // DIFFERENT Stripe subscription. Overwriting featured_stripe_subscription_id
+  // would strand that live sub (untracked, still billing the provider). Keep
+  // the existing sub, hand the incoming duplicate back to the caller to cancel
+  // + refund, and stop — the existing sub already owns the placements. A re-run
+  // for the SAME sub id (Stripe retry) falls through to the idempotent path.
+  const existingFeaturedSubId =
+    (facSubRow as { featured_stripe_subscription_id: string | null }).featured_stripe_subscription_id;
+  if (
+    (facSubRow as { has_featured: boolean }).has_featured === true &&
+    existingFeaturedSubId &&
+    existingFeaturedSubId !== args.stripeSubscriptionId
+  ) {
+    result.duplicateSubscriptionId = args.stripeSubscriptionId;
+    return result;
+  }
 
   const { error: flagErr } = await supabase
     .from("facility_subscriptions")

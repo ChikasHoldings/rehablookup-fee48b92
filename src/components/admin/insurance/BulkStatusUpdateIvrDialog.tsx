@@ -67,9 +67,12 @@ export function BulkStatusUpdateIvrDialog({
       if (res.errored === 0 && res.skipped === 0) {
         toast.success(`Updated ${res.updated} ${res.updated === 1 ? "request" : "requests"}`);
       } else {
-        toast.success(
-          `Updated ${res.updated} · ${res.skipped} skipped · ${res.errored} errored`,
-        );
+        const summary = `Updated ${res.updated} · ${res.skipped} skipped · ${res.errored} errored`;
+        if (res.errored > 0) {
+          (res.updated > 0 ? toast.warning : toast.error)(summary);
+        } else {
+          toast.success(summary);
+        }
       }
       handleOpenChange(false);
       onSuccess();

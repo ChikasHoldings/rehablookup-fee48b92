@@ -13,6 +13,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 import { Resend } from "https://esm.sh/resend@2.0.0?target=denonext";
 import { z } from "https://esm.sh/zod@3.23.8?target=denonext";
+import { checkRateLimit, logRateLimitAttempt, getRequestIdentifier, rateLimitResponse } from "../_shared/rate-limit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -98,6 +99,15 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
     { auth: { persistSession: false } },
   );
+
+  // Rate limit this unauthenticated endpoint (sends an admin-inbox email per
+  // call) by source IP to prevent inbox spam / Resend cost.
+  const rlId = getRequestIdentifier(req);
+  const rl = await checkRateLimit(supabase, {
+    identifier: rlId, actionType: "provider_interest_submit", maxAttempts: 5, windowMinutes: 60,
+  });
+  if (!rl.allowed) return rateLimitResponse(corsHeaders);
+  await logRateLimitAttempt(supabase, rlId, "provider_interest_submit", true);
 
   let rawBody: unknown;
   try {

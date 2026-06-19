@@ -124,10 +124,14 @@ export function AdminShell() {
     effectiveIsSuperAdmin ||
     isImpersonating ||
     (isInitialized && Object.keys(permissions || {}).length > 0);
-  const hasRouteAccess = permissionsReady
-    ? effectiveCanAccessRoute(location.pathname)
-    : true; // optimistic — render the page while permissions hydrate;
-              // RLS still gates every data fetch server-side.
+  // M9: fail CLOSED while permissions hydrate. This previously rendered the
+  // page optimistically (hasRouteAccess = true) for the ~1s between the
+  // isAdmin cache hit and the permissions network fetch, briefly exposing the
+  // structure of permission-gated admin pages. We now hold a loading state
+  // (see render below) until the gate can be evaluated for real. Super-admins
+  // and impersonation short-circuit permissionsReady above, so they're
+  // unaffected; RLS still gates every server-side data fetch regardless.
+  const hasRouteAccess = permissionsReady && effectiveCanAccessRoute(location.pathname);
 
   // Get role-specific mobile nav and filter by permissions
   const mobileNavSections = getMobileNavForRole(effectiveAdminRole, effectiveIsSuperAdmin);
@@ -202,7 +206,11 @@ export function AdminShell() {
         >
           <div className="max-w-7xl mx-auto w-full">
             <AdminErrorBoundary>
-              {hasRouteAccess ? (
+              {!permissionsReady ? (
+                // Permissions still hydrating — hold a loading state rather
+                // than optimistically rendering a potentially-gated page (M9).
+                <AdminPageLoading />
+              ) : hasRouteAccess ? (
                 <Suspense fallback={<AdminPageLoading />}>
                   <Outlet />
                 </Suspense>

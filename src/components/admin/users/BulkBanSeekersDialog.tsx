@@ -79,7 +79,12 @@ export function BulkBanSeekersDialog({
       if (res.errored === 0 && res.skipped === 0) {
         toast.success(`${verb} ${res.updated} ${res.updated === 1 ? "seeker" : "seekers"}`);
       } else {
-        toast.success(`${verb} ${res.updated} · ${res.skipped} skipped · ${res.errored} errored`);
+        const summary = `${verb} ${res.updated} · ${res.skipped} skipped · ${res.errored} errored`;
+        if (res.errored > 0) {
+          (res.updated > 0 ? toast.warning : toast.error)(summary);
+        } else {
+          toast.success(summary);
+        }
       }
       handleOpenChange(false);
       onSuccess();

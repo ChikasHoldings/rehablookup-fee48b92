@@ -28,6 +28,7 @@
 // Returns: { userId, autoConfirmed: true } on success.
 // ============================================================================
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
+import { checkRateLimit, logRateLimitAttempt, getRequestIdentifier, rateLimitResponse } from "../_shared/rate-limit.ts";
 
 const VERSION = "1.2.0";
 
@@ -85,6 +86,16 @@ Deno.serve(async (req) => {
     if (!lastName) return json(400, { error: "Last name required", code: "MISSING_LAST_NAME" });
 
     const svc = createClient(SUPABASE_URL, SUPABASE_SRK);
+
+    // Rate limit unauthenticated account creation by source IP. Prevents mass
+    // auth-user creation, verification-email cost, and at-scale email
+    // enumeration via the seeker/provider/admin existence checks below.
+    const rlId = getRequestIdentifier(req);
+    const rl = await checkRateLimit(svc, {
+      identifier: rlId, actionType: "register_provider_account", maxAttempts: 5, windowMinutes: 60,
+    });
+    if (!rl.allowed) return rateLimitResponse(corsHeaders);
+    await logRateLimitAttempt(svc, rlId, "register_provider_account", true);
 
     try {
       const [seekerRes, providerRes, adminRes] = await Promise.all([

@@ -26,6 +26,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target
 import { assertCronSecret } from "../_shared/cron-auth.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0?target=denonext";
 import { sendEmailWithRetry, sleep, BULK_SEND_DELAY_MS } from "../_shared/resilient-email-sender.ts";
+import { signUnsubscribeToken } from "../_shared/unsubscribe-token.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -62,8 +63,8 @@ interface UserProfile {
  * own; the worst case is an attacker unsubscribing a user from
  * marketing emails, which is the user's intent anyway.
  */
-function unsubscribeUrl(userId: string): string {
-  const token = btoa(userId);
+async function unsubscribeUrl(userId: string): Promise<string> {
+  const token = await signUnsubscribeToken(userId);
   return `${PUBLIC_SITE_URL}/api/provider-emails/unsubscribe?u=${token}`;
 }
 
@@ -333,7 +334,7 @@ async function processRow(
   }
 
   // Compose the email.
-  const unsub = unsubscribeUrl(row.user_id);
+  const unsub = await unsubscribeUrl(row.user_id);
   const firstName = profile.first_name ?? "";
   const content = row.sequence === "free_to_pro"
     ? freeToProContent(row.step, firstName, unsub)

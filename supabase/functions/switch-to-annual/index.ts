@@ -255,6 +255,23 @@ Deno.serve(async (req) => {
 
   const monthlyPeriodEnd = monthlySub.current_period_end; // unix seconds
 
+  // Idempotency guard (sequential): if a prior switch already tagged this
+  // monthly sub, an annual sub is already being created — returning here
+  // prevents a second annual subscription (double annual billing) on retry
+  // or double-submit. True-concurrency double-submits (both read metadata
+  // before either writes it) are caught by the idempotencyKey on the
+  // subscriptions.create below.
+  if (monthlySub.metadata?.switched_to_annual_at) {
+    return new Response(
+      JSON.stringify({
+        ok: true,
+        alreadySwitching: true,
+        message: "An annual switch is already in progress for this subscription.",
+      }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
+  }
+
   // Step 1: cancel the monthly sub at period_end (no refund — they
   // used the month). cancel_at_period_end is idempotent on Stripe.
   try {
@@ -290,6 +307,11 @@ Deno.serve(async (req) => {
         switched_by_user_id: user.id,
         facility_subscription_id: sub.id,
       },
+    }, {
+      // Dedup concurrent / retried switch requests so two rapid clicks (the
+      // upgrade button has no in-flight lock) can never create two annual
+      // subscriptions. Stable per (facility_subscription, monthly sub).
+      idempotencyKey: `switch-to-annual:${sub.id}:${sub.stripe_subscription_id}`,
     });
   } catch (err) {
     console.error("[switch-to-annual] stripe.subscriptions.create failed", err);

@@ -97,7 +97,10 @@ const VALID_DATE_PRESETS: DatePreset[] = [
   "thisQuarter", "lastQuarter", "thisYear", "lastYear", "custom",
 ];
 const VALID_GROUPINGS: Grouping[] = ["daily", "weekly", "monthly"];
-const VALID_TABS = ["traffic", "leads", "performance", "subscriptions"] as const;
+// Must mirror the rendered TabsTrigger values below — a stale list (the old
+// one had a phantom "performance" tab and was missing ctasources/churn/
+// form-conversion) silently drops ?tab= deep-links back to "traffic".
+const VALID_TABS = ["traffic", "leads", "ctasources", "subscriptions", "churn", "form-conversion"] as const;
 type AnalyticsTab = typeof VALID_TABS[number];
 
 export default function AdminAnalytics() {

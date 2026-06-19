@@ -76,9 +76,12 @@ export function BulkReassignDialog({
       if (res.errored === 0 && res.skipped === 0) {
         toast.success(`Reassigned ${res.reassigned} ${res.reassigned === 1 ? "lead" : "leads"}`);
       } else {
-        toast.success(
-          `Reassigned ${res.reassigned} · ${res.skipped} skipped · ${res.errored} errored`,
-        );
+        const summary = `Reassigned ${res.reassigned} · ${res.skipped} skipped · ${res.errored} errored`;
+        if (res.errored > 0) {
+          (res.reassigned > 0 ? toast.warning : toast.error)(summary);
+        } else {
+          toast.success(summary);
+        }
       }
       onOpenChange(false);
       setPickedFacilityId(null);

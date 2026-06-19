@@ -100,7 +100,12 @@ export function BulkMarketingLeadActionDialog({
       if (res.errored === 0 && res.skipped === 0) {
         toast.success(`${config.verb}d ${res.succeeded} ${noun}`);
       } else {
-        toast.success(`${config.verb}d ${res.succeeded} · ${res.skipped} skipped · ${res.errored} errored`);
+        const summary = `${config.verb}d ${res.succeeded} · ${res.skipped} skipped · ${res.errored} errored`;
+        if (res.errored > 0) {
+          (res.succeeded > 0 ? toast.warning : toast.error)(summary);
+        } else {
+          toast.success(summary);
+        }
       }
       handleOpenChange(false);
       onSuccess();

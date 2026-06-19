@@ -225,16 +225,22 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
 
   const handleSaveNote = async (note: string) => {
     const { data: { user: admin } } = await supabase.auth.getUser();
-    if (admin && user) {
-      await supabase.from("admin_audit_log").insert({
-        admin_user_id: admin.id,
-        action_type: "seeker_note",
-        target_type: "seeker",
-        target_id: user.user_id,
-        details: { note },
-      });
-      toast.success("Note saved");
+    if (!admin || !user) {
+      toast.error("Could not save note — please sign in again.");
+      return;
     }
+    const { error } = await supabase.from("admin_audit_log").insert({
+      admin_user_id: admin.id,
+      action_type: "seeker_note",
+      target_type: "seeker",
+      target_id: user.user_id,
+      details: { note },
+    });
+    if (error) {
+      toast.error(`Failed to save note: ${error.message}`);
+      return;
+    }
+    toast.success("Note saved");
   };
 
   if (!user) return null;

@@ -8,6 +8,11 @@ const corsHeaders = {
 const ALLOWED_EVENT_TYPES = ["listing_impression", "profile_view", "click_to_call", "website_click"];
 const ALLOWED_PAGE_CONTEXTS = ["search", "profile", "other"];
 
+const MAX_BODY_SIZE = 5000;
+
+const isValidUUID = (str: unknown): str is string =>
+  typeof str === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(str);
+
 // Roles whose facility interactions are counted as INTERNAL traffic and
 // excluded from the public-facing "visitor" KPI on /admin/analytics.
 // Providers (`facility_owner` etc.) are intentionally NOT excluded — a
@@ -139,12 +144,47 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    const { facilityId, eventType, sessionId, pageContext = "other" } = await req.json();
+    // Body-size cap before parsing (L6 — parity with track-view).
+    const rawBody = await req.text();
+    if (rawBody.length > MAX_BODY_SIZE) {
+      return new Response(
+        JSON.stringify({ error: "Request too large" }),
+        { status: 413, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    let parsed: Record<string, unknown>;
+    try {
+      parsed = JSON.parse(rawBody);
+    } catch {
+      return new Response(
+        JSON.stringify({ error: "Invalid JSON" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const facilityId = parsed.facilityId;
+    const eventType = parsed.eventType;
+    const sessionId = parsed.sessionId;
+    const pageContext = typeof parsed.pageContext === "string" ? parsed.pageContext : "other";
 
     if (!facilityId || !eventType || !sessionId) {
       console.error("[track-provider-event] Missing required fields:", { facilityId, eventType, sessionId });
       return new Response(
         JSON.stringify({ error: "Missing required fields: facilityId, eventType, sessionId" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Validate facilityId is a UUID (L6 — parity with track-view).
+    if (!isValidUUID(facilityId)) {
+      return new Response(
+        JSON.stringify({ error: "Invalid facilityId format" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    if (typeof eventType !== "string" || typeof sessionId !== "string" || sessionId.length > 200) {
+      return new Response(
+        JSON.stringify({ error: "Invalid eventType or sessionId" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }

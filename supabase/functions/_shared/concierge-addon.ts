@@ -58,6 +58,11 @@ export interface ActivateConciergeResult {
   network_opted_in_set: boolean;
   partner_rows_inserted: number;
   partner_rows_reactivated: number;
+  // H5: set to the INCOMING Stripe sub id when activation was refused because a
+  // DIFFERENT Concierge sub is already tracked for this facility (a duplicate
+  // purchase within the checkout→webhook window). The caller cancels + refunds
+  // this id so the orphaned live sub stops double-charging. null = no duplicate.
+  duplicateSubscriptionId: string | null;
   failed: { step: string; error: string }[];
 }
 
@@ -83,6 +88,7 @@ export async function activateConciergePartner(
     network_opted_in_set: false,
     partner_rows_inserted: 0,
     partner_rows_reactivated: 0,
+    duplicateSubscriptionId: null,
     failed: [],
   };
 
@@ -104,6 +110,23 @@ export async function activateConciergePartner(
   }
 
   const facSubId = (facSubRow as { id: string }).id;
+
+  // H5 duplicate-purchase orphan guard: Concierge is already active on a
+  // DIFFERENT Stripe subscription. Overwriting concierge_stripe_subscription_id
+  // would strand that live sub (untracked, still billing the provider). Keep
+  // the existing sub, hand the incoming duplicate back to the caller to cancel
+  // + refund, and stop — the existing sub already owns the partner rows. A
+  // re-run for the SAME sub id (Stripe retry) falls through to the idempotent path.
+  const existingConciergeSubId =
+    (facSubRow as { concierge_stripe_subscription_id: string | null }).concierge_stripe_subscription_id;
+  if (
+    (facSubRow as { has_concierge_partner: boolean }).has_concierge_partner === true &&
+    existingConciergeSubId &&
+    existingConciergeSubId !== args.stripeSubscriptionId
+  ) {
+    result.duplicateSubscriptionId = args.stripeSubscriptionId;
+    return result;
+  }
 
   // 1. Flip the partner flag + record the Stripe sub id.
   const { error: flagErr } = await supabase

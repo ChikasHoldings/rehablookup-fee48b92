@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Rotate3D, ArrowRight, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { readFunctionError } from "@/lib/functionError";
 import { toast } from "sonner";
 import { fmtMoney, fmtMoneyWhole, TIER_PRICING } from "@/lib/billingPricing";
 import { useActivePromotion } from "@/hooks/useActivePromotion";
@@ -42,7 +43,7 @@ export function FeaturedMarketingDetail({ facilityId }: FeaturedMarketingDetailP
           ...(featuredPromoId ? { promo_id: featuredPromoId } : {}),
         },
       });
-      if (error) throw error;
+      if (error) throw new Error((await readFunctionError(error)) ?? "Couldn't start checkout. Please check your connection and try again.");
       if (data?.error || !data?.url) {
         throw new Error(data?.error ?? "Checkout URL missing");
       }
