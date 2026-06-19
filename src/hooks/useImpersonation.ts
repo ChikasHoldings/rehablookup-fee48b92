@@ -1,5 +1,6 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { ROLE_DEFAULTS } from "@/hooks/useAdminUserManagement";
 import type { AdminRoleType } from "@/hooks/useAdminUserManagement";
 
 interface ImpersonationTarget {
@@ -24,6 +25,56 @@ export function useImpersonation() {
   const [impersonating, setImpersonating] = useState<ImpersonationTarget | null>(
     getStoredImpersonation,
   );
+
+  // L3: the grant persisted in sessionStorage can be hand-edited by an
+  // already-authenticated admin. It only drives the client-side *preview*
+  // (RLS gates all real data server-side), but a tampered blob shouldn't be
+  // able to widen the previewed nav/permissions. On restore, re-derive role +
+  // permissions from the DB for the stored userId and overwrite whatever was
+  // persisted; if the target is no longer an active admin, drop the session.
+  useEffect(() => {
+    const stored = getStoredImpersonation();
+    if (!stored?.userId) return;
+    let cancelled = false;
+    void (async () => {
+      const [{ data: profile }, { data: perms }] = await Promise.all([
+        supabase
+          .from("admin_user_profiles")
+          .select("admin_role, status")
+          .eq("user_id", stored.userId)
+          .maybeSingle(),
+        supabase
+          .from("admin_user_permissions")
+          .select("permission_key, granted")
+          .eq("user_id", stored.userId),
+      ]);
+      if (cancelled) return;
+
+      if (!profile || profile.status !== "active") {
+        sessionStorage.removeItem(SESSION_KEY);
+        setImpersonating(null);
+        return;
+      }
+
+      const role = profile.admin_role as AdminRoleType;
+      const permMap: Record<string, boolean> = {};
+      (perms || []).forEach((p) => {
+        permMap[p.permission_key] = p.granted;
+      });
+      const authoritative: ImpersonationTarget = {
+        userId: stored.userId,
+        displayName: stored.displayName,
+        role,
+        permissions:
+          Object.keys(permMap).length > 0 ? permMap : (ROLE_DEFAULTS[role] || {}),
+      };
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify(authoritative));
+      setImpersonating(authoritative);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Start an impersonation session. The audit row is written FIRST and the
   // local session state only flips after the insert succeeds — that way an
