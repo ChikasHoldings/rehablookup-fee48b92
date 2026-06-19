@@ -617,10 +617,15 @@ function renderFacilityHtml(f, kids) {
   const stateSlug = locationSlug(f.state);
   const cityHrefSlug = locationSlug(f.city);
 
-  const title = `${f.name} — Addiction Treatment in ${f.city}, ${f.state} | RehabLookup`;
+  // Facilities that share name+city+state with a sibling (multi-location orgs,
+  // e.g. several "Crossroads" sites in one city) would otherwise emit identical
+  // <title>/<description> and trip check:unique-meta. The street address is the
+  // natural differentiator — each location has its own. (SEO audit fix.)
+  const disambig = f._metaDisambiguate && f.address ? ` (${f.address})` : "";
+  const title = `${f.name}${disambig} — Addiction Treatment in ${f.city}, ${f.state} | RehabLookup`;
   const baseDesc = f.description
-    ? truncate(f.description, 155)
-    : `${f.name} offers comprehensive addiction treatment services in ${f.city}, ${f.state}. Verify insurance and start your recovery journey today.`;
+    ? truncate((f._metaDisambiguate && f.address ? `${f.address}: ` : "") + f.description, 155)
+    : `${f.name}${disambig} offers comprehensive addiction treatment services in ${f.city}, ${f.state}. Verify insurance and start your recovery journey today.`;
   const metaDescription = baseDesc;
 
   const ogImage =
@@ -1034,6 +1039,24 @@ async function main() {
   // hard error in `check:facility-sitemap-sync` ("static HTML file has no
   // sitemap entry") and fail the SEO Validators CI job.
   const liveSlugs = new Set();
+
+  // Flag facilities whose name+city+state is shared by a sibling so the
+  // template disambiguates their <title>/<description> with the street address
+  // (otherwise multi-location orgs emit duplicate meta — fails check:unique-meta).
+  // (SEO audit fix.)
+  {
+    const metaKeyCount = new Map();
+    for (const f of facilities) {
+      if (!f.slug || !f.name || !f.city || !f.state) continue;
+      const k = `${f.name}|${f.city}|${f.state}`.toLowerCase();
+      metaKeyCount.set(k, (metaKeyCount.get(k) || 0) + 1);
+    }
+    for (const f of facilities) {
+      const k = `${f.name}|${f.city}|${f.state}`.toLowerCase();
+      f._metaDisambiguate = (metaKeyCount.get(k) || 0) > 1;
+    }
+  }
+
   let written = 0;
   for (const f of facilities) {
     if (!f.slug || !f.name || !f.city || !f.state) {
