@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, AlertTriangle, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { readFunctionError } from "@/lib/functionError";
 import { toast } from "sonner";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import {
@@ -139,7 +140,7 @@ export default function BillingCancel() {
           },
         },
       );
-      if (error) throw error;
+      if (error) throw new Error((await readFunctionError(error)) ?? "Couldn't cancel your subscription. Please check your connection and try again.");
       if (data?.error) throw new Error(data.error);
 
       // Interval-specific success message. Annual cancels prorate a

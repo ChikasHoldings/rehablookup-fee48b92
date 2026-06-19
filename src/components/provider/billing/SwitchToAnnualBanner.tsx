@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Sparkles, Loader2 } from "lucide-react";
 import { fmtMoney, TIER_PRICING } from "@/lib/billingPricing";
 import { supabase } from "@/integrations/supabase/client";
+import { readFunctionError } from "@/lib/functionError";
 import { toast } from "sonner";
 import type { FacilitySubscriptionRow } from "@/hooks/useFacilitySubscription";
 
@@ -54,7 +55,7 @@ export function SwitchToAnnualBanner({ subscription, onSwitched }: SwitchToAnnua
       const { data, error } = await supabase.functions.invoke("switch-to-annual", {
         body: { subscription_id: subscription.id },
       });
-      if (error) throw error;
+      if (error) throw new Error((await readFunctionError(error)) ?? "Couldn't switch to annual. Please check your connection and try again.");
       if (data?.error) throw new Error(data.error);
       toast.success("Switch to annual scheduled. Your annual billing starts after your monthly period ends.");
       setOpen(false);

@@ -109,11 +109,12 @@ export function ProviderActivityTimeline({ facilityId, userId }: ProviderActivit
 
       if (notifications) {
         notifications.forEach((notif) => {
+          const message = notif.message ?? "";
           events.push({
             id: `notif-${notif.id}`,
             type: "notification",
             title: notif.title,
-            description: notif.message.substring(0, 100) + (notif.message.length > 100 ? "..." : ""),
+            description: message.substring(0, 100) + (message.length > 100 ? "..." : ""),
             timestamp: notif.created_at,
             icon: MessageSquare,
             iconColor: "text-blue-500",

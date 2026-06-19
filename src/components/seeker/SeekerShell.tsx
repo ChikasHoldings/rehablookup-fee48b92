@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback, Suspense } from "react";
-import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import { Navigate, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { SeekerHeader } from "./SeekerHeader";
 import { SeekerMobileNav } from "./SeekerMobileNav";
@@ -219,6 +219,13 @@ export function SeekerShell() {
   // see the seeker "Complete Your Profile" empty state during the redirect race.
   if (!isReady || (isAuthenticated && (profile === undefined || userRole === undefined))) {
     return <SeekerShellSkeleton />;
+  }
+
+  // Unauthenticated → redirect during render so anonymous visitors never see a
+  // flash of shell chrome before the effect-based redirect fires (L2; mirrors
+  // ProviderShell's render-phase guard).
+  if (!isAuthenticated) {
+    return <Navigate to={`/login?redirect=${encodeURIComponent(location.pathname)}`} replace />;
   }
 
   // Show empty state ONLY for authenticated seekers (not admins/providers in transit).
