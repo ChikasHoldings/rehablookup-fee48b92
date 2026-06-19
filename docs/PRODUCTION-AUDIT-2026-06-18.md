@@ -32,7 +32,7 @@ The risk is **latent, not live** — concentrated in three areas:
 > Added after the fix pass. Everything below this section is the original
 > point-in-time audit, unchanged.
 
-**All Critical + all High + 10 of 13 Medium findings are fixed, validated, and
+**All Critical + all High + 11 of 13 Medium findings are fixed, validated, and
 pushed.** DB migrations are applied live; **edge-function and frontend fixes are
 inert until deployed** (merge → deploy workflows + Vercel).
 
@@ -52,7 +52,7 @@ inert until deployed** (merge → deploy workflows + Vercel).
 | M8, M9 | ✅ Fixed | Entitlement + admin-permission hydration fail closed. |
 | M10 | ✅ Fixed | Dead FacilityCard buttons removed; AdminAnalytics `VALID_TABS` corrected. |
 | M3 | 🟡 Partial | 500 error-body leak fixed; secret now prefers `DATA_EXPORT_SECRET` (falls back to `SMOKE_CRON_SECRET` until provisioned). **Remaining:** bind the gate to an admin JWT identity — needs caller-context (browser vs script) confirmation first. |
-| M2 | ⏸️ Deferred | Ledger drift is systemic + operational — needs a deliberate reconcile, not a blind fix. Note: MCP `apply_migration` records under apply-time versions (`20260618*`), so this session's `20260829*` files look "unapplied" to `supabase db push` — but all five are idempotent (`create or replace` / `if not exists` / `revoke` / `enable rls`), so re-running them is harmless. |
+| M2 | ✅ Fixed (ledger live) | Reconciled the prod ledger to the repo on 2026-06-18: de-duped 2 colliding versions, then inserted a row for every file version not present (`274 → 766`) after verifying the 116 future-dated migrations are actually applied (112 by name, 4 by schema/data effect). `supabase db push` is now a no-op, closing the destructive-replay risk (`drop_pay_per_admission_residue`). Backup: `schema_migrations_backup_20260618`; go-forward rule + rollback in `supabase/migrations/README.md`. |
 | 🟢 Low cluster | ⏸️ Deferred | Not addressed in this pass. |
 
 **Before launch:** deploy, then dry-run cancel / switch-to-annual / add-on
