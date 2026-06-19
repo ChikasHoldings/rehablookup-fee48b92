@@ -21,8 +21,11 @@ import Stripe from "https://esm.sh/stripe@18.5.0?target=denonext";
 
 const VERSION = "1.0.0";
 
+// Derive from the function's own environment so this isn't pinned to a single
+// project ref (L8 — hygiene). Falls back to the prod URL only if SUPABASE_URL
+// is somehow unset.
 const DEFAULT_URL =
-  "https://mldbxpntzcjalgjmwnqa.supabase.co/functions/v1/stripe-webhook";
+  `${Deno.env.get("SUPABASE_URL") ?? "https://mldbxpntzcjalgjmwnqa.supabase.co"}/functions/v1/stripe-webhook`;
 
 const EVENTS = [
   "checkout.session.completed",

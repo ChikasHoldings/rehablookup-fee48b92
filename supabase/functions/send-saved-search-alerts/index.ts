@@ -152,7 +152,10 @@ async function findMatches(
     q = q.ilike("state", state);
   } else if (state && state.length > 2) {
     // Accept either full-name match on state or city match against location.
-    q = q.or(`state.ilike.${state},city.ilike.${state}`);
+    // criteria is user-supplied, so strip characters that have meaning in a
+    // PostgREST .or() filter to prevent breaking out of the value (L5).
+    const s = state.replace(/[(),"\\]/g, " ").trim();
+    if (s) q = q.or(`state.ilike.${s},city.ilike.${s}`);
   }
 
   const type = lc(criteria.type);
