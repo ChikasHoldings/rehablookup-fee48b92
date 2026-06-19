@@ -32,7 +32,7 @@ The risk is **latent, not live** — concentrated in three areas:
 > Added after the fix pass. Everything below this section is the original
 > point-in-time audit, unchanged.
 
-**All Critical + all High + 11 of 13 Medium findings are fixed, validated, and
+**All Critical + all High + 12 of 13 Medium findings are fixed, validated, and
 pushed.** DB migrations are applied live; **edge-function and frontend fixes are
 inert until deployed** (merge → deploy workflows + Vercel).
 
@@ -51,7 +51,7 @@ inert until deployed** (merge → deploy workflows + Vercel).
 | M6 | ✅ Fixed (DB live) | Concierge gate: period guard + `past_due` grace. |
 | M8, M9 | ✅ Fixed | Entitlement + admin-permission hydration fail closed. |
 | M10 | ✅ Fixed | Dead FacilityCard buttons removed; AdminAnalytics `VALID_TABS` corrected. |
-| M3 | 🟡 Partial | 500 error-body leak fixed; secret now prefers `DATA_EXPORT_SECRET` (falls back to `SMOKE_CRON_SECRET` until provisioned). **Remaining:** bind the gate to an admin JWT identity — needs caller-context (browser vs script) confirmation first. |
+| M3 | ✅ Fixed (pending deploy) | `data-export` has no code caller — it's a manual admin/ops tool. Now gated by **two factors**: the dedicated secret (prefers `DATA_EXPORT_SECRET`, falls back to `SMOKE_CRON_SECRET`) **and** `requireAdmin` (Authorization Bearer must resolve to an active `admin_user_profiles` row). Exports are logged to `admin_audit_log`. 500 body no longer leaks detail. Callers must now send an admin user's access token **and** `x-export-secret`. Inert until the function is deployed. |
 | M2 | ✅ Fixed (ledger live) | Reconciled the prod ledger to the repo on 2026-06-18: de-duped 2 colliding versions, then inserted a row for every file version not present (`274 → 766`) after verifying the 116 future-dated migrations are actually applied (112 by name, 4 by schema/data effect). `supabase db push` is now a no-op, closing the destructive-replay risk (`drop_pay_per_admission_residue`). Backup: `schema_migrations_backup_20260618`; go-forward rule + rollback in `supabase/migrations/README.md`. |
 | 🟢 Low cluster | ⏸️ Deferred | Not addressed in this pass. |
 
