@@ -1,12 +1,12 @@
 /**
  * Resilient Email Sender
- * 
+ *
  * Wraps Resend with:
  * - Automatic retry with exponential backoff (up to 3 attempts)
  * - Suppressed email checking
  * - Full send tracking (sent/failed/retried/dlq) via email_tracking_events
  * - Dead-letter logging for persistent failures
- * 
+ *
  * Usage:
  *   import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
  *   const result = await sendEmailWithRetry(supabase, resend, { ...emailParams }, { emailType: "provider_welcome" });

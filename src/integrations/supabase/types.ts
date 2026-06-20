@@ -7071,6 +7071,17 @@ export type Database = {
           refund_amount_cents: number
         }[]
       }
+      create_provider_notification: {
+        Args: {
+          p_facility_id: string
+          p_message: string
+          p_metadata?: Json
+          p_title: string
+          p_type: string
+          p_user_id: string
+        }
+        Returns: string
+      }
       create_review_request: {
         Args: {
           p_facility_id: string

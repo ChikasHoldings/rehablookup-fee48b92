@@ -98,6 +98,11 @@ export const NOTIFICATION_TYPES: Record<string, NotificationTypeEntry> = {
   verification_hard: { label: "Urgent verification issue", icon: errIcon, route: "/provider/dashboard", category: "listings" },
   facilities_reactivated: { label: "Listings Reactivated", icon: <Sparkles className="h-5 w-5 text-emerald-500" />, route: "/provider/listings", category: "listings" },
   facilities_suspended: { label: "Listings Paused", icon: warnIcon, route: "/provider/listings", category: "listings" },
+  // Facility-claim decisions made by an Admin in the claims-review panel.
+  // Both route to the claim-status page where the provider sees the outcome
+  // (approved → ownership transferred; rejected → reason / next steps).
+  claim_approved: { label: "Claim Approved", icon: shieldIcon, route: "/provider/claims", category: "listings" },
+  claim_rejected: { label: "Claim Not Approved", icon: errIcon, route: "/provider/claims", category: "listings" },
 
   // ─── Marketing / placements ─────────────────────────────────────────
   featured_activated: { label: "Featured", icon: <Sparkles className="h-5 w-5 text-amber-500" />, route: "/provider/marketing/featured", category: "placements" },

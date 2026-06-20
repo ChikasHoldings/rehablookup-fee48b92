@@ -36,7 +36,7 @@ function generatePasswordResetEmail(firstName: string, tempPassword: string, log
     <tr>
       <td align="center">
         <table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; width: 100%;">
-          
+
           <!-- Header -->
           <tr>
             <td style="background: linear-gradient(135deg, hsl(217, 54%, 23%) 0%, hsl(217, 41%, 35%) 100%); padding: 32px; border-radius: 12px 12px 0 0;">
@@ -52,19 +52,19 @@ function generatePasswordResetEmail(firstName: string, tempPassword: string, log
               </table>
             </td>
           </tr>
-          
+
           <!-- Content -->
           <tr>
             <td style="background: hsl(0, 0%, 100%); padding: 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; border-left: 1px solid hsl(220, 13%, 91%); border-right: 1px solid hsl(220, 13%, 91%);">
-              
+
               <p style="margin: 0 0 20px 0; color: hsl(215, 19%, 35%); font-size: 16px; line-height: 1.6;">
                 Hello ${firstName},
               </p>
-              
+
               <p style="margin: 0 0 24px 0; color: hsl(215, 19%, 35%); font-size: 16px; line-height: 1.6;">
                 Your admin password has been reset. Here is your new temporary password:
               </p>
-              
+
               <!-- Password Box -->
               <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background: hsl(210, 20%, 98%); border: 1px solid hsl(220, 13%, 91%); border-radius: 8px; margin-bottom: 24px;">
                 <tr>
@@ -75,7 +75,7 @@ function generatePasswordResetEmail(firstName: string, tempPassword: string, log
                   </td>
                 </tr>
               </table>
-              
+
               <!-- Warning -->
               <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background: hsl(45, 93%, 95%); border: 1px solid hsl(45, 93%, 75%); border-radius: 8px; margin-bottom: 24px;">
                 <tr>
@@ -86,7 +86,7 @@ function generatePasswordResetEmail(firstName: string, tempPassword: string, log
                   </td>
                 </tr>
               </table>
-              
+
               <!-- CTA Button -->
               <table width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
@@ -97,10 +97,10 @@ function generatePasswordResetEmail(firstName: string, tempPassword: string, log
                   </td>
                 </tr>
               </table>
-              
+
             </td>
           </tr>
-          
+
           <!-- Footer -->
           <tr>
             <td style="background: hsl(217, 54%, 23%); padding: 32px; border-radius: 0 0 12px 12px;">
@@ -117,7 +117,7 @@ function generatePasswordResetEmail(firstName: string, tempPassword: string, log
               </table>
             </td>
           </tr>
-          
+
         </table>
       </td>
     </tr>
@@ -140,7 +140,7 @@ function generateInvitationEmail(displayName: string, email: string, tempPasswor
     <tr>
       <td align="center">
         <table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; width: 100%;">
-          
+
           <!-- Header -->
           <tr>
             <td style="background: linear-gradient(135deg, hsl(217, 54%, 23%) 0%, hsl(217, 41%, 35%) 100%); padding: 32px; border-radius: 12px 12px 0 0;">
@@ -156,19 +156,19 @@ function generateInvitationEmail(displayName: string, email: string, tempPasswor
               </table>
             </td>
           </tr>
-          
+
           <!-- Content -->
           <tr>
             <td style="background: hsl(0, 0%, 100%); padding: 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; border-left: 1px solid hsl(220, 13%, 91%); border-right: 1px solid hsl(220, 13%, 91%);">
-              
+
               <p style="margin: 0 0 20px 0; color: hsl(215, 19%, 35%); font-size: 16px; line-height: 1.6;">
                 Hello ${displayName},
               </p>
-              
+
               <p style="margin: 0 0 24px 0; color: hsl(215, 19%, 35%); font-size: 16px; line-height: 1.6;">
                 Your invitation to the RehabLookup Admin Panel has been resent. Here are your new login credentials:
               </p>
-              
+
               <!-- Credentials Box -->
               <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background: hsl(210, 20%, 98%); border: 1px solid hsl(220, 13%, 91%); border-radius: 8px; margin-bottom: 24px;">
                 <tr>
@@ -190,7 +190,7 @@ function generateInvitationEmail(displayName: string, email: string, tempPasswor
                   </td>
                 </tr>
               </table>
-              
+
               <!-- Warning -->
               <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background: hsl(45, 93%, 95%); border: 1px solid hsl(45, 93%, 75%); border-radius: 8px; margin-bottom: 24px;">
                 <tr>
@@ -206,7 +206,7 @@ function generateInvitationEmail(displayName: string, email: string, tempPasswor
                   </td>
                 </tr>
               </table>
-              
+
               <!-- CTA Button -->
               <table width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
@@ -217,10 +217,10 @@ function generateInvitationEmail(displayName: string, email: string, tempPasswor
                   </td>
                 </tr>
               </table>
-              
+
             </td>
           </tr>
-          
+
           <!-- Footer -->
           <tr>
             <td style="background: hsl(217, 54%, 23%); padding: 32px; border-radius: 0 0 12px 12px;">
@@ -237,7 +237,7 @@ function generateInvitationEmail(displayName: string, email: string, tempPasswor
               </table>
             </td>
           </tr>
-          
+
         </table>
       </td>
     </tr>
@@ -267,7 +267,7 @@ Deno.serve(async (req) => {
 
     const token = authHeader.replace("Bearer ", "");
     const { data: { user: requestingUser }, error: authError } = await supabase.auth.getUser(token);
-    
+
     if (authError || !requestingUser) {
       throw new Error("Unauthorized");
     }
@@ -362,15 +362,17 @@ Deno.serve(async (req) => {
     switch (action) {
       case "suspend": {
         // Update admin profile status
-        await supabase
+        const { error: suspendProfileErr } = await supabase
           .from("admin_user_profiles")
           .update({ status: "suspended" })
           .eq("user_id", targetUserId);
+        if (suspendProfileErr) throw new Error(`Failed to suspend user: ${suspendProfileErr.message}`);
 
         // Disable user in auth (ban)
-        await supabase.auth.admin.updateUserById(targetUserId, {
+        const { error: banErr } = await supabase.auth.admin.updateUserById(targetUserId, {
           ban_duration: "876000h", // ~100 years
         });
+        if (banErr) throw new Error(`Failed to disable user session: ${banErr.message}`);
 
         // Log action
         await supabase.from("admin_audit_log").insert({
@@ -387,15 +389,17 @@ Deno.serve(async (req) => {
 
       case "unsuspend": {
         // Update admin profile status
-        await supabase
+        const { error: unsuspendProfileErr } = await supabase
           .from("admin_user_profiles")
           .update({ status: "active" })
           .eq("user_id", targetUserId);
+        if (unsuspendProfileErr) throw new Error(`Failed to unsuspend user: ${unsuspendProfileErr.message}`);
 
         // Unban user
-        await supabase.auth.admin.updateUserById(targetUserId, {
+        const { error: unbanErr } = await supabase.auth.admin.updateUserById(targetUserId, {
           ban_duration: "none",
         });
+        if (unbanErr) throw new Error(`Failed to restore user session: ${unbanErr.message}`);
 
         // Log action
         await supabase.from("admin_audit_log").insert({
@@ -448,44 +452,39 @@ Deno.serve(async (req) => {
           }
         }
 
-        // Delete from admin_user_permissions
-        await supabase
-          .from("admin_user_permissions")
-          .delete()
-          .eq("user_id", targetUserId);
+        // Delete dependent rows, then the auth user LAST. Every error is
+        // captured and thrown so a partial deletion can't report false
+        // success. Deletes are idempotent (delete-where-user_id), so a retry
+        // after a mid-cascade failure safely re-runs the earlier steps; doing
+        // the auth delete last keeps the account recoverable if a child delete
+        // fails.
+        const { error: permDelErr } = await supabase
+          .from("admin_user_permissions").delete().eq("user_id", targetUserId);
+        if (permDelErr) throw new Error(`Failed to delete admin permissions: ${permDelErr.message}`);
 
-        // Delete from admin_user_profiles
-        await supabase
-          .from("admin_user_profiles")
-          .delete()
-          .eq("user_id", targetUserId);
+        const { error: adminProfDelErr } = await supabase
+          .from("admin_user_profiles").delete().eq("user_id", targetUserId);
+        if (adminProfDelErr) throw new Error(`Failed to delete admin profile: ${adminProfDelErr.message}`);
 
-        // Delete from admin_user_notifications
-        await supabase
-          .from("admin_user_notifications")
-          .delete()
-          .eq("user_id", targetUserId);
+        const { error: notifDelErr } = await supabase
+          .from("admin_user_notifications").delete().eq("user_id", targetUserId);
+        if (notifDelErr) throw new Error(`Failed to delete admin notifications: ${notifDelErr.message}`);
 
-        // Delete from profiles table
-        await supabase
-          .from("profiles")
-          .delete()
-          .eq("user_id", targetUserId);
+        const { error: profDelErr } = await supabase
+          .from("profiles").delete().eq("user_id", targetUserId);
+        if (profDelErr) throw new Error(`Failed to delete profile: ${profDelErr.message}`);
 
-        // Delete account activity log entries
-        await supabase
-          .from("account_activity_log")
-          .delete()
-          .eq("user_id", targetUserId);
+        const { error: activityDelErr } = await supabase
+          .from("account_activity_log").delete().eq("user_id", targetUserId);
+        if (activityDelErr) throw new Error(`Failed to delete activity log: ${activityDelErr.message}`);
 
-        // Delete roles
-        await supabase
-          .from("user_roles")
-          .delete()
-          .eq("user_id", targetUserId);
+        const { error: rolesDelErr } = await supabase
+          .from("user_roles").delete().eq("user_id", targetUserId);
+        if (rolesDelErr) throw new Error(`Failed to delete user roles: ${rolesDelErr.message}`);
 
-        // Delete the user from auth
-        await supabase.auth.admin.deleteUser(targetUserId);
+        // Delete the user from auth (last — dependent rows are already gone)
+        const { error: authDelErr } = await supabase.auth.admin.deleteUser(targetUserId);
+        if (authDelErr) throw new Error(`Failed to delete auth user: ${authDelErr.message}`);
 
         // Log action
         await supabase.from("admin_audit_log").insert({
@@ -700,9 +699,10 @@ Deno.serve(async (req) => {
         tempPasswordExpiry.setHours(tempPasswordExpiry.getHours() + 72);
 
         // Update password in auth
-        await supabase.auth.admin.updateUserById(targetUserId, {
+        const { error: resendPwdErr } = await supabase.auth.admin.updateUserById(targetUserId, {
           password: tempPassword,
         });
+        if (resendPwdErr) throw new Error(`Failed to set temporary password: ${resendPwdErr.message}`);
 
         // Update expiry in admin profile
         await supabase
@@ -738,8 +738,9 @@ Deno.serve(async (req) => {
           details: { email: targetProfile?.email },
         });
 
+        // SECURITY: deliver the temp password to the target via email only —
+        // do not return it in the response body.
         result.message = "Invitation resent successfully";
-        result.tempPassword = tempPassword;
         break;
       }
 
@@ -754,12 +755,13 @@ Deno.serve(async (req) => {
         const newMfaSkip = !(adminProfile?.mfa_skip || false);
 
         // Update mfa_skip
-        await supabase
+        const { error: mfaSkipErr } = await supabase
           .from("admin_user_profiles")
           .upsert({
             user_id: targetUserId,
             mfa_skip: newMfaSkip,
           }, { onConflict: "user_id" });
+        if (mfaSkipErr) throw new Error(`Failed to update 2FA enforcement: ${mfaSkipErr.message}`);
 
         // Log action
         await supabase.from("admin_audit_log").insert({

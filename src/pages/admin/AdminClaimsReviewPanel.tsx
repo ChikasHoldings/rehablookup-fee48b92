@@ -360,6 +360,30 @@ function AdminClaimsReviewPanel() {
       console.warn("[AdminClaims] audit log write failed", auditErr);
     }
 
+    // 3b. In-app provider notification mirroring the decision into the
+    //     provider's bell (they also get an email via the side-effect below).
+    //     Best-effort: the claim decision is already committed, so a
+    //     notification failure must never surface as a decision failure.
+    //     Only the terminal approve/reject decisions are mirrored.
+    if (toStatus === "approved" || toStatus === "rejected") {
+      try {
+        const approved = toStatus === "approved";
+        const facilityName = claim.facilities?.name ?? "your facility";
+        await supabase.rpc("create_provider_notification", {
+          p_user_id: claim.claimant_user_id,
+          p_facility_id: claim.facility_id,
+          p_type: approved ? "claim_approved" : "claim_rejected",
+          p_title: approved ? "Facility claim approved" : "Facility claim not approved",
+          p_message: approved
+            ? `Your claim for ${facilityName} has been approved — you now manage this listing.`
+            : `Your claim for ${facilityName} was not approved. Open your claim to see the reason and next steps.`,
+          p_metadata: { link: "/provider/claims", claim_id: claim.id },
+        });
+      } catch (notifyErr) {
+        console.warn("[AdminClaims] in-app notification failed", notifyErr);
+      }
+    }
+
     // 4. Side-effect email. Caller chooses whether to surface a banner
     //    when emailSent === false so the admin can manually resend.
     if (sendEmailFn) {

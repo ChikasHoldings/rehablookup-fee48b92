@@ -556,6 +556,30 @@ export default function AdminProviders() {
         console.warn("[AdminProviders] audit log write failed", auditError);
       }
 
+      // 4. In-app provider notification for admin-driven lifecycle changes.
+      //    Suspend/reactivate are admin-only actions the provider can't see
+      //    elsewhere, so mirror them into the provider's in-app bell (they
+      //    already get email for some flows). Best-effort: the facility write
+      //    is already committed, so a notification failure must never surface
+      //    as an update failure. Skipped for unclaimed rows (no owner to ping).
+      if ((actionType === "suspended" || actionType === "reactivated") && facility.user_id) {
+        try {
+          const suspended = actionType === "suspended";
+          await supabase.rpc("create_provider_notification", {
+            p_user_id: facility.user_id,
+            p_facility_id: id,
+            p_type: suspended ? "facilities_suspended" : "facilities_reactivated",
+            p_title: suspended ? "Listing paused" : "Listing reactivated",
+            p_message: suspended
+              ? `${facility.name} has been paused by our team and is temporarily hidden from search. Reply to our team if you have questions.`
+              : `${facility.name} has been reactivated and is live in search again.`,
+            p_metadata: { link: "/provider/listings" },
+          });
+        } catch (notifyErr) {
+          console.warn("[AdminProviders] in-app notification failed", notifyErr);
+        }
+      }
+
       return { approvalEmailSent };
     },
     onSuccess: (result) => {
