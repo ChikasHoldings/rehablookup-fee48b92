@@ -277,7 +277,7 @@ export default function AdminProviders() {
 
     const proChannel = supabase
       .channel(`admin-pro-subscriptions-${Math.random().toString(36).slice(2,8)}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "pro_subscriptions" }, () => {
+      .on("postgres_changes", { event: "*", schema: "public", table: "facility_subscriptions" }, () => {
         queryClient.invalidateQueries({ queryKey: ["admin-pro-subscriptions"] });
       })
       .subscribe();
@@ -316,7 +316,7 @@ export default function AdminProviders() {
           supabase.from("facilities").select("id", { count: "exact", head: true }).eq("status", "approved").neq("suspended", true),
           supabase.from("facilities").select("id", { count: "exact", head: true }).eq("status", "pending"),
           supabase.from("facilities").select("id", { count: "exact", head: true }).eq("suspended", true),
-          supabase.from("facility_subscriptions").select("id", { count: "exact", head: true }).eq("status", "active"),
+          supabase.from("facility_subscriptions").select("id", { count: "exact", head: true }).in("status", ["active", "past_due"]),
           supabase.from("facilities").select("id", { count: "exact", head: true }).eq("concierge_network_opted_in", true),
           supabase.from("facilities").select("id", { count: "exact", head: true }).eq("data_source", "samhsa_import"),
           supabase.from("facilities").select("id", { count: "exact", head: true }).is("user_id", null),
@@ -349,10 +349,13 @@ export default function AdminProviders() {
   const { data: proSubscriptions } = useQuery({
     queryKey: ["admin-pro-subscriptions"],
     queryFn: async () => {
+      // Grace-aware: include past_due so dunning Pro providers (still
+      // entitled per has_active_pro) keep their badge and stay findable in
+      // the admin Pro view — that cohort is exactly who needs billing support.
       const { data } = await supabase
         .from("facility_subscriptions")
         .select("id, facility_id, status, current_period_end, price_cents, created_at")
-        .eq("status", "active");
+        .in("status", ["active", "past_due"]);
       
       const map: Record<string, ProSubscription> = {};
       data?.forEach(sub => {

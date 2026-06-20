@@ -697,7 +697,10 @@ export function SubscriptionDetailModal({
           </div>
 
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={manageMutation.isPending}>Cancel</AlertDialogCancel>
+            {/* "Never mind" rather than "Cancel": this dialog also confirms
+                subscription *cancellation*, where a "Cancel" dismiss button
+                sitting next to "Confirm" is dangerously ambiguous. */}
+            <AlertDialogCancel disabled={manageMutation.isPending}>Never mind</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmActionHandler}
               disabled={manageMutation.isPending}

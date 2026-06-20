@@ -343,7 +343,7 @@ export function PlanSettingsTab() {
                 <span className="text-2xl font-bold">Free</span>
               </div>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>• {PLAN_DETAILS.free.location_limit} facility listing</li>
+                <li>• Unlimited facility listings</li>
                 <li>• Family contact form — full lead details</li>
                 <li>• Up to 5 photos</li>
                 <li>• No per-lead fees</li>
@@ -357,7 +357,7 @@ export function PlanSettingsTab() {
                 <span className="text-2xl font-bold">{PLAN_DETAILS.pro.price}<span className="text-sm font-normal">{PLAN_DETAILS.pro.period}</span></span>
               </div>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>• Up to {PLAN_DETAILS.pro.location_limit} facility listings</li>
+                <li>• Unlimited facility listings</li>
                 <li>• Verified badge + lead analytics</li>
                 <li>• Priority placement (+50 ranking)</li>
                 <li>• 10 photos + 1 facility video</li>

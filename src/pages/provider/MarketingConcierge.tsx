@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, AlertCircle } from "lucide-react";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { useFacilitySubscription } from "@/hooks/useFacilitySubscription";
+import { isActiveProRow } from "@/lib/proAccess";
 import { ConciergeMarketingDetail } from "@/components/provider/marketing/ConciergeMarketingDetail";
 import { ConciergeManagementPanel } from "@/components/provider/marketing/ConciergeManagementPanel";
 import { ConciergeAnalyticsWidget } from "@/components/provider/marketing/ConciergeAnalyticsWidget";
@@ -105,7 +106,7 @@ export default function MarketingConcierge() {
     );
   }
 
-  const isPro = subscription?.tier === "pro" && subscription?.status === "active";
+  const isPro = isActiveProRow(subscription);
   const hasConcierge = subscription?.has_concierge_partner === true;
   // The Concierge add-on bills independently of Pro — use its own period end,
   // falling back to the Pro period for rows not yet backfilled by the webhook.

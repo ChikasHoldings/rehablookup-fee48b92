@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, AlertCircle } from "lucide-react";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { useFacilitySubscription } from "@/hooks/useFacilitySubscription";
+import { isActiveProRow } from "@/lib/proAccess";
 import { FeaturedMarketingDetail } from "@/components/provider/marketing/FeaturedMarketingDetail";
 import { FeaturedManagementPanel } from "@/components/provider/marketing/FeaturedManagementPanel";
 import { FeaturedAnalyticsWidget } from "@/components/provider/FeaturedAnalyticsWidget";
@@ -103,7 +104,7 @@ export default function MarketingFeatured() {
     );
   }
 
-  const isPro = subscription?.tier === "pro" && subscription?.status === "active";
+  const isPro = isActiveProRow(subscription);
   const hasFeatured = subscription?.has_featured === true;
   // Concierge Partner is the mutually-exclusive upgrade that already INCLUDES
   // Featured exposure (and is managed on the Concierge page), so a Concierge

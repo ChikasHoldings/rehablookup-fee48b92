@@ -507,7 +507,7 @@ For facilities wanting maximum exposure:
 - **Priority placement** on city / state pages (+50 ranking boost)
 - **10 photos + 1 facility video**
 - **Marketing Hub** unlocked (Featured + Concierge add-ons)
-- **Up to 5 facility listings** under one account
+- **Unlimited facility listings** under one account
 - **Embed badge** for your website
 
 Cancel anytime from the billing page.

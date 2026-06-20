@@ -77,7 +77,9 @@ export const TAB_FILTERS: Record<AdminProvidersTab, TabFilter> = {
     const { data } = await supabase
       .from("facility_subscriptions")
       .select("facility_id")
-      .eq("status", "active");
+      // Grace-aware: past_due providers are still entitled (has_active_pro)
+      // and belong in the admin Pro tab so they can be supported through dunning.
+      .in("status", ["active", "past_due"]);
     const ids = (data || []).map((r: { facility_id: string }) => r.facility_id);
     if (!ids.length) return null;
     let q = supabase

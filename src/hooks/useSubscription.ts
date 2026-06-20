@@ -112,7 +112,7 @@ export const PLAN_DETAILS = {
       "+50 ranking-score boost",
       "10 photos + 1 facility video",
       "Marketing Hub (Featured + Concierge add-ons)",
-      "Up to 5 facility listings",
+      "Unlimited facility listings",
     ],
     // Stripe price/product ids are read from STRIPE_PRICE_PRO_ANNUAL
     // at runtime (see scripts/stripe-setup-monetization.ts). Static
