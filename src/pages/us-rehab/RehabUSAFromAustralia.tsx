@@ -19,7 +19,7 @@ export default function RehabUSAFromAustralia() {
     <Layout>
       <SEO
         title="US Rehab for Australians | American Addiction Treatment from Australia"
-        description="Australian patients seeking addiction treatment in America. Access cutting-edge US programs, luxury facilities, and immediate admission. Complete confidentiality guaranteed."
+        description="Australian patients seeking addiction treatment in America. Access leading US programs, luxury facilities, and fast admissions, with confidential support every step of the way."
         canonical="/us-rehab/australian-patients"
         keywords={["US rehab from Australia", "American rehab Australians", "addiction treatment USA from Australia", "luxury rehab America Australian"]}
         structuredData={{

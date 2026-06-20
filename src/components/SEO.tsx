@@ -608,11 +608,16 @@ export function generateLocalBusinessSchema(facility: {
     ],
     numberOfRooms: bedCountNum,
     audience,
-    ...(facility.rating && {
+    // Only emit AggregateRating with a real review count (>=1). Emitting
+    // reviewCount:0 is invalid per Google's rating guidelines (and the
+    // project's own check-aggregate-rating validator) and can trigger a
+    // structured-data penalty; it also must mirror the visible star badge,
+    // which only renders when reviewCount > 0.
+    ...(facility.rating && facility.reviewCount && facility.reviewCount > 0 && {
       aggregateRating: {
         "@type": "AggregateRating",
         ratingValue: facility.rating,
-        reviewCount: facility.reviewCount || 0,
+        reviewCount: facility.reviewCount,
         bestRating: 5,
         worstRating: 1,
       },

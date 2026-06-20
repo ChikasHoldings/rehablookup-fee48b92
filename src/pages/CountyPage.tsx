@@ -245,7 +245,7 @@ export default function CountyPage() {
               compact
             />
             <LocationStatTile
-              label={countyFacilities.length === 1 ? "Center" : "Centers"}
+              label={isStateFallback ? "Statewide" : countyFacilities.length === 1 ? "Center" : "Centers"}
               value={isLoading ? "—" : `${countyFacilities.length}+`}
               icon={Building2}
               compact

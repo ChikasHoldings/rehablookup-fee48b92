@@ -54,7 +54,10 @@ const MUST_BLOCK = [
 // Curated canonical hubs that must be in the sitemap.
 const REQUIRED_HUBS = [
   "/",
-  "/rehab-centers",
+  // NOTE: /rehab-centers is a 301 → /search-results (vercel.json) — a redirect
+  // SOURCE, so it must NOT ship in the sitemap (listing it produces a GSC
+  // "Page with redirect" exclusion). validate-sitemap-robots.mjs already
+  // dropped it from its hub list for the same reason; keep the two in sync.
   "/treatment-types",
   "/locations",
   "/insurance",

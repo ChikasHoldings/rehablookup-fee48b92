@@ -97,12 +97,6 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://rehablookup.com/emergency-rehab-near-me/nevada/las-vegas</loc>
-    <lastmod>2026-05-20</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
     <loc>https://rehablookup.com/faith-based-rehab-centers</loc>
     <lastmod>2026-05-20</lastmod>
     <changefreq>monthly</changefreq>
@@ -176,12 +170,6 @@
   </url>
   <url>
     <loc>https://rehablookup.com/mat-clinic-near-me/oregon/portland</loc>
-    <lastmod>2026-05-20</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://rehablookup.com/medicare-rehab-near-me/florida/miami</loc>
     <lastmod>2026-05-20</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
@@ -1541,18 +1529,6 @@
        only via direct URL hits. /search-results was excluded
        intentionally (page emits <meta name="robots" content="noindex">
        so it must not appear in sitemap). -->
-  <url>
-    <loc>https://rehablookup.com/outpatient-rehab</loc>
-    <lastmod>2026-05-23</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://rehablookup.com/rehab-vs-detox</loc>
-    <lastmod>2026-05-23</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
   <url>
     <loc>https://rehablookup.com/rehab-centers/georgia/county/cherokee-ga</loc>
     <lastmod>2026-05-23</lastmod>

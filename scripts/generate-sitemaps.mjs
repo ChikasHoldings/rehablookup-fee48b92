@@ -10,21 +10,41 @@ import { extractSpaRoutes } from "./lib/extract-spa-routes.mjs";
 // follows the loc, hits the 301, drops the source URL from the index,
 // and reports it as broken because the sitemap promised it. Sitemaps
 // must contain only canonical 200 targets.
-const REDIRECT_SOURCES = (() => {
+const { REDIRECT_SOURCES, REDIRECT_SOURCE_PATTERNS } = (() => {
+  const set = new Set();
+  const patterns = [];
   try {
     const here = path.dirname(fileURLToPath(import.meta.url));
     const vc = JSON.parse(readFileSync(path.resolve(here, "../vercel.json"), "utf8"));
-    const set = new Set();
     for (const r of vc.redirects || []) {
-      if (r.source && !r.source.includes(":") && !r.source.includes("*")) {
-        set.add(r.source);
+      if (!r.source) continue;
+      const src = r.source.split("?")[0].toLowerCase().replace(/\/$/, "") || "/";
+      if (src.includes(":") || src.includes("*")) {
+        // Parameterized/wildcard sources (e.g. `/alcohol-rehab-in-:city`,
+        // `/foo/*`) ALSO produce a 301 for every concrete URL they match.
+        // Previously only literal sources were stripped, so thousands of
+        // city-pattern URLs (each 301 → /search-results) shipped in the
+        // sitemap and produced GSC "Page with redirect" exclusions at scale.
+        // Compile to a regex using the same transform the SEO validators use.
+        const rx = "^" + src
+          .replace(/[.+^${}()|[\]\\?]/g, "\\$&")
+          .replace(/:[A-Za-z]\w*/g, "[^/]+")
+          .replace(/\*/g, ".*") + "$";
+        patterns.push(new RegExp(rx));
+      } else {
+        set.add(src);
       }
     }
-    return set;
   } catch {
-    return new Set();
+    /* fall through to empty matchers */
   }
+  return { REDIRECT_SOURCES: set, REDIRECT_SOURCE_PATTERNS: patterns };
 })();
+
+// A normalized (lowercase, no trailing slash) path is a redirect source if it
+// matches a literal source OR any parameterized/wildcard source pattern.
+const isRedirectSource = (normPath) =>
+  REDIRECT_SOURCES.has(normPath) || REDIRECT_SOURCE_PATTERNS.some((rx) => rx.test(normPath));
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -175,7 +195,7 @@ function filterSitemapXml(xml, prerenderedPaths, stats, spaRoutes) {
     // exclusions because Google follows the 301 and de-indexes the loc.
     // The redirect target is the canonical URL; if it's a real page it'll
     // ship via its own sitemap entry independently.
-    if (REDIRECT_SOURCES.has(norm)) {
+    if (isRedirectSource(norm)) {
       if (droppedSamples.length < 5) droppedSamples.push(`${loc} (redirect-source)`);
       return "";
     }
