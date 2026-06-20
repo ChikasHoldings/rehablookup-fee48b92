@@ -192,8 +192,15 @@ Deno.serve(async (req) => {
       throw new Error("Inquiry not found");
     }
 
-    // Guard: don't send introductions for closed/placed cases
-    if (inquiry.status === 'closed' || inquiry.status === 'placed') {
+    // Guard: don't send introductions once the seeker has already committed to
+    // a facility (seeker_selected and every downstream admission state) or the
+    // case is closed. ('placed' was never a canonical status — the real
+    // post-selection states are seeker_selected → admission_in_progress →
+    // admitted → billed → completed, per validate_concierge_status_transition.)
+    const NON_INTRODUCIBLE_STATUSES = [
+      'seeker_selected', 'admission_in_progress', 'admitted', 'billed', 'completed', 'closed',
+    ];
+    if (NON_INTRODUCIBLE_STATUSES.includes(inquiry.status)) {
       throw new Error(`Cannot send introduction: case is ${inquiry.status}`);
     }
 

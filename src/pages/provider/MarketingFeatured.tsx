@@ -192,7 +192,9 @@ export default function MarketingFeatured() {
                 treatment-type and insurance pages you match. <strong>Flat-fee
                 ad inventory</strong> — no bidding wars, no per-click charges,
                 calls go directly to your admissions line. For national +
-                homepage exposure, upgrade to Concierge Partner.
+                homepage exposure, upgrade to Concierge Partner.{" "}
+                <strong>Featured is a paid add-on</strong> (billed per location)
+                that requires an active Pro plan — Pro is the first step.
               </>
             }
             bullets={[
@@ -200,7 +202,7 @@ export default function MarketingFeatured() {
               "Pick which placements you want from a live availability list",
               "Waitlist when a geo fills — never a price hike for existing subscribers",
             ]}
-            ctaLabel="Upgrade to Pro to unlock"
+            ctaLabel="Upgrade to Pro to get started"
             ctaTo="/provider/billing?upgrade=pro"
             secondaryAction={{ label: "See full pricing", to: "/for-providers" }}
           >

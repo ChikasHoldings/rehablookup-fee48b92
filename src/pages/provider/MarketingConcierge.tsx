@@ -180,7 +180,8 @@ export default function MarketingConcierge() {
                 clinical criteria first (<strong>never by who paid us</strong>)
                 and Concierge Partners get a visual badge so the advisor
                 naturally mentions you. Flat subscription; never per-call or
-                per-admission.
+                per-admission. <strong>Concierge Partner is a paid add-on</strong>{" "}
+                that requires an active Pro plan — Pro is the first step.
               </>
             }
             bullets={[
@@ -189,7 +190,7 @@ export default function MarketingConcierge() {
               "Capped at 3–5 facilities per major city (waitlist when full)",
               "Calls go directly to your admissions line — we never intermediate",
             ]}
-            ctaLabel="Upgrade to Pro to unlock"
+            ctaLabel="Upgrade to Pro to get started"
             ctaTo="/provider/billing?upgrade=pro"
             secondaryAction={{ label: "See full pricing", to: "/for-providers" }}
           >

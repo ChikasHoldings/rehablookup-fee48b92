@@ -27,6 +27,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 import { z } from "https://esm.sh/zod@3.23.8?target=denonext";
+import { isBotUserAgent } from "../_shared/bot-detection.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -429,6 +430,12 @@ Deno.serve(async (req) => {
     .eq("active", true)
     .eq("placement_type", parsed.data.placement_type)
     .eq("placement_value", parsed.data.placement_value)
+    // Only publicly-listable facilities may appear as paid Featured. Admin
+    // suspension / un-approval does NOT cascade to featured_placements, so
+    // without this an active-subscription placement on a suspended or pending
+    // facility would still render in the paid rotation. The fallback path
+    // already requires approved+verified; this keeps the paid path honest too.
+    .eq("facilities.status", "approved")
     // Featured holders OR Concierge Partners (Concierge includes Featured
     // exposure + national/international). A canceled add-on drops out of
     // rotation immediately because the inner join + this filter reject it.
@@ -531,13 +538,18 @@ Deno.serve(async (req) => {
   // Skipped entirely when log_impressions=false (strip surface — the
   // client logs per-card via IntersectionObserver instead).
   if (parsed.data.log_impressions) {
-    const xf = req.headers.get("x-forwarded-for");
-    const ip = xf ? xf.split(",")[0]?.trim() : null;
-    const ipHash = await hashIp(ip);
     const userAgent = req.headers.get("user-agent")?.slice(0, 500) ?? null;
     const pagePath = parsed.data.page_path ?? null;
 
-    if (facilities.length > 0 && pagePath) {
+    // Skip impression logging for automated traffic (crawlers, prerender,
+    // monitoring) so bots can't inflate Featured impressions / CTR — parity
+    // with log-strip-impression + log-phone-click. The rotation response is
+    // still returned below, so bots/prerender keep rendering Featured content
+    // for SEO; we simply don't count their impression.
+    if (!isBotUserAgent(userAgent) && facilities.length > 0 && pagePath) {
+      const xf = req.headers.get("x-forwarded-for");
+      const ip = xf ? xf.split(",")[0]?.trim() : null;
+      const ipHash = await hashIp(ip);
       const impressionRows = facilities.map((f) => ({
         facility_id: f.facility_id,
         placement_type: parsed.data.placement_type,
