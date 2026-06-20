@@ -53,6 +53,41 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // ── Auth + facility ownership ────────────────────────────────────────
+    // This is the first half of the reply-email verification flow: it emails
+    // a 6-digit code to a caller-chosen address bound to a caller-chosen
+    // facilityId. Without an ownership check, an attacker could request a
+    // code (delivered to their OWN inbox) bound to a victim's facility, then
+    // verify it to hijack the facility's inbound lead replies — plus abuse
+    // it as an arbitrary RehabLookup-branded email sender. Require a valid
+    // session JWT and owner/manager rights on the facility before sending.
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: "Authentication required" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    const { data: authData, error: authErr } = await supabase.auth.getUser(
+      authHeader.replace(/^Bearer\s+/i, ""),
+    );
+    if (authErr || !authData?.user?.id) {
+      return new Response(
+        JSON.stringify({ error: "Invalid authentication" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    const { data: canEditFacility, error: ownErr } = await supabase.rpc(
+      "user_can_edit_facility",
+      { _facility_id: facilityId, _user_id: authData.user.id },
+    );
+    if (ownErr || canEditFacility !== true) {
+      return new Response(
+        JSON.stringify({ error: "You don't have access to this facility." }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
     const { count } = await supabase
       .from("reply_email_verification_codes")

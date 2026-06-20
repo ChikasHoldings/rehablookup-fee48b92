@@ -17,6 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
+import { useProviderFacilities } from "@/hooks/useProviderFacilities";
 import { useProStatus } from "@/hooks/useProStatus";
 import { ProgramsManagementSection } from "@/components/provider/listing/ProgramsManagementSection";
 import { AmenitiesManagementSection } from "@/components/provider/listing/AmenitiesManagementSection";
@@ -57,15 +58,29 @@ export default function EnhancedProfile() {
   const urlFacility = searchParams.get("facility");
   const urlFacilityIsValid = !!urlFacility && UUID_PATTERN.test(urlFacility);
   const facilityId = urlFacilityIsValid ? urlFacility : selectedFacility?.id;
+  const { facilities, isLoading: facilitiesLoading } = useProviderFacilities();
   const { data: proStatus } = useProStatus(facilityId);
   const isPro = proStatus?.isPro ?? false;
 
   const [activeTab, setActiveTab] = useState<Tab>("programs");
 
+  // Ownership guard. Unlike the main editor (MyListings strips a bogus
+  // ?edit=), this page took ?facility=<uuid> verbatim with no access check, so
+  // a hand-typed foreign id rendered a fully interactive Programs/Amenities/
+  // Media/Accreditation/Staff editor pointed at a facility the user can't edit.
+  // RLS rejects the reads/writes, but guard the URL too so we don't show a
+  // half-working editor. Mirrors MyListings: only bounce once the facility
+  // list has loaded and the id genuinely isn't accessible (owner OR team).
+  const ownsFacility = !!facilityId && facilities.some((f) => f.id === facilityId);
+
   if (!facilityId) {
     // No facility selected → bounce back to the listings page where the
     // facility selector lives. This mirrors the pattern used by the
     // other Pro provider pages (MarketingFeatured, MarketingConcierge).
+    return <Navigate to="/provider/listings" replace />;
+  }
+
+  if (!facilitiesLoading && facilities.length > 0 && !ownsFacility) {
     return <Navigate to="/provider/listings" replace />;
   }
 
