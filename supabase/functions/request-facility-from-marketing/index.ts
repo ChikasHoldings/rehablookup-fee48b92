@@ -130,6 +130,25 @@ Deno.serve(async (req) => {
 
     log(requestId, "INFO", "Lead created from marketing", { leadId: newLead.id, facilityId: body.facilityId });
 
+    // In-app provider notification so the owner gets a dashboard bell alert,
+    // not just an email (mirrors submit-qualified-lead's direct insert). Without
+    // this, a lead created from the marketing landing surfaced silently in the
+    // provider's inquiries queue. Best-effort — the lead is already committed.
+    if (facility.user_id) {
+      try {
+        await supabase.from("provider_notifications").insert({
+          user_id: facility.user_id,
+          facility_id: body.facilityId,
+          type: "new_lead",
+          title: "New inquiry",
+          message: `${marketingLead.first_name} requested information about ${facility.name}.`,
+          metadata: { link: "/provider/inquiries", lead_id: newLead.id, source: "marketing_landing" },
+        });
+      } catch (notifErr) {
+        log(requestId, "WARN", "Failed to insert provider notification", { error: String(notifErr) });
+      }
+    }
+
     // Update marketing lead to track requested facility
     const updatedRequested = [...(marketingLead.facilities_requested || []), body.facilityId];
     await supabase
@@ -210,19 +229,19 @@ function getFacilityNotificationEmail(firstName: string, facilityName: string): 
                       ${firstName[0]?.toUpperCase() || '?'}
                     </div>
                     <p style="margin: 0; text-align: center; font-size: 18px; font-weight: 600; color: #1e293b;">${firstName} is interested</p>
-                    <p style="margin: 8px 0 0 0; text-align: center; font-size: 13px; color: #64748b;">Contact info hidden until unlocked</p>
+                    <p style="margin: 8px 0 0 0; text-align: center; font-size: 13px; color: #64748b;">Full contact details are in your dashboard</p>
                   </td>
                 </tr>
               </table>
               
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #fef3c7; border: 2px solid #f59e0b; border-radius: 12px; margin-bottom: 24px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f0fdf4; border: 2px solid #16a34a; border-radius: 12px; margin-bottom: 24px;">
                 <tr>
                   <td style="padding: 20px; text-align: center;">
-                    <p style="margin: 0 0 16px 0; font-size: 14px; color: #78350f; line-height: 1.5;">
-                      Unlock this lead in your dashboard to view full contact details.
+                    <p style="margin: 0 0 16px 0; font-size: 14px; color: #166534; line-height: 1.5;">
+                      Open your dashboard to view the full contact details and respond.
                     </p>
                     <a href="https://rehablookup.com/provider/inquiries" style="display: inline-block; background: #1B365D; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: 600; font-size: 14px;">
-                      🔓 View in Dashboard
+                      View in Dashboard
                     </a>
                   </td>
                 </tr>

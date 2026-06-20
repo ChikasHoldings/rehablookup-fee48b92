@@ -90,7 +90,7 @@ Deno.serve(async (req) => {
     // Verify target facility exists + is approved
     const { data: targetFacility, error: facilityErr } = await adminClient
       .from("facilities")
-      .select("id, name, status")
+      .select("id, name, status, user_id")
       .eq("id", targetFacilityId)
       .maybeSingle();
     if (facilityErr) return json(500, { error: "Facility lookup failed", code: "facility_lookup_failed" });
@@ -173,6 +173,26 @@ Deno.serve(async (req) => {
     const reassigned = results.filter((r) => r.status === "reassigned").length;
     const skipped = results.filter((r) => r.status === "skipped").length;
     const errored = results.filter((r) => r.status === "error").length;
+
+    // Notify the receiving facility's owner that leads were moved into their
+    // queue — otherwise they appear silently with no signal. One summary
+    // notification for the batch (direct insert via the service-role client;
+    // create_provider_notification is admin-JWT-gated and can't be called with
+    // the service role). Best-effort: the reassignments are already committed.
+    if (reassigned > 0 && targetFacility.user_id) {
+      try {
+        await adminClient.from("provider_notifications").insert({
+          user_id: targetFacility.user_id,
+          facility_id: targetFacilityId,
+          type: "lead_redistributed",
+          title: reassigned === 1 ? "New lead assigned to you" : `${reassigned} leads assigned to you`,
+          message: `${reassigned} lead${reassigned === 1 ? "" : "s"} ${reassigned === 1 ? "was" : "were"} assigned to ${targetFacility.name}. Open your inquiries to respond.`,
+          metadata: { link: "/provider/inquiries", reassigned_count: reassigned, bulk: true },
+        });
+      } catch (notifyErr) {
+        console.warn(`[admin-bulk-reassign-leads] notification insert failed`, notifyErr);
+      }
+    }
 
     return json(200, {
       success: true,

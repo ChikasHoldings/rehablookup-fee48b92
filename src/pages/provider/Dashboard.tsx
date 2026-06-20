@@ -429,6 +429,23 @@ export default function ProviderDashboardPage() {
     return () => clearInterval(interval);
   }, [facilityId, queryClient]);
 
+  // Keep the open lead drawer in sync with refetched data. The drawer holds a
+  // snapshot (`selectedLead`); after an in-drawer status/snooze change
+  // invalidates ["recent-leads"], re-point the snapshot at the fresh row so the
+  // badge/dropdown/snooze panel update immediately instead of showing the old
+  // value until the drawer is closed and reopened. (Mirrors Inquiries.tsx.)
+  useEffect(() => {
+    if (!drawerOpen || !selectedLead) return;
+    const fresh = recentLeads.find((l) => l.id === selectedLead.id);
+    if (
+      fresh &&
+      (fresh.status !== selectedLead.status ||
+        fresh.snooze_until !== selectedLead.snooze_until)
+    ) {
+      setSelectedLead(fresh);
+    }
+  }, [recentLeads, drawerOpen, selectedLead]);
+
   const handleLeadClick = (lead: Lead) => {
     setSelectedLead(lead);
     setDrawerOpen(true);

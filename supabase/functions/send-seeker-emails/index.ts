@@ -73,6 +73,48 @@ Deno.serve(async (req) => {
     const { type, seekerId: bodySeekerId, email, metadata: bodyMetadata, leadId }: SeekerEmailRequest = await req.json();
     logStep("Received request", { type, seekerId: bodySeekerId, hasEmail: !!email, leadId });
 
+    // AUTHZ for the leadId-driven path (facility_contacted_you). This endpoint
+    // runs with the service-role key and derives the seeker recipient from the
+    // lead row, so without a caller check anyone could POST an arbitrary leadId
+    // to spam a known seeker AND poison the per-lead idempotency key (which
+    // would suppress the legitimate "a facility responded" notification later).
+    // Require the caller to either present the service-role key (trusted server
+    // callers) OR be able to READ the lead under RLS — i.e. the facility owner,
+    // a team member, an admin, or the seeker themself (leads_select_consolidated
+    // / leads_team_select). Other email types (welcome/digest/security/etc.) are
+    // unaffected.
+    if (leadId) {
+      const authHeader = req.headers.get("Authorization") || req.headers.get("authorization") || "";
+      const token = authHeader.replace(/^Bearer\s+/i, "");
+      const srk = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+      const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+      const isServiceCaller = token.length > 0 && token === srk;
+      if (!isServiceCaller) {
+        if (!token) {
+          return new Response(
+            JSON.stringify({ error: "Authentication required" }),
+            { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+        const userClient = createClient(supabaseUrl, anonKey, {
+          global: { headers: { Authorization: `Bearer ${token}` } },
+          auth: { persistSession: false },
+        });
+        const { data: visibleLead } = await userClient
+          .from("leads")
+          .select("id")
+          .eq("id", leadId)
+          .maybeSingle();
+        if (!visibleLead) {
+          logStep("Blocked unauthorized facility_contacted_you attempt", { leadId });
+          return new Response(
+            JSON.stringify({ error: "Not authorized for this lead" }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+      }
+    }
+
     // Allow callers to pass `leadId` instead of seekerId+email+metadata.
     // Used by the facility_contacted_you flow (provider marks a lead as
     // contacted/scheduled/etc in /provider/leads → InquiryDetailPanel).

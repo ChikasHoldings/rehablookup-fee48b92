@@ -207,6 +207,30 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
           },
         });
       }
+
+      // Notify the RECEIVING facility's owner. Without this the reassigned lead
+      // lands silently in their inquiries queue (visible via RLS) with no signal
+      // — and the UI promised "the provider will be notified". Best-effort: the
+      // reassignment is already committed; a notification failure must not undo it.
+      try {
+        const { data: destFacility } = await supabase
+          .from("facilities")
+          .select("user_id, name")
+          .eq("id", facilityId)
+          .maybeSingle();
+        if (destFacility?.user_id) {
+          await supabase.rpc("create_provider_notification", {
+            p_user_id: destFacility.user_id,
+            p_facility_id: facilityId,
+            p_type: "lead_redistributed",
+            p_title: "New lead assigned to you",
+            p_message: `A lead was assigned to ${destFacility.name ?? "your facility"}. Open your inquiries to respond.`,
+            p_metadata: { link: "/provider/inquiries", lead_id: lead.id, reassigned: true },
+          });
+        }
+      } catch (notifyErr) {
+        console.warn("[InquiryDetailModal] reassign notification failed", notifyErr);
+      }
     },
     onSuccess: () => {
       onLeadUpdated();

@@ -91,6 +91,35 @@ export const LEAD_TRANSITIONS: Record<LeadStatusValue, LeadStatusValue[]> = {
   expired: ["unlocked", "closed"],
 };
 
+/**
+ * Maps the provider RESPONSE axis (`leads.provider_response_status`:
+ * pending|contacted|responded|closed — what the Inquiries panel drives and
+ * what seeker "facility responded" emails key off) to the corresponding
+ * PIPELINE status (`leads.status` — what admin KPIs, the dashboard drawer, and
+ * provider analytics read).
+ *
+ * Used to forward-sync the pipeline axis when a provider acts on the Inquiries
+ * panel so the two surfaces stop disagreeing. Returns null when no pipeline
+ * change should occur ('pending' is a correction/no-op). The actual write is
+ * BEST-EFFORT and still gated by the DB `validate_lead_status_transition`
+ * trigger, which safely rejects terminal/backward transitions (e.g. a lead
+ * already 'converted'/'closed') — those rejections are ignored.
+ */
+export function responseStatusToLeadStatus(
+  responseStatus: string,
+): LeadStatusValue | null {
+  switch (responseStatus) {
+    case "contacted":
+      return "contacted";
+    case "responded":
+      return "responding";
+    case "closed":
+      return "closed";
+    default:
+      return null; // 'pending' or unknown → leave the pipeline status untouched
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Placement invoices
 // ─────────────────────────────────────────────────────────────────────────────
