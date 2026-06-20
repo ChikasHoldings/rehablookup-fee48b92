@@ -35,17 +35,27 @@ export function ProviderReviewsTab({ provider, providerFacilities }: ProviderRev
 
   const updateReviewStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      const { error } = await supabase
+      // Stamp who/when so this secondary moderation surface matches the
+      // hardened AdminReviews path, and check the row count so a concurrent
+      // delete / RLS denial doesn't surface as a false "Review updated".
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data, error } = await supabase
         .from("facility_reviews")
-        .update({ status })
-        .eq("id", id);
+        .update({
+          status,
+          reviewed_at: new Date().toISOString(),
+          reviewed_by: user?.id ?? null,
+        })
+        .eq("id", id)
+        .select("id");
       if (error) throw error;
+      if (!data || data.length === 0) throw new Error("Review not found or already removed.");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-provider-reviews"] });
       toast.success("Review updated");
     },
-    onError: () => toast.error("Failed to update review"),
+    onError: (err: Error) => toast.error(err?.message || "Failed to update review"),
   });
 
   const avgRating = reviews?.length ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1) : "—";

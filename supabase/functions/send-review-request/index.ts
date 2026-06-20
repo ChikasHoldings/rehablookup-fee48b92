@@ -254,41 +254,53 @@ Deno.serve(async (req) => {
       },
     );
 
-    // sendEmailWithRetry returns the Resend response on success — we
-    // need the message id so the resend-webhook can correlate open /
-    // click events later. Be defensive about the shape.
-    const resendId =
-      ((sendResult as { id?: string | null })?.id) ||
-      (sendResult as { data?: { id?: string } })?.data?.id ||
-      null;
+    // The shared sender returns { success, emailId, suppressed, error }. The
+    // previous code read `.id` / `.data.id` (shapes the sender never returns),
+    // so resendId was ALWAYS null → mark_review_request_sent never fired and
+    // every request was stuck "Pending" even after delivery, and the function
+    // returned ok:true even when the email was suppressed/failed → a false
+    // "request sent" toast with no recovery path. Decide on `success` and read
+    // the real `emailId`.
+    if (!sendResult.success) {
+      // The review_requests row exists, but the invitation email did NOT go
+      // out. Don't claim it was sent — tell the provider so they can follow up.
+      // sent_at stays null and the row shows as Pending in the history.
+      console.warn("[send-review-request] invite email not sent", {
+        request_id: requestPayload.request_id,
+        suppressed: sendResult.suppressed ?? false,
+        error: sendResult.error ?? null,
+      });
+      return json({
+        ok: false,
+        email_sent: false,
+        request_id: requestPayload.request_id,
+        suppressed: sendResult.suppressed === true,
+        message: sendResult.suppressed
+          ? "This recipient has opted out of emails, so no review invitation was sent."
+          : "We created the request, but couldn't send the invitation email. Please try again shortly.",
+      });
+    }
 
-    if (resendId) {
-      const { error: markError } = await adminClient.rpc(
-        "mark_review_request_sent",
-        { p_request_id: requestPayload.request_id, p_resend_id: resendId },
-      );
-      if (markError) {
-        // Logging only — the email already went out. The webhook
-        // tracker won't be able to correlate without resend_id, but
-        // sent_at remains unset which the provider UI handles.
-        console.warn(
-          "[send-review-request] mark_review_request_sent failed (email still sent):",
-          markError,
-        );
-      }
-    } else {
+    // Email sent — stamp sent_at (+ resend id for open/click correlation).
+    const resendId = sendResult.emailId ?? null;
+    const { error: markError } = await adminClient.rpc(
+      "mark_review_request_sent",
+      { p_request_id: requestPayload.request_id, p_resend_id: resendId },
+    );
+    if (markError) {
+      // Email already went out; only the sent_at/resend_id stamp failed.
       console.warn(
-        "[send-review-request] missing resend id in sendEmailWithRetry response — sent_at not set",
+        "[send-review-request] mark_review_request_sent failed (email still sent):",
+        markError,
       );
     }
 
-    // Also send the plain-text alternative — most Resend account
-    // configs add it from html automatically, but pass it explicitly
-    // for safety / spam scoring.
+    // The shared sender derives the text alternative; pass-through retained.
     void text;
 
     return json({
       ok: true,
+      email_sent: true,
       request_id: requestPayload.request_id,
       review_url: reviewUrl,
     });

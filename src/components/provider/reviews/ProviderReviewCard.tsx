@@ -280,7 +280,7 @@ export const ProviderReviewCard = memo(forwardRef<HTMLDivElement, ProviderReview
                     >
                       Cancel
                     </Button>
-                    <Button size="sm" onClick={handleSubmit} disabled={isSubmitting}>
+                    <Button size="sm" onClick={handleSubmit} disabled={isSubmitting || !responseText.trim()}>
                       {isSubmitting ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (

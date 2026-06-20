@@ -21,7 +21,10 @@ import { cn } from "@/lib/utils";
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const NAME_MIN = 1;
 const NAME_MAX = 80;
-const REVIEW_MAX = 4000;
+// Matches the validate_review_data trigger + submit_review_via_token RPC +
+// the logged-in seeker form, all capped at 2000. Previously 4000 here, which
+// let recipients type up to 4000 chars only to hard-fail at the DB trigger.
+const REVIEW_MAX = 2000;
 
 interface ValidPayload {
   state: "valid";

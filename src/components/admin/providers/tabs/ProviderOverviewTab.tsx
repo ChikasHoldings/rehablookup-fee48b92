@@ -95,10 +95,14 @@ export function ProviderOverviewTab({
   const { data: reviewCount } = useQuery({
     queryKey: ["admin-provider-review-count", provider.user_id, facilityIds],
     queryFn: async () => {
+      // Approved-only, matching the provider dashboard + every public surface.
+      // Counting all statuses inflated this KPI with pending/rejected/hidden
+      // reviews the provider never sees.
       const { count } = await supabase
         .from("facility_reviews")
         .select("id", { count: "exact", head: true })
-        .in("facility_id", facilityIds);
+        .in("facility_id", facilityIds)
+        .eq("status", "approved");
       return count || 0;
     },
   });

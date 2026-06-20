@@ -94,7 +94,7 @@ export function ReviewRequestDialog({
       });
       if (error) throw new Error(error.message || "Failed to send review request");
       if ((data as { error?: string })?.error) throw new Error((data as { error: string }).error);
-      return data as { ok: boolean; duplicate?: boolean; review_url?: string; message?: string };
+      return data as { ok: boolean; duplicate?: boolean; email_sent?: boolean; review_url?: string; message?: string };
     },
     onSuccess: (data) => {
       if (data.duplicate) {
@@ -103,6 +103,16 @@ export function ReviewRequestDialog({
           description:
             data.message ||
             "This recipient has a pending invitation from the last 24 hours. We won't send another email.",
+        });
+      } else if (data.ok === false || data.email_sent === false) {
+        // The request row was created, but the invitation email did not go out
+        // (suppressed recipient or send failure). Never claim it was sent.
+        toast({
+          title: "Request saved, but email not sent",
+          description:
+            data.message ||
+            "We couldn't send the invitation email. Please try again shortly.",
+          variant: "destructive",
         });
       } else {
         toast({

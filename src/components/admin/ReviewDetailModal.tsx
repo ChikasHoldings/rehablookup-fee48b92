@@ -101,7 +101,7 @@ export function ReviewDetailModal({ review, open, onOpenChange, onRefresh }: Rev
     // Stamp reviewed_by so the bulk path's audit and this single-row
     // path produce identical fields.
     const { data: { user } } = await supabase.auth.getUser();
-    const { error } = await supabase
+    const { data: updatedRows, error } = await supabase
       .from("facility_reviews")
       .update({
         status: newStatus,
@@ -109,12 +109,20 @@ export function ReviewDetailModal({ review, open, onOpenChange, onRefresh }: Rev
         reviewed_at: new Date().toISOString(),
         reviewed_by: user?.id ?? null,
       })
-      .eq("id", review.id);
+      .eq("id", review.id)
+      .select("id");
 
     setProcessing(false);
 
-    if (error) {
-      toast.error(`Failed to ${action} review: ${error.message}`);
+    // 0 rows + no error == the row was concurrently deleted or RLS rejected the
+    // write. Never claim success (and never write an audit-log entry / fire the
+    // seeker email) for a moderation that didn't land.
+    if (error || !updatedRows || updatedRows.length === 0) {
+      toast.error(
+        error
+          ? `Failed to ${action} review: ${error.message}`
+          : "Review not found or already deleted.",
+      );
       return;
     }
 
