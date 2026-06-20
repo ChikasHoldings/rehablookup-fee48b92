@@ -108,6 +108,18 @@ export async function resolveProviderPostLoginPath(
     };
   }
 
+  // Onboarding not finished. If the caller handed us an onboarding-scoped
+  // returnTo — e.g. a claim deep-link
+  // `/provider/onboarding?intent=claim&facility_slug=…` captured before the
+  // sign-in round-trip — honor it so the claim intent + target facility
+  // survive login. The bare wizard path would discard the query string and
+  // strand the user at find_or_list with no facility selected. returnTo is
+  // already safeReturnTo-sanitized at the Login boundary; we additionally
+  // require it to be an onboarding path so a stale dashboard/returnTo can
+  // never short-circuit the unfinished wizard.
+  if (returnTo && isOnboardingPath(returnTo)) {
+    return { path: returnTo, reason: "onboarding_incomplete", onboardingStep };
+  }
   return { path: ONBOARDING_PATH, reason: "onboarding_incomplete", onboardingStep };
 }
 

@@ -431,13 +431,19 @@ export default function ClaimWizard({ embedded = false, slugProp, onCancel }: Cl
 
   const wizardBody = (
     <>
-      <WizardStepper
-        currentStep={state.currentStep}
-        totalSteps={TOTAL_STEPS}
-        labels={WIZARD_STEP_LABELS}
-        onStepClick={setStep}
-        className="mb-8"
-      />
+      {/* When embedded in the unified onboarding wizard, the host already
+          renders its own WizardStepper (account → … → build → plan). Showing
+          the claim sub-stepper here too would stack two progress bars, so
+          suppress it and let the host own the top-level progress UI. */}
+      {!embedded && (
+        <WizardStepper
+          currentStep={state.currentStep}
+          totalSteps={TOTAL_STEPS}
+          labels={WIZARD_STEP_LABELS}
+          onStepClick={setStep}
+          className="mb-8"
+        />
+      )}
 
         {loading && (
           <Card className="p-8 flex flex-col items-center gap-2">
