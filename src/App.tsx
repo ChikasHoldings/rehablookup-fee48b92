@@ -267,7 +267,6 @@ const SeekerReviews = lazy(() => import("./pages/seeker/SeekerReviews"));
 const SeekerSettings = lazy(() => import("./pages/seeker/SeekerSettings"));
 const SeekerNotifications = lazy(() => import("./pages/seeker/SeekerNotifications"));
 const SeekerNotificationPreferences = lazy(() => import("./pages/seeker/SeekerNotificationPreferences"));
-const SeekerFacilityProfile = lazy(() => import("./pages/seeker/SeekerFacilityProfile"));
 const SeekerSearch = lazy(() => import("./pages/seeker/SeekerSearch"));
 const SeekerHelp = lazy(() => import("./pages/seeker/SeekerHelp"));
 const SeekerConcierge = lazy(() => import("./pages/seeker/SeekerConcierge"));
@@ -1394,7 +1393,6 @@ const AppInner = () => {
               <Route path="settings" element={<SeekerSettings />} />
               <Route path="notifications" element={<SeekerNotifications />} />
               <Route path="notification-preferences" element={<SeekerNotificationPreferences />} />
-              <Route path="facility/:facilityId" element={<SeekerFacilityProfile />} />
               <Route path="search" element={<SeekerSearch />} />
               <Route path="help" element={<SeekerHelp />} />
               <Route path="concierge" element={<SeekerConcierge />} />

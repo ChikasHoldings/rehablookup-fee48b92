@@ -31,6 +31,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
+import { SummaryChips } from "@/components/seeker/SavedSearchSummaryChips";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -228,35 +229,6 @@ function SavedSearchCard({ s }: { s: SavedSearch }) {
         </div>
       </CardContent>
     </Card>
-  );
-}
-
-function SummaryChips({ criteria }: { criteria: Record<string, unknown> }) {
-  const chips: { label: string; value: string }[] = [];
-  if (typeof criteria.location === "string" && criteria.location) chips.push({ label: "Where", value: criteria.location });
-  if (typeof criteria.state === "string" && criteria.state) chips.push({ label: "State", value: criteria.state });
-  if (Array.isArray(criteria.treatmentTypes)) chips.push({ label: "Treatment", value: criteria.treatmentTypes.join(", ") });
-  if (typeof criteria.treatment === "string" && criteria.treatment) chips.push({ label: "Treatment", value: criteria.treatment });
-  if (Array.isArray(criteria.insuranceTypes)) chips.push({ label: "Insurance", value: criteria.insuranceTypes.join(", ") });
-  if (typeof criteria.insurance === "string" && criteria.insurance) chips.push({ label: "Insurance", value: criteria.insurance });
-  if (Array.isArray(criteria.amenities) && criteria.amenities.length) chips.push({ label: "Amenities", value: criteria.amenities.join(", ") });
-  if (typeof criteria.distance === "string" && criteria.distance) chips.push({ label: "Distance", value: `${criteria.distance} mi` });
-  if (criteria.verified) chips.push({ label: "Verified only", value: "Yes" });
-  if (criteria.featuredOnly) chips.push({ label: "Featured", value: "Yes" });
-  if (typeof criteria.q === "string" && criteria.q) chips.push({ label: "Search", value: criteria.q });
-
-  if (chips.length === 0) {
-    return <p className="text-xs text-muted-foreground italic">All facilities (no filters)</p>;
-  }
-  return (
-    <div className="flex flex-wrap gap-1.5">
-      {chips.map((c) => (
-        <Badge key={`${c.label}:${c.value}`} variant="secondary" className="text-[11px] font-medium">
-          <span className="text-muted-foreground mr-1">{c.label}:</span>
-          {c.value}
-        </Badge>
-      ))}
-    </div>
   );
 }
 

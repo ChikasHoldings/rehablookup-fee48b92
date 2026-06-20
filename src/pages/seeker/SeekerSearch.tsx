@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Helmet } from "react-helmet-async";
-import { useLocation, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import {
   Search,
   MapPin,
@@ -1105,9 +1105,9 @@ function InitialState({
           </div>
           <div className="space-y-1">
             {recentSavedSearches.map((s) => (
-              <a
+              <Link
                 key={s.id}
-                href={s.search_url}
+                to={s.search_url}
                 className="w-full flex items-center justify-between px-4 py-3 bg-card border border-border rounded-xl hover:bg-muted hover:border-primary/50 transition-all"
               >
                 <div className="flex items-center gap-3 min-w-0">
@@ -1122,7 +1122,7 @@ function InitialState({
                   )}
                   <ArrowRight className="h-4 w-4 text-muted-foreground" />
                 </div>
-              </a>
+              </Link>
             ))}
           </div>
         </section>

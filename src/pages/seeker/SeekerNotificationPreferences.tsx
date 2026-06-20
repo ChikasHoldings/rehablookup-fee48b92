@@ -46,6 +46,10 @@ export default function SeekerNotificationPreferences() {
   // refs are keyed by preference name; only the latest sequence-id wins.
   const writeSeqRef = useRef<Record<string, number>>({});
 
+  // Keys with an in-flight upsert. The realtime handler skips these so a
+  // postgres_changes echo can't overwrite the user's optimistic value mid-save.
+  const inFlightKeysRef = useRef<Set<string>>(new Set());
+
   const fetchPreferences = useCallback(async () => {
     if (!sessionUserId) {
       setIsLoading(false);
@@ -87,9 +91,9 @@ export default function SeekerNotificationPreferences() {
   // Realtime: notification_preferences added to supabase_realtime in
   // migration 20260705000000. UPDATEs from another tab (or an admin
   // support touch) propagate within ~200ms. RLS limits delivery to the
-  // user's own row. We skip applying the event if a local write is
-  // in-flight for the same key — the local optimistic state is the
-  // intended truth until that write resolves.
+  // user's own row. We skip applying the event for any key with an
+  // in-flight local write (inFlightKeysRef) — the optimistic state is the
+  // intended truth until that write resolves, so an echo can't flicker it.
   useEffect(() => {
     if (!sessionUserId) return;
     const channel = supabase
@@ -100,12 +104,15 @@ export default function SeekerNotificationPreferences() {
         (payload) => {
           const row = payload.new as Partial<NotificationPreferences> | null;
           if (!row) return;
+          const inFlight = inFlightKeysRef.current;
+          const merge = (k: keyof NotificationPreferences, prevVal: boolean) =>
+            inFlight.has(k) || typeof row[k] !== 'boolean' ? prevVal : (row[k] as boolean);
           setPreferences((prev) => ({
-            email_lead_alerts: typeof row.email_lead_alerts === 'boolean' ? row.email_lead_alerts : prev.email_lead_alerts,
-            email_weekly_digest: typeof row.email_weekly_digest === 'boolean' ? row.email_weekly_digest : prev.email_weekly_digest,
-            email_product_updates: typeof row.email_product_updates === 'boolean' ? row.email_product_updates : prev.email_product_updates,
-            followup_reminders_enabled: typeof row.followup_reminders_enabled === 'boolean' ? row.followup_reminders_enabled : prev.followup_reminders_enabled,
-            browser_notifications: typeof row.browser_notifications === 'boolean' ? row.browser_notifications : prev.browser_notifications,
+            email_lead_alerts: merge('email_lead_alerts', prev.email_lead_alerts),
+            email_weekly_digest: merge('email_weekly_digest', prev.email_weekly_digest),
+            email_product_updates: merge('email_product_updates', prev.email_product_updates),
+            followup_reminders_enabled: merge('followup_reminders_enabled', prev.followup_reminders_enabled),
+            browser_notifications: merge('browser_notifications', prev.browser_notifications),
           }));
         },
       )
@@ -127,23 +134,30 @@ export default function SeekerNotificationPreferences() {
     // latest — a faster second click invalidates the first's effects.
     const seq = (writeSeqRef.current[key] || 0) + 1;
     writeSeqRef.current[key] = seq;
+    inFlightKeysRef.current.add(key);
 
+    // Typed patch so the computed key doesn't widen the payload to a string
+    // index signature, which Supabase's generated upsert type rejects.
+    const patch: Partial<Record<keyof NotificationPreferences, boolean>> = { [key]: value };
     const { error } = await supabase
       .from('notification_preferences')
       .upsert(
         {
           user_id: sessionUserId,
-          [key]: value,
           updated_at: new Date().toISOString(),
+          ...patch,
         },
         { onConflict: 'user_id' },
       );
 
     // A newer write for this key has been issued — abandon our toast +
-    // rollback. The newer write will own the user-visible outcome.
+    // rollback. The newer write (still in-flight) owns the outcome and
+    // clears the in-flight flag when it resolves.
     if (writeSeqRef.current[key] !== seq) {
       return;
     }
+
+    inFlightKeysRef.current.delete(key);
 
     if (error) {
       setPreferences(prev);

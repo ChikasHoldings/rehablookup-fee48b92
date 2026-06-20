@@ -178,7 +178,7 @@ export function AdvisorMessaging({ inquiryId }: AdvisorMessagingProps) {
       const trimmedContent = messageContent.trim();
       
       // Upload attachment if present
-      let attachmentData: { url: string; name: string } | null = null;
+      let attachmentData: { url: string; name: string; storagePath: string } | null = null;
       if (attachment) {
         attachmentData = await uploadFile();
         if (!attachmentData && !trimmedContent) {
@@ -195,7 +195,18 @@ export function AdvisorMessaging({ inquiryId }: AdvisorMessagingProps) {
         attachment_name: attachmentData?.name || null,
       });
 
-      if (error) throw error;
+      if (error) {
+        // The file is already in storage; remove it so a failed insert doesn't
+        // leave an orphaned object in the concierge-attachments bucket.
+        if (attachmentData?.storagePath) {
+          try {
+            await supabase.storage.from("concierge-attachments").remove([attachmentData.storagePath]);
+          } catch {
+            // best-effort cleanup
+          }
+        }
+        throw error;
+      }
 
       // Update thread timestamps
       await supabase

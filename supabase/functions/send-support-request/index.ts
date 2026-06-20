@@ -86,15 +86,17 @@ Deno.serve(async (req) => {
     let contextInfo = "";
 
     if (isSeeker) {
+      // NOTE: seeker_profiles has no `email` column — the seeker's email lives
+      // on the auth user (already captured in `userEmail` above). Selecting a
+      // non-existent column made this query error, leaving sender_name "Unknown".
       const { data: seekerProfile } = await supabase
         .from("seeker_profiles")
-        .select("first_name, last_name, email")
+        .select("first_name, last_name")
         .eq("user_id", user.id)
         .maybeSingle();
-      
+
       if (seekerProfile) {
         userName = [seekerProfile.first_name, seekerProfile.last_name].filter(Boolean).join(" ") || "Unknown";
-        userEmail = seekerProfile.email || user.email || "Unknown";
       }
       contextInfo = "Client Account";
     } else {

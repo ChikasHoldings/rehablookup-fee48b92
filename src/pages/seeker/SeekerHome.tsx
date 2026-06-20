@@ -33,7 +33,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useFavorites } from "@/hooks/useFavorites";
 import { FacilityCard, FacilityCardData, FacilityCardSkeleton } from "@/components/seeker/FacilityCard";
-import { useFeaturedFacilityIds } from "@/hooks/useApprovedFacilities";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { getPlanPriority } from "@/lib/facilityPlanSort";
 import { useGeoLocation } from "@/hooks/useGeoLocation";
@@ -114,7 +113,6 @@ export default function SeekerHome() {
   const [sortBy, setSortBy] = useState<SortOption>("proximity");
   const [currentPage, setCurrentPage] = useState(1);
   const { favoritesCount } = useFavorites();
-  const { data: featuredData } = useFeaturedFacilityIds();
   const seekerLocation = useSeekerLocation();
 
   // URL state hydration (once on mount) + loop-guarded sync so the
@@ -189,11 +187,9 @@ export default function SeekerHome() {
         setSeekerKpis(null);
         return;
       }
-      const { data: { user } } = await supabase.auth.getUser();
-      if (cancelled || !user) {
-        setSeekerKpis(null);
-        return;
-      }
+      // authUserId already reflects the current session (seeded from storage
+      // and kept in sync via onAuthStateChange), so use it directly instead of
+      // an extra supabase.auth.getUser() round-trip on every mount.
       // International placement product retired 2026-05-20 — only
       // domestic concierge cases remain in the seeker KPI summary.
       // .error checked on every individual call below; the entire KPI
@@ -211,12 +207,12 @@ export default function SeekerHome() {
         supabase
           .from("concierge_inquiries")
           .select("id", { count: "exact", head: true })
-          .eq("user_id", user.id)
+          .eq("user_id", authUserId)
           .not("status", "in", "(closed,completed)"),
         supabase
           .from("concierge_inquiries")
           .select("id, primary_concern, level_of_care, updated_at, intake_submitted_at, status")
-          .eq("user_id", user.id)
+          .eq("user_id", authUserId)
           .is("intake_submitted_at", null)
           .order("updated_at", { ascending: false })
           .limit(1)
@@ -224,7 +220,7 @@ export default function SeekerHome() {
         supabase
           .from("seeker_notifications")
           .select("id", { count: "exact", head: true })
-          .eq("user_id", user.id)
+          .eq("user_id", authUserId)
           .eq("read", false),
       ]);
       if (cancelled) return;

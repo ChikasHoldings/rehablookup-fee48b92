@@ -262,7 +262,7 @@ export function ConciergeInlineIntake({ userEmail, userName, userPhone, userId }
 
       if (error) throw error;
 
-      if (data?.success || data?.id) {
+      if (data?.success || data?.inquiryId) {
         toast.success("Your placement request has been submitted! Our team will be in touch soon.", { duration: 6000 });
         queryClient.invalidateQueries({ queryKey: ["seeker-concierge-cases"] });
         navigate("/account/concierge");

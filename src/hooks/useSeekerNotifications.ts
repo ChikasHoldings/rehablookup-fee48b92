@@ -306,6 +306,9 @@ export function useSeekerNotifications() {
   // with only a console.error. Prior code silently refetched on
   // failure — the user couldn't tell their click did nothing.
   const markAsRead = useCallback(async (notificationId: string) => {
+    const uid = userIdRef.current;
+    if (!uid) return;
+
     // Optimistic update
     setNotifications(prev =>
       prev.map(n => (n.id === notificationId ? { ...n, read: true } : n))
@@ -313,9 +316,6 @@ export function useSeekerNotifications() {
     setUnreadCount(prev => Math.max(0, prev - 1));
 
     try {
-      const uid = userIdRef.current;
-      if (!uid) return;
-
       const { error } = await supabase
         .from("seeker_notifications")
         .update({ read: true })
@@ -335,14 +335,14 @@ export function useSeekerNotifications() {
   }, [toast, fetchNotifications]);
 
   const markAllAsRead = useCallback(async () => {
+    const uid = userIdRef.current;
+    if (!uid) return;
+
     // Optimistic update
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
     setUnreadCount(0);
 
     try {
-      const uid = userIdRef.current;
-      if (!uid) return;
-
       const { error } = await supabase
         .from("seeker_notifications")
         .update({ read: true })
@@ -367,6 +367,9 @@ export function useSeekerNotifications() {
   }, [toast, fetchNotifications]);
 
   const deleteNotification = useCallback(async (notificationId: string) => {
+    const uid = userIdRef.current;
+    if (!uid) return;
+
     // Optimistic update — capture unread status before removing
     setNotifications(prev => {
       const target = prev.find(n => n.id === notificationId);
@@ -377,9 +380,6 @@ export function useSeekerNotifications() {
     });
 
     try {
-      const uid = userIdRef.current;
-      if (!uid) return;
-
       const { error } = await supabase
         .from("seeker_notifications")
         .delete()

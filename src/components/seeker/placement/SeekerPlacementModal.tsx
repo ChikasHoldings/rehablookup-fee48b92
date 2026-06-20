@@ -173,7 +173,7 @@ export function SeekerPlacementModal({ caseData, open, onOpenChange }: SeekerPla
   ])];
 
   const { data: matchedFacilities } = useQuery({
-    queryKey: ["seeker-matched-facilities", allMatchedIds],
+    queryKey: ["seeker-matched-facilities", currentUserId, allMatchedIds],
     queryFn: async () => {
       if (!allMatchedIds.length) return [];
       const { data, error } = await supabase

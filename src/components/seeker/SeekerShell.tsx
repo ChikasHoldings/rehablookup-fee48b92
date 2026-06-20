@@ -15,7 +15,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { UserCircle2 } from "lucide-react";
-import { AccessDenied } from "@/components/provider/AccessDenied";
 
 // Preload all seeker pages on module load for instant navigation
 preloadSeekerPages();
@@ -106,6 +105,30 @@ function SeekerEmptyState({ onCompleteProfile }: { onCompleteProfile: () => void
   );
 }
 
+/**
+ * Recoverable error state for a transient seeker-profile fetch failure.
+ * Lets the user retry within the session instead of being stranded on the
+ * "Complete Your Profile" empty state when the fetch merely failed once.
+ */
+function SeekerErrorState({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div className="flex items-center justify-center min-h-[400px] p-6">
+      <Card className="max-w-md w-full">
+        <CardContent className="pt-6 text-center">
+          <UserCircle2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <h2 className="text-xl font-semibold mb-2">Something went wrong</h2>
+          <p className="text-muted-foreground mb-4">
+            We couldn't load your account just now. Please check your connection and try again.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-2 justify-center">
+            <Button onClick={onRetry}>Try Again</Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 export function SeekerShell() {
   const { user, userId, email: userEmail, isAuthenticated, isReady } = useAuthReady();
 
@@ -118,15 +141,20 @@ export function SeekerShell() {
 
   // Fetch seeker profile once per session.
   // Cached for the full session — settings page invalidates this key after edits.
-  const { data: profile } = useQuery({
+  const { data: profile, isError: isProfileError, refetch: refetchProfile } = useQuery({
     queryKey: ['seeker-profile', userId],
     queryFn: async () => {
       if (!userId) return null;
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('seeker_profiles')
         .select('display_name, first_name, avatar_url')
         .eq('user_id', userId)
         .maybeSingle();
+      // Surface transient errors so React Query retries and the shell can show
+      // a recoverable error state. Previously the error was ignored, so a
+      // one-off fetch failure looked like "no profile" and stranded the user
+      // on the empty state with no way to refetch within the session.
+      if (error) throw error;
       return data as SeekerProfile | null;
     },
     enabled: isReady && !!userId,
@@ -135,6 +163,7 @@ export function SeekerShell() {
     refetchOnMount: false,      // don't refetch on every navigation
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
+    retry: 2,                   // auto-recover from transient fetch failures
   });
 
   // Check email verification status
@@ -155,25 +184,26 @@ export function SeekerShell() {
     prefetchAdjacentRoutes(location.pathname);
   }, [location.pathname]);
 
-  // Redirect admins/providers away from seeker panel; also fetch account
-  // status so suspended seekers are blocked before reaching the dashboard.
+  // Resolve role to redirect admins/providers away from the seeker panel.
+  // (admin via has_role; provider if a row exists in `profiles`; else seeker.)
+  // NOTE: `profiles` has no `status` column, so account suspension is not
+  // enforced here — there is currently no seeker-suspension mechanism in the
+  // schema. Re-add a real status/banned column + gate if/when that ships.
   const { data: roleAndStatus } = useQuery({
     queryKey: ['shell-role-check', userId],
     queryFn: async () => {
       if (!userId) return null;
       const [adminResult, providerResult] = await Promise.all([
         supabase.rpc("has_role", { _user_id: userId, _role: "admin" }),
-        supabase.from("profiles").select("id, status").eq("user_id", userId).maybeSingle(),
+        supabase.from("profiles").select("id").eq("user_id", userId).maybeSingle(),
       ]);
       const role = adminResult.data === true ? "admin" : providerResult.data ? "provider" : "seeker";
-      const status = (providerResult.data as { id: string; status?: string | null } | null)?.status ?? null;
-      return { role, status };
+      return { role };
     },
     enabled: isReady && !!userId,
     staleTime: 30000,
   });
   const userRole = roleAndStatus?.role;
-  const profileStatus = roleAndStatus?.status;
 
   useEffect(() => {
     if (!isReady || !userRole || hasRedirected.current) return;
@@ -217,7 +247,7 @@ export function SeekerShell() {
   // Show loading skeleton while auth/profile/role is resolving.
   // We wait for BOTH profile and userRole so admins/providers don't briefly
   // see the seeker "Complete Your Profile" empty state during the redirect race.
-  if (!isReady || (isAuthenticated && (profile === undefined || userRole === undefined))) {
+  if (!isReady || (isAuthenticated && ((profile === undefined && !isProfileError) || userRole === undefined))) {
     return <SeekerShellSkeleton />;
   }
 
@@ -228,29 +258,23 @@ export function SeekerShell() {
     return <Navigate to={`/login?redirect=${encodeURIComponent(location.pathname)}`} replace />;
   }
 
+  // Recoverable profile fetch error (transient) — let authenticated seekers
+  // retry instead of being stranded on the empty state.
+  if (isAuthenticated && isProfileError && userRole === "seeker") {
+    return <SeekerErrorState onRetry={() => refetchProfile()} />;
+  }
+
   // Show empty state ONLY for authenticated seekers (not admins/providers in transit).
   if (isAuthenticated && profile === null && userRole === "seeker") {
     return (
-      <SeekerEmptyState 
-        onCompleteProfile={() => navigate('/account/settings')} 
+      <SeekerEmptyState
+        onCompleteProfile={() => navigate('/account/settings')}
       />
     );
   }
 
   // Hide shell during redirect
   if (userRole === "admin" || userRole === "provider" || hasRedirected.current) return null;
-
-  // Suspended account — block dashboard access, same as ProviderShell.
-  // Only fires once profileStatus is resolved (null means still loading).
-  if (profileStatus === "suspended") {
-    return (
-      <AccessDenied
-        requiredRole="provider"
-        title="Account suspended"
-        message="Your account has been suspended. Please contact support for assistance."
-      />
-    );
-  }
 
   return (
     <div

@@ -312,7 +312,7 @@ export default function SeekerConcierge() {
     isError: matchedFacilitiesError,
     refetch: refetchMatched,
   } = useQuery({
-    queryKey: ["matched-facilities", selectedCase?.matched_facility_ids],
+    queryKey: ["matched-facilities", selectedCase?.id, selectedCase?.matched_facility_ids],
     queryFn: async () => {
       if (!selectedCase?.matched_facility_ids?.length) return [];
 
@@ -329,7 +329,7 @@ export default function SeekerConcierge() {
 
   // Fetch placed facility
   const { data: placedFacility } = useQuery({
-    queryKey: ["placed-facility", selectedCase?.placed_facility_id],
+    queryKey: ["placed-facility", selectedCase?.id, selectedCase?.placed_facility_id],
     queryFn: async () => {
       if (!selectedCase?.placed_facility_id) return null;
       
