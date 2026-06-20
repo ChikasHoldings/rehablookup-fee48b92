@@ -216,7 +216,7 @@ export function ArticleEditor({ open, onOpenChange, article, onSuccess }: Articl
         seo_keywords: data.seo_keywords
           ? data.seo_keywords.split(",").map((k) => k.trim()).filter(Boolean)
           : null,
-        ...(data.status === "published" ? { published_at: new Date().toISOString() } : {}),
+        ...(data.status === "published" && !article?.published_at ? { published_at: new Date().toISOString() } : {}),
       };
 
       if (isEditing && article) {

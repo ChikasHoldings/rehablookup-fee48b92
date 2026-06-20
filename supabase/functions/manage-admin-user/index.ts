@@ -329,9 +329,16 @@ Deno.serve(async (req) => {
         throw new Error("You cannot suspend or delete your own account");
       }
     }
+    // Prevent self role/permission changes so a sole Super Admin can't lock the
+    // org out of staff management by demoting or de-permissioning themselves.
+    if ((action === "update_role" || action === "update_permissions") && targetUserId === requestingUser.id) {
+      throw new Error("You cannot change your own role or permissions");
+    }
 
-    // Prevent modifying another Super Admin unless you are the requestor yourself
-    if (action !== "resend_invitation" && action !== "reset_password") {
+    // Prevent modifying another Super Admin unless you are the requestor yourself.
+    // SECURITY: reset_password is intentionally NOT exempted here — exempting it
+    // let a lower-tier admin reset a Super Admin's password (account takeover).
+    if (action !== "resend_invitation") {
       const { data: targetIsSuperAdmin } = await supabase.rpc("is_super_admin", {
         _user_id: targetUserId,
       });
@@ -499,9 +506,10 @@ Deno.serve(async (req) => {
         tempPasswordExpiry.setHours(tempPasswordExpiry.getHours() + 72);
 
         // Update password in auth
-        await supabase.auth.admin.updateUserById(targetUserId, {
+        const { error: pwdErr } = await supabase.auth.admin.updateUserById(targetUserId, {
           password: tempPassword,
         });
+        if (pwdErr) throw new Error(`Failed to reset password: ${pwdErr.message}`);
 
         // Update admin profile
         await supabase
@@ -538,8 +546,10 @@ Deno.serve(async (req) => {
           details: { email: targetProfile?.email },
         });
 
+        // SECURITY: do NOT return the plaintext temp password in the response
+        // body — it is delivered to the target admin via email only. The client
+        // shows a static success message and never reads tempPassword.
         result.message = "Password reset successfully. New credentials sent via email.";
-        result.tempPassword = tempPassword;
         break;
       }
 

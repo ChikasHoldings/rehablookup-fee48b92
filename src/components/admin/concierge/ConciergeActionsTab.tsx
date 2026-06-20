@@ -467,12 +467,18 @@ function NotifyClientCard({ caseData, onRefresh }: { caseData: ConciergeInquiry;
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
-      await supabase.functions.invoke("send-concierge-notifications", {
+      const { data: notifyData, error: notifyError } = await supabase.functions.invoke("send-concierge-notifications", {
         body: {
           type: "facilities_ready_for_review",
           inquiryId: caseData.id,
         },
       });
+      // Don't claim success if the function failed or returned an error body
+      // (e.g. the seeker has no email) — otherwise the admin sees a false
+      // "Client has been notified" toast and a misleading case event.
+      if (notifyError || (notifyData && (notifyData as { error?: string }).error)) {
+        throw new Error((notifyData as { error?: string })?.error || notifyError?.message || "Notification failed");
+      }
 
       await supabase.from("concierge_case_events").insert({
         inquiry_id: caseData.id,

@@ -143,13 +143,13 @@ export const DashboardKPICards = forwardRef<HTMLDivElement, DashboardKPICardsPro
                 ${totalMonthlyRevenue?.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) || "0"}
               </div>
               <p className="text-[9px] sm:text-xs opacity-70 mt-0.5 sm:mt-1 flex items-center gap-0.5 sm:gap-1 truncate">
-                {revenueStats?.percentChange && revenueStats.percentChange >= 0 ? (
+                {revenueStats?.percentChange != null && revenueStats.percentChange >= 0 ? (
                   <TrendingUp className="h-2.5 w-2.5 sm:h-3 sm:w-3 shrink-0" />
                 ) : (
                   <TrendingDown className="h-2.5 w-2.5 sm:h-3 sm:w-3 shrink-0" />
                 )}
                 <span className="truncate">
-                  {revenueStats?.percentChange ? `${revenueStats.percentChange >= 0 ? "+" : ""}${revenueStats.percentChange}%` : "—"} vs last
+                  {revenueStats?.percentChange != null ? `${revenueStats.percentChange >= 0 ? "+" : ""}${revenueStats.percentChange}%` : "—"} vs last
                 </span>
               </p>
             </>

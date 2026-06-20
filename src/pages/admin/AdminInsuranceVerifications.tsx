@@ -695,6 +695,7 @@ export default function AdminInsuranceVerifications() {
 
       {open && (
         <RequestDetail
+          key={open.id}
           request={open}
           onClose={() => setOpenId(null)}
           onUpdate={(input) => statusMutation.mutate(input)}

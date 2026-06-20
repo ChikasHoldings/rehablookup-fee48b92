@@ -379,12 +379,13 @@ export function ToursTab({ caseData }: ToursTabProps) {
                         tour.preferred_dates.length > 0 && (
                           <div className="text-sm text-muted-foreground">
                             <span className="font-medium">Preferred: </span>
-                            {tour.preferred_dates
+                            {(tour.preferred_dates as string[])
+                              .filter((d) => d && !isNaN(new Date(d).getTime()))
                               .slice(0, 2)
-                              .map((d: string, i: number) => (
+                              .map((d: string, i: number, arr: string[]) => (
                                 <span key={i}>
                                   {format(new Date(d), "MMM d")}
-                                  {i < Math.min(tour.preferred_dates.length, 2) - 1 ? ", " : ""}
+                                  {i < arr.length - 1 ? ", " : ""}
                                 </span>
                               ))}
                             {tour.preferred_dates.length > 2 &&
