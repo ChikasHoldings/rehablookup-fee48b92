@@ -1,181 +1,158 @@
 import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  resolveNotificationRoute,
-  type AdminRouteKey,
-} from "@/lib/notificationRouteMap";
 
 /**
- * Sidebar badges now reflect ONLY unread notification counts, grouped
- * by the admin route the notification belongs to. The mapping lives in
- * `src/lib/notificationRouteMap.ts` so every surface (sidebar badges,
- * notification list click-through) agrees on where a given type
- * routes.
+ * Admin sidebar badges = the live count of *actionable / pending* items in each
+ * section's work queue, read straight from the source-of-truth table using the
+ * SAME filter the section's own page uses for its "pending" view. The badge
+ * therefore always matches what the admin sees when they open the page.
  *
- * Two sources contribute to each route's badge:
- *  1. `admin_notifications` — global broadcast stream
- *  2. `admin_user_notifications` — per-user personal stream (filtered
- *     to the current user via RLS)
+ * This replaced an older "unread notifications per route" model whose badges
+ * drifted from reality: informational notifications (provider_signup,
+ * claim_rejection_email_sent, orphaned_lead_closed, system_maintenance, …) were
+ * never cleared by doing the work, so e.g. Providers showed 15 while there were
+ * zero pending claims. Cross-cutting alerts still live in the notifications bell
+ * (/admin/notifications) — the sidebar is now strictly about open work.
  *
- * Both tables are in the supabase_realtime publication (migrations
- * 20260626000000 + 20260630000000). This hook subscribes to both so
- * the badges update within ~200ms of any notification insert / read
- * flip / delete. A 60s polling fallback covers channel drops.
+ * Correctness / freshness guarantees:
+ *  - Each count is a `head:true` / `count:exact` query — no rows transferred —
+ *    and is RLS-scoped, so a badge only counts rows the current admin may see.
+ *  - Counts refresh on a 60s poll AND immediately via postgres_changes on every
+ *    source table (all are in the supabase_realtime publication), so a badge
+ *    never shows a stale or phantom number.
+ *  - A single failing count degrades to 0 for that one badge (logged) instead of
+ *    blanking the whole sidebar.
  */
 
-// Legacy field names retained as keys for sidebar items that historically
-// surfaced operational counts (leads / pendingProviders / etc.). They
-// now report UNREAD NOTIFICATION counts for the route, not raw status
-// row counts. See adminNavConfig.ts for how `countKey` resolves.
+// Keys map 1:1 to nav items via `countKey` in adminNavConfig.ts. Only sections
+// with a well-defined "needs attention" queue appear here; log/monitor pages
+// (security, email, 404, audit) and management pages (subscriptions, seekers)
+// intentionally have no badge.
 export interface AdminSidebarCounts {
-  // Per-route unread counts — primary surface for sidebar badges.
-  unreadByRoute: Record<AdminRouteKey, number>;
-
-  // Total unread (header bell icon, mobile nav). Equals the sum of
-  // both streams' unread rows.
-  totalUnread: number;
-
-  // Legacy keys mapped to per-route unread for backwards compatibility
-  // with existing adminNavConfig.ts entries. Each maps to the route
-  // its sidebar item points at.
-  leads: number;                  // -> /admin/leads
-  pendingProviders: number;       // -> /admin/providers
-  supportTickets: number;         // -> /admin/support
-  pendingReviews: number;         // -> /admin/reviews
-  placements: number;             // -> /admin/concierge
-  marketingLeads: number;         // -> /admin/marketing
-  openEscalations: number;        // -> /admin/escalations
-  insuranceVerifications: number; // -> /admin/insurance-verifications
-  // Re-verification queue count — pulled directly from
-  // re_verification_events (the engine doesn't fire admin_notifications
-  // per event; the queue page is the source of truth, so the badge
-  // mirrors it instead of duplicating signals into admin_notifications).
-  reVerificationPending: number;  // -> /admin/re-verification
+  leads: number;                  // /admin/leads                   leads.status = 'new'
+  pendingProviders: number;       // /admin/providers               facility_claim_requests.status = 'pending'
+  supportTickets: number;         // /admin/support                 support_tickets.status in ('new','open')
+  pendingReviews: number;         // /admin/reviews                 facility_reviews + review_disputes, status = 'pending'
+  placements: number;             // /admin/concierge               concierge_inquiries, status not in ('completed','closed')
+  marketingLeads: number;         // /admin/marketing               marketing_leads.status = 'new'
+  openEscalations: number;        // /admin/escalations             admin_escalations.status in ('open','in_progress')
+  insuranceVerifications: number; // /admin/insurance-verifications  insurance_verification_requests.status in ('new','in_progress')
+  reVerificationPending: number;  // /admin/re-verification         re_verification_events.resolution in (pending,notified,lapsed,pending_review)
 }
 
-const EMPTY_ROUTE_MAP: Record<AdminRouteKey, number> = {
-  "/admin/providers": 0,
-  "/admin/leads": 0,
-  "/admin/subscriptions": 0,
-  "/admin/reviews": 0,
-  "/admin/escalations": 0,
-  "/admin/security-logs": 0,
-  "/admin/concierge": 0,
-  "/admin/support": 0,
-  "/admin/not-found-events": 0,
-  "/admin/marketing": 0,
-  "/admin/email-logs": 0,
-  "/admin/seekers": 0,
-  "/admin/insurance-verifications": 0,
-  "/admin/re-verification": 0,
-  "/admin/notifications": 0,
+const ZERO_COUNTS: AdminSidebarCounts = {
+  leads: 0,
+  pendingProviders: 0,
+  supportTickets: 0,
+  pendingReviews: 0,
+  placements: 0,
+  marketingLeads: 0,
+  openEscalations: 0,
+  insuranceVerifications: 0,
+  reVerificationPending: 0,
 };
+
+// Every table whose rows can change a badge. We subscribe to all of them so a
+// badge updates the moment the underlying queue changes, not just on the poll.
+const SOURCE_TABLES = [
+  "facility_claim_requests",
+  "facility_reviews",
+  "review_disputes",
+  "support_tickets",
+  "admin_escalations",
+  "leads",
+  "concierge_inquiries",
+  "insurance_verification_requests",
+  "marketing_leads",
+  "re_verification_events",
+] as const;
+
+const QUERY_KEY = ["admin-sidebar-pending-counts"] as const;
+
+// Pull the row count out of a PostgREST head/count response, degrading to 0 (and
+// logging) if that one query failed — one bad count must not blank the sidebar.
+function toCount(
+  res: { count: number | null; error: { message: string } | null },
+  label: string,
+): number {
+  if (res.error) {
+    console.warn(`[admin-sidebar-counts] ${label} count failed:`, res.error.message);
+    return 0;
+  }
+  return res.count ?? 0;
+}
 
 export function useAdminSidebarCounts() {
   const queryClient = useQueryClient();
 
   const query = useQuery({
-    queryKey: ["admin-sidebar-unread-counts"],
+    queryKey: QUERY_KEY,
     queryFn: async (): Promise<AdminSidebarCounts> => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const head = { count: "exact" as const, head: true };
 
-      // Fetch only what we need: `type` so we can aggregate by route.
-      // `read=false` filter is applied server-side. Cap at 5000 each
-      // (more than 5000 unread is a triage failure, not a UI concern).
-      const [globalRes, userRes, reVerifyRes] = await Promise.all([
-        supabase
-          .from("admin_notifications")
-          .select("type")
-          .eq("read", false)
-          .limit(5000),
-        user
-          ? supabase
-              .from("admin_user_notifications")
-              .select("type")
-              .eq("user_id", user.id)
-              .eq("read", false)
-              .limit(5000)
-          : Promise.resolve({ data: [], error: null } as { data: Array<{ type: string }>; error: null }),
-        // Engine-raised re-verification events that need a human
-        // decision. `head: true` skips returning rows; `count: 'exact'`
-        // gets the matching-row total via the response Content-Range
-        // header. RLS scopes the table to admins automatically.
+      const [
+        claimsRes,
+        reviewsRes,
+        disputesRes,
+        supportRes,
+        escalationsRes,
+        leadsRes,
+        placementsRes,
+        insuranceRes,
+        marketingRes,
+        reverifyRes,
+      ] = await Promise.all([
+        supabase.from("facility_claim_requests").select("id", head).eq("status", "pending"),
+        supabase.from("facility_reviews").select("id", head).eq("status", "pending"),
+        supabase.from("review_disputes").select("id", head).eq("status", "pending"),
+        supabase.from("support_tickets").select("id", head).in("status", ["new", "open"]),
+        supabase.from("admin_escalations").select("id", head).in("status", ["open", "in_progress"]),
+        supabase.from("leads").select("id", head).eq("status", "new"),
+        supabase.from("concierge_inquiries").select("id", head).not("status", "in", "(completed,closed)"),
+        supabase.from("insurance_verification_requests").select("id", head).in("status", ["new", "in_progress"]),
+        supabase.from("marketing_leads").select("id", head).eq("status", "new"),
         supabase
           .from("re_verification_events")
-          .select("id", { count: "exact", head: true })
+          .select("id", head)
           .in("resolution", ["pending", "notified", "lapsed", "pending_review"]),
       ]);
 
-      if (globalRes.error) throw new Error(`Global unread fetch failed: ${globalRes.error.message}`);
-      if (userRes.error) throw new Error(`Personal unread fetch failed: ${userRes.error.message}`);
-      // Don't fail the whole hook if the re-verify count errors —
-      // worst case the badge shows 0 and the queue is still reachable.
-      if (reVerifyRes.error) console.warn("[admin-sidebar-counts] re-verify count failed:", reVerifyRes.error.message);
-
-      const routeCounts: Record<AdminRouteKey, number> = { ...EMPTY_ROUTE_MAP };
-      let totalUnread = 0;
-
-      for (const row of globalRes.data || []) {
-        const route = resolveNotificationRoute(row.type);
-        routeCounts[route] = (routeCounts[route] || 0) + 1;
-        totalUnread += 1;
-      }
-      for (const row of userRes.data || []) {
-        const route = resolveNotificationRoute(row.type);
-        routeCounts[route] = (routeCounts[route] || 0) + 1;
-        totalUnread += 1;
-      }
-
-      const reVerificationPending = reVerifyRes.count ?? 0;
-      routeCounts["/admin/re-verification"] = reVerificationPending;
-
       return {
-        unreadByRoute: routeCounts,
-        totalUnread,
-        // Backwards-compatible alias fields, each pulling from the
-        // route map so the sidebar's existing `countKey` lookups still
-        // resolve through this hook.
-        leads: routeCounts["/admin/leads"],
-        pendingProviders: routeCounts["/admin/providers"],
-        supportTickets: routeCounts["/admin/support"],
-        pendingReviews: routeCounts["/admin/reviews"],
-        placements: routeCounts["/admin/concierge"],
-        marketingLeads: routeCounts["/admin/marketing"],
-        openEscalations: routeCounts["/admin/escalations"],
-        insuranceVerifications: routeCounts["/admin/insurance-verifications"],
-        reVerificationPending,
+        leads: toCount(leadsRes, "leads"),
+        pendingProviders: toCount(claimsRes, "providers"),
+        supportTickets: toCount(supportRes, "support"),
+        pendingReviews: toCount(reviewsRes, "reviews") + toCount(disputesRes, "review-disputes"),
+        placements: toCount(placementsRes, "placements"),
+        marketingLeads: toCount(marketingRes, "marketing"),
+        openEscalations: toCount(escalationsRes, "escalations"),
+        insuranceVerifications: toCount(insuranceRes, "insurance"),
+        reVerificationPending: toCount(reverifyRes, "re-verification"),
       };
     },
+    // Show "no badge" (zeros) while the first fetch is in flight rather than a
+    // possibly-wrong cached value — a badge is never shown until it's real.
+    placeholderData: ZERO_COUNTS,
     staleTime: 30 * 1000,
     refetchInterval: 60 * 1000,
+    refetchOnWindowFocus: true,
     retry: 1,
   });
 
-  // Realtime invalidation: any change to either notifications table
-  // re-pulls the unread counts. Cheap because we only SELECT `type`.
+  // Push-update: any insert/update/delete on a queue table re-pulls the counts.
+  // Cheap because every query is head-only (no rows). The 60s poll above is the
+  // fallback if the realtime channel drops.
   useEffect(() => {
     const invalidate = () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-sidebar-unread-counts"] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
     };
-    const channel = supabase
-      .channel(`admin-sidebar-unread-live-${Math.random().toString(36).slice(2,8)}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "admin_notifications" },
-        invalidate,
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "admin_user_notifications" },
-        invalidate,
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "re_verification_events" },
-        invalidate,
-      )
-      .subscribe();
+    const channel = supabase.channel(
+      `admin-sidebar-counts-${Math.random().toString(36).slice(2, 8)}`,
+    );
+    for (const table of SOURCE_TABLES) {
+      channel.on("postgres_changes", { event: "*", schema: "public", table }, invalidate);
+    }
+    channel.subscribe();
     return () => {
       supabase.removeChannel(channel);
     };

@@ -10,7 +10,6 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { useAdminSidebarCounts } from "@/hooks/useAdminSidebarCounts";
-import type { AdminRouteKey } from "@/lib/notificationRouteMap";
 import {
   type NavItem,
   type NavGroup,
@@ -82,14 +81,14 @@ function AdminSidebarComponent({ isSuperAdmin, hasPermission, adminRole = "custo
     return hasPermission(item.permission);
   };
 
-  // Sidebar badges show ONLY unread notification counts for the
-  // destination route. The notificationRouteMap drives which
-  // notification types land where; the count comes from both the
-  // global broadcast stream and the per-user personal stream.
+  // Sidebar badges show the live count of pending/actionable items for the
+  // section (pending claims, new leads, open tickets, …) via the nav item's
+  // `countKey`. Items without a countKey (logs, settings, management pages)
+  // never show a badge. The counts come from useAdminSidebarCounts, which reads
+  // each section's source table directly and updates in real time.
   const getItemCount = (item: NavItem): number => {
-    if (!counts) return 0;
-    const route = item.to as AdminRouteKey;
-    return counts.unreadByRoute?.[route] ?? 0;
+    if (!counts || !item.countKey) return 0;
+    return counts[item.countKey] ?? 0;
   };
 
   const renderNavItem = (entry: NavItem) => {
