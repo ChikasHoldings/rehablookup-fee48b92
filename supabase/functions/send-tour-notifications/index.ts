@@ -1292,16 +1292,22 @@ Deno.serve(async (req: Request): Promise<Response> => {
           results.facilitySMS = smsSent;
         }
 
-        // Create in-app notification for provider
+        // Create in-app notification for provider. provider_notifications has
+        // no `link` column — a top-level `link` threw PGRST204 and silently
+        // dropped the row; the deep link comes from the registry (tour_* →
+        // /provider/inquiries). Best-effort.
         if (tour.facility?.user_id) {
-          await supabase.from("provider_notifications").insert({
-            user_id: tour.facility.user_id,
-            type: "tour_request",
-            title: "New Tour Request",
-            message: `${emailData.seekerName} has requested a ${tour.tour_type} tour.`,
-            link: "/provider/placement-network",
-          });
-          results.providerNotification = true;
+          try {
+            await supabase.from("provider_notifications").insert({
+              user_id: tour.facility.user_id,
+              type: "tour_request",
+              title: "New Tour Request",
+              message: `${emailData.seekerName} has requested a ${tour.tour_type} tour.`,
+            });
+            results.providerNotification = true;
+          } catch (notifErr) {
+            console.warn("[send-tour-notifications] tour_request notification failed", notifErr);
+          }
         }
 
         // Log case event
@@ -1450,13 +1456,18 @@ Deno.serve(async (req: Request): Promise<Response> => {
         // In-app notification for provider
         if (tour.facility?.user_id) {
           const confirmedTime = formatDateTime(emailData.confirmedDateTime);
-          await supabase.from("provider_notifications").insert({
-            user_id: tour.facility.user_id,
-            type: "tour_confirmed",
-            title: "Tour Confirmed",
-            message: `${emailData.seekerName} confirmed the tour for ${confirmedTime}.`,
-            link: "/provider/placement-network",
-          });
+          // No `link` column on provider_notifications (registry routes tour_*
+          // → /provider/inquiries). Best-effort.
+          try {
+            await supabase.from("provider_notifications").insert({
+              user_id: tour.facility.user_id,
+              type: "tour_confirmed",
+              title: "Tour Confirmed",
+              message: `${emailData.seekerName} confirmed the tour for ${confirmedTime}.`,
+            });
+          } catch (notifErr) {
+            console.warn("[send-tour-notifications] tour_confirmed notification failed", notifErr);
+          }
         }
 
         // Log case event
@@ -1525,13 +1536,18 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
           // In-app notification for provider
           if (tour.facility?.user_id) {
-            await supabase.from("provider_notifications").insert({
-              user_id: tour.facility.user_id,
-              type: "tour_cancelled",
-              title: "Tour Cancelled",
-              message: `${emailData.seekerName} cancelled their tour request.`,
-              link: "/provider/placement-network",
-            });
+            // No `link` column on provider_notifications (registry routes
+            // tour_* → /provider/inquiries). Best-effort.
+            try {
+              await supabase.from("provider_notifications").insert({
+                user_id: tour.facility.user_id,
+                type: "tour_cancelled",
+                title: "Tour Cancelled",
+                message: `${emailData.seekerName} cancelled their tour request.`,
+              });
+            } catch (notifErr) {
+              console.warn("[send-tour-notifications] tour_cancelled notification failed", notifErr);
+            }
           }
         } else if (cancelledBy === "facility" && resend) {
           // Facility cancelled - notify user

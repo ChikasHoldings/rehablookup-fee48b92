@@ -355,6 +355,23 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // SECURITY: this function is orphaned — the real payment-failed path is inline
+  // in stripe-webhook (HMAC-verified). It was deployed with verify_jwt disabled
+  // and NO in-body auth, so anyone who knew the URL could POST arbitrary
+  // providerEmail/userId to send a "payment failed" email from our domain and
+  // inject provider_notifications + admin_notifications. Require the service-role
+  // key as the bearer (server-to-server only) before doing anything.
+  {
+    const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "").trim();
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    if (!serviceKey || token !== serviceKey) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+  }
+
   try {
     logStep("Function started");
 

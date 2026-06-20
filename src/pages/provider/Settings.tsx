@@ -166,8 +166,11 @@ export default function ProviderSettingsPage() {
   const [browserNotifications, setBrowserNotifications] = useState(false);
   const [leadNotificationFrequency, setLeadNotificationFrequency] = useState<'instant' | 'daily_digest' | 'weekly_digest' | 'none'>('instant');
   const [notifyNewLeads, setNotifyNewLeads] = useState(true);
-  const [notifyLeadStatusChanges, setNotifyLeadStatusChanges] = useState(true);
-  const [notifyFacilityViews, setNotifyFacilityViews] = useState(false);
+  // Retained for the saved-prefs shape, but no longer surfaced as UI toggles —
+  // no sender reads notify_lead_status_changes / notify_facility_views, so they
+  // were dead switches. (Setters dropped since nothing flips them anymore.)
+  const [notifyLeadStatusChanges] = useState(true);
+  const [notifyFacilityViews] = useState(false);
   const [digestTime, setDigestTime] = useState('09:00');
   const [followupRemindersEnabled, setFollowupRemindersEnabled] = useState(true);
   const [defaultSnoozeDuration, setDefaultSnoozeDuration] = useState('1_day');
@@ -398,7 +401,11 @@ export default function ProviderSettingsPage() {
 
     const preferences = {
       user_id: session.user.id,
-      email_lead_alerts: emailLeadAlerts,
+      // The frequency radio is the visible control; map its "Off" to the flag
+      // the lead sender actually honors (email_lead_alerts). Previously "Off"
+      // wrote only lead_notification_frequency — which no sender reads — so a
+      // provider who opted out kept receiving instant lead emails.
+      email_lead_alerts: leadNotificationFrequency !== 'none',
       email_weekly_digest: emailWeeklyDigest,
       email_product_updates: emailProductUpdates,
       sms_lead_alerts: smsLeadAlerts,
@@ -1502,10 +1509,12 @@ export default function ProviderSettingsPage() {
                     {/* Notification Types */}
                     <div className="pt-3 border-t border-border space-y-0">
                       <Label className="text-sm font-medium mb-3 block">What to notify</Label>
+                      {/* "Status Changes" and "Profile Views" were removed — they
+                          were dead toggles (no sender ever read
+                          notify_lead_status_changes / notify_facility_views), so
+                          flipping them changed nothing. */}
                       {[
                         { checked: notifyNewLeads, onChange: setNotifyNewLeads, label: "New Leads", desc: "When a new lead is available" },
-                        { checked: notifyLeadStatusChanges, onChange: setNotifyLeadStatusChanges, label: "Status Changes", desc: "When lead status updates" },
-                        { checked: notifyFacilityViews, onChange: setNotifyFacilityViews, label: "Profile Views", desc: "Weekly view summary" },
                       ].map((item, idx) => (
                         <div key={idx} className="flex items-center justify-between py-2.5">
                           <div>

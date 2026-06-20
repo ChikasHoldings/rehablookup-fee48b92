@@ -76,7 +76,10 @@ Deno.serve(async (req) => {
     const email = typeof body.email === "string" ? body.email.trim().toLowerCase().slice(0, 255) : "";
     const topic = sanitizeStr(body.topic, 50);
     const message = sanitizeStr(body.message, 5000);
-    const userId = typeof body.userId === "string" && isValidUUID(body.userId) ? body.userId : null;
+    // A body-supplied `userId` is intentionally IGNORED — trusting it let anyone
+    // attribute a ticket to another provider's "My Tickets" list (this endpoint
+    // is unauthenticated + service-role). sender_user_id is derived from the
+    // verified session JWT below instead.
 
     const stdError = (code: string, message: string, status: number, field?: string) =>
       new Response(
@@ -118,6 +121,24 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
+    // Derive the ticket owner from the verified session JWT (when the caller is
+    // signed in) — NEVER from a body-supplied id. Logged-out submissions are
+    // intentionally unattributed (sender_user_id = null). This also fixes the
+    // continuity gap where a signed-in provider's public-form ticket never
+    // appeared in their "My Tickets".
+    let senderUserId: string | null = null;
+    const authHeader = req.headers.get("Authorization");
+    if (authHeader) {
+      try {
+        const { data: { user } } = await supabaseAdmin.auth.getUser(
+          authHeader.replace(/^Bearer\s+/i, ""),
+        );
+        senderUserId = user?.id ?? null;
+      } catch (_e) {
+        senderUserId = null;
+      }
+    }
+
     // Rate limit: this is an unauthenticated endpoint that emails a
     // caller-supplied address. Cap per source IP AND per target email so it
     // can't be abused to bomb a victim or burn Resend quota (idempotency key
@@ -138,32 +159,42 @@ Deno.serve(async (req) => {
       source: 'provider_support',
       sender_name: name,
       sender_email: email,
-      sender_user_id: userId,
+      sender_user_id: senderUserId,
       category: topicLabel,
       subject: `Provider Support: ${topicLabel}`,
       message: message,
     }).select('id').single();
 
+    // The ticket is the system of record — it's what the admin support inbox
+    // reads and what powers the provider's "My Tickets". If it didn't persist,
+    // do NOT fall through to emailing + returning success (that produced a false
+    // "Message Sent" for a ticket that doesn't exist, with no tracked record).
+    // Fail loudly so the provider retries.
     if (ticketError) {
       console.error("[SEND-PROVIDER-SUPPORT] Failed to create support ticket:", ticketError);
-    } else {
-      const { data: adminUsers } = await supabaseAdmin
-        .from('admin_user_profiles')
-        .select('user_id')
-        .eq('status', 'active');
-      
-      if (adminUsers && adminUsers.length > 0) {
-        const notifications = adminUsers.map(admin => ({
-          user_id: admin.user_id,
-          type: 'support_ticket',
-          title: 'New Provider Support Request',
-          message: `${name.slice(0, 50)} needs help with ${topicLabel}`,
-          link: `/admin/support?ticket=${ticketData?.id}`,
-          metadata: { ticket_id: ticketData?.id, source: 'provider_support' }
-        }));
-        
-        await supabaseAdmin.from('admin_user_notifications').insert(notifications);
-      }
+      return new Response(
+        JSON.stringify({ success: false, error: "We couldn't submit your request right now. Please try again." }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    // Ticket created — notify admins in-app (best-effort; never fatal).
+    const { data: adminUsers } = await supabaseAdmin
+      .from('admin_user_profiles')
+      .select('user_id')
+      .eq('status', 'active');
+
+    if (adminUsers && adminUsers.length > 0) {
+      const notifications = adminUsers.map(admin => ({
+        user_id: admin.user_id,
+        type: 'support_ticket',
+        title: 'New Provider Support Request',
+        message: `${name.slice(0, 50)} needs help with ${topicLabel}`,
+        link: `/admin/support?ticket=${ticketData?.id}`,
+        metadata: { ticket_id: ticketData?.id, source: 'provider_support' }
+      }));
+
+      await supabaseAdmin.from('admin_user_notifications').insert(notifications);
     }
 
     const emailHtml = `

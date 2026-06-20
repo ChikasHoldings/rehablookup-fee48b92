@@ -19,14 +19,22 @@ export interface ProviderNotification {
 // Simple notification sound (base64 encoded short beep)
 const NOTIFICATION_SOUND_URL = "data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2teleA0AFQN/kI6sxr2UXQAAxuzXooRCBgmQx+/FeSQNTfj3vE8PFq3s7qF1IkJ1wdbhoF4XLpG/xaCJTitdoNm6qXlPVYCgzcDBm2s5RnKUwdDFvJFfRFZ9l7bRzcKqeE1Laz5LWnSUqbXCzL+pgV1AMDlXboSZq7q+xb6uhFk6LkNedI6iu8XDu65/VDAsOlV5lq3Cx7+0qIhfQC8yTGJ+mbO/wruzqopiQy4sRV12j6S2wcS7t6+JYEQsKUBYcoabrrzAuba1qotgRCsmP1RvgoySnaWtsLe4ubaxqp+ThntuZV5bXmNqc4CQnq20uLy6tq+ij3xrX1NLSkpOVl9sdIiXpay0trStpJqOgnZqYFhTUldaX2hxgI2Zoa2ys7Cvqp2PhHpvZ2JfX2FlaXJ5g4+Yoqqvs7OvrKaclIqBd3FtaWpsb3R5gImRmqGnq66vraqknpaNhH15dnV1dnh7foSKkJebnqOlp6elo5+blo+JhIB9fHt7fH6Bh4yRlpmcnqCgo6OioJ2ZlpKOioeDgYGBgoWIjJCTlpmbnZ+goaKioaCemZaRjYqIhoWEhYaHioyPkpWYmpydn5+goKCfnpyZl5SSj4yLioqKi4yNj5KUlpianJ2en5+fnp2cm5mWk5GQjo2NjY2OjpCSlJaYmZudnZ6enp2cm5qYlpSTkZCPj4+Pj5CRkpSVl5mam5ycnZ2dnJuamJeVk5KRkJCQkJCRkpOUlZaXmJmanJycnJybmpmYl5WUk5KRkZGRkZGSkpOUlZaXmJmampubm5uamZiXlpWUk5OSkpKSkpOTk5SVlpaXmJmZmpqampqZmZiXlpWVlJSUk5OTk5SUlJWVlpaXl5iYmZmZmZmYmJeWlpWVlJSUlJSUlJSVlZWWlpeXl5iYmJiYmJeXlpaWlZWVlZWVlZWVlZaWlpaWl5eXl5eXl5eXlpaWlpaWlpaWlpaWlpaWlpaWlpaWlpeXl5eXl5eXl5aWlpaWlpaWlpaWlpaWlpaWlpaWlpeXl5eXl5eX";
 
+// IDs of notifications with an in-flight mark-as-read / delete mutation, plus
+// the "__all__" sentinel for bulk mark-all / delete-all. The realtime
+// UPDATE/DELETE handlers skip events for these so an in-flight optimistic state
+// isn't briefly overwritten by the server's replay of the now-stale row.
+//
+// MODULE-LEVEL (not a per-instance ref): the header bell, the notifications
+// page, and the dashboard activity card all mount this hook simultaneously,
+// each with its own realtime channel. A per-instance guard only suppressed the
+// echo in the initiating instance — sibling instances replayed a stale
+// read=false row back into the SHARED React-Query cache, transiently
+// un-reading the bell after "mark all read". A shared set closes that race.
+const inFlightMutations = new Set<string>();
+
 export function useProviderNotifications() {
   const queryClient = useQueryClient();
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  // IDs of notifications with an in-flight mark-as-read / delete
-  // mutation. The realtime UPDATE handler skips events for these so an
-  // in-flight optimistic state isn't briefly overwritten by Stripe's
-  // replay of the now-stale row.
-  const inFlightMutationsRef = useRef<Set<string>>(new Set());
 
   // Initialize audio element on mount
   useEffect(() => {
@@ -103,6 +111,25 @@ export function useProviderNotifications() {
     retry: 1,
   });
 
+  // Accurate unread badge even when a provider has >100 total notifications:
+  // the list query caps at 100, so counting unread off that array undercounts
+  // when unread items sit beyond the newest 100. This is an exact server count.
+  const { data: serverUnreadCount } = useQuery({
+    queryKey: ["provider-notifications-unread-count"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return 0;
+      const { count } = await supabase
+        .from("provider_notifications")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .eq("read", false);
+      return count ?? 0;
+    },
+    staleTime: 30 * 1000,
+    retry: 1,
+  });
+
   // Real-time subscription for instant updates - filtered by user_id
   useEffect(() => {
     let channel: ReturnType<typeof supabase.channel> | null = null;
@@ -149,6 +176,8 @@ export function useProviderNotifications() {
               if (old.some(n => n.id === newNotification.id)) return old;
               return [newNotification, ...old];
             });
+            // Keep the exact server unread count fresh for the >100-row case.
+            queryClient.invalidateQueries({ queryKey: ["provider-notifications-unread-count"] });
           }
         )
         .on(
@@ -168,8 +197,8 @@ export function useProviderNotifications() {
             // state and the row briefly flips back to unread. The
             // "__all__" sentinel covers bulk mark-as-read where we
             // don't track every individual row id.
-            if (inFlightMutationsRef.current.has("__all__")) return;
-            if (inFlightMutationsRef.current.has(updatedNotification.id)) return;
+            if (inFlightMutations.has("__all__")) return;
+            if (inFlightMutations.has(updatedNotification.id)) return;
             queryClient.setQueryData<ProviderNotification[]>(["provider-notifications"], (old) => {
               if (!old) return old;
               return old.map(n => n.id === updatedNotification.id ? updatedNotification : n);
@@ -189,7 +218,7 @@ export function useProviderNotifications() {
             // Same "__all__" sentinel guard as the UPDATE handler so a
             // bulk-delete mid-flight doesn't get partial realtime
             // events bouncing rows back into the optimistic-empty list.
-            if (inFlightMutationsRef.current.has("__all__")) return;
+            if (inFlightMutations.has("__all__")) return;
             queryClient.setQueryData<ProviderNotification[]>(["provider-notifications"], (old) => {
               if (!old) return old;
               return old.filter(n => n.id !== deletedId);
@@ -221,7 +250,14 @@ export function useProviderNotifications() {
     };
   }, [queryClient, playNotificationSound, showBrowserNotification]);
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  const loadedUnread = notifications.filter((n) => !n.read).length;
+  // When the full set is loaded (< the 100 cap) the array is authoritative and
+  // reflects optimistic mark-as-read instantly. Once we hit the cap, trust the
+  // server count, but never show fewer than what's visibly unread in the window.
+  const unreadCount =
+    notifications.length < 100
+      ? loadedUnread
+      : Math.max(loadedUnread, serverUnreadCount ?? loadedUnread);
 
   const markAsReadMutation = useMutation({
     mutationFn: async (notificationId: string) => {
@@ -233,7 +269,7 @@ export function useProviderNotifications() {
       return notificationId;
     },
     onMutate: async (notificationId) => {
-      inFlightMutationsRef.current.add(notificationId);
+      inFlightMutations.add(notificationId);
       await queryClient.cancelQueries({ queryKey: ["provider-notifications"] });
       const previousNotifications = queryClient.getQueryData<ProviderNotification[]>(["provider-notifications"]);
 
@@ -252,8 +288,9 @@ export function useProviderNotifications() {
       toast.error("Failed to mark as read");
     },
     onSettled: (_data, _err, notificationId) => {
-      if (notificationId) inFlightMutationsRef.current.delete(notificationId);
+      if (notificationId) inFlightMutations.delete(notificationId);
       queryClient.invalidateQueries({ queryKey: ["provider-notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["provider-notifications-unread-count"] });
     },
   });
 
@@ -274,7 +311,7 @@ export function useProviderNotifications() {
       // honour this and skip processing, otherwise the per-row Stripe-
       // style replay would briefly bounce some rows back to unread
       // while the optimistic state shows everything read.
-      inFlightMutationsRef.current.add("__all__");
+      inFlightMutations.add("__all__");
       await queryClient.cancelQueries({ queryKey: ["provider-notifications"] });
       const previousNotifications = queryClient.getQueryData<ProviderNotification[]>(["provider-notifications"]);
 
@@ -296,8 +333,9 @@ export function useProviderNotifications() {
       toast.success("All notifications marked as read");
     },
     onSettled: () => {
-      inFlightMutationsRef.current.delete("__all__");
+      inFlightMutations.delete("__all__");
       queryClient.invalidateQueries({ queryKey: ["provider-notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["provider-notifications-unread-count"] });
     },
   });
 
@@ -311,7 +349,7 @@ export function useProviderNotifications() {
       return notificationId;
     },
     onMutate: async (notificationId) => {
-      inFlightMutationsRef.current.add(notificationId);
+      inFlightMutations.add(notificationId);
       await queryClient.cancelQueries({ queryKey: ["provider-notifications"] });
       const previousNotifications = queryClient.getQueryData<ProviderNotification[]>(["provider-notifications"]);
 
@@ -333,8 +371,9 @@ export function useProviderNotifications() {
       toast.success("Notification deleted");
     },
     onSettled: (_data, _err, notificationId) => {
-      if (notificationId) inFlightMutationsRef.current.delete(notificationId);
+      if (notificationId) inFlightMutations.delete(notificationId);
       queryClient.invalidateQueries({ queryKey: ["provider-notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["provider-notifications-unread-count"] });
     },
   });
 
@@ -354,7 +393,7 @@ export function useProviderNotifications() {
       // events from the server-side cascade don't slip through the
       // handler and trigger partial re-renders against the now-empty
       // optimistic cache.
-      inFlightMutationsRef.current.add("__all__");
+      inFlightMutations.add("__all__");
       await queryClient.cancelQueries({ queryKey: ["provider-notifications"] });
       const previousNotifications = queryClient.getQueryData<ProviderNotification[]>(["provider-notifications"]);
 
@@ -373,8 +412,9 @@ export function useProviderNotifications() {
       toast.success("All notifications cleared");
     },
     onSettled: () => {
-      inFlightMutationsRef.current.delete("__all__");
+      inFlightMutations.delete("__all__");
       queryClient.invalidateQueries({ queryKey: ["provider-notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["provider-notifications-unread-count"] });
     },
   });
 
