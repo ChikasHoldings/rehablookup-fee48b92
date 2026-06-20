@@ -1274,9 +1274,11 @@ const CenterProfile = () => {
                     </div>
                   )}
 
-                  {/* Phone */}
-                  {showContactDetails ? (
-                    <a 
+                  {/* Phone — only when the facility actually has a number;
+                      otherwise fall through to the placement helpline below so
+                      we never render an empty label or a dead tel:null link. */}
+                  {showContactDetails && facility.phone ? (
+                    <a
                       href={`tel:${facility.phone}`}
                       onClick={() => trackInteraction("call")}
                       className="flex items-start gap-3 p-3 rounded-lg bg-muted/40 hover:bg-primary/5 transition-colors group"
@@ -1513,7 +1515,7 @@ const CenterProfile = () => {
                       Message Center
                     </Button>
 
-                    {showContactDetails && (
+                    {showContactDetails && facility.phone && (
                       // Was <a><Button>...</Button></a> — invalid HTML
                       // (nested interactive). Use Button's asChild to
                       // mount the <a> as the root element instead.
@@ -1572,7 +1574,7 @@ const CenterProfile = () => {
                   <Sparkles className="h-4 w-4" />
                   Get Started
                 </Button>
-                {showContactDetails && (
+                {showContactDetails && facility.phone && (
                   // Same asChild fix as the sidebar Call CTA above —
                   // avoid <a><Button></Button></a> nested interactive.
                   <Button asChild variant="outline" size="lg" className="w-full gap-2 h-11 text-xs font-semibold">

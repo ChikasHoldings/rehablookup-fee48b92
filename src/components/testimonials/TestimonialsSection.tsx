@@ -182,6 +182,13 @@ export function TestimonialsSection({
             />
           ))}
         </div>
+
+        {/* Disclosure: testimonials are individual experiences shared by real
+            users/providers; self-reported outcomes and metrics are not typical
+            or guaranteed. Keeps the social-proof rail FTC-appropriate. */}
+        <p className="mt-5 text-center text-[11px] text-muted-foreground/70 max-w-2xl mx-auto px-4">
+          Individual experiences shared by people and providers who have used RehabLookup. Results vary and are not guaranteed.
+        </p>
       </div>
     </section>
   );

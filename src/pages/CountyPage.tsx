@@ -49,25 +49,23 @@ export default function CountyPage() {
   // cityInList normalizes both sides for Saint/Fort/Mount/Point + punctuation
   // so SAMHSA-imported facilities (e.g. city="St. Louis") match seed data
   // (e.g. majorCities=["Saint Louis"]).
-  const countyFacilities = useMemo(() => {
-    if (!countyData || !stateData) return [];
+  const { countyFacilities, isStateFallback } = useMemo(() => {
+    if (!countyData || !stateData) return { countyFacilities: [], isStateFallback: false };
     const stateNameLower = stateData.name.toLowerCase();
     const stateAbbrLower = stateData.abbreviation.toLowerCase();
 
-    let filtered = approvedFacilities.filter(f => {
-      const stateMatch = f.state.toLowerCase() === stateNameLower || f.state.toLowerCase() === stateAbbrLower;
-      if (!stateMatch) return false;
-      return cityInList(f.city, countyData.majorCities);
-    });
+    const inState = approvedFacilities.filter(f =>
+      f.state.toLowerCase() === stateNameLower || f.state.toLowerCase() === stateAbbrLower
+    );
+    const countyMatched = inState.filter(f => cityInList(f.city, countyData.majorCities));
 
-    // Fallback: if fewer than 3, show all state facilities
-    if (filtered.length < 3) {
-      filtered = approvedFacilities.filter(f =>
-        f.state.toLowerCase() === stateNameLower || f.state.toLowerCase() === stateAbbrLower
-      );
-    }
+    // Fallback: if fewer than 3 match the county directly, show all state
+    // facilities — but flag it so the UI labels them as state-wide rather than
+    // misrepresenting state centers as serving this specific county.
+    const usingFallback = countyMatched.length < 3;
+    const base = usingFallback ? inState : countyMatched;
 
-    return [...filtered].sort((a, b) => {
+    const sorted = [...base].sort((a, b) => {
       const aPro = (a as { isPro?: boolean }).isPro ? 1 : 0;
       const bPro = (b as { isPro?: boolean }).isPro ? 1 : 0;
       if (bPro !== aPro) return bPro - aPro;
@@ -76,6 +74,8 @@ export default function CountyPage() {
       if (bScore !== aScore) return bScore - aScore;
       return a.name.localeCompare(b.name);
     }).slice(0, 12);
+
+    return { countyFacilities: sorted, isStateFallback: usingFallback };
   }, [approvedFacilities, countyData, stateData]);
 
   if (!stateData || !countyData || !stateCounty) {
@@ -297,9 +297,11 @@ export default function CountyPage() {
               </div>
               {!isLoading && (
                 <p className="mt-1 text-sm text-muted-foreground">
-                  {countyFacilities.length > 0
-                    ? `${countyFacilities.length} verified ${countyFacilities.length === 1 ? "facility" : "facilities"} serving the county`
-                    : `Expanding directory in ${countyData.name} County.`}
+                  {countyFacilities.length === 0
+                    ? `Expanding directory in ${countyData.name} County.`
+                    : isStateFallback
+                      ? `Fewer centers are listed directly in ${countyData.name} County — showing ${countyFacilities.length} verified ${countyFacilities.length === 1 ? "facility" : "facilities"} across ${stateData.name}.`
+                      : `${countyFacilities.length} verified ${countyFacilities.length === 1 ? "facility" : "facilities"} serving the county`}
                 </p>
               )}
             </div>

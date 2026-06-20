@@ -729,10 +729,15 @@ const CityPage = () => {
               {displayedCities.map((city) => {
                 // Live facility-count chip per city — mirrors the
                 // StatePage Cities section. Uses the same approved
-                // facilities query already loaded for cityCenters.
-                const cityFacilityCount = approvedFacilities.filter((f) =>
-                  citiesMatch(f.city, city.name),
-                ).length;
+                // facilities query already loaded for cityCenters. Must also
+                // match the state, otherwise a same-named city in another
+                // state (e.g. "Springfield") inflates the count.
+                const cityFacilityCount = approvedFacilities.filter((f) => {
+                  const inState =
+                    f.state?.toLowerCase() === stateData.name.toLowerCase() ||
+                    f.state?.toLowerCase() === stateData.abbreviation.toLowerCase();
+                  return inState && citiesMatch(f.city, city.name);
+                }).length;
                 return (
                   <Link
                     key={city.slug}

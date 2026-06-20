@@ -117,10 +117,10 @@ export const seekerTestimonials: Testimonial[] = [
   {
     name: "Robert & Linda C.",
     location: "Atlanta, GA",
-    quote: "When our daughter relapsed, we panicked. RehabLookup connected us with a facility within 4 hours. The speed and compassion of their team during that crisis was extraordinary.",
+    quote: "When our daughter relapsed, we didn't know where to turn. RehabLookup connected us with a facility quickly, and the compassion of their team meant everything to our family.",
     rating: 5,
     role: "family",
-    context: "Emergency placement for daughter",
+    context: "Found placement for daughter",
     avatar: robertLindaImg,
   },
   {
@@ -162,10 +162,10 @@ export const seekerTestimonials: Testimonial[] = [
   {
     name: "Lisa H.",
     location: "Minneapolis, MN",
-    quote: "After my daughter's overdose scare, we needed help immediately — not in two weeks. The concierge team got her into a detox facility within 6 hours. That speed saved her life. She's now thriving in a sober living home.",
+    quote: "After my daughter's overdose scare, we didn't want to wait weeks for help. The concierge team helped us find a detox facility quickly. She's now thriving in a sober living home.",
     rating: 5,
     role: "family",
-    context: "Emergency detox placement for daughter",
+    context: "Found detox placement for daughter",
     avatar: lisaImg,
   },
   {
@@ -307,7 +307,7 @@ export const seekerTestimonials: Testimonial[] = [
   {
     name: "Vanessa C.",
     location: "Miami, FL",
-    quote: "I was pregnant and using. Every day I didn't get help, I was hurting my baby. RehabLookup found a facility with a specialized perinatal program within 24 hours. My daughter was born healthy and I've been clean since. They saved two lives that day.",
+    quote: "I was pregnant and using, and I was scared for my baby. RehabLookup helped me find a facility with a specialized perinatal program quickly. My daughter was born healthy and I've been in recovery since.",
     rating: 5,
     role: "seeker",
     context: "Found perinatal addiction program",
@@ -355,7 +355,7 @@ export const providerTestimonials: Testimonial[] = [
   {
     name: "James Whitfield",
     location: "Malibu, CA",
-    quote: "We've tried every marketing channel out there. RehabLookup consistently delivers the highest-quality referrals at the lowest cost per admission. It's our #1 source now.",
+    quote: "We've tried every marketing channel out there. RehabLookup consistently delivers high-quality referrals for one flat monthly fee — no per-lead or per-admission charges. It's become one of our most reliable channels.",
     rating: 5,
     role: "provider",
     context: "CEO, Pacific Coast Treatment Center",
@@ -418,7 +418,7 @@ export const providerTestimonials: Testimonial[] = [
   {
     name: "Andre Jackson, MBA",
     location: "Charlotte, NC",
-    quote: "Before RehabLookup, we spent $15,000/month on Google Ads with inconsistent results. Now we get a steady pipeline of qualified leads for a fraction of the cost. Our cost per admission dropped by 60%.",
+    quote: "Before RehabLookup, we spent $15,000/month on Google Ads with inconsistent results. Now we get a steady pipeline of qualified inquiries for one predictable flat monthly fee — none of the per-click unpredictability.",
     rating: 5,
     role: "provider",
     context: "VP of Growth, Carolina Recovery Network",
@@ -464,7 +464,7 @@ export const providerTestimonials: Testimonial[] = [
   {
     name: "Darnell Jackson",
     location: "Atlanta, GA",
-    quote: "Our 45-bed facility was running at 62% occupancy when we joined RehabLookup. Within four months, we hit 91%. The exclusive lead model means my admissions team actually has time to do proper clinical assessments instead of racing to dial numbers.",
+    quote: "Our 45-bed facility had real occupancy headroom when we joined RehabLookup. Because inquiries arrive with detailed intake information, my admissions team actually has time to do proper clinical assessments instead of racing to dial numbers.",
     rating: 5,
     role: "provider",
     context: "CEO, Peachtree Recovery Center",
@@ -527,7 +527,7 @@ export const providerTestimonials: Testimonial[] = [
   {
     name: "Dr. Nicole Stafford",
     location: "Nashville, TN",
-    quote: "I was spending $8,000/month on leads from two other directories — shared leads that went to 10 facilities simultaneously. Switched to RehabLookup's exclusive model and my cost per admission dropped by half while my admissions team's morale went through the roof.",
+    quote: "I was spending $8,000/month on other directories that resold the same shared leads to ten facilities at once. RehabLookup's flat monthly subscription gave us a predictable cost and far better-matched inquiries, and my admissions team's morale went through the roof.",
     rating: 5,
     role: "provider",
     context: "CMO, Southern Behavioral Health Group",
@@ -590,7 +590,7 @@ export const providerTestimonials: Testimonial[] = [
   {
     name: "Dr. Margaret Kelly",
     location: "Denver, CO",
-    quote: "As chief medical officer of a 120-bed campus, I need marketing channels that deliver volume without sacrificing quality. RehabLookup is the only platform where we've scaled to 30+ admissions per month while maintaining our clinical selectivity. The ROI is 4x our next best channel.",
+    quote: "As chief medical officer of a 120-bed campus, I need marketing channels that deliver volume without sacrificing quality. RehabLookup has helped us grow admissions while maintaining our clinical selectivity, and it's consistently one of our most cost-effective channels.",
     rating: 5,
     role: "provider",
     context: "CMO, Rocky Mountain Treatment Campus",

@@ -258,7 +258,7 @@ const About = () => {
               {/* Stats */}
               <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="text-center p-4 rounded-xl bg-muted/50">
-                  <div className="font-display text-2xl font-bold text-accent">500+</div>
+                  <div className="font-display text-2xl font-bold text-accent">{STATS.facilities}</div>
                   <div className="text-sm text-muted-foreground">Verified Centers</div>
                 </div>
                 <div className="text-center p-4 rounded-xl bg-muted/50">
@@ -535,8 +535,8 @@ const About = () => {
             {[
               { year: "2024", title: "Founded", desc: "RehabLookup launched with a mission to bring transparency to addiction treatment search." },
               { year: "2024", title: "First 100 Facilities", desc: "Onboarded 100+ verified treatment centers across 25 states." },
-              { year: "2025", title: "Nationwide Coverage", desc: "Expanded to all 50 states with 500+ verified facilities and exclusive lead model." },
-              { year: "2026", title: "Platform 2.0", desc: "Launched provider dashboard, concierge placement, and ROI analytics for treatment centers." },
+              { year: "2025", title: "Nationwide Coverage", desc: "Expanded to all 50 states with 500+ verified facilities on a transparent flat-fee subscription model." },
+              { year: "2026", title: "Platform 2.0", desc: "Launched the provider dashboard, concierge placement, and performance analytics for treatment centers." },
             ].map((milestone, idx) => (
               <div key={idx} className="flex gap-4">
                 <div className="flex flex-col items-center">

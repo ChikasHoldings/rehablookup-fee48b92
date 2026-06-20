@@ -87,7 +87,7 @@ const treatmentOptions = [
     icon: Brain,
     title: "Mental Health",
     description: "Dual diagnosis treatment addressing addiction alongside anxiety, depression, and PTSD.",
-    link: "/treatment-types/dual-diagnosis",
+    link: "/treatment-types/dual-diagnosis-treatment",
   },
   {
     icon: Home,
@@ -318,7 +318,7 @@ const Index = () => {
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4 text-accent shrink-0" aria-hidden />
               <span className="text-sm md:text-base text-primary-foreground/90">
-                <strong className="font-semibold text-white">Free</strong> 24/7 Help
+                <strong className="font-semibold text-white">Free</strong> · Fast Response
               </span>
             </div>
           </div>

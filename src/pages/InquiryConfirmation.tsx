@@ -142,6 +142,33 @@ export default function InquiryConfirmation() {
                   </a>
                 </div>
 
+                {/* Crisis line — a seeker waiting up to an hour for a
+                    coordinator must always have an immediate-help path. Mirrors
+                    the ConciergeThankYou crisis block. */}
+                <div
+                  role="complementary"
+                  aria-label="Immediate crisis support"
+                  className="rounded-lg border border-red-200 bg-red-50/70 p-4 text-sm text-red-900"
+                >
+                  <p className="font-semibold">In crisis right now?</p>
+                  <p className="mt-1 leading-relaxed">
+                    Call or text{" "}
+                    <a href="tel:988" className="font-bold underline">988</a>{" "}
+                    for the Suicide &amp; Crisis Lifeline, or visit{" "}
+                    <a
+                      href="https://988lifeline.org"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-medium underline"
+                    >
+                      988lifeline.org
+                    </a>
+                    . If someone is in immediate danger, call 911. Trained
+                    counselors are available 24/7 — you don't have to wait for
+                    our coordinator.
+                  </p>
+                </div>
+
                 {refDisplay && (
                   <p className="text-xs text-slate-500 text-center">
                     Inquiry reference: {refDisplay}

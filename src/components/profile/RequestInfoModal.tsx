@@ -33,6 +33,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LeadIntakeForm } from "@/components/lead-intake";
+import { LeadIntakeFormData } from "@/components/lead-intake/types";
+import { useToast } from "@/hooks/use-toast";
 import { formatPhoneNumber, getPhoneDigits } from "@/lib/phoneUtils";
 
 interface NearbyFacility {
@@ -449,6 +451,7 @@ export function RequestInfoModal({
   prefillData,
 }: RequestInfoModalProps) {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [nearbyFacilities, setNearbyFacilities] = useState<NearbyFacility[]>([]);
   const [loadingNearby, setLoadingNearby] = useState(false);
   const [formSubmitted, setFormSubmitted] = useState(false);
@@ -614,6 +617,50 @@ export function RequestInfoModal({
   // Check if at capacity (for free tier providers) — only meaningful when we
   // were able to load real lead usage for a real facility.
   const isAtCapacity = hasFacilityRecord && leadUsage && leadUsage.remaining === 0 && !isPro;
+
+  // When the facility record failed to load (no id), the default lead path
+  // would dead-end at submit ("select a treatment center") and silently drop
+  // the lead — despite the fallback banner promising "we'll follow up". Route
+  // these through the concierge-matching marketing-lead function so the promise
+  // is kept. Throw on failure so the form never shows a false success.
+  const handleConciergeFallbackSubmit = async (formData: LeadIntakeFormData) => {
+    try {
+      const { error } = await supabase.functions.invoke("submit-marketing-lead", {
+        body: {
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          phone: formData.phone,
+          preferredContact: formData.preferredContact,
+          urgency: formData.urgency,
+          whoSeekingHelp: formData.whoSeekingHelp,
+          locationZip: formData.locationZip,
+          locationCityState: formData.locationCityState,
+          levelOfCare: formData.levelOfCare,
+          insuranceType: formData.insuranceType,
+          insuranceProvider: formData.insuranceProvider,
+          primarySubstance: formData.primarySubstance,
+          dualDiagnosis: formData.dualDiagnosis,
+          ageRange: formData.ageRange,
+          gender: formData.gender,
+          previousTreatment: formData.previousTreatment,
+          coOccurringConditions: formData.coOccurringConditions,
+          employmentStatus: formData.employmentStatus,
+          message: formData.message,
+          landingPage: typeof window !== "undefined" ? window.location.pathname : "/center",
+        },
+      });
+      if (error) throw error;
+    } catch (err) {
+      console.error("Concierge fallback lead submission failed:", err);
+      toast({
+        title: "Submission failed",
+        description: (err instanceof Error ? err.message : "") || "Please try again in a moment.",
+        variant: "destructive",
+      });
+      throw err instanceof Error ? err : new Error("Submission failed");
+    }
+  };
 
   // Custom success handler for the form
   const renderSuccess = ({
@@ -830,6 +877,7 @@ export function RequestInfoModal({
               facilityId={safeFacilityId ?? undefined}
               facilityName={safeFacilityName}
               renderSuccess={renderSuccess}
+              onCustomSubmit={safeFacilityId ? undefined : handleConciergeFallbackSubmit}
             />
           )}
         </div>

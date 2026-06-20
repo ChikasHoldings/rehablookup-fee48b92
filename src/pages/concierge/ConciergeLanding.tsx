@@ -49,7 +49,7 @@ const STAT_CARDS = [
 const FAQ_ITEMS = [
   {
     question: "Is the placement service really free?",
-    answer: "Yes — there is no fee for clients. Our placement specialists provide personalized recommendations, insurance verification assistance, and direct introductions to vetted programs at no cost to you. We're compensated by partner facilities only when a successful placement is made.",
+    answer: "Yes — there is no fee for clients, ever. Our placement specialists provide personalized recommendations, insurance verification assistance, and direct introductions to vetted programs at no cost to you. We're funded by facilities that pay a flat monthly subscription for their listing — never a per-call, per-lead, or per-placement fee. Our advisors are salaried, so their recommendations are based on your needs, not on who pays us.",
   },
   {
     question: "How quickly will I hear back?",
@@ -431,8 +431,8 @@ export default function ConciergeLanding() {
                   <strong className="text-foreground/80">Important:</strong> This service provides placement assistance, not medical advice. 
                   Treatment decisions should be made with qualified healthcare professionals.
                 </p>
-                <p className="hidden sm:block">
-                  If you or someone you know is in immediate danger, please call 911 or your local 
+                <p>
+                  If you or someone you know is in immediate danger, please call 911 or your local
                   emergency number. For crisis support, visit the{" "}
                   <a 
                     href="https://988lifeline.org" 

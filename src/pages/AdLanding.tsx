@@ -18,6 +18,8 @@ import { LazyVideoEmbed } from "@/components/ui/lazy-video-embed";
 import { supabase } from "@/integrations/supabase/client";
 import logoImage from "@/assets/logo-header.webp";
 import { LeadIntakeForm } from "@/components/lead-intake";
+import { LeadIntakeFormData } from "@/components/lead-intake/types";
+import { useToast } from "@/hooks/use-toast";
 import { scrollToTopInstant } from "@/hooks/useScrollToTop";
 
 // Configure your video here. Leave `videoId` empty to hide the video block
@@ -210,7 +212,8 @@ function LandingSuccessView({ firstName }: { firstName: string }) {
 
 export default function AdLanding() {
   const [searchParams] = useSearchParams();
-  
+  const { toast } = useToast();
+
   // UTM parameters
   const utmParams = useRef<UTMParams>({
     utm_source: searchParams.get("utm_source"),
@@ -250,6 +253,56 @@ export default function AdLanding() {
     }
   };
   
+  // Paid-ad landings have no facility context, so the default lead path
+  // (which requires a facilityId) would dead-end at submit and silently drop
+  // every lead. Route through the concierge-matching marketing-lead function
+  // instead — same pattern MarketingLanding uses. Throw on failure so the form
+  // never shows a false success and the visitor can retry.
+  const handleAdSubmit = async (formData: LeadIntakeFormData) => {
+    const utm = utmParams.current;
+    try {
+      const { error } = await supabase.functions.invoke("submit-marketing-lead", {
+        body: {
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          phone: formData.phone,
+          preferredContact: formData.preferredContact,
+          urgency: formData.urgency,
+          whoSeekingHelp: formData.whoSeekingHelp,
+          locationZip: formData.locationZip,
+          locationCityState: formData.locationCityState,
+          levelOfCare: formData.levelOfCare,
+          insuranceType: formData.insuranceType,
+          insuranceProvider: formData.insuranceProvider,
+          primarySubstance: formData.primarySubstance,
+          dualDiagnosis: formData.dualDiagnosis,
+          ageRange: formData.ageRange,
+          gender: formData.gender,
+          previousTreatment: formData.previousTreatment,
+          coOccurringConditions: formData.coOccurringConditions,
+          employmentStatus: formData.employmentStatus,
+          message: formData.message,
+          utmSource: utm.utm_source,
+          utmMedium: utm.utm_medium,
+          utmCampaign: utm.utm_campaign,
+          utmTerm: utm.utm_term,
+          utmContent: utm.utm_content,
+          landingPage: window.location.pathname,
+        },
+      });
+      if (error) throw error;
+    } catch (err) {
+      console.error("Ad landing lead submission failed:", err);
+      toast({
+        title: "Submission failed",
+        description: (err instanceof Error ? err.message : "") || "Please try again in a moment.",
+        variant: "destructive",
+      });
+      throw err instanceof Error ? err : new Error("Submission failed");
+    }
+  };
+
   // Custom success renderer that scrolls to top and shows landing-specific success
   const renderSuccess = ({ firstName }: { firstName: string }) => {
     // Scroll to top when showing success
@@ -306,7 +359,7 @@ export default function AdLanding() {
           
           {/* Lead Intake Form with custom success */}
           <section className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200">
-            <LeadIntakeForm renderSuccess={renderSuccess} />
+            <LeadIntakeForm renderSuccess={renderSuccess} onCustomSubmit={handleAdSubmit} />
           </section>
           
           {/* Trust & Info Section */}
