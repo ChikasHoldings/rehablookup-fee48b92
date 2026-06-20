@@ -282,11 +282,13 @@ function ProviderShellContent() {
   //    hasn't resolved yet.  Return null while the polling useEffect retries.
   if (role === null) return null;
 
-  // 6. Suspended account — lock out the entire dashboard immediately.
-  //    providerData?.profile may be undefined while the query is in-flight;
-  //    only block when status is explicitly 'suspended' so the shell renders
-  //    normally until the profile loads (no flicker for active accounts).
-  if (providerData?.profile?.status === "suspended") {
+  // 6. Suspended listing — lock out the dashboard immediately.
+  //    Suspension is admin-controlled via facilities.suspended (set by
+  //    AdminProviders), NOT profiles.status (which doesn't exist). `facility`
+  //    resolves to the selected/primary facility; only block when suspended is
+  //    explicitly true so the shell renders normally while the query is
+  //    in-flight (no flicker for active accounts).
+  if (facility?.suspended === true) {
     return (
       <AccessDenied
         requiredRole="provider"

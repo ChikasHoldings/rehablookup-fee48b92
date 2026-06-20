@@ -17,12 +17,9 @@ interface Profile {
    *  (or by a post-checkout Pro recovery in Dashboard.tsx). Null until
    *  the user has finished onboarding. */
   onboarding_completed_at: string | null;
-  /** profiles.plan mirror — 'free' | 'pro'. Lets components avoid an
-   *  extra useProStatus call when they only need the tier. */
-  plan: "free" | "pro" | null;
-  /** Account-level status. 'active' for normal accounts; 'suspended' blocks
-   *  dashboard access in ProviderShell. */
-  status: string | null;
+  /** profiles.plan mirror — 'free' | 'pro' (stored as a text column). Lets
+   *  components avoid an extra useProStatus call when they only need the tier. */
+  plan: string | null;
 }
 
 interface Facility {
@@ -30,6 +27,10 @@ interface Facility {
   name: string;
   slug: string | null;
   status: string;
+  /** Admin-controlled suspension flag (facilities.suspended). When true the
+   *  ProviderShell locks the dashboard. This — not profiles.status — is the
+   *  real provider-suspension source of truth (set by AdminProviders). */
+  suspended: boolean | null;
   email: string | null;
   logo_url: string | null;
   gallery_urls: string[] | null;
@@ -134,20 +135,20 @@ export function useProviderData(facilityId?: string) {
         // Fetch profile
         supabase
           .from("profiles")
-          .select("first_name, last_name, email, phone, job_title, primary_contact_name, timezone, phone_verified, phone_verified_at, onboarding_completed_at, plan, status")
+          .select("first_name, last_name, email, phone, job_title, primary_contact_name, timezone, phone_verified, phone_verified_at, onboarding_completed_at, plan")
           .eq("user_id", session.user.id)
           .maybeSingle(),
         // Fetch facility
         facilityId
           ? supabase
               .from("facilities")
-              .select("id, name, slug, status, email, logo_url, gallery_urls, description, phone, address, city, state, zip_code, website, profile_completion_celebrated, reply_email, reply_email_verified")
+              .select("id, name, slug, status, suspended, email, logo_url, gallery_urls, description, phone, address, city, state, zip_code, website, profile_completion_celebrated, reply_email, reply_email_verified")
               .eq("id", facilityId)
               .eq("user_id", session.user.id)
               .maybeSingle()
           : supabase
               .from("facilities")
-              .select("id, name, slug, status, email, logo_url, gallery_urls, description, phone, address, city, state, zip_code, website, profile_completion_celebrated, reply_email, reply_email_verified")
+              .select("id, name, slug, status, suspended, email, logo_url, gallery_urls, description, phone, address, city, state, zip_code, website, profile_completion_celebrated, reply_email, reply_email_verified")
               .eq("user_id", session.user.id)
               .limit(1)
               .maybeSingle(),

@@ -247,12 +247,20 @@ export function AddFeaturedPlacementForm({
         return;
       }
 
+      // Deterministically pick the most relevant existing row (active first,
+      // else most recently activated). A bare .maybeSingle() errored with
+      // PGRST116 when historic duplicate rows existed, and the ignored error
+      // left `existing` null → the code fell through and INSERTed a new
+      // duplicate. .limit(1) makes the lookup single-row-safe.
       const { data: existing } = await supabase
         .from("featured_placements")
         .select("id, active")
         .eq("facility_id", facilityId)
         .eq("placement_type", type)
         .eq("placement_value", placementValue)
+        .order("active", { ascending: false })
+        .order("activated_at", { ascending: false, nullsFirst: false })
+        .limit(1)
         .maybeSingle();
 
       if (existing && (existing as { active: boolean }).active === true) {

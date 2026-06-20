@@ -7,6 +7,9 @@ import { fmtMoney, fmtMoneyWhole, TIER_PRICING } from "@/lib/billingPricing";
 
 interface ProUpgradeChoicesProps {
   onChoose: (interval: "monthly" | "annual") => void;
+  /** Which interval is currently launching checkout, if any. Disables both
+   *  buttons to prevent a double-click opening two checkout sessions. */
+  busy?: "monthly" | "annual" | null;
 }
 
 const PRO_FEATURES = [
@@ -26,7 +29,7 @@ const PRO_FEATURES = [
  * separate product category. The only allowed reference to them is
  * the helper-text link below the cards pointing to /provider/marketing.
  */
-export function ProUpgradeChoices({ onChoose }: ProUpgradeChoicesProps) {
+export function ProUpgradeChoices({ onChoose, busy = null }: ProUpgradeChoicesProps) {
   return (
     <div className="space-y-4">
       <div>
@@ -65,9 +68,10 @@ export function ProUpgradeChoices({ onChoose }: ProUpgradeChoicesProps) {
             </ul>
             <Button
               onClick={() => onChoose("monthly")}
+              disabled={busy !== null}
               className="w-full bg-[#1B365D] hover:bg-[#142a4a]"
             >
-              Choose Pro Monthly
+              {busy === "monthly" ? "Redirecting…" : "Choose Pro Monthly"}
             </Button>
           </CardContent>
         </Card>
@@ -106,9 +110,10 @@ export function ProUpgradeChoices({ onChoose }: ProUpgradeChoicesProps) {
             </ul>
             <Button
               onClick={() => onChoose("annual")}
+              disabled={busy !== null}
               className="w-full bg-[#1B365D] hover:bg-[#142a4a]"
             >
-              Choose Pro Annual
+              {busy === "annual" ? "Redirecting…" : "Choose Pro Annual"}
             </Button>
           </CardContent>
         </Card>

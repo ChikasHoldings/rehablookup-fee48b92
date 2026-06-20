@@ -67,6 +67,7 @@ export const NOTIFICATION_TYPES: Record<string, NotificationTypeEntry> = {
   lead_expired: { label: "Lead Expired", icon: errIcon, route: "/provider/inquiries", category: "leads" },
   lead_status_changed: { label: "Inquiry Update", icon: <MessageSquare className="h-5 w-5 text-blue-500" />, route: "/provider/inquiries", category: "leads" },
   lead_redistributed: { label: "New Inquiry", icon: leadIcon, route: "/provider/inquiries", category: "leads" },
+  lead_message: { label: "New Message", icon: <MessageSquare className="h-5 w-5 text-blue-500" />, route: "/provider/inquiries", category: "leads" },
 
   // ─── Billing / subscription ─────────────────────────────────────────
   subscription_active: { label: "Pro Activated", icon: <ShieldCheck className="h-5 w-5 text-emerald-500" />, route: "/provider/billing", category: "billing" },

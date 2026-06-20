@@ -79,6 +79,8 @@ export default function ProviderSubscription() {
 
   const portalDebounceRef = useRef(false);
   const [portalLoading, setPortalLoading] = useState(false);
+  const proUpgradeDebounceRef = useRef(false);
+  const [proUpgradeBusy, setProUpgradeBusy] = useState<"monthly" | "annual" | null>(null);
 
   // The hook owns the decaying polling schedule (2s → 4s → 8s, ~3 min
   // total). We watch the query's pending state via a ref to decide when
@@ -202,6 +204,11 @@ export default function ProviderSubscription() {
 
   const handleProUpgrade = async (interval: "monthly" | "annual") => {
     if (!facilityId) return;
+    // Guard against double-clicks launching two checkout sessions while the
+    // redirect is in flight (mirrors handleManageBilling's debounce).
+    if (proUpgradeDebounceRef.current) return;
+    proUpgradeDebounceRef.current = true;
+    setProUpgradeBusy(interval);
     try {
       const { data, error } = await supabase.functions.invoke("create-checkout-session", {
         body: {
@@ -230,6 +237,12 @@ export default function ProviderSubscription() {
       // Truly unexpected (e.g. crash in our own code path).
       console.error("[Subscription] upgrade unexpected error", err);
       toast.error("Something went wrong. Please try again.");
+    } finally {
+      // Re-enable on any non-redirect path (errors/returns). On the success
+      // path window.location.assign unloads the page, so this is a harmless
+      // no-op there.
+      setProUpgradeBusy(null);
+      setTimeout(() => { proUpgradeDebounceRef.current = false; }, 4000);
     }
   };
 
@@ -451,7 +464,7 @@ export default function ProviderSubscription() {
           <>
             <PromoCountdownBanner facilityId={facilityId} targets={["pro"]} />
             <FreeSubscriptionCard />
-            <ProUpgradeChoices onChoose={handleProUpgrade} />
+            <ProUpgradeChoices onChoose={handleProUpgrade} busy={proUpgradeBusy} />
           </>
         )}
         </div>

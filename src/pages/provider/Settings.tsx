@@ -467,6 +467,18 @@ export default function ProviderSettingsPage() {
 
   const handleSaveProfile = async () => {
     if (!profile) return;
+    // Guard against overwriting real data with an empty form when the profile
+    // never loaded (e.g. a transient fetch error left providerData.profile
+    // null and the user typed into blank fields). Saving then would null out
+    // phone/job_title/etc. Require a successful load before allowing a write.
+    if (!providerData?.profile) {
+      toast({
+        title: "Couldn't load your profile",
+        description: "Please refresh the page before saving so your existing details aren't overwritten.",
+        variant: "destructive",
+      });
+      return;
+    }
     if (!validateProfileForm()) return;
 
     // Rate limit: 5 second cooldown

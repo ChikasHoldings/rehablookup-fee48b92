@@ -14,8 +14,6 @@ import {
   Loader2,
   Send,
   Clock,
-  ShieldCheck,
-  ShieldX,
   User,
   MapPin,
   AlertTriangle,
@@ -138,7 +136,11 @@ export function LeadDetailDrawer({ lead, open, onOpenChange }: LeadDetailDrawerP
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["provider-leads"] });
+      // Invalidate the keys actually read by the surfaces that show this lead:
+      // the dashboard recent-leads feed and the Inquiries list. (The old
+      // ["provider-leads"] key had no reader, so the UI never refreshed.)
+      queryClient.invalidateQueries({ queryKey: ["recent-leads"] });
+      queryClient.invalidateQueries({ queryKey: ["provider-inquiries"] });
       toast({ title: "Status updated" });
     },
     onError: () => {
@@ -157,7 +159,11 @@ export function LeadDetailDrawer({ lead, open, onOpenChange }: LeadDetailDrawerP
       if (error) throw error;
     },
     onSuccess: (_, snoozeUntil) => {
-      queryClient.invalidateQueries({ queryKey: ["provider-leads"] });
+      // Invalidate the keys actually read by the surfaces that show this lead:
+      // the dashboard recent-leads feed and the Inquiries list. (The old
+      // ["provider-leads"] key had no reader, so the UI never refreshed.)
+      queryClient.invalidateQueries({ queryKey: ["recent-leads"] });
+      queryClient.invalidateQueries({ queryKey: ["provider-inquiries"] });
       if (snoozeUntil) {
         toast({ title: "Reminders snoozed", description: `Until ${format(snoozeUntil, "MMM d 'at' h:mm a")}` });
       } else {
@@ -212,10 +218,14 @@ export function LeadDetailDrawer({ lead, open, onOpenChange }: LeadDetailDrawerP
   });
 
   const handleCopy = async (text: string, field: string) => {
-    await navigator.clipboard.writeText(text);
-    setCopiedField(field);
-    setTimeout(() => setCopiedField(null), 2000);
-    toast({ title: "Copied to clipboard" });
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedField(field);
+      setTimeout(() => setCopiedField(null), 2000);
+      toast({ title: "Copied to clipboard" });
+    } catch {
+      toast({ title: "Couldn't copy", description: "Please copy the text manually.", variant: "destructive" });
+    }
   };
 
   const handleAddNote = () => {
@@ -428,17 +438,6 @@ export function LeadDetailDrawer({ lead, open, onOpenChange }: LeadDetailDrawerP
                         <div>
                           <div className="flex items-center gap-2">
                             <p className="text-sm font-medium">{displayInfo.email}</p>
-                            {lead.email_verified ? (
-                              <Badge variant="secondary" className="gap-1 text-xs bg-green-100 text-green-700 border-0">
-                                <ShieldCheck className="h-3 w-3" />
-                                Verified
-                              </Badge>
-                            ) : (
-                              <Badge variant="outline" className="gap-1 text-xs text-muted-foreground">
-                                <ShieldX className="h-3 w-3" />
-                                Unverified
-                              </Badge>
-                            )}
                           </div>
                           <p className="text-xs text-muted-foreground">
                             {lead.preferred_contact === "email" ? "Preferred contact" : "Email"}

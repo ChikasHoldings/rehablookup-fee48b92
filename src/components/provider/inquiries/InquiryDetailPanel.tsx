@@ -179,9 +179,13 @@ export function InquiryDetailPanel({ inquiry }: InquiryDetailPanelProps) {
     updateStatus.mutate({ status, notes: responseNotes || undefined });
   };
 
-  const copyToClipboard = (text: string, label: string) => {
-    navigator.clipboard.writeText(text);
-    toast.success(`${label} copied to clipboard`);
+  const copyToClipboard = async (text: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success(`${label} copied to clipboard`);
+    } catch {
+      toast.error(`Couldn't copy ${label}. Please copy it manually.`);
+    }
   };
 
   const currentStatus = (inquiry.provider_response_status || 'pending') as ResponseStatus;

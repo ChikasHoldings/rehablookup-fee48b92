@@ -348,7 +348,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
 
       const { data } = await supabase
         .from("facilities")
-        .select("id, user_id, name, slug, address, city, state, zip_code, phone, email, reply_email, reply_email_verified, reply_email_verified_at, website, description, facility_type, gender_served, bed_count, status, featured, logo_url, gallery_urls, year_established, accepts_international_patients, verified_phone, verified_phone_set_at, has_facility_verified_contact, hours_of_operation, languages_spoken, accessibility_features, accepting_admissions")
+        .select("id, user_id, name, slug, address, city, state, zip_code, phone, email, reply_email, reply_email_verified, reply_email_verified_at, website, description, facility_type, gender_served, bed_count, status, suspended, profile_completion_celebrated, featured, logo_url, gallery_urls, year_established, accepts_international_patients, verified_phone, verified_phone_set_at, has_facility_verified_contact, hours_of_operation, languages_spoken, accessibility_features, accepting_admissions")
         .eq("id", currentFacilityId)
         .maybeSingle();
 

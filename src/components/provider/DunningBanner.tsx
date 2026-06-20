@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, ArrowRight, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,6 +30,7 @@ interface PastDueRow {
  * something is off, with a Refresh CTA.
  */
 export function DunningBanner() {
+  const location = useLocation();
   const { data: pastDue, isError, refetch } = useQuery({
     queryKey: ["provider-dunning-past-due"],
     queryFn: async (): Promise<PastDueRow[]> => {
@@ -40,7 +41,9 @@ export function DunningBanner() {
         .from("facility_subscriptions")
         .select("facility_id, tier, status, current_period_end, has_featured, has_concierge_partner")
         .eq("provider_id", userId)
-        .eq("status", "past_due");
+        // Include `unpaid` (past_due that exhausted Stripe retries) — it's the
+        // most urgent state and was previously missed by the dunning banner.
+        .in("status", ["past_due", "unpaid"]);
       if (error) {
         // Log + throw so React Query surfaces isError. Returning [] here
         // would silently hide a real past_due state.
@@ -53,6 +56,10 @@ export function DunningBanner() {
     refetchOnWindowFocus: true,
     retry: 2,
   });
+
+  // The Billing page renders its own in-page past-due card, so suppress the
+  // global banner there to avoid two payment-failed notices stacking.
+  if (location.pathname.startsWith("/provider/billing")) return null;
 
   if (isError) {
     return (

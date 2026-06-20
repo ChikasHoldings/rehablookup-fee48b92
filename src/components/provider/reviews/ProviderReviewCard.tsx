@@ -227,7 +227,7 @@ export const ProviderReviewCard = memo(forwardRef<HTMLDivElement, ProviderReview
                         <Button size="sm" variant="ghost" onClick={() => setIsEditing(false)}>
                           Cancel
                         </Button>
-                        <Button size="sm" onClick={handleUpdate} disabled={isSubmitting}>
+                        <Button size="sm" onClick={handleUpdate} disabled={isSubmitting || !editText.trim()}>
                           {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save'}
                         </Button>
                       </div>
