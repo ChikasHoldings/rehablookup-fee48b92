@@ -17,6 +17,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 import { Resend } from "https://esm.sh/resend@2.0.0?target=denonext";
 import { z } from "https://esm.sh/zod@3.23.8?target=denonext";
+import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -184,12 +185,25 @@ Deno.serve(async (req) => {
   `;
 
   try {
-    await resend.emails.send({
-      from: "RehabLookup <inquiries@rehablookup.com>",
-      to: recipient,
-      subject: "A seeker submitted an inquiry on your RehabLookup listing",
-      html,
-    });
+    // Route through the resilient sender (retry + dead-letter + suppression
+    // check + tracking) instead of a raw Resend call. The per-inquiry
+    // idempotency key also makes a duplicate POST a no-op rather than a
+    // double-send (this endpoint had no idempotency before).
+    await sendEmailWithRetry(
+      supabase,
+      resend,
+      {
+        from: "RehabLookup <inquiries@rehablookup.com>",
+        to: recipient,
+        subject: "A seeker submitted an inquiry on your RehabLookup listing",
+        html,
+      },
+      {
+        emailType: "free_tier_inquiry_redirect",
+        idempotencyKey: `free-tier-redirect-${parsed.data.inquiry_id}`,
+        metadata: { facility_id: parsed.data.facility_id, inquiry_id: parsed.data.inquiry_id },
+      },
+    );
   } catch (err) {
     console.error("[notify-free-tier-inquiry-redirect] email send failed", err);
     // Non-fatal — in-app notification already created.

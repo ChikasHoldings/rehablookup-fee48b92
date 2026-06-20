@@ -64,8 +64,12 @@ export const NOTIFICATION_TYPES: Record<string, NotificationTypeEntry> = {
   high_intent_lead: { label: "🔥 High Intent", icon: <UserPlus className="h-5 w-5 text-orange-500" />, route: "/provider/inquiries", category: "leads" },
   lead_received: { label: "New Inquiry", icon: leadIcon, route: "/provider/inquiries", category: "leads" },
   lead_reminder: { label: "Reminder", icon: <Bell className="h-5 w-5 text-amber-500" />, route: "/provider/inquiries", category: "leads" },
-  lead_expired: { label: "Lead Expired", icon: errIcon, route: "/provider/inquiries", category: "leads" },
-  lead_status_changed: { label: "Inquiry Update", icon: <MessageSquare className="h-5 w-5 text-blue-500" />, route: "/provider/inquiries", category: "leads" },
+  // NOTE: `lead_expired` and `lead_status_changed` were removed — no backend
+  // path ever emitted them (fake coverage), and there is no lifecycle event
+  // that should notify the provider on a generic status change or expiry
+  // without being noisy. `lead_redistributed` IS emitted (admin reassign →
+  // see admin-bulk-reassign-leads / InquiryDetailModal). Unknown types still
+  // render via the registry fallback, so any stray historical row is safe.
   lead_redistributed: { label: "New Inquiry", icon: leadIcon, route: "/provider/inquiries", category: "leads" },
   lead_message: { label: "New Message", icon: <MessageSquare className="h-5 w-5 text-blue-500" />, route: "/provider/inquiries", category: "leads" },
 

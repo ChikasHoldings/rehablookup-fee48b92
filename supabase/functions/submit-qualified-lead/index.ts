@@ -1211,14 +1211,23 @@ Deno.serve(async (req) => {
     //   • Return early with the redirect response shape so the client
     //     can route to the seeker-confirmation page.
     // Pro flow continues below unchanged.
-    const { data: facilityForTier } = await supabase
-      .from("facility_subscriptions")
-      .select("status, tier, has_featured, has_concierge_partner")
-      .eq("facility_id", data.facilityId)
-      .eq("status", "active")
-      .maybeSingle();
-    const isProTier =
-      facilityForTier?.status === "active" && facilityForTier?.tier === "pro";
+    // Grace-aware Pro gate — MUST match the canonical has_active_pro() that the
+    // provider UI, dashboard, and admin all honor: tier='pro' AND (active within
+    // current_period_end OR past_due grace). This previously excluded past_due,
+    // so a dunning (past_due) provider kept their Pro tools yet their NEW leads
+    // were silently routed to concierge — contradicting every other surface.
+    // Calling the RPC keeps this predicate from ever drifting from the DB rule.
+    // Fail-safe: on RPC error treat as non-Pro (concierge route) so we never
+    // deliver a raw lead to a facility we can't confirm is entitled.
+    const { data: isProTier, error: tierErr } = await supabase.rpc("has_active_pro", {
+      p_facility_id: data.facilityId,
+    });
+    if (tierErr) {
+      log(requestId, "WARN", "has_active_pro check failed — routing to concierge (fail-safe)", {
+        facilityId: data.facilityId,
+        err: tierErr.message,
+      });
+    }
 
     if (!isProTier) {
       log(requestId, "INFO", "Free-tier inquiry — routing through concierge", {
@@ -1402,12 +1411,13 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Notify the Free facility of the redirect. We don't block the
-      // seeker on it — the concierge_inquiries row is the source of
-      // truth — but a hard failure should surface to ops via
-      // admin_notifications so courtesy outreach isn't silently lost
-      // during provider outages.
-      void (async () => {
+      // Notify the Free facility of the redirect. Awaited (was fire-and-forget
+      // `void`) so the edge runtime can't tear down after the response and drop
+      // the notification — it was previously possible to lose it silently. The
+      // IIFE swallows its own errors (logs + admin_notifications on failure), so
+      // awaiting never fails the seeker response; the concierge_inquiries row is
+      // already the committed source of truth regardless.
+      await (async () => {
         try {
           const { error } = await supabase.functions.invoke(
             "notify-free-tier-inquiry-redirect",
