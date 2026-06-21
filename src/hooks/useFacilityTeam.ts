@@ -85,11 +85,18 @@ export function useFacilityTeam(facilityId: string | null | undefined) {
 
   const changeRole = useMutation({
     mutationFn: async (args: { memberId: string; role: Exclude<TeamRole, "owner"> }) => {
-      const { error } = await supabase
+      // .select() + row-count check so an RLS-blocked write (a non-owner, or an
+      // owner whose Pro lapsed mid-session) surfaces as an error instead of a
+      // false "Role updated" toast. The team-table write policy is owner-only.
+      const { data, error } = await supabase
         .from("facility_team_members")
         .update({ role: args.role })
-        .eq("id", args.memberId);
+        .eq("id", args.memberId)
+        .select("id");
       if (error) throw new Error(error.message);
+      if (!data || data.length === 0) {
+        throw new Error("You don't have permission to change this member, or it no longer exists.");
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: key });
@@ -102,11 +109,15 @@ export function useFacilityTeam(facilityId: string | null | undefined) {
 
   const remove = useMutation({
     mutationFn: async (memberId: string) => {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("facility_team_members")
         .delete()
-        .eq("id", memberId);
+        .eq("id", memberId)
+        .select("id");
       if (error) throw new Error(error.message);
+      if (!data || data.length === 0) {
+        throw new Error("You don't have permission to remove this member, or it no longer exists.");
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: key });

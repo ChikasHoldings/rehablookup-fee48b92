@@ -93,34 +93,52 @@ export function SelectedFacilityProvider({ children }: { children: ReactNode }) 
     return () => subscription.unsubscribe();
   }, [currentUserId]);
 
-  // Update selected facility when facilities load (only once)
+  // Keep the selected facility valid against the *current* accessible list.
+  // Runs on every facilities change (not just once) so that if the user loses
+  // access to the selected facility mid-session — a team member removed/role-
+  // revoked, or Pro lapses and the facility drops out of useProviderFacilities
+  // — we don't strand the panel on a facility they can no longer reach.
   useEffect(() => {
-    if (facilitiesLoading || facilities.length === 0 || hydratedRef.current) return;
-    
-    const currentId = selectedFacility?.id;
-    
-    // If we have a selected facility, try to find the full version
-    if (currentId) {
-      const fullFacility = facilities.find(f => f.id === currentId);
-      if (fullFacility && !fullFacility.suspended) {
-        if (import.meta.env.DEV) console.log("[SelectedFacilityContext] Hydrated facility:", fullFacility.name);
-        setSelectedFacilityState(fullFacility);
-        localStorage.setItem("selectedFacilityData", JSON.stringify(fullFacility));
-        hydratedRef.current = true;
-        return;
+    if (facilitiesLoading) return;
+
+    // No accessible facilities at all → clear any stale selection.
+    if (facilities.length === 0) {
+      if (selectedFacility) {
+        setSelectedFacilityState(null);
+        localStorage.removeItem("selectedFacilityId");
+        localStorage.removeItem("selectedFacilityData");
       }
+      hydratedRef.current = true;
+      return;
     }
-    
-    // Default to first non-suspended facility
-    const activeFacility = facilities.find(f => !f.suspended) ?? facilities[0];
-    if (activeFacility) {
-      if (import.meta.env.DEV) console.log("[SelectedFacilityContext] Defaulting to first active facility:", activeFacility.name);
-      setSelectedFacilityState(activeFacility);
-      localStorage.setItem("selectedFacilityId", activeFacility.id);
-      localStorage.setItem("selectedFacilityData", JSON.stringify(activeFacility));
+
+    const currentId = selectedFacility?.id;
+    const current = currentId ? facilities.find(f => f.id === currentId) : undefined;
+
+    // Selection still valid → hydrate to the full record (only when it differs,
+    // so re-runs are no-ops and can't loop).
+    if (current && !current.suspended) {
+      if (selectedFacility !== current) {
+        if (import.meta.env.DEV) console.log("[SelectedFacilityContext] Hydrated facility:", current.name);
+        setSelectedFacilityState(current);
+        localStorage.setItem("selectedFacilityId", current.id);
+        localStorage.setItem("selectedFacilityData", JSON.stringify(current));
+      }
+      hydratedRef.current = true;
+      return;
+    }
+
+    // Selection missing/suspended (access removed, Pro lapsed, or first load):
+    // fall back to a valid facility.
+    const fallback = facilities.find(f => !f.suspended) ?? facilities[0];
+    if (fallback && fallback.id !== selectedFacility?.id) {
+      if (import.meta.env.DEV) console.log("[SelectedFacilityContext] Re-selecting valid facility:", fallback.name);
+      setSelectedFacilityState(fallback);
+      localStorage.setItem("selectedFacilityId", fallback.id);
+      localStorage.setItem("selectedFacilityData", JSON.stringify(fallback));
     }
     hydratedRef.current = true;
-  }, [facilities, facilitiesLoading, selectedFacility?.id]);
+  }, [facilities, facilitiesLoading, selectedFacility]);
 
   const setSelectedFacility = useCallback((facility: ProviderFacility) => {
     setSelectedFacilityState(facility);

@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { fmtMoney, fmtMoneyWhole, TIER_PRICING } from "@/lib/billingPricing";
 import { useActivePromotion } from "@/hooks/useActivePromotion";
 import { PromoCountdownBanner } from "@/components/provider/promo/PromoCountdownBanner";
+import { useFacilityRole } from "@/hooks/useFacilityRole";
 
 interface ConciergeMarketingDetailProps {
   facilityId: string;
@@ -28,6 +29,11 @@ export function ConciergeMarketingDetail({ facilityId }: ConciergeMarketingDetai
   const [submittingInterval, setSubmittingInterval] = useState<"monthly" | "annual" | null>(null);
   const { promo } = useActivePromotion(facilityId);
   const conciergePromoId = promo?.target_product === "concierge" ? promo.id : null;
+  // Add-on purchases are owner-only (create-checkout-session returns NOT_OWNER
+  // otherwise). Hide CTAs for a resolved non-owner team member; gating on the
+  // resolved role avoids hiding them from the owner while the RPC is in flight.
+  const { role } = useFacilityRole(facilityId);
+  const isNonOwnerMember = role === "manager" || role === "viewer";
 
   const handlePurchase = async (interval: "monthly" | "annual") => {
     setSubmittingInterval(interval);
@@ -135,6 +141,12 @@ export function ConciergeMarketingDetail({ facilityId }: ConciergeMarketingDetai
           </p>
         </div>
 
+        {isNonOwnerMember ? (
+          <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-600">
+            Becoming a Concierge Partner is limited to the facility owner. Ask
+            your account owner to enable it for this location.
+          </div>
+        ) : (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 pt-2 border-t border-slate-100">
           <Button
             onClick={() => handlePurchase("monthly")}
@@ -176,6 +188,7 @@ export function ConciergeMarketingDetail({ facilityId }: ConciergeMarketingDetai
             <ArrowRight className="h-4 w-4 ml-auto" />
           </Button>
         </div>
+        )}
 
         <p className="text-xs text-slate-500 leading-relaxed pt-2">
           <strong>Billed per location</strong>, separately from Pro — if you
