@@ -1274,8 +1274,6 @@ Deno.serve(async (req) => {
           user_email: data.email,
           user_phone: data.phone,
           status: "pending_intake",
-          payment_status: "n/a",
-          payment_amount_cents: 0,
           intake_data: conciergeIntake,
           routing_mode: "free_tier_redirect",
           originating_facility_id: data.facilityId,
