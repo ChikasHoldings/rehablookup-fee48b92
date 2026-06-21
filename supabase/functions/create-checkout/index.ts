@@ -1,5 +1,6 @@
 import Stripe from "https://esm.sh/stripe@18.5.0?target=denonext";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
+import { PriceResolutionError, selectActivePriceId } from "../_shared/stripe-price.ts";
 
 const VERSION = "1.0.3";
 
@@ -8,26 +9,39 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Pro monthly Stripe price. We resolve this by lookup_key at request
-// time (not at module load) so the function picks up price rotations
-// automatically. The legacy hardcoded `price_1Sel1C9fxdThyiakWLfgbl9K`
-// is retained as a fallback for any transitional state where the
-// lookup_key briefly isn't attached.
+// Pro monthly Stripe price is resolved by lookup_key at request time (not at
+// module load) so the function automatically picks up price rotations.
+// Resolution FAILS CLOSED — see resolveProPriceId: if the key does not map to
+// exactly one active price, checkout errors out rather than charging a
+// hardcoded fallback.
 const PRO_LOOKUP_KEY = "rl_pro_monthly_v1";
-const PRO_PRICE_ID_FALLBACK = "price_1Sel1C9fxdThyiakWLfgbl9K";
 
+// Legacy hardcoded Pro price id. Retained ONLY to recognize existing
+// subscribers who are still billed on this price (so we correctly report
+// "already on Pro" instead of trying to re-bill them). It is NEVER charged —
+// checkout fails closed when the lookup key can't be resolved.
+const LEGACY_PRO_PRICE_ID = "price_1Sel1C9fxdThyiakWLfgbl9K";
+
+// Stripe mode (live/test) derived from the secret-key prefix, for safe
+// diagnostic logging. Never logs the key itself.
+function stripeModeFromKey(key: string): "live" | "test" | "unknown" {
+  if (key.startsWith("sk_live_") || key.startsWith("rk_live_")) return "live";
+  if (key.startsWith("sk_test_") || key.startsWith("rk_test_")) return "test";
+  return "unknown";
+}
+
+// Resolve the active Pro monthly price by lookup_key. Throws
+// PriceResolutionError (handled at the call site → controlled 503) when the
+// key does not resolve to exactly one active price. There is no fallback.
 async function resolveProPriceId(stripe: Stripe): Promise<string> {
-  try {
-    const found = await stripe.prices.list({
-      lookup_keys: [PRO_LOOKUP_KEY],
-      active: true,
-      limit: 1,
-    });
-    if (found.data[0]?.id) return found.data[0].id;
-  } catch (e) {
-    console.warn("[CREATE-CHECKOUT] lookup_key resolution failed; falling back", e);
-  }
-  return PRO_PRICE_ID_FALLBACK;
+  // limit:2 so selectActivePriceId can reject ambiguous duplicates, not just
+  // a missing key.
+  const found = await stripe.prices.list({
+    lookup_keys: [PRO_LOOKUP_KEY],
+    active: true,
+    limit: 2,
+  });
+  return selectActivePriceId(found.data);
 }
 
 function isSameOrigin(candidate: unknown, origin: string): candidate is string {
@@ -83,11 +97,39 @@ Deno.serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
-    // Resolve the active Pro price by lookup_key. Falls back to the
-    // legacy hardcoded id if the lookup_key isn't attached yet (e.g.
-    // mid-deploy before admin-attach-stripe-lookup-keys has run on the
-    // env). After round 27 the lookup keys are configured in Stripe.
-    const proPriceId = await resolveProPriceId(stripe);
+    // Resolve the active Pro price by lookup_key. FAILS CLOSED: if the
+    // key doesn't resolve to exactly one active Stripe price we return a
+    // controlled error instead of billing a hardcoded fallback — so a
+    // missing/rotated/duplicated price can never silently charge the
+    // wrong amount.
+    let proPriceId: string;
+    try {
+      proPriceId = await resolveProPriceId(stripe);
+    } catch (resolveErr) {
+      const reason = resolveErr instanceof Error ? resolveErr.message : String(resolveErr);
+      // Internal diagnostics only — no secrets. Stripe mode is derived
+      // from the key prefix, never the key itself.
+      logStep(requestId, "Pro price resolution FAILED — failing closed", {
+        product: "pro",
+        billingInterval: "monthly",
+        lookupKey: PRO_LOOKUP_KEY,
+        stripeMode: stripeModeFromKey(stripeKey),
+        reason,
+        failClosed: true,
+      });
+      const code = resolveErr instanceof PriceResolutionError
+        ? resolveErr.code
+        : "PRICE_RESOLUTION_FAILED";
+      return new Response(
+        JSON.stringify({
+          error: "This plan is temporarily unavailable. Please contact support.",
+          code,
+          requestId,
+          _version: VERSION,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 503 },
+      );
+    }
     logStep(requestId, "Pro price resolved", { proPriceId });
 
     // Check if customer exists
@@ -143,8 +185,9 @@ Deno.serve(async (req) => {
     if (existingSubscription) {
       const currentPriceId = existingSubscription.items.data[0]?.price.id;
       
-      // Already on Pro (current OR legacy hardcoded price)
-      if (currentPriceId === proPriceId || currentPriceId === PRO_PRICE_ID_FALLBACK) {
+      // Already on Pro (current resolved price OR the legacy hardcoded
+      // price some existing subscribers are still billed on).
+      if (currentPriceId === proPriceId || currentPriceId === LEGACY_PRO_PRICE_ID) {
         return new Response(
           JSON.stringify({ error: "You are already on the Pro plan", alreadySubscribed: true }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
