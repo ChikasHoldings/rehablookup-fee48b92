@@ -1,16 +1,12 @@
-import { useState, useRef, useCallback, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { 
-  HelpCircle, 
-  MessageSquare, 
+import { useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import {
+  HelpCircle,
+  MessageSquare,
   Mail,
   FileText,
   Clock,
   AlertCircle,
-  CheckCircle,
-  Send,
-  Loader2,
   Shield,
   Handshake,
   CreditCard,
@@ -18,39 +14,23 @@ import {
   Users,
   BarChart3,
   Ticket,
-  ChevronDown,
-  ChevronUp
+  ArrowLeft,
+  Plus,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { ProviderPageHeader } from "@/components/provider/ProviderPageHeader";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { getCachedSession } from "@/lib/sessionCache";
-import { cn } from "@/lib/utils";
-import { formatDistanceToNow } from "date-fns";
-
-const SUBJECT_MAX = 200;
-const MESSAGE_MAX = 5000;
-const COOLDOWN_MS = 60_000;
+import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
+import { SupportTicketList } from "@/components/support/SupportTicketList";
+import { SupportTicketThread } from "@/components/support/SupportTicketThread";
+import { NewSupportTicketForm } from "@/components/support/NewSupportTicketForm";
+import { useSupportTickets } from "@/lib/support/useSupportTickets";
 
 const faqSections = [
   {
@@ -159,122 +139,45 @@ const helpTopics = [
 ];
 
 const CATEGORIES = [
-  { value: "account", label: "Account Issues" },
   { value: "billing", label: "Billing & Payments" },
   { value: "listing", label: "Listing Help" },
   { value: "leads", label: "Leads & Placements" },
-  { value: "placements", label: "Concierge Partner" },
+  { value: "account", label: "Account Issues" },
   { value: "technical", label: "Technical Support" },
   { value: "other", label: "Other" },
-] as const;
+];
 
 export default function ProviderHelpPage() {
-  const [contactSubject, setContactSubject] = useState("");
-  const [contactCategory, setContactCategory] = useState("");
-  const [contactMessage, setContactMessage] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-  const [showAllTickets, setShowAllTickets] = useState(false);
-  const lastSubmitRef = useRef<number>(0);
+  const { selectedFacility } = useSelectedFacility();
+  const facilityId = selectedFacility?.id ?? null;
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selectedTicketId = searchParams.get("ticket");
+  const [creating, setCreating] = useState(false);
 
-  // Fetch user's submitted tickets
+  // Provider's own tickets + their facility team's (RLS scopes the rows).
   const {
-    data: myTickets = [],
+    data: myTickets,
     isLoading: loadingTickets,
     isError: ticketsError,
     refetch: refetchTickets,
-  } = useQuery({
-    queryKey: ["my-support-tickets"],
-    queryFn: async () => {
-      const session = await getCachedSession();
-      if (!session?.user) return [];
-      const { data, error } = await supabase
-        .from("support_tickets")
-        .select("id, subject, category, status, priority, created_at, resolution_notes, resolved_at")
-        .eq("sender_user_id", session.user.id)
-        .order("created_at", { ascending: false })
-        .limit(20);
-      // Throw so React Query surfaces isError — returning [] here would
-      // render the "no tickets yet" empty state on a real fetch
-      // failure, hiding the problem from the provider.
-      if (error) {
-        console.error("[Help] support_tickets fetch failed", error);
-        throw new Error(error.message || "Failed to load support tickets");
-      }
-      return data || [];
-    },
-  });
+  } = useSupportTickets("provider");
 
-  const trimmedSubject = contactSubject.trim();
-  const trimmedMessage = contactMessage.trim();
-  const isFormValid = !!contactCategory && trimmedSubject.length >= 3 && trimmedMessage.length >= 10;
+  const selectTicket = (ticketId: string | null) => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (ticketId) next.set("ticket", ticketId);
+        else next.delete("ticket");
+        return next;
+      },
+      { replace: true },
+    );
+  };
 
-  // Auto-dismiss the success panel after 8s without leaking the timer
-  // on unmount — the previous setTimeout fired setState even after the
-  // component was gone, which warned in dev and could break in prod.
-  useEffect(() => {
-    if (!submitted) return;
-    const t = window.setTimeout(() => setSubmitted(false), 8000);
-    return () => window.clearTimeout(t);
-  }, [submitted]);
-
-  const handleSubjectChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    if (val.length <= SUBJECT_MAX) setContactSubject(val);
-  }, []);
-
-  const handleMessageChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const val = e.target.value;
-    if (val.length <= MESSAGE_MAX) setContactMessage(val);
-  }, []);
-
-  const handleContactSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!isFormValid) {
-      toast.error("Please fill in all required fields with valid content.");
-      return;
-    }
-
-    const now = Date.now();
-    if (now - lastSubmitRef.current < COOLDOWN_MS) {
-      const secondsLeft = Math.ceil((COOLDOWN_MS - (now - lastSubmitRef.current)) / 1000);
-      toast.error(`Please wait ${secondsLeft}s before sending another message.`);
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      const { data, error } = await supabase.functions.invoke("send-support-request", {
-        body: {
-          category: contactCategory,
-          subject: trimmedSubject,
-          message: trimmedMessage,
-        },
-      });
-
-      if (error) throw new Error(error.message || "Failed to submit support request");
-      if (data?.error) throw new Error(data.error);
-
-      lastSubmitRef.current = Date.now();
-      setSubmitted(true);
-      toast.success("Message sent! Our team will respond within 24-48 hours.");
-
-      setContactSubject("");
-      setContactCategory("");
-      setContactMessage("");
-      refetchTickets();
-      // Auto-dismissal of the "Message Sent!" panel is handled by the
-      // effect below so the timer is cleaned up if the user navigates
-      // away — replacing the previous unmanaged setTimeout that would
-      // call setState on an unmounted tree.
-    } catch (error) {
-      console.error("Error submitting support request:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to send message. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
+  const handleCreated = (ticketId: string) => {
+    setCreating(false);
+    refetchTickets();
+    selectTicket(ticketId);
   };
 
   return (
@@ -345,7 +248,7 @@ export default function ProviderHelpPage() {
             </CardContent>
           </Card>
 
-          {/* Contact Support Form */}
+          {/* Contact Support — opens an in-app ticket (list + thread below) */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
@@ -353,115 +256,38 @@ export default function ProviderHelpPage() {
                 Contact Support
               </CardTitle>
               <CardDescription className="text-sm">
-                Send us a message and we'll respond within 24-48 hours
+                {creating
+                  ? "Tell us what's going on — we'll reply in the thread below."
+                  : "Open a request and we'll respond within 24-48 hours, right here."}
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-0">
-              {submitted ? (
-                <div className="text-center py-8">
-                  <div className="h-12 w-12 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-3">
-                    <CheckCircle className="h-6 w-6 text-emerald-600" />
-                  </div>
-                  <h3 className="font-semibold text-base">Message Sent!</h3>
-                  <p className="text-muted-foreground text-sm mt-1">
-                    Our support team will get back to you within 24-48 hours.
+              {creating ? (
+                <NewSupportTicketForm
+                  panel="provider"
+                  facilityId={facilityId}
+                  categories={CATEGORIES}
+                  senderName={selectedFacility?.name}
+                  onCreated={handleCreated}
+                  onCancel={() => setCreating(false)}
+                />
+              ) : (
+                <div className="space-y-3">
+                  {selectedFacility && (
+                    <p className="text-xs text-muted-foreground">
+                      Filing as <span className="font-medium text-foreground">{selectedFacility.name}</span>.
+                      Switch facilities from the header to file for another listing.
+                    </p>
+                  )}
+                  <Button onClick={() => setCreating(true)} className="w-full gap-1.5">
+                    <Plus className="h-4 w-4" />
+                    New support request
+                  </Button>
+                  <p className="text-xs text-muted-foreground">
+                    Include the word <strong>Urgent</strong> for time-sensitive lead, placement, or outage
+                    issues — we'll route those first.
                   </p>
                 </div>
-              ) : (
-                <form onSubmit={handleContactSubmit} className="space-y-3.5">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="category" className="text-sm">Category <span className="text-destructive">*</span></Label>
-                    <Select value={contactCategory} onValueChange={setContactCategory}>
-                      <SelectTrigger className="h-9">
-                        <SelectValue placeholder="Select a category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {CATEGORIES.map(c => (
-                          <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="subject" className="text-sm">Subject <span className="text-destructive">*</span></Label>
-                      <span
-                        id="subject-counter"
-                        className={cn(
-                          "text-xs tabular-nums",
-                          contactSubject.length > SUBJECT_MAX * 0.9 ? "text-destructive" : "text-muted-foreground"
-                        )}
-                      >
-                        {contactSubject.length}/{SUBJECT_MAX}
-                      </span>
-                    </div>
-                    <Input
-                      id="subject"
-                      placeholder="Brief description of your issue"
-                      value={contactSubject}
-                      onChange={handleSubjectChange}
-                      className="h-9"
-                      maxLength={SUBJECT_MAX}
-                      aria-describedby="subject-counter subject-help"
-                    />
-                    <p id="subject-help" className="text-xs text-muted-foreground">
-                      Include the word <strong>Urgent</strong> for time-sensitive lead, placement, or outage issues — we'll route those first.
-                    </p>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="message" className="text-sm">Message <span className="text-destructive">*</span></Label>
-                      <span
-                        id="message-counter"
-                        className={cn(
-                          "text-xs tabular-nums",
-                          contactMessage.length > MESSAGE_MAX * 0.9 ? "text-destructive" : "text-muted-foreground"
-                        )}
-                      >
-                        {contactMessage.length}/{MESSAGE_MAX}
-                      </span>
-                    </div>
-                    <Textarea
-                      id="message"
-                      placeholder="Describe your issue in detail..."
-                      rows={4}
-                      value={contactMessage}
-                      onChange={handleMessageChange}
-                      maxLength={MESSAGE_MAX}
-                      aria-describedby={
-                        trimmedMessage.length > 0 && trimmedMessage.length < 10
-                          ? "message-counter message-error"
-                          : "message-counter"
-                      }
-                      aria-invalid={trimmedMessage.length > 0 && trimmedMessage.length < 10}
-                    />
-                    {trimmedMessage.length > 0 && trimmedMessage.length < 10 && (
-                      <p id="message-error" className="text-xs text-destructive">
-                        Please provide at least 10 characters.
-                      </p>
-                    )}
-                  </div>
-
-                  <Button 
-                    type="submit" 
-                    className="w-full" 
-                    disabled={isSubmitting || !isFormValid}
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Sending...
-                      </>
-                    ) : (
-                      <>
-                        <Send className="h-4 w-4 mr-2" />
-                        Send Message
-                      </>
-                    )}
-                  </Button>
-                </form>
               )}
             </CardContent>
           </Card>
@@ -510,28 +336,37 @@ export default function ProviderHelpPage() {
           </Card>
         </div>
 
-        {/* My Support Tickets */}
+        {/* My Support Tickets — list + thread (own + facility team via RLS) */}
         <Card>
           <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
                 <CardTitle className="flex items-center gap-2 text-base">
                   <Ticket className="h-5 w-5 text-primary" />
-                  My Support Tickets
+                  Support Tickets
                 </CardTitle>
                 <CardDescription className="text-sm">
-                  Track the status of your submitted requests
+                  {selectedTicketId
+                    ? "Reply to support or reopen a resolved request"
+                    : "Your requests and your facility team's — track status and reply"}
                 </CardDescription>
               </div>
-              {myTickets.length > 0 && (
-                <Badge variant="secondary" className="text-xs">{myTickets.length}</Badge>
+              {selectedTicketId && (
+                <Button variant="ghost" size="sm" className="gap-1.5 shrink-0" onClick={() => selectTicket(null)}>
+                  <ArrowLeft className="h-4 w-4" />
+                  All tickets
+                </Button>
               )}
             </div>
           </CardHeader>
           <CardContent className="pt-0">
-            {loadingTickets ? (
-              <div className="space-y-3">
-                {[1, 2].map(i => <Skeleton key={i} className="h-16 w-full" />)}
+            {selectedTicketId ? (
+              <div className="h-[70vh] min-h-[420px]">
+                <SupportTicketThread
+                  ticketId={selectedTicketId}
+                  panel="provider"
+                  onBack={() => selectTicket(null)}
+                />
               </div>
             ) : ticketsError ? (
               <div className="text-center py-8">
@@ -546,73 +381,13 @@ export default function ProviderHelpPage() {
                   Try again
                 </Button>
               </div>
-            ) : myTickets.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <Ticket className="h-10 w-10 mx-auto mb-2 opacity-40" />
-                <p className="text-sm">No tickets submitted yet</p>
-                <p className="text-xs mt-1">Use the contact form above to reach our team</p>
-              </div>
             ) : (
-              <div className="space-y-2">
-                {(showAllTickets ? myTickets : myTickets.slice(0, 3)).map((ticket) => {
-                  const statusConfig: Record<string, { label: string; className: string }> = {
-                    new: { label: "Submitted", className: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300" },
-                    open: { label: "In Review", className: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300" },
-                    in_progress: { label: "In Progress", className: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300" },
-                    resolved: { label: "Resolved", className: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300" },
-                    closed: { label: "Closed", className: "bg-muted text-muted-foreground" },
-                  };
-                  const st = statusConfig[ticket.status] || statusConfig.new;
-
-                  return (
-                    <div key={ticket.id} className="p-3 rounded-lg border border-border hover:bg-muted/30 transition-colors">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <p className="text-sm font-medium truncate">{ticket.subject || "No subject"}</p>
-                            <Badge variant="secondary" className={cn("text-xs shrink-0", st.className)}>
-                              {st.label}
-                            </Badge>
-                            {ticket.priority === "urgent" && (
-                              <Badge
-                                variant="secondary"
-                                className="text-xs shrink-0 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
-                              >
-                                Urgent
-                              </Badge>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                            <span>{ticket.category}</span>
-                            <span>•</span>
-                            <span>{formatDistanceToNow(new Date(ticket.created_at), { addSuffix: true })}</span>
-                          </div>
-                          {ticket.status === "resolved" && ticket.resolution_notes && (
-                            <p className="text-xs text-muted-foreground mt-2 p-2 rounded bg-muted/50 border border-border/50">
-                              <span className="font-medium text-foreground">Resolution: </span>
-                              {ticket.resolution_notes}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-                {myTickets.length > 3 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full text-muted-foreground gap-1.5"
-                    onClick={() => setShowAllTickets(!showAllTickets)}
-                  >
-                    {showAllTickets ? (
-                      <><ChevronUp className="h-3.5 w-3.5" /> Show less</>
-                    ) : (
-                      <><ChevronDown className="h-3.5 w-3.5" /> Show all {myTickets.length} tickets</>
-                    )}
-                  </Button>
-                )}
-              </div>
+              <SupportTicketList
+                tickets={myTickets}
+                onSelect={(id) => selectTicket(id)}
+                isLoading={loadingTickets}
+                emptyHint="Use the contact form above to reach our team."
+              />
             )}
           </CardContent>
         </Card>

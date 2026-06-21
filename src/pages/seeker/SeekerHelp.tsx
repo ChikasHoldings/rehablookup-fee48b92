@@ -1,27 +1,14 @@
-import { useState, useRef } from "react";
 import { Helmet } from "react-helmet-async";
-import { HelpCircle, MessageSquare, BookOpen, Mail, Phone, ExternalLink, ChevronRight, Send } from "lucide-react";
+import { HelpCircle, MessageSquare, BookOpen, Mail, Phone, ExternalLink, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 
 const faqs = [
   {
@@ -80,74 +67,6 @@ const helpTopics = [
 ];
 
 export default function SeekerHelp() {
-  const [subject, setSubject] = useState("");
-  const [category, setCategory] = useState("");
-  const [message, setMessage] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Sanitize text: strip HTML tags and dangerous protocols
-  const sanitizeInput = (str: string, maxLen: number): string => {
-    return str
-      .replace(/<[^>]*>/g, '')
-      .replace(/javascript:/gi, '')
-      .replace(/data:/gi, '')
-      .trim()
-      .slice(0, maxLen);
-  };
-
-  const lastSubmitRef = useRef<number>(0);
-
-  const handleContactSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (isSubmitting) return;
-
-    // Rate limit: 10s cooldown
-    const now = Date.now();
-    if (now - lastSubmitRef.current < 10000) {
-      toast.error("Please wait before sending another message.");
-      return;
-    }
-
-    const cleanSubject = sanitizeInput(subject, 200);
-    const cleanMessage = sanitizeInput(message, 2000);
-
-    if (!cleanSubject || !category || !cleanMessage) {
-      toast.error("Please fill in all fields");
-      return;
-    }
-
-    if (cleanMessage.length < 10) {
-      toast.error("Please provide more detail in your message.");
-      return;
-    }
-
-    lastSubmitRef.current = now;
-    setIsSubmitting(true);
-
-    try {
-      const { error } = await supabase.functions.invoke("send-support-request", {
-        body: {
-          subject: cleanSubject,
-          category,
-          message: cleanMessage,
-          source: "seeker"
-        }
-      });
-
-      if (error) throw error;
-
-      toast.success("Your message has been sent! We'll get back to you soon.");
-      setSubject("");
-      setCategory("");
-      setMessage("");
-    } catch (error) {
-      console.error("Error sending support request:", error);
-      toast.error("Failed to send message. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   return (
     <>
       <Helmet>
@@ -253,75 +172,31 @@ export default function SeekerHelp() {
             </Card>
           </section>
 
-          {/* Contact Form */}
+          {/* Contact Support — routes to the in-app ticket flow (list + thread) */}
           <section>
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
               Contact Support
             </h2>
             <Card className="bg-card border-border">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base text-foreground flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4 text-primary" />
-                  Send us a message
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleContactSubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="category" className="text-foreground">Category</Label>
-                    <Select value={category} onValueChange={setCategory}>
-                      <SelectTrigger className="bg-muted border-border text-foreground">
-                        <SelectValue placeholder="Select a category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="account">Account Issues</SelectItem>
-                        <SelectItem value="search">Search & Filters</SelectItem>
-                        <SelectItem value="facility">Facility Information</SelectItem>
-                        <SelectItem value="reviews">Reviews</SelectItem>
-                        <SelectItem value="privacy">Privacy Concerns</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
+              <CardContent className="p-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 h-10 w-10 rounded-lg bg-primary/15 flex items-center justify-center">
+                    <MessageSquare className="h-5 w-5 text-primary" />
                   </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="subject" className="text-foreground">Subject</Label>
-                    <Input
-                      id="subject"
-                      value={subject}
-                      onChange={(e) => setSubject(e.target.value)}
-                      placeholder="Brief description of your issue"
-                      className="bg-muted border-border text-foreground placeholder:text-muted-foreground"
-                    />
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-medium text-foreground">Message our support team</h3>
+                    <p className="text-sm text-muted-foreground mt-0.5">
+                      Open a request, attach files if needed, and follow the full conversation in one place.
+                      We'll notify you when support replies.
+                    </p>
+                    <Button asChild className="mt-3 gap-1.5">
+                      <Link to="/account/support">
+                        <MessageSquare className="h-4 w-4" />
+                        Go to Support
+                      </Link>
+                    </Button>
                   </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="message" className="text-foreground">Message</Label>
-                    <Textarea
-                      id="message"
-                      value={message}
-                      onChange={(e) => setMessage(e.target.value)}
-                      placeholder="Please describe your question or issue in detail..."
-                      rows={4}
-                      className="bg-muted border-border text-foreground placeholder:text-muted-foreground resize-none"
-                    />
-                  </div>
-
-                  <Button 
-                    type="submit" 
-                    className="w-full"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? (
-                      "Sending..."
-                    ) : (
-                      <>
-                        <Send className="h-4 w-4 mr-2" />
-                        Send Message
-                      </>
-                    )}
-                  </Button>
-                </form>
+                </div>
               </CardContent>
             </Card>
           </section>

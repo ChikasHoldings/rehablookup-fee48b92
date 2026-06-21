@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   CreditCard,
   ImageOff,
+  LifeBuoy,
   MessageSquare,
   Settings,
   Shield,
@@ -141,6 +142,14 @@ export const NOTIFICATION_TYPES: Record<string, NotificationTypeEntry> = {
   // admin_message: an admin contacting the provider (send-admin-notification).
   // Route to the notification center where the full message is readable.
   admin_message: { label: "Message from Admin", icon: <MessageSquare className="h-5 w-5 text-blue-500" />, route: "/provider/notifications", category: "system" },
+
+  // ─── Support tickets ────────────────────────────────────────────────
+  // In-app support replies / status changes. Route to the Help page where
+  // the provider's ticket list + thread live (deep-link via metadata.link
+  // → /provider/help?ticket=<id> when the producer sets it).
+  support_reply: { label: "Support Reply", icon: <LifeBuoy className="h-5 w-5 text-blue-500" />, route: "/provider/help", category: "system" },
+  support_resolved: { label: "Support Resolved", icon: <CheckCircle2 className="h-5 w-5 text-emerald-500" />, route: "/provider/help", category: "system" },
+  support_reopened: { label: "Support Reopened", icon: <LifeBuoy className="h-5 w-5 text-amber-500" />, route: "/provider/help", category: "system" },
 };
 
 export const FALLBACK_ENTRY: NotificationTypeEntry = {
