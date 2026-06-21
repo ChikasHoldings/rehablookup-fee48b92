@@ -1,6 +1,8 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 import { Resend } from "https://esm.sh/resend@2.0.0?target=denonext";
 import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
+import { assertCronSecret } from "../_shared/cron-auth.ts";
+import { requireAdmin } from "../_shared/require-admin.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -398,6 +400,17 @@ function hasData(role: string, data: Record<string, unknown>): boolean {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  // Auth: this digest is cron-invoked (X-Cron-Secret) but can also be triggered
+  // manually from the admin UI. Require one or the other — without a gate, any
+  // authenticated user could trigger the stats computation + admin email
+  // fan-out (verify_jwt alone does NOT restrict to admins). Neither helper
+  // consumes the request body, so the period parse below still works.
+  const cronAuth = assertCronSecret(req);
+  if (!cronAuth.ok) {
+    const adminAuth = await requireAdmin(req);
+    if (!adminAuth.ok) return adminAuth.response;
   }
 
   try {

@@ -318,7 +318,11 @@ Deno.serve(async (req) => {
 
     // CRITICAL: Role hierarchy enforcement
     // Only Super Admins can perform destructive or role-altering actions
-    const superAdminOnlyActions = ["delete", "suspend", "unsuspend", "update_role", "update_permissions", "toggle_mfa_skip"];
+    // reset_password + resend_invitation are super-admin-only too: the admin UI
+    // only exposes them to super admins, so the backend must match (otherwise a
+    // lower-tier admin could force a password reset / re-invite on a peer admin
+    // via a direct function call, contrary to the UI gate).
+    const superAdminOnlyActions = ["delete", "suspend", "unsuspend", "update_role", "update_permissions", "toggle_mfa_skip", "reset_password", "resend_invitation"];
     if (superAdminOnlyActions.includes(action) && !requestorIsSuperAdmin) {
       throw new Error("Only Super Admins can perform this action");
     }
