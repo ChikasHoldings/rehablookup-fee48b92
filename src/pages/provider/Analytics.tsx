@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { BarChart3, CalendarIcon, X, ChevronDown, Building2, Download } from "lucide-react";
 import { ProviderPageHeader } from "@/components/provider/ProviderPageHeader";
 import { SubscriptionAnalyticsTab } from "@/components/provider/analytics/SubscriptionAnalyticsTab";
@@ -39,8 +40,7 @@ import {
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { toast } from "sonner";
-
-type TabKey = "overview" | "engagement" | "leads" | "performance" | "market" | "roi" | "subscription";
+import { resolveInitialAnalyticsTab, type AnalyticsTabKey as TabKey } from "@/lib/analyticsTabs";
 
 export default function ProviderAnalyticsPage() {
   const shouldOpenCalendarFromMenuRef = useRef(false);
@@ -50,7 +50,13 @@ export default function ProviderAnalyticsPage() {
   }));
   const [selectedPreset, setSelectedPreset] = useState<string>("all");
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<TabKey>("overview");
+  // Honor a deep-linked ?tab= (e.g. the dashboard's "View detailed analytics"
+  // → /provider/analytics?tab=subscription) so cross-feature hand-offs land on
+  // the intended tab instead of always falling back to Overview.
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState<TabKey>(
+    resolveInitialAnalyticsTab(searchParams.get("tab")),
+  );
   const [selectedFacilityId, setSelectedFacilityId] = useState<string>("all");
   const isMobile = useIsMobile();
 

@@ -293,7 +293,8 @@ function ProviderShellContent() {
       <AccessDenied
         requiredRole="provider"
         title="Account suspended"
-        message="Your account has been suspended. Please contact support for assistance."
+        message="This facility has been suspended. Contact our support team to resolve this or appeal the decision."
+        action={{ label: "Contact support", href: "/provider-support" }}
       />
     );
   }

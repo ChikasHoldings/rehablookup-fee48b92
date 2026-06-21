@@ -74,7 +74,7 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const navigate = useNavigate();
   
-  const { notifications, unreadCount, markAsRead, isLoading: notificationsLoading } = useProviderNotifications();
+  const { notifications, unreadCount, markAsRead, isLoading: notificationsLoading, error: notificationsError } = useProviderNotifications();
   const { facilities, isLoading: facilitiesLoading } = useProviderFacilities();
   const { 
     selectedFacility, 
@@ -207,6 +207,11 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
               {notificationsLoading ? (
                 <div className="py-8 text-center">
                   <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+                </div>
+              ) : notificationsError ? (
+                <div className="py-8 text-center">
+                  <BellOff className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">Couldn't load notifications</p>
                 </div>
               ) : recentNotifications.length === 0 ? (
                 <div className="py-8 text-center">
