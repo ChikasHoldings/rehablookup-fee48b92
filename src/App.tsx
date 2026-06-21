@@ -269,6 +269,7 @@ const SeekerNotifications = lazy(() => import("./pages/seeker/SeekerNotification
 const SeekerNotificationPreferences = lazy(() => import("./pages/seeker/SeekerNotificationPreferences"));
 const SeekerSearch = lazy(() => import("./pages/seeker/SeekerSearch"));
 const SeekerHelp = lazy(() => import("./pages/seeker/SeekerHelp"));
+const SeekerSupport = lazy(() => import("./pages/seeker/SeekerSupport"));
 const SeekerConcierge = lazy(() => import("./pages/seeker/SeekerConcierge"));
 const SeekerInsuranceVerifications = lazy(() => import("./pages/seeker/SeekerInsuranceVerifications"));
 const SeekerSavedSearches = lazy(() => import("./pages/seeker/SeekerSavedSearches"));
@@ -1395,6 +1396,7 @@ const AppInner = () => {
               <Route path="notification-preferences" element={<SeekerNotificationPreferences />} />
               <Route path="search" element={<SeekerSearch />} />
               <Route path="help" element={<SeekerHelp />} />
+              <Route path="support" element={<SeekerSupport />} />
               <Route path="concierge" element={<SeekerConcierge />} />
               <Route path="concierge/:inquiryId" element={<SeekerConcierge />} />
               {/* International placements are concierge inquiries (tagged international). */}

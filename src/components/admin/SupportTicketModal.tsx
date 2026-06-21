@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import {
   Mail,
@@ -12,6 +12,8 @@ import {
   Trash2,
   AlertTriangle,
   UserCheck,
+  Lock,
+  Headphones,
 } from "lucide-react";
 import {
   Dialog,
@@ -46,10 +48,8 @@ import {
 import {
   SupportTicket,
   useSupportTicketNotes,
-  useUpdateSupportTicket,
   useAssignSupportTicket,
   useAddSupportTicketNote,
-  useResolveSupportTicket,
 } from "@/hooks/useAdminSupportTickets";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { logAdminAction, AdminAuditActions } from "@/hooks/useAdminAuditLog";
@@ -57,6 +57,15 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import {
+  useSupportMessages,
+  useSupportReply,
+  useMarkSupportRead,
+  useAdminSupportStatus,
+  type SupportTicketStatus,
+} from "@/lib/support/useSupportTickets";
+import { SupportAttachmentPicker, AttachmentList } from "@/components/support/SupportAttachments";
+import { SupportStatusBadge } from "@/components/support/SupportStatusBadge";
 
 interface SupportTicketModalProps {
   ticket: SupportTicket | null;
@@ -72,9 +81,10 @@ const sourceLabels: Record<string, { label: string; icon: React.ElementType }> =
 };
 
 const statusOptions = [
-  { value: "new", label: "New", className: "bg-info/10 text-info" },
-  { value: "open", label: "Open", className: "bg-warning/10 text-warning" },
+  { value: "open", label: "Open", className: "bg-info/10 text-info" },
   { value: "in_progress", label: "In Progress", className: "bg-chart-3/10 text-chart-3" },
+  { value: "waiting_on_user", label: "Waiting on User", className: "bg-warning/10 text-warning" },
+  { value: "waiting_on_admin", label: "Waiting on Support", className: "bg-warning/10 text-warning" },
   { value: "resolved", label: "Resolved", className: "bg-success/10 text-success" },
   { value: "closed", label: "Closed", className: "bg-muted text-muted-foreground" },
 ];
@@ -94,15 +104,23 @@ export function SupportTicketModal({
 }: SupportTicketModalProps) {
   const { user } = useAdminAuth();
   const [newNote, setNewNote] = useState("");
+  const [reply, setReply] = useState("");
+  const [replyFiles, setReplyFiles] = useState<File[]>([]);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [escalating, setEscalating] = useState(false);
 
   const { data: notes = [], isLoading: notesLoading } = useSupportTicketNotes(ticket?.id || "");
-  const updateTicket = useUpdateSupportTicket();
+  const { data: messages = [], isLoading: messagesLoading } = useSupportMessages(ticket?.id || null);
   const assignTicket = useAssignSupportTicket();
   const addNote = useAddSupportTicketNote();
-  const resolveTicket = useResolveSupportTicket();
+  // Status/priority/category/assignment/resolution route through the
+  // support-ticket-status edge function so the user is notified on
+  // resolve/close/reopen (a direct table update would skip that).
+  const adminStatus = useAdminSupportStatus();
+  const sendReply = useSupportReply();
+  const markRead = useMarkSupportRead();
+  const markReadMutate = markRead.mutate;
 
   const { data: adminStaff = [] } = useQuery({
     queryKey: ["admin-staff-list"],
@@ -116,6 +134,13 @@ export function SupportTicketModal({
     },
   });
 
+  // Mark the ticket read for the admin side when the modal opens.
+  const ticketId = ticket?.id;
+  useEffect(() => {
+    if (open && ticketId) markReadMutate(ticketId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, ticketId]);
+
   if (!ticket) return null;
 
   const source = sourceLabels[ticket.source];
@@ -123,20 +148,24 @@ export function SupportTicketModal({
 
   const handleStatusChange = (status: string) => {
     if (!user?.id) return;
-    updateTicket.mutate({
-      ticketId: ticket.id,
-      updates: { status: status as SupportTicket["status"] },
-      currentUserId: user.id,
-    });
+    adminStatus.mutate(
+      { ticketId: ticket.id, status: status as SupportTicketStatus },
+      {
+        onSuccess: () => toast.success("Status updated"),
+        onError: (err) => toast.error(err instanceof Error ? err.message : "Failed to update status"),
+      },
+    );
   };
 
   const handlePriorityChange = (priority: string) => {
     if (!user?.id) return;
-    updateTicket.mutate({
-      ticketId: ticket.id,
-      updates: { priority: priority as SupportTicket["priority"] },
-      currentUserId: user.id,
-    });
+    adminStatus.mutate(
+      { ticketId: ticket.id, priority },
+      {
+        onSuccess: () => toast.success("Priority updated"),
+        onError: (err) => toast.error(err instanceof Error ? err.message : "Failed to update priority"),
+      },
+    );
   };
 
   const handleAssign = (assigneeId: string) => {
@@ -146,6 +175,19 @@ export function SupportTicketModal({
       assigneeId: assigneeId === "unassigned" ? null : assigneeId,
       currentUserId: user.id,
     });
+  };
+
+  const handleSendReply = async () => {
+    if (!reply.trim() || sendReply.isPending) return;
+    try {
+      await sendReply.mutateAsync({ ticketId: ticket.id, body: reply.trim(), files: replyFiles });
+      setReply("");
+      setReplyFiles([]);
+      toast.success("Reply sent to the user");
+    } catch (err) {
+      // Keep the draft on failure.
+      toast.error(err instanceof Error ? err.message : "Failed to send reply");
+    }
   };
 
   const handleAddNote = () => {
@@ -170,11 +212,14 @@ export function SupportTicketModal({
   };
 
   const handleResolve = () => {
-    if (!user?.id || resolveTicket.isPending) return;
-    resolveTicket.mutate({
-      ticketId: ticket.id,
-      currentUserId: user.id,
-    });
+    if (!user?.id || adminStatus.isPending) return;
+    adminStatus.mutate(
+      { ticketId: ticket.id, status: "resolved" },
+      {
+        onSuccess: () => toast.success("Ticket resolved — the user has been notified"),
+        onError: (err) => toast.error(err instanceof Error ? err.message : "Failed to resolve ticket"),
+      },
+    );
   };
 
   const handleDelete = async () => {
@@ -244,21 +289,12 @@ export function SupportTicketModal({
       });
       if (error) throw error;
 
-      // Step 2: mark the ticket as in_progress. Failure here is a
-      // soft warning — the escalation exists, the ticket just didn't
-      // get its status bumped, so we surface that explicitly instead
-      // of a generic success toast.
+      // Step 2: mark the ticket as in_progress (via the status edge fn).
+      // Failure here is a soft warning — the escalation exists, the ticket
+      // just didn't get its status bumped, so we surface that explicitly
+      // instead of a generic success toast.
       try {
-        await new Promise<void>((resolve, reject) => {
-          updateTicket.mutate(
-            {
-              ticketId: ticket.id,
-              updates: { status: "in_progress" as SupportTicket["status"] },
-              currentUserId: user.id,
-            },
-            { onSuccess: () => resolve(), onError: (err) => reject(err) },
-          );
-        });
+        await adminStatus.mutateAsync({ ticketId: ticket.id, status: "in_progress" });
         toast.success("Escalated to management");
       } catch (statusErr) {
         const msg = statusErr instanceof Error ? statusErr.message : String(statusErr);
@@ -292,31 +328,90 @@ export function SupportTicketModal({
             <div className="space-y-4 sm:space-y-6 pb-4">
               {/* Sender Info */}
               <div className="bg-muted/50 rounded-lg p-3 sm:p-4">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
-                  <div>
-                    <p className="font-medium text-foreground text-sm sm:text-base">{ticket.sender_name}</p>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-medium text-foreground text-sm sm:text-base">{ticket.sender_name}</p>
+                      <SupportStatusBadge status={ticket.status} />
+                    </div>
                     <a
                       href={`mailto:${ticket.sender_email}`}
-                      className="text-xs sm:text-sm text-primary hover:underline flex items-center gap-1"
+                      className="text-xs sm:text-sm text-primary hover:underline flex items-center gap-1 mt-0.5"
                     >
                       {ticket.sender_email}
                       <ExternalLink className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                     </a>
                   </div>
-                  <Button variant="outline" size="sm" asChild className="self-start sm:self-auto text-xs sm:text-sm h-8 sm:h-9">
-                    <a href={`mailto:${ticket.sender_email}?subject=Re: ${ticket.subject || ticket.category}`}>
-                      <Mail className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
-                      Reply
-                    </a>
-                  </Button>
                 </div>
               </div>
 
-              {/* Message */}
+              {/* Conversation thread (in-app replies). The original ticket
+                  body is the first user message; subsequent messages come
+                  from support_ticket_messages. Admins reply in-thread below. */}
               <div>
-                <h4 className="text-xs sm:text-sm font-medium text-muted-foreground mb-1.5 sm:mb-2">Message</h4>
-                <div className="bg-background border border-border rounded-lg p-3 sm:p-4">
-                  <p className="text-sm sm:text-base text-foreground/80 whitespace-pre-wrap">{ticket.message}</p>
+                <h4 className="text-xs sm:text-sm font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
+                  <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  Conversation
+                </h4>
+                <div className="space-y-3">
+                  <AdminMessageBubble
+                    role="user"
+                    senderLabel={ticket.sender_name || "User"}
+                    body={ticket.message}
+                    createdAt={ticket.created_at}
+                  />
+                  {messagesLoading ? (
+                    <div className="space-y-2">
+                      <Skeleton className="h-14 w-3/4 rounded-lg" />
+                      <Skeleton className="h-14 w-3/4 rounded-lg ml-auto" />
+                    </div>
+                  ) : (
+                    messages.map((m) => (
+                      <AdminMessageBubble
+                        key={m.id}
+                        role={m.sender_role}
+                        senderLabel={m.sender_role === "admin" ? "Support" : ticket.sender_name || "User"}
+                        body={m.body}
+                        createdAt={m.created_at}
+                        attachments={m.attachments}
+                      />
+                    ))
+                  )}
+                </div>
+
+                {/* Admin reply composer */}
+                <div className="mt-3 rounded-lg border border-border bg-background p-3 space-y-2">
+                  <Textarea
+                    placeholder="Reply to the user… (sends an in-app message + notification)"
+                    value={reply}
+                    onChange={(e) => setReply(e.target.value.slice(0, 5000))}
+                    rows={3}
+                    maxLength={5000}
+                    className="resize-none text-xs sm:text-sm"
+                    disabled={sendReply.isPending}
+                  />
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <SupportAttachmentPicker
+                      files={replyFiles}
+                      onChange={setReplyFiles}
+                      onError={(msg) => toast.error(msg)}
+                      disabled={sendReply.isPending}
+                      idPrefix="admin-support-reply"
+                    />
+                    <Button
+                      size="sm"
+                      onClick={handleSendReply}
+                      disabled={!reply.trim() || sendReply.isPending}
+                      className="gap-1.5 ml-auto"
+                    >
+                      {sendReply.isPending ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Send className="h-3.5 w-3.5" />
+                      )}
+                      Send reply
+                    </Button>
+                  </div>
                 </div>
               </div>
 
@@ -397,12 +492,17 @@ export function SupportTicketModal({
 
               <Separator />
 
-              {/* Internal Notes */}
-              <div>
-                <h4 className="text-xs sm:text-sm font-medium text-foreground mb-2 sm:mb-3 flex items-center gap-1.5 sm:gap-2">
-                  <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  Internal Notes ({notes.length})
-                </h4>
+              {/* Internal Notes — admin-only, never shown to the user. */}
+              <div className="rounded-lg border border-amber-200 bg-amber-50/40 dark:border-amber-900/40 dark:bg-amber-900/10 p-3">
+                <div className="flex items-center justify-between gap-2 mb-2 sm:mb-3 flex-wrap">
+                  <h4 className="text-xs sm:text-sm font-medium text-foreground flex items-center gap-1.5 sm:gap-2">
+                    <Lock className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-amber-600" />
+                    Internal notes ({notes.length})
+                  </h4>
+                  <Badge variant="outline" className="text-[10px] text-amber-700 border-amber-300 bg-amber-100/60 dark:text-amber-300 dark:border-amber-800">
+                    Internal — not visible to the user
+                  </Badge>
+                </div>
 
                 {notesLoading ? (
                   <div className="space-y-2 mb-3">
@@ -534,11 +634,11 @@ export function SupportTicketModal({
               {ticket.status !== "resolved" && ticket.status !== "closed" && (
                 <Button
                   onClick={handleResolve}
-                  disabled={resolveTicket.isPending}
+                  disabled={adminStatus.isPending}
                   className="bg-success hover:bg-success/90 text-success-foreground text-xs sm:text-sm h-8 sm:h-9"
                   size="sm"
                 >
-                  {resolveTicket.isPending ? (
+                  {adminStatus.isPending ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
                   ) : (
                     <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
@@ -574,5 +674,44 @@ export function SupportTicketModal({
         </AlertDialogContent>
       </AlertDialog>
     </>
+  );
+}
+
+/**
+ * One message in the admin conversation view. Admin replies align right
+ * (the admin is the viewer here); user messages align left.
+ */
+function AdminMessageBubble({
+  role,
+  senderLabel,
+  body,
+  createdAt,
+  attachments,
+}: {
+  role: "user" | "admin";
+  senderLabel: string;
+  body: string;
+  createdAt: string;
+  attachments?: { path: string; name: string; type: string; size: number }[] | null;
+}) {
+  const mine = role === "admin";
+  return (
+    <div className={cn("flex flex-col gap-1 max-w-[90%]", mine ? "ml-auto items-end" : "items-start")}>
+      <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground px-1">
+        {mine ? <Headphones className="h-3 w-3" aria-hidden /> : <User className="h-3 w-3" aria-hidden />}
+        <span>{senderLabel}</span>
+        <span aria-hidden>·</span>
+        <span>{format(new Date(createdAt), "MMM d, h:mm a")}</span>
+      </div>
+      <div
+        className={cn(
+          "rounded-2xl px-3.5 py-2.5 text-sm break-words whitespace-pre-wrap w-full",
+          mine ? "bg-primary text-primary-foreground rounded-br-sm" : "bg-muted text-foreground rounded-bl-sm",
+        )}
+      >
+        {body}
+        <AttachmentList attachments={attachments} />
+      </div>
+    </div>
   );
 }

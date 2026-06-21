@@ -1,6 +1,6 @@
 import React from "react";
 import {
-  Bell, Send, Heart, Star, Building2, MapPin, Calendar, HeartHandshake, UserCheck, CheckCircle,
+  Bell, Send, Heart, Star, Building2, MapPin, Calendar, HeartHandshake, UserCheck, CheckCircle, LifeBuoy,
 } from "lucide-react";
 
 // Single source of truth for seeker-notification UI + routing.
@@ -43,6 +43,9 @@ export function notificationIconCompact(type: string): React.ReactNode {
     concierge_tour_cancelled: <Calendar className="h-4 w-4 text-destructive" />,
     concierge_message_received: <Send className="h-4 w-4 text-primary" />,
     placement_intro: <UserCheck className="h-4 w-4 text-primary" />,
+    support_reply: <LifeBuoy className="h-4 w-4 text-primary" />,
+    support_resolved: <CheckCircle className="h-4 w-4 text-success" />,
+    support_reopened: <LifeBuoy className="h-4 w-4 text-warning" />,
   };
   return map[type] || <Bell className="h-4 w-4 text-muted-foreground" />;
 }
@@ -76,6 +79,9 @@ export function notificationIconLarge(type: string): React.ReactNode {
     concierge_tour_cancelled: <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-destructive" />,
     concierge_message_received: <Send className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />,
     placement_intro: <UserCheck className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />,
+    support_reply: <LifeBuoy className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />,
+    support_resolved: <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-success" />,
+    support_reopened: <LifeBuoy className="h-4 w-4 sm:h-5 sm:w-5 text-warning" />,
   };
   return map[type] || <Bell className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />;
 }
@@ -115,6 +121,12 @@ const TYPE_ROUTES: Record<string, string> = {
   // Facility / saved flow
   saved_facility: "/account/saved",
   facility_update: "/account/saved",
+  // Support tickets — the producer sets metadata.link to
+  // `/account/support?ticket=<id>`; this is the type-based fallback when
+  // no explicit link is present.
+  support_reply: "/account/support",
+  support_resolved: "/account/support",
+  support_reopened: "/account/support",
 };
 
 /**

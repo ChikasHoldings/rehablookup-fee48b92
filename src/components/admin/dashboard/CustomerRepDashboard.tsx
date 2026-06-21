@@ -4,6 +4,8 @@ import { useEffect, useCallback, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { SupportTicketModal } from "@/components/admin/SupportTicketModal";
+import type { SupportTicket } from "@/hooks/useAdminSupportTickets";
+import { useAdminSupportStatus } from "@/lib/support/useSupportTickets";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -46,6 +48,8 @@ export function CustomerRepDashboard() {
   const [confirmResolveTicketId, setConfirmResolveTicketId] = useState<string | null>(null);
   const [confirmRejectReviewId, setConfirmRejectReviewId] = useState<string | null>(null);
 
+  const adminStatus = useAdminSupportStatus();
+
   const invalidateDashboard = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ["rep-ticket-stats"] });
     queryClient.invalidateQueries({ queryKey: ["rep-my-tickets"] });
@@ -54,6 +58,23 @@ export function CustomerRepDashboard() {
     queryClient.invalidateQueries({ queryKey: ["rep-pending-reviews"] });
     queryClient.invalidateQueries({ queryKey: ["rep-my-escalations"] });
   }, [queryClient]);
+
+  // Fetch the full ticket row before opening the modal — the modal needs the
+  // complete record (sender, message, status, assignment, …), not an id stub.
+  const { data: selectedTicket } = useQuery({
+    queryKey: ["rep-selected-ticket", selectedTicketId],
+    queryFn: async (): Promise<SupportTicket | null> => {
+      if (!selectedTicketId) return null;
+      const { data, error } = await supabase
+        .from("support_tickets")
+        .select("id, sender_name, sender_email, sender_user_id, subject, message, category, priority, status, source, assigned_to, assigned_by, assigned_at, resolved_by, resolved_at, resolution_notes, created_at, updated_at")
+        .eq("id", selectedTicketId)
+        .maybeSingle();
+      if (error) throw error;
+      return (data as SupportTicket) ?? null;
+    },
+    enabled: !!selectedTicketId,
+  });
 
   useEffect(() => {
     const channel = supabase
@@ -179,16 +200,18 @@ export function CustomerRepDashboard() {
     setSelectedTicketId(ticketId);
   };
 
-  // Resolve ticket — triggered by confirmation dialog
+  // Resolve ticket — triggered by confirmation dialog. Routes through the
+  // support-ticket-status edge function so the user is notified (the
+  // confirmation copy promises this), rather than a silent table update.
   const resolveTicket = async (ticketId: string) => {
     if (!user?.id) return;
-    const { error } = await supabase
-      .from("support_tickets")
-      .update({ status: "resolved", resolved_at: new Date().toISOString() })
-      .eq("id", ticketId);
-    if (error) { toast.error("Failed to resolve ticket"); return; }
-    toast.success("Ticket resolved");
-    invalidateDashboard();
+    try {
+      await adminStatus.mutateAsync({ ticketId, status: "resolved" });
+      toast.success("Ticket resolved — the user has been notified");
+      invalidateDashboard();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to resolve ticket");
+    }
   };
 
   // Reject review — triggered by confirmation dialog
@@ -754,10 +777,12 @@ export function CustomerRepDashboard() {
         </DialogContent>
       </Dialog>
 
-      {/* Support Ticket Detail Modal - inline open from dashboard */}
+      {/* Support Ticket Detail Modal - inline open from dashboard.
+          The full row is fetched (selectedTicket) before rendering so the
+          modal gets a complete record rather than an id-only stub. */}
       <SupportTicketModal
-        ticket={selectedTicketId ? { id: selectedTicketId } as never : null}
-        open={!!selectedTicketId}
+        ticket={selectedTicket ?? null}
+        open={!!selectedTicketId && !!selectedTicket}
         onOpenChange={(open) => { if (!open) { setSelectedTicketId(null); invalidateDashboard(); } }}
       />
 
