@@ -87,7 +87,7 @@ Deno.serve(async (req) => {
     // Get facility info
     const { data: facility, error: facilityError } = await supabase
       .from("facilities")
-      .select("id, name, user_id, email, reply_email")
+      .select("id, name, user_id, email, reply_email, status, suspended")
       .eq("id", body.facilityId)
       .single();
 
@@ -99,9 +99,46 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Routing gates — mirror submit-qualified-lead so a marketing "Connect"
+    // cannot route a raw lead + seeker PII to a facility that isn't an active,
+    // approved, paying provider. Without these (this runs on the service-role
+    // client, which bypasses the leads INSERT RLS), a suspended/unapproved or
+    // free/canceled facility would silently receive full contact details.
+    if (facility.status !== "approved" || facility.suspended === true) {
+      log(requestId, "WARN", "Facility not accepting inquiries", { facilityId: body.facilityId, status: facility.status, suspended: facility.suspended });
+      return new Response(
+        JSON.stringify({ error: "This facility isn't accepting inquiries right now.", code: "facility_not_accepting" }),
+        { status: 409, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    const { data: isPro, error: proError } = await supabase.rpc("has_active_pro", { p_facility_id: body.facilityId });
+    if (proError) {
+      // Fail closed: if we cannot confirm Pro status, do not create a raw lead.
+      log(requestId, "ERROR", "has_active_pro check failed", { facilityId: body.facilityId, error: proError.message });
+      return new Response(
+        JSON.stringify({ error: "Couldn't connect you to this facility right now. Please try again.", code: "eligibility_check_failed" }),
+        { status: 503, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+    if (!isPro) {
+      log(requestId, "WARN", "Facility is not an active Pro provider", { facilityId: body.facilityId });
+      return new Response(
+        JSON.stringify({ error: "This facility isn't available for a direct connection right now.", code: "facility_not_eligible" }),
+        { status: 409, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
     // Create a lead in the main leads table (normal flow)
     const fullName = `${marketingLead.first_name} ${marketingLead.last_name}`.trim();
     
+    // Deterministic idempotency key (one lead per marketing-lead × facility).
+    // Backed by the partial UNIQUE index on leads.idempotency_key, so a retry
+    // or concurrent double-fire collapses to the same row instead of creating
+    // duplicate leads (the facilities_requested array check above is updated
+    // non-atomically and can't be relied on for this).
+    const idempotencyKey = `mktg-${body.marketingLeadId}-${body.facilityId}`;
+
     const { data: newLead, error: leadError } = await supabase
       .from("leads")
       .insert({
@@ -119,11 +156,21 @@ Deno.serve(async (req) => {
         message: marketingLead.message,
         source: "marketing_landing",
         status: "new",
+        idempotency_key: idempotencyKey,
       })
       .select()
       .single();
 
     if (leadError) {
+      // 23505 = duplicate idempotency_key: this marketing lead already routed to
+      // this facility (retry / double-click). Report honest success, not an error.
+      if ((leadError as { code?: string }).code === "23505") {
+        log(requestId, "INFO", "Duplicate suppressed (already routed)", { idempotencyKey });
+        return new Response(
+          JSON.stringify({ success: true, alreadyRequested: true, message: "Your request has already been sent to this facility." }),
+          { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
       log(requestId, "ERROR", "Failed to create lead", { error: leadError.message });
       throw new Error("Failed to create lead");
     }

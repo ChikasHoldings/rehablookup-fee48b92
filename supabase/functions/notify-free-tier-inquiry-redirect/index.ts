@@ -113,21 +113,34 @@ Deno.serve(async (req) => {
   });
 
   // ── In-app notification (always — doesn't depend on Resend) ──
+  // Idempotent: this function can be retried (the caller swallows errors), so
+  // skip if a "seeker inquired" bell for THIS inquiry already exists, to avoid
+  // duplicate notifications. The email below is separately idempotency-keyed.
   if (facility.user_id) {
-    await supabase.from("provider_notifications").insert({
-      user_id: facility.user_id,
-      facility_id: facility.id,
-      type: "free_tier_inquiry_redirect",
-      title: "A seeker inquired on your listing",
-      message:
-        "We've connected them with our concierge team, who will present your facility alongside 1-2 matched options. Upgrade to Pro to receive these directly.",
-      metadata: {
-        inquiry_id: parsed.data.inquiry_id,
-        level_of_care: parsed.data.level_of_care,
-        insurance: parsed.data.insurance,
-        urgency: parsed.data.urgency,
-      },
-    });
+    const { data: existingNotif } = await supabase
+      .from("provider_notifications")
+      .select("id")
+      .eq("user_id", facility.user_id)
+      .eq("type", "free_tier_inquiry_redirect")
+      .filter("metadata->>inquiry_id", "eq", parsed.data.inquiry_id)
+      .maybeSingle();
+
+    if (!existingNotif) {
+      await supabase.from("provider_notifications").insert({
+        user_id: facility.user_id,
+        facility_id: facility.id,
+        type: "free_tier_inquiry_redirect",
+        title: "A seeker inquired on your listing",
+        message:
+          "We've connected them with our concierge team, who will present your facility alongside 1-2 matched options. Upgrade to Pro to receive these directly.",
+        metadata: {
+          inquiry_id: parsed.data.inquiry_id,
+          level_of_care: parsed.data.level_of_care,
+          insurance: parsed.data.insurance,
+          urgency: parsed.data.urgency,
+        },
+      });
+    }
   }
 
   // ── Email (skipped silently if Resend isn't configured) ──

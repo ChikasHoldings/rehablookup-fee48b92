@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { resolveSeekerInquiryStatus } from "@/lib/seekerInquiryStatus";
 import {
   Dialog,
   DialogContent,
@@ -103,12 +104,19 @@ function formatShortDate(dateString: string) {
   });
 }
 
-function getStatusInfo(status: string) {
-  switch (status) {
-    case "new":
-      return { label: "Pending Review", color: "bg-blue-100 text-blue-700", icon: Clock };
-    case "contacted":
+function getStatusInfo(lead: { status: string; provider_responded_at: string | null; provider_response_status: string | null }) {
+  // Seeker-facing: "Facility Responded" is driven by the provider-response
+  // signal, not pipeline status='contacted' (see resolveSeekerInquiryStatus).
+  const key = resolveSeekerInquiryStatus({
+    status: lead.status,
+    providerRespondedAt: lead.provider_responded_at,
+    providerResponseStatus: lead.provider_response_status,
+  });
+  switch (key) {
+    case "responded":
       return { label: "Facility Responded", color: "bg-emerald-100 text-emerald-700", icon: CheckCircle2 };
+    case "pending":
+      return { label: "Pending Review", color: "bg-blue-100 text-blue-700", icon: Clock };
     case "in_progress":
       return { label: "In Progress", color: "bg-amber-100 text-amber-700", icon: MessageSquare };
     case "scheduled":
@@ -208,7 +216,7 @@ export function InquiryDetailModal({ open, onOpenChange, leadId }: Omit<InquiryD
     fetchData();
   }, [open, leadId]);
 
-  const statusInfo = lead ? getStatusInfo(lead.status) : null;
+  const statusInfo = lead ? getStatusInfo(lead) : null;
   const StatusIcon = statusInfo?.icon || FileText;
 
   return (
