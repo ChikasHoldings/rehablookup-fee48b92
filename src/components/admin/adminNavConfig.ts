@@ -131,7 +131,6 @@ const managerNav: NavSection[] = [
   {
     sectionLabel: "Team & Operations",
     entries: [
-      { to: "/admin/users", icon: ShieldCheck, label: "Staff Management", permission: "users" },
       { to: "/admin/leads", icon: Users, label: "Inquiries", permission: "leads", countKey: "leads" },
       { to: "/admin/insurance-verifications", icon: FileCheck2, label: "Insurance VOB", permission: "leads", countKey: "insuranceVerifications" },
       { to: "/admin/re-verification", icon: ShieldAlert, label: "Re-verification", permission: "providers", countKey: "reVerificationPending" },
