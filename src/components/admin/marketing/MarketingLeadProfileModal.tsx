@@ -376,11 +376,23 @@ export function MarketingLeadProfileModal({
         status: "new",
       });
       if (error) throw error;
-      await supabase.from("marketing_leads").update({ status: "contacted" }).eq("id", lead.id);
+      // Secondary bookkeeping — the lead is already routed (primary insert
+      // succeeded above). A failure here must not hard-fail the action, but it
+      // must not be reported as a clean success either; surface it honestly.
+      const { error: statusErr } = await supabase
+        .from("marketing_leads")
+        .update({ status: "contacted" })
+        .eq("id", lead.id);
+      return { statusSynced: !statusErr };
     },
-    onSuccess: () => {
+    onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ["admin-marketing-leads"] });
-      toast.success("Lead routed to provider");
+      queryClient.invalidateQueries({ queryKey: ["admin-leads"] });
+      toast.success(
+        res?.statusSynced === false
+          ? "Lead routed to provider (marketing status sync pending — refresh to confirm)"
+          : "Lead routed to provider",
+      );
       setRouteDialogOpen(false);
       setSelectedFacilityId("");
       setFacilitySearch("");

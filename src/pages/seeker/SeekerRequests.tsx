@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { pluckNonNull } from "@/lib/nullableRows";
 import { getFacilityPlaceholder } from "@/lib/facilityPlaceholder";
+import { resolveSeekerInquiryStatus } from "@/lib/seekerInquiryStatus";
 import { Link, useSearchParams } from "react-router-dom";
 
 // Keep the localStorage "viewed leads" set bounded so it doesn't grow
@@ -84,12 +85,19 @@ function RequestCardSkeleton() {
   );
 }
 
-function getStatusBadge(status: string) {
-  switch (status) {
-    case "new":
-      return <Badge className="bg-primary/10 text-primary border-0 text-xs">Pending Review</Badge>;
-    case "contacted":
+function getStatusBadge(request: { status: string; provider_responded_at: string | null; provider_response_status: string | null }) {
+  // Seeker-facing label: "Facility Responded" is driven by the provider-response
+  // signal, NOT the pipeline status='contacted' (see resolveSeekerInquiryStatus).
+  const key = resolveSeekerInquiryStatus({
+    status: request.status,
+    providerRespondedAt: request.provider_responded_at,
+    providerResponseStatus: request.provider_response_status,
+  });
+  switch (key) {
+    case "responded":
       return <Badge className="bg-success/10 text-success border-0 text-xs">Facility Responded</Badge>;
+    case "pending":
+      return <Badge className="bg-primary/10 text-primary border-0 text-xs">Pending Review</Badge>;
     case "in_progress":
       return <Badge className="bg-warning/10 text-warning border-0 text-xs">In Progress</Badge>;
     case "scheduled":
@@ -194,7 +202,7 @@ function RequestCard({ request, onClick, isNew, unreadCount = 0 }: { request: Su
                   {unreadCount}
                 </Badge>
               )}
-              {getStatusBadge(request.status)}
+              {getStatusBadge(request)}
             </div>
           </div>
           <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground flex-wrap">
