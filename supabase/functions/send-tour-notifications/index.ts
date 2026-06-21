@@ -1182,6 +1182,38 @@ async function sendSMS(phone: string, message: string): Promise<boolean> {
   return false;
 }
 
+// ── inlined from _shared/notification-auth.ts (keep in sync) ───────────────
+// Per-actor auth for this verify_jwt=false dispatcher: service-role bearer →
+// "service"; valid admin JWT → "admin"; valid non-admin JWT → "user" (the
+// caller must then be verified as the tour's seeker or facility owner); else 401.
+type NotifierActor = "service" | "admin" | "user";
+type AuthorizeResult =
+  | { ok: true; actor: NotifierActor; userId: string | null }
+  | { ok: false; status: number; error: string };
+async function authorizeNotifier(
+  req: Request,
+  admin: ReturnType<typeof createClient>,
+): Promise<AuthorizeResult> {
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  const authHeader = req.headers.get("Authorization") || req.headers.get("authorization") || "";
+  const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+  if (!token) return { ok: false, status: 401, error: "unauthorized" };
+  if (serviceKey && token === serviceKey) return { ok: true, actor: "service", userId: null };
+  const { data: { user }, error } = await admin.auth.getUser(token);
+  if (error || !user) return { ok: false, status: 401, error: "unauthorized" };
+  // Admin/staff = active admin-console member (super_admin/admin/advisor) OR a
+  // user_roles admin — advisors are staff but are NOT in user_roles.
+  const { data: staff } = await admin
+    .from("admin_user_profiles").select("user_id").eq("user_id", user.id).eq("status", "active").maybeSingle();
+  let isAdmin = !!staff;
+  if (!isAdmin) {
+    const { data: role } = await admin
+      .from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle();
+    isAdmin = !!role;
+  }
+  return { ok: true, actor: isAdmin ? "admin" : "user", userId: user.id };
+}
+
 Deno.serve(async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -1216,13 +1248,20 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // C7: authenticate the caller before any lookup/fan-out (verify_jwt=false
+    // endpoint serves both server-to-server and browser callers).
+    const authz = await authorizeNotifier(req, supabase);
+    if (!authz.ok) {
+      return jsonError(authz.error, "Unauthorized", authz.status, corsHeaders);
+    }
+
     // Fetch tour request with related data
     const { data: tour, error: tourError } = await supabase
       .from("concierge_tour_requests")
       .select(`
         *,
         facility:facilities(id, name, city, state, concierge_admissions_email, concierge_admissions_phone, user_id),
-        inquiry:concierge_inquiries(id, user_name, user_email, user_phone, user_id)
+        inquiry:concierge_inquiries(id, user_name, user_email, user_phone, user_id, sms_consent)
       `)
       .eq("id", tourId)
       .single();
@@ -1230,6 +1269,18 @@ Deno.serve(async (req: Request): Promise<Response> => {
     if (tourError || !tour) {
       console.error("Tour not found:", tourError);
       return jsonError("tour_not_found", "Tour not found", 404, corsHeaders, {}, { tourId, dbError: tourError?.message });
+    }
+
+    // C7: per-resource authorization for the non-admin "user" actor — the caller
+    // must be a party to THIS tour (the seeker who owns the inquiry, or the
+    // provider who owns the facility). Otherwise an authenticated stranger could
+    // fan out tour emails/SMS for someone else's tour.
+    if (authz.actor === "user") {
+      const isSeeker = !!tour.inquiry?.user_id && tour.inquiry.user_id === authz.userId;
+      const isProvider = !!tour.facility?.user_id && tour.facility.user_id === authz.userId;
+      if (!isSeeker && !isProvider) {
+        return jsonError("forbidden", "Forbidden", 403, corsHeaders);
+      }
     }
 
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
@@ -1361,8 +1412,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
           }
         }
 
-        // SMS to seeker
-        if (userPhone) {
+        // SMS to seeker — only if they consented to SMS at intake.
+        if (userPhone && tour.inquiry?.sms_consent) {
           const proposedTime = formatDateTime(tour.proposed_datetime);
           const smsMessage = `RehabLookup: ${emailData.facilityName} proposed tour for ${proposedTime}. Confirm here: https://rehablookup.com/account/concierge`;
           const smsSent = await sendSMS(userPhone, smsMessage);
@@ -1448,7 +1499,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
         // SMS to facility
         if (facilityPhone) {
           const confirmedTime = formatDateTime(tour.confirmed_datetime);
-          const smsMessage = `RehabLookup: Tour CONFIRMED! ${emailData.seekerName} will tour on ${confirmedTime}. Contact: ${tour.inquiry?.user_phone}`;
+          // Do NOT include the seeker's phone here — this SMS goes to the
+          // facility's business line; seeker contact details live behind the
+          // authenticated provider dashboard, not in an outbound SMS.
+          const smsMessage = `RehabLookup: Tour CONFIRMED! ${emailData.seekerName} will tour on ${confirmedTime}. Details in your provider dashboard.`;
           const smsSent = await sendSMS(facilityPhone, smsMessage);
           results.facilitySMS = smsSent;
         }
@@ -1571,8 +1625,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
             }
           }
 
-          // SMS to seeker
-          if (userPhone) {
+          // SMS to seeker — only if they consented to SMS at intake.
+          if (userPhone && tour.inquiry?.sms_consent) {
             const smsMessage = `RehabLookup: Unfortunately, ${emailData.facilityName} had to reschedule. View other options: https://rehablookup.com/account/concierge`;
             await sendSMS(userPhone, smsMessage);
           }

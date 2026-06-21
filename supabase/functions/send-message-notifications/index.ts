@@ -561,6 +561,46 @@ interface NotificationPayload {
   senderType: "seeker" | "facility" | "advisor";
 }
 
+// ── inlined from _shared/notification-auth.ts (keep in sync) ───────────────
+// Per-actor auth for this verify_jwt=false dispatcher: service-role bearer →
+// "service"; valid admin JWT → "admin"; valid non-admin JWT → "user" (the
+// caller must then be verified as a thread participant); anything else → 401.
+type NotifierActor = "service" | "admin" | "user";
+type AuthorizeResult =
+  | { ok: true; actor: NotifierActor; userId: string | null }
+  | { ok: false; status: number; error: string };
+async function authorizeNotifier(
+  req: Request,
+  admin: ReturnType<typeof createClient>,
+): Promise<AuthorizeResult> {
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  const authHeader = req.headers.get("Authorization") || req.headers.get("authorization") || "";
+  const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+  if (!token) return { ok: false, status: 401, error: "unauthorized" };
+  if (serviceKey && token === serviceKey) return { ok: true, actor: "service", userId: null };
+  const { data: { user }, error } = await admin.auth.getUser(token);
+  if (error || !user) return { ok: false, status: 401, error: "unauthorized" };
+  // Admin/staff = active admin-console member (super_admin/admin/advisor) OR a
+  // user_roles admin — advisors are staff but are NOT in user_roles.
+  const { data: staff } = await admin
+    .from("admin_user_profiles").select("user_id").eq("user_id", user.id).eq("status", "active").maybeSingle();
+  let isAdmin = !!staff;
+  if (!isAdmin) {
+    const { data: role } = await admin
+      .from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle();
+    isAdmin = !!role;
+  }
+  return { ok: true, actor: isAdmin ? "admin" : "user", userId: user.id };
+}
+
+// Deterministic short hash (djb2 → base36) for content-stable idempotency keys.
+// Replaces the previous `Date.now()` suffix, which defeated dedup entirely.
+function stableHash(input: string): string {
+  let h = 5381;
+  for (let i = 0; i < input.length; i++) h = ((h << 5) + h + input.charCodeAt(i)) >>> 0;
+  return h.toString(36);
+}
+
 // Helper to send SMS via Twilio. Round-30 retry pattern: one retry
 // on transient failure (500ms backoff); on final failure, insert an
 // admin_notifications row so ops can investigate Twilio outages
@@ -667,6 +707,16 @@ Deno.serve(async (req) => {
     const resend = new Resend(resendApiKey);
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // C7: authenticate the caller. This endpoint runs verify_jwt=false so it can
+    // serve both server-to-server (service-role) and browser (seeker/admin) calls
+    // — but it must NOT accept an anonymous body that fans out emails/SMS.
+    const authz = await authorizeNotifier(req, supabase);
+    if (!authz.ok) {
+      return new Response(JSON.stringify({ error: authz.error }), {
+        status: authz.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const payload: NotificationPayload = await req.json();
     console.log("Received notification request:", payload.notificationType);
 
@@ -683,13 +733,15 @@ Deno.serve(async (req) => {
           id,
           user_name,
           user_email,
-          user_phone
+          user_phone,
+          sms_consent
         ),
         facilities (
           id,
           name,
           reply_email,
-          email
+          email,
+          user_id
         )
       `)
       .eq("id", payload.threadId)
@@ -703,12 +755,37 @@ Deno.serve(async (req) => {
     const inquiry = thread.concierge_inquiries as any;
     const facility = thread.facilities as any;
 
+    // C7: per-resource authorization + server-derived sender label.
+    // The seeker owns the (advisor) thread via concierge_threads.user_id; the
+    // provider owns a facility thread via facilities.user_id. A non-admin user
+    // who is neither participant cannot trigger notifications for this thread,
+    // and may never *claim* a sender type — it is derived from their identity.
+    const seekerUserId: string | null = (thread as any).user_id ?? null;
+    const facilityUserId: string | null = facility?.user_id ?? null;
+    const isSeeker = !!seekerUserId && seekerUserId === authz.userId;
+    const isProvider = !!facilityUserId && facilityUserId === authz.userId;
+    if (authz.actor === "user" && !isSeeker && !isProvider) {
+      return new Response(JSON.stringify({ error: "forbidden" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    let senderType: "seeker" | "facility" | "advisor";
+    if (authz.actor === "admin") {
+      senderType = "advisor";
+    } else if (authz.actor === "user") {
+      senderType = isProvider ? "facility" : "seeker";
+    } else {
+      // service: trust the orchestrating server's label, but validate the enum.
+      senderType = (["seeker", "facility", "advisor"] as const).includes(payload.senderType)
+        ? payload.senderType : "seeker";
+    }
+
     const baseEmailData: MessageEmailData = {
       seekerName: inquiry?.user_name || "Client",
       seekerEmail: inquiry?.user_email || "",
       facilityName: facility?.name,
       senderName: "",
-      senderType: payload.senderType,
+      senderType,
       messagePreview: payload.messageContent,
       threadType: thread.thread_type as "advisor" | "facility",
     };
@@ -722,10 +799,10 @@ Deno.serve(async (req) => {
       case "message_to_seeker": {
         // Notify seeker when facility or advisor sends message
         if (inquiry?.user_email) {
-          const senderLabel = payload.senderType === "advisor" 
-            ? "Your Placement Advisor" 
+          const senderLabel = senderType === "advisor"
+            ? "Your Placement Advisor"
             : facility?.name || "Treatment Center";
-          
+
           emails.push({
             to: inquiry.user_email,
             subject: `New message from ${senderLabel}`,
@@ -735,8 +812,8 @@ Deno.serve(async (req) => {
             }),
           });
 
-          // Also send SMS if phone is available
-          if (inquiry?.user_phone) {
+          // Also send SMS if phone is available AND the seeker consented to SMS.
+          if (inquiry?.user_phone && inquiry?.sms_consent) {
             const preview = payload.messageContent.length > 80 
               ? payload.messageContent.substring(0, 77) + "..." 
               : payload.messageContent;
@@ -780,6 +857,12 @@ Deno.serve(async (req) => {
       }
     }
 
+    // MSG-5: stable, content-derived idempotency. The old `Date.now()` suffix
+    // made every invocation unique, so a re-invocation / retry double-sent.
+    const idemHash = stableHash(
+      `${payload.threadId}|${payload.notificationType}|${senderType}|${payload.messageContent}`,
+    );
+
     // Send all emails
     for (const email of emails) {
       try {
@@ -790,7 +873,7 @@ Deno.serve(async (req) => {
           html: email.html,
         }, {
           emailType: `message_${payload.notificationType}`,
-          idempotencyKey: `msg-${payload.threadId}-${payload.notificationType}-${Date.now().toString(36)}`,
+          idempotencyKey: `msg-${payload.threadId}-${payload.notificationType}-${idemHash}`,
         });
         console.log(`Email sent to ${email.to}:`, result);
       } catch (emailError) {
@@ -798,15 +881,40 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Send SMS if applicable
+    // Send SMS if applicable — idempotent on the same (thread, content) key so a
+    // retry never double-texts the seeker. Reuses email_tracking_events as the
+    // dedup ledger; the phone number is never stored (PII).
     let smsSent = false;
     if (smsRecipient) {
-      smsSent = await sendSMS(
-        smsRecipient.phone,
-        smsRecipient.message,
-        supabase,
-        { threadId: payload.threadId, recipientType: payload.notificationType },
-      );
+      const smsIdemKey = `msg-sms-${payload.threadId}-${idemHash}`;
+      const { data: smsAlready } = await supabase
+        .from("email_tracking_events")
+        .select("id")
+        .eq("email_id", smsIdemKey)
+        .eq("event_type", "sent")
+        .maybeSingle();
+      if (smsAlready) {
+        console.log("SMS dedup hit:", smsIdemKey);
+        smsSent = true;
+      } else {
+        smsSent = await sendSMS(
+          smsRecipient.phone,
+          smsRecipient.message,
+          supabase,
+          { threadId: payload.threadId, recipientType: payload.notificationType },
+        );
+        if (smsSent) {
+          try {
+            await supabase.from("email_tracking_events").insert({
+              email_id: smsIdemKey,
+              email_type: "message_sms_notification",
+              event_type: "sent",
+              recipient_email: "sms",
+              event_data: { thread_id: payload.threadId, notification_type: payload.notificationType },
+            });
+          } catch (_e) { /* tracking is best-effort */ }
+        }
+      }
     }
 
     return new Response(
