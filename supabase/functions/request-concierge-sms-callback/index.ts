@@ -83,7 +83,7 @@ serve(async (req) => {
   // the placement team has the clinical context to act on the callback.
   const { data: existing, error: findErr } = await supabase
     .from("concierge_inquiries")
-    .select("id, status")
+    .select("id, status, user_id")
     .eq("draft_id", draftId)
     .maybeSingle();
 
@@ -99,6 +99,27 @@ serve(async (req) => {
       JSON.stringify({ error: "draft_not_found" }),
       { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
+  }
+
+  // MSG-6: bind the callback to the draft owner. If the draft belongs to an
+  // authenticated seeker (user_id set), only that seeker may convert it —
+  // otherwise anyone who learned the draftId could overwrite the contact info
+  // (name/phone/email) and flip the case to the live queue. Anonymous drafts
+  // (no user_id) keep the original frictionless flow.
+  if (existing.user_id) {
+    const authHeader = req.headers.get("Authorization") || req.headers.get("authorization") || "";
+    const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+    let callerId: string | null = null;
+    if (token) {
+      const { data: { user } } = await supabase.auth.getUser(token);
+      callerId = user?.id ?? null;
+    }
+    if (callerId !== existing.user_id) {
+      return new Response(
+        JSON.stringify({ error: "forbidden" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
   }
 
   const now = new Date().toISOString();

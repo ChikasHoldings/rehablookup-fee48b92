@@ -400,6 +400,39 @@ interface FacilityData {
   user_id: string;
 }
 
+// ── inlined from _shared/notification-auth.ts (keep in sync) ───────────────
+// Per-actor auth for this verify_jwt=false dispatcher: service-role bearer →
+// "service"; valid admin JWT → "admin"; valid non-admin JWT → "user" (the
+// caller must then be verified as the owner of the inquiry); else 401.
+type NotifierActor = "service" | "admin" | "user";
+type AuthorizeResult =
+  | { ok: true; actor: NotifierActor; userId: string | null }
+  | { ok: false; status: number; error: string };
+async function authorizeNotifier(
+  req: Request,
+  admin: ReturnType<typeof createClient>,
+): Promise<AuthorizeResult> {
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  const authHeader = req.headers.get("Authorization") || req.headers.get("authorization") || "";
+  const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+  if (!token) return { ok: false, status: 401, error: "unauthorized" };
+  if (serviceKey && token === serviceKey) return { ok: true, actor: "service", userId: null };
+  const { data: { user }, error } = await admin.auth.getUser(token);
+  if (error || !user) return { ok: false, status: 401, error: "unauthorized" };
+  const { data: role } = await admin
+    .from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle();
+  return { ok: true, actor: role ? "admin" : "user", userId: user.id };
+}
+
+// Notification types a non-admin SEEKER may legitimately trigger (their own
+// actions on their own case). Everything else is service/admin-only — those
+// types email facilities / providers and carry seeker PHI.
+const SEEKER_ALLOWED_TYPES = new Set<string>([
+  "seeker_confirmed",
+  "seeker_rejected_provider",
+  "seeker_cancelled",
+]);
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -415,6 +448,16 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
     const resend = new Resend(resendKey);
+
+    // C7: authenticate the caller (verify_jwt=false endpoint serves both
+    // server-to-server and browser callers; an anonymous body must not be able
+    // to fan out case notifications carrying seeker PHI).
+    const authz = await authorizeNotifier(req, supabase);
+    if (!authz.ok) {
+      return new Response(JSON.stringify({ error: authz.error }), {
+        status: authz.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const body = await req.json();
     const { type, inquiryId, facilityId, invoiceId, metadata }: NotificationRequest = body;
@@ -459,6 +502,22 @@ Deno.serve(async (req) => {
 
     if (inquiryError || !inquiry) {
       throw new Error("Inquiry not found");
+    }
+
+    // C7: per-resource authorization for the non-admin "user" actor. A seeker
+    // may only fire notifications for THEIR OWN inquiry, and only for the
+    // seeker-initiated event types — never the provider/admin-facing ones.
+    if (authz.actor === "user") {
+      if (inquiry.user_id !== authz.userId) {
+        return new Response(JSON.stringify({ error: "forbidden" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (!SEEKER_ALLOWED_TYPES.has(type)) {
+        return new Response(JSON.stringify({ error: "forbidden_type" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
     // Fetch facility if needed
