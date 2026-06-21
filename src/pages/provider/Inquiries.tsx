@@ -22,7 +22,6 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { toast } from "sonner";
 
 import { InquiryListItem } from "@/components/provider/inquiries/InquiryListItem";
-import { RedirectedInquiries } from "@/components/provider/inquiries/RedirectedInquiries";
 import { useLeadUnreadCounts } from "@/hooks/useLeadUnreadCounts";
 import { PaginationFooter } from "@/components/common/PaginationFooter";
 import { usePagination } from "@/hooks/usePagination";
@@ -387,10 +386,6 @@ export default function ProviderInquiriesPage() {
             isMobile ? "w-full" : "w-[320px] flex-shrink-0 md:w-[360px] lg:w-[400px]"
           )}>
             <div className="flex-1 overflow-auto">
-              {/* Inquiries that came in on free/unclaimed listings and were
-                  routed to the concierge placement team. Self-hides for Pro
-                  facilities (their inquiries become exclusive leads). */}
-              <RedirectedInquiries facilityIds={facilityIds} />
               {isLoading ? (
                 // Render the same number of skeleton rows as the user's
                 // persisted page size, so the visible list height

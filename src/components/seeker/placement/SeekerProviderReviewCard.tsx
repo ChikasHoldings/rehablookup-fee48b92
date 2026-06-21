@@ -72,6 +72,11 @@ const FACILITY_TYPE_LABELS: Record<string, string> = {
   "Telehealth/Virtual": "Telehealth",
 };
 
+// get_seeker_introductions isn't in the generated types yet.
+const supabaseRelaxed = supabase as unknown as {
+  rpc: (fn: string, args?: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>;
+};
+
 // ── Main Component ─────────────────────────────────────
 
 export function SeekerProviderReviewCard({ inquiryId, onConfirmed }: SeekerProviderReviewCardProps) {
@@ -97,64 +102,53 @@ export function SeekerProviderReviewCard({ inquiryId, onConfirmed }: SeekerProvi
     enabled: !!inquiryId,
   });
 
-  // Fetch interested facilities with enriched data
+  // Fetch interested facilities with enriched data.
+  // Seekers have NO direct RLS read on concierge_introductions (it grants only
+  // admin + facility-owner), so this goes through the security-definer RPC
+  // `get_seeker_introductions`, which returns ONLY seeker-safe columns
+  // (id, facility_id, provider_response) for 'interested' introductions on an
+  // inquiry the caller owns — never provider notes / disclosure fields.
   const { data: facilities, isLoading } = useQuery({
     queryKey: ["seeker-interested-facilities", inquiryId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("concierge_introductions")
-        .select(`
-          id,
-          facility_id,
-          provider_response,
-          facilities (
-            id, name, city, state, slug, logo_url, gallery_urls,
-            facility_type, description, verified, year_established
-          )
-        `)
-        .eq("inquiry_id", inquiryId)
-        .eq("provider_response", "interested")
-        .limit(3);
-
+      const { data: introRows, error } = await supabaseRelaxed.rpc("get_seeker_introductions", {
+        p_inquiry_id: inquiryId,
+      });
       if (error) throw error;
 
-      type IntroRow = {
+      const intros = ((introRows ?? []) as { id: string; facility_id: string; provider_response: string }[]).slice(0, 3);
+      const facilityIds = intros.map((i) => i.facility_id);
+      if (facilityIds.length === 0) return [] as EnrichedFacility[];
+
+      type FacilityRow = {
         id: string;
-        facilities: {
-          id: string;
-          name: string;
-          city: string;
-          state: string;
-          slug: string;
-          logo_url: string | null;
-          gallery_urls: string[] | null;
-          facility_type: string;
-          description: string | null;
-          verified: boolean | null;
-          year_established: number | null;
-          [k: string]: unknown;
-        } | null;
-        [k: string]: unknown;
+        name: string;
+        city: string;
+        state: string;
+        slug: string;
+        logo_url: string | null;
+        gallery_urls: string[] | null;
+        facility_type: string;
+        description: string | null;
+        verified: boolean | null;
+        year_established: number | null;
       };
 
-      const intros = ((data || []) as IntroRow[]).filter((intro) => intro.facilities) as (IntroRow & {
-        facilities: NonNullable<IntroRow["facilities"]>;
-      })[];
-      const facilityIds = intros.map((i) => i.facilities.id);
-
-      // Parallel fetch services & insurance for all facilities
-      const [servicesRes, insuranceRes] = await Promise.all([
-        facilityIds.length > 0
-          ? supabase.from("facility_services").select("facility_id, service_name").in("facility_id", facilityIds)
-          : { data: [] },
-        facilityIds.length > 0
-          ? supabase.from("facility_insurance").select("facility_id, insurance_name").in("facility_id", facilityIds)
-          : { data: [] },
+      // Enrich with public facility data + services/insurance (all publicly readable).
+      const [facilitiesRes, servicesRes, insuranceRes] = await Promise.all([
+        supabase
+          .from("facilities")
+          .select("id, name, city, state, slug, logo_url, gallery_urls, facility_type, description, verified, year_established")
+          .in("id", facilityIds),
+        supabase.from("facility_services").select("facility_id, service_name").in("facility_id", facilityIds),
+        supabase.from("facility_insurance").select("facility_id, insurance_name").in("facility_id", facilityIds),
       ]);
+
+      const facById: Record<string, FacilityRow> = {};
+      (facilitiesRes.data || []).forEach((f) => { facById[(f as FacilityRow).id] = f as FacilityRow; });
 
       const servicesByFacility: Record<string, string[]> = {};
       const insuranceByFacility: Record<string, string[]> = {};
-
       (servicesRes.data || []).forEach((s: { facility_id: string; service_name: string; [k: string]: unknown }) => {
         if (!servicesByFacility[s.facility_id]) servicesByFacility[s.facility_id] = [];
         servicesByFacility[s.facility_id].push(s.service_name);
@@ -164,22 +158,28 @@ export function SeekerProviderReviewCard({ inquiryId, onConfirmed }: SeekerProvi
         insuranceByFacility[i.facility_id].push(i.insurance_name);
       });
 
-      return intros.map((intro) => ({
-        id: intro.facilities.id,
-        name: intro.facilities.name,
-        city: intro.facilities.city,
-        state: intro.facilities.state,
-        slug: intro.facilities.slug,
-        logo_url: intro.facilities.logo_url,
-        gallery_urls: intro.facilities.gallery_urls,
-        facility_type: intro.facilities.facility_type,
-        description: intro.facilities.description,
-        verified: intro.facilities.verified,
-        year_established: intro.facilities.year_established,
-        introduction_id: intro.id,
-        services: servicesByFacility[intro.facilities.id] || [],
-        insurance: insuranceByFacility[intro.facilities.id] || [],
-      })) as EnrichedFacility[];
+      return intros
+        .map((intro) => {
+          const f = facById[intro.facility_id];
+          if (!f) return null;
+          return {
+            id: f.id,
+            name: f.name,
+            city: f.city,
+            state: f.state,
+            slug: f.slug,
+            logo_url: f.logo_url,
+            gallery_urls: f.gallery_urls,
+            facility_type: f.facility_type,
+            description: f.description,
+            verified: f.verified,
+            year_established: f.year_established,
+            introduction_id: intro.id,
+            services: servicesByFacility[f.id] || [],
+            insurance: insuranceByFacility[f.id] || [],
+          } as EnrichedFacility;
+        })
+        .filter((x): x is EnrichedFacility => x !== null);
     },
     enabled: !!inquiryId,
   });
@@ -191,21 +191,16 @@ export function SeekerProviderReviewCard({ inquiryId, onConfirmed }: SeekerProvi
       submitGuard.current = true;
       if (!userId) throw new Error("Not authenticated");
 
-      const { data: updated, error } = await supabase
-        .from("concierge_inquiries")
-        .update({
-          seeker_confirmed: true,
-          seeker_confirmed_at: new Date().toISOString(),
-          placed_facility_id: facility.id,
-        })
-        .eq("id", inquiryId)
-        .eq("user_id", userId)
-        .eq("seeker_confirmed", false)
-        .select("id")
-        .maybeSingle();
-
+      // Placement confirmation MUST go through the security-definer RPC: the
+      // guard_seeker_inquiry_update trigger blocks a seeker from writing
+      // seeker_confirmed / placed_facility_id directly (a direct .update() here
+      // always failed). The RPC verifies the caller owns the inquiry and that
+      // this facility was actually introduced, then sets the placement.
+      const { error } = await supabase.rpc("seeker_confirm_placement", {
+        p_inquiry_id: inquiryId,
+        p_facility_id: facility.id,
+      });
       if (error) throw error;
-      if (!updated) return; // idempotent
 
       await supabase.from("concierge_case_events").insert({
         inquiry_id: inquiryId,
