@@ -235,6 +235,15 @@ verify_jwt = false
 # BUCKET C — Authenticated user (verify_jwt = true)
 # ═════════════════════════════════════════════════════════════════════════════
 
+[functions.support-ticket-create]
+verify_jwt = true
+
+[functions.support-ticket-reply]
+verify_jwt = true
+
+[functions.support-ticket-status]
+verify_jwt = true
+
 [functions.submit-concierge-intake]
 verify_jwt = true
 

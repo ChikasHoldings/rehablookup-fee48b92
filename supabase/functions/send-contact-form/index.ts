@@ -143,28 +143,34 @@ Deno.serve(async (req: Request): Promise<Response> => {
       message: message,
     }).select('id').single();
 
-    if (ticketError) {
+    // The ticket is the system of record — fail loud rather than return a
+    // false success (which would silently lose the visitor's message).
+    if (ticketError || !ticketData) {
       console.error("[SEND-CONTACT-FORM] Failed to create support ticket:", ticketError);
-    } else {
-      console.log("[SEND-CONTACT-FORM] Support ticket created successfully");
-      
-      const { data: adminUsers } = await supabaseAdmin
-        .from('admin_user_profiles')
-        .select('user_id')
-        .eq('status', 'active');
-      
-      if (adminUsers && adminUsers.length > 0) {
-        const notifications = adminUsers.map(admin => ({
-          user_id: admin.user_id,
-          type: 'support_ticket',
-          title: 'New Support Ticket',
-          message: `${name.slice(0, 50)} submitted a contact form (${subjectLabel})`,
-          link: `/admin/support?ticket=${ticketData?.id}`,
-          metadata: { ticket_id: ticketData?.id, source: 'public_contact' }
-        }));
-        
-        await supabaseAdmin.from('admin_user_notifications').insert(notifications);
-      }
+      return new Response(
+        JSON.stringify({ error: "Couldn't submit your message right now. Please try again." }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    console.log("[SEND-CONTACT-FORM] Support ticket created successfully");
+
+    const { data: adminUsers } = await supabaseAdmin
+      .from('admin_user_profiles')
+      .select('user_id')
+      .eq('status', 'active');
+
+    if (adminUsers && adminUsers.length > 0) {
+      const notifications = adminUsers.map(admin => ({
+        user_id: admin.user_id,
+        type: 'support_ticket',
+        title: 'New Support Ticket',
+        message: `${name.slice(0, 50)} submitted a contact form (${subjectLabel})`,
+        link: `/admin/support?ticket=${ticketData?.id}`,
+        metadata: { ticket_id: ticketData?.id, source: 'public_contact' }
+      }));
+
+      await supabaseAdmin.from('admin_user_notifications').insert(notifications);
     }
 
     const emailHtml = `
