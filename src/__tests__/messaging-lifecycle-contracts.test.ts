@@ -34,6 +34,10 @@ describe("messaging lifecycle contracts", () => {
       expect(src, rel).toMatch(/token === serviceKey/);
       // a non-service token must resolve to a real user, else 401
       expect(src, rel).toMatch(/auth\.getUser\(token\)/);
+      // admin/staff classification must include admin-console members (advisors
+      // are staff but are NOT in user_roles — keying on user_roles alone would
+      // 403 every advisor's notification dispatch).
+      expect(src, rel).toMatch(/admin_user_profiles/);
     }
   });
 

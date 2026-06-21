@@ -580,9 +580,17 @@ async function authorizeNotifier(
   if (serviceKey && token === serviceKey) return { ok: true, actor: "service", userId: null };
   const { data: { user }, error } = await admin.auth.getUser(token);
   if (error || !user) return { ok: false, status: 401, error: "unauthorized" };
-  const { data: role } = await admin
-    .from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle();
-  return { ok: true, actor: role ? "admin" : "user", userId: user.id };
+  // Admin/staff = active admin-console member (super_admin/admin/advisor) OR a
+  // user_roles admin — advisors are staff but are NOT in user_roles.
+  const { data: staff } = await admin
+    .from("admin_user_profiles").select("user_id").eq("user_id", user.id).eq("status", "active").maybeSingle();
+  let isAdmin = !!staff;
+  if (!isAdmin) {
+    const { data: role } = await admin
+      .from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle();
+    isAdmin = !!role;
+  }
+  return { ok: true, actor: isAdmin ? "admin" : "user", userId: user.id };
 }
 
 // Deterministic short hash (djb2 → base36) for content-stable idempotency keys.

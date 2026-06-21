@@ -43,8 +43,19 @@ export async function authorizeNotifier(req: Request, admin: any): Promise<Autho
   const { data: { user }, error } = await admin.auth.getUser(token);
   if (error || !user) return { ok: false, status: 401, error: "unauthorized" };
 
-  const { data: role } = await admin
-    .from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle();
+  // Admin/staff = an ACTIVE admin-console member (super_admin / admin / advisor)
+  // OR a user_roles admin. This must match how the admin & concierge panels
+  // authorize their users: advisors are staff who orchestrate notifications but
+  // are NOT in user_roles (user_is_admin / has_role both return false for them),
+  // so keying on user_roles alone would wrongly reject every advisor.
+  const { data: staff } = await admin
+    .from("admin_user_profiles").select("user_id").eq("user_id", user.id).eq("status", "active").maybeSingle();
+  let isAdmin = !!staff;
+  if (!isAdmin) {
+    const { data: role } = await admin
+      .from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle();
+    isAdmin = !!role;
+  }
 
-  return { ok: true, actor: role ? "admin" : "user", userId: user.id };
+  return { ok: true, actor: isAdmin ? "admin" : "user", userId: user.id };
 }
