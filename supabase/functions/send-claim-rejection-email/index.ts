@@ -10,6 +10,7 @@
 // ============================================================================
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 import { Resend } from "https://esm.sh/resend@2.0.0?target=denonext";
+import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
 
 const VERSION = "1.0.0";
 
@@ -129,22 +130,36 @@ Deno.serve(async (req) => {
 
     try {
       const resend = new Resend(RESEND_API_KEY);
-      // deno-lint-ignore no-explicit-any
-      const sendRes = await (resend.emails as any).send({
-        from: "RehabLookup <no-reply@rehablookup.com>",
-        to: [recipientEmail],
-        subject: `Update on your claim: ${facilityName}`,
-        html: emailHtml(
-          claim.claimant_name ?? "",
-          facilityName,
-          claim.rejection_reason ?? "",
-          retryUrl,
-          supportEmail,
-        ),
-      });
-      if (sendRes?.error) {
-        log("ERROR", "resend error", { error: sendRes.error });
-        return json(502, { error: "Failed to send rejection email", code: "EMAIL_SEND_FAILED" });
+      // Resilient sender: suppression check + retry + idempotency (one rejection
+      // email per claim) + dead-letter. Previously a raw resend.send() bypassed
+      // all of it and reported success even when suppressed/failed.
+      const sendRes = await sendEmailWithRetry(
+        svc,
+        resend,
+        {
+          from: "RehabLookup <no-reply@rehablookup.com>",
+          to: [recipientEmail],
+          subject: `Update on your claim: ${facilityName}`,
+          html: emailHtml(
+            claim.claimant_name ?? "",
+            facilityName,
+            claim.rejection_reason ?? "",
+            retryUrl,
+            supportEmail,
+          ),
+        },
+        {
+          emailType: "claim_rejection",
+          idempotencyKey: `claim-rejected-${claimRequestId}`,
+          metadata: { claim_id: claimRequestId },
+        },
+      );
+      if (!sendRes.success) {
+        log("ERROR", "rejection email not sent", { suppressed: sendRes.suppressed ?? false, error: sendRes.error ?? null });
+        return json(502, {
+          error: sendRes.suppressed ? "Recipient has opted out of email" : "Failed to send rejection email",
+          code: sendRes.suppressed ? "EMAIL_SUPPRESSED" : "EMAIL_SEND_FAILED",
+        });
       }
     } catch (sendErr) {
       log("ERROR", "resend exception", { error: String(sendErr) });

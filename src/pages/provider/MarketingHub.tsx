@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { useFacilitySubscription } from "@/hooks/useFacilitySubscription";
+import { isActiveProRow } from "@/lib/proAccess";
 import { MarketingHubCards } from "@/components/provider/marketing/MarketingHubCards";
 import { MarketDemandCard } from "@/components/provider/marketing/MarketDemandCard";
 import { PromoCountdownBanner } from "@/components/provider/promo/PromoCountdownBanner";
@@ -58,7 +59,9 @@ export default function MarketingHub() {
   const facilityId = selectedFacility?.id;
   const { data: subscription, isLoading, isError, refetch } = useFacilitySubscription(facilityId);
 
-  const isPro = subscription?.tier === "pro" && subscription?.status === "active";
+  // Grace-aware: a past_due provider is still a paying Pro in Stripe's
+  // dunning window and must keep access to the Marketing tools they own.
+  const isPro = isActiveProRow(subscription);
 
   if (isLoading) {
     return (
@@ -273,7 +276,7 @@ function PlanComparisonBlock() {
   const features: Array<{ label: string; free: boolean | string; pro: boolean | string; }> = [
     { label: "Public listing on directory", free: true, pro: true },
     { label: "Receive inquiry leads", free: true, pro: true },
-    { label: "Photo gallery", free: "1 photo", pro: "10 photos" },
+    { label: "Photo gallery", free: "5 photos", pro: "10 photos" },
     { label: "Priority search placement (+50 boost)", free: false, pro: true },
     { label: "Verified badge", free: false, pro: true },
     { label: "Enhanced profile (video, programs, accreditations)", free: false, pro: true },

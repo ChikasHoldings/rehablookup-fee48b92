@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, AlertCircle } from "lucide-react";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { useFacilitySubscription } from "@/hooks/useFacilitySubscription";
+import { isActiveProRow } from "@/lib/proAccess";
 import { ConciergeMarketingDetail } from "@/components/provider/marketing/ConciergeMarketingDetail";
 import { ConciergeManagementPanel } from "@/components/provider/marketing/ConciergeManagementPanel";
 import { ConciergeAnalyticsWidget } from "@/components/provider/marketing/ConciergeAnalyticsWidget";
@@ -105,7 +106,7 @@ export default function MarketingConcierge() {
     );
   }
 
-  const isPro = subscription?.tier === "pro" && subscription?.status === "active";
+  const isPro = isActiveProRow(subscription);
   const hasConcierge = subscription?.has_concierge_partner === true;
   // The Concierge add-on bills independently of Pro — use its own period end,
   // falling back to the Pro period for rows not yet backfilled by the webhook.
@@ -179,7 +180,8 @@ export default function MarketingConcierge() {
                 clinical criteria first (<strong>never by who paid us</strong>)
                 and Concierge Partners get a visual badge so the advisor
                 naturally mentions you. Flat subscription; never per-call or
-                per-admission.
+                per-admission. <strong>Concierge Partner is a paid add-on</strong>{" "}
+                that requires an active Pro plan — Pro is the first step.
               </>
             }
             bullets={[
@@ -188,7 +190,7 @@ export default function MarketingConcierge() {
               "Capped at 3–5 facilities per major city (waitlist when full)",
               "Calls go directly to your admissions line — we never intermediate",
             ]}
-            ctaLabel="Upgrade to Pro to unlock"
+            ctaLabel="Upgrade to Pro to get started"
             ctaTo="/provider/billing?upgrade=pro"
             secondaryAction={{ label: "See full pricing", to: "/for-providers" }}
           >

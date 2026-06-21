@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { InquiryTypeBadge, type InquiryType } from "@/components/provider/InquiryTypeBadge";
 import { formatSourceLabel } from "@/lib/sourceLabels";
+import { responseStatusToLeadStatus } from "@/lib/statusTransitions";
 import { useLeadContactTracking } from "@/hooks/useLeadContactTracking";
 import { useProStatus } from "@/hooks/useProStatus";
 import { Link } from "react-router-dom";
@@ -120,10 +121,35 @@ export function InquiryDetailPanel({ inquiry }: InquiryDetailPanelProps) {
     onSuccess: (_, { status }) => {
       // Targeted invalidation — the broad `["provider-inquiries"]` prefix
       // would invalidate every cached facility-set as well; constrain to
-      // the keys we know about.
+      // the keys we know about. (`["dashboard-kpi-strip"]` had no reader; the
+      // dashboard count cards read `["total-leads-count"]`/`["urgent-leads-count"]`,
+      // which the forward-sync below invalidates once the pipeline write lands.)
       queryClient.invalidateQueries({ queryKey: ["provider-inquiries"] });
       queryClient.invalidateQueries({ queryKey: ["recent-leads"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard-kpi-strip"] });
+
+      // Forward-sync the pipeline status (`leads.status`) so admin KPIs, the
+      // dashboard drawer, and provider analytics — all of which read
+      // `leads.status` — reflect this response instead of staying stuck on
+      // "new". Best-effort + DB-trigger-gated: validate_lead_status_transition
+      // safely rejects terminal/backward hops (e.g. already converted/closed),
+      // which we ignore. `provider_response_status` stays the canonical axis.
+      const pipelineStatus = responseStatusToLeadStatus(status);
+      if (pipelineStatus) {
+        void (async () => {
+          const { error: syncErr } = await supabase
+            .from("leads")
+            .update({ status: pipelineStatus } as never)
+            .eq("id", inquiry.id)
+            .eq("facility_id", inquiry.facility_id);
+          if (syncErr) {
+            console.warn("[InquiryDetailPanel] pipeline status sync skipped", syncErr.message);
+          } else {
+            queryClient.invalidateQueries({ queryKey: ["total-leads-count"] });
+            queryClient.invalidateQueries({ queryKey: ["urgent-leads-count"] });
+            queryClient.invalidateQueries({ queryKey: ["recent-leads"] });
+          }
+        })();
+      }
       // Clear the notes textarea on success so the next status change
       // starts with a fresh note. The previous note is still visible
       // below the textarea via `inquiry.provider_response_notes`.

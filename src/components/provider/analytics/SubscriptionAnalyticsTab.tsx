@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { useFacilityAnalytics, type AnalyticsRange, type FacilityAnalyticsResponse } from "@/hooks/useFacilityAnalytics";
+import { useFacilityRole } from "@/hooks/useFacilityRole";
 
 // Industry-benchmark CTR for Featured placements. Update via the env var
 // `VITE_INDUSTRY_AVG_CTR` (percent value, e.g. "0.65"). Default 0.65%
@@ -34,13 +35,34 @@ interface SubscriptionAnalyticsTabProps {
 
 export function SubscriptionAnalyticsTab({ facilityId, viewingAsFacilityName }: SubscriptionAnalyticsTabProps) {
   const [range, setRange] = useState<AnalyticsRange>("last_30d");
-  const { data, isLoading, isError, error } = useFacilityAnalytics({ facilityId, range });
+  // Subscription analytics surface billing data (renewal forecast, paid
+  // amounts), so this tab stays owner-only — managers/viewers get a clear
+  // owner-only notice rather than the forbidden error the get-facility-analytics
+  // edge function returns. Passing a null facilityId for non-owners disables the
+  // query so we never fire the wasted 403.
+  const { isOwner, isLoading: roleLoading } = useFacilityRole(facilityId);
+  const { data, isLoading, isError, error } = useFacilityAnalytics({
+    facilityId: isOwner ? facilityId : null,
+    range,
+  });
 
   if (!facilityId) {
     return (
       <Card>
         <CardContent className="py-8 text-center text-sm text-muted-foreground">
           Select a facility to view subscription analytics.
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (roleLoading) return <SkeletonState />;
+
+  if (!isOwner) {
+    return (
+      <Card>
+        <CardContent className="py-8 text-center text-sm text-muted-foreground">
+          Subscription &amp; billing analytics are available to the facility owner.
         </CardContent>
       </Card>
     );

@@ -8,6 +8,7 @@ import {
   Star,
   Sparkles,
   ExternalLink,
+  Eye,
 } from "lucide-react";
 import { ProviderPageHeader } from "@/components/provider/ProviderPageHeader";
 import { Button } from "@/components/ui/button";
@@ -17,11 +18,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
+import { useProviderFacilities } from "@/hooks/useProviderFacilities";
 import { useProStatus } from "@/hooks/useProStatus";
 import { ProgramsManagementSection } from "@/components/provider/listing/ProgramsManagementSection";
 import { AmenitiesManagementSection } from "@/components/provider/listing/AmenitiesManagementSection";
 import { MediaUrlsSection } from "@/components/provider/listing/MediaUrlsSection";
 import { StaffManagementSection } from "@/components/provider/listing/StaffManagementSection";
+import { useFacilityRole } from "@/hooks/useFacilityRole";
+import { cn } from "@/lib/utils";
 
 type Tab = "programs" | "amenities" | "media" | "accreditations" | "staff";
 
@@ -57,15 +61,34 @@ export default function EnhancedProfile() {
   const urlFacility = searchParams.get("facility");
   const urlFacilityIsValid = !!urlFacility && UUID_PATTERN.test(urlFacility);
   const facilityId = urlFacilityIsValid ? urlFacility : selectedFacility?.id;
+  const { facilities, isLoading: facilitiesLoading } = useProviderFacilities();
   const { data: proStatus } = useProStatus(facilityId);
   const isPro = proStatus?.isPro ?? false;
+  // Viewers get a read-only (inert) editor — mirrors the ListingEditor
+  // viewer-inert invariant. Owners/managers (canEdit) edit normally; RLS is
+  // the real backstop. Gated on `isViewer` (resolved) so owners/managers don't
+  // see an inert flash while the role RPC is in flight.
+  const { isViewer } = useFacilityRole(facilityId);
 
   const [activeTab, setActiveTab] = useState<Tab>("programs");
+
+  // Ownership guard. Unlike the main editor (MyListings strips a bogus
+  // ?edit=), this page took ?facility=<uuid> verbatim with no access check, so
+  // a hand-typed foreign id rendered a fully interactive Programs/Amenities/
+  // Media/Accreditation/Staff editor pointed at a facility the user can't edit.
+  // RLS rejects the reads/writes, but guard the URL too so we don't show a
+  // half-working editor. Mirrors MyListings: only bounce once the facility
+  // list has loaded and the id genuinely isn't accessible (owner OR team).
+  const ownsFacility = !!facilityId && facilities.some((f) => f.id === facilityId);
 
   if (!facilityId) {
     // No facility selected → bounce back to the listings page where the
     // facility selector lives. This mirrors the pattern used by the
     // other Pro provider pages (MarketingFeatured, MarketingConcierge).
+    return <Navigate to="/provider/listings" replace />;
+  }
+
+  if (!facilitiesLoading && facilities.length > 0 && !ownsFacility) {
     return <Navigate to="/provider/listings" replace />;
   }
 
@@ -126,7 +149,15 @@ export default function EnhancedProfile() {
             </nav>
           </div>
 
-          {/* Panels */}
+          {isViewer && (
+            <div className="flex items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+              <Eye className="h-4 w-4 shrink-0" aria-hidden />
+              You have view-only access to this facility. Editing the enhanced profile is limited to owners and managers.
+            </div>
+          )}
+
+          {/* Panels — inert for view-only members */}
+          <div className={cn(isViewer && "pointer-events-none select-none opacity-90")} aria-disabled={isViewer || undefined}>
           <Card>
             <CardContent className="pt-6">
               <div
@@ -189,6 +220,7 @@ export default function EnhancedProfile() {
               </div>
             </CardContent>
           </Card>
+          </div>
         </div>
       </div>
     </>

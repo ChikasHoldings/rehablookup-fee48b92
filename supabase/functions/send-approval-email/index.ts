@@ -62,7 +62,7 @@ function generateApprovalEmail(
 
   // Pro benefits
   if (isPro) {
-    email += proInsightsBox("As a Pro member, you get 20% off lead unlocks, up to 5 facility listings, and priority visibility in search results.");
+    email += proInsightsBox("As a Pro member, you get a verified badge, priority visibility in search results, full lead contact details delivered directly, and the Marketing Hub (Featured + Concierge add-ons).");
   }
 
   // What happens next
@@ -93,7 +93,7 @@ function generateApprovalEmail(
                       💡 Upgrade to Pro
                     </p>
                     <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #64748b; line-height: 1.6;">
-                      Get 20% off lead unlocks, add up to 5 locations, and boost your visibility.
+                      Get a verified badge, priority placement, and full lead details to boost your visibility.
                       <a href="https://rehablookup.com/provider/billing" style="color: #1B365D; font-weight: 500;">Learn more →</a>
                     </p>
                   </td>

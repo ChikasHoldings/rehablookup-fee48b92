@@ -181,26 +181,49 @@ export function FacilityPhoneVerifySection({
       if (data?.error) throw new Error(data.error);
 
       // Mirror onto the facility row so the public profile can show the
-      // "Verified contact" badge. Best-effort: RLS allows owners to
-      // update their own facility; a denial here means the badge stays
-      // off but the profile-level verification still succeeded.
+      // "Verified contact" badge. RLS allows owners/managers to update their
+      // own facility. We must confirm the write actually landed: a 0-row
+      // result (RLS denial — e.g. a viewer, or access changed mid-session)
+      // returns no error, so checking only `error` would flip the badge to
+      // "Verified" while the DB stayed unchanged, and the next refetch would
+      // silently drop it.
+      let facilityBadgeSaved = true;
       if (facilityId) {
-        const { error: updErr } = await supabase
+        const { data: updatedRows, error: updErr } = await supabase
           .from("facilities")
           .update({
             verified_phone: value,
             verified_phone_set_at: new Date().toISOString(),
             has_facility_verified_contact: true,
           })
-          .eq("id", facilityId);
-        if (updErr) {
-          console.warn("[FacilityPhoneVerify] facilities update failed", updErr);
+          .eq("id", facilityId)
+          .select("id");
+        if (updErr || !updatedRows || updatedRows.length === 0) {
+          facilityBadgeSaved = false;
+          console.warn("[FacilityPhoneVerify] facilities verified_phone update did not persist", updErr);
         }
       }
 
-      setVerified(true);
       setCodeSent(false);
       setCode("");
+
+      // The SMS code was correct (verify-sms-code already verified the phone at
+      // the profile level), but if the facility-badge mirror didn't persist we
+      // must NOT show this listing as verified — say so plainly so the provider
+      // retries instead of believing a badge is live that isn't.
+      if (facilityId && !facilityBadgeSaved) {
+        setVerifyError(
+          "Your phone was verified, but saving the verified badge to this listing failed. Please try again.",
+        );
+        toast({
+          title: "Couldn't save verified badge",
+          description: "Your phone was verified, but saving it to this listing didn't go through. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setVerified(true);
       toast({ title: "Phone verified", description: "Your facility phone is verified." });
       onVerified?.();
     } catch (e) {

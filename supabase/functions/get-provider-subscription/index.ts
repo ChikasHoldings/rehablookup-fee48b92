@@ -194,8 +194,15 @@ Deno.serve(async (req) => {
     const subscriptionData = activeSubscription ? {
       id: activeSubscription.id,
       status: activeSubscription.status,
-      current_period_start: new Date(activeSubscription.current_period_start * 1000).toISOString(),
-      current_period_end: new Date(activeSubscription.current_period_end * 1000).toISOString(),
+      // Guard the period fields: some subscription states (e.g. incomplete)
+      // can omit them, and `new Date(undefined * 1000).toISOString()` throws a
+      // RangeError that 500s the whole admin detail modal. Fall back to null.
+      current_period_start: activeSubscription.current_period_start
+        ? new Date(activeSubscription.current_period_start * 1000).toISOString()
+        : null,
+      current_period_end: activeSubscription.current_period_end
+        ? new Date(activeSubscription.current_period_end * 1000).toISOString()
+        : null,
       cancel_at_period_end: activeSubscription.cancel_at_period_end,
       canceled_at: activeSubscription.canceled_at ? new Date(activeSubscription.canceled_at * 1000).toISOString() : null,
       created: new Date(activeSubscription.created * 1000).toISOString(),

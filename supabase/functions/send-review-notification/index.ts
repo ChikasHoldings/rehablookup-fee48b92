@@ -121,18 +121,47 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Fetch seeker details
-    const { data: seekerProfile } = await supabase
-      .from("seeker_profiles")
-      .select("user_id, display_name, first_name")
-      .eq("user_id", seekerId || review.user_id)
-      .single();
+    // Fetch seeker details. Token/placement reviews have user_id=NULL (the
+    // recipient has no seeker account), so seekerProfile is null for those.
+    const lookupUserId = seekerId || review.user_id;
+    const { data: seekerProfile } = lookupUserId
+      ? await supabase
+          .from("seeker_profiles")
+          .select("user_id, display_name, first_name")
+          .eq("user_id", lookupUserId)
+          .maybeSingle()
+      : { data: null };
 
     // Fetch seeker email from auth.users
     let seekerEmail: string | null = null;
     if (seekerProfile?.user_id) {
       const { data: seekerAuth } = await supabase.auth.admin.getUserById(seekerProfile.user_id);
       seekerEmail = seekerAuth?.user?.email || null;
+    }
+
+    // Token-submitted reviews (the provider "request a review" + placement
+    // funnels) land with user_id=NULL, so there's no seeker_profiles row and
+    // the approve/reject email/notification would silently no-op. Recover the
+    // recipient from the originating review_request and email them at the
+    // address they submitted from. There's no account, so the in-app inserts
+    // (guarded by seekerProfile?.user_id) are correctly skipped — email only.
+    let effectiveSeekerProfile = seekerProfile as
+      | { user_id: string | null; display_name?: string | null; first_name?: string | null }
+      | null;
+    if (!seekerEmail && review.review_request_id) {
+      const { data: rr } = await supabase
+        .from("review_requests")
+        .select("recipient_email, recipient_name")
+        .eq("id", review.review_request_id)
+        .maybeSingle();
+      if (rr?.recipient_email) {
+        seekerEmail = rr.recipient_email;
+        effectiveSeekerProfile = {
+          user_id: null,
+          display_name: rr.recipient_name ?? null,
+          first_name: rr.recipient_name ?? null,
+        };
+      }
     }
 
     // Fetch provider profile for email
@@ -192,7 +221,7 @@ Deno.serve(async (req) => {
           providerProfile,
           providerPlan: planInfo.plan,
           seekerEmail,
-          seekerProfile,
+          seekerProfile: effectiveSeekerProfile,
         });
         break;
 
@@ -201,7 +230,7 @@ Deno.serve(async (req) => {
           review,
           facility,
           seekerEmail,
-          seekerProfile,
+          seekerProfile: effectiveSeekerProfile,
           rejectionReason,
         });
         break;
@@ -211,7 +240,7 @@ Deno.serve(async (req) => {
           review,
           facility,
           seekerEmail,
-          seekerProfile,
+          seekerProfile: effectiveSeekerProfile,
           responseText,
         });
         break;

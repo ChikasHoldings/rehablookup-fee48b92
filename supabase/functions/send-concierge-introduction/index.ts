@@ -192,8 +192,15 @@ Deno.serve(async (req) => {
       throw new Error("Inquiry not found");
     }
 
-    // Guard: don't send introductions for closed/placed cases
-    if (inquiry.status === 'closed' || inquiry.status === 'placed') {
+    // Guard: don't send introductions once the seeker has already committed to
+    // a facility (seeker_selected and every downstream admission state) or the
+    // case is closed. ('placed' was never a canonical status — the real
+    // post-selection states are seeker_selected → admission_in_progress →
+    // admitted → billed → completed, per validate_concierge_status_transition.)
+    const NON_INTRODUCIBLE_STATUSES = [
+      'seeker_selected', 'admission_in_progress', 'admitted', 'billed', 'completed', 'closed',
+    ];
+    if (NON_INTRODUCIBLE_STATUSES.includes(inquiry.status)) {
       throw new Error(`Cannot send introduction: case is ${inquiry.status}`);
     }
 
@@ -415,14 +422,23 @@ Deno.serve(async (req) => {
       .single();
 
     if (facilityFull?.user_id) {
-      await supabase.from("provider_notifications").insert({
-        user_id: facilityFull.user_id,
-        type: "placement_introduction",
-        title: "New Placement Introduction",
-        message: `A potential client (${levelOfCare}) has been matched to your facility. Review and respond in your Placement Network.`,
-        link: "/provider/marketing/concierge",
-        metadata: { inquiry_id: inquiryId, introduction_id: resolvedIntroductionId },
-      });
+      // provider_notifications has no `link` column — a top-level `link` here
+      // threw PGRST204 and silently dropped the notification AND skipped the
+      // SMS below (the insert was un-try/caught). The deep link comes from the
+      // notification registry (placement_introduction → /provider/marketing/
+      // concierge). Best-effort so a notification hiccup can't break the
+      // introduction or its SMS.
+      try {
+        await supabase.from("provider_notifications").insert({
+          user_id: facilityFull.user_id,
+          type: "placement_introduction",
+          title: "New Placement Introduction",
+          message: `A potential client (${levelOfCare}) has been matched to your facility. Review and respond in your Placement Network.`,
+          metadata: { inquiry_id: inquiryId, introduction_id: resolvedIntroductionId },
+        });
+      } catch (notifErr) {
+        console.warn("[send-concierge-introduction] provider notification insert failed", notifErr);
+      }
 
       // SMS channel — best-effort, but AWAITED with a bounded timeout so it
       // actually dispatches (an un-awaited fetch can be cut off when the

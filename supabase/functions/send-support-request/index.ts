@@ -156,30 +156,39 @@ Deno.serve(async (req) => {
       message: contextInfo ? `${contextInfo}\n\n${message}` : message,
     }).select('id').single();
 
+    // The ticket is the system of record (admin inbox + the provider's "My
+    // Tickets" both read it). If it didn't persist, do NOT fall through to
+    // emailing + returning success — that was a false "Message Sent" for a
+    // ticket that doesn't exist. Fail loudly so the user retries.
     if (ticketError) {
       console.error("[SEND-SUPPORT-REQUEST] Failed to create ticket:", ticketError);
-    } else {
-      console.log("[SEND-SUPPORT-REQUEST] Support ticket created successfully");
-      
-      const { data: adminUsers } = await supabaseAdmin
-        .from('admin_user_profiles')
-        .select('user_id')
-        .eq('status', 'active');
-      
-      if (adminUsers && adminUsers.length > 0) {
-        const sourceLabel = isSeeker ? "Client" : "Provider";
-        const notifications = adminUsers.map(admin => ({
-          user_id: admin.user_id,
-          type: 'support_ticket',
-          title: `${urgencyPrefix}New ${sourceLabel} Support Request`,
-          message: `${userName}${!isSeeker && contextInfo ? ` (${contextInfo})` : ''} needs help with ${categoryLabel}`,
-          link: `/admin/support?ticket=${ticketData?.id}`,
-          metadata: { ticket_id: ticketData?.id, source: ticketSource, priority: ticketPriority }
-        }));
-        
-        await supabaseAdmin.from('admin_user_notifications').insert(notifications);
-        console.log("[SEND-SUPPORT-REQUEST] Admin notifications created");
-      }
+      return new Response(
+        JSON.stringify({ success: false, error: "We couldn't submit your request right now. Please try again." }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    console.log("[SEND-SUPPORT-REQUEST] Support ticket created successfully");
+
+    // Notify admins in-app (best-effort; never fatal).
+    const { data: adminUsers } = await supabaseAdmin
+      .from('admin_user_profiles')
+      .select('user_id')
+      .eq('status', 'active');
+
+    if (adminUsers && adminUsers.length > 0) {
+      const sourceLabel = isSeeker ? "Client" : "Provider";
+      const notifications = adminUsers.map(admin => ({
+        user_id: admin.user_id,
+        type: 'support_ticket',
+        title: `${urgencyPrefix}New ${sourceLabel} Support Request`,
+        message: `${userName}${!isSeeker && contextInfo ? ` (${contextInfo})` : ''} needs help with ${categoryLabel}`,
+        link: `/admin/support?ticket=${ticketData?.id}`,
+        metadata: { ticket_id: ticketData?.id, source: ticketSource, priority: ticketPriority }
+      }));
+
+      await supabaseAdmin.from('admin_user_notifications').insert(notifications);
+      console.log("[SEND-SUPPORT-REQUEST] Admin notifications created");
     }
 
     const sourceLabel = isSeeker ? "Client" : "Provider";

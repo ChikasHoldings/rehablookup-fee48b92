@@ -116,7 +116,7 @@ const faqs = [
   },
   {
     question: "How do I upgrade to Pro?",
-    answer: "Visit your provider dashboard and click on 'Upgrade to Pro' to subscribe. Pro members get 20% off lead unlocks, up to 5 facility listings, and priority placement in search results.",
+    answer: "Visit your provider dashboard and click on 'Upgrade to Pro' to subscribe. Pro is a flat monthly (or annual) subscription — members get a verified badge, priority placement in search results, full lead contact details delivered directly, and enhanced profile features. No per-lead fees.",
   },
   {
     question: "What analytics are available?",

@@ -9,6 +9,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 import { z } from "https://esm.sh/zod@3.23.8?target=denonext";
+import { isBotUserAgent } from "../_shared/bot-detection.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -57,6 +58,16 @@ Deno.serve(async (req) => {
     return new Response(null, { status: 204, headers: corsHeaders });
   }
 
+  const userAgent = req.headers.get("user-agent")?.slice(0, 500) ?? null;
+  // Drop automated traffic before it can inflate Featured phone-click / CTR
+  // metrics. featured_phone_clicks has no is_bot column, so (unlike
+  // provider_events, which tags then filters) we filter bots at ingestion,
+  // using the same shared UA list as track-provider-event. Still 204 — the
+  // dialer is already opening client-side regardless.
+  if (isBotUserAgent(userAgent)) {
+    return new Response(null, { status: 204, headers: corsHeaders });
+  }
+
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
@@ -66,7 +77,6 @@ Deno.serve(async (req) => {
   const xf = req.headers.get("x-forwarded-for");
   const ip = xf ? xf.split(",")[0]?.trim() : null;
   const ipHash = await hashIp(ip);
-  const userAgent = req.headers.get("user-agent")?.slice(0, 500) ?? null;
 
   await supabase.from("featured_phone_clicks").insert({
     facility_id: parsed.data.facility_id,

@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { fmtMoney, fmtMoneyWhole, TIER_PRICING } from "@/lib/billingPricing";
 import { useActivePromotion } from "@/hooks/useActivePromotion";
 import { PromoCountdownBanner } from "@/components/provider/promo/PromoCountdownBanner";
+import { useFacilityRole } from "@/hooks/useFacilityRole";
 
 interface FeaturedMarketingDetailProps {
   facilityId: string;
@@ -30,6 +31,12 @@ export function FeaturedMarketingDetail({ facilityId }: FeaturedMarketingDetailP
   const [submittingInterval, setSubmittingInterval] = useState<"monthly" | "annual" | null>(null);
   const { promo } = useActivePromotion(facilityId);
   const featuredPromoId = promo?.target_product === "featured" ? promo.id : null;
+  // Add-on purchases are owner-only (create-checkout-session returns NOT_OWNER
+  // for anyone else). Hide the CTAs for a resolved non-owner team member so
+  // they don't hit a 403; gating on the resolved role (not !isOwner) avoids
+  // hiding the CTAs from the real owner while the role RPC is in flight.
+  const { role } = useFacilityRole(facilityId);
+  const isNonOwnerMember = role === "manager" || role === "viewer";
 
   const handlePurchase = async (interval: "monthly" | "annual") => {
     setSubmittingInterval(interval);
@@ -97,6 +104,12 @@ export function FeaturedMarketingDetail({ facilityId }: FeaturedMarketingDetailP
           </p>
         </div>
 
+        {isNonOwnerMember ? (
+          <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-600">
+            Adding Featured is limited to the facility owner. Ask your account
+            owner to enable it for this location.
+          </div>
+        ) : (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 pt-2 border-t border-slate-100">
           <Button
             onClick={() => handlePurchase("monthly")}
@@ -138,6 +151,7 @@ export function FeaturedMarketingDetail({ facilityId }: FeaturedMarketingDetailP
             <ArrowRight className="h-4 w-4 ml-auto" />
           </Button>
         </div>
+        )}
 
         <p className="text-xs text-slate-500 leading-relaxed pt-2">
           <strong>Billed per location</strong>, separately from Pro — if you

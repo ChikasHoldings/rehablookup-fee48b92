@@ -1135,8 +1135,8 @@ const CenterProfile = () => {
                     </p>
                     <p className="mt-1 text-xs sm:text-sm text-muted-foreground leading-relaxed">
                       Claim this listing free in 2 minutes — keep your contact details up to date,
-                      respond to leads, and unlock featured placement + a 20% discount on every lead
-                      unlock with a Pro membership.
+                      respond to leads, and unlock a verified badge, priority placement, and
+                      enhanced profile features with a Pro membership.
                     </p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">

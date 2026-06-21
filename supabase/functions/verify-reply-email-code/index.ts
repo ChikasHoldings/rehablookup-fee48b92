@@ -33,6 +33,42 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // ── Auth + facility ownership ────────────────────────────────────────
+    // This endpoint flips facilities.reply_email + reply_email_verified via
+    // the service role, so it MUST confirm the caller may edit THIS facility.
+    // Without it, anyone could verify an attacker-controlled address against
+    // any facilityId (codes are requested at the attacker's own inbox) and
+    // hijack that facility's inbound lead replies. We require a valid session
+    // JWT and owner/manager rights on the facility (mirrors the listing
+    // editor's RLS-backed edit gate). facilityId is non-secret (public URLs),
+    // so presence checks alone are not authorization.
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: "Authentication required" }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+    const { data: authData, error: authErr } = await supabase.auth.getUser(
+      authHeader.replace(/^Bearer\s+/i, ""),
+    );
+    if (authErr || !authData?.user?.id) {
+      return new Response(
+        JSON.stringify({ error: "Invalid authentication" }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+    const { data: canEditFacility, error: ownErr } = await supabase.rpc(
+      "user_can_edit_facility",
+      { _facility_id: facilityId, _user_id: authData.user.id },
+    );
+    if (ownErr || canEditFacility !== true) {
+      return new Response(
+        JSON.stringify({ error: "You don't have access to this facility." }),
+        { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
     // Find the latest pending verification code
     const { data: verificationRecord, error: fetchError } = await supabase
       .from("reply_email_verification_codes")

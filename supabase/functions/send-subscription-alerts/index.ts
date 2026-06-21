@@ -36,8 +36,8 @@ function generateRenewalEmail(
   const isPro = plan === 'pro';
   const planName = isPro ? "Pro" : "Free";
   
-  const proInsights = isPro 
-    ? proInsightsBox('Your 20% discount on lead unlocks and priority search visibility will continue after renewal.')
+  const proInsights = isPro
+    ? proInsightsBox('Your verified badge, priority search visibility, and direct full-detail leads will continue after renewal.')
     : '';
 
   return `

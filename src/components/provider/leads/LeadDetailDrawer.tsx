@@ -46,7 +46,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { LeadStatusBadge, type LeadStatus } from "./LeadStatusBadge";
-import { getStatusOptions } from "./leadStatusOptions";
+import { getStatusOptions, leadStatusLabel } from "./leadStatusOptions";
 import { EmailLeadDialog } from "./EmailLeadDialog";
 import { Lead } from "./types";
 import { useLeadContactTracking } from "@/hooks/useLeadContactTracking";
@@ -129,22 +129,34 @@ export function LeadDetailDrawer({ lead, open, onOpenChange }: LeadDetailDrawerP
   const updateStatus = useMutation({
     mutationFn: async (newStatus: LeadStatus) => {
       if (!lead) return;
-      const { error } = await supabase
+      // Facility-scope + 0-row detection so a write filtered out by RLS
+      // (e.g. lead reassigned / ownership lost) surfaces as an error instead
+      // of a false "Status updated" toast. Uses count rather than .select() so
+      // provider code never reads back from the base `leads` table (PII-masking
+      // contract — see scripts/check-provider-leads-masking.mjs).
+      const { error, count } = await supabase
         .from("leads")
-        .update({ status: newStatus })
-        .eq("id", lead.id);
+        .update({ status: newStatus }, { count: "exact" })
+        .eq("id", lead.id)
+        .eq("facility_id", lead.facility_id);
       if (error) throw error;
+      if (!count) {
+        throw new Error("Update was blocked — refresh to see the current status.");
+      }
     },
     onSuccess: () => {
       // Invalidate the keys actually read by the surfaces that show this lead:
-      // the dashboard recent-leads feed and the Inquiries list. (The old
-      // ["provider-leads"] key had no reader, so the UI never refreshed.)
+      // the dashboard recent-leads feed, the Inquiries list, AND the dashboard
+      // count cards (total/urgent) — those drive the "needs follow-up" metric.
       queryClient.invalidateQueries({ queryKey: ["recent-leads"] });
       queryClient.invalidateQueries({ queryKey: ["provider-inquiries"] });
+      queryClient.invalidateQueries({ queryKey: ["total-leads-count"] });
+      queryClient.invalidateQueries({ queryKey: ["urgent-leads-count"] });
       toast({ title: "Status updated" });
     },
-    onError: () => {
-      toast({ title: "Failed to update status", variant: "destructive" });
+    onError: (err) => {
+      const msg = err instanceof Error ? err.message : "Failed to update status";
+      toast({ title: msg, variant: "destructive" });
     },
   });
 
@@ -152,26 +164,31 @@ export function LeadDetailDrawer({ lead, open, onOpenChange }: LeadDetailDrawerP
   const snoozeReminder = useMutation({
     mutationFn: async (snoozeUntil: Date | null) => {
       if (!lead) return;
-      const { error } = await supabase
+      const { error, count } = await supabase
         .from("leads")
-        .update({ snooze_until: snoozeUntil?.toISOString() || null })
-        .eq("id", lead.id);
+        .update({ snooze_until: snoozeUntil?.toISOString() || null }, { count: "exact" })
+        .eq("id", lead.id)
+        .eq("facility_id", lead.facility_id);
       if (error) throw error;
+      if (!count) {
+        throw new Error("Update was blocked — refresh to see the current status.");
+      }
     },
     onSuccess: (_, snoozeUntil) => {
-      // Invalidate the keys actually read by the surfaces that show this lead:
-      // the dashboard recent-leads feed and the Inquiries list. (The old
-      // ["provider-leads"] key had no reader, so the UI never refreshed.)
+      // Invalidate the keys actually read by the surfaces that show this lead.
       queryClient.invalidateQueries({ queryKey: ["recent-leads"] });
       queryClient.invalidateQueries({ queryKey: ["provider-inquiries"] });
+      queryClient.invalidateQueries({ queryKey: ["total-leads-count"] });
+      queryClient.invalidateQueries({ queryKey: ["urgent-leads-count"] });
       if (snoozeUntil) {
         toast({ title: "Reminders snoozed", description: `Until ${format(snoozeUntil, "MMM d 'at' h:mm a")}` });
       } else {
         toast({ title: "Snooze removed", description: "Reminders are now active" });
       }
     },
-    onError: () => {
-      toast({ title: "Failed to update snooze", variant: "destructive" });
+    onError: (err) => {
+      const msg = err instanceof Error ? err.message : "Failed to update snooze";
+      toast({ title: msg, variant: "destructive" });
     },
   });
 
@@ -202,18 +219,23 @@ export function LeadDetailDrawer({ lead, open, onOpenChange }: LeadDetailDrawerP
   // Delete note mutation
   const deleteNote = useMutation({
     mutationFn: async (noteId: string) => {
-      const { error } = await supabase
+      const { data: deleted, error } = await supabase
         .from("lead_notes")
         .delete()
-        .eq("id", noteId);
+        .eq("id", noteId)
+        .select("id");
       if (error) throw error;
+      if (!deleted || deleted.length === 0) {
+        throw new Error("Could not delete the note — refresh and try again.");
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["lead-notes", lead?.id] });
       toast({ title: "Note deleted" });
     },
-    onError: () => {
-      toast({ title: "Failed to delete note", variant: "destructive" });
+    onError: (err) => {
+      const msg = err instanceof Error ? err.message : "Failed to delete note";
+      toast({ title: msg, variant: "destructive" });
     },
   });
 
@@ -266,9 +288,16 @@ export function LeadDetailDrawer({ lead, open, onOpenChange }: LeadDetailDrawerP
                   disabled={updateStatus.isPending}
                 >
                   <SelectTrigger className="w-full">
-                    <SelectValue />
+                    <SelectValue placeholder={leadStatusLabel(lead.status)} />
                   </SelectTrigger>
                   <SelectContent>
+                    {/* Current status as a disabled anchor so the trigger never
+                        renders blank — getStatusOptions omits the current/system
+                        statuses (new/unlocked/expired), which left "New" leads
+                        (the most common state) showing an empty control. */}
+                    <SelectItem value={lead.status} disabled>
+                      {leadStatusLabel(lead.status)} (current)
+                    </SelectItem>
                     {getStatusOptions(lead.status as LeadStatus).map((option) => (
                       <SelectItem key={option.value} value={option.value}>
                         {option.label}

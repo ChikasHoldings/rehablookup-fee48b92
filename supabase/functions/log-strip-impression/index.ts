@@ -17,6 +17,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 import { z } from "https://esm.sh/zod@3.23.8?target=denonext";
+import { isBotUserAgent } from "../_shared/bot-detection.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -74,6 +75,15 @@ Deno.serve(async (req) => {
     return new Response(null, { status: 204, headers: corsHeaders });
   }
 
+  const userAgent = req.headers.get("user-agent")?.slice(0, 500) ?? null;
+  // Drop automated traffic before it can inflate Featured impression / CTR
+  // metrics. featured_impressions has no is_bot column, so we filter bots at
+  // ingestion (same shared UA list as track-provider-event). Still 204 — the
+  // strip render never depends on this endpoint succeeding.
+  if (isBotUserAgent(userAgent)) {
+    return new Response(null, { status: 204, headers: corsHeaders });
+  }
+
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
@@ -83,7 +93,6 @@ Deno.serve(async (req) => {
   const xf = req.headers.get("x-forwarded-for");
   const ip = xf ? xf.split(",")[0]?.trim() : null;
   const ipHash = await hashIp(ip);
-  const userAgent = req.headers.get("user-agent")?.slice(0, 500) ?? null;
 
   const { error } = await supabase
     .from("featured_impressions")

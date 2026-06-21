@@ -6,9 +6,11 @@ interface AccessDeniedProps {
   requiredRole: "provider" | "admin";
   title?: string;
   message?: string;
+  /** Optional primary action (e.g. a support/appeal link for suspended accounts). */
+  action?: { label: string; href: string };
 }
 
-export function AccessDenied({ requiredRole, title, message }: AccessDeniedProps) {
+export function AccessDenied({ requiredRole, title, message, action }: AccessDeniedProps) {
   const label = requiredRole === "admin" ? "admin account" : "provider account";
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-6">
@@ -22,8 +24,13 @@ export function AccessDenied({ requiredRole, title, message }: AccessDeniedProps
         <p className="text-muted-foreground">
           {message ?? `This area requires a ${label}. Sign in with the correct account to continue.`}
         </p>
-        <div className="flex justify-center gap-3">
-          <Button asChild>
+        <div className="flex flex-col sm:flex-row justify-center gap-3">
+          {action && (
+            <Button asChild>
+              <Link to={action.href}>{action.label}</Link>
+            </Button>
+          )}
+          <Button asChild variant={action ? "outline" : "default"}>
             <Link to="/login">Sign in with a different account</Link>
           </Button>
           <Button asChild variant="outline">

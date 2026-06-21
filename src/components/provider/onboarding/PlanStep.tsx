@@ -349,7 +349,9 @@ export function PlanStep({ onAdvance, onBack }: PlanStepProps) {
           Choose your plan
         </h2>
         <p className="mt-1 text-sm text-slate-600">
-          Your listing is live. Stay on Free or upgrade to Pro — you can switch anytime from your dashboard.
+          {onboardingMode === "claim"
+            ? "Your claim is in — we'll verify it and email you when it's approved. Pick a plan to finish setting up your account."
+            : "Your listing is in — we'll review it and email you when it's live. Pick a plan to finish setting up your account."}
         </p>
       </header>
 

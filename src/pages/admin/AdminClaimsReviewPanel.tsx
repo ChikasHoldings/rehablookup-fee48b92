@@ -467,6 +467,11 @@ function AdminClaimsReviewPanel() {
           verified_at: new Date().toISOString(),
         })
         .eq("id", claim.id)
+        // Only mark verification complete on a still-reviewable claim. Without
+        // this guard an admin could flip verification_status on an already
+        // approved/rejected/withdrawn claim, which (for approved/under_review)
+        // can re-fire the finalize-verification trigger and muddy the record.
+        .in("status", ["pending", "under_review"])
         .select("id");
       if (updErr) throw updErr;
       if (!updated || updated.length === 0) {
@@ -971,7 +976,10 @@ function AdminClaimsReviewPanel() {
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmApprove}>
+            <AlertDialogAction
+              onClick={confirmApprove}
+              disabled={actionPending === approveTarget?.id}
+            >
               Approve & transfer ownership
             </AlertDialogAction>
           </AlertDialogFooter>

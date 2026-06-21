@@ -130,12 +130,13 @@ Deno.serve(async (req) => {
     // Check if this is a Pro subscription.
     // BUGFIX: The previous `|| !!subscription` made every subscriber appear as Pro
     // regardless of product. Now we strictly check the product ID list.
-    // Status gate: only active/trialing count as Pro — matches useProStatus,
-    // the has_active_pro RLS, and useFacilitySubscriptionTier (all active-only).
-    // Without it, a past_due provider reported isPro:true here while every other
-    // gate locked them, a latent money/correctness desync.
+    // Status gate (grace-aware): active/trialing AND past_due all count as Pro,
+    // matching the canonical DB has_active_pro() and the useProStatus hook.
+    // past_due is the Stripe dunning grace window — the provider is still a
+    // paying customer and keeps benefits until cancellation. Excluding it here
+    // (as this previously did) desynced the provider UI from every backend gate.
     const isPro = PRO_PRODUCT_IDS.includes(productId)
-      && (subscription.status === "active" || subscription.status === "trialing");
+      && (subscription.status === "active" || subscription.status === "trialing" || subscription.status === "past_due");
 
     logStep("Determined subscription status", { 
       isPro,

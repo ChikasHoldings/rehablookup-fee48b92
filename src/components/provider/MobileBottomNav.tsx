@@ -44,15 +44,12 @@ export function MobileBottomNav({ onMoreClick }: MobileBottomNavProps) {
   // concierge cases contribute to the placement badge now.
   const totalPlacementCount = pendingDomesticCount;
 
-  const isMoreActive = [
-    "/provider/settings",
-    "/provider/reviews",
-    "/provider/analytics",
-    "/provider/embed-badge",
-    "/provider/help",
-    "/provider/knowledge-base",
-    "/provider/notifications",
-  ].some(path => location.pathname.startsWith(path));
+  // "More" is active on any provider route that isn't one of the four primary
+  // tabs (previously an incomplete allow-list left billing/marketing/credential-
+  // kit/etc. with no selected bottom-nav item).
+  const isMoreActive =
+    location.pathname.startsWith("/provider") &&
+    !navItems.some(item => item.href === location.pathname);
 
   return (
     <nav

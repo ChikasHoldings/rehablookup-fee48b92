@@ -636,7 +636,7 @@ export default function AddLocationPage() {
                   <Link to="/provider/listings">Back to My Listings</Link>
                 </Button>
                 <Button asChild variant="outline">
-                  <Link to={`/provider/listings?facility=${success.facilityId}`}>
+                  <Link to={`/provider/listings?edit=${success.facilityId}`}>
                     Add photos &amp; finish setup
                   </Link>
                 </Button>
@@ -675,7 +675,7 @@ export default function AddLocationPage() {
               </p>
               <div className="flex flex-wrap gap-2 pt-2">
                 <Button asChild>
-                  <Link to={`/provider/listings?facility=${partialSuccess.facilityId}`}>
+                  <Link to={`/provider/listings?edit=${partialSuccess.facilityId}`}>
                     Continue in editor
                   </Link>
                 </Button>

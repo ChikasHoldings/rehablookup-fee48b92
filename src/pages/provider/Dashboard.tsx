@@ -25,7 +25,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useProviderData } from "@/hooks/useProviderData";
 import { useProviderFacilities } from "@/hooks/useProviderFacilities";
-import { useFacilityLimits } from "@/hooks/useFacilityLimits";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { fromLeadsProviderView } from "@/lib/leadsProviderView";
@@ -136,9 +135,28 @@ export default function ProviderDashboardPage() {
   
   const { data: providerData, isLoading, isPlaceholderData } = useProviderData(facilityId);
   const { facilities } = useProviderFacilities();
-  const { planTier } = useFacilityLimits();
-  const proStatus = { isPro: planTier === "pro" };
   const { data: subscription } = useFacilitySubscription(facilityId);
+
+  // Pro status for the SELECTED facility. has_active_pro() is SECURITY DEFINER,
+  // so it returns the chosen facility's Pro state correctly for the owner AND a
+  // team member (who can't read facility_subscriptions directly). The previous
+  // useFacilityLimits()/useProStatus() with no facilityId returned the
+  // provider's best subscription across ALL facilities, so a multi-facility
+  // owner's Free facility was mislabeled "Pro" (showing its leads + hiding the
+  // upgrade prompt) whenever they had Pro on a different facility.
+  const { data: facilityIsPro = false } = useQuery({
+    queryKey: ["facility-has-active-pro", facilityId],
+    queryFn: async (): Promise<boolean> => {
+      if (!facilityId) return false;
+      const { data, error } = await supabase.rpc("has_active_pro", { p_facility_id: facilityId });
+      if (error) throw error;
+      return data === true;
+    },
+    enabled: !!facilityId,
+    staleTime: 1000 * 60 * 2,
+    refetchOnWindowFocus: true,
+  });
+  const proStatus = { isPro: facilityIsPro };
   
   const facility = selectedFacility || providerData?.facility;
   const profile = providerData?.profile;
@@ -424,10 +442,28 @@ export default function ProviderDashboardPage() {
     const interval = setInterval(() => {
       if (typeof document !== "undefined" && document.hidden) return;
       queryClient.invalidateQueries({ queryKey: ["total-leads-count", facilityId] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard-kpi-strip", facilityId] });
+      queryClient.invalidateQueries({ queryKey: ["urgent-leads-count", facilityId] });
+      queryClient.invalidateQueries({ queryKey: ["impression-count", facilityId] });
     }, 60_000);
     return () => clearInterval(interval);
   }, [facilityId, queryClient]);
+
+  // Keep the open lead drawer in sync with refetched data. The drawer holds a
+  // snapshot (`selectedLead`); after an in-drawer status/snooze change
+  // invalidates ["recent-leads"], re-point the snapshot at the fresh row so the
+  // badge/dropdown/snooze panel update immediately instead of showing the old
+  // value until the drawer is closed and reopened. (Mirrors Inquiries.tsx.)
+  useEffect(() => {
+    if (!drawerOpen || !selectedLead) return;
+    const fresh = recentLeads.find((l) => l.id === selectedLead.id);
+    if (
+      fresh &&
+      (fresh.status !== selectedLead.status ||
+        fresh.snooze_until !== selectedLead.snooze_until)
+    ) {
+      setSelectedLead(fresh);
+    }
+  }, [recentLeads, drawerOpen, selectedLead]);
 
   const handleLeadClick = (lead: Lead) => {
     setSelectedLead(lead);

@@ -4,10 +4,17 @@
 // Notifies the claimant that their facility claim was approved.
 //
 // Body:  { claimRequestId: uuid }
-// Auth:  required (verify_jwt=true). Caller must be an admin.
+// Auth:  Gateway verify_jwt is disabled for this function (see config.toml);
+//        authorization is enforced in the body. Accepts EITHER (a) an admin
+//        user JWT (verified via getUser + is_admin), OR (b) a trusted system
+//        caller presenting the project service-role key as the Bearer token —
+//        used by the DB auto-approval trigger (handle_claim_request_approval)
+//        to email a claimant whose claim was auto-approved by the verification
+//        engine with no admin in the loop.
 // ============================================================================
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 import { Resend } from "https://esm.sh/resend@2.0.0?target=denonext";
+import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
 
 const VERSION = "1.0.0";
 
@@ -71,15 +78,24 @@ Deno.serve(async (req) => {
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) return json(401, { error: "Authentication required", code: "AUTH_MISSING" });
-    const anon = createClient(SUPABASE_URL, SUPABASE_ANON);
     const token = authHeader.replace(/^Bearer\s+/i, "");
-    const { data: u, error: uErr } = await anon.auth.getUser(token);
-    if (uErr || !u?.user) return json(401, { error: "Invalid authentication", code: "AUTH_INVALID" });
 
     const svc = createClient(SUPABASE_URL, SUPABASE_SRK);
 
-    const { data: adminCheck } = await svc.rpc("is_admin", { p_user_id: u.user.id });
-    if (!adminCheck) return json(403, { error: "Admin only", code: "NOT_ADMIN" });
+    // Trusted system caller: the DB auto-approval trigger
+    // (handle_claim_request_approval) invokes this function with the
+    // service-role key — a server-only secret that never reaches a browser —
+    // to notify a claimant whose claim was auto-approved by the verification
+    // engine with no admin in the loop. Those calls skip the interactive
+    // admin gate. Every other caller must present a valid admin user JWT.
+    const isSystemCaller = token.length > 0 && token === SUPABASE_SRK;
+    if (!isSystemCaller) {
+      const anon = createClient(SUPABASE_URL, SUPABASE_ANON);
+      const { data: u, error: uErr } = await anon.auth.getUser(token);
+      if (uErr || !u?.user) return json(401, { error: "Invalid authentication", code: "AUTH_INVALID" });
+      const { data: adminCheck } = await svc.rpc("is_admin", { p_user_id: u.user.id });
+      if (!adminCheck) return json(403, { error: "Admin only", code: "NOT_ADMIN" });
+    }
 
     let body: { claimRequestId?: string };
     try { body = await req.json(); } catch { return json(400, { error: "Invalid JSON", code: "BAD_JSON" }); }
@@ -114,16 +130,32 @@ Deno.serve(async (req) => {
 
     try {
       const resend = new Resend(RESEND_API_KEY);
-      // deno-lint-ignore no-explicit-any
-      const sendRes = await (resend.emails as any).send({
-        from: "RehabLookup <no-reply@rehablookup.com>",
-        to: [recipientEmail],
-        subject: `Your claim is approved: ${facilityName}`,
-        html: emailHtml(claim.claimant_name ?? "", facilityName, dashboardUrl),
-      });
-      if (sendRes?.error) {
-        log("ERROR", "resend error", { error: sendRes.error });
-        return json(502, { error: "Failed to send approval email", code: "EMAIL_SEND_FAILED" });
+      // Route through the resilient sender for suppression check + retry +
+      // idempotency (one approval email per claim) + dead-letter on persistent
+      // failure — parity with every other provider lifecycle email. Previously
+      // a raw resend.send() bypassed all of this and still reported success
+      // (and wrote an "email sent" admin note) even for suppressed/failed sends.
+      const sendRes = await sendEmailWithRetry(
+        svc,
+        resend,
+        {
+          from: "RehabLookup <no-reply@rehablookup.com>",
+          to: [recipientEmail],
+          subject: `Your claim is approved: ${facilityName}`,
+          html: emailHtml(claim.claimant_name ?? "", facilityName, dashboardUrl),
+        },
+        {
+          emailType: "claim_approval",
+          idempotencyKey: `claim-approved-${claimRequestId}`,
+          metadata: { claim_id: claimRequestId },
+        },
+      );
+      if (!sendRes.success) {
+        log("ERROR", "approval email not sent", { suppressed: sendRes.suppressed ?? false, error: sendRes.error ?? null });
+        return json(502, {
+          error: sendRes.suppressed ? "Recipient has opted out of email" : "Failed to send approval email",
+          code: sendRes.suppressed ? "EMAIL_SUPPRESSED" : "EMAIL_SEND_FAILED",
+        });
       }
     } catch (sendErr) {
       log("ERROR", "resend exception", { error: String(sendErr) });

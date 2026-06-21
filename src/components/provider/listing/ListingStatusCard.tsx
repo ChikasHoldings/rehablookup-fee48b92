@@ -1,10 +1,11 @@
 import { Link } from "react-router-dom";
-import { CheckCircle, Clock, AlertCircle, HelpCircle, Eye } from "lucide-react";
+import { CheckCircle, Clock, AlertCircle, AlertTriangle, HelpCircle, Eye } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { getListingStatusMeta, type ListingStatusTone } from "@/lib/listingStatus";
 
 interface ListingStatusCardProps {
   status: string;
@@ -12,39 +13,49 @@ interface ListingStatusCardProps {
   city: string;
   state: string;
   slug: string | null;
+  suspended?: boolean;
   onPreview?: () => void;
 }
 
-const getStatusConfig = (status: string) => {
-  switch (status) {
-    case "approved":
-      return {
-        label: "Live",
-        description: "Visible to families",
-        icon: CheckCircle,
-        bgColor: "bg-green-500/10",
-        textColor: "text-green-600 dark:text-green-400",
-        badgeClass: "bg-green-500/10 text-green-700 border-green-200 dark:text-green-400 dark:border-green-800"
-      };
-    case "pending":
-      return {
-        label: "Under Review",
-        description: "Usually 24-48 hours",
-        icon: Clock,
-        bgColor: "bg-amber-500/10",
-        textColor: "text-amber-600 dark:text-amber-400",
-        badgeClass: "bg-amber-500/10 text-amber-700 border-amber-200 dark:text-amber-400 dark:border-amber-800"
-      };
-    default:
-      return {
-        label: "Draft",
-        description: "Not published yet",
-        icon: AlertCircle,
-        bgColor: "bg-muted",
-        textColor: "text-muted-foreground",
-        badgeClass: "bg-muted text-muted-foreground border-border"
-      };
-  }
+// Presentation styling per status tone. Labels/descriptions come from the
+// shared getListingStatusMeta so rejected / needs_edits / pending_review are
+// surfaced distinctly instead of all collapsing to "Draft".
+const TONE_STYLES: Record<ListingStatusTone, {
+  icon: typeof CheckCircle;
+  bgColor: string;
+  textColor: string;
+  badgeClass: string;
+}> = {
+  live: {
+    icon: CheckCircle,
+    bgColor: "bg-green-500/10",
+    textColor: "text-green-600 dark:text-green-400",
+    badgeClass: "bg-green-500/10 text-green-700 border-green-200 dark:text-green-400 dark:border-green-800",
+  },
+  review: {
+    icon: Clock,
+    bgColor: "bg-amber-500/10",
+    textColor: "text-amber-600 dark:text-amber-400",
+    badgeClass: "bg-amber-500/10 text-amber-700 border-amber-200 dark:text-amber-400 dark:border-amber-800",
+  },
+  attention: {
+    icon: AlertTriangle,
+    bgColor: "bg-red-500/10",
+    textColor: "text-red-600 dark:text-red-400",
+    badgeClass: "bg-red-500/10 text-red-700 border-red-200 dark:text-red-400 dark:border-red-800",
+  },
+  paused: {
+    icon: AlertTriangle,
+    bgColor: "bg-amber-500/10",
+    textColor: "text-amber-600 dark:text-amber-400",
+    badgeClass: "bg-amber-500/10 text-amber-700 border-amber-200 dark:text-amber-400 dark:border-amber-800",
+  },
+  draft: {
+    icon: AlertCircle,
+    bgColor: "bg-muted",
+    textColor: "text-muted-foreground",
+    badgeClass: "bg-muted text-muted-foreground border-border",
+  },
 };
 
 export function ListingStatusCard({
@@ -53,9 +64,11 @@ export function ListingStatusCard({
   city,
   state,
   slug,
+  suspended,
   onPreview
 }: ListingStatusCardProps) {
-  const statusConfig = getStatusConfig(status);
+  const meta = getListingStatusMeta(status, suspended);
+  const statusConfig = { ...meta, ...TONE_STYLES[meta.tone] };
   const StatusIcon = statusConfig.icon;
 
   return (
@@ -79,7 +92,7 @@ export function ListingStatusCard({
             <div className="flex items-center gap-2">
               <p className="text-sm font-semibold">{statusConfig.label}</p>
               <Badge variant="outline" className={cn("text-xs", statusConfig.badgeClass)}>
-                {status === 'approved' ? 'Public' : 'Private'}
+                {statusConfig.isPublic ? 'Public' : 'Private'}
               </Badge>
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">

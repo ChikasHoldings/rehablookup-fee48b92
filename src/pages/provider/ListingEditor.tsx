@@ -67,6 +67,7 @@ import { ProviderTrustForm } from "@/components/provider/ProviderTrustForm";
 import { useProStatus } from "@/hooks/useProStatus";
 import { useFacilitySubscription } from "@/hooks/useFacilitySubscription";
 import { PLAN_LIMITS } from "@/lib/planLimits";
+import { getListingStatusMeta, type ListingStatusTone } from "@/lib/listingStatus";
 import { FacilityPhoneVerifySection } from "@/components/provider/listing/FacilityPhoneVerifySection";
 import { cn } from "@/lib/utils";
 import {
@@ -697,7 +698,11 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
     } finally {
       setIsAutoSaving(false);
     }
-  }, [facility, isSaving, currentFacilityId, queryClient, toast]);
+    // isConciergePartner gates the persisted accepts_international_patients
+    // value (line ~660); omitting it let a stale `false` overwrite a Concierge
+    // partner's enabled flag when the subscription query resolved after the
+    // last `facility` change.
+  }, [facility, isSaving, currentFacilityId, queryClient, toast, isConciergePartner]);
 
   // Auto-save effect
   useEffect(() => {
@@ -912,8 +917,13 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
     } finally {
       setIsSaving(false);
     }
+    // isConciergePartner gates the persisted accepts_international_patients
+    // value (~826) and profileCompletion drives the one-time 100%-complete
+    // celebration (~803); both live outside `facility`, so they must be deps
+    // or a stale value can wipe a partner's international flag / mis-fire the
+    // completion email.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- validateAllFields is declared below; React runs callbacks after the full render so the forward reference is safe.
-  }, [facility, canEdit, toast, queryClient, currentFacilityId, setFacility]);
+  }, [facility, canEdit, toast, queryClient, currentFacilityId, setFacility, isConciergePartner, profileCompletion]);
 
   // Keyboard shortcut: Ctrl+S / Cmd+S
   useEffect(() => {
@@ -1013,7 +1023,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
   };
 
   const handleServicesChange = async (selectedServices: string[]) => {
-    if (!facility) return;
+    if (!facility || !canEdit) return;
 
     const currentServiceNames = services.map(s => s.service_name);
     const toAdd = selectedServices.filter(s => !currentServiceNames.includes(s));
@@ -1051,7 +1061,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
   };
 
   const handleInsuranceChange = async (selectedInsurance: string[]) => {
-    if (!facility) return;
+    if (!facility || !canEdit) return;
 
     const currentInsuranceNames = insurance.map(i => i.insurance_name);
     const toAdd = selectedInsurance.filter(i => !currentInsuranceNames.includes(i));
@@ -1089,7 +1099,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
   };
 
   const handleAgeGroupsChange = async (selectedAgeGroups: string[]) => {
-    if (!facility) return;
+    if (!facility || !canEdit) return;
 
     const currentAgeGroupNames = ageGroups.map(ag => ag.age_group);
     const toAdd = selectedAgeGroups.filter(ag => !currentAgeGroupNames.includes(ag));
@@ -1126,6 +1136,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
   };
 
   const handleRemoveService = async (serviceId: string) => {
+    if (!canEdit) return;
     const { error } = await supabase
       .from("facility_services")
       .delete()
@@ -1145,6 +1156,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
   };
 
   const handleRemoveInsurance = async (insuranceId: string) => {
+    if (!canEdit) return;
     const { error } = await supabase
       .from("facility_insurance")
       .delete()
@@ -1164,6 +1176,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
   };
 
   const handleRemoveAgeGroup = async (ageGroupId: string) => {
+    if (!canEdit) return;
     const { error } = await supabase
       .from("facility_age_groups")
       .delete()
@@ -1292,15 +1305,19 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
     }
   };
 
+  // Status chip styling per presentation tone. The label/tone themselves come
+  // from the shared getListingStatusMeta so rejected / needs_edits /
+  // pending_review no longer masquerade as "Draft".
+  const STATUS_TONE_STYLES: Record<ListingStatusTone, { icon: typeof CheckCircle; className: string }> = {
+    live: { icon: CheckCircle, className: "bg-green-500/10 text-green-700 border-green-200" },
+    review: { icon: Clock, className: "bg-amber-500/10 text-amber-700 border-amber-200" },
+    attention: { icon: AlertTriangle, className: "bg-red-500/10 text-red-700 border-red-200" },
+    paused: { icon: AlertTriangle, className: "bg-amber-500/10 text-amber-700 border-amber-200" },
+    draft: { icon: AlertCircle, className: "bg-muted text-muted-foreground border-border" },
+  };
   const getStatusConfig = (status: string) => {
-    switch (status) {
-      case "approved":
-        return { label: "Live", icon: CheckCircle, className: "bg-green-500/10 text-green-700 border-green-200" };
-      case "pending":
-        return { label: "Under Review", icon: Clock, className: "bg-amber-500/10 text-amber-700 border-amber-200" };
-      default:
-        return { label: "Draft", icon: AlertCircle, className: "bg-muted text-muted-foreground border-border" };
-    }
+    const meta = getListingStatusMeta(status, (facility as { suspended?: boolean } | null)?.suspended);
+    return { label: meta.label, ...STATUS_TONE_STYLES[meta.tone] };
   };
 
   // Loading skeleton
@@ -1575,7 +1592,15 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
         {/* Content area – fixed min height prevents shift */}
         <div className="flex-1 min-w-0 min-h-[500px]">
           <Card className="border-border/60 shadow-sm">
-            <CardContent className="p-4 sm:p-6">
+            {/* Viewers (read-only team members) get a non-interactive view.
+                The core text fields already ignore viewer edits (updateField
+                guard) and the child-table handlers early-return, but the
+                embedded Services/Insurance/Age-Group/Staff/Trust/Photo controls
+                don't accept a role prop — so we make the whole panel
+                pointer-inert for non-editors. RLS is still the real backstop;
+                this just stops a viewer from poking controls whose writes would
+                be silently rejected behind the "view-only" banner. */}
+            <CardContent className={cn("p-4 sm:p-6", !canEdit && "pointer-events-none")} aria-disabled={!canEdit}>
               {/* ═══ PHOTOS TAB ═══ */}
               {activeTab === "photos" && (
                 <div

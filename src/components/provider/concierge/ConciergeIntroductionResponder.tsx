@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -83,26 +83,14 @@ export function ConciergeIntroductionResponder({ facilityId }: ConciergeIntroduc
     },
     enabled: !!facilityId,
     staleTime: 1000 * 30,
+    // concierge_introductions is intentionally NOT in the realtime publication
+    // (it carries seeker PII — migration 20260414131447 removed it to prevent
+    // PII broadcast), so postgres_changes can never stream new introductions to
+    // the provider. Poll instead so the inbox stays current without a manual
+    // refresh; the provider's own response already invalidates on mutation.
+    refetchInterval: 1000 * 60,
+    refetchOnWindowFocus: true,
   });
-
-  useEffect(() => {
-    if (!facilityId) return;
-    const channelName = `provider-concierge-intros-${facilityId}-${Math.random().toString(36).slice(2, 10)}`;
-    const channel = supabase
-      .channel(channelName)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "concierge_introductions", filter: `facility_id=eq.${facilityId}` },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["provider-concierge-introductions", facilityId] });
-          queryClient.invalidateQueries({ queryKey: ["pending-concierge-count", facilityId] });
-        },
-      )
-      .subscribe();
-    return () => {
-      try { supabase.removeChannel(channel); } catch { /* already torn down */ }
-    };
-  }, [facilityId, queryClient]);
 
   const respond = useMutation({
     mutationFn: async ({ introId, response }: { introId: string; response: "interested" | "not_available" }) => {

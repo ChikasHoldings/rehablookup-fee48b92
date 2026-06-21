@@ -25,3 +25,22 @@ export function getStatusOptions(currentStatus?: LeadStatus): { value: LeadStatu
   const allowed = LEAD_TRANSITIONS[currentStatus] ?? [];
   return allManual.filter((o) => allowed.includes(o.value));
 }
+
+/** Display label for ANY lead status (incl. the system-managed ones that
+ *  getStatusOptions intentionally omits: new / unlocked / expired). */
+const STATUS_LABELS: Record<LeadStatus, string> = {
+  new: "New",
+  unlocked: "Unlocked",
+  contacted: "Contacted",
+  in_progress: "In Progress",
+  responding: "Responding",
+  converted: "Converted",
+  lost: "Lost",
+  closed: "Closed",
+  expired: "Expired",
+};
+
+export function leadStatusLabel(status?: LeadStatus | string | null): string {
+  if (!status) return "—";
+  return STATUS_LABELS[status as LeadStatus] ?? status;
+}
