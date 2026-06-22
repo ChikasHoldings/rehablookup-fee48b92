@@ -97,7 +97,7 @@ const faqSections = [
       },
       {
         question: "How do I manage my subscription?",
-        answer: "Go to Settings > Billing to view your current plan, update payment methods, view invoices, or manage your Pro subscription."
+        answer: "Open Billing from the sidebar to view your current plan, update payment methods, view invoices, or manage your Pro subscription."
       },
     ],
   },

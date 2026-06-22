@@ -140,8 +140,8 @@ export function FacilityImageUpload({
           : [...currentImages, ...uploadedUrls];
         onImagesChange(newImages);
         toast({
-          title: "Upload successful",
-          description: `${uploadedUrls.length} image${uploadedUrls.length !== 1 ? "s" : ""} uploaded.`,
+          title: "Image added",
+          description: `${uploadedUrls.length} image${uploadedUrls.length !== 1 ? "s" : ""} added — save your listing to publish.`,
         });
       }
     } finally {

@@ -193,12 +193,19 @@ export function useFacilityStaff(facilityId: string | undefined) {
         .eq("id", id)
         .maybeSingle();
 
-      const { error } = await supabase
+      const { data: deleted, error } = await supabase
         .from("facility_staff")
         .delete()
-        .eq("id", id);
+        .eq("id", id)
+        .select("id");
 
       if (error) throw error;
+      // 0 rows + no error == RLS rejected the delete (e.g. a viewer reached the
+      // control via keyboard, or access changed mid-session). Throw so the
+      // caller surfaces an honest error instead of a false "removed" toast.
+      if (!deleted || deleted.length === 0) {
+        throw new Error("Couldn't remove this staff member — you may not have permission.");
+      }
 
       await removeStaffPhotoIfOwned(
         (existing as { photo_url: string | null } | null)?.photo_url ?? null,

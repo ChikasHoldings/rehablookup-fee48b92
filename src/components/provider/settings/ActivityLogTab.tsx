@@ -95,7 +95,7 @@ export const ActivityLogTab = forwardRef<HTMLDivElement>((_, ref) => {
     getUser();
   }, []);
 
-  const { data: activities, isLoading } = useQuery({
+  const { data: activities, isLoading, isError, refetch } = useQuery({
     queryKey: ["activity-log", userId],
     queryFn: async () => {
       if (!userId) return [];
@@ -131,6 +131,29 @@ export const ActivityLogTab = forwardRef<HTMLDivElement>((_, ref) => {
                 </div>
               </div>
             ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Activity Log</CardTitle>
+          <CardDescription>Recent account activity and security events</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8 text-muted-foreground">
+            <Activity className="h-12 w-12 mx-auto mb-3 opacity-50" />
+            <p>Couldn't load your activity</p>
+            <button
+              onClick={() => refetch()}
+              className="text-sm mt-2 text-primary hover:underline"
+            >
+              Try again
+            </button>
           </div>
         </CardContent>
       </Card>

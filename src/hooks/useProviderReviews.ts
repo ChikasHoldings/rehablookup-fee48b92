@@ -300,13 +300,19 @@ export function useProviderReviews() {
   }, [fetchReviews]);
 
   const deleteResponse = useCallback(async (responseId: string) => {
-    const { error } = await supabase
+    const { data: deleted, error } = await supabase
       .from('review_responses')
       .delete()
-      .eq('id', responseId);
+      .eq('id', responseId)
+      .select('id');
 
     if (error) {
       return { error };
+    }
+    // 0 rows + no error == RLS blocked the delete. Surface it instead of a
+    // false "Response deleted" toast (the response would reappear on refetch).
+    if (!deleted || deleted.length === 0) {
+      return { error: new Error("Couldn't delete the response — it may have already been removed.") };
     }
 
     fetchReviews();
