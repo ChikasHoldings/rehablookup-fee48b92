@@ -639,7 +639,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
     }
     
     try {
-      const { error } = await supabase
+      const { data: savedRows, error } = await supabase
         .from("facilities")
         .update({
           name: sanitizeFacilityName(facility.name),
@@ -664,9 +664,13 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
           accessibility_features: facility.accessibility_features,
           accepting_admissions: facility.accepting_admissions,
         })
-        .eq("id", facility.id);
+        .eq("id", facility.id)
+        .select("id");
 
-      if (!error) {
+      // 0 rows + no error == RLS rejected the write (e.g. access changed
+      // mid-session). Mirror handleSave: never show "Saved" on a write that
+      // didn't land. `hasChanges` stays true so the next debounce retries.
+      if (!error && savedRows && savedRows.length > 0) {
         queryClient.setQueryData(["facility-listing", currentFacilityId], facility);
         queryClient.invalidateQueries({ queryKey: ["provider-data"] });
         queryClient.invalidateQueries({ queryKey: ["provider-facilities"] });
@@ -681,7 +685,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
         // typing was saved when it silently wasn't. `hasChanges` stays
         // true on error so the floating save bar continues to nag and
         // the next 3-second debounce will retry automatically.
-        console.error("[ListingEditor] Auto-save failed:", error.message);
+        console.error("[ListingEditor] Auto-save failed:", error?.message ?? "no rows updated (write blocked)");
         toast({
           title: "Auto-save failed",
           description: "Your latest changes weren't saved. Click Save Changes or try again — we'll keep retrying.",

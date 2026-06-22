@@ -96,11 +96,15 @@ export function ConciergeManagementPanel({ facilityId, subscription }: Concierge
     if (!confirmRemove) return;
     setRemoving(true);
     try {
-      const { error } = await supabase
+      const { data: updated, error } = await supabase
         .from("concierge_partner_facilities")
         .update({ active: false, deactivated_at: new Date().toISOString() })
-        .eq("id", confirmRemove.id);
+        .eq("id", confirmRemove.id)
+        .select("id")
+        .maybeSingle();
       if (error) throw error;
+      // 0 rows + no error == RLS blocked the update; don't claim success.
+      if (!updated) throw new Error("Couldn't remove this geo — please try again.");
       toast.success(`Geo removed. Re-claim before ${periodEndStr} at no additional charge.`);
       setConfirmRemove(null);
       queryClient.invalidateQueries({ queryKey: ["concierge-geos", subscription.id] });
