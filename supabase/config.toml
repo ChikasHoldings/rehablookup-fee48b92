@@ -506,6 +506,9 @@ verify_jwt = false
 [functions.drain-addon-waitlist]
 verify_jwt = false
 
+[functions.auto-decline-stale-introductions]
+verify_jwt = false
+
 [functions.placement-cron]
 verify_jwt = false
 

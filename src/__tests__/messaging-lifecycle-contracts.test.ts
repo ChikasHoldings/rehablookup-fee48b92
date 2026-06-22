@@ -34,10 +34,10 @@ describe("messaging lifecycle contracts", () => {
       expect(src, rel).toMatch(/token === serviceKey/);
       // a non-service token must resolve to a real user, else 401
       expect(src, rel).toMatch(/auth\.getUser\(token\)/);
-      // admin/staff classification must include admin-console members (advisors
-      // are staff but are NOT in user_roles — keying on user_roles alone would
-      // 403 every advisor's notification dispatch).
-      expect(src, rel).toMatch(/admin_user_profiles/);
+      // admin classification keys on the project-wide user_roles 'admin' gate —
+      // consistent with useAdminAuth / concierge RLS / record-introduction-decision
+      // (create-admin-user provisions every admin & advisor with this row).
+      expect(src, rel).toMatch(/from\("user_roles"\)[\s\S]*?eq\("role", "admin"\)/);
     }
   });
 
