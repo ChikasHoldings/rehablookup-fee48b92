@@ -5,7 +5,7 @@ import { formatDistanceToNow } from "date-fns";
 import {
   Home, Send, Heart, Star, Settings, LogOut, LogIn,
   Search, Bell, BellOff, X, MapPin, Building2, ChevronRight, HeartHandshake,
-  CheckCheck,
+  CheckCheck, HelpCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -515,6 +515,12 @@ export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = 
                   <Link to="/account/settings" className="flex items-center gap-2.5 py-2">
                     <Settings className="h-4 w-4 text-muted-foreground" />
                     Settings
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild className="rounded-lg">
+                  <Link to="/account/help" className="flex items-center gap-2.5 py-2">
+                    <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                    Help &amp; Support
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className="my-1" />

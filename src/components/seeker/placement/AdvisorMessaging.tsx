@@ -238,7 +238,10 @@ export function AdvisorMessaging({ inquiryId }: AdvisorMessagingProps) {
       queryClient.invalidateQueries({ queryKey: ["advisor-thread", inquiryId] });
       queryClient.invalidateQueries({ queryKey: ["unread-advisor-count", inquiryId] });
     },
-    onError: () => {
+    onError: (error) => {
+      // The attachment hook (uploadFile) already surfaces its own "Upload
+      // failed" toast, so don't stack a second generic toast for that case.
+      if (error instanceof Error && error.message === "Failed to upload attachment") return;
       toast({
         title: "Error",
         description: "Failed to send message. Please try again.",
