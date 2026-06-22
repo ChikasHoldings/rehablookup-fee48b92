@@ -693,7 +693,7 @@ function AdminClaimsReviewPanel() {
         </div>
       )}
 
-      <div className="rounded-md border overflow-hidden">
+      <div className="rounded-md border overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>

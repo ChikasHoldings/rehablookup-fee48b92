@@ -547,12 +547,17 @@ export default function AdminSecurityLogs() {
   // underlying DB / RLS failure rather than a generic string.
   const toggleBlockMutation = useMutation({
     mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
-      const { error } = await supabase
+      // 0-row detection: a bare update().eq() reports success even when RLS
+      // changes no rows, so a no-op toggle would show a false success.
+      const { data: updated, error } = await supabase
         .from("blocked_identifiers")
         .update({ is_active: isActive })
-        .eq("id", id);
+        .eq("id", id)
+        .select("id")
+        .maybeSingle();
 
       if (error) throw new Error(`Toggle failed: ${error.message}`);
+      if (!updated) throw new Error("Block not found or the update was blocked.");
     },
     onSuccess: (_, variables) => {
       toast.success(variables.isActive ? "Block reactivated" : "Block deactivated");

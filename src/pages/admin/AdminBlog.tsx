@@ -383,11 +383,16 @@ export default function AdminBlog() {
   const updateFeaturedMutation = useMutation({
     mutationFn: async ({ id, featured }: { id: string; featured: boolean }) => {
       const article = articles?.find((a) => a.id === id);
-      const { error } = await supabase
+      // 0-row detection (mirrors updateStatusMutation above): a bare
+      // update().eq() reports success even when RLS silently changes no rows.
+      const { data: updated, error } = await supabase
         .from("blog_articles")
         .update({ featured } as never)
-        .eq("id", id);
+        .eq("id", id)
+        .select("id")
+        .maybeSingle();
       if (error) throw error;
+      if (!updated) throw new Error("Article not found or the update was blocked.");
       await logAdminAction({
         actionType: AdminAuditActions.BLOG_ARTICLE_STATUS_CHANGED,
         targetType: "blog_article",

@@ -104,7 +104,11 @@ function LeadStatusBadge({ lead }: { lead: Lead }) {
   // removed 2026-05-21 — they were holdovers from the per-lead-sale model.
   // Admins viewing a lead now infer reassignment context from the
   // facility column in the row itself + the admin_audit_log entry.
-  if (lead.status === "expired" || lead.lead_expired_at) {
+  // Only surface an explicit "Expired" pill when the lead carries an expiry
+  // timestamp but its main status hasn't been flipped to "expired" yet (a rare
+  // race) — otherwise the Status column's StatusBadge already shows it, so a
+  // separate badge would be redundant. Rendered inline in the Status column.
+  if (lead.lead_expired_at && lead.status !== "expired") {
     return (
       <Badge variant="outline" className="bg-muted text-muted-foreground border-border gap-1 text-xs">
         <Clock className="h-3 w-3" />Expired
@@ -716,7 +720,6 @@ export default function AdminLeads() {
                     <TableHead scope="col" className="min-w-[160px]">Client</TableHead>
                     <TableHead scope="col" className="min-w-[120px]">Facility</TableHead>
                     <TableHead scope="col" className="min-w-[70px]">Type</TableHead>
-                    <TableHead scope="col" className="min-w-[80px]">Lead Status</TableHead>
                     <TableHead scope="col" className="min-w-[80px]">Status</TableHead>
                     <TableHead scope="col" className="min-w-[100px]">Date</TableHead>
                   </TableRow>
@@ -771,11 +774,9 @@ export default function AdminLeads() {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <LeadStatusBadge lead={lead} />
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1.5 flex-wrap">
                             <StatusBadge status={lead.status} />
+                            <LeadStatusBadge lead={lead} />
                             {staleHours > 0 && (
                               <Badge
                                 variant="outline"
