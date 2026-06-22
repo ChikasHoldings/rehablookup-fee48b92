@@ -1,6 +1,7 @@
+import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Mail, MessageCircle } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 
 export function PlacementSupportCard() {
   return (
@@ -12,14 +13,14 @@ export function PlacementSupportCard() {
           </div>
           <div>
             <p className="font-medium text-sm">Need Help?</p>
-            <p className="text-xs text-muted-foreground">Our specialists are here to assist you.</p>
+            <p className="text-xs text-muted-foreground">Message our team and track the reply in your account.</p>
           </div>
         </div>
         <Button variant="outline" size="sm" className="gap-2" asChild>
-          <a href="mailto:placement@rehablookup.com">
-            <Mail className="h-4 w-4" />
-            Email Support
-          </a>
+          <Link to="/account/support">
+            <MessageCircle className="h-4 w-4" />
+            Contact Support
+          </Link>
         </Button>
       </CardContent>
     </Card>

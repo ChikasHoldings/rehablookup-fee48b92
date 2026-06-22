@@ -513,9 +513,9 @@ export default function SeekerHome() {
 
           <Card className="mt-8 bg-gradient-to-r from-warning/5 to-warning/10 border-warning/20">
             <CardContent className="p-6 sm:p-8 text-center">
-              <p className="text-warning font-medium mb-2">Need immediate help?</p>
+              <p className="text-warning font-medium mb-2">Ready to find treatment?</p>
               <h3 className="text-xl font-display font-semibold mb-4 text-foreground">
-                Our support team is available 24/7 to connect you with treatment
+                Our placement advisors can connect you with the right treatment center
               </h3>
               <Button asChild size="lg" className="shadow-lg">
                 <Link to="/account/concierge">

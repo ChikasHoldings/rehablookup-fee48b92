@@ -5,18 +5,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { 
-  MapPin, 
-  ExternalLink, 
+import {
+  MapPin,
+  ExternalLink,
   ThumbsDown,
   CheckCircle,
   Building2,
   Loader2,
   HeadphonesIcon,
   Sparkles,
-  Flame,
-  Zap,
-  Clock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -49,27 +46,7 @@ const FACILITY_TYPE_LABELS: Record<string, string> = {
   sober_living: "Sober Living",
 };
 
-/** Deterministic competition signals based on facility id hash */
-function getCompetitionSignals(facilityId: string, rank: number) {
-  const signals: { icon: typeof Flame; text: string; color: string }[] = [];
-  // Simple hash from id to pick signals consistently
-  const hash = facilityId.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
-
-  if (rank === 0) {
-    signals.push({ icon: Sparkles, text: "Top recommended for your needs", color: "text-warning" });
-  }
-
-  if (hash % 3 === 0 || rank <= 1) {
-    signals.push({ icon: Flame, text: "High acceptance rate", color: "text-success" });
-  }
-  if (hash % 2 === 0) {
-    signals.push({ icon: Zap, text: "Fast admission available", color: "text-primary" });
-  }
-
-  return signals.slice(0, 2); // Max 2 signals per card
-}
-
-export function PlacementMatchCard({ 
+export function PlacementMatchCard({
   facility, 
   isPlaced,
   onDismiss,
@@ -77,7 +54,6 @@ export function PlacementMatchCard({
   rank = 99,
 }: PlacementMatchCardProps) {
   const facilityTypeLabel = FACILITY_TYPE_LABELS[facility.facility_type] || facility.facility_type;
-  const competitionSignals = getCompetitionSignals(facility.id, rank);
   const isTopPick = rank === 0;
 
   return (
@@ -134,25 +110,6 @@ export function PlacementMatchCard({
             </div>
           </div>
 
-          {/* Competition Signals + Urgency */}
-          {!isPlaced && (
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-4 pb-2">
-              {competitionSignals.map((signal, i) => {
-                const SignalIcon = signal.icon;
-                return (
-                  <div key={i} className={cn("flex items-center gap-1 text-xs font-medium", signal.color)}>
-                    <SignalIcon className="h-3 w-3" />
-                    <span>{signal.text}</span>
-                  </div>
-                );
-              })}
-              <div className="flex items-center gap-1 text-xs font-medium text-destructive">
-                <Clock className="h-3 w-3" />
-                <span>Availability may change quickly</span>
-              </div>
-            </div>
-          )}
-          
           {/* Actions */}
           <div className="flex items-center gap-2 px-4 pb-4 pt-0">
             <Button 

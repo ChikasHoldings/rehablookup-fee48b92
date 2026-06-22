@@ -134,12 +134,17 @@ export function useSavedSearches() {
   const remove = useMutation({
     mutationFn: async (id: string): Promise<void> => {
       if (!user) throw new Error("Not authenticated");
-      const { error } = await supabase
+      // 0-row detection: a bare delete().eq() resolves with no error even when
+      // it matches no rows (already gone / RLS), which would show a false
+      // "removed" toast. Mirror `update` above, which throws via .single().
+      const { data, error } = await supabase
         .from("saved_searches")
         .delete()
         .eq("id", id)
-        .eq("user_id", user.id);
+        .eq("user_id", user.id)
+        .select("id");
       if (error) throw error;
+      if (!data || data.length === 0) throw new Error("Saved search not found or already removed.");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
