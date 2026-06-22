@@ -43,19 +43,14 @@ export async function authorizeNotifier(req: Request, admin: any): Promise<Autho
   const { data: { user }, error } = await admin.auth.getUser(token);
   if (error || !user) return { ok: false, status: 401, error: "unauthorized" };
 
-  // Admin/staff = an ACTIVE admin-console member (super_admin / admin / advisor)
-  // OR a user_roles admin. This must match how the admin & concierge panels
-  // authorize their users: advisors are staff who orchestrate notifications but
-  // are NOT in user_roles (user_is_admin / has_role both return false for them),
-  // so keying on user_roles alone would wrongly reject every advisor.
-  const { data: staff } = await admin
-    .from("admin_user_profiles").select("user_id").eq("user_id", user.id).eq("status", "active").maybeSingle();
-  let isAdmin = !!staff;
-  if (!isAdmin) {
-    const { data: role } = await admin
-      .from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle();
-    isAdmin = !!role;
-  }
+  // Admin = the coarse user_roles 'admin' gate — the project-wide admin signal.
+  // create-admin-user provisions every admin/advisor account with a user_roles
+  // 'admin' row PLUS a fine-grained admin_user_profiles.admin_role, and
+  // useAdminAuth (has_role), the concierge_messages INSERT RLS, and
+  // record-introduction-decision all key on user_roles. Keep this consistent
+  // with them rather than introducing a second, profile-based admin model.
+  const { data: role } = await admin
+    .from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle();
 
-  return { ok: true, actor: isAdmin ? "admin" : "user", userId: user.id };
+  return { ok: true, actor: role ? "admin" : "user", userId: user.id };
 }

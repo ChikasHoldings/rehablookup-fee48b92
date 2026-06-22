@@ -125,6 +125,10 @@ const ANON_NAMES = new Set([
 
 // Bucket E: cron-triggered (X-Cron-Secret enforced in code)
 const CRON_NAMES = new Set([
+  // Hourly stale-introduction sweep — invoked by scheduled.call_edge_function
+  // (pg_cron), gated by assertCronSecret (X-Cron-Secret). Reconciled into the
+  // repo from the live deployment (was deployed but missing from source).
+  "auto-decline-stale-introductions",
   // auto-status-transition was mis-classified here by the 2026-05-22 audit: it
   // is NOT scheduled in pg_cron and is invoked only by clients (admin console +
   // the seeker confirming a provider). The cron-secret gate 401'd every real
