@@ -1,9 +1,42 @@
 import { describe, it, expect } from "vitest";
 import {
   getNavSectionsForRole,
+  getMobileNavForRole,
   isNavGroup,
   type NavSection,
 } from "../adminNavConfig";
+
+/**
+ * Every admin route mounted under <AdminShell /> in src/App.tsx. Mirrored here
+ * (not imported, to keep the test self-contained and free of the router/
+ * supabase import chain). Update this set when an admin <Route> is added or
+ * removed. A nav link that is NOT in this set is a DEAD LINK — it would render
+ * the public 404 catch-all instead of an admin page.
+ */
+const KNOWN_ADMIN_ROUTES = new Set<string>([
+  "/admin",
+  "/admin/leads",
+  "/admin/insurance-verifications",
+  "/admin/re-verification",
+  "/admin/providers",
+  "/admin/seekers",
+  "/admin/concierge",
+  "/admin/subscriptions",
+  "/admin/support",
+  "/admin/reviews",
+  "/admin/escalations",
+  "/admin/marketing",
+  "/admin/blog",
+  "/admin/analytics",
+  "/admin/users",
+  "/admin/back-office",
+  "/admin/email-logs",
+  "/admin/security-logs",
+  "/admin/audit-log",
+  "/admin/not-found-events",
+  "/admin/settings",
+  "/admin/notifications",
+]);
 
 /**
  * Super-admin-only permission keys. The admin route guard
@@ -73,4 +106,34 @@ describe("adminNavConfig — lower-tier nav must not expose super-admin-only rou
     expect(perms).toContain("audit_log");
     expect(perms).toContain("settings");
   });
+});
+
+describe("adminNavConfig — no dead or duplicate nav links", () => {
+  const roleCases = [
+    ["super_admin", true],
+    ["manager", false],
+    ["advisor", false],
+    ["customer_rep", false],
+  ] as const;
+
+  for (const [role, isSuper] of roleCases) {
+    it(`${role} desktop nav links all resolve to a real admin route`, () => {
+      const links = allLinks(getNavSectionsForRole(role, isSuper));
+      const dead = links.filter((to) => !KNOWN_ADMIN_ROUTES.has(to));
+      expect(dead).toEqual([]);
+    });
+
+    it(`${role} mobile nav links all resolve to a real admin route`, () => {
+      const mobileLinks = getMobileNavForRole(role, isSuper).flatMap((s) =>
+        s.items.map((i) => i.to),
+      );
+      const dead = mobileLinks.filter((to) => !KNOWN_ADMIN_ROUTES.has(to));
+      expect(dead).toEqual([]);
+    });
+
+    it(`${role} nav has no duplicate links`, () => {
+      const links = allLinks(getNavSectionsForRole(role, isSuper));
+      expect(links.length).toBe(new Set(links).size);
+    });
+  }
 });

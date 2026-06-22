@@ -188,12 +188,15 @@ export function CustomerRepDashboard() {
   const claimTicket = async (ticketId: string) => {
     if (!user?.id) return;
     setClaimingTicketId(ticketId);
-    const { error } = await supabase
+    const { data: claimed, error } = await supabase
       .from("support_tickets")
       .update({ assigned_to: user.id, assigned_at: new Date().toISOString(), assigned_by: user.id, status: "open" })
-      .eq("id", ticketId);
+      .eq("id", ticketId)
+      .select("id")
+      .maybeSingle();
     setClaimingTicketId(null);
-    if (error) { toast.error("Failed to claim ticket"); return; }
+    // 0-row detection: a blocked (RLS) update returns no error AND no row.
+    if (error || !claimed) { toast.error("Failed to claim ticket"); return; }
     toast.success("Ticket claimed — opening details...");
     invalidateDashboard();
     // Auto-open the ticket detail
@@ -217,12 +220,14 @@ export function CustomerRepDashboard() {
   // Reject review — triggered by confirmation dialog
   const handleRejectReview = async (reviewId: string) => {
     setModeratingReviewId(reviewId);
-    const { error } = await supabase
+    const { data: rejected, error } = await supabase
       .from("facility_reviews")
       .update({ status: "rejected" })
-      .eq("id", reviewId);
+      .eq("id", reviewId)
+      .select("id")
+      .maybeSingle();
     setModeratingReviewId(null);
-    if (error) { toast.error("Failed to reject"); return; }
+    if (error || !rejected) { toast.error("Failed to reject"); return; }
     toast.success("Review rejected");
     invalidateDashboard();
   };
@@ -569,12 +574,14 @@ export function CustomerRepDashboard() {
                             disabled={moderatingReviewId === review.id}
                             onClick={async () => {
                               setModeratingReviewId(review.id);
-                              const { error } = await supabase
+                              const { data: approved, error } = await supabase
                                 .from("facility_reviews")
                                 .update({ status: "approved" })
-                                .eq("id", review.id);
+                                .eq("id", review.id)
+                                .select("id")
+                                .maybeSingle();
                               setModeratingReviewId(null);
-                              if (error) { toast.error("Failed to approve"); return; }
+                              if (error || !approved) { toast.error("Failed to approve"); return; }
                               toast.success("Review approved");
                               invalidateDashboard();
                             }}

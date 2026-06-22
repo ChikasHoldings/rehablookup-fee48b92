@@ -124,7 +124,13 @@ export default function AdvisorInbox() {
         .from("concierge_threads")
         .update({ admin_last_read_at: new Date().toISOString() })
         .eq("id", selectedThread.id)
-        .then(() => {
+        .then(({ error }) => {
+          // Only refresh the unread badges if the read-marker actually
+          // persisted; a swallowed error would leave the badge stuck unread.
+          if (error) {
+            console.warn("[AdvisorInbox] failed to mark thread read", error);
+            return;
+          }
           queryClient.invalidateQueries({ queryKey: ["advisor-inbox-threads"] });
         });
     }
@@ -177,14 +183,19 @@ export default function AdvisorInbox() {
       });
       if (error) throw error;
 
-      // Update thread last_message_at
-      await supabase
+      // Update thread last_message_at. The message itself already persisted
+      // above, so a failure here must NOT fail the send — just log it; thread
+      // ordering / read-state self-heals on the next message or refetch.
+      const { error: threadErr } = await supabase
         .from("concierge_threads")
         .update({
           last_message_at: new Date().toISOString(),
           admin_last_read_at: new Date().toISOString(),
         })
         .eq("id", selectedThread.id);
+      if (threadErr) {
+        console.warn("[AdvisorInbox] failed to update thread timestamps", threadErr);
+      }
 
       // Deliver the email/push to the seeker or facility — the insert above only
       // persists the message. Without this, messages sent from the cross-case

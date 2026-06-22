@@ -261,7 +261,10 @@ export function SupportTicketModal({
     }
   };
 
-  // Auto-claim: assign to current user when opened if unassigned
+  // Auto-claim: assign to current user when opened if unassigned.
+  // The assign mutation owns the success/error toast (its onSuccess/onError).
+  // Firing a synchronous "claimed" toast here would double-toast on success
+  // and show a false success if the assignment actually failed.
   const handleClaimTicket = () => {
     if (!user?.id || ticket.assigned_to) return;
     assignTicket.mutate({
@@ -269,7 +272,6 @@ export function SupportTicketModal({
       assigneeId: user.id,
       currentUserId: user.id,
     });
-    toast.success("Ticket claimed");
   };
 
   const handleEscalateToManager = async () => {

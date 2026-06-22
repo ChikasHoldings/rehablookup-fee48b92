@@ -344,7 +344,10 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
-      await supabase.from("lead_notes").insert({ lead_id: lead.id, user_id: user.id, note: noteText.trim() });
+      // Supabase does not throw on a failed insert — it returns { error }.
+      // Without this check an RLS-blocked insert would show a false "Note saved".
+      const { error } = await supabase.from("lead_notes").insert({ lead_id: lead.id, user_id: user.id, note: noteText.trim() });
+      if (error) throw error;
       setNoteText("");
       refetchNotes();
       toast.success("Note saved");
