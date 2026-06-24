@@ -902,6 +902,28 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     console.log("Email sent:", emailResponse);
 
+    // The resilient sender returns success:false when the recipient is
+    // suppressed (prior bounce/unsubscribe) or after exhausting retries
+    // (dead-lettered). In those cases the seeker received NOTHING — so we must
+    // NOT log the email as "sent", must NOT advance the lead to "contacted",
+    // and must NOT report success. Fail loud so the provider knows to retry /
+    // reach the lead another way (otherwise a real lead silently goes uncontacted).
+    if (!emailResponse.success) {
+      const reason = emailResponse.suppressed
+        ? "the recipient's email address is suppressed (a previous message bounced or they unsubscribed)"
+        : "delivery failed after multiple attempts";
+      console.error("[send-lead-email] send not successful:", emailResponse);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          suppressed: emailResponse.suppressed ?? false,
+          deadLettered: emailResponse.deadLettered ?? false,
+          error: `Email not sent — ${reason}.`,
+        }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     const { data: emailLog, error: logError } = await supabase
       .from("lead_emails")
       .insert({

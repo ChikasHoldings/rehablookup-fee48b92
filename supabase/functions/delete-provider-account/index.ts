@@ -81,186 +81,65 @@ Deno.serve(async (req) => {
 
     const facilityIds = facilities?.map(f => f.id) || [];
 
-    if (facilityIds.length > 0) {
-      // Delete leads associated with facilities
-      await adminClient
-        .from("leads")
-        .delete()
-        .in("facility_id", facilityIds);
-
-      // Delete lead routing logs
-      await adminClient
-        .from("lead_routing_logs")
-        .delete()
-        .in("assigned_provider_id", facilityIds);
-
-      // Delete facility views
-      await adminClient
-        .from("facility_views")
-        .delete()
-        .in("facility_id", facilityIds);
-
-      // Delete facility interactions
-      await adminClient
-        .from("facility_interactions")
-        .delete()
-        .in("facility_id", facilityIds);
-
-      // Delete facility services
-      await adminClient
-        .from("facility_services")
-        .delete()
-        .in("facility_id", facilityIds);
-
-      // Delete facility insurance
-      await adminClient
-        .from("facility_insurance")
-        .delete()
-        .in("facility_id", facilityIds);
-
-      // Delete facility age groups
-      await adminClient
-        .from("facility_age_groups")
-        .delete()
-        .in("facility_id", facilityIds);
-
-      // Delete facility credentials
-      await adminClient
-        .from("facility_credentials")
-        .delete()
-        .in("facility_id", facilityIds);
-
-      // Delete facility accreditations
-      await adminClient
-        .from("facility_accreditations")
-        .delete()
-        .in("facility_id", facilityIds);
-
-      // Delete facility credential documents
-      await adminClient
-        .from("facility_credential_documents")
-        .delete()
-        .in("facility_id", facilityIds);
-
-      // Delete review responses
-      await adminClient
-        .from("review_responses")
-        .delete()
-        .in("facility_id", facilityIds);
-
-      // Delete review disputes
-      await adminClient
-        .from("review_disputes")
-        .delete()
-        .in("facility_id", facilityIds);
-
-
-      // facility_pending_changes was dropped in 20260809000000 (orphan
-      // table — provider edits go direct to facilities). No cleanup
-      // needed; the cascade on DROP TABLE handled any historical rows.
-
-      // Delete provider notifications
-      await adminClient
-        .from("provider_notifications")
-        .delete()
-        .eq("user_id", user.id);
-
-      // Delete provider events
-      await adminClient
-        .from("provider_events")
-        .delete()
-        .in("facility_id", facilityIds);
-
-      // Delete featured placement analytics
-      await adminClient
-        .from("featured_placement_analytics")
-        .delete()
-        .in("facility_id", facilityIds);
-
-      // Delete lead emails
-      await adminClient
-        .from("lead_emails")
-        .delete()
-        .in("facility_id", facilityIds);
-
-      // Delete lead notes
-      await adminClient
-        .from("lead_notes")
-        .delete()
-        .eq("user_id", user.id);
-
-      // Delete reply email verification codes
-      await adminClient
-        .from("reply_email_verification_codes")
-        .delete()
-        .in("facility_id", facilityIds);
-
-      // Delete facility reviews (reviews on provider's facilities)
-      await adminClient
-        .from("facility_reviews")
-        .delete()
-        .in("facility_id", facilityIds);
-
-      // Delete request help analytics
-      await adminClient
-        .from("request_help_analytics")
-        .delete()
-        .in("facility_id", facilityIds);
-
-      // Delete flagged images
-      await adminClient
-        .from("flagged_images")
-        .delete()
-        .in("facility_id", facilityIds);
-
-      // Delete facilities themselves
-      await adminClient
-        .from("facilities")
-        .delete()
-        .eq("user_id", user.id);
+    // 1. Purge all FACILITY-scoped data through the maintained SECURITY DEFINER
+    //    purge function — the single source of truth (same model the seeker
+    //    delete path uses). It covers everything the old hand-rolled list did
+    //    PLUS the tables it silently omitted (facility_subscriptions,
+    //    facility_staff, provider_payment_methods, concierge_*, lead/review
+    //    children, favorites, badge impressions, …). Pass p_delete_user=false;
+    //    user-level rows are purged explicitly in step 2. Error-checked so we
+    //    NEVER report success on a partial delete (the old code swallowed every
+    //    delete error and could leave PII behind while returning success).
+    for (const fid of facilityIds) {
+      const { error: purgeError } = await adminClient.rpc("purge_provider_data", {
+        p_facility_id: fid,
+        p_delete_user: false,
+      });
+      if (purgeError) {
+        console.error("[DELETE-PROVIDER-ACCOUNT] purge_provider_data failed:", purgeError);
+        return new Response(
+          JSON.stringify({ error: "Failed to delete account data" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
-    // Delete profile
-    await adminClient
+    // 2. Purge USER-keyed rows (error-checked, idempotent). Includes the
+    //    user-scoped rows the RPC's facility loop doesn't reach
+    //    (provider_notifications / lead_notes keyed by user_id, account-level
+    //    notification prefs, roles, sessions, activity log, subscription
+    //    alerts/events). Fail closed before deleting the auth identity.
+    const userScopedDeletes = await Promise.all([
+      adminClient.from("provider_notifications").delete().eq("user_id", user.id),
+      adminClient.from("lead_notes").delete().eq("user_id", user.id),
+      adminClient.from("notification_preferences").delete().eq("user_id", user.id),
+      adminClient.from("user_roles").delete().eq("user_id", user.id),
+      adminClient.from("user_sessions").delete().eq("user_id", user.id),
+      adminClient.from("account_activity_log").delete().eq("user_id", user.id),
+      adminClient.from("subscription_alerts").delete().eq("user_id", user.id),
+      adminClient.from("subscription_events").delete().eq("user_id", user.id),
+    ]);
+    const userDeleteErr = userScopedDeletes.find((r) => r.error)?.error;
+    if (userDeleteErr) {
+      console.error("[DELETE-PROVIDER-ACCOUNT] user-row purge failed:", userDeleteErr);
+      return new Response(
+        JSON.stringify({ error: "Failed to delete account data" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // 3. Delete the profile last (FK anchor for the provider identity).
+    const { error: profileDeleteErr } = await adminClient
       .from("profiles")
       .delete()
       .eq("user_id", user.id);
-
-    // Delete notification preferences
-    await adminClient
-      .from("notification_preferences")
-      .delete()
-      .eq("user_id", user.id);
-
-    // Delete user roles
-    await adminClient
-      .from("user_roles")
-      .delete()
-      .eq("user_id", user.id);
-
-    // Delete user sessions
-    await adminClient
-      .from("user_sessions")
-      .delete()
-      .eq("user_id", user.id);
-
-    // Delete activity log
-    await adminClient
-      .from("account_activity_log")
-      .delete()
-      .eq("user_id", user.id);
-
-    // Delete subscription alerts
-    await adminClient
-      .from("subscription_alerts")
-      .delete()
-      .eq("user_id", user.id);
-
-    // Delete subscription events
-    await adminClient
-      .from("subscription_events")
-      .delete()
-      .eq("user_id", user.id);
+    if (profileDeleteErr) {
+      console.error("[DELETE-PROVIDER-ACCOUNT] profile delete failed:", profileDeleteErr);
+      return new Response(
+        JSON.stringify({ error: "Failed to delete account data" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // Finally delete the auth user
     const { error: deleteError } = await adminClient.auth.admin.deleteUser(user.id);

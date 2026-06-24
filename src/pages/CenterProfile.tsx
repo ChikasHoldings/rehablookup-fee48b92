@@ -483,22 +483,15 @@ const CenterProfile = () => {
     staleTime: 1000 * 60 * 5,
   });
 
-  const { data: facilityPlan = "free" } = useQuery({
-    queryKey: ["facility-plan", facility?.id],
-    queryFn: async (): Promise<string> => {
-      if (!facility?.id) return "free";
-      const { data } = await supabase.functions.invoke("get-facility-plan", {
-        body: { facilityId: facility.id },
-      });
-      // Map legacy tiers to Free/Pro
-      const plan = data?.plan || "free";
-      if (plan === "professional" || plan === "featured") return "pro";
-      if (plan === "basic") return "free";
-      return plan;
-    },
-    enabled: !!facility?.id,
-    staleTime: 1000 * 60 * 5,
-  });
+  // Pro plan is derived directly from the public_facilities view's `is_pro`
+  // flag (= has_active_pro), which is loaded with the facility above and is
+  // visible to ANONYMOUS visitors. The previous get-facility-plan edge call
+  // required verify_jwt, so anonymous seekers — the majority of public-profile
+  // traffic — always resolved to "free", silently defeating the Pro lead-modal
+  // benefits (competitor hiding, uncapped leads, Pro badge). Deriving from
+  // is_pro fixes it for everyone, removes a JWT-gated round-trip on a public
+  // page, and honours the past_due grace period that get-facility-plan missed.
+  const facilityPlan = facility?.is_pro ? "pro" : "free";
 
   // Fetch facility rating for badge display
   const ratingData = useFacilityRating(facility?.id);
