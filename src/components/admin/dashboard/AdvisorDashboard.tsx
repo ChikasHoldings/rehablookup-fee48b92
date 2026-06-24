@@ -138,14 +138,19 @@ export function AdvisorDashboard() {
       // open the placement workflow for a case this advisor doesn't own.
       if (!claimed) throw new Error("This case was just claimed by another advisor.");
 
-      // Log event
-      await supabase.from("concierge_case_events").insert({
+      // Log event. The claim update already committed (0-row guarded above);
+      // surface a failed event insert rather than silently dropping the
+      // case-event audit trail.
+      const { error: eventErr } = await supabase.from("concierge_case_events").insert({
         inquiry_id: caseId,
         event_type: "advisor_claimed",
         event_data: { advisor_id: advisorId },
         actor_id: advisorId,
         actor_type: "advisor",
       });
+      if (eventErr) {
+        console.error("[AdvisorDashboard] claim case_event insert failed", eventErr);
+      }
     },
     onSuccess: (_data, caseId) => {
       toast.success("Case claimed! Opening placement workflow...");

@@ -77,7 +77,7 @@ export function EscalationDetailSheet({
   onOpenChange,
   adminNames,
 }: EscalationDetailSheetProps) {
-  const { user, isSuperAdmin } = useAdminAuth();
+  const { user, isSuperAdmin, adminRole } = useAdminAuth();
   const queryClient = useQueryClient();
   const [resolutionNotes, setResolutionNotes] = useState("");
 
@@ -101,6 +101,11 @@ export function EscalationDetailSheet({
   const priorityCfg = PRIORITY_MAP[escalation.priority] || PRIORITY_MAP.medium;
   const statusCfg = STATUS_MAP[escalation.status] || STATUS_MAP.open;
   const isAssignedToMe = escalation.assigned_to === user?.id;
+  // Priority and (re)assignment to other admins are manager/super-admin only
+  // (enforced server-side by the admin_escalations BEFORE UPDATE trigger). A
+  // non-moderator can still self-claim an unassigned escalation via the Claim
+  // button below.
+  const canModerate = isSuperAdmin || adminRole === "manager";
   const canAct = escalation.status !== "resolved" && escalation.status !== "closed";
   const creatorName = adminNames[escalation.created_by] || "Unknown";
   const assigneeName = escalation.assigned_to ? (adminNames[escalation.assigned_to] || "Admin") : null;
@@ -242,7 +247,11 @@ export function EscalationDetailSheet({
                 <div className="space-y-4">
                   <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Actions</h4>
 
-                  {/* Priority + Assignment row */}
+                  {/* Priority + Assignment row — moderator-only. Non-moderators
+                      self-assign via the Claim button below; the server-side
+                      escalation trigger rejects reassignment/priority changes
+                      from them regardless. */}
+                  {canModerate && (
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Priority</label>
@@ -286,6 +295,7 @@ export function EscalationDetailSheet({
                       </Select>
                     </div>
                   </div>
+                  )}
 
                   {/* Quick claim */}
                   {!escalation.assigned_to && (

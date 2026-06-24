@@ -193,7 +193,7 @@ Deno.serve(async (req) => {
     if (loadErr) return json(500, { error: "Failed to load escalations", code: "lookup_failed" });
     const currentMap = new Map(current?.map((r) => [r.id, r]) ?? []);
 
-    const results: Array<{ id: string; status: "ok" | "skipped" | "error"; reason?: string }> = [];
+    const results: Array<{ id: string; status: "ok" | "skipped" | "error"; reason?: string; auditWarning?: boolean }> = [];
     const now = new Date().toISOString();
 
     for (const id of escalationIds as string[]) {
@@ -213,7 +213,7 @@ Deno.serve(async (req) => {
             .eq("id", id);
           if (deleteErr) throw new Error(`Delete failed: ${deleteErr.message}`);
 
-          await adminClient.from("admin_audit_log").insert({
+          const { error: deleteAuditErr } = await adminClient.from("admin_audit_log").insert({
             admin_user_id: user.id,
             action_type: "escalation_bulk_deleted",
             target_type: "escalation",
@@ -227,8 +227,14 @@ Deno.serve(async (req) => {
               reason,
             },
           });
+          // The delete already committed; never silently drop the regulated
+          // audit record. Surface the gap (alertable) instead of reporting a
+          // clean success.
+          if (deleteAuditErr) {
+            console.error(`[admin-bulk-update-escalations] audit log insert failed for deleted escalation ${id}: ${deleteAuditErr.message}`);
+          }
 
-          results.push({ id, status: "ok" });
+          results.push({ id, status: "ok", ...(deleteAuditErr ? { auditWarning: true } : {}) });
           continue;
         }
 
@@ -296,7 +302,7 @@ Deno.serve(async (req) => {
           .eq("id", id);
         if (updateErr) throw new Error(updateErr.message);
 
-        await adminClient.from("admin_audit_log").insert({
+        const { error: updateAuditErr } = await adminClient.from("admin_audit_log").insert({
           admin_user_id: user.id,
           action_type: auditAction,
           target_type: "escalation",
@@ -310,8 +316,13 @@ Deno.serve(async (req) => {
             ...(update.resolution_notes ? { resolution_notes: update.resolution_notes } : {}),
           },
         });
+        // The mutation already committed; surface (don't swallow) a failed
+        // audit write on this regulated action trail.
+        if (updateAuditErr) {
+          console.error(`[admin-bulk-update-escalations] audit log insert failed for ${auditAction} on escalation ${id}: ${updateAuditErr.message}`);
+        }
 
-        results.push({ id, status: "ok" });
+        results.push({ id, status: "ok", ...(updateAuditErr ? { auditWarning: true } : {}) });
       } catch (err) {
         results.push({
           id,

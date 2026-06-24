@@ -53,6 +53,16 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (!roleData) throw new Error("Unauthorized: Admin access required");
+
+    // Revenue/MRR is a super_admin/manager surface (it backs the SuperAdmin and
+    // Manager dashboards and matches the 'subscriptions' permission, which only
+    // those tiers hold). Every admin tier — including advisor/customer_rep —
+    // carries the coarse user_roles 'admin' grant, so the check above is not
+    // sufficient; gate explicitly on the moderation tier.
+    const { data: canModerate, error: modErr } = await supabaseClient
+      .rpc("can_moderate_users", { p_user_id: adminUser.id });
+    if (modErr) throw new Error(`Authorization check failed: ${modErr.message}`);
+    if (canModerate !== true) throw new Error("Unauthorized: manager or super admin access required");
     logStep("Admin verified", { adminId: adminUser.id });
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");

@@ -6,6 +6,33 @@
 
 ---
 
+> ## ⚠️ SUPERSEDED — read this first (updated 2026-06-24)
+>
+> The original fix below used an **optimistic (fail-open) render**: while
+> permissions hydrate, `hasRouteAccess` defaulted to `true` and the page
+> mounted. That is **no longer how the code works.** `AdminShell` now **fails
+> closed** during hydration — it holds a loading state until permissions are
+> ready, then renders `<Outlet/>` or `<AccessDenied/>`:
+>
+> ```ts
+> const hasRouteAccess = permissionsReady && effectiveCanAccessRoute(location.pathname);
+> // …render…
+> {!permissionsReady ? <AdminPageLoading /> : hasRouteAccess ? <Outlet /> : <AccessDenied />}
+> ```
+>
+> This still fixes the flash (a loading skeleton shows instead of AccessDenied),
+> but never renders a permission-gated page before the guard has resolved.
+>
+> Relatedly, `useAdminAuth.canAccessRoute` is now **fail-closed for unmapped
+> routes**: a route with no `routePermissionMap` entry is denied for non-super
+> tiers (it previously fell through to "allow"). Every mounted `/admin` route
+> must be mapped — enforced by `adminNavConfig.test.ts`.
+>
+> The "Fix" / "Why this is safe" sections below are kept for history but
+> describe the older optimistic approach; treat them as superseded.
+
+---
+
 ## Root cause
 
 `useAdminAuth` does two things on mount:

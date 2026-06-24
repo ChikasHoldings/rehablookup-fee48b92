@@ -137,3 +137,85 @@ describe("adminNavConfig — no dead or duplicate nav links", () => {
     });
   }
 });
+
+/**
+ * Mirror of routePermissionMap in useAdminAuth.ts (kept here, not imported, for
+ * the same reason as KNOWN_ADMIN_ROUTES — to avoid the hook's supabase/router
+ * import chain). Update this when routePermissionMap changes.
+ *
+ * canAccessRoute is now FAIL-CLOSED: an /admin route with no permission mapping
+ * is denied for every non-super tier (previously it fell through to "allow").
+ * So every mounted admin route MUST resolve to a permission key here (directly
+ * or via a longest-prefix match), or lower tiers would hit a false
+ * AccessDenied.
+ */
+const ROUTE_PERMISSION_MAP: Record<string, string> = {
+  "/admin": "dashboard",
+  "/admin/dashboard": "dashboard",
+  "/admin/analytics": "analytics",
+  "/admin/providers": "providers",
+  "/admin/leads": "leads",
+  "/admin/seekers": "seekers",
+  "/admin/subscriptions": "subscriptions",
+  "/admin/featured": "featured",
+  "/admin/users": "users",
+  "/admin/audit-log": "audit_log",
+  "/admin/settings": "settings",
+  "/admin/notifications": "notifications",
+  "/admin/profile": "dashboard",
+  "/admin/reviews": "reviews",
+  "/admin/concierge": "placements",
+  "/admin/support": "support",
+  "/admin/placement-revenue": "placements",
+  "/admin/credentials": "providers",
+  "/admin/security-logs": "security_logs",
+  "/admin/marketing": "leads",
+  "/admin/blog": "providers",
+  "/admin/international": "placements",
+  "/admin/inbox": "placements",
+  "/admin/escalations": "escalations",
+  "/admin/back-office": "back_office",
+  "/admin/provider-directory": "placements",
+  "/admin/email-logs": "security_logs",
+  "/admin/insurance-verifications": "leads",
+  "/admin/re-verification": "providers",
+  "/admin/not-found-events": "audit_log",
+  "/admin/claims": "providers",
+};
+
+function resolveRoutePermission(pathname: string): string | undefined {
+  if (ROUTE_PERMISSION_MAP[pathname]) return ROUTE_PERMISSION_MAP[pathname];
+  const sorted = Object.entries(ROUTE_PERMISSION_MAP)
+    .filter(([route]) => route !== "/admin")
+    .sort((a, b) => b[0].length - a[0].length);
+  for (const [route, perm] of sorted) {
+    if (pathname.startsWith(route)) return perm;
+  }
+  return undefined;
+}
+
+describe("admin route guard — fail-closed completeness", () => {
+  it("every mounted admin route resolves to a permission key (no fail-closed dead-end)", () => {
+    const unmapped = [...KNOWN_ADMIN_ROUTES].filter(
+      (route) => !resolveRoutePermission(route),
+    );
+    expect(unmapped).toEqual([]);
+  });
+});
+
+describe("adminNavConfig — advisor Escalations dead-end (D4 regression)", () => {
+  // Advisors are `escalations: false` by default, so an Escalations nav link
+  // would route to /admin/escalations and immediately hit AccessDenied. The
+  // advisor "Tools" section was removed for this reason.
+  it("advisor nav does not link to /admin/escalations", () => {
+    expect(allLinks(getNavSectionsForRole("advisor", false))).not.toContain(
+      "/admin/escalations",
+    );
+  });
+
+  it("customer_rep nav still links to /admin/escalations (reps are escalations:true)", () => {
+    expect(allLinks(getNavSectionsForRole("customer_rep", false))).toContain(
+      "/admin/escalations",
+    );
+  });
+});

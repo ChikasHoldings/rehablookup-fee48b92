@@ -293,10 +293,18 @@ export function useAdminAuth() {
       }
     }
 
-    // Dashboard, profile, and notifications are always accessible to any admin
-    if (!permissionKey || permissionKey === "dashboard" || permissionKey === "notifications") return true;
+    // Dashboard, profile, and notifications are always accessible to any admin.
+    if (permissionKey === "dashboard" || permissionKey === "notifications") return true;
 
-    // Settings is only accessible if the role has settings permission
+    // Fail closed: an /admin route with no permission mapping is NOT implicitly
+    // public. Every mounted /admin route must declare its permission in
+    // routePermissionMap (enforced by adminNavConfig.test.ts). Previously an
+    // unmapped route fell through to `return true`, so any newly-added admin
+    // route would have been reachable by every tier client-side until someone
+    // remembered to map it.
+    if (!permissionKey) return false;
+
+    // Otherwise the role must hold the route's declared permission.
     return permissions[permissionKey] === true;
   }, [isSuperAdmin, permissions]);
 
