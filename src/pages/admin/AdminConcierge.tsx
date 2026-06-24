@@ -572,20 +572,26 @@ export default function AdminConcierge() {
                 <SelectItem value="standard">Standard intake</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={advisorFilter} onValueChange={setAdvisorFilter}>
-              <SelectTrigger className="w-full sm:w-[150px]">
-                <SelectValue placeholder="Advisor" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Advisors</SelectItem>
-                <SelectItem value="unassigned">Unassigned</SelectItem>
-                {adminStaff?.map(a => (
-                  <SelectItem key={a.user_id} value={a.user_id}>
-                    {a.display_name || `${a.first_name} ${a.last_name}`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {/* Advisors only see their own + unassigned cases (enforced by the
+                concierge_inquiries RLS policy), so the cross-advisor filter is
+                hidden for them — it would only ever surface their own caseload
+                or nothing. Managers/super-admins keep the full filter. */}
+            {!isAdvisor && (
+              <Select value={advisorFilter} onValueChange={setAdvisorFilter}>
+                <SelectTrigger className="w-full sm:w-[150px]">
+                  <SelectValue placeholder="Advisor" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Advisors</SelectItem>
+                  <SelectItem value="unassigned">Unassigned</SelectItem>
+                  {adminStaff?.map(a => (
+                    <SelectItem key={a.user_id} value={a.user_id}>
+                      {a.display_name || `${a.first_name} ${a.last_name}`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             <div className="flex items-center gap-2 self-start sm:self-auto">
               <span className="text-xs text-muted-foreground tabular-nums whitespace-nowrap">{filteredCases.length} cases</span>
               <div className="flex items-center border rounded-md overflow-hidden">
