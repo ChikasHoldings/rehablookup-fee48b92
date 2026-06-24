@@ -177,6 +177,43 @@ Deno.serve(async (req) => {
       }
     }
 
+    // AUTHZ for the non-leadId types (welcome / security_alert / password_changed
+    // / drip / digest / account_reminder / etc.). These resolve the recipient
+    // from the request body, so without a caller check anyone holding the public
+    // anon key could relay branded RehabLookup emails to arbitrary addresses
+    // (spam / domain-reputation abuse). Require EITHER the service-role key
+    // (trusted cron/server callers — process-seeker-drip / -followup-reminders,
+    // both of which invoke with the service-role client) OR an authenticated
+    // user, in which case the recipient is forced to that user's OWN email. Every
+    // real client caller (signup welcome, login security_alert, settings
+    // password_changed) only ever emails the signed-in user themselves, so this
+    // neutralizes the relay without affecting any legitimate send.
+    if (!leadId) {
+      const naAuthHeader = req.headers.get("Authorization") || req.headers.get("authorization") || "";
+      const naToken = naAuthHeader.replace(/^Bearer\s+/i, "");
+      const naSrk = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+      const isServiceCaller = naToken.length > 0 && naToken === naSrk;
+      if (!isServiceCaller) {
+        if (!naToken) {
+          return new Response(
+            JSON.stringify({ error: "Authentication required" }),
+            { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+        const { data: naAuth, error: naErr } = await supabase.auth.getUser(naToken);
+        if (naErr || !naAuth?.user?.email) {
+          return new Response(
+            JSON.stringify({ error: "Invalid authentication" }),
+            { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+        // Force recipient to the authenticated user — a signed-in caller may only
+        // email themselves, never a body-supplied address.
+        seekerId = naAuth.user.id;
+        seekerEmail = naAuth.user.email;
+      }
+    }
+
     if (!seekerEmail && seekerId) {
       const { data: authUser } = await supabase.auth.admin.getUserById(seekerId);
       seekerEmail = authUser?.user?.email;
@@ -187,12 +224,12 @@ Deno.serve(async (req) => {
       const [profileResult, prefsResult] = await Promise.all([
         supabase
           .from("seeker_profiles")
-          .select("*")
+          .select("display_name, first_name, phone_verified, phone, sms_opted_in_at, sms_opted_out_at")
           .eq("user_id", seekerId)
           .single(),
         supabase
           .from("notification_preferences")
-          .select("*")
+          .select("email_lead_alerts, email_weekly_digest, email_product_updates, browser_notifications, followup_reminders_enabled")
           .eq("user_id", seekerId)
           .maybeSingle()
       ]);

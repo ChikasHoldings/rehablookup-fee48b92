@@ -17,7 +17,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
-import { CalendarDays, Video, Users, Loader2, CheckCircle } from "lucide-react";
+import { CalendarDays, Video, Users, Loader2, CheckCircle, Mail } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -43,7 +43,7 @@ export const FacilityTourRequestModal = forwardRef<HTMLDivElement, FacilityTourR
     prefillData,
   }, ref) {
   const { toast } = useToast();
-  const [step, setStep] = useState<"form" | "success">("form");
+  const [step, setStep] = useState<"form" | "verify" | "success">("form");
   const [tourType, setTourType] = useState<"in_person" | "virtual">("in_person");
   const [preferredDates, setPreferredDates] = useState<Date[]>([]);
   const [notes, setNotes] = useState("");
@@ -52,94 +52,139 @@ export const FacilityTourRequestModal = forwardRef<HTMLDivElement, FacilityTourR
   );
   const [email, setEmail] = useState(prefillData?.email || "");
   const [phone, setPhone] = useState(prefillData?.phone || "");
+  // Email verification (non-concierge / guest path only — submit-qualified-lead
+  // requires a server-verified email, so we collect a 6-digit code inline).
+  const [code, setCode] = useState("");
 
-  const submitMutation = useMutation({
-    mutationFn: async () => {
-      // Check if user is authenticated
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      // For authenticated users with active concierge inquiry, use that flow
-      if (user) {
-        const { data: inquiry } = await supabase
-          .from("concierge_inquiries")
-          .select("id")
-          .eq("user_id", user.id)
-          .not("status", "in", "(closed,completed)")
-          .maybeSingle();
+  // ── Build the qualified-lead payload (non-concierge path) ──
+  const buildLeadBody = () => {
+    const nameParts = name.trim().split(/\s+/);
+    const firstName = nameParts[0] || "";
+    const lastName = nameParts.slice(1).join(" ") || "";
+    const tourMessage = `Tour Request (${tourType === "virtual" ? "Virtual" : "In-Person"})\n\nPreferred dates: ${preferredDates.map(d => format(d, "MMM d, yyyy")).join(", ")}\n\n${notes || "No additional notes"}`;
+    return {
+      facilityId,
+      name: name.trim(),
+      firstName,
+      lastName,
+      email: email.toLowerCase().trim(),
+      phone: phone.replace(/\D/g, ""),
+      message: tourMessage,
+      preferredContact: "call" as const,
+      source: "facility_profile" as const,
+      // Stable within a 5-min window so a double-submit / retry doesn't create
+      // two leads, while still allowing a genuine later re-request.
+      idempotencyKey: `tour-${facilityId}-${email.toLowerCase().trim()}-${Math.floor(Date.now() / 300000)}`,
+    };
+  };
 
-        if (inquiry) {
-          // Use the concierge tour request flow
-          const { data: insertedRow, error } = await supabase
-            .from("concierge_tour_requests")
-            .insert({
-              inquiry_id: inquiry.id,
-              facility_id: facilityId,
-              user_id: user.id,
-              tour_type: tourType,
-              preferred_dates: preferredDates.map((d) => d.toISOString()),
-              notes: notes || null,
-              status: "requested",
-            })
-            .select("id")
-            .maybeSingle();
-          if (error) throw error;
+  const submitQualifiedLead = async () => {
+    const { data, error } = await supabase.functions.invoke("submit-qualified-lead", {
+      body: buildLeadBody(),
+    });
+    if (error) throw new Error(extractErrorMessage(error, "Failed to submit tour request"));
+    if (data?.error) throw new Error(extractErrorMessage(data, "Failed to submit tour request"));
+  };
 
-          // Notify the facility's provider that a tour was requested.
-          // Fire-and-forget — never block the user's confirmation on the email.
-          void supabase.functions
-            .invoke("send-tour-notifications", {
-              // The function takes { type, tourId } and reads facility/inquiry
-              // from the tour row. The prior { tourRequestId, event: "requested" }
-              // shape 400'd every time (silently, since this is fire-and-forget),
-              // so the facility never got the tour-requested email/SMS.
-              body: {
-                type: "tour_requested",
-                tourId: insertedRow?.id,
-              },
-            })
-            .catch((err) =>
-              console.warn("[FacilityTourRequestModal] tour notification failed", err),
-            );
-          return { type: "concierge" };
-        }
-      }
+  // Authenticated seeker with an active concierge inquiry → use the concierge
+  // tour-request table directly (no email verification needed; the JWT proves
+  // identity). Returns true when the request was handled this way.
+  const tryConciergeSubmit = async (): Promise<boolean> => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
 
-      // For non-concierge users, route through the hardened edge function
-      // This ensures sanitization, rate limiting, duplicate detection, and notifications
-      const nameParts = name.trim().split(/\s+/);
-      const firstName = nameParts[0] || "";
-      const lastName = nameParts.slice(1).join(" ") || "";
-      const tourMessage = `Tour Request (${tourType === "virtual" ? "Virtual" : "In-Person"})\n\nPreferred dates: ${preferredDates.map(d => format(d, "MMM d, yyyy")).join(", ")}\n\n${notes || "No additional notes"}`;
+    const { data: inquiry } = await supabase
+      .from("concierge_inquiries")
+      .select("id")
+      .eq("user_id", user.id)
+      .not("status", "in", "(closed,completed)")
+      .maybeSingle();
+    if (!inquiry) return false;
 
-      const { data, error } = await supabase.functions.invoke("submit-qualified-lead", {
-        body: {
-          facilityId,
-          name: name.trim(),
-          firstName,
-          lastName,
-          email: email.toLowerCase().trim(),
-          phone: phone.replace(/\D/g, ""),
-          message: tourMessage,
-          preferredContact: "call",
-          source: "facility_profile",
-          idempotencyKey: `tour-${facilityId}-${email.toLowerCase().trim()}-${Date.now()}`,
-        },
+    const { data: insertedRow, error } = await supabase
+      .from("concierge_tour_requests")
+      .insert({
+        inquiry_id: inquiry.id,
+        facility_id: facilityId,
+        user_id: user.id,
+        tour_type: tourType,
+        preferred_dates: preferredDates.map((d) => d.toISOString()),
+        notes: notes || null,
+        status: "requested",
+      })
+      .select("id")
+      .maybeSingle();
+    if (error) throw error;
+
+    // Notify the facility's provider — fire-and-forget, never block confirmation.
+    void supabase.functions
+      .invoke("send-tour-notifications", {
+        body: { type: "tour_requested", tourId: insertedRow?.id },
+      })
+      .catch((err) =>
+        console.warn("[FacilityTourRequestModal] tour notification failed", err),
+      );
+    return true;
+  };
+
+  // Phase 1 — concierge path, or (guest) submit if already verified, else send a
+  // code and advance to the verify step. The previous version posted straight to
+  // submit-qualified-lead with no verification, so every guest tour request got a
+  // 403 email_not_verified and a generic "try again" toast.
+  const initiateMutation = useMutation({
+    mutationFn: async (): Promise<{ done: boolean }> => {
+      if (await tryConciergeSubmit()) return { done: true };
+
+      const emailNorm = email.toLowerCase().trim();
+      // Already verified (e.g. used Request Info first this session)? Submit now.
+      const { data: check } = await supabase.functions.invoke("check-email-verified", {
+        body: { email: emailNorm },
       });
+      if (check?.verified) {
+        await submitQualifiedLead();
+        return { done: true };
+      }
+      // Otherwise send a one-time code and collect it on the verify step.
+      const { data: sendData, error: sendErr } = await supabase.functions.invoke("send-verification-code", {
+        body: { email: emailNorm },
+      });
+      if (sendErr) throw new Error(extractErrorMessage(sendErr, "Failed to send verification code"));
+      if (sendData?.error) throw new Error(extractErrorMessage(sendData, "Failed to send verification code"));
+      return { done: false };
+    },
+    onSuccess: (r) => {
+      setStep(r.done ? "success" : "verify");
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: extractErrorMessage(error, "Failed to submit tour request. Please try again."),
+        variant: "destructive",
+      });
+      console.error("Tour request error:", error);
+    },
+  });
 
-      if (error) throw new Error(extractErrorMessage(error, "Failed to submit tour request"));
-      if (data?.error) throw new Error(extractErrorMessage(data, "Failed to submit tour request"));
-      return { type: "lead" };
+  // Phase 2 — verify the emailed code, then submit the qualified lead.
+  const verifyMutation = useMutation({
+    mutationFn: async () => {
+      const emailNorm = email.toLowerCase().trim();
+      const { data, error } = await supabase.functions.invoke("verify-code", {
+        body: { email: emailNorm, code: code.trim() },
+      });
+      if (error) throw new Error(extractErrorMessage(error, "Invalid code. Please try again."));
+      if (data?.error) throw new Error(extractErrorMessage(data, "Invalid code. Please try again."));
+      await submitQualifiedLead();
     },
     onSuccess: () => {
       setStep("success");
     },
     onError: (error) => {
       toast({
-        title: "Error",
-        description: "Failed to submit tour request. Please try again.",
+        title: "Verification failed",
+        description: extractErrorMessage(error, "That code didn't work. Please try again."),
         variant: "destructive",
       });
-      console.error("Tour request error:", error);
     },
   });
 
@@ -156,6 +201,7 @@ export const FacilityTourRequestModal = forwardRef<HTMLDivElement, FacilityTourR
     setStep("form");
     setPreferredDates([]);
     setNotes("");
+    setCode("");
     // Reset identity fields to their prefill defaults too. This modal is a
     // long-lived mount on CenterProfile, so without this, reopening (e.g. on a
     // shared device) would show the previous user's name/email/phone.
@@ -182,6 +228,53 @@ export const FacilityTourRequestModal = forwardRef<HTMLDivElement, FacilityTourR
             </p>
             <Button onClick={handleClose} className="w-full">Done</Button>
           </div>
+        ) : step === "verify" ? (
+          <>
+            <DialogHeader>
+              <DialogTitle>Verify your email</DialogTitle>
+              <DialogDescription>
+                We sent a 6-digit code to {email.toLowerCase().trim()}. Enter it to send your tour request.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4 py-4">
+              <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <Mail className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <Label htmlFor="tour_code" className="text-sm font-medium">Verification code</Label>
+                <Input
+                  id="tour_code"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                  value={code}
+                  onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  placeholder="000000"
+                  className="mt-1.5 text-center text-lg tracking-[0.5em]"
+                />
+              </div>
+              <Button
+                onClick={() => verifyMutation.mutate()}
+                disabled={code.trim().length !== 6 || verifyMutation.isPending}
+                className="w-full"
+              >
+                {verifyMutation.isPending ? (
+                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Verifying...</>
+                ) : (
+                  "Verify & Send Request"
+                )}
+              </Button>
+              <button
+                type="button"
+                onClick={() => initiateMutation.mutate()}
+                disabled={initiateMutation.isPending}
+                className="w-full text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline disabled:opacity-50"
+              >
+                {initiateMutation.isPending ? "Resending..." : "Didn't get a code? Resend"}
+              </button>
+            </div>
+          </>
         ) : (
           <>
             <DialogHeader>
@@ -204,8 +297,8 @@ export const FacilityTourRequestModal = forwardRef<HTMLDivElement, FacilityTourR
                     htmlFor="tour_in_person"
                     className={cn(
                       "flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-all text-sm",
-                      tourType === "in_person" 
-                        ? "border-primary bg-primary/5 ring-1 ring-primary/20" 
+                      tourType === "in_person"
+                        ? "border-primary bg-primary/5 ring-1 ring-primary/20"
                         : "border-border hover:border-border/80"
                     )}
                   >
@@ -217,8 +310,8 @@ export const FacilityTourRequestModal = forwardRef<HTMLDivElement, FacilityTourR
                     htmlFor="tour_virtual"
                     className={cn(
                       "flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-all text-sm",
-                      tourType === "virtual" 
-                        ? "border-primary bg-primary/5 ring-1 ring-primary/20" 
+                      tourType === "virtual"
+                        ? "border-primary bg-primary/5 ring-1 ring-primary/20"
                         : "border-border hover:border-border/80"
                     )}
                   >
@@ -327,11 +420,11 @@ export const FacilityTourRequestModal = forwardRef<HTMLDivElement, FacilityTourR
                 Cancel
               </Button>
               <Button
-                onClick={() => submitMutation.mutate()}
-                disabled={!canSubmit || submitMutation.isPending}
+                onClick={() => initiateMutation.mutate()}
+                disabled={!canSubmit || initiateMutation.isPending}
                 className="flex-1"
               >
-                {submitMutation.isPending ? (
+                {initiateMutation.isPending ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                     Sending...

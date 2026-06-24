@@ -204,17 +204,36 @@ Deno.serve(async (req) => {
 
     // Phone verification is the proof-of-control for anonymous public
     // intakes (the form bakes phone OTP into the funnel). Authenticated
-    // seekers (signed-in account) bypass the recency check — their
-    // identity is already proven by the JWT — but a bearer token is
-    // still required for that path.
+    // seekers (signed-in account) bypass — their identity is already
+    // proven by the JWT.
+    //
+    // SECURITY: we verify SERVER-SIDE that the submitted phone actually
+    // completed an OTP. The previous gate trusted a client-supplied
+    // `phoneVerifiedAt` timestamp, which any caller holding the public anon
+    // key could forge to create an inquiry with an arbitrary, never-verified
+    // phone (spam + putting a victim's number in the advisor queue). The OTP
+    // pipeline stores phones in E.164 (`send-sms-verification-code`) and
+    // `verify-sms-code` flips `verified=true` on success, so we require a
+    // recent verified code for the normalized submitted phone.
     if (!authenticatedUserId) {
-      const phoneOk = (() => {
-        if (!phoneVerifiedAt || typeof phoneVerifiedAt !== "string") return false;
-        const t = Date.parse(phoneVerifiedAt);
-        if (Number.isNaN(t)) return false;
-        // Accept anything within the last 60 minutes.
-        return Date.now() - t <= 60 * 60 * 1000;
-      })();
+      const phoneDigits = String((intakeData as FullIntakeData).phone ?? "").replace(/\D/g, "");
+      const e164 = phoneDigits.length >= 10 ? `+1${phoneDigits.slice(-10)}` : null;
+      let phoneOk = false;
+      if (e164) {
+        // Window is generous on purpose: the code is created ≤10 min before the
+        // user enters it and the funnel submits shortly after, so 2h comfortably
+        // covers an honest user while bounding replay of a stale verified code.
+        const { data: verifiedCode } = await supabase
+          .from("phone_verification_codes")
+          .select("id")
+          .eq("phone", e164)
+          .eq("verified", true)
+          .gte("created_at", new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString())
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        phoneOk = !!verifiedCode;
+      }
       if (!phoneOk) {
         const code = "phone_verification_required";
         logStep(requestId, code, { phoneVerifiedAtPresent: !!phoneVerifiedAt });

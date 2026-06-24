@@ -183,11 +183,22 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Mark code as verified
-    await supabase
+    // Mark code as verified. This MUST persist: downstream gates (e.g.
+    // submit-concierge-intake) require a verified=true row as server-side proof
+    // of phone control, so a silently-failed write here would later block the
+    // legitimate user at submit time. Fail loud so the client can retry instead
+    // of believing verification succeeded.
+    const { error: markVerifiedError } = await supabase
       .from("phone_verification_codes")
       .update({ verified: true })
       .eq("id", verificationCode.id);
+    if (markVerifiedError) {
+      logStep("Failed to persist verification", { requestId, error: markVerifiedError.message });
+      return new Response(
+        JSON.stringify({ error: "Failed to complete verification. Please try again.", requestId }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // Update user profile if userId is provided
     if (userId) {
