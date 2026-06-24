@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { fetchAdminDirectory } from "@/lib/adminDirectory";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useEscalationTransition, type EscalationStatus } from "@/hooks/useEscalationTransition";
 import {
@@ -85,11 +85,10 @@ export function EscalationDetailSheet({
   const { data: assignableAdmins } = useQuery({
     queryKey: ["assignable-admins"],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("admin_user_profiles")
-        .select("user_id, first_name, last_name, display_name, admin_role")
-        .in("admin_role", ["super_admin", "manager"]);
-      return data || [];
+      // admin_user_profiles SELECT is tier-restricted; resolve assignable
+      // admins through the directory RPC instead.
+      const directory = await fetchAdminDirectory();
+      return directory.filter((a) => a.admin_role === "super_admin" || a.admin_role === "manager");
     },
     enabled: open,
   });

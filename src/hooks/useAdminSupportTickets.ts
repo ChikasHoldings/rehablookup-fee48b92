@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAdminDirectory } from "@/lib/adminDirectory";
 import { toast } from "sonner";
 
 export interface SupportTicket {
@@ -94,11 +95,11 @@ export function useAdminSupportTickets(filters: SupportTicketFilters = {}) {
       let adminProfiles: Record<string, { display_name: string | null; avatar_url: string | null }> = {};
       
       if (assignedUserIds.length > 0) {
-        const { data: profiles } = await supabase
-          .from("admin_user_profiles")
-          .select("user_id, display_name, avatar_url")
-          .in("user_id", assignedUserIds);
-        
+        // admin_user_profiles SELECT is tier-restricted; resolve assignee
+        // identity through the directory RPC instead.
+        const directory = await fetchAdminDirectory();
+        const profiles = directory.filter((p) => assignedUserIds.includes(p.user_id));
+
         if (profiles) {
           adminProfiles = profiles.reduce((acc, p) => {
             acc[p.user_id] = { display_name: p.display_name, avatar_url: p.avatar_url };
@@ -133,11 +134,11 @@ export function useSupportTicketNotes(ticketId: string) {
       let authorProfiles: Record<string, { display_name: string | null; avatar_url: string | null }> = {};
       
       if (authorIds.length > 0) {
-        const { data: profiles } = await supabase
-          .from("admin_user_profiles")
-          .select("user_id, display_name, avatar_url")
-          .in("user_id", authorIds);
-        
+        // admin_user_profiles SELECT is tier-restricted; resolve note-author
+        // identity through the directory RPC instead.
+        const directory = await fetchAdminDirectory();
+        const profiles = directory.filter((p) => authorIds.includes(p.user_id));
+
         if (profiles) {
           authorProfiles = profiles.reduce((acc, p) => {
             acc[p.user_id] = { display_name: p.display_name, avatar_url: p.avatar_url };
