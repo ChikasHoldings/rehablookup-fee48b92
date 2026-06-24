@@ -4,6 +4,7 @@ import { useCaseTransition } from "@/hooks/useCaseTransition";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { getCaseEventActorType } from "@/lib/caseEventActor";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAdminDirectory } from "@/lib/adminDirectory";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -38,13 +39,13 @@ export function AdvisorAssignmentCard({ caseData, onRefresh }: AdvisorAssignment
   const { data: adminStaff, isLoading: staffLoading } = useQuery({
     queryKey: ["admin-staff-advisors"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("admin_user_profiles")
-        .select("user_id, first_name, last_name, display_name, admin_role")
-        .in("admin_role", ["super_admin", "manager", "advisor"])
-        .eq("status", "active");
-      if (error) throw error;
-      return data;
+      // admin_user_profiles SELECT is tier-restricted; resolve assignable staff
+      // through the directory RPC instead.
+      const directory = await fetchAdminDirectory();
+      return directory.filter((a) =>
+        (a.admin_role === "super_admin" || a.admin_role === "manager" || a.admin_role === "advisor")
+        && a.status === "active",
+      );
     },
   });
 

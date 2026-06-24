@@ -55,6 +55,7 @@ import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { logAdminAction, AdminAuditActions } from "@/hooks/useAdminAuditLog";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAdminDirectory } from "@/lib/adminDirectory";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import {
@@ -125,12 +126,10 @@ export function SupportTicketModal({
   const { data: adminStaff = [] } = useQuery({
     queryKey: ["admin-staff-list"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("admin_user_profiles")
-        .select("user_id, display_name, avatar_url")
-        .eq("status", "active");
-      if (error) throw error;
-      return data;
+      // admin_user_profiles SELECT is tier-restricted; resolve the assignee
+      // directory through the RPC instead.
+      const directory = await fetchAdminDirectory();
+      return directory.filter((a) => a.status === "active");
     },
   });
 

@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAdminDirectory, adminDisplayName } from "@/lib/adminDirectory";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useEscalationTransition, type EscalationStatus } from "@/hooks/useEscalationTransition";
 import { Badge } from "@/components/ui/badge";
@@ -137,14 +138,13 @@ export function EscalationsList({
     queryKey: ["admin-names", adminIds],
     queryFn: async () => {
       if (!adminIds.length) return {};
-      const { data, error } = await supabase
-        .from("admin_user_profiles")
-        .select("user_id, first_name, last_name, display_name")
-        .in("user_id", adminIds);
-      if (error) throw error;
+      // Name resolution for other admins goes through the directory RPC — the
+      // admin_user_profiles table SELECT is tier-restricted (lower tiers read
+      // only their own row).
+      const directory = await fetchAdminDirectory();
       const map: Record<string, string> = {};
-      data?.forEach((a) => {
-        map[a.user_id] = a.display_name || [a.first_name, a.last_name].filter(Boolean).join(" ") || "Admin";
+      directory.forEach((a) => {
+        if (adminIds.includes(a.user_id)) map[a.user_id] = adminDisplayName(a);
       });
       return map;
     },

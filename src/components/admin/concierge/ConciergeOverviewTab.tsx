@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAdminDirectory } from "@/lib/adminDirectory";
 import {
   User, Calendar, Clock, Shield, MapPin, CheckCircle, XCircle, AlertTriangle,
 } from "lucide-react";
@@ -59,12 +60,10 @@ export function ConciergeOverviewTab({ caseData }: ConciergeOverviewTabProps) {
     queryKey: ["advisor-profile", caseData.assigned_advisor_id],
     queryFn: async () => {
       if (!caseData.assigned_advisor_id) return null;
-      const { data } = await supabase
-        .from("admin_user_profiles")
-        .select("first_name, last_name, display_name")
-        .eq("user_id", caseData.assigned_advisor_id)
-        .maybeSingle();
-      return data;
+      // admin_user_profiles SELECT is tier-restricted; resolve the advisor's
+      // name through the directory RPC instead.
+      const directory = await fetchAdminDirectory();
+      return directory.find((a) => a.user_id === caseData.assigned_advisor_id) ?? null;
     },
     enabled: !!caseData.assigned_advisor_id,
   });

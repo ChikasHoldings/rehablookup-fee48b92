@@ -23,6 +23,7 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAdminDirectory } from "@/lib/adminDirectory";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -147,13 +148,12 @@ export default function AdminSupport() {
   const { data: adminStaff = [] } = useQuery({
     queryKey: ["admin-support-staff"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("admin_user_profiles")
-        .select("user_id, display_name")
-        .eq("status", "active")
-        .order("display_name", { ascending: true });
-      if (error) throw error;
-      return data ?? [];
+      // admin_user_profiles SELECT is tier-restricted; resolve the staff
+      // directory through the RPC instead.
+      const directory = await fetchAdminDirectory();
+      return directory
+        .filter((a) => a.status === "active")
+        .sort((x, y) => (x.display_name || "").localeCompare(y.display_name || ""));
     },
     staleTime: 1000 * 60 * 5,
   });

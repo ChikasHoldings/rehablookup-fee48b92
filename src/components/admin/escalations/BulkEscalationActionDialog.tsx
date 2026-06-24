@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAdminDirectory } from "@/lib/adminDirectory";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
@@ -68,14 +69,12 @@ export function BulkEscalationActionDialog({
   const { data: assignableAdmins = [] } = useQuery({
     queryKey: ["escalation-bulk-assignable-admins"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("admin_user_profiles")
-        .select("user_id, first_name, last_name, display_name, admin_role")
-        .in("admin_role", ["super_admin", "manager"])
-        .eq("status", "active")
-        .order("display_name", { ascending: true });
-      if (error) throw error;
-      return data ?? [];
+      // admin_user_profiles SELECT is tier-restricted; resolve eligible
+      // assignees through the directory RPC instead.
+      const directory = await fetchAdminDirectory();
+      return directory
+        .filter((a) => (a.admin_role === "super_admin" || a.admin_role === "manager") && a.status === "active")
+        .sort((x, y) => (x.display_name || "").localeCompare(y.display_name || ""));
     },
     enabled: open && action === "assign",
   });

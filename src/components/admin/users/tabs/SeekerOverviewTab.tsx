@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAdminDirectory } from "@/lib/adminDirectory";
 import {
   User, MapPin, Calendar, CheckCircle, Shield,
   Send, KeyRound, Ban, Trash2, ShieldOff, Loader2, FileText,
@@ -128,11 +129,10 @@ export function SeekerOverviewTab({
       let advisor = null;
       const advisorId = topCase.assigned_advisor_id;
       if (advisorId) {
-        const { data: adv } = await supabase
-          .from("admin_user_profiles")
-          .select("user_id, first_name, last_name, display_name")
-          .eq("user_id", advisorId)
-          .single();
+        // admin_user_profiles SELECT is tier-restricted; resolve the advisor's
+        // name through the directory RPC instead.
+        const directory = await fetchAdminDirectory();
+        const adv = directory.find((a) => a.user_id === advisorId) ?? null;
         advisor = adv ? (adv.display_name || `${adv.first_name || ""} ${adv.last_name || ""}`.trim()) : null;
       }
 

@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { pluckNonNull } from "@/lib/nullableRows";
 import { slugToLabel } from "@/lib/textCase";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAdminDirectory } from "@/lib/adminDirectory";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Building2, Calendar, MapPin,
@@ -83,13 +84,14 @@ export function SeekerPlacementsTab({ userId }: SeekerPlacementsTabProps) {
       const advisorIds = [...new Set(pluckNonNull(inqs as { assigned_advisor_id: string | null }[], "assigned_advisor_id"))];
       const advisorMap: Record<string, string> = {};
       if (advisorIds.length) {
-        const { data: advisors } = await supabase
-          .from("admin_user_profiles")
-          .select("user_id, first_name, last_name, display_name")
-          .in("user_id", advisorIds);
-        advisors?.forEach((a) => {
-          advisorMap[a.user_id] = a.display_name || `${a.first_name || ""} ${a.last_name || ""}`.trim() || "Advisor";
-        });
+        // admin_user_profiles SELECT is tier-restricted; resolve advisor names
+        // through the directory RPC instead.
+        const directory = await fetchAdminDirectory();
+        directory
+          .filter((a) => advisorIds.includes(a.user_id))
+          .forEach((a) => {
+            advisorMap[a.user_id] = a.display_name || `${a.first_name || ""} ${a.last_name || ""}`.trim() || "Advisor";
+          });
       }
 
       return inqs.map((inq) => ({

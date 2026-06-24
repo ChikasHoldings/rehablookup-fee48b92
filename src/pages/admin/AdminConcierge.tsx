@@ -5,6 +5,7 @@ import { AdvisorReminder } from "@/components/admin/concierge/AdvisorReminder";
 import { Link, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { fetchAdminDirectory } from "@/lib/adminDirectory";
 import { AdminPageHeader, AdminStatCard } from "@/components/admin/AdminPageHeader";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -193,11 +194,10 @@ export default function AdminConcierge() {
   const { data: adminStaff } = useQuery({
     queryKey: ["admin-staff-list"],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("admin_user_profiles")
-        .select("user_id, first_name, last_name, display_name")
-        .eq("status", "active");
-      return data || [];
+      // admin_user_profiles SELECT is tier-restricted; resolve the active-staff
+      // directory through the RPC instead.
+      const directory = await fetchAdminDirectory();
+      return directory.filter((a) => a.status === "active");
     },
   });
 
