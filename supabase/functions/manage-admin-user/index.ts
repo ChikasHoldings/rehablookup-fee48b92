@@ -605,21 +605,23 @@ Deno.serve(async (req) => {
           .single();
 
         if (!existingRole) {
-          await supabase.from("user_roles").insert({
+          const { error: roleInsertErr } = await supabase.from("user_roles").insert({
             user_id: targetUserId,
             role: "admin",
           });
+          if (roleInsertErr) throw new Error("Failed to grant the admin role. Please try again.");
         }
 
         // Update super_admin permission based on role
         const isSuperAdmin = newRole === "super_admin";
-        await supabase
+        const { error: superPermErr } = await supabase
           .from("admin_user_permissions")
           .upsert({
             user_id: targetUserId,
             permission_key: "super_admin",
             granted: isSuperAdmin,
           }, { onConflict: "user_id,permission_key" });
+        if (superPermErr) throw new Error("Role updated but failed to sync the super-admin permission. Please re-apply the role.");
 
         // Log action
         await supabase.from("admin_audit_log").insert({
@@ -653,11 +655,12 @@ Deno.serve(async (req) => {
           .maybeSingle();
 
         // Delete existing permissions (except super_admin which is role-bound)
-        await supabase
+        const { error: permClearErr } = await supabase
           .from("admin_user_permissions")
           .delete()
           .eq("user_id", targetUserId)
           .neq("permission_key", "super_admin");
+        if (permClearErr) throw new Error("Failed to update permissions while clearing old grants. Please try again.");
 
         // Insert new permissions (filter out super_admin - it's managed by role changes only)
         const permissionInserts = Object.entries(permissions)
@@ -669,7 +672,11 @@ Deno.serve(async (req) => {
           }));
 
         if (permissionInserts.length > 0) {
-          await supabase.from("admin_user_permissions").insert(permissionInserts);
+          // Delete-then-insert isn't transactional; if this insert fails the old
+          // grants are already gone, so fail loud (don't report success on an
+          // admin left with no permissions) — a retry re-applies cleanly.
+          const { error: permInsertErr } = await supabase.from("admin_user_permissions").insert(permissionInserts);
+          if (permInsertErr) throw new Error("Failed to save updated permissions. Please re-apply the admin's permissions.");
         }
 
         // Log action

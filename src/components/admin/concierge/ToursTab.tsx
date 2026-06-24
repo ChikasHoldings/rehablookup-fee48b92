@@ -220,12 +220,15 @@ export function ToursTab({ caseData }: ToursTabProps) {
     }) => {
       const { data: { user } } = await supabase.auth.getUser();
 
-      const { error } = await supabase
+      const { data: updatedTour, error } = await supabase
         .from("concierge_tour_requests")
         .update(updates as never)
-        .eq("id", tourId);
+        .eq("id", tourId)
+        .select("id")
+        .maybeSingle();
 
       if (error) throw error;
+      if (!updatedTour) throw new Error("Tour not found, or you don't have permission to update it.");
 
       await supabase.from("concierge_case_events").insert({
         inquiry_id: caseData.id,

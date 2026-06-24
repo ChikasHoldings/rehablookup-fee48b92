@@ -124,10 +124,11 @@ export function TwoFactorSetupDialog({
       // Update admin_user_profiles to mark MFA as enabled and log audit
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        await supabase
+        const { error: mfaFlagErr } = await supabase
           .from("admin_user_profiles")
           .update({ mfa_enabled: true })
           .eq("user_id", user.id);
+        if (mfaFlagErr) console.warn("[TwoFactorSetup] mfa_enabled flag write failed (factor already enrolled)", mfaFlagErr);
 
         await logAdminAction({
           actionType: AdminAuditActions.MFA_ENABLED,

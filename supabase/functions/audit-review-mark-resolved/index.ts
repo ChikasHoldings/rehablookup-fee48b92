@@ -57,15 +57,22 @@ Deno.serve(async (req) => {
     { auth: { persistSession: false } },
   );
 
-  const { data: roleRows } = await admin
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", user.id);
-  const isAdmin = (roleRows ?? []).some((r: { role: string }) =>
-    ["admin", "super_admin"].includes(r.role),
-  );
-  if (!isAdmin) {
-    return new Response(JSON.stringify({ error: "Admin role required" }), {
+  // EKRA oversight is a separation-of-duties surface: resolving a flagged
+  // concierge introduction must be done by super_admin/manager, NOT the advisor
+  // whose introduction was flagged. The prior gate accepted any user_roles
+  // 'admin' row, which create-admin-user grants to EVERY tier (incl. advisor /
+  // customer_rep) — so an advisor could self-clear their own compliance flags.
+  // Gate on the granular admin_user_profiles tier instead.
+  const { data: adminProfile } = await admin
+    .from("admin_user_profiles")
+    .select("admin_role, status")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  const canModerate = !!adminProfile
+    && adminProfile.status === "active"
+    && ["super_admin", "manager"].includes(adminProfile.admin_role);
+  if (!canModerate) {
+    return new Response(JSON.stringify({ error: "Super-admin or manager role required" }), {
       status: 403,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
@@ -87,7 +94,7 @@ Deno.serve(async (req) => {
     );
   }
 
-  const { error: updateErr } = await admin
+  const { data: updatedRows, error: updateErr } = await admin
     .from("concierge_introduction_audit")
     .update({
       reviewed_at: new Date().toISOString(),
@@ -95,12 +102,22 @@ Deno.serve(async (req) => {
       review_outcome: parsed.data.outcome,
       review_note: parsed.data.note ?? null,
     })
-    .eq("id", parsed.data.audit_id);
+    .eq("id", parsed.data.audit_id)
+    .select("id");
 
   if (updateErr) {
     console.error("[audit-review-mark-resolved] update failed", updateErr);
     return new Response(JSON.stringify({ error: "Failed to mark as resolved" }), {
       status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+  // 0-row detection: don't report success when the audit_id doesn't exist
+  // (or was filtered out) — otherwise a flagged row appears "resolved" with
+  // nothing changed.
+  if (!updatedRows || updatedRows.length === 0) {
+    return new Response(JSON.stringify({ error: "Audit record not found" }), {
+      status: 404,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
