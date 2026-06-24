@@ -99,7 +99,7 @@ function seekerReminderEmail(userName: string, facilitiesCount: number): string 
       <a href="${DASHBOARD_URL}/account/concierge" style="display:inline-block;padding:14px 28px;background:#0EA5E9;color:#fff;text-decoration:none;border-radius:8px;font-size:15px;font-weight:600;">Review My Options</a>
     </div>
     <p style="margin:24px 0 0;font-size:13px;color:#94a3b8;text-align:center;">
-      Questions? Reply to this email or call us at (888) 555-0123.
+      Questions? Reply to this email or call us at <a href="tel:+12146396420" style="color:#94a3b8;font-weight:600;">(214) 639-6420</a>.
     </p>
   </td></tr>
 </table>
