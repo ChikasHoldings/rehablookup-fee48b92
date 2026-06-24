@@ -679,7 +679,7 @@ function getFreeTierSeekerConfirmationEmail(args: {
       route or intermediate.
     </p>
     <p style="font-size:14px;color:#334155;line-height:1.6;margin:0 0 12px 0;">
-      In the meantime, you can reach us at <a href="tel:+18005551234" style="color:#1B365D;font-weight:600;">(800) 555-1234</a>.
+      In the meantime, you can reach us at <a href="tel:+12146396420" style="color:#1B365D;font-weight:600;">(214) 639-6420</a>.
     </p>
     <p style="font-size:12px;color:#94a3b8;margin:24px 0 0 0;border-top:1px solid #e2e8f0;padding-top:16px;">
       Reference: ${inquiryId.slice(0, 8)} &middot; This is a transactional email about your

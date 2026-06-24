@@ -458,6 +458,17 @@ export function EmailLeadDialog({ lead, open, onOpenChange, facilityId }: EmailL
         throw new Error(response.data.error);
       }
 
+      // A suppressed / dead-lettered send returns success:false (HTTP 502 →
+      // surfaced as response.error above). Guard the in-body flag too so the
+      // provider is never told an undeliverable email "sent successfully".
+      if (response.data?.success === false) {
+        throw new Error(
+          response.data.suppressed
+            ? "This recipient's email is suppressed (a previous message bounced or they unsubscribed) — the message was not sent."
+            : "The email could not be delivered. Please try again.",
+        );
+      }
+
       return response.data;
     },
     onSuccess: (data) => {

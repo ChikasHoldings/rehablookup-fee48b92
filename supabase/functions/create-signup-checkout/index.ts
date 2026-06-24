@@ -187,6 +187,11 @@ Deno.serve(async (req) => {
           billing_period: parsed.data.billing_period,
         },
       },
+    }, {
+      // Prevent a double-submit / network retry during signup from creating two
+      // live Pro subscriptions for the same facility: a stable 5-minute
+      // idempotency key makes Stripe return the SAME Checkout Session on retry.
+      idempotencyKey: `signup-checkout-${user.id}-${parsed.data.facility_id}-${Math.floor(Date.now() / 300000)}`,
     });
 
     return new Response(
