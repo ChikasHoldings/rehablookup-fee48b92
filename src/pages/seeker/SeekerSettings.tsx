@@ -503,9 +503,10 @@ export default function SeekerSettings() {
 
     setIsSaving(true);
 
-    const fullDisplayName = cleanFirstName && cleanLastName
-      ? `${cleanFirstName} ${cleanLastName}`
-      : displayName;
+    // Build from whichever name parts are present so a first-name-only edit
+    // still persists; fall back to the existing display name only when both
+    // are blank (previously a missing last name silently discarded the edit).
+    const fullDisplayName = [cleanFirstName, cleanLastName].filter(Boolean).join(" ") || displayName;
 
     // If the phone in the form differs from the last-verified phone,
     // the row's phone_verified flag is no longer truthful. Reset it on

@@ -202,17 +202,24 @@ export function SeekerProviderReviewCard({ inquiryId, onConfirmed }: SeekerProvi
       });
       if (error) throw error;
 
-      await supabase.from("concierge_case_events").insert({
+      const { error: confirmEventError } = await supabase.from("concierge_case_events").insert({
         inquiry_id: inquiryId,
         event_type: "seeker_confirmed",
         event_data: { facility_id: facility.id, facility_name: facility.name },
         actor_type: "seeker",
         actor_id: userId,
       });
+      if (confirmEventError) console.warn("[SeekerProviderReviewCard] confirm audit-event insert failed", confirmEventError);
 
-      await supabase.functions.invoke("send-concierge-notifications", {
-        body: { type: "seeker_confirmed", inquiryId, facilityId: facility.id },
-      });
+      // Best-effort: the placement is already committed by the RPC above, so a
+      // notification failure must NOT reject the mutation — otherwise the seeker
+      // is shown "Failed to confirm" after a successful placement (and retries).
+      // Mirrors the reject path's try/catch below.
+      try {
+        await supabase.functions.invoke("send-concierge-notifications", {
+          body: { type: "seeker_confirmed", inquiryId, facilityId: facility.id },
+        });
+      } catch (e) { console.error("Confirm notification error:", e); }
 
       // Auto-advance pipeline: presented_to_seeker → seeker_selected → admission_in_progress
       try {
@@ -240,19 +247,25 @@ export function SeekerProviderReviewCard({ inquiryId, onConfirmed }: SeekerProvi
     mutationFn: async ({ facility, reason }: { facility: EnrichedFacility; reason: string }) => {
       if (!userId) throw new Error("Not authenticated");
 
-      await supabase.from("concierge_rejected_facilities").insert({
+      // This insert IS the dismissal — surface failures (e.g. RLS denial) so we
+      // never show "Facility dismissed" when nothing was written (it would
+      // silently reappear on the next refetch). A duplicate dismissal (unique
+      // violation) is benign and treated as success (already dismissed).
+      const { error: rejectError } = await supabase.from("concierge_rejected_facilities").insert({
         inquiry_id: inquiryId,
         facility_id: facility.id,
         user_id: userId,
       });
+      if (rejectError && rejectError.code !== "23505") throw rejectError;
 
-      await supabase.from("concierge_case_events").insert({
+      const { error: rejectEventError } = await supabase.from("concierge_case_events").insert({
         inquiry_id: inquiryId,
         event_type: "seeker_rejected_facility",
         event_data: { facility_id: facility.id, facility_name: facility.name, reason: reason.trim() || undefined },
         actor_type: "seeker",
         actor_id: userId,
       });
+      if (rejectEventError) console.warn("[SeekerProviderReviewCard] reject audit-event insert failed", rejectEventError);
 
       try {
         await supabase.functions.invoke("send-concierge-notifications", {

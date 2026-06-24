@@ -540,16 +540,31 @@ export default function SeekerRequests() {
     markLeadViewed(leadId);
   };
 
+  // Bucket tabs off the SAME seeker-facing status the badge uses
+  // (resolveSeekerInquiryStatus), not raw leads.status. Otherwise a lead the
+  // badge labels "Facility Responded" (provider_responded_at set while the
+  // pipeline status is still 'new') would sit in the Pending tab, and
+  // pipeline-only states (contacted/closed) with no real provider response
+  // would wrongly count as "responded". "Pending" = awaiting first facility
+  // action; everything else (responded/in-progress/scheduled/admitted/closed/
+  // expired) belongs in the other tab.
+  const seekerStatusKey = (r: SubmittedRequest) =>
+    resolveSeekerInquiryStatus({
+      status: r.status,
+      providerRespondedAt: r.provider_responded_at,
+      providerResponseStatus: r.provider_response_status,
+    });
+
   // Filter requests
   const filteredRequests = requests.filter(req => {
-    if (filterTab === "pending") return req.status === "new";
-    if (filterTab === "responded") return req.status !== "new";
+    if (filterTab === "pending") return seekerStatusKey(req) === "pending";
+    if (filterTab === "responded") return seekerStatusKey(req) !== "pending";
     return true;
   });
 
   // Counts for tabs
-  const pendingCount = requests.filter(r => r.status === "new").length;
-  const respondedCount = requests.filter(r => r.status !== "new").length;
+  const pendingCount = requests.filter(r => seekerStatusKey(r) === "pending").length;
+  const respondedCount = requests.filter(r => seekerStatusKey(r) !== "pending").length;
   const unviewedCount = requests.filter(r => !viewedLeadIds.has(r.id) && (r.provider_responded_at || r.provider_response_status === "responded")).length;
 
   if (isReady && !isAuthenticated) {

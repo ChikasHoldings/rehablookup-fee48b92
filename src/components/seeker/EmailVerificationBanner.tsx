@@ -104,9 +104,11 @@ export function EmailVerificationBanner({ email, onVerified }: EmailVerification
     }
   };
 
-  // Auto-verify when 6 digits entered
+  // Auto-verify when 6 digits entered. Guard on !isVerifying so a fast paste /
+  // extra keystroke that re-renders while a verify is already in flight can't
+  // double-invoke verify-code for the same code.
   useEffect(() => {
-    if (code.join('').length === 6 && showCodeInput) {
+    if (code.join('').length === 6 && showCodeInput && !isVerifying) {
       handleVerify();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

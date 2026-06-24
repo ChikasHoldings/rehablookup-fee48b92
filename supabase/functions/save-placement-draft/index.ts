@@ -44,6 +44,23 @@ Deno.serve(async (req) => {
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Resolve the authenticated caller (if any). Anonymous drafts are allowed —
+    // the concierge funnel saves progress before signup — but once a draft is
+    // claimed by a signed-in user it can only be updated by that same user,
+    // closing the draftId-only IDOR that let anyone with a victim's draft_id
+    // overwrite their HIPAA intake. supabase.functions.invoke attaches the user's
+    // JWT when a session exists; anonymous calls send the public anon/publishable
+    // key, which resolves to no user (callerUserId stays null).
+    let callerUserId: string | null = null;
+    {
+      const draftAuthHeader = req.headers.get("Authorization") || req.headers.get("authorization") || "";
+      const draftToken = draftAuthHeader.replace(/^Bearer\s+/i, "");
+      if (draftToken && draftToken !== supabaseServiceKey && draftToken !== supabaseAnonKey) {
+        const { data: draftAuth } = await supabaseAdmin.auth.getUser(draftToken);
+        if (draftAuth?.user?.id) callerUserId = draftAuth.user.id;
+      }
+    }
+
     // Validate content length
     const contentLength = req.headers.get("content-length");
     if (contentLength && parseInt(contentLength) > MAX_BODY_SIZE) {
@@ -221,17 +238,27 @@ Deno.serve(async (req) => {
     if (validatedDraftId) {
       const { data: existingDraft } = await supabaseAdmin
         .from("concierge_inquiries")
-        .select("id")
+        .select("id, user_id")
         .eq("draft_id", validatedDraftId)
         .maybeSingle();
 
       if (existingDraft) {
+        // IDOR guard: a draft already claimed by a signed-in user may only be
+        // updated by that same user. Anonymous (unclaimed) drafts stay updatable
+        // by draft_id so the pre-signup funnel keeps working.
+        if (existingDraft.user_id && existingDraft.user_id !== callerUserId) {
+          logStep("Forbidden draft update (owner mismatch)", { draftId: validatedDraftId });
+          return errorResponse("Not authorized for this draft", 403, corsHeaders);
+        }
         // Update existing draft (no more "alreadyPaid" gate — concierge is
         // free for seekers under the EKRA flat-fee model and the legacy
         // payment_status column is being dropped).
         const { error: updateError } = await supabaseAdmin
           .from("concierge_inquiries")
           .update({
+            // Claim the draft on the first authenticated touch (keeps an existing
+            // owner; sets it when a signed-in user continues an anonymous draft).
+            user_id: existingDraft.user_id ?? callerUserId,
             user_name: userName,
             user_email: email,
             user_phone: phone,
@@ -308,6 +335,7 @@ Deno.serve(async (req) => {
       .from("concierge_inquiries")
       .insert({
         draft_id: draftId,
+        user_id: callerUserId,
         user_name: userName,
         user_email: email,
         user_phone: phone,
