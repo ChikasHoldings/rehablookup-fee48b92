@@ -185,12 +185,12 @@ const advisorNav: NavSection[] = [
       { to: "/admin/analytics", icon: BarChart3, label: "Analytics", permission: "analytics" },
     ],
   },
-  {
-    sectionLabel: "Tools",
-    entries: [
-      { to: "/admin/escalations", icon: AlertTriangle, label: "Escalations", permission: "escalations", countKey: "openEscalations" },
-    ],
-  },
+  // No "Tools"/Escalations section for advisors: they are `escalations:false`
+  // by default, so an Escalations nav link would route to /admin/escalations
+  // and immediately hit AccessDenied (the route requires the `escalations`
+  // permission). Visibility must match the route gate — see the Analytics note
+  // above. Advisors raise issues to managers through their dashboard, not the
+  // escalations queue. Grant the `escalations` permission to restore the entry.
 ];
 
 // ──────────────────────────────────────────────

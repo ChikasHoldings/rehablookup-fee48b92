@@ -113,9 +113,12 @@ export function useEscalationTransition() {
         );
       }
 
-      // Always write audit log.
+      // Always write audit log. The escalation mutation already committed
+      // above; if the audit insert fails (RLS / transient), surface it
+      // (alertable) rather than silently dropping a record on this regulated
+      // action trail.
       if (user?.id) {
-        await supabase.from("admin_audit_log").insert({
+        const { error: auditErr } = await supabase.from("admin_audit_log").insert({
           admin_user_id: user.id,
           action_type: "escalation_update",
           target_type: "escalation",
@@ -126,6 +129,9 @@ export function useEscalationTransition() {
             ...(opts.auditContext || {}),
           },
         });
+        if (auditErr) {
+          console.error("[useEscalationTransition] audit log insert failed", auditErr);
+        }
       }
     },
     onSuccess: (_d, opts) => {
