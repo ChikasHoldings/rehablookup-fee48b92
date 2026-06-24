@@ -293,7 +293,7 @@ export function ConciergeIntroductionsTab({ caseData, onRefresh }: ConciergeIntr
       });
 
       // Log to PII disclosure audit table for compliance tracking
-      await supabase.from("pii_disclosure_log").insert({
+      const { error: piiLogError } = await supabase.from("pii_disclosure_log").insert({
         disclosure_type: "concierge_introduction",
         reference_id: introId,
         admin_user_id: user.id,
@@ -308,6 +308,10 @@ export function ConciergeIntroductionsTab({ caseData, onRefresh }: ConciergeIntr
           primary_concern: caseData.primary_concern,
         },
       });
+      // HIPAA compliance audit — never silently lose the disclosure record under
+      // the success toast. The disclosure already committed above, so surface a
+      // failed audit write loudly rather than failing the mutation.
+      if (piiLogError) console.error("[ConciergeIntroductions] pii_disclosure_log insert failed", piiLogError);
     },
     onSuccess: () => {
       toast.success("Patient info disclosed to facility");

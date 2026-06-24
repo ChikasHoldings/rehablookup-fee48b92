@@ -165,14 +165,15 @@ export function useUserManagement() {
 
   // Check if user is banned
   const checkBanStatus = async (userId: string): Promise<boolean> => {
-    const { data } = await supabase
-      .from("blocked_identifiers")
-      .select("id")
-      .eq("identifier", userId)
-      .eq("is_active", true)
-      .maybeSingle();
-    
-    return !!data;
+    // Read ban state via the admin-gated SECURITY DEFINER RPC. A direct
+    // blocked_identifiers read is RLS-restricted to super_admins, so a manager /
+    // customer_rep would always get 0 rows and see a banned seeker as "Active".
+    const { data, error } = await supabase.rpc("is_user_banned" as never, { p_user_id: userId } as never);
+    if (error) {
+      console.warn("[checkBanStatus] is_user_banned RPC failed", error);
+      return false;
+    }
+    return (data as boolean | null) === true;
   };
 
   return {

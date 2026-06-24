@@ -1085,7 +1085,7 @@ export default function AdminSettings() {
                         "text-xs mt-1",
                         maintenanceEnabled ? "text-warning/80" : "text-success/80"
                       )}>
-                        {maintenanceEnabled ? "Maintenance mode active" : "99.9% uptime"}
+                        {maintenanceEnabled ? "Maintenance mode active" : "Operational"}
                       </p>
                     </div>
                     <div className="p-4 rounded-lg bg-success/10 border border-success/20">

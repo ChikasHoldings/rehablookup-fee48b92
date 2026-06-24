@@ -220,6 +220,12 @@ Deno.serve(async (req) => {
 
     if (adminProfileError) {
       console.error("[CREATE-ADMIN-USER] Failed to create admin profile:", adminProfileError);
+      // Roll back so we never report success on a half-provisioned admin (a
+      // user_roles 'admin' row with no admin_user_profiles row breaks every tier
+      // check) and so the email is freed for a clean retry.
+      await supabase.from("user_roles").delete().eq("user_id", userId).eq("role", "admin");
+      await supabase.auth.admin.deleteUser(userId);
+      throw new Error("Failed to create admin profile. Please try again.");
     }
 
     // Build permissions
@@ -238,7 +244,15 @@ Deno.serve(async (req) => {
 
     if (permissionInserts.length > 0) {
       const { error: permError } = await supabase.from("admin_user_permissions").insert(permissionInserts);
-      if (permError) console.error("[CREATE-ADMIN-USER] Failed to insert permissions:", permError);
+      if (permError) {
+        console.error("[CREATE-ADMIN-USER] Failed to insert permissions:", permError);
+        // Roll back the whole admin: never report success on an admin with no
+        // permissions, and free the email for a clean retry.
+        await supabase.from("admin_user_profiles").delete().eq("user_id", userId);
+        await supabase.from("user_roles").delete().eq("user_id", userId).eq("role", "admin");
+        await supabase.auth.admin.deleteUser(userId);
+        throw new Error("Failed to save admin permissions. Please try again.");
+      }
     }
 
     // Log the action

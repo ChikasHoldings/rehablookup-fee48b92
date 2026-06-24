@@ -78,10 +78,11 @@ export function DisableTwoFactorDialog({
       // Update admin_user_profiles to mark MFA as disabled and log audit
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        await supabase
+        const { error: mfaFlagErr } = await supabase
           .from("admin_user_profiles")
           .update({ mfa_enabled: false })
           .eq("user_id", user.id);
+        if (mfaFlagErr) console.warn("[DisableTwoFactor] mfa_enabled flag write failed (factor already unenrolled)", mfaFlagErr);
         
         await logAdminAction({
           actionType: AdminAuditActions.MFA_DISABLED,

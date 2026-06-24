@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
+import { getCaseEventActorType } from "../_shared/case-event-actor.ts";
 
 const VERSION = "5.1.0";
 
@@ -221,7 +222,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { inquiryId, trigger, actorId, actorType = "system" }: TransitionRequest = await req.json();
+    // actorId/actorType are intentionally NOT read from the body — they are
+    // derived server-side below from the verified JWT (see resolvedActorType).
+    const { inquiryId, trigger }: TransitionRequest = await req.json();
 
     if (!inquiryId || !trigger) {
       return new Response(
@@ -257,6 +260,21 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Derive the case-event actor SERVER-SIDE from the verified identity — never
+    // the request body. An owner-seeker could otherwise forge a super_admin-
+    // attributed event on their own case timeline (audit-trail spoofing).
+    let resolvedActorType = "system";
+    if (isOwner) {
+      resolvedActorType = "seeker";
+    } else if (isAdmin) {
+      const { data: actorProfile } = await supabase
+        .from("admin_user_profiles")
+        .select("admin_role")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      resolvedActorType = getCaseEventActorType(actorProfile?.admin_role);
+    }
+
     // Safety net: ensure an advisor is assigned before walking past `advisor_assigned`.
     // The DB trigger handles this on insert, but legacy/imported rows may slip through.
     if (!inquiry.assigned_advisor_id) {
@@ -281,8 +299,8 @@ Deno.serve(async (req) => {
             inquiry_id: inquiryId,
             event_type: "advisor_assigned",
             event_data: { advisor_id: picked, auto: true, source: "auto-status-transition" },
-            actor_id: actorId || null,
-            actor_type: actorType,
+            actor_id: user.id,
+            actor_type: resolvedActorType,
           });
         }
       } else {
@@ -346,8 +364,8 @@ Deno.serve(async (req) => {
           ...(lastError ? { partial: true, last_error: lastError } : {}),
           ...(lockMissAt ? { partial: true, lock_miss_at: lockMissAt } : {}),
         },
-        actor_id: actorId || null,
-        actor_type: actorType,
+        actor_id: user.id,
+        actor_type: resolvedActorType,
       });
     }
 

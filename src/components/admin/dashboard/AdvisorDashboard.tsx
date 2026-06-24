@@ -124,13 +124,19 @@ export function AdvisorDashboard() {
       if (!advisorId) throw new Error("Not authenticated");
       setClaimingId(caseId);
 
-      const { error } = await supabase
+      const { data: claimed, error } = await supabase
         .from("concierge_inquiries")
         .update({ assigned_advisor_id: advisorId })
         .eq("id", caseId)
-        .is("assigned_advisor_id", null);
+        .is("assigned_advisor_id", null)
+        .select("id")
+        .maybeSingle();
 
       if (error) throw error;
+      // Conditional update: if another advisor already claimed this case, the
+      // .is(null) filter matches 0 rows with no error. Don't show "claimed" and
+      // open the placement workflow for a case this advisor doesn't own.
+      if (!claimed) throw new Error("This case was just claimed by another advisor.");
 
       // Log event
       await supabase.from("concierge_case_events").insert({

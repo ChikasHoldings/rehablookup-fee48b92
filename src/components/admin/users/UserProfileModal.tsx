@@ -169,14 +169,11 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
     queryKey: ["admin-seeker-notes", user?.user_id],
     queryFn: async () => {
       if (!user?.user_id) return "";
-      const { data } = await supabase.from("admin_audit_log")
-        .select("details")
-        .eq("target_id", user.user_id)
-        .eq("target_type", "seeker")
-        .eq("action_type", "seeker_note")
-        .order("created_at", { ascending: false })
-        .limit(1);
-      return (data?.[0]?.details as { note?: string } | null)?.note || "";
+      // Admin notes live in admin_audit_log (super_admin-only SELECT RLS); read
+      // via the admin-gated RPC so manager/customer_rep also see prior notes
+      // instead of an always-empty string.
+      const { data } = await supabase.rpc("get_seeker_admin_note" as never, { p_user_id: user.user_id } as never);
+      return (data as string | null) || "";
     },
     enabled: !!user?.user_id && open,
   });

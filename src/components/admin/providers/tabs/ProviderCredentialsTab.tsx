@@ -84,15 +84,21 @@ export function ProviderCredentialsTab({ provider, providerFacilities }: Provide
   const updateAccreditationVerification = useMutation({
     mutationFn: async ({ accreditationId, verified }: { accreditationId: string; verified: boolean }) => {
       const { data: { user } } = await supabase.auth.getUser();
-      const { error } = await supabase
+      const { data: updated, error } = await supabase
         .from("facility_accreditations")
         .update({
           verified,
           verified_at: verified ? new Date().toISOString() : null,
           verified_by: verified ? user?.id : null,
         })
-        .eq("id", accreditationId);
+        .eq("id", accreditationId)
+        .select("id")
+        .maybeSingle();
       if (error) throw error;
+      // 0-row detection: credential moderation is RLS-gated to super_admin/
+      // manager, so a lower-tier admin's update silently matches no rows. Don't
+      // report "updated" when nothing changed.
+      if (!updated) throw new Error("Accreditation not found, or you don't have permission to verify it.");
     },
     onSuccess: () => { refetchAccreditations(); toast.success("Accreditation updated"); },
     onError: () => toast.error("Failed to update"),
@@ -100,12 +106,15 @@ export function ProviderCredentialsTab({ provider, providerFacilities }: Provide
 
   const handleRejectDocument = async () => {
     if (!rejectDocId || !rejectReason.trim()) return;
-    const { error } = await supabase
+    const { data: rejected, error } = await supabase
       .from("facility_credential_documents")
       .update({ status: "rejected", rejection_reason: rejectReason.trim() })
-      .eq("id", rejectDocId);
-    if (error) {
-      toast.error("Failed to reject document");
+      .eq("id", rejectDocId)
+      .select("id")
+      .maybeSingle();
+    if (error || !rejected) {
+      // 0-row → RLS-gated to super_admin/manager; surface honestly.
+      toast.error(error ? "Failed to reject document" : "Document not found, or you don't have permission.");
     } else {
       toast.success("Document rejected");
       refetchDocuments();
@@ -243,8 +252,8 @@ export function ProviderCredentialsTab({ provider, providerFacilities }: Provide
                       <>
                         <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" onClick={async () => {
                           const { data: { user } } = await supabase.auth.getUser();
-                          const { error } = await supabase.from("facility_credential_documents").update({ status: "verified", verified_at: new Date().toISOString(), verified_by: user?.id }).eq("id", doc.id);
-                          if (error) toast.error("Failed"); else { toast.success("Verified"); refetchDocuments(); }
+                          const { data: verifiedDoc, error } = await supabase.from("facility_credential_documents").update({ status: "verified", verified_at: new Date().toISOString(), verified_by: user?.id }).eq("id", doc.id).select("id").maybeSingle();
+                          if (error || !verifiedDoc) toast.error(error ? "Failed" : "Not found or no permission"); else { toast.success("Verified"); refetchDocuments(); }
                         }}>
                           <CheckCircle className="h-3.5 w-3.5 mr-1" />Verify
                         </Button>
