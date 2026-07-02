@@ -102,7 +102,15 @@ Deno.test("pipeline: NavigateAuthSignup preserves query params + sanitizes retur
   // The inline component must read useSearchParams, run returnTo
   // through safeReturnTo (rejecting //x and /\\x), and re-emit the qs.
   assertStringIncludes(app, "function NavigateAuthSignup()");
-  assertStringIncludes(app, "function safeReturnTo(");
+  // safeReturnTo was extracted into a shared lib module — accept either
+  // the local function or the lib import (the sanitizer itself is asserted
+  // in src/lib/safeReturnTo.ts).
+  const hasSanitizer =
+    app.includes("function safeReturnTo(") ||
+    /import \{[^}]*safeReturnTo[^}]*\} from "@\/lib\/safeReturnTo"/.test(app);
+  assert(hasSanitizer, "App.tsx must define or import safeReturnTo");
+  const lib = await read("src/lib/safeReturnTo.ts");
+  assertStringIncludes(lib, "export function safeReturnTo(");
   assert(
     /safeReturnTo\(params\.get\("returnTo"\)\)/.test(app),
     "NavigateAuthSignup must filter returnTo through safeReturnTo",
@@ -417,22 +425,37 @@ Deno.test("pipeline: Onboarding page redirects already-completed users to the da
   // exception lets them re-enter for adding another facility.
   assertStringIncludes(src, "onboarding_completed_at");
   assertStringIncludes(src, '"/provider/dashboard"');
+  // The bypass grew from add-listing-only to wizardReEntry
+  // (= add-listing OR a claim deep link) — 2026-05-23 audit fix. The
+  // invariant is unchanged: completed users bounce to the dashboard unless
+  // they arrive with an explicit re-entry intent.
   assert(
-    /profile\?\.onboarding_completed_at\s*&&\s*!addListingIntent/.test(src),
-    "Onboarding.tsx must redirect already-completed users to the dashboard UNLESS ?action=add-listing is present",
+    /const wizardReEntry = addListingIntent \|\| claimIntent/.test(src),
+    "wizardReEntry must be add-listing OR claim intent",
+  );
+  assert(
+    /profile\?\.onboarding_completed_at\s*&&\s*!wizardReEntry/.test(src),
+    "Onboarding.tsx must redirect already-completed users to the dashboard UNLESS a re-entry intent is present",
   );
 });
 
-Deno.test("pipeline: Dashboard welcome modal gated by profile_completion_celebrated + isPlaceholderData", async () => {
+Deno.test("pipeline: single global WelcomeModal; Dashboard placeholder-gates its empty state", async () => {
   const src = await read("src/pages/provider/Dashboard.tsx");
-  // Without the isPlaceholderData check the modal flashes open on
-  // every reload for established providers while the localStorage
-  // placeholder is in play (round-30 audit fix).
-  assertStringIncludes(src, "profile_completion_celebrated");
+  // The Dashboard-local ProviderWelcomeModal was retired 2026-05-20 —
+  // WelcomeModal is mounted once in ProviderShell (asserted in
+  // monetization-hardening-regressions_test.ts). Dashboard must not mount
+  // its own copy, and its "no facility yet" empty state must still gate on
+  // isPlaceholderData so it never flashes for established providers.
   assert(
-    /!isLoading\s*&&\s*!isPlaceholderData\s*&&[\s\S]{0,80}profile_completion_celebrated/.test(src),
-    "Welcome modal must gate on isPlaceholderData to avoid the reload-flash bug",
+    !src.includes("<ProviderWelcomeModal"),
+    "Dashboard must not mount a local welcome modal",
   );
+  assert(
+    /!isLoading\s*&&\s*!isPlaceholderData\s*&&\s*!facility/.test(src),
+    "Dashboard empty state must gate on isPlaceholderData to avoid the reload-flash bug",
+  );
+  const shell = await read("src/components/provider/ProviderShell.tsx");
+  assertStringIncludes(shell, "<WelcomeModal />");
 });
 
 Deno.test("pipeline: SelectedFacilityContext clears state on SIGNED_OUT", async () => {

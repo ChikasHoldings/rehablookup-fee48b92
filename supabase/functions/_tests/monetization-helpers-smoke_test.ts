@@ -59,13 +59,20 @@ Deno.test("pro-benefits: notifier writes admin_notifications.type='pro_benefits_
 // Featured add-on helpers
 // ─────────────────────────────────────────────────────────────────────────
 
-Deno.test("featured-addon: activate seeds homepage + state + city placements", async () => {
+Deno.test("featured-addon: activate seeds state + city placements (local/regional only)", async () => {
   const src = await readSrc("../_shared/featured-addon.ts");
-  // The seed function pushes homepage with value "national" first.
-  assertStringIncludes(src, 'type: "homepage", value: "national"');
-  // The state seed uses uppercase abbreviation; check the call.
-  assertStringIncludes(src, "trim().toUpperCase()");
-  // City seed uses slugify (matches src/lib/featuredBucket.ts).
+  // Product change: Featured is LOCAL/REGIONAL only — the homepage/national
+  // rotation is reserved (see the comment in featured-addon.ts). Activation
+  // must NOT seed a national placement anymore.
+  assertStringIncludes(src, "NO homepage/national seed");
+  assert(
+    !src.includes('type: "homepage", value: "national"'),
+    "featured activation must not seed a homepage/national placement",
+  );
+  // State + city seeds are slugified to match the slug-keyed State/City
+  // pages (an UPPER(name) seed never matched them — see the comment in
+  // buildSeedPlacements).
+  assertStringIncludes(src, "slugify(facility.state)");
   assertStringIncludes(src, "slugify(facility.city)");
 });
 
@@ -108,7 +115,10 @@ Deno.test("concierge-addon: deactivate does NOT auto-revert concierge_network_op
   // Provider may want to stay opted-in unpaid (no partner badge, but still
   // appears in advisor matching). The deactivate function only touches the
   // partner-specific columns.
-  const deactivate = src.slice(src.indexOf("deactivateConciergePartner"));
+  // Anchor on the function DEFINITION — the module header comment mentions
+  // the symbol earlier, and slicing from there swallowed unrelated
+  // activation code that legitimately references the column.
+  const deactivate = src.slice(src.indexOf("export async function deactivateConciergePartner"));
   assert(
     !deactivate.includes("concierge_network_opted_in"),
     "deactivateConciergePartner must not touch concierge_network_opted_in",
@@ -122,7 +132,16 @@ Deno.test("concierge-addon: deactivate does NOT auto-revert concierge_network_op
 Deno.test("create-checkout-session: Pro-required gate present", async () => {
   const src = await readSrc("../create-checkout-session/index.ts");
   assertStringIncludes(src, "PRO_REQUIRED");
-  assertStringIncludes(src, '.tier !== "pro"');
+  // The gate was refactored to a positive activePro check: add-ons 409 with
+  // PRO_REQUIRED unless tier === "pro" AND status === "active".
+  assert(
+    /activePro\s*=[\s\S]{0,200}?tier === "pro"[\s\S]{0,120}?status === "active"/.test(src),
+    "add-on checkout must compute activePro from tier + status",
+  );
+  assert(
+    /if \(!activePro\)[\s\S]{0,300}?PRO_REQUIRED/.test(src),
+    "add-on checkout must 409 PRO_REQUIRED when not activePro",
+  );
 });
 
 Deno.test("create-checkout-session: writes metadata.type for webhook routing", async () => {
