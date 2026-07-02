@@ -31,8 +31,13 @@ import {
   CREDENTIAL_ALLOWED,
 } from "../_shared/file-magic.ts";
 
-const VERSION = "1.0.0";
+// 1.1.0 (2026-07-02 entitlement audit): plan-aware object-count ceiling for
+// gallery uploads — mirrors the facility_images_plan_object_cap RESTRICTIVE
+// storage policy (this function uploads via service role, which bypasses
+// storage RLS, so the ceiling must be enforced here too).
+const VERSION = "1.1.0";
 const MAX_BYTES = 10 * 1024 * 1024; // 10MB
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -117,6 +122,32 @@ Deno.serve(async (req) => {
 
     // ---- Upload via service role with the DETECTED content type ----
     const svc = createClient(SUPABASE_URL, SUPABASE_SRK, { auth: { persistSession: false } });
+
+    // ---- Plan-aware object ceiling for gallery uploads ----
+    // Service-role uploads bypass the facility_images_plan_object_cap
+    // RESTRICTIVE storage policy, so enforce the same ceiling here via the
+    // same SQL helper (counts nested objects under the caller's folder;
+    // Free=10 / Pro=60 — see migration 20260829004100). The gallery flow
+    // always writes fresh timestamped paths, so every accepted upload grows
+    // the count; upserts to an existing path are rare and the cap's slack
+    // absorbs them.
+    if (cfg.bucket === "facility-images") {
+      const { data: withinCap, error: capErr } = await svc.rpc(
+        "facility_images_upload_within_cap",
+        { p_user: uid },
+      );
+      if (capErr) {
+        console.error("[validate-and-upload] cap check failed", capErr.message);
+        return json(502, { error: "Upload failed. Please try again.", code: "PLAN_CAP_CHECK_ERROR" });
+      }
+      if (withinCap !== true) {
+        return json(403, {
+          error:
+            "Image storage limit reached for your plan. Remove unused images or upgrade to Pro for more space.",
+          code: "PLAN_STORAGE_CAP",
+        });
+      }
+    }
     const { error: upErr } = await svc.storage.from(cfg.bucket).upload(path, buf, {
       contentType: result.detectedMime!,
       upsert,

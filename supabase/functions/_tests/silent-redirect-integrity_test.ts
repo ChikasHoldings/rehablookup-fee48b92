@@ -50,11 +50,13 @@ const GUARDED_PAGES = [
 for (const file of GUARDED_PAGES) {
   Deno.test(`silent-redirect: ${file} renders NotFoundInPlace on miss (not silent Navigate)`, async () => {
     const src = await read(file);
-    // The data-miss branch must use NotFoundInPlace (phase AB shared
-    // component). Pro-gates and auth-gates can still use Navigate.
+    // The data-miss branch must render an IN-PLACE 404 — either the shared
+    // NotFoundInPlace (phase AB) or a page-local equivalent (ArticleDetail
+    // ships its own ArticleNotFound with noindex + CTA, phase AA). Pro-gates
+    // and auth-gates can still use Navigate.
     assert(
-      src.includes("NotFoundInPlace"),
-      `${file} must import + render NotFoundInPlace on data-miss`,
+      src.includes("NotFoundInPlace") || src.includes("ArticleNotFound"),
+      `${file} must render an in-place 404 component on data-miss`,
     );
   });
 }

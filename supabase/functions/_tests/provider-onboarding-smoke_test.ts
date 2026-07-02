@@ -40,14 +40,85 @@ const FUNCTIONS = [
     // This function does NOT accept a client-supplied idempotencyKey.
     acceptsClientIdempotencyKey: false,
   },
-  {
-    name: "send-provider-welcome-email",
-    path: "../send-provider-welcome-email/index.ts",
-    schema: "WelcomeEmailRequestSchema",
-    idempotencyPrefix: "welcome-",
-    acceptsClientIdempotencyKey: true,
-  },
+  // send-provider-welcome-email was rebuilt as v3 (EKRA-aligned, relaxed
+  // schema so the wizard can fire it pre-facility, plan reconciled against
+  // facility_subscriptions, Resend-level Idempotency-Key). It no longer
+  // shares the v2 zod/createLogger/sendEmailWithRetry plumbing, so it has
+  // its own dedicated contract block below instead of the shared loop.
 ] as const;
+
+// ---------------------------------------------------------------------------
+// 0. send-provider-welcome-email v3 contract
+// ---------------------------------------------------------------------------
+
+const WELCOME_PATH = "../send-provider-welcome-email/index.ts";
+
+Deno.test("[send-provider-welcome-email] OPTIONS preflight + 405 on non-POST", async () => {
+  const src = await loadSource(WELCOME_PATH);
+  assertStringIncludes(src, 'req.method === "OPTIONS"');
+  assertStringIncludes(src, 'req.method !== "POST"');
+  assertStringIncludes(src, "status: 405");
+});
+
+Deno.test("[send-provider-welcome-email] tolerant JSON parse + 400 on missing/invalid email", async () => {
+  const src = await loadSource(WELCOME_PATH);
+  // Malformed JSON degrades to {} and then fails the email validation with
+  // a 400 — never a 500.
+  assertStringIncludes(src, "req.json().catch(() => ({}))");
+  assert(
+    /providerEmail required and must be valid[\s\S]{0,200}?status: 400/.test(src),
+    "invalid providerEmail must 400",
+  );
+});
+
+Deno.test("[send-provider-welcome-email] catch-all returns 500 with corsHeaders", async () => {
+  const src = await loadSource(WELCOME_PATH);
+  const tail = src.slice(src.lastIndexOf("} catch"));
+  assertStringIncludes(tail, "status: 500");
+  assertStringIncludes(tail, "corsHeaders");
+});
+
+Deno.test("[send-provider-welcome-email] every Response includes corsHeaders", async () => {
+  const src = await loadSource(WELCOME_PATH);
+  const responses = [...src.matchAll(/new Response\(/g)];
+  assert(responses.length >= 5, `expected >= 5 Response sites, got ${responses.length}`);
+  for (const m of responses) {
+    const start = m.index ?? 0;
+    const window = src.slice(start, start + 500);
+    assert(window.includes("corsHeaders"), `Response at offset ${start} missing corsHeaders`);
+  }
+});
+
+Deno.test("[send-provider-welcome-email] stable idempotency key on the Resend send", async () => {
+  const src = await loadSource(WELCOME_PATH);
+  // Dedup happens at the Resend layer via the Idempotency-Key header, keyed
+  // by (email, plan) so a plan switch can still send its own welcome.
+  assert(
+    /idempotencyKey = body\.idempotencyKey \? String\(body\.idempotencyKey\) : `welcome-\$\{providerEmail\}-\$\{plan\}`/.test(src),
+    "must default the key to welcome-<email>-<plan>",
+  );
+  assertStringIncludes(src, '"Idempotency-Key": idempotencyKey');
+});
+
+Deno.test("[send-provider-welcome-email] reconciles caller plan against facility_subscriptions", async () => {
+  const src = await loadSource(WELCOME_PATH);
+  // Pro-benefit invariant: a stale caller must not ship the "Welcome to
+  // Free" email to a provider whose webhook already activated Pro.
+  assertStringIncludes(src, 'from("facility_subscriptions")');
+  assert(
+    /dbTier === "pro" && plan !== "pro"/.test(src),
+    "DB Pro must override a caller-claimed Free plan",
+  );
+});
+
+Deno.test("[send-provider-welcome-email] sanitizes Resend errors in the client response", async () => {
+  const src = await loadSource(WELCOME_PATH);
+  assert(
+    /resend error[\s\S]{0,600}?Failed to send welcome email/.test(src),
+    "Resend failures must be logged server-side and sanitized client-side",
+  );
+  assert(!src.includes("details: sendErr"), "must not leak raw Resend error payloads");
+});
 
 async function loadSource(relative: string): Promise<string> {
   return await Deno.readTextFile(new URL(relative, import.meta.url));

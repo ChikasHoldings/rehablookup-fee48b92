@@ -100,7 +100,9 @@ function parseRouteConstants(src: string): RouteConstant[] {
   // like `centerBySlug: (slug) => \`/center/${slug}\`` are skipped —
   // those are validated against their static prefix in a separate test.
   const out: RouteConstant[] = [];
-  const re = /^\s*(\w+):\s*"(\/[^"]+)"\s*,?$/gm;
+  // `*` not `+` after the slash: the bare root route `home: "/"` is a
+  // legitimate constant (ANON_LANDING) and must parse too.
+  const re = /^\s*(\w+):\s*"(\/[^"]*)"\s*,?$/gm;
   let m: RegExpExecArray | null;
   while ((m = re.exec(src))) {
     out.push({ name: m[1], value: m[2] });

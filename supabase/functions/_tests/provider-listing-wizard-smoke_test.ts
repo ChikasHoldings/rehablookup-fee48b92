@@ -77,16 +77,23 @@ Deno.test("[get-facility-plan] missing Stripe key -> safe default { plan: \"free
   assert(re.test(src), "missing Stripe key must fail open to free");
 });
 
-Deno.test("[get-facility-plan] active pro_subscriptions row -> { plan: \"pro\" }", async () => {
+Deno.test("[get-facility-plan] entitled pro row -> { plan: \"pro\" } (has_active_pro parity)", async () => {
   const src = await loadSource(PLAN_PATH);
-  // DB lookup is the fast path (avoids a Stripe round-trip).
+  // DB lookup is the fast path (avoids a Stripe round-trip). 2026-07-02
+  // audit: the query must mirror has_active_pro() — tier='pro', and either
+  // active-within-period or the past_due dunning grace window. The old
+  // status='active' + gt(period) query denied grace that every DB gate grants.
   assertStringIncludes(src, 'from("facility_subscriptions")');
   assertStringIncludes(src, '.eq("facility_id", facilityId)');
-  assertStringIncludes(src, '.eq("status", "active")');
-  // Must enforce that the period hasn't expired.
-  assertStringIncludes(src, '.gt("current_period_end"');
+  assertStringIncludes(src, '.eq("tier", "pro")');
+  assertStringIncludes(src, '.in("status", ["active", "past_due"])');
+  // Period check happens in JS so a NULL period end still counts as active.
+  assert(
+    /status === "past_due"[\s\S]{0,200}?current_period_end/.test(src),
+    "grace-aware entitlement filter must run over the returned rows",
+  );
   const re = /if\s*\(proSub\)[\s\S]{0,300}?plan:\s*"pro"/;
-  assert(re.test(src), "active proSub must short-circuit to plan: 'pro'");
+  assert(re.test(src), "entitled proSub must short-circuit to plan: 'pro'");
 });
 
 Deno.test("[get-facility-plan] catch-all fails open to { plan: \"free\" } with status 200", async () => {

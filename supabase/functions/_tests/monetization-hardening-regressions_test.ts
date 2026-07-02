@@ -44,7 +44,7 @@ Deno.test("plan-gate: profiles.plan tightened to NOT NULL via gated migration", 
   // The ALTER must be gated on NO NULL rows remaining so it never
   // fails mid-migration. Look for the exact gate shape.
   assert(
-    /NOT EXISTS \(\s*SELECT 1 FROM public\.profiles WHERE plan IS NULL\s*\)/.test(sql),
+    /NOT EXISTS \(\s*(--[^\n]*\n\s*)*SELECT 1 FROM public\.profiles WHERE plan IS NULL\s*\)/.test(sql),
     "ALTER TABLE ... SET NOT NULL must be gated on `NOT EXISTS (... plan IS NULL)`",
   );
   assertStringIncludes(sql, "ALTER TABLE public.profiles ALTER COLUMN plan SET NOT NULL");
@@ -70,18 +70,21 @@ Deno.test("plan-gate: state-row completion trigger blocks unsafe transitions", a
 });
 
 Deno.test("plan-gate: ClaimSubmitted does NOT prematurely complete onboarding", async () => {
+  // The pre-fix code path was ClaimSubmitted.tsx calling
+  // `supabase.rpc("complete_provider_onboarding")` on mount, bypassing
+  // PlanStep. The page has since been DELETED outright (claim submissions
+  // route to /provider/claims), which closes the bypass even harder than
+  // the original fix. Assert the file stays gone; if it ever comes back,
+  // it must not call the completion RPC.
+  const deleted = !(await exists("src/pages/provider/ClaimSubmitted.tsx"));
+  if (deleted) {
+    assert(deleted, "ClaimSubmitted.tsx deleted — bypass impossible");
+    return;
+  }
   const src = await read("src/pages/provider/ClaimSubmitted.tsx");
-  // The pre-fix code path: useEffect calling `supabase.rpc("complete_provider_onboarding")`
-  // on mount. Must NOT exist — that's the bypass we closed.
   assert(
     !/rpc\(["']complete_provider_onboarding["']\)/.test(src),
     "ClaimSubmitted must NOT call complete_provider_onboarding (was bypassing PlanStep)",
-  );
-  // Confirm the explanatory replacement comment is in place so a
-  // future developer can't re-introduce the bug without learning why.
-  assertStringIncludes(
-    src,
-    "PlanStep is now the single owner of the completion flip",
   );
 });
 
@@ -247,7 +250,14 @@ Deno.test("unification: legacy provider-entry routes redirect inline", async () 
 Deno.test("unification: NavigateAuthSignup sanitizes returnTo", async () => {
   const app = await read("src/App.tsx");
   assertStringIncludes(app, "function NavigateAuthSignup()");
-  assertStringIncludes(app, "function safeReturnTo(");
+  // safeReturnTo was extracted from App.tsx into a shared lib module —
+  // accept either the local function or the import of the lib version.
+  const hasSanitizer =
+    app.includes("function safeReturnTo(") ||
+    /import \{[^}]*safeReturnTo[^}]*\} from "@\/lib\/safeReturnTo"/.test(app);
+  assert(hasSanitizer, "App.tsx must define or import safeReturnTo");
+  const lib = await read("src/lib/safeReturnTo.ts");
+  assertStringIncludes(lib, "export function safeReturnTo(");
   assert(
     /safeReturnTo\(params\.get\(["']returnTo["']\)\)/.test(app),
     "NavigateAuthSignup must filter returnTo through safeReturnTo",
