@@ -42,11 +42,17 @@ BEGIN
     RETURN NEW;
   END IF;
 
-  -- Admins and service-role pipelines may create listings past the cap
-  -- (an explicit human/ops decision, visible in admin_audit_log).
+  -- Admins and service-role / no-JWT pipelines (SQL, migrations, imports)
+  -- may create listings past the cap (an explicit human/ops decision,
+  -- visible in admin_audit_log).
+  --
+  -- NOTE: this function is SECURITY DEFINER, so current_user is the function
+  -- OWNER here — never use `current_user IN ('postgres', ...)` as an actor
+  -- test inside it (it would always pass). Actor detection must come from
+  -- the request JWT claims / role GUC, which SECURITY DEFINER does not alter.
   IF current_setting('role', true) = 'service_role'
-     OR auth.role() = 'service_role'
-     OR current_user IN ('postgres', 'supabase_admin', 'service_role')
+     OR (SELECT auth.role()) = 'service_role'
+     OR COALESCE(current_setting('request.jwt.claims', true), '') = ''
      OR public.has_role((SELECT auth.uid()), 'admin'::app_role) THEN
     RETURN NEW;
   END IF;
