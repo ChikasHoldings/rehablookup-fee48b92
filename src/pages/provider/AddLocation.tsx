@@ -230,7 +230,13 @@ export default function AddLocationPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { facilities, refetch: refetchFacilities } = useProviderFacilities();
-  const { used: usedLocations } = useFacilityLimits();
+  const {
+    used: usedLocations,
+    limit: locationLimit,
+    canAddMore,
+    planTier,
+    isLoading: limitsLoading,
+  } = useFacilityLimits();
   const { data: proStatus } = useProStatus();
   const isPro = proStatus?.isPro ?? false;
 
@@ -321,6 +327,19 @@ export default function AddLocationPage() {
   // Submit — creates facility + every side table row
   async function handleSubmit() {
     if (submittingRef.current) return;
+    // Plan cap (mirrors the enforce_facility_limit DB trigger, which is the
+    // authoritative gate — this just fails fast with a friendlier message).
+    if (!canAddMore) {
+      toast({
+        title: "Listing limit reached",
+        description:
+          planTier === "pro"
+            ? `Your Pro plan includes up to ${locationLimit} facility listings.`
+            : "The Free plan includes 1 facility listing. Upgrade to Pro to add up to 5 locations.",
+        variant: "destructive",
+      });
+      return;
+    }
     submittingRef.current = true;
     setIsSubmitting(true);
     setPartialSuccess(null);
@@ -679,6 +698,59 @@ export default function AddLocationPage() {
                     Continue in editor
                   </Link>
                 </Button>
+                <Button asChild variant="outline">
+                  <Link to="/provider/listings">Back to My Listings</Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // Plan cap reached — show the upgrade path instead of the wizard.
+  // (Server-side, the enforce_facility_limit trigger rejects the insert
+  // regardless; this screen just makes the limit legible.)
+  if (!limitsLoading && !canAddMore) {
+    return (
+      <div className="min-h-full bg-slate-50">
+        <Helmet>
+          <title>Add Location | RehabLookup Provider</title>
+          <meta name="robots" content="noindex, nofollow" />
+        </Helmet>
+        <ProviderPageHeader
+          title="Add a new location"
+          description="Listing limit reached"
+          icon={<Building2 className="h-4 w-4" />}
+          backTo="/provider/listings"
+          backLabel="My Listings"
+        />
+        <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6 lg:px-8">
+          <Card>
+            <CardContent className="p-6 space-y-3">
+              <div className="flex items-center gap-2">
+                <Lock className="h-4 w-4 text-muted-foreground" />
+                <p className="text-sm font-medium">
+                  You're using {usedLocations} of {locationLimit} listing
+                  {locationLimit === 1 ? "" : "s"} on the{" "}
+                  {planTier === "pro" ? "Pro" : "Free"} plan.
+                </p>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {planTier === "pro"
+                  ? "Pro includes up to 5 facility listings. Contact support if you manage more locations."
+                  : "The Free plan includes 1 facility listing. Upgrade to Pro to list up to 5 locations, each with 10 photos, video, and priority placement."}
+              </p>
+              <div className="flex flex-wrap gap-2 pt-2">
+                {planTier !== "pro" && (
+                  <Button asChild>
+                    <Link to="/provider/billing">
+                      <Sparkles className="h-4 w-4 mr-1" />
+                      Upgrade to Pro
+                    </Link>
+                  </Button>
+                )}
                 <Button asChild variant="outline">
                   <Link to="/provider/listings">Back to My Listings</Link>
                 </Button>

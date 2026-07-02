@@ -38,7 +38,7 @@ export function ProBenefitsWidget({ className }: ProBenefitsWidgetProps) {
     {
       icon: Building2,
       label: `${usedLocations} location${usedLocations === 1 ? "" : "s"}`,
-      description: "Add unlimited facilities",
+      description: "List up to 5 facilities on Pro",
       color: "text-violet-600",
       bgColor: "bg-violet-500/10",
     },

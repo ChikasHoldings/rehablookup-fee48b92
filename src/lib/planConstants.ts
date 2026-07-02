@@ -38,7 +38,7 @@ export const PLANS: Record<"free" | "pro", Plan> = {
     badge: null,
     headline: "Get listed for free",
     features: [
-      "Basic facility listing",
+      "1 facility listing",
       "Up to 5 photos",
       "Standard placement in the directory",
       "Basic support",
@@ -52,6 +52,7 @@ export const PLANS: Record<"free" | "pro", Plan> = {
     badge: "Recommended",
     headline: "Stand out and convert",
     features: [
+      "Up to 5 facility listings",
       "Enriched profile with extra detail blocks",
       "Up to 10 photos + 1 facility video",
       "Priority placement on city + state pages",

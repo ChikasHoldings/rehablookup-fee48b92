@@ -217,7 +217,7 @@ Quality images help families visualize your facility and make confident decision
     content: `
 # Managing Multiple Facility Listings
 
-You can manage unlimited facility listings under a single provider account — there is no cap on any plan.
+You can manage multiple facility listings under a single provider account. The Free plan includes 1 listing; Pro includes up to 5.
 
 ## Switching Between Facilities
 
@@ -232,7 +232,7 @@ Use the **facility selector dropdown** in the top header bar to switch between y
 
 ## Important Notes
 
-- Listings are unlimited on every plan — add as many locations as you operate
+- The Free plan includes 1 listing; Pro includes up to 5 locations
 - Each facility has its own set of leads — they are never mixed
 - Pro is a per-facility subscription ($99/mo flat) — upgrade each location you want Pro benefits on
 - Analytics can be viewed per-facility or rolled up across facilities
@@ -309,7 +309,7 @@ RehabLookup uses a flat-fee subscription model. There are no per-lead charges, n
 | Priority placement (+50 ranking) | Yes |
 | 10 photos + 1 facility video | Yes |
 | Marketing Hub (Featured + Concierge add-ons) | Yes |
-| Unlimited facility listings | Yes (any plan) |
+| Up to 5 facility listings | Yes (Free plan includes 1) |
 
 Cancel anytime from **Billing**.
 
@@ -507,7 +507,7 @@ For facilities wanting maximum exposure:
 - **Priority placement** on city / state pages (+50 ranking boost)
 - **10 photos + 1 facility video**
 - **Marketing Hub** unlocked (Featured + Concierge add-ons)
-- **Unlimited facility listings** under one account
+- **Up to 5 facility listings** under one account
 - **Embed badge** for your website
 
 Cancel anytime from the billing page.

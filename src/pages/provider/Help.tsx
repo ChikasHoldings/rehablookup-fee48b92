@@ -47,7 +47,7 @@ const faqSections = [
       },
       {
         question: "Can I have multiple facilities?",
-        answer: "Yes. You can add unlimited facility listings from a single account, on any plan. Use the facility selector in the header to switch between locations."
+        answer: "Yes. The Free plan includes 1 facility listing; Pro includes up to 5 from a single account. Use the facility selector in the header to switch between locations."
       },
     ],
   },
@@ -89,7 +89,7 @@ const faqSections = [
     items: [
       {
         question: "What does Pro membership include?",
-        answer: "Pro ($99/month, or $1,009.80/yr — save 15%) includes: verified badge, direct contact info visible to clients, inquiries delivered directly to your inbox with full contact details, review responses, 10 photos plus 1 video, unlimited facility listings, priority support, analytics dashboard, and an embeddable trust badge. Featured rotation placements and Concierge Partner surfacing are optional add-ons priced separately — see /for-providers for the full lineup."
+        answer: "Pro ($99/month, or $1,009.80/yr — save 15%) includes: verified badge, direct contact info visible to clients, inquiries delivered directly to your inbox with full contact details, review responses, 10 photos plus 1 video, up to 5 facility listings, priority support, analytics dashboard, and an embeddable trust badge. Featured rotation placements and Concierge Partner surfacing are optional add-ons priced separately — see /for-providers for the full lineup."
       },
       {
         question: "How does billing work?",

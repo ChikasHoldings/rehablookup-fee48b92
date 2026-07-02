@@ -56,14 +56,26 @@ Deno.serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
-    // Check pro_subscriptions table first (new model)
-    const { data: proSub } = await supabaseClient
+    // Check the facility_subscriptions table first (canonical model). Match
+    // has_active_pro() exactly (2026-07-02 audit): tier='pro', and either
+    // active-within-period (NULL period end counts) or past_due dunning
+    // grace. This function previously omitted the grace window, so a
+    // past_due provider read as "free" here while every DB gate treated
+    // them as Pro.
+    const nowIso = new Date().toISOString();
+    const { data: proSubRows } = await supabaseClient
       .from("facility_subscriptions")
-      .select("id, status, current_period_end")
+      .select("id, tier, status, current_period_end")
       .eq("facility_id", facilityId)
-      .eq("status", "active")
-      .gt("current_period_end", new Date().toISOString())
-      .maybeSingle();
+      .eq("tier", "pro")
+      .in("status", ["active", "past_due"])
+      .limit(5);
+
+    const proSub = (proSubRows ?? []).find(
+      (r) =>
+        r.status === "past_due" ||
+        (r.status === "active" && (!r.current_period_end || r.current_period_end > nowIso)),
+    );
 
     if (proSub) {
       logStep("Found active Pro subscription in database", { facilityId });

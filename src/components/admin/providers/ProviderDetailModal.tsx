@@ -12,6 +12,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
 import { type Facility, type ProSubscription } from "./ProviderListItem";
+import { isActiveProRow } from "@/lib/proAccess";
 import { getStatusBadge } from "./providerBadges";
 
 import { ProviderOverviewTab } from "./tabs/ProviderOverviewTab";
@@ -91,13 +92,17 @@ export function ProviderDetailModal({
     queryKey: ["admin-provider-pro", provider?.id],
     queryFn: async () => {
       if (!provider?.id) return null;
+      // Mirror has_active_pro(): tier='pro', active-within-period or
+      // past_due grace (2026-07-02 audit — admin display must match the
+      // entitlement source of truth).
       const { data } = await supabase
         .from("facility_subscriptions")
-        .select("id, facility_id, status, price_cents, current_period_end, stripe_subscription_id, created_at")
+        .select("id, facility_id, tier, status, price_cents, current_period_end, stripe_subscription_id, created_at")
         .eq("facility_id", provider.id)
-        .eq("status", "active")
+        .eq("tier", "pro")
+        .in("status", ["active", "past_due"])
         .maybeSingle();
-      return data;
+      return data && isActiveProRow(data) ? data : null;
     },
     enabled: !!provider?.id && open,
   });

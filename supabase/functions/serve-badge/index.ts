@@ -414,6 +414,27 @@ Deno.serve(async (req) => {
       return new Response("Facility not found", { status: 404, headers: corsHeaders });
     }
 
+    // Embed badges are a Pro feature (2026-07-02 entitlement audit). This
+    // endpoint previously rendered ANY badge type for ANY approved facility —
+    // the ?type= param was fully caller-controlled and facilities.verified was
+    // fetched but never checked, so a Free/unverified facility could embed a
+    // "verified" badge. Gate on the canonical has_active_pro() and, for the
+    // verified badge, on the facility actually being verified (matching the
+    // public_facilities masking rule).
+    const { data: isPro, error: proError } = await supabase.rpc("has_active_pro", {
+      p_facility_id: facility.id,
+    });
+    if (proError || isPro !== true) {
+      if (proError) console.error("has_active_pro check failed:", proError);
+      return new Response("Badge embedding requires an active Pro subscription", {
+        status: 404,
+        headers: corsHeaders,
+      });
+    }
+    if (type === "verified" && facility.verified !== true) {
+      return new Response("Facility is not verified", { status: 404, headers: corsHeaders });
+    }
+
     // Track impression (non-blocking)
     const referrer = req.headers.get("referer") || req.headers.get("origin");
     let referrerDomain = null;

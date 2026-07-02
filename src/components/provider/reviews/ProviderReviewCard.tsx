@@ -42,6 +42,11 @@ function formatReviewDate(iso: string | null | undefined): string {
 interface ProviderReviewCardProps {
   review: ProviderReview;
   showFacility?: boolean;
+  /** Responding to reviews is a Pro feature (server-gated by the
+   * validate_review_response trigger). When false, the Respond button is
+   * replaced with an upgrade hint. Defaults to true so admin/other callers
+   * without plan context keep the old behavior. */
+  canRespond?: boolean;
   onSubmitResponse: (reviewId: string, text: string) => Promise<{ error: { message: string } | null }>;
   onUpdateResponse: (responseId: string, text: string) => Promise<{ error: { message: string } | null }>;
   onDeleteResponse: (responseId: string) => Promise<{ error: { message: string } | null }>;
@@ -49,13 +54,14 @@ interface ProviderReviewCardProps {
 }
 
 // Using forwardRef to properly handle refs from parent components (e.g., Radix Tabs)
-export const ProviderReviewCard = memo(forwardRef<HTMLDivElement, ProviderReviewCardProps>(function ProviderReviewCard({ 
+export const ProviderReviewCard = memo(forwardRef<HTMLDivElement, ProviderReviewCardProps>(function ProviderReviewCard({
   review,
   showFacility,
-  onSubmitResponse, 
-  onUpdateResponse, 
+  canRespond = true,
+  onSubmitResponse,
+  onUpdateResponse,
   onDeleteResponse,
-  onFlagReview 
+  onFlagReview
 }, ref) {
   const [isResponding, setIsResponding] = useState(false);
   const [responseText, setResponseText] = useState('');
@@ -298,11 +304,16 @@ export const ProviderReviewCard = memo(forwardRef<HTMLDivElement, ProviderReview
 
           {/* Actions */}
           <div className="px-4 py-3 bg-muted/30 border-t border-border/50 flex items-center gap-2 flex-wrap">
-            {!review.response && !isResponding && (
+            {!review.response && !isResponding && canRespond && (
               <Button size="sm" onClick={() => setIsResponding(true)}>
                 <MessageSquare className="h-4 w-4 mr-1.5" />
                 Respond
               </Button>
+            )}
+            {!review.response && !isResponding && !canRespond && (
+              <span className="text-xs text-muted-foreground">
+                Responding to reviews is a Pro feature.
+              </span>
             )}
             {!review.dispute && (
               <Button

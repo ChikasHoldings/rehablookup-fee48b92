@@ -43,6 +43,7 @@ import {
   applyProviderSearch,
   type AdminProvidersTab,
 } from "./adminProvidersConfig";
+import { isActiveProRow } from "@/lib/proAccess";
 
 function useDebounce(value: string, delay: number) {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -316,7 +317,9 @@ export default function AdminProviders() {
           supabase.from("facilities").select("id", { count: "exact", head: true }).eq("status", "approved").neq("suspended", true),
           supabase.from("facilities").select("id", { count: "exact", head: true }).eq("status", "pending"),
           supabase.from("facilities").select("id", { count: "exact", head: true }).eq("suspended", true),
-          supabase.from("facility_subscriptions").select("id", { count: "exact", head: true }).in("status", ["active", "past_due"]),
+          // tier='pro' filter (2026-07-02 audit): status alone would count
+          // non-Pro add-on rows toward the "Pro" stat.
+          supabase.from("facility_subscriptions").select("id", { count: "exact", head: true }).eq("tier", "pro").in("status", ["active", "past_due"]),
           supabase.from("facilities").select("id", { count: "exact", head: true }).eq("concierge_network_opted_in", true),
           supabase.from("facilities").select("id", { count: "exact", head: true }).eq("data_source", "samhsa_import"),
           supabase.from("facilities").select("id", { count: "exact", head: true }).is("user_id", null),
@@ -352,14 +355,23 @@ export default function AdminProviders() {
       // Grace-aware: include past_due so dunning Pro providers (still
       // entitled per has_active_pro) keep their badge and stay findable in
       // the admin Pro view — that cohort is exactly who needs billing support.
+      //
+      // 2026-07-02 audit fix: filter tier='pro' and apply the same period
+      // semantics as the canonical has_active_pro() (isActiveProRow). The
+      // previous status-only query could badge add-on rows or expired
+      // 'active' rows as Pro — admin display must never disagree with the
+      // entitlement source of truth.
       const { data } = await supabase
         .from("facility_subscriptions")
-        .select("id, facility_id, status, current_period_end, price_cents, created_at")
+        .select("id, facility_id, tier, status, current_period_end, price_cents, created_at")
+        .eq("tier", "pro")
         .in("status", ["active", "past_due"]);
-      
+
       const map: Record<string, ProSubscription> = {};
       data?.forEach(sub => {
-        map[sub.facility_id] = sub;
+        if (isActiveProRow(sub)) {
+          map[sub.facility_id] = sub;
+        }
       });
       return map;
     },

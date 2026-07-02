@@ -498,6 +498,7 @@ export default function ProviderReviews() {
                   key={review.id}
                   review={review}
                   showFacility={facilities.length > 1}
+                  canRespond={requestProStatus?.isPro === true}
                   onSubmitResponse={submitResponse}
                   onUpdateResponse={updateResponse}
                   onDeleteResponse={deleteResponse}

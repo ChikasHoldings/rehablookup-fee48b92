@@ -313,6 +313,7 @@ interface Row {
 
 const COMPARISON_ROWS: Row[] = [
   { label: "Listing visible in directory",        values: [true, true] },
+  { label: "Facility listings",                   values: ["1 listing", "Up to 5"] },
   { label: "Verified badge",                      values: [false, true] },
   { label: "Edit description, treatments, hours", values: [true, true] },
   { label: "Upload logo",                         values: [true, true] },

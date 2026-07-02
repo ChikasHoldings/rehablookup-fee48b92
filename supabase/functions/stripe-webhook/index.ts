@@ -2121,7 +2121,11 @@ async function trackEvent(
 
 // ── stripe-webhook entrypoint body ─────────────────────────
 // Version tracking for deployment verification
-const VERSION = "1.3.0";
+// 1.4.0 (2026-07-02 entitlement audit): payment-confirmation gates — no Pro
+// activation for unpaid/incomplete sessions; 'incomplete' is stored verbatim
+// (never promoted into the past_due grace window); benefits activate on the
+// incomplete→active transition; subscription_events records real status.
+const VERSION = "1.4.0";
 const DEPLOYED_AT = "2026-05-16T00:00:00Z";
 
 const corsHeaders = {
@@ -2476,6 +2480,21 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
           const subscription = await stripe.subscriptions.retrieve(subscriptionId);
           const currentPeriodEnd = new Date(subscription.current_period_end * 1000).toISOString();
 
+          // Payment-confirmation gate (2026-07-02 entitlement audit): a
+          // Checkout session can complete while payment is still pending
+          // (async payment methods, abandoned 3DS/SCA → subscription status
+          // 'incomplete'). Previously this handler wrote status:'active'
+          // unconditionally, granting Pro before Stripe confirmed money.
+          // Now: benefits only when the session is paid or the subscription
+          // is already active/trialing. Otherwise the row is stored as
+          // 'incomplete' — has_active_pro() ignores it, and the
+          // customer.subscription.updated handler activates benefits when
+          // Stripe reports the transition to 'active'.
+          const paymentConfirmed =
+            session.payment_status === "paid" ||
+            subscription.status === "active" ||
+            subscription.status === "trialing";
+
           // Derive new monetization flags from the subscription items.
           // Falls back to bare Pro ($99/mo) if no new lookup keys
           // matched. The pre-rebuild $399 bundle is fully retired.
@@ -2498,7 +2517,7 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
               facility_id: facilityId,
               stripe_subscription_id: subscriptionId,
               stripe_customer_id: customerId,
-              status: "active",
+              status: paymentConfirmed ? "active" : "incomplete",
               price_cents: monthlyEquivalentCents,
               tier: "pro",
               has_featured: flagsCheckout.has_featured,
@@ -2547,6 +2566,14 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
                 error: adminErr instanceof Error ? adminErr.message : String(adminErr),
               });
             }
+          } else if (!paymentConfirmed) {
+            // Row recorded as 'incomplete' — no benefits until Stripe
+            // confirms payment (customer.subscription.updated → active).
+            logStep("Pro subscription recorded as incomplete — payment not confirmed yet", {
+              facilityId,
+              sessionPaymentStatus: session.payment_status,
+              subscriptionStatus: subscription.status,
+            });
           } else {
             logStep("Pro subscription activated", { facilityId, currentPeriodEnd });
 
@@ -2572,7 +2599,7 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
               facility_id: facilityId,
               type: "subscription_active",
               title: "Pro Subscription Activated!",
-              message: "Featured placement, priority search ranking, and unlimited facility listings are now active.",
+              message: "Featured placement, priority search ranking, and up to 5 facility listings are now active.",
               metadata: { subscription_id: subscriptionId },
             });
           }
@@ -2597,12 +2624,15 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
       });
 
       const currentPeriodEnd = new Date(subscription.current_period_end * 1000).toISOString();
-      // Round-31 audit fix: 'incomplete' (3DS/SCA pending payment) was
-      // falling through and getting stored as the raw Stripe enum,
-      // but the rest of the app treats anything-not-canceled as
-      // active. A provider who hit a 3DS challenge would see Pro
-      // active when it actually wasn't yet. Map explicitly:
-      //   incomplete        → past_due (gates benefits the same way)
+      // Round-31 audit fix + 2026-07-02 entitlement audit: map Stripe's
+      // status enum onto the stored statuses explicitly.
+      //   incomplete        → incomplete. It was previously mapped to
+      //                       past_due, but has_active_pro() grants a
+      //                       dunning GRACE window for past_due — which
+      //                       would entitle a never-paid (3DS-abandoned)
+      //                       subscription. 'incomplete' grants nothing;
+      //                       benefits activate on the incomplete→active
+      //                       transition below.
       //   incomplete_expired → canceled (the 23h window timed out)
       //   trialing          → active (we don't offer trials but if
       //                       Stripe creates one, treat as active)
@@ -2610,7 +2640,7 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
         subscription.status === "active" ? "active"
         : subscription.status === "trialing" ? "active"
         : subscription.status === "past_due" ? "past_due"
-        : subscription.status === "incomplete" ? "past_due"
+        : subscription.status === "incomplete" ? "incomplete"
         : subscription.status === "incomplete_expired" ? "canceled"
         : subscription.status === "canceled" ? "canceled"
         : subscription.status === "unpaid" ? "past_due"
@@ -2694,6 +2724,36 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
         // Previously, benefits were only applied at checkout.session.completed and never re-applied
         // on recovery from past_due, leaving providers without featured/ranking boost after recovery.
         const previousStatus = (event.data.previous_attributes as Record<string, unknown>)?.status as string | undefined;
+
+        // First-time activation for a subscription that was recorded as
+        // 'incomplete' at checkout (async/3DS payment confirmed later).
+        // activateProBenefits is idempotent, so a webhook retry is safe.
+        if (mappedStatus === "active" && previousStatus === "incomplete" && proSub) {
+          logStep("Incomplete subscription confirmed paid — activating Pro benefits", {
+            facilityId: proSub.facility_id,
+          });
+          const proResult = await activateProBenefits(supabaseAdmin, proSub.provider_id);
+          logStep("Pro benefits activation result (incomplete→active)", {
+            updated: proResult.facilitiesUpdated.length,
+            already: proResult.alreadyActive.length,
+            failed: proResult.failed.length,
+          });
+          await notifyProBenefitsPartialFailure(supabaseAdmin, {
+            userId: proSub.provider_id,
+            eventType: "customer.subscription.updated (incomplete→active)",
+            result: proResult,
+            stripeEventId: event.id,
+          });
+          await supabaseAdmin.from("provider_notifications").insert({
+            user_id: proSub.provider_id,
+            facility_id: proSub.facility_id,
+            type: "subscription_active",
+            title: "Pro Subscription Activated!",
+            message: "Your payment was confirmed — featured placement, priority search ranking, and up to 5 facility listings are now active.",
+            metadata: { subscription_id: subscription.id },
+          });
+        }
+
         if (mappedStatus === "active" && previousStatus === "past_due" && proSub) {
           logStep("Subscription recovered from past_due — restoring Pro benefits", { facilityId: proSub.facility_id });
           const { data: allFacilities } = await supabaseAdmin
@@ -2785,7 +2845,11 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
           .from("facility_subscriptions")
           .update({ status: "past_due", updated_at: new Date().toISOString() })
           .eq("stripe_subscription_id", failedSubId)
-          .neq("status", "canceled");
+          .neq("status", "canceled")
+          // A failed FIRST invoice on a never-paid subscription must not
+          // promote 'incomplete' into the past_due grace window —
+          // has_active_pro() grants benefits for past_due.
+          .neq("status", "incomplete");
         if (pastDueErr) logStep("WARN failed to set past_due on payment_failed", { error: pastDueErr.message });
       }
 
@@ -3101,7 +3165,7 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
                   ? `<div style="background: #ecfdf5; border-left: 4px solid #059669; padding: 15px; margin: 20px 0;">
                        <p style="margin: 0; color: #047857; font-weight: 600;">Your Pro Benefits Are Active</p>
                        <p style="margin: 8px 0 0; color: #047857;">✓ Featured placement & priority ranking</p>
-                       <p style="margin: 4px 0 0; color: #047857;">✓ Unlimited facility listings</p>
+                       <p style="margin: 4px 0 0; color: #047857;">✓ Up to 5 facility listings</p>
                      </div>`
                   : "";
 
@@ -3686,7 +3750,15 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
         // facilities.featured, +50 ranking) via the shared helper. The
         // helper is idempotent so this branch is safe to re-enter on
         // webhook retry. Partial failures emit an admin notification.
-        if (profile?.user_id && planTier === "pro") {
+        //
+        // 2026-07-02 entitlement audit: gate on the subscription actually
+        // being active/trialing. Stripe emits customer.subscription.created
+        // for 'incomplete' (3DS/SCA pending) subscriptions too — granting
+        // benefits there is Pro-before-payment. The incomplete→active
+        // transition is handled by customer.subscription.updated.
+        const subscriptionEntitled =
+          subscription.status === "active" || subscription.status === "trialing";
+        if (profile?.user_id && planTier === "pro" && subscriptionEntitled) {
           const proResult = await activateProBenefits(supabaseAdmin, profile.user_id);
           logStep("Pro benefits activation result", {
             userId: profile.user_id,
@@ -3750,7 +3822,10 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
           plan_tier: planTier,
           amount_cents: amount,
           currency: currency,
-          status: "active",
+          // Record the REAL Stripe status — previously hardcoded "active",
+          // which made an unpaid 'incomplete' subscription look confirmed
+          // in the admin event history.
+          status: subscription.status,
           metadata: {
             customer_email: customerEmail,
             provider_name: providerName,
