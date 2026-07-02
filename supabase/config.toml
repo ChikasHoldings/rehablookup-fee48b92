@@ -446,6 +446,10 @@ verify_jwt = true
 [functions.admin-manage-invoice]
 verify_jwt = true
 
+[functions.admin-stripe-webhook-doctor]
+# Self-gates on a service-role JWT in-function (same as admin-register-stripe-webhook).
+verify_jwt = false
+
 [functions.admin-register-stripe-webhook]
 verify_jwt = true
 
