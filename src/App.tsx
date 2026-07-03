@@ -379,6 +379,7 @@ const ProviderMarketingConcierge = lazy(() => import("./pages/provider/Marketing
 const AdminLogin = lazy(() => import("./pages/admin/AdminLogin"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const AdminProviders = lazy(() => import("./pages/admin/AdminProviders"));
+const AdminProviderProfile = lazy(() => import("./pages/admin/AdminProviderProfile"));
 const AdminLeads = lazy(() => import("./pages/admin/AdminLeads"));
 const AdminInsuranceVerifications = lazy(() => import("./pages/admin/AdminInsuranceVerifications"));
 const AdminSubscriptions = lazy(() => import("./pages/admin/AdminSubscriptions"));
@@ -1857,6 +1858,7 @@ const AppInner = () => {
               <Route index element={<Navigate to="/admin/dashboard" replace />} />
               <Route path="dashboard" element={<AdminDashboard />} />
               <Route path="providers" element={<AdminProviders />} />
+              <Route path="providers/account/:userId" element={<AdminProviderProfile />} />
               <Route path="claims" element={<AdminClaimsReviewPanel />} />
               <Route path="re-verification" element={<AdminReVerificationQueue />} />
               <Route path="leads" element={<AdminLeads />} />

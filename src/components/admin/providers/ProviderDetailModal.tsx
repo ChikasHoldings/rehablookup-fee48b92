@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   Eye, LayoutList, Inbox, History, FileCheck2, Send,
-  Handshake, Star, TrendingUp, BadgeCheck, Crown, MapPin,
+  Handshake, Star, TrendingUp, BadgeCheck, Crown, MapPin, UserCog,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -197,6 +199,13 @@ export function ProviderDetailModal({
                   <Badge variant="outline" className="text-chart-3 border-chart-3/30 gap-1 h-5 text-xs">
                     <Handshake className="h-3 w-3" />Placement
                   </Badge>
+                )}
+                {provider.user_id && (
+                  <Button asChild size="sm" variant="outline" className="h-6 gap-1 text-xs">
+                    <Link to={`/admin/providers/account/${provider.user_id}`}>
+                      <UserCog className="h-3 w-3" /> Account profile
+                    </Link>
+                  </Button>
                 )}
               </div>
             </div>

@@ -42,6 +42,8 @@ import { DashboardListingHealthCard } from "@/components/provider/DashboardListi
 import { FeaturedAnalyticsWidget } from "@/components/provider/FeaturedAnalyticsWidget";
 import { ConciergeAnalyticsWidget } from "@/components/provider/marketing/ConciergeAnalyticsWidget";
 import { FreeTierValueTeaser } from "@/components/provider/FreeTierValueTeaser";
+import { PlanGraceBanner } from "@/components/provider/PlanGraceBanner";
+import { getCachedSession } from "@/lib/sessionCache";
 
 // Compact directory-style metric tile. Hairline border, white bg, no
 // shadow lift on hover — just a subtle border accent. Title sits as a
@@ -162,6 +164,22 @@ export default function ProviderDashboardPage() {
   const profile = providerData?.profile;
   const userName = profile?.first_name || "";
   const facilityIds = facilities?.map(f => f.id) ?? [];
+
+  // Open (pending/rejected) facility claims for the claim-status banner.
+  const { data: openClaims } = useQuery({
+    queryKey: ["dashboard-open-claims"],
+    staleTime: 60 * 1000,
+    queryFn: async (): Promise<{ id: string; status: string }[]> => {
+      const session = await getCachedSession();
+      if (!session) return [];
+      const { data } = await supabase
+        .from("facility_claim_requests")
+        .select("id, status")
+        .eq("claimant_user_id", session.user.id)
+        .in("status", ["pending", "rejected"]);
+      return data ?? [];
+    },
+  });
   // True only when we've finished loading AND confirmed no facility exists.
   // Without this guard the "Getting Started — create your first listing"
   // card flashes for ~1s on every initial mount before useProviderData
@@ -470,8 +488,20 @@ export default function ProviderDashboardPage() {
     setDrawerOpen(true);
   };
 
-  const getStatusConfig = (status: string) => {
-    switch (status) {
+  const getStatusConfig = (f: { status: string; suspended?: boolean | null }) => {
+    // Suspension takes precedence over approval — a paused listing is NOT
+    // live (matches the shared getListingStatusMeta / ListingCard semantics;
+    // this local map previously showed suspended-approved rows as "Live").
+    if (f.suspended === true) {
+      return {
+        label: "Paused",
+        icon: AlertCircle,
+        bgClass: "bg-amber-100",
+        textClass: "text-amber-800",
+        dotClass: "bg-amber-500",
+      };
+    }
+    switch (f.status) {
       case "approved":
         return { 
           label: "Live", 
@@ -501,7 +531,7 @@ export default function ProviderDashboardPage() {
 
   // ---- derived overview values ----
   const totalFacilities = facilities?.length ?? 0;
-  const liveCount = facilities?.filter((f) => f.status === "approved").length ?? 0;
+  const liveCount = facilities?.filter((f) => f.status === "approved" && f.suspended !== true).length ?? 0;
   const pendingCount = facilities?.filter((f) => f.status === "pending").length ?? 0;
   const PROFILE_CHECKS = 7;
   const missingFields = providerData?.facility ? computeMissingFields() : [];
@@ -558,6 +588,36 @@ export default function ProviderDashboardPage() {
       </div>
 
       <div className="mx-auto max-w-7xl space-y-5 px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
+        {/* Courtesy-period countdown (no-op unless an admin grant is active) */}
+        <PlanGraceBanner />
+
+        {/* Pending / rejected claim visibility — a claim-intent signup owns
+            zero facilities until approval, so without this the empty state
+            pushes them to create a duplicate listing with no mention of the
+            claim they already filed (2026-07-03 audit, gap G3). */}
+        {openClaims && openClaims.length > 0 && (
+          <Card className="border-sky-200 bg-sky-50">
+            <CardContent className="flex items-start gap-3 p-4">
+              <Clock className="mt-0.5 h-5 w-5 shrink-0 text-sky-600" aria-hidden />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-sky-900">
+                  {openClaims.some((c) => c.status === "rejected")
+                    ? "A facility claim needs your attention"
+                    : `Your facility claim${openClaims.length === 1 ? " is" : "s are"} under review`}
+                </p>
+                <p className="mt-1 text-xs text-sky-800/80">
+                  {openClaims.some((c) => c.status === "rejected")
+                    ? "One of your claims was not approved — review the reason and next steps."
+                    : "We'll notify you as soon as our team finishes verifying your claim."}
+                </p>
+                <Button asChild size="sm" variant="outline" className="mt-3 border-sky-300 bg-white">
+                  <Link to="/provider/claims">View claim status</Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Signup recovery banner */}
         {showSignupRecovery && (
           <Card className="border-rose-300 bg-rose-50">
@@ -711,7 +771,7 @@ export default function ProviderDashboardPage() {
                   <CardContent className="p-0">
                     <ul className="divide-y divide-slate-100">
                       {(facilities ?? []).map((f) => {
-                        const sc = getStatusConfig(f.status);
+                        const sc = getStatusConfig(f);
                         return (
                           <li key={f.id} className="flex items-center gap-3 px-4 py-3 sm:px-5">
                             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100">

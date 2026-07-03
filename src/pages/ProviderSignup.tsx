@@ -275,13 +275,25 @@ export default function ProviderSignup({
       const { data: sessionData } = await supabase.auth.getSession();
       const userId = sessionData.session?.user.id;
       if (!userId || cancelled) return;
+      // Per-facility Pro entitlement, NOT the drift-prone profiles.plan
+      // mirror (2026-07-03 audit, gap G6). The facility being built here has
+      // no subscription yet, so any active Pro row of the provider's is the
+      // best available signal — the enforce_facility_plan_photo_cap trigger
+      // remains authoritative server-side either way.
       const { data } = await supabase
-        .from("profiles")
-        .select("plan")
-        .eq("user_id", userId)
-        .maybeSingle();
+        .from("facility_subscriptions")
+        .select("tier, status, current_period_end")
+        .eq("provider_id", userId)
+        .eq("tier", "pro")
+        .in("status", ["active", "past_due"]);
       if (!cancelled) {
-        setProviderPlan(resolvePlan((data as { plan: string | null } | null)?.plan ?? null));
+        const now = Date.now();
+        const isPro = (data ?? []).some(
+          (r) =>
+            r.status === "past_due" ||
+            (r.status === "active" && (!r.current_period_end || new Date(r.current_period_end).getTime() > now)),
+        );
+        setProviderPlan(resolvePlan(isPro ? "pro" : "free"));
       }
     })();
     return () => {
@@ -599,6 +611,36 @@ export default function ProviderSignup({
       }
       } // end !isResumeMode
 
+      // 2.5 Facility-cap pre-check (2026-07-03 audit, gap G2). The embedded
+      // add-listing flow re-enters this builder for providers who already own
+      // facilities; without this check the enforce_facility_limit trigger's
+      // rejection fell into the orphan-rollback branch below and surfaced as
+      // "Account created — facility save failed" (a loop, since
+      // signup-rollback-cleanup rightly refuses when a facility exists). The
+      // RPC computes the allowance exactly like the trigger (plan cap or an
+      // active courtesy grant, whichever is greater).
+      try {
+        const { data: allowance } = await supabase.rpc("get_my_facility_allowance");
+        const a = allowance as { used: number; max_allowed: number; plan: string } | null;
+        if (a && a.used >= a.max_allowed) {
+          toast({
+            title: "Listing limit reached",
+            description:
+              a.plan === "pro"
+                ? `Your Pro plan includes up to ${a.max_allowed} facility listings.`
+                : "The Free plan includes 1 facility listing. Upgrade to Pro to add up to 5 locations.",
+          });
+          submittingRef.current = false;
+          setIsSubmitting(false);
+          navigate("/provider/billing?upgrade=pro");
+          return;
+        }
+      } catch (allowanceErr) {
+        // Pre-check is best-effort; the DB trigger stays authoritative and
+        // its rejection is handled below.
+        console.warn("[ProviderSignup] allowance pre-check failed", allowanceErr);
+      }
+
       // 3. Create facility (with input sanitization)
       if (import.meta.env.DEV) console.log("[ProviderSignup] Creating facility...");
 
@@ -663,6 +705,22 @@ export default function ProviderSignup({
         // the row that's now in the DB and route them straight to
         // the plan step (which is where they were headed anyway).
         const pgCode = (facilityError as { code?: string }).code;
+
+        // Plan-cap rejection (enforce_facility_limit trigger, check_violation).
+        // This is a LIMIT, not a failure — never run the orphan rollback for
+        // it, and never show "your facility didn't save during signup".
+        if ((facilityError.message ?? "").includes("Facility limit reached")) {
+          toast({
+            title: "Listing limit reached",
+            description:
+              "Your plan doesn't allow another facility listing yet. Upgrade to Pro to add up to 5 locations.",
+          });
+          submittingRef.current = false;
+          setIsSubmitting(false);
+          navigate("/provider/billing?upgrade=pro");
+          return;
+        }
+
         if (pgCode === "23505") {
           console.warn(
             "[ProviderSignup] facility insert hit unique guard — finding existing row",

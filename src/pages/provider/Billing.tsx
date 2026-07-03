@@ -28,6 +28,7 @@ import { BillingDetailsCard } from "@/components/provider/billing/BillingDetails
 import { fmtMoney, TIER_PRICING } from "@/lib/billingPricing";
 import { useActivePromotion } from "@/hooks/useActivePromotion";
 import { PromoCountdownBanner } from "@/components/provider/promo/PromoCountdownBanner";
+import { PlanGraceBanner } from "@/components/provider/PlanGraceBanner";
 
 /**
  * Validate a Stripe URL returned by an edge function before we hand it
@@ -333,6 +334,9 @@ export default function ProviderSubscription() {
           </div>
         </div>
         <div className="container mx-auto max-w-3xl space-y-6 px-4 py-8">
+
+        {/* Courtesy-period countdown + upgrade CTA (no-op without a grant) */}
+        <PlanGraceBanner />
 
         {checkoutPolling && (
           <Card>

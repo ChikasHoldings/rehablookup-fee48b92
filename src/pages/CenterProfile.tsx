@@ -470,6 +470,29 @@ const CenterProfile = () => {
     };
   }, [facility]);
 
+  // Does the signed-in viewer own this facility? Drives the "Manage this
+  // listing" affordance for owners (owned facilities no longer show the
+  // claim CTA — is_claimed keys off user_id since the 2026-07-03 fix).
+  // RLS lets only the owner see their own facilities row, so this is a
+  // safe, cheap existence check; anonymous viewers short-circuit to false.
+  const { data: viewerOwnsFacility } = useQuery({
+    queryKey: ["viewer-owns-facility", facility?.id],
+    enabled: !!facility?.id,
+    staleTime: 5 * 60 * 1000,
+    queryFn: async (): Promise<boolean> => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const uid = sessionData.session?.user?.id;
+      if (!uid || !facility?.id) return false;
+      const { data } = await supabase
+        .from("facilities")
+        .select("id")
+        .eq("id", facility.id)
+        .eq("user_id", uid)
+        .maybeSingle();
+      return !!data;
+    },
+  });
+
   const { data: hasFeaturedSubscription } = useQuery({
     queryKey: ["featured-subscription-check", facility?.id],
     queryFn: async (): Promise<boolean> => {
@@ -926,6 +949,25 @@ const CenterProfile = () => {
                   >
                     <ShieldCheck className="h-3.5 w-3.5 mr-1.5" />
                     Claim This Listing
+                  </Button>
+                </div>
+              )}
+              {/* Managed listing — owner shortcut into the editor. Public
+                  visitors of a claimed/owned listing see nothing here (the
+                  managed state is conveyed by the absence of the claim CTA
+                  and the verified/Pro badges, not an extra chip). */}
+              {claimFlags?.is_claimed && viewerOwnsFacility && (
+                <div className="absolute top-3 right-3">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    asChild
+                    className="bg-white/90 hover:bg-white text-foreground hover:text-primary border-white/60 hover:border-primary/40 backdrop-blur-sm shadow-md"
+                  >
+                    <Link to={`/provider/listings?edit=${facility.id}`}>
+                      <ShieldCheck className="h-3.5 w-3.5 mr-1.5" />
+                      Manage this listing
+                    </Link>
                   </Button>
                 </div>
               )}

@@ -150,6 +150,11 @@ export function useProviderData(facilityId?: string) {
               .from("facilities")
               .select("id, name, slug, status, suspended, email, logo_url, gallery_urls, description, phone, address, city, state, zip_code, website, profile_completion_celebrated, reply_email, reply_email_verified")
               .eq("user_id", session.user.id)
+              // Deterministic fallback: prefer a non-suspended facility (the
+              // unordered limit(1) used to pick an arbitrary row, which could
+              // momentarily resolve to a suspended one) and break ties by age.
+              .order("suspended", { ascending: true, nullsFirst: true })
+              .order("created_at", { ascending: true })
               .limit(1)
               .maybeSingle(),
       ]);
