@@ -8851,37 +8851,6 @@ export type Database = {
           user_name: string
         }[]
       }
-      get_public_facility_data: {
-        Args: { facility_id: string }
-        Returns: {
-          address: string
-          bed_count: string
-          city: string
-          created_at: string
-          description: string
-          email: string
-          facility_type: string
-          featured: boolean
-          featured_pinned: boolean
-          gallery_urls: string[]
-          gender_served: string
-          id: string
-          last_featured_shown_at: string
-          logo_url: string
-          name: string
-          phone: string
-          reply_email: string
-          reply_email_verified: boolean
-          reply_email_verified_at: string
-          slug: string
-          state: string
-          status: string
-          updated_at: string
-          verified: boolean
-          website: string
-          zip_code: string
-        }[]
-      }
       get_review_request_by_token: {
         Args: { p_request_id: string }
         Returns: Json
