@@ -1,0 +1,34 @@
+-- =============================================================================
+-- Neutralize the get_public_facility_data() masking bypass (integrity pass).
+--
+-- ROOT CAUSE
+--   get_public_facility_data(uuid) is a SECURITY DEFINER RPC that predates the
+--   public_facilities view hardening. It diverges from the canonical public
+--   contract in two unsafe ways:
+--     1. It returns f.email UNMASKED and additionally exposes internal
+--        reply_email / reply_email_verified / reply_email_verified_at columns
+--        that public_facilities never surfaces.
+--     2. Its WHERE clause filters only status='approved' and OMITS the
+--        `COALESCE(suspended,false)=false` visibility filter, so an
+--        admin-suspended (moderated-off) facility is still returned.
+--
+--   It is DORMANT: no edge function or client code invokes it (the only
+--   reference is the generated types.ts). It is therefore pure latent attack
+--   surface — the moment any UI wired to it, it would leak suspended rows and
+--   provider-internal reply-email state around the public masking rules.
+--
+-- FIX
+--   Drop it. public_facilities is the single source of truth for public
+--   facility data and already applies both the field masking (verified /
+--   video_url / virtual_tour_url via has_active_pro) and the
+--   status='approved' AND suspended=false visibility filter. With zero callers
+--   there is nothing to migrate; a future public detail surface must read
+--   public_facilities.
+--
+-- ROLLBACK
+--   Restore the function body from
+--   20260819000000_pro_gate_verified_badge.sql (NOT recommended — it carries
+--   the email/suspended leak this migration removes).
+-- =============================================================================
+
+DROP FUNCTION IF EXISTS public.get_public_facility_data(uuid);

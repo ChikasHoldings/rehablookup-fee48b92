@@ -16,6 +16,7 @@ import { format } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { fromLeadsProviderView } from "@/lib/leadsProviderView";
+import { getListingStatusMeta, type ListingStatusTone } from "@/lib/listingStatus";
 
 interface ListingCardProps {
   facility: {
@@ -38,30 +39,20 @@ interface ListingCardProps {
   withinList?: boolean;
 }
 
-const getStatusConfig = (status: string) => {
-  switch (status) {
-    case "approved":
-      return {
-        label: "Live",
-        icon: CheckCircle,
-        dotColor: "bg-emerald-500",
-        pillClass: "bg-emerald-50 text-emerald-700 ring-emerald-200",
-      };
-    case "pending":
-      return {
-        label: "Under Review",
-        icon: Clock,
-        dotColor: "bg-amber-500",
-        pillClass: "bg-amber-50 text-amber-800 ring-amber-200",
-      };
-    default:
-      return {
-        label: "Draft",
-        icon: AlertCircle,
-        dotColor: "bg-slate-400",
-        pillClass: "bg-slate-100 text-slate-700 ring-slate-200",
-      };
-  }
+// Labels come from the shared getListingStatusMeta so rejected / needs_edits /
+// pending_review / suspended each read distinctly instead of collapsing to
+// "Draft" / "Live". This local map only supplies the card's row styling
+// (icon + dot + pill) per tone.
+const TONE_STYLES: Record<ListingStatusTone, {
+  icon: typeof CheckCircle;
+  dotColor: string;
+  pillClass: string;
+}> = {
+  live: { icon: CheckCircle, dotColor: "bg-emerald-500", pillClass: "bg-emerald-50 text-emerald-700 ring-emerald-200" },
+  review: { icon: Clock, dotColor: "bg-amber-500", pillClass: "bg-amber-50 text-amber-800 ring-amber-200" },
+  attention: { icon: AlertCircle, dotColor: "bg-red-500", pillClass: "bg-red-50 text-red-700 ring-red-200" },
+  paused: { icon: Lock, dotColor: "bg-slate-400", pillClass: "bg-slate-100 text-slate-700 ring-slate-200" },
+  draft: { icon: AlertCircle, dotColor: "bg-slate-400", pillClass: "bg-slate-100 text-slate-700 ring-slate-200" },
 };
 
 /**
@@ -86,14 +77,8 @@ export function ListingCard({
   withinList = true,
 }: ListingCardProps) {
   const isSuspended = facility.suspended === true;
-  const statusConfig = isSuspended
-    ? {
-        label: "Paused",
-        icon: Lock,
-        dotColor: "bg-slate-400",
-        pillClass: "bg-slate-100 text-slate-700 ring-slate-200",
-      }
-    : getStatusConfig(facility.status);
+  const meta = getListingStatusMeta(facility.status, facility.suspended);
+  const statusConfig = { label: meta.label, ...TONE_STYLES[meta.tone] };
   const StatusIcon = statusConfig.icon;
 
   const mainImage = facility.gallery_urls?.[0] || facility.logo_url;

@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { validateEmail } from "@/lib/facilitySanitization";
 import { trackEvent } from "@/lib/analytics";
 import { safeReturnTo } from "@/lib/safeReturnTo";
+import { friendlyRegisterError } from "@/lib/registerAccountErrors";
 import { useProviderOnboardingState } from "@/hooks/useProviderOnboardingState";
 
 /**
@@ -90,29 +91,30 @@ export function AccountStep({ onAdvance }: { onAdvance: () => void }) {
           },
         },
       );
-      // Surface "already registered" errors as a sign-in prompt instead
-      // of a generic failure toast. register-provider-account returns
-      // 409 with code='email_in_use' when the email is taken; older
-      // deployments may return the raw "already exists" string, so we
-      // match both.
-      const detectAlreadyRegistered = (msg: string | undefined): boolean =>
-        !!msg && /already (registered|in use|exists)|duplicate/i.test(msg);
-
+      // register-provider-account returns structured 409/400 JSON
+      // ({ error, code }). supabase.functions.invoke surfaces non-2xx
+      // responses as a FunctionsHttpError whose `.message` is the generic
+      // "Edge Function returned a non-2xx status code" — the real body lives
+      // in error.context (a Response). Parse it (mirroring Login.tsx) and map
+      // the code to a friendly message (friendlyRegisterError). Unknown/5xx
+      // codes fall back to a generic line so no internal error detail leaks.
       if (error) {
-        if (detectAlreadyRegistered(error.message)) {
-          toast.error("An account with this email already exists. Use the sign-in page instead.");
-        } else {
-          toast.error(error.message || "Sign-up failed. Please try again.");
+        let code: string | undefined;
+        try {
+          const ctx = (error as { context?: { json?: () => Promise<{ code?: string }> } }).context;
+          const body = ctx?.json ? await ctx.json() : undefined;
+          code = body?.code;
+        } catch {
+          /* non-JSON error body — fall through to generic mapping */
         }
+        toast.error(friendlyRegisterError(code));
         setSubmitting(false);
         return;
       }
       if (data?.error) {
-        if (detectAlreadyRegistered(data.error) || data?.code === "email_in_use") {
-          toast.error("An account with this email already exists. Use the sign-in page instead.");
-        } else {
-          toast.error(data.error);
-        }
+        // Defensive: some deployments/paths return { error, code } in the 200
+        // body rather than as a non-2xx. Map the same way.
+        toast.error(friendlyRegisterError((data as { code?: string }).code));
         setSubmitting(false);
         return;
       }
