@@ -126,6 +126,22 @@ export default function ProviderSubscription() {
     }
   }, [isCheckoutReturn, subscription?.status, searchParams, setSearchParams, invalidateSub, facilityId]);
 
+  // Stripe's cancel_url is /provider/billing?checkout=cancel. Surface a
+  // friendly, NON-error acknowledgement and strip the param so it can't
+  // linger or re-fire on refresh. No subscription state changes on cancel —
+  // nothing implies Pro. (This is distinct from checkout=success above, which
+  // drives polling; cancel never starts polling since isCheckoutReturn only
+  // matches "success".)
+  const isCheckoutCancel = searchParams.get("checkout") === "cancel";
+  useEffect(() => {
+    if (!isCheckoutCancel) return;
+    const next = new URLSearchParams(searchParams);
+    next.delete("checkout");
+    next.delete("session_id");
+    setSearchParams(next, { replace: true });
+    toast.message("Checkout canceled. No changes were made.");
+  }, [isCheckoutCancel, searchParams, setSearchParams]);
+
   // 2026-05-20 hardening: handle the two upsell-deep-link query params
   // that callers across the panel use (WelcomeModal, ProviderSidebar,
   // KPI strip, missed-leads, performance panel, RedirectedInquiries,

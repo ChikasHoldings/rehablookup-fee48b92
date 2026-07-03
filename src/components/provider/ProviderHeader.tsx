@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { ListingPreviewModal } from "./listing/ListingPreviewModal";
 import logoDarkBg from "@/assets/logo-dark-bg.webp";
 import { Link, useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
@@ -70,7 +69,6 @@ interface ProviderHeaderProps {
 // Facility limits now handled by useFacilityLimits hook
 
 export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilityLogo, userName, onLogout }: ProviderHeaderProps) {
-  const [previewOpen, setPreviewOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const navigate = useNavigate();
   
@@ -146,7 +144,6 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
   };
 
   return (
-    <>
     <header className="sticky top-0 z-50 bg-primary border-b border-white/10 shadow-md">
       <div className="h-14 sm:h-16 md:h-[72px] max-w-[1800px] mx-auto px-2.5 sm:px-4 md:px-6 flex items-center justify-between gap-1.5 sm:gap-3 md:gap-4 min-w-0">
         {/* Left - Logo */}
@@ -562,16 +559,5 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
         </AlertDialogContent>
       </AlertDialog>
     </header>
-
-      {/* Listing Preview Modal */}
-      {facilitySlug && facilityName && (
-        <ListingPreviewModal
-          open={previewOpen}
-          onOpenChange={setPreviewOpen}
-          facilityName={facilityName}
-          facilitySlug={facilitySlug}
-        />
-      )}
-    </>
   );
 }
