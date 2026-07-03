@@ -379,7 +379,7 @@ export function CustomerRepDashboard() {
 
       {/* Main Tabs */}
       <Tabs defaultValue="my-tickets" className="space-y-4">
-        <TabsList>
+        <TabsList className="overflow-x-auto">
           <TabsTrigger value="my-tickets" className="gap-1.5">
             My Tickets
             {(myTickets?.length || 0) > 0 && (

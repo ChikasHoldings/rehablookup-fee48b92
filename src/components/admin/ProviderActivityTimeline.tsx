@@ -47,11 +47,18 @@ export function ProviderActivityTimeline({ facilityId, userId }: ProviderActivit
     queryFn: async () => {
       const events: ActivityEvent[] = [];
 
-      // Fetch admin audit log for this facility
+      // Fetch admin audit log for this account (and its facility, if any).
+      // A zero-facility owner passes facilityId="" — an empty-string uuid
+      // comparison is rejected by PostgREST and would fail the whole query,
+      // dropping even the account-scoped events, so only include the facility
+      // term when we actually have a facility id.
+      const auditFilter = facilityId
+        ? `target_id.eq.${facilityId},target_id.eq.${userId}`
+        : `target_id.eq.${userId}`;
       const { data: auditLogs } = await supabase
         .from("admin_audit_log")
         .select("id, action_type, target_type, target_id, details, created_at")
-        .or(`target_id.eq.${facilityId},target_id.eq.${userId}`)
+        .or(auditFilter)
         .order("created_at", { ascending: false })
         .limit(50);
 
@@ -71,13 +78,15 @@ export function ProviderActivityTimeline({ facilityId, userId }: ProviderActivit
         });
       }
 
-      // Fetch leads for this facility
-      const { data: leads } = await supabase
-        .from("leads")
-        .select("id, name, email, status, source, created_at")
-        .eq("facility_id", facilityId)
-        .order("created_at", { ascending: false })
-        .limit(30);
+      // Fetch leads for this facility (skip entirely for zero-facility owners).
+      const { data: leads } = facilityId
+        ? await supabase
+            .from("leads")
+            .select("id, name, email, status, source, created_at")
+            .eq("facility_id", facilityId)
+            .order("created_at", { ascending: false })
+            .limit(30)
+        : { data: null };
 
       if (leads) {
         leads.forEach((lead) => {
@@ -123,13 +132,15 @@ export function ProviderActivityTimeline({ facilityId, userId }: ProviderActivit
         });
       }
 
-      // Fetch flagged images for this facility
-      const { data: flaggedImages } = await supabase
-        .from("flagged_images")
-        .select("id, facility_id, image_type, image_url, reason, flagged_at, resolved, resolved_at")
-        .eq("facility_id", facilityId)
-        .order("flagged_at", { ascending: false })
-        .limit(20);
+      // Fetch flagged images for this facility (skip for zero-facility owners).
+      const { data: flaggedImages } = facilityId
+        ? await supabase
+            .from("flagged_images")
+            .select("id, facility_id, image_type, image_url, reason, flagged_at, resolved, resolved_at")
+            .eq("facility_id", facilityId)
+            .order("flagged_at", { ascending: false })
+            .limit(20)
+        : { data: null };
 
       if (flaggedImages) {
         flaggedImages.forEach((flag) => {

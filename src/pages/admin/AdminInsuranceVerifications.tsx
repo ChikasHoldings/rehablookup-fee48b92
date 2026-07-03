@@ -174,6 +174,7 @@ export default function AdminInsuranceVerifications() {
   // delivers events the caller's JWT can read.
   const invalidate = useCallback(() => {
     qc.invalidateQueries({ queryKey: ["admin-insurance-verifications"] });
+    qc.invalidateQueries({ queryKey: ["insurance-kpi-counts"] });
   }, [qc]);
 
   useEffect(() => {
@@ -359,22 +360,39 @@ export default function AdminInsuranceVerifications() {
     onSuccess: () => {
       toast.success("Request updated");
       qc.invalidateQueries({ queryKey: ["admin-insurance-verifications"] });
+      qc.invalidateQueries({ queryKey: ["insurance-kpi-counts"] });
     },
     onError: (e: Error) => toast.error(e.message || "Update failed"),
   });
 
-  // Mini KPI strip
-  const counts = useMemo(() => {
-    const c = { new: 0, in_progress: 0, verified: 0, no_coverage: 0, immediate: 0 };
-    requests.forEach((r) => {
-      if (r.status === "new") c.new++;
-      if (r.status === "in_progress") c.in_progress++;
-      if (r.status === "verified") c.verified++;
-      if (r.status === "no_coverage") c.no_coverage++;
-      if (r.urgency === "immediate" && r.status !== "closed") c.immediate++;
-    });
-    return c;
-  }, [requests]);
+  // Mini KPI strip — counts come from dedicated unfiltered head-count
+  // queries so the tiles reflect the whole table, not the currently-
+  // filtered list (which would read 0 for a bucket the active status /
+  // carrier filter excludes).
+  const { data: counts } = useQuery({
+    queryKey: ["insurance-kpi-counts"],
+    queryFn: async () => {
+      const results = await Promise.all([
+        supabase.from("insurance_verification_requests").select("id", { count: "exact", head: true }).eq("status", "new"),
+        supabase.from("insurance_verification_requests").select("id", { count: "exact", head: true }).eq("status", "in_progress"),
+        supabase.from("insurance_verification_requests").select("id", { count: "exact", head: true }).eq("status", "verified"),
+        supabase.from("insurance_verification_requests").select("id", { count: "exact", head: true }).eq("status", "no_coverage"),
+        supabase.from("insurance_verification_requests").select("id", { count: "exact", head: true }).eq("urgency", "immediate").neq("status", "closed"),
+      ]);
+      for (const r of results) {
+        if (r.error) throw r.error;
+      }
+      const [newRes, inProgressRes, verifiedRes, noCoverageRes, immediateRes] = results;
+      return {
+        new: newRes.count ?? 0,
+        in_progress: inProgressRes.count ?? 0,
+        verified: verifiedRes.count ?? 0,
+        no_coverage: noCoverageRes.count ?? 0,
+        immediate: immediateRes.count ?? 0,
+      };
+    },
+    staleTime: 30_000,
+  });
 
   // CSV export of the currently-filtered set. Includes the fields
   // ops actually needs for cohort analysis (carrier success rate,
@@ -441,17 +459,17 @@ export default function AdminInsuranceVerifications() {
       </header>
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <KPI label="New" value={counts.new} tone="bg-blue-500/10 text-blue-700" />
-        <KPI label="In progress" value={counts.in_progress} tone="bg-amber-500/10 text-amber-700" />
-        <KPI label="Verified" value={counts.verified} tone="bg-emerald-500/10 text-emerald-700" />
-        <KPI label="No coverage" value={counts.no_coverage} tone="bg-rose-500/10 text-rose-700" />
-        <KPI label="Urgent open" value={counts.immediate} tone="bg-rose-500/10 text-rose-700" icon={<AlertTriangle className="h-4 w-4" />} />
+        <KPI label="New" value={counts ? counts.new : "—"} tone="bg-blue-500/10 text-blue-700" />
+        <KPI label="In progress" value={counts ? counts.in_progress : "—"} tone="bg-amber-500/10 text-amber-700" />
+        <KPI label="Verified" value={counts ? counts.verified : "—"} tone="bg-emerald-500/10 text-emerald-700" />
+        <KPI label="No coverage" value={counts ? counts.no_coverage : "—"} tone="bg-rose-500/10 text-rose-700" />
+        <KPI label="Urgent open" value={counts ? counts.immediate : "—"} tone="bg-rose-500/10 text-rose-700" icon={<AlertTriangle className="h-4 w-4" />} />
       </div>
 
       <Card>
         <CardHeader className="pb-3">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-            <div className="flex flex-1 items-center gap-2">
+            <div className="flex flex-1 flex-wrap items-center gap-2">
               <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                 <Input
@@ -716,7 +734,7 @@ export default function AdminInsuranceVerifications() {
   );
 }
 
-function KPI({ label, value, tone, icon }: { label: string; value: number; tone: string; icon?: React.ReactNode }) {
+function KPI({ label, value, tone, icon }: { label: string; value: number | string; tone: string; icon?: React.ReactNode }) {
   return (
     <Card>
       <CardContent className="p-3">

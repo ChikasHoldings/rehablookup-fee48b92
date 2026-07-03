@@ -30,28 +30,32 @@ const STATUS_OPTIONS = [
   { value: "lost", label: "Lost" },
 ];
 
-const ACTION_CONFIG: Record<BulkMarketingAction, { title: string; verb: string; icon: React.ElementType; danger?: boolean; description: string }> = {
+const ACTION_CONFIG: Record<BulkMarketingAction, { title: string; verb: string; pastVerb: string; icon: React.ElementType; danger?: boolean; description: string }> = {
   update_status: {
     title: "Change status",
     verb: "Update",
+    pastVerb: "Updated",
     icon: RefreshCw,
     description: "Updates the status on every selected marketing lead. Already-in-target leads are skipped.",
   },
   mark_converted: {
     title: "Mark as converted to concierge",
     verb: "Mark converted",
+    pastVerb: "Marked converted",
     icon: Shield,
     description: "Flags every selected lead as converted_to_concierge, stamps converted_at, and sets status=converted. Already-converted leads are skipped.",
   },
   send_followup: {
     title: "Send follow-up email",
     verb: "Send",
+    pastVerb: "Sent",
     icon: Mail,
     description: "Fires the send-marketing-followup edge fn for each selected lead. Leads that have already received a follow-up are skipped.",
   },
   delete: {
     title: "Delete marketing leads",
     verb: "Delete",
+    pastVerb: "Deleted",
     icon: Trash2,
     danger: true,
     description: "Permanently deletes the selected leads. Super-admin only. Cannot be undone.",
@@ -98,9 +102,9 @@ export function BulkMarketingLeadActionDialog({
     onSuccess: (res) => {
       const noun = res.succeeded === 1 ? "lead" : "leads";
       if (res.errored === 0 && res.skipped === 0) {
-        toast.success(`${config.verb}d ${res.succeeded} ${noun}`);
+        toast.success(`${config.pastVerb} ${res.succeeded} ${noun}`);
       } else {
-        const summary = `${config.verb}d ${res.succeeded} · ${res.skipped} skipped · ${res.errored} errored`;
+        const summary = `${config.pastVerb} ${res.succeeded} · ${res.skipped} skipped · ${res.errored} errored`;
         if (res.errored > 0) {
           (res.succeeded > 0 ? toast.warning : toast.error)(summary);
         } else {

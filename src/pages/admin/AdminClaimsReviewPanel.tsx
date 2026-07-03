@@ -279,6 +279,11 @@ function AdminClaimsReviewPanel() {
   // already committed, so we surface a per-row "Resend notification" button
   // and let the admin retry. Cleared when fetchClaims() refreshes.
   const [emailFailedForClaimId, setEmailFailedForClaimId] = useState<string | null>(null);
+  // Persist the full claim (not just its id) so the resend control survives the
+  // post-action fetchClaims() — after an approve, the claim leaves the default
+  // "pending" filter and its row (and per-row resend button) disappears, so the
+  // recovery action must live in a filter-independent banner.
+  const [emailFailedClaim, setEmailFailedClaim] = useState<ClaimRow | null>(null);
   const [resendPending, setResendPending] = useState<string | null>(null);
 
   /**
@@ -412,6 +417,7 @@ function AdminClaimsReviewPanel() {
       if (error) throw error;
       toast.success("Notification email resent.");
       setEmailFailedForClaimId(null);
+      setEmailFailedClaim(null);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Resend failed");
     } finally {
@@ -588,8 +594,9 @@ function AdminClaimsReviewPanel() {
         // Email failed but DB write committed — surface a persistent banner
         // with a manual resend button instead of a transient warning toast.
         setEmailFailedForClaimId(claim.id);
+        setEmailFailedClaim(claim);
         toast.warning(
-          "Approval saved. The notification email could not be sent — use the Resend button on the claim row to retry.",
+          "Approval saved. The notification email could not be sent — use the Resend button in the banner above to retry.",
           { duration: 8000 },
         );
       } else {
@@ -626,8 +633,10 @@ function AdminClaimsReviewPanel() {
         sendEmailFn: "send-claim-rejection-email",
       });
       if (result.emailSent === false) {
+        setEmailFailedForClaimId(claim.id);
+        setEmailFailedClaim({ ...claim, status: "rejected" });
         toast.warning(
-          "Rejection saved but the notification email failed to send.",
+          "Rejection saved but the notification email failed to send — use the Resend button in the banner above to retry.",
           { duration: 8000 },
         );
       } else {
@@ -663,6 +672,41 @@ function AdminClaimsReviewPanel() {
           Refresh
         </Button>
       </div>
+
+      {/* Filter-independent email-failure recovery. The just-actioned claim
+          may no longer be in the visible (filtered) list, so the resend control
+          lives here rather than on the row. */}
+      {emailFailedClaim && (
+        <div className="flex flex-col gap-3 rounded-lg border border-amber-300 bg-amber-50/70 p-4 dark:border-amber-800 dark:bg-amber-950/30 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-2.5">
+            <Mail className="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden />
+            <div>
+              <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">
+                Notification email not delivered
+              </p>
+              <p className="text-xs text-amber-800/80 dark:text-amber-200/70">
+                The {emailFailedClaim.status === "approved" ? "approval" : "rejection"} decision for{" "}
+                <span className="font-medium">{emailFailedClaim.facilities?.name ?? "the facility"}</span> was saved, but
+                the email to {emailFailedClaim.claimant_name} could not be sent. Retry so they're notified.
+              </p>
+            </div>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <Button
+              size="sm"
+              onClick={() => resendApprovalEmail(emailFailedClaim)}
+              disabled={resendPending === emailFailedClaim.id}
+              aria-label={`Resend notification email to ${emailFailedClaim.claimant_name}`}
+            >
+              <RefreshCw className={`mr-1.5 h-3.5 w-3.5 ${resendPending === emailFailedClaim.id ? "animate-spin" : ""}`} aria-hidden />
+              {resendPending === emailFailedClaim.id ? "Sending…" : "Resend email"}
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => { setEmailFailedClaim(null); setEmailFailedForClaimId(null); }}>
+              Dismiss
+            </Button>
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>

@@ -204,7 +204,7 @@ export function NetworkProvidersTab() {
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -234,6 +234,7 @@ export function NetworkProvidersTab() {
       {/* Providers Table */}
       <div className="border rounded-lg">
         <ScrollArea className="h-[500px]">
+          <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -337,6 +338,7 @@ export function NetworkProvidersTab() {
               )}
             </TableBody>
           </Table>
+          </div>
         </ScrollArea>
       </div>
     </div>

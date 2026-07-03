@@ -321,7 +321,10 @@ export default function AdminNotifications() {
   // Memoize filtered notifications
   const filteredNotifications = useMemo(() => {
     let notifications = activeTab === "global"
-      ? globalNotifications.map(n => ({ ...n, source: "global" as const }))
+      // Apply the same role-relevance filter as the "All" tab and the unread
+      // badge — otherwise the Global tab leaks security/payment broadcasts to
+      // lower-privilege roles that are hidden everywhere else.
+      ? globalNotifications.filter(n => isRelevantNotification(n.type)).map(n => ({ ...n, source: "global" as const }))
       : activeTab === "personal"
       ? userNotifications.map(n => ({ ...n, source: "personal" as const }))
       : allNotifications;
@@ -349,7 +352,7 @@ export default function AdminNotifications() {
     }
 
     return notifications;
-  }, [activeTab, filter, typeFilter, searchQuery, allNotifications, globalNotifications, userNotifications]);
+  }, [activeTab, filter, typeFilter, searchQuery, allNotifications, globalNotifications, userNotifications, isRelevantNotification]);
 
   // Get unique notification types for filter
   const notificationTypes = useMemo(() => Array.from(new Set(allNotifications.map(n => n.type))), [allNotifications]);

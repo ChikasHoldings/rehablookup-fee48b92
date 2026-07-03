@@ -60,6 +60,7 @@ export function ManagerDashboard() {
     queryClient.invalidateQueries({ queryKey: ["manager-team-stats"] });
     queryClient.invalidateQueries({ queryKey: ["manager-escalation-stats"] });
     queryClient.invalidateQueries({ queryKey: ["manager-placement-stats"] });
+    queryClient.invalidateQueries({ queryKey: ["manager-revenue-stats"] });
   }, [queryClient]);
 
   useEffect(() => {
@@ -320,13 +321,13 @@ export function ManagerDashboard() {
               <>
                 <div className="text-lg sm:text-2xl font-bold truncate tabular-nums">${revenueStats?.monthlyRevenue?.toLocaleString() || "0"}</div>
                 <p className="text-[9px] sm:text-xs text-muted-foreground mt-0.5 flex items-center gap-0.5">
-                  {revenueStats?.percentChange && revenueStats.percentChange >= 0 ? (
+                  {revenueStats?.percentChange != null && revenueStats.percentChange >= 0 ? (
                     <TrendingUp className="h-2.5 w-2.5 shrink-0 text-success" />
                   ) : (
                     <TrendingDown className="h-2.5 w-2.5 shrink-0 text-destructive" />
                   )}
                   <span className="truncate">
-                    {revenueStats?.percentChange ? `${revenueStats.percentChange >= 0 ? "+" : ""}${revenueStats.percentChange}%` : "—"} vs last
+                    {revenueStats?.percentChange != null ? `${revenueStats.percentChange >= 0 ? "+" : ""}${revenueStats.percentChange}%` : "—"} vs last
                   </span>
                 </p>
               </>

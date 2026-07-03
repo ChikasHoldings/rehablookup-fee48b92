@@ -172,7 +172,7 @@ export function ConciergePlacementTab({ caseData, onRefresh }: ConciergePlacemen
                           </Badge>
                           <Badge
                             variant={
-                              facility.concierge_availability_status === "open"
+                              facility.concierge_availability_status === "accepting"
                                 ? "default"
                                 : facility.concierge_availability_status === "limited"
                                 ? "secondary"

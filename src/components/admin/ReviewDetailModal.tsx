@@ -181,12 +181,27 @@ export function ReviewDetailModal({ review, open, onOpenChange, onRefresh }: Rev
       return;
     }
 
-    const { error } = await supabase.from("facility_reviews").delete().eq("id", review.id);
+    // Return the deleted row so a concurrent delete (0 rows affected) is
+    // detected instead of falsely reporting success + writing a phantom audit
+    // entry — matching the page-level handler in AdminReviews.
+    const { data: deleted, error } = await supabase
+      .from("facility_reviews")
+      .delete()
+      .eq("id", review.id)
+      .select("id")
+      .maybeSingle();
     setProcessing(false);
     setDeleteConfirm(false);
 
     if (error) {
       toast.error(`Failed to delete review: ${error.message}`);
+      return;
+    }
+    if (!deleted) {
+      toast.info("This review was already removed.");
+      queryClient.invalidateQueries({ queryKey: ["admin-sidebar-counts"] });
+      onRefresh();
+      onOpenChange(false);
       return;
     }
 

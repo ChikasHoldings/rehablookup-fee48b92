@@ -172,11 +172,29 @@ export function EscalationsList({
   // Deep-link: open a specific escalation when ?id=<uuid> is in the URL.
   useEffect(() => {
     if (!initialOpenId) return;
-    const target = escalations?.find((e) => e.id === initialOpenId);
+    if (escalations === undefined) return; // wait for the list to load first
+    const target = escalations.find((e) => e.id === initialOpenId);
     if (target) {
       setSelectedEscalation(target);
       onInitialOpenConsumed?.();
+      return;
     }
+    // Not in the current (filtered) list — e.g. a notification deep-link to a
+    // resolved/closed escalation while the default "open" filter is active.
+    // Fetch it directly so the sheet still opens, and clear the ?id param
+    // either way so it never leaks in the URL.
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("admin_escalations")
+        .select("id, subject, description, priority, status, created_by, assigned_to, related_type, related_id, resolution_notes, resolved_at, created_at, updated_at")
+        .eq("id", initialOpenId)
+        .maybeSingle();
+      if (cancelled) return;
+      if (data) setSelectedEscalation(data);
+      onInitialOpenConsumed?.();
+    })();
+    return () => { cancelled = true; };
   }, [initialOpenId, escalations, onInitialOpenConsumed]);
 
   const updateMutation = useEscalationTransition();

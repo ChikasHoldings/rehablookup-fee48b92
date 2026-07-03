@@ -193,12 +193,17 @@ export default function AdminMarketing() {
         ),
         supabase.from("marketing_leads").select("id", { count: "exact", head: true }).eq("converted_to_concierge", true),
         supabase.from("marketing_leads").select("id", { count: "exact", head: true }).in("urgency", ["immediate", "within-week"]),
+        // "Engaged" = the lead requested ≥1 facility. Mirrors the
+        // getStatusBadge / Engaged definition: facilities_requested
+        // is a non-empty array. Counted globally so the KPI matches its
+        // sibling tiles instead of the filtered/paginated list.
+        supabase.from("marketing_leads").select("id", { count: "exact", head: true }).not("facilities_requested", "is", null).neq("facilities_requested", "{}"),
       ]);
       for (const r of results) {
         if (r.error) throw r.error;
       }
       const [total, ...rest] = results;
-      const [newCount, contactedCount, convertedCount, lostCount, conciergeCount, urgentCount] = rest;
+      const [newCount, contactedCount, convertedCount, lostCount, conciergeCount, urgentCount, engagedCount] = rest;
       return {
         total: total.count ?? 0,
         new: newCount.count ?? 0,
@@ -207,6 +212,7 @@ export default function AdminMarketing() {
         lost: lostCount.count ?? 0,
         concierge: conciergeCount.count ?? 0,
         urgent: urgentCount.count ?? 0,
+        engaged: engagedCount.count ?? 0,
       };
     },
     staleTime: 30 * 1000,
@@ -325,10 +331,7 @@ export default function AdminMarketing() {
   const convertedLeads = globalCounts?.concierge ?? 0;
   const newLeads = globalCounts?.new ?? 0;
   const urgentLeads = globalCounts?.urgent ?? 0;
-  const engagedLeads = useMemo(
-    () => leads.filter((l) => (l.facilities_requested?.length || 0) > 0).length,
-    [leads],
-  );
+  const engagedLeads = globalCounts?.engaged ?? 0;
 
   const getStatusBadge = (lead: MarketingLead) => {
     if (lead.converted_to_concierge) {
@@ -509,7 +512,7 @@ export default function AdminMarketing() {
               </button>
               <div className="flex flex-col items-center justify-center px-3 py-2.5 min-w-[72px]">
                 <TrendingUp className="h-3.5 w-3.5 text-success mb-1" />
-                <span className="text-lg font-semibold tabular-nums leading-none">{isLoading ? "—" : engagedLeads}</span>
+                <span className="text-lg font-semibold tabular-nums leading-none">{globalCounts ? engagedLeads : "—"}</span>
                 <span className="text-[9px] text-muted-foreground uppercase tracking-wider mt-1">Engaged</span>
               </div>
               <button

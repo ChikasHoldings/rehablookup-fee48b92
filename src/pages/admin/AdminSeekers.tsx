@@ -24,6 +24,7 @@ import {
   Ban,
   Loader2,
   Link2,
+  RefreshCw,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -315,7 +316,7 @@ export default function AdminSeekers() {
     a.download = `seekers-export-${new Date().toISOString().split("T")[0]}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    toast.success("Clients exported to CSV");
+    toast.success(`Exported ${rows.length} clients (current page)`);
   };
 
   // Fetch total count for pagination
@@ -349,7 +350,7 @@ export default function AdminSeekers() {
     totalItems: totalCount ?? 0,
   });
 
-  const { data: users, isLoading, isFetching } = useQuery({
+  const { data: users, isLoading, isFetching, isError: usersError, refetch: refetchUsers } = useQuery({
     queryKey: ["admin-users", currentPage, verificationFilter, searchQuery],
     queryFn: async () => {
       const from = (currentPage - 1) * pageSize;
@@ -625,9 +626,16 @@ export default function AdminSeekers() {
                   <SelectItem value="unverified">Not Verified</SelectItem>
                 </SelectContent>
               </Select>
-              <Button variant="outline" size="sm" onClick={handleExportCSV} className="gap-1.5 h-10">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleExportCSV}
+                className="gap-1.5 h-10"
+                title="Export the current page of clients to CSV"
+                aria-label="Export the current page of clients to CSV"
+              >
                 <Download className="h-4 w-4" />
-                <span className="hidden sm:inline">Export</span>
+                <span className="hidden sm:inline">Export page</span>
               </Button>
               {selectedIds.size > 0 && (
                 <>
@@ -705,6 +713,18 @@ export default function AdminSeekers() {
               {Array.from({ length: 6 }).map((_, i) => (
                 <Skeleton key={i} className="h-14 w-full" />
               ))}
+            </div>
+          ) : usersError ? (
+            <div className="text-center py-16">
+              <UsersIcon className="h-12 w-12 text-destructive/40 mx-auto mb-3" />
+              <p className="text-destructive font-medium">Failed to load clients</p>
+              <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
+                Something went wrong fetching this page. Check your connection and try again.
+              </p>
+              <Button variant="outline" size="sm" onClick={() => refetchUsers()} className="mt-4 gap-1.5">
+                <RefreshCw className="h-3.5 w-3.5" />
+                Retry
+              </Button>
             </div>
           ) : safeUsers.length === 0 ? (
             <div className="text-center py-16">

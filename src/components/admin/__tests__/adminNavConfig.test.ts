@@ -15,6 +15,7 @@ import {
  */
 const KNOWN_ADMIN_ROUTES = new Set<string>([
   "/admin",
+  "/admin/dashboard",
   "/admin/leads",
   "/admin/insurance-verifications",
   "/admin/re-verification",

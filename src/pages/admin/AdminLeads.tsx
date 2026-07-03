@@ -348,7 +348,7 @@ export default function AdminLeads() {
   });
 
 
-  const { data: leads, isLoading, isFetching } = useQuery({
+  const { data: leads, isLoading, isFetching, isError: leadsError, refetch: refetchLeads } = useQuery({
     queryKey: ["admin-leads", statusFilter, inquiryTypeFilter, searchQuery, currentPage, dateRange.from?.toISOString(), dateRange.to?.toISOString(), sortKey],
     queryFn: async () => {
       const from = (currentPage - 1) * pageSize;
@@ -467,7 +467,7 @@ export default function AdminLeads() {
       facility_name: facilitiesMap.get(lead.facility_id || "")?.name || undefined,
     }));
     exportLeadsToCSV(exportData);
-    toast.success(`Exported ${leads.length} leads`);
+    toast.success(`Exported ${leads.length} leads (current page)`);
   }, [leads, facilitiesMap]);
 
   const openDetail = (lead: Lead) => {
@@ -534,9 +534,17 @@ export default function AdminLeads() {
                 <span className="hidden sm:inline">Copy link</span>
               </Button>
             )}
-            <Button variant="outline" size="sm" className="gap-2" onClick={handleExportCSV} disabled={!leads || leads.length === 0}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              onClick={handleExportCSV}
+              disabled={!leads || leads.length === 0}
+              title="Export the current page of inquiries to CSV"
+              aria-label="Export the current page of inquiries to CSV"
+            >
               <Download className="h-4 w-4" />
-              <span className="hidden sm:inline">Export</span>
+              <span className="hidden sm:inline">Export page</span>
             </Button>
           </div>
         }
@@ -684,6 +692,18 @@ export default function AdminLeads() {
         <CardContent className="p-0">
           {isLoading ? (
             <div className="p-6 space-y-3">{[...Array(6)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>
+          ) : leadsError ? (
+            <div className="text-center py-16 px-4">
+              <Users className="h-12 w-12 text-destructive/40 mx-auto mb-3" aria-hidden />
+              <p className="text-destructive font-medium">Failed to load inquiries</p>
+              <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
+                Something went wrong fetching this page. Check your connection and try again.
+              </p>
+              <Button variant="outline" size="sm" onClick={() => refetchLeads()} className="mt-4 gap-1.5">
+                <RefreshCw className="h-3.5 w-3.5" />
+                Retry
+              </Button>
+            </div>
           ) : filteredLeads.length > 0 ? (
             <>
               {/* Background-refetch indicator — surfaces the realtime/polling

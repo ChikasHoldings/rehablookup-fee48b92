@@ -3,7 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft, Building2, CreditCard, ShieldCheck, Clock, Sparkles,
-  Mail, Phone, CalendarDays, AlertCircle, Plus, XCircle,
+  Mail, Phone, CalendarDays, AlertCircle, Plus, XCircle, RefreshCw,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -48,7 +48,7 @@ export default function AdminProviderProfile() {
   const [grantDays, setGrantDays] = useState("30");
   const [grantReason, setGrantReason] = useState("");
 
-  const { data: profile, isLoading: profileLoading } = useQuery({
+  const { data: profile, isLoading: profileLoading, isError: profileError, refetch: refetchProfile } = useQuery({
     queryKey: ["admin-provider-profile", userId],
     enabled: !!userId,
     queryFn: async () => {
@@ -215,6 +215,28 @@ export default function AdminProviderProfile() {
     );
   }
 
+  // Distinguish a real fetch failure from a genuinely-missing record, so a
+  // transient outage isn't misreported as "no account found".
+  if (profileError) {
+    return (
+      <div className="mx-auto max-w-5xl p-6">
+        <Button asChild variant="ghost" size="sm" className="mb-4">
+          <Link to="/admin/providers"><ArrowLeft className="mr-1.5 h-4 w-4" /> Back to Providers</Link>
+        </Button>
+        <Card><CardContent className="p-8 flex flex-col items-center gap-3 text-center">
+          <AlertCircle className="h-6 w-6 text-destructive" />
+          <div>
+            <p className="font-semibold text-foreground">Couldn't load this provider account</p>
+            <p className="text-sm text-muted-foreground mt-0.5">The account failed to load. Please retry.</p>
+          </div>
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => refetchProfile()}>
+            <RefreshCw className="h-3.5 w-3.5" /> Retry
+          </Button>
+        </CardContent></Card>
+      </div>
+    );
+  }
+
   if (!profile) {
     return (
       <div className="mx-auto max-w-5xl p-6">
@@ -343,7 +365,10 @@ export default function AdminProviderProfile() {
                   {f.featured && <Badge className="bg-sky-100 text-sky-800">Featured</Badge>}
                   <span className="text-xs text-muted-foreground">{f.gallery_urls?.length ?? 0} photos · {f.data_source}</span>
                   <Button asChild size="sm" variant="ghost" className="ml-auto">
-                    <Link to={`/admin/providers?facility=${f.id}`}>Open</Link>
+                    {/* Deep-link to the Facilities tab scoped to this owner and
+                        pre-searched to this facility's name — both params the
+                        Providers page honors (a bare ?facility= is ignored). */}
+                    <Link to={`/admin/providers?view=facilities&owner=${userId}&q=${encodeURIComponent(f.name)}`}>Open</Link>
                   </Button>
                 </li>
               ))}

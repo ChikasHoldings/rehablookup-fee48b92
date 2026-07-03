@@ -305,8 +305,8 @@ export function FeaturedAnalyticsDashboard() {
 
 
       {/* Header with date range selector and refresh */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
           <div className="h-10 w-10 rounded-lg bg-emerald-100 flex items-center justify-center">
             <BarChart3 className="h-5 w-5 text-emerald-600" />
           </div>
@@ -492,11 +492,11 @@ export function FeaturedAnalyticsDashboard() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-emerald-700">Monthly Revenue</p>
+                <p className="text-sm font-medium text-emerald-700">Est. Monthly Revenue</p>
                 <p className="text-2xl font-bold text-emerald-900">
                   ${data.estimatedRevenue.toLocaleString()}
                 </p>
-                <p className="text-xs text-emerald-600 mt-1">From Pro subscriptions</p>
+                <p className="text-xs text-emerald-600 mt-1">Pro list price × subscribers (excl. discounts)</p>
               </div>
               <div className="h-10 w-10 rounded-full bg-emerald-200 flex items-center justify-center">
                 <DollarSign className="h-5 w-5 text-emerald-700" />
@@ -597,35 +597,47 @@ export function FeaturedAnalyticsDashboard() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-6 md:grid-cols-3">
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">Cost Per Lead</p>
-              <p className="text-2xl font-bold">
-                ${data.totalLeads > 0 
-                  ? Math.round(data.estimatedRevenue / data.totalLeads)
-                  : "—"}
-              </p>
-              <p className="text-xs text-muted-foreground">Based on {dateRange === "30d" ? "monthly" : dateRange} revenue</p>
-            </div>
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">Cost Per Click</p>
-              <p className="text-2xl font-bold">
-                ${data.totalClicks > 0 
-                  ? (data.estimatedRevenue / data.totalClicks).toFixed(2)
-                  : "—"}
-              </p>
-              <p className="text-xs text-muted-foreground">Profile visit cost</p>
-            </div>
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">Lead Value Estimate</p>
-              <p className="text-2xl font-bold text-emerald-600">
-                {data.totalLeads > 0 
-                  ? `$${Math.round((data.estimatedRevenue / data.totalLeads) * 0.3).toLocaleString()}`
-                  : "—"}
-              </p>
-              <p className="text-xs text-muted-foreground">Estimated value at 30% conversion</p>
-            </div>
-          </div>
+          {(() => {
+            // estimatedRevenue is a full-MONTH figure, but totalLeads/totalClicks
+            // are scoped to the selected window. Dividing month-revenue by
+            // window-leads overstates cost ~4x on 7d and understates on 90d.
+            // Prorate the revenue to the same window so the ratios are
+            // dimensionally consistent.
+            const windowDays = dateRange === "7d" ? 7 : dateRange === "90d" ? 90 : 30;
+            const windowedRevenue = (data.estimatedRevenue * windowDays) / 30;
+            const rangeLabel = dateRange === "30d" ? "30d" : dateRange;
+            return (
+              <div className="grid gap-6 md:grid-cols-3">
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">Cost Per Lead</p>
+                  <p className="text-2xl font-bold">
+                    ${data.totalLeads > 0
+                      ? Math.round(windowedRevenue / data.totalLeads).toLocaleString()
+                      : "—"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Est. featured spend ÷ leads ({rangeLabel})</p>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">Cost Per Click</p>
+                  <p className="text-2xl font-bold">
+                    ${data.totalClicks > 0
+                      ? (windowedRevenue / data.totalClicks).toFixed(2)
+                      : "—"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Est. featured spend ÷ profile visits ({rangeLabel})</p>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">Lead Value Estimate</p>
+                  <p className="text-2xl font-bold text-emerald-600">
+                    {data.totalLeads > 0
+                      ? `$${Math.round((windowedRevenue / data.totalLeads) * 0.3).toLocaleString()}`
+                      : "—"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Est. value at 30% assumed conversion</p>
+                </div>
+              </div>
+            );
+          })()}
         </CardContent>
       </Card>
     </div>

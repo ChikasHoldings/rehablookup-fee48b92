@@ -219,6 +219,9 @@ export function ArticleEditor({ open, onOpenChange, article, onSuccess }: Articl
         ...(data.status === "published" && !article?.published_at ? { published_at: new Date().toISOString() } : {}),
       };
 
+      // Track the affected row id so the audit log can reference it.
+      // On create the id isn't known until the insert returns it.
+      let targetId: string | null = article?.id ?? null;
       if (isEditing && article) {
         const { error } = await supabase
           .from("blog_articles")
@@ -226,10 +229,13 @@ export function ArticleEditor({ open, onOpenChange, article, onSuccess }: Articl
           .eq("id", article.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase
+        const { data: inserted, error } = await supabase
           .from("blog_articles")
-          .insert(articleData as never);
+          .insert(articleData as never)
+          .select("id")
+          .single();
         if (error) throw error;
+        targetId = (inserted as { id: string } | null)?.id ?? null;
       }
 
       // Audit log for blog changes
@@ -239,7 +245,7 @@ export function ArticleEditor({ open, onOpenChange, article, onSuccess }: Articl
           admin_user_id: adminUser.id,
           action_type: isEditing ? "blog_article_updated" : "blog_article_created",
           target_type: "blog_article",
-          target_id: article?.id || null,
+          target_id: targetId,
           details: { title: data.title, slug: cleanSlug, status: data.status },
         });
       }

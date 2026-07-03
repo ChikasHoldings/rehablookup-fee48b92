@@ -368,6 +368,7 @@ export default function AdminSettings() {
   // the UI can render a banner instead of silently showing zeros.
   const { data: stats, isLoading: loadingStats, isFetching: fetchingStats, refetch: refetchStats, error: statsError } = useQuery({
     queryKey: ["admin-settings-stats"],
+    enabled: isSuperAdmin,
     queryFn: async () => {
       const [facilitiesResult, leadsResult, adminProfilesResult, flaggedResult, auditLogsResult] = await Promise.all([
         supabase.from("facilities").select("id", { count: "exact", head: true }),
@@ -428,6 +429,7 @@ export default function AdminSettings() {
   // Fetch storage usage data
   const { data: storageData, isLoading: loadingStorage, refetch: refetchStorage } = useQuery({
     queryKey: ["admin-storage-usage"],
+    enabled: isSuperAdmin,
     queryFn: async () => {
       // Get all files from the facility-images bucket
       const { data: files, error } = await supabase
@@ -488,6 +490,7 @@ export default function AdminSettings() {
   // Real backup status is surfaced via a link to the Supabase dashboard.
   const { data: backupInfo } = useQuery({
     queryKey: ["admin-backup-info"],
+    enabled: isSuperAdmin,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("admin_audit_log")
@@ -750,7 +753,7 @@ export default function AdminSettings() {
     },
     onSuccess: (data) => {
       toast.success("Audit log cleanup complete", {
-        description: `Deleted ${data.deleted || 0} old audit log entries`,
+        description: `Deleted ${data?.deleted ?? 0} old audit log entries`,
       });
       invalidateSettingsQueries();
       refetchStats();
@@ -1697,7 +1700,7 @@ export default function AdminSettings() {
           ) : (
             <>
               {/* Quick Actions */}
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap gap-y-2 items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Badge variant="outline" className="gap-1">
                     <Activity className="h-3 w-3" />
@@ -2025,7 +2028,7 @@ export default function AdminSettings() {
                   </div>
                   
                   {/* Send Now Buttons */}
-                  <div className="flex gap-3 mt-4">
+                  <div className="flex flex-wrap gap-y-2 gap-3 mt-4">
                     <Button
                       variant="outline"
                       size="sm"
@@ -2431,15 +2434,12 @@ export default function AdminSettings() {
         {/* Data Tab */}
         <TabsContent value="data" className="space-y-6">
           {/* Quick Actions Bar */}
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap gap-y-2 items-center justify-between">
             <div className="flex items-center gap-2">
               <Badge variant="outline" className="gap-1">
                 <Activity className="h-3 w-3" />
                 Live Data
               </Badge>
-              <span className="text-sm text-muted-foreground">
-                Last updated: {new Date().toLocaleTimeString()}
-              </span>
             </div>
             <div className="flex items-center gap-2">
               <Button 
