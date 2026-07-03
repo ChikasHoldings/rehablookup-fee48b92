@@ -136,6 +136,21 @@ export function SelectedFacilityProvider({ children }: { children: ReactNode }) 
       setSelectedFacilityState(fallback);
       localStorage.setItem("selectedFacilityId", fallback.id);
       localStorage.setItem("selectedFacilityData", JSON.stringify(fallback));
+    } else if (
+      fallback && selectedFacility &&
+      (fallback.suspended !== selectedFacility.suspended ||
+        fallback.status !== selectedFacility.status)
+    ) {
+      // Same facility (no non-suspended alternative to switch to), but the
+      // persisted snapshot is stale — e.g. the facility was just suspended
+      // while a pre-suspension localStorage snapshot said suspended:false.
+      // Hydrate the fresh record so ProviderShell's paused banner + status
+      // surfaces reflect reality (selectedFacility wins over providerData there).
+      // Content-based (suspended/status) so it fires once then stabilises — no loop.
+      if (import.meta.env.DEV) console.log("[SelectedFacilityContext] Refreshed stale facility snapshot:", fallback.name);
+      setSelectedFacilityState(fallback);
+      localStorage.setItem("selectedFacilityId", fallback.id);
+      localStorage.setItem("selectedFacilityData", JSON.stringify(fallback));
     }
     hydratedRef.current = true;
   }, [facilities, facilitiesLoading, selectedFacility]);

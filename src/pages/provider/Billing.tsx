@@ -106,7 +106,10 @@ export default function ProviderSubscription() {
   // manual escalation.
   const pollingTimedOut = pollingActive && elapsedSec >= 180;
   useEffect(() => {
-    if (pollingActive && subscription?.status === "active") {
+    // Stop polling once the sub reaches a live Pro state. `trialing` counts as
+    // Pro here (matches `isPro` below), so a trial doesn't leave the
+    // "Processing your subscription…" spinner running alongside the Pro card.
+    if (pollingActive && (subscription?.status === "active" || subscription?.status === "trialing")) {
       setPollingActive(false);
       setPollingStartedAt(null);
     }

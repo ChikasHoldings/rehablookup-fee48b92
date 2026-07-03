@@ -81,7 +81,13 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
         </p>
         <ul className="space-y-0.5">
           {navItems.map((item) => {
-            const isActive = location.pathname === item.href;
+            // Prefix-match so secondary routes highlight their parent item:
+            // /provider/listings/profile → My Listing, /provider/marketing/*
+            // → Marketing, /provider/billing/* → Subscription. No nav href is a
+            // prefix of another, so there's no cross-highlight.
+            const isActive =
+              location.pathname === item.href ||
+              location.pathname.startsWith(item.href + "/");
             const Icon = item.icon;
             const isInquiriesItem = item.href === "/provider/inquiries";
             // After the /provider/placement-network retirement, the

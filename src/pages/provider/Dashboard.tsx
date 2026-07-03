@@ -549,7 +549,7 @@ export default function ProviderDashboardPage() {
                   </Link>
                 </Button>
               )}
-              {facility?.slug && facility.status === "approved" && (
+              {facility?.slug && facility.status === "approved" && facility.suspended !== true && (
                 <Button asChild size="sm" variant="outline" className="gap-1.5">
                   <a href={`/center/${facility.slug}`} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="h-3.5 w-3.5" aria-hidden />
@@ -715,7 +715,7 @@ export default function ProviderDashboardPage() {
               <MetricCard
                 title="Reviews"
                 value={reviewErr ? "—" : reviewCount}
-                subtitle={impressionErr ? "Views unavailable" : `${impressionCount.toLocaleString()} profile views`}
+                subtitle={impressionErr ? "Views unavailable" : `${impressionCount.toLocaleString()} profile impressions`}
                 icon={Star}
                 iconBg="bg-amber-100"
                 iconColor="text-amber-600"

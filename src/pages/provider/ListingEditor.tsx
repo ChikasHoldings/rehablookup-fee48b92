@@ -894,10 +894,20 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
             );
         }
 
+        // Only claim the listing is "live" and offer the public link when it
+        // is actually publicly visible (approved + not suspended). A pending /
+        // needs_edits / rejected / draft / suspended listing 404s at /center/:slug
+        // (CenterProfile treats non-approved/suspended as Not Found), so a
+        // "now live" toast with a View Profile link there is false + a dead link.
+        const isLivePublic =
+          facility.status === "approved" &&
+          !(facility as { suspended?: boolean }).suspended;
         toast({
-          title: "Profile updated",
-          description: "Your public profile is now live with the latest changes.",
-          action: facility.slug ? (
+          title: isLivePublic ? "Profile updated" : "Changes saved",
+          description: isLivePublic
+            ? "Your public profile is now live with the latest changes."
+            : "Your changes have been saved. They'll appear on your public page once this listing is approved and active.",
+          action: isLivePublic && facility.slug ? (
             <ToastAction altText="View Public Profile" asChild>
               <a href={`/center/${facility.slug}`} target="_blank" rel="noopener noreferrer">
                 View Profile

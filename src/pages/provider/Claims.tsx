@@ -192,7 +192,7 @@ export default function ProviderClaims() {
         />
         <div className="container mx-auto max-w-3xl px-4 py-5 md:px-6 lg:px-8">
 
-        {authChecking || claims === null ? (
+        {authChecking || (claims === null && !error) ? (
           <Card className="p-8 flex flex-col items-center gap-2">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-hidden />
             <p className="text-sm text-muted-foreground">Loading your claims…</p>
