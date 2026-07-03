@@ -122,6 +122,32 @@ curl -X POST https://mldbxpntzcjalgjmwnqa.supabase.co/functions/v1/send-message-
 
 ---
 
+### ✅ Section 4b: Owner-only security/config (pre-GA, non-blocking for code deploys)
+
+These cannot be set from code or migrations — a project **owner** must apply them
+in the respective dashboards. They do **not** block a code deployment. Full
+write-up: `docs/audit/prelaunch-security-config-2026-07-03.md`.
+
+- [ ] **Leaked-password (HIBP) protection** — Supabase Dashboard →
+      **Authentication → Password protection** → enable **"Check passwords
+      against HaveIBeenPwned"** (leaked-password protection). Only affects
+      new/changed passwords. *Recommended before GA.*
+- [ ] **Stripe live Pro product ID** — confirm the live Stripe **Pro** product
+      id is present in `PRO_PRODUCT_IDS` (defined in `check-subscription`,
+      `get-revenue-stats`, `send-retention-outreach`,
+      `check-provider-health-alerts`, and `_shared/email-templates.ts`). This
+      list drives only email / plan-**label** classification — authoritative Pro
+      entitlement is `facility_subscriptions.tier/status` + `has_active_pro()`,
+      never this list. Current entries: `prod_pro_monthly` (legacy placeholder)
+      + `prod_TbalLOPujTIoUe`, `prod_Tbyz1bf6iYyzYd`, `prod_TbalOeJZA2ZoJl`,
+      `prod_TbyzJVNOQL71NN`. If the live id differs, add it — or, safer against
+      future drift, switch the classifier to match on the Stripe price
+      **lookup_key / price metadata** instead of a static product-id allowlist.
+
+**Status:** ⬜ Pending | 🟢 PASS | 🔴 FAIL
+
+---
+
 ### ✅ Section 5: Provider Onboarding (1–3 providers)
 
 **Signup & Claim:**
