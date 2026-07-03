@@ -41,6 +41,8 @@ import {
 } from "lucide-react";
 import { ProviderPageHeader } from "@/components/provider/ProviderPageHeader";
 import { ClaimEngineStatePanel } from "@/components/provider/ClaimEngineStatePanel";
+import { useUserRole } from "@/hooks/useUserRole";
+import { resolveClaimsGuard } from "@/lib/claimsRouteGuard";
 
 type ClaimStatus =
   | "pending"
@@ -116,30 +118,28 @@ function formatDate(iso: string): string {
 
 export default function ProviderClaims() {
   const navigate = useNavigate();
-  const [authChecking, setAuthChecking] = useState(true);
+  const { role, isLoading: isRoleLoading, isAuthenticated } = useUserRole();
   const [claims, setClaims] = useState<ClaimRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Panel-consistent route guard. This page is intentionally NOT mounted inside
+  // ProviderShell: the shell bounces providers with incomplete onboarding into
+  // the wizard, but /provider/claims must stay reachable mid-claim — a pending,
+  // still-unverified claim renders a "Resume" link back into onboarding. So we
+  // enforce auth + role here using the same useUserRole source of truth as the
+  // shell, minus that onboarding bounce:
+  //   • anonymous → onboarding (carrying returnTo so the claim intent survives)
+  //   • admin     → the admin claim-review surface (/admin/claims)
+  //   • seeker    → their account home
+  //   • provider / brief null-role signup window → render the claims list
+  //     (RLS scopes rows to the caller, so the null-role window is safe)
+  const guard = resolveClaimsGuard(role, isAuthenticated, isRoleLoading);
+  const redirectTo = guard.kind === "redirect" ? guard.to : null;
   useEffect(() => {
-    let cancelled = false;
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (cancelled) return;
-      if (!session?.user) {
-        navigate("/provider/onboarding?returnTo=/provider/claims", { replace: true });
-        return;
-      }
-      setAuthChecking(false);
-    }).catch((err) => {
-      if (cancelled) return;
-      console.error("[Claims] auth.getSession failed", err);
-      // Don't leave the user stuck on the auth-checking spinner. Show
-      // the unauth state so they can navigate to login.
-      navigate("/provider/onboarding?returnTo=/provider/claims", { replace: true });
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [navigate]);
+    if (redirectTo) navigate(redirectTo, { replace: true });
+  }, [redirectTo, navigate]);
+
+  const authChecking = guard.kind !== "render";
 
   useEffect(() => {
     if (authChecking) return;
