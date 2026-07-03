@@ -35,7 +35,7 @@ Deno.test("admin_list_provider_owners is admin-gated + definer + canonical sourc
 
 Deno.test("AdminProviders is a tabbed Owners/Facilities page, Facilities preserved", async () => {
   const src = await read("src/pages/admin/AdminProviders.tsx");
-  inc(src, "<OwnersTab />");
+  inc(src, "<OwnersTab");
   assert(/<TabsTrigger value="owners"/.test(src), "has an Owners tab trigger");
   assert(/<TabsTrigger value="facilities"/.test(src), "has a Facilities tab trigger");
   assert(/=== "facilities" \? "facilities" : "owners"/.test(src), "Owners is the default view");
@@ -43,6 +43,28 @@ Deno.test("AdminProviders is a tabbed Owners/Facilities page, Facilities preserv
   inc(src, "<ProviderStatsCharts");
   inc(src, "BulkProviderStatusDialog");
   inc(src, "<ProviderListItem");
+});
+
+Deno.test("owner scope: Facilities list can be constrained to one owner and cleared", async () => {
+  const src = await read("src/pages/admin/AdminProviders.tsx");
+  // Deep-link handler + URL param + query scoping + clearable banner.
+  inc(src, "viewOwnerFacilities");
+  assert(/searchParams\.get\("owner"\)/.test(src), "reads the owner scope from the URL");
+  assert(/resolved\.eq\("user_id", ownerFilter\)/.test(src), "scopes both facility queries to the owner");
+  inc(src, "clearOwnerFilter");
+  // Foreign params (Owners-tab namespaced + owner scope) must survive the
+  // Facilities-tab URL writer — it starts from the current params, not blank.
+  assert(/new URLSearchParams\(searchParams\)/.test(src), "URL writer preserves foreign params");
+});
+
+Deno.test("OwnersTab is wired for enterprise triage: KPIs, export, deep-link", async () => {
+  const src = await read("src/components/admin/providers/OwnersTab.tsx");
+  inc(src, "onViewOwnerFacilities");
+  inc(src, "summarizeOwners");
+  inc(src, "ownersToCsv");
+  inc(src, "ownerRiskFlags");
+  // URL-persisted, namespaced filter params (no collision with q/tab/owner).
+  inc(src, "useSearchParams");
 });
 
 Deno.test("facility rows link to the owner Admin Provider Profile", async () => {

@@ -35,6 +35,13 @@ export const PLAN_SORT_ORDER: Record<OwnerPlanState, number> = {
   pro: 0, grace: 1, past_due: 2, incomplete: 3, canceled: 4, free: 5,
 };
 
+/** Human-readable plan labels — shared by the UI badge and the CSV export so
+ *  the two never drift. */
+export const PLAN_LABELS: Record<OwnerPlanState, string> = {
+  pro: "Pro", grace: "Grace", past_due: "Past due",
+  incomplete: "Incomplete", canceled: "Canceled", free: "Free",
+};
+
 export function ownerName(o: ProviderOwnerRow): string {
   const n = [o.first_name, o.last_name].filter(Boolean).join(" ").trim();
   return n || o.email || "Unnamed provider";
@@ -110,4 +117,100 @@ export function filterAndSortOwners(
         return new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime();
     }
   });
+}
+
+// ---------------------------------------------------------------------------
+// KPI rollup — drives the clickable summary strip at the top of the Owners tab.
+// Computed over the FULL owner set (not the filtered page) so the tiles always
+// show the true totals; clicking a tile applies the matching filter.
+// ---------------------------------------------------------------------------
+
+export interface OwnerSummary {
+  total: number;
+  pro: number;
+  grace: number;
+  pastDue: number;
+  free: number;
+  /** Free plan AND no Stripe customer on file — genuinely never-billed. */
+  noBilling: number;
+  actionNeeded: number;
+}
+
+export function summarizeOwners(rows: ProviderOwnerRow[]): OwnerSummary {
+  const s: OwnerSummary = { total: rows.length, pro: 0, grace: 0, pastDue: 0, free: 0, noBilling: 0, actionNeeded: 0 };
+  for (const o of rows) {
+    if (o.plan_state === "pro") s.pro++;
+    else if (o.plan_state === "grace") s.grace++;
+    else if (o.plan_state === "past_due") s.pastDue++;
+    else if (o.plan_state === "free") s.free++;
+    if (o.plan_state === "free" && !o.has_stripe_customer) s.noBilling++;
+    if (ownerActionNeeded(o)) s.actionNeeded++;
+  }
+  return s;
+}
+
+// ---------------------------------------------------------------------------
+// Risk / action reasons — a single source of truth for WHY an owner is flagged,
+// reused by the card's "action needed" tooltip. Empty array ⇒ no action needed.
+// ---------------------------------------------------------------------------
+
+export interface OwnerRiskFlag {
+  key: string;
+  label: string;
+  /** Severity bucket so the UI can colour without re-deriving. */
+  tone: "warning" | "danger";
+}
+
+export function ownerRiskFlags(o: ProviderOwnerRow): OwnerRiskFlag[] {
+  const flags: OwnerRiskFlag[] = [];
+  if (o.pending_count > 0)
+    flags.push({ key: "pending", label: `${o.pending_count} listing${o.pending_count === 1 ? "" : "s"} awaiting review`, tone: "warning" });
+  if (o.rejected_count > 0)
+    flags.push({ key: "rejected", label: `${o.rejected_count} rejected / needs edits`, tone: "danger" });
+  if (o.suspended_count > 0)
+    flags.push({ key: "suspended", label: `${o.suspended_count} paused / suspended`, tone: "danger" });
+  if (o.plan_state === "past_due")
+    flags.push({ key: "past_due", label: "Billing past due", tone: "danger" });
+  if (o.plan_state === "incomplete")
+    flags.push({ key: "incomplete", label: "Billing incomplete", tone: "warning" });
+  return flags;
+}
+
+// ---------------------------------------------------------------------------
+// CSV export — mirrors the Facilities-tab export so admins have parity. Kept
+// here (pure) so the column contract is unit-testable.
+// ---------------------------------------------------------------------------
+
+function csvCell(v: unknown): string {
+  const s = v == null ? "" : String(v);
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+export const OWNER_CSV_HEADERS = [
+  "Owner", "Email", "Phone", "Joined", "Email verified", "Onboarding",
+  "Plan", "Grace expires", "Total facilities", "Live", "Pending",
+  "Rejected", "Paused", "Stripe customer", "Last facility update", "Action needed",
+] as const;
+
+export function ownersToCsv(rows: ProviderOwnerRow[]): string {
+  const iso = (d: string | null) => (d ? new Date(d).toISOString().slice(0, 10) : "");
+  const lines = rows.map((o) => [
+    ownerName(o),
+    o.email ?? "",
+    o.phone ?? "",
+    iso(o.created_at),
+    o.email_verified_at ? "Yes" : "No",
+    o.onboarding_completed_at ? "Complete" : "Incomplete",
+    PLAN_LABELS[o.plan_state],
+    iso(o.grace_expires_at),
+    o.total_facilities,
+    o.live_count,
+    o.pending_count,
+    o.rejected_count,
+    o.suspended_count,
+    o.has_stripe_customer ? "Yes" : "No",
+    iso(o.last_facility_update),
+    ownerActionNeeded(o) ? "Yes" : "No",
+  ].map(csvCell).join(","));
+  return [OWNER_CSV_HEADERS.join(","), ...lines].join("\n");
 }

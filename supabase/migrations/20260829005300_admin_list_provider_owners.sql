@@ -133,7 +133,10 @@ BEGIN
   JOIN public.profiles p ON p.user_id = ow.user_id
   LEFT JOIN fac    ON fac.uid = ow.user_id
   LEFT JOIN subs   ON subs.uid = ow.user_id
-  LEFT JOIN grants gr ON gr.uid = ow.user_id;
+  LEFT JOIN grants gr ON gr.uid = ow.user_id
+  -- Stable default ordering (newest account first) so the client renders
+  -- deterministically before the user picks a sort.
+  ORDER BY p.created_at DESC NULLS LAST, ow.user_id;
 END;
 $function$;
 

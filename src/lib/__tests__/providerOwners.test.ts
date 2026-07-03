@@ -3,6 +3,10 @@ import {
   ownerName,
   ownerActionNeeded,
   filterAndSortOwners,
+  summarizeOwners,
+  ownerRiskFlags,
+  ownersToCsv,
+  OWNER_CSV_HEADERS,
   type ProviderOwnerRow,
 } from "@/lib/providerOwners";
 
@@ -75,5 +79,57 @@ describe("filterAndSortOwners", () => {
     const copy = [...rows];
     filterAndSortOwners(rows, { sort: "most_facilities" });
     expect(rows).toEqual(copy);
+  });
+});
+
+describe("summarizeOwners", () => {
+  it("counts totals by plan state and action-needed", () => {
+    const rows = [
+      mk({ plan_state: "pro", live_count: 2 }),
+      mk({ plan_state: "grace", grace_expires_at: "2026-08-01T00:00:00Z" }),
+      mk({ plan_state: "past_due" }),
+      mk({ plan_state: "free", has_stripe_customer: true }), // billed before → not "no billing"
+      mk({ plan_state: "free", has_stripe_customer: false, pending_count: 1 }), // no billing + action
+    ];
+    const s = summarizeOwners(rows);
+    expect(s).toEqual({ total: 5, pro: 1, grace: 1, pastDue: 1, free: 2, noBilling: 1, actionNeeded: 2 });
+  });
+  it("is zeroed for an empty set", () => {
+    expect(summarizeOwners([])).toEqual({ total: 0, pro: 0, grace: 0, pastDue: 0, free: 0, noBilling: 0, actionNeeded: 0 });
+  });
+});
+
+describe("ownerRiskFlags", () => {
+  it("returns no flags for a healthy owner", () => {
+    expect(ownerRiskFlags(mk({ plan_state: "pro", live_count: 3 }))).toEqual([]);
+  });
+  it("surfaces each moderation/billing reason with a severity tone", () => {
+    const flags = ownerRiskFlags(mk({ pending_count: 2, rejected_count: 1, suspended_count: 1, plan_state: "past_due" }));
+    expect(flags.map((f) => f.key)).toEqual(["pending", "rejected", "suspended", "past_due"]);
+    expect(flags.find((f) => f.key === "pending")?.label).toBe("2 listings awaiting review");
+    expect(flags.find((f) => f.key === "rejected")?.tone).toBe("danger");
+  });
+  it("stays consistent with ownerActionNeeded", () => {
+    const withAction = mk({ suspended_count: 1 });
+    const noAction = mk({ plan_state: "free", live_count: 1 });
+    expect(ownerRiskFlags(withAction).length > 0).toBe(ownerActionNeeded(withAction));
+    expect(ownerRiskFlags(noAction).length > 0).toBe(ownerActionNeeded(noAction));
+  });
+});
+
+describe("ownersToCsv", () => {
+  it("emits a header row plus one row per owner with escaped cells", () => {
+    const csv = ownersToCsv([
+      mk({ first_name: "Ada", last_name: "Lovelace", email: "ada@x.com", plan_state: "pro", total_facilities: 3, live_count: 3, created_at: "2026-01-02T00:00:00Z" }),
+      mk({ first_name: "Comma, Inc", email: "c@x.com", plan_state: "free" }),
+    ]);
+    const lines = csv.split("\n");
+    expect(lines[0]).toBe(OWNER_CSV_HEADERS.join(","));
+    expect(lines).toHaveLength(3);
+    expect(lines[1]).toContain("Ada Lovelace");
+    expect(lines[1]).toContain("Pro");
+    expect(lines[1]).toContain("2026-01-02");
+    // A value containing a comma must be quoted.
+    expect(lines[2]).toContain('"Comma, Inc"');
   });
 });

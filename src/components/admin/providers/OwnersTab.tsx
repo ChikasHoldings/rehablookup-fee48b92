@@ -1,9 +1,10 @@
-import { useMemo, useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link, useSearchParams } from "react-router-dom";
 import {
   Search, Users, Building2, AlertCircle, RefreshCw, ExternalLink,
   CheckCircle2, Clock, Ban, PauseCircle, CreditCard, Sparkles, ShieldAlert,
+  Download, ListFilter,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,6 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
   type ProviderOwnerRow,
@@ -24,8 +26,13 @@ import {
   type OwnerSortKey as SortKey,
   ownerName,
   ownerActionNeeded as actionNeeded,
+  ownerRiskFlags,
   filterAndSortOwners,
+  summarizeOwners,
+  ownersToCsv,
 } from "@/lib/providerOwners";
+
+export const OWNERS_QUERY_KEY = ["admin-provider-owners"] as const;
 
 const PLAN_META: Record<OwnerPlanState, { label: string; className: string; icon: typeof Sparkles }> = {
   pro: { label: "Pro", className: "bg-emerald-500/10 text-emerald-700 border-emerald-200 dark:text-emerald-400", icon: Sparkles },
@@ -46,10 +53,17 @@ function useDebounced<T>(value: T, delay: number): T {
 }
 
 const PAGE_SIZE = 25;
+const fmtDate = (d: string) => new Date(d).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 
-export function OwnersTab() {
-  const { data, isLoading, isError, refetch, isFetching } = useQuery({
-    queryKey: ["admin-provider-owners"],
+interface OwnersTabProps {
+  /** Deep-link into the Facilities tab pre-filtered to this owner's listings. */
+  onViewOwnerFacilities: (userId: string, ownerLabel: string) => void;
+}
+
+export function OwnersTab({ onViewOwnerFacilities }: OwnersTabProps) {
+  const queryClient = useQueryClient();
+  const { data, isLoading, isError, refetch, isFetching, dataUpdatedAt } = useQuery({
+    queryKey: OWNERS_QUERY_KEY,
     queryFn: async (): Promise<ProviderOwnerRow[]> => {
       const { data, error } = await supabase.rpc("admin_list_provider_owners");
       if (error) throw error;
@@ -58,25 +72,88 @@ export function OwnersTab() {
     refetchOnMount: true,
   });
 
-  const [searchInput, setSearchInput] = useState("");
+  // Keep the owner rollup fresh: facility moderation and subscription changes
+  // both alter the aggregate, so invalidate on either. Best-effort realtime —
+  // the RPC re-runs on the next render if the channel is unavailable.
+  useEffect(() => {
+    const suffix = Math.random().toString(36).slice(2, 8);
+    const ch = supabase
+      .channel(`admin-owners-${suffix}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "facilities" }, () =>
+        queryClient.invalidateQueries({ queryKey: OWNERS_QUERY_KEY }))
+      .on("postgres_changes", { event: "*", schema: "public", table: "facility_subscriptions" }, () =>
+        queryClient.invalidateQueries({ queryKey: OWNERS_QUERY_KEY }))
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [queryClient]);
+
+  // -- URL-persisted filter/sort/page state (bookmarkable + shareable) --------
+  // Owner-tab params are namespaced (oq/plan/onb/fstat/act/osort/opage) so they
+  // never collide with the Facilities-tab params (q/tab/owner) that the parent
+  // page owns. The parent's URL writer preserves foreign keys, so both survive.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const plan = (searchParams.get("plan") ?? "all") as PlanFilter;
+  const onboarding = (searchParams.get("onb") ?? "all") as OnboardingFilter;
+  const status = (searchParams.get("fstat") ?? "all") as StatusFilter;
+  const sort = (searchParams.get("osort") ?? "newest") as SortKey;
+  const actionOnly = searchParams.get("act") === "1";
+  const page = Math.max(1, parseInt(searchParams.get("opage") ?? "1", 10) || 1);
+
+  // Search has a debounced local mirror for a responsive input; the debounced
+  // value is written to the URL (oq) for shareability and drives filtering.
+  const [searchInput, setSearchInput] = useState(() => searchParams.get("oq") ?? "");
   const search = useDebounced(searchInput.trim().toLowerCase(), 300);
-  const [plan, setPlan] = useState<PlanFilter>("all");
-  const [onboarding, setOnboarding] = useState<OnboardingFilter>("all");
-  const [status, setStatus] = useState<StatusFilter>("all");
-  const [actionOnly, setActionOnly] = useState(false);
-  const [sort, setSort] = useState<SortKey>("newest");
-  const [page, setPage] = useState(1);
+  useEffect(() => {
+    setSearchParams((prev) => {
+      const n = new URLSearchParams(prev);
+      if (search) n.set("oq", search); else n.delete("oq");
+      if ((n.get("oq") ?? "") !== (prev.get("oq") ?? "")) n.delete("opage");
+      return n;
+    }, { replace: true });
+  }, [search, setSearchParams]);
 
-  // Any filter/search/sort change returns to page 1.
-  useEffect(() => { setPage(1); }, [search, plan, onboarding, status, actionOnly, sort]);
+  // A filter change resets to page 1 (deletes opage). `page` itself keeps opage.
+  const patchParams = useCallback((mut: (n: URLSearchParams) => void, resetPage = true) => {
+    setSearchParams((prev) => {
+      const n = new URLSearchParams(prev);
+      mut(n);
+      if (resetPage) n.delete("opage");
+      return n;
+    }, { replace: true });
+  }, [setSearchParams]);
 
+  const setKey = (key: string, val: string, clearValue: string) =>
+    patchParams((n) => { if (!val || val === clearValue) n.delete(key); else n.set(key, val); });
+
+  const clearAllFilters = () => {
+    setSearchInput("");
+    patchParams((n) => { ["oq", "plan", "onb", "fstat", "act", "osort"].forEach((k) => n.delete(k)); });
+  };
+
+  const summary = useMemo(() => summarizeOwners(data ?? []), [data]);
   const filtered = useMemo(
     () => filterAndSortOwners(data ?? [], { search, plan, onboarding, status, actionOnly, sort }),
     [data, search, plan, onboarding, status, actionOnly, sort],
   );
 
+  const hasActiveFilters = !!search || plan !== "all" || onboarding !== "all" || status !== "all" || actionOnly || sort !== "newest";
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const pageRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const safePage = Math.min(page, totalPages);
+  const pageRows = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  const setPage = (p: number) => patchParams((n) => { if (p <= 1) n.delete("opage"); else n.set("opage", String(p)); }, false);
+
+  const handleExport = () => {
+    if (!filtered.length) { toast.info("No owners to export"); return; }
+    const csv = ownersToCsv(filtered);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `provider-owners-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`Exported ${filtered.length} owner${filtered.length === 1 ? "" : "s"} to CSV`);
+  };
 
   return (
     <div className="space-y-4">
@@ -93,23 +170,45 @@ export function OwnersTab() {
         </CardContent>
       </Card>
 
+      {/* KPI strip — click a tile to filter. Counts reflect ALL owners. */}
+      <KpiStrip
+        summary={summary}
+        loading={isLoading}
+        active={{ plan, actionOnly }}
+        onPlan={(p) => setKey("plan", p, "all")}
+        onActionNeeded={() => setKey("act", actionOnly ? "0" : "1", "0")}
+        onAll={clearAllFilters}
+      />
+
       {/* Filters */}
       <div className="flex flex-col gap-3">
-        <div className="relative w-full sm:max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search owner name, email, or facility name…"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            className="pl-9 h-9 text-sm"
-            type="search"
-            autoComplete="off"
-            maxLength={128}
-            aria-label="Search provider owners"
-          />
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="relative w-full sm:max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search owner name, email, or facility name…"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              className="pl-9 h-9 text-sm"
+              type="search"
+              autoComplete="off"
+              maxLength={128}
+              aria-label="Search provider owners"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" className="h-9 gap-1.5" onClick={() => refetch()} disabled={isFetching}>
+              <RefreshCw className={cn("h-3.5 w-3.5", isFetching && "animate-spin")} />
+              <span className="hidden sm:inline">Refresh</span>
+            </Button>
+            <Button variant="outline" size="sm" className="h-9 gap-1.5" onClick={handleExport} disabled={isLoading || !filtered.length}>
+              <Download className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Export</span>
+            </Button>
+          </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Select value={plan} onValueChange={(v) => setPlan(v as PlanFilter)}>
+          <Select value={plan} onValueChange={(v) => setKey("plan", v, "all")}>
             <SelectTrigger className="h-8 w-[140px] text-xs"><SelectValue placeholder="Plan" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All plans</SelectItem>
@@ -122,7 +221,7 @@ export function OwnersTab() {
               <SelectItem value="no_billing">No billing</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={onboarding} onValueChange={(v) => setOnboarding(v as OnboardingFilter)}>
+          <Select value={onboarding} onValueChange={(v) => setKey("onb", v, "all")}>
             <SelectTrigger className="h-8 w-[150px] text-xs"><SelectValue placeholder="Onboarding" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All onboarding</SelectItem>
@@ -130,7 +229,7 @@ export function OwnersTab() {
               <SelectItem value="incomplete">Onboarding incomplete</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={status} onValueChange={(v) => setStatus(v as StatusFilter)}>
+          <Select value={status} onValueChange={(v) => setKey("fstat", v, "all")}>
             <SelectTrigger className="h-8 w-[150px] text-xs"><SelectValue placeholder="Facility status" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Any facility status</SelectItem>
@@ -140,7 +239,7 @@ export function OwnersTab() {
               <SelectItem value="suspended">Has suspended</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
+          <Select value={sort} onValueChange={(v) => setKey("osort", v, "newest")}>
             <SelectTrigger className="h-8 w-[160px] text-xs"><SelectValue placeholder="Sort" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="newest">Newest provider</SelectItem>
@@ -154,12 +253,18 @@ export function OwnersTab() {
             variant={actionOnly ? "default" : "outline"}
             size="sm"
             className="h-8 gap-1.5 text-xs"
-            onClick={() => setActionOnly((v) => !v)}
+            onClick={() => setKey("act", actionOnly ? "0" : "1", "0")}
             aria-pressed={actionOnly}
           >
             <ShieldAlert className="h-3.5 w-3.5" />
             Action needed
           </Button>
+          {hasActiveFilters && (
+            <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-xs text-muted-foreground" onClick={clearAllFilters}>
+              <ListFilter className="h-3.5 w-3.5" />
+              Clear filters
+            </Button>
+          )}
         </div>
       </div>
 
@@ -194,26 +299,32 @@ export function OwnersTab() {
               ? "No provider owner accounts yet."
               : "Try clearing search or filters."}
           </p>
+          {hasActiveFilters && (data?.length ?? 0) > 0 && (
+            <Button variant="outline" size="sm" className="mt-1" onClick={clearAllFilters}>Clear filters</Button>
+          )}
         </CardContent></Card>
       ) : (
         <div className="space-y-3">
-          {pageRows.map((o) => <OwnerCard key={o.user_id} owner={o} />)}
+          {pageRows.map((o) => (
+            <OwnerCard key={o.user_id} owner={o} onViewFacilities={onViewOwnerFacilities} />
+          ))}
         </div>
       )}
 
       {!isLoading && !isError && filtered.length > 0 && (
-        <div className="flex items-center justify-between px-1 text-xs text-muted-foreground">
+        <div className="flex flex-col gap-2 px-1 sm:flex-row sm:items-center sm:justify-between text-xs text-muted-foreground">
           <span>
-            {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}
+            {(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, filtered.length)} of {filtered.length}
             {" "}{filtered.length === 1 ? "owner" : "owners"}
+            {dataUpdatedAt ? <span className="hidden sm:inline"> · updated {new Date(dataUpdatedAt).toLocaleTimeString()}</span> : null}
           </span>
           {totalPages > 1 && (
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" className="h-7" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
+              <Button variant="outline" size="sm" className="h-7" disabled={safePage <= 1} onClick={() => setPage(safePage - 1)}>
                 Previous
               </Button>
-              <span className="tabular-nums">Page {page} / {totalPages}</span>
-              <Button variant="outline" size="sm" className="h-7" disabled={page >= totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}>
+              <span className="tabular-nums">Page {safePage} / {totalPages}</span>
+              <Button variant="outline" size="sm" className="h-7" disabled={safePage >= totalPages} onClick={() => setPage(safePage + 1)}>
                 Next
               </Button>
             </div>
@@ -224,16 +335,87 @@ export function OwnersTab() {
   );
 }
 
+// --- KPI strip --------------------------------------------------------------
+
+function KpiTile({ label, value, icon: Icon, tone, active, onClick }: {
+  label: string; value: number; icon: typeof Sparkles;
+  tone: "default" | "pro" | "grace" | "danger" | "warning"; active?: boolean; onClick: () => void;
+}) {
+  const toneCls: Record<string, string> = {
+    default: "text-muted-foreground",
+    pro: "text-emerald-600 dark:text-emerald-400",
+    grace: "text-violet-600 dark:text-violet-400",
+    danger: "text-red-600 dark:text-red-400",
+    warning: "text-amber-600 dark:text-amber-400",
+  };
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={!!active}
+      className={cn(
+        "flex flex-1 min-w-[92px] flex-col items-start gap-0.5 rounded-lg border px-3 py-2.5 text-left transition-all",
+        active ? "border-primary/50 bg-primary/5 ring-1 ring-primary/30" : "border-border hover:bg-muted/50",
+      )}
+    >
+      <span className={cn("inline-flex items-center gap-1.5 text-[11px] font-medium", toneCls[tone])}>
+        <Icon className="h-3.5 w-3.5" />{label}
+      </span>
+      <span className="text-lg font-semibold tabular-nums text-foreground">{value}</span>
+    </button>
+  );
+}
+
+function KpiStrip({ summary, loading, active, onPlan, onActionNeeded, onAll }: {
+  summary: ReturnType<typeof summarizeOwners>;
+  loading: boolean;
+  active: { plan: PlanFilter; actionOnly: boolean };
+  onPlan: (p: PlanFilter) => void;
+  onActionNeeded: () => void;
+  onAll: () => void;
+}) {
+  if (loading) {
+    return (
+      <div className="flex flex-wrap gap-2">
+        {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-[62px] flex-1 min-w-[92px] rounded-lg" />)}
+      </div>
+    );
+  }
+  return (
+    <div className="flex flex-wrap gap-2">
+      <KpiTile label="All owners" value={summary.total} icon={Users} tone="default"
+        active={active.plan === "all" && !active.actionOnly} onClick={onAll} />
+      <KpiTile label="Pro" value={summary.pro} icon={Sparkles} tone="pro"
+        active={active.plan === "pro"} onClick={() => onPlan("pro")} />
+      <KpiTile label="Grace" value={summary.grace} icon={Clock} tone="grace"
+        active={active.plan === "grace"} onClick={() => onPlan("grace")} />
+      <KpiTile label="Past due" value={summary.pastDue} icon={CreditCard} tone="danger"
+        active={active.plan === "past_due"} onClick={() => onPlan("past_due")} />
+      <KpiTile label="No billing" value={summary.noBilling} icon={Ban} tone="default"
+        active={active.plan === "no_billing"} onClick={() => onPlan("no_billing")} />
+      <KpiTile label="Action needed" value={summary.actionNeeded} icon={ShieldAlert} tone="warning"
+        active={active.actionOnly} onClick={onActionNeeded} />
+    </div>
+  );
+}
+
+// --- Owner card -------------------------------------------------------------
+
 function StatusChip({ n, label, className }: { n: number; label: string; className: string }) {
   if (!n) return null;
   return <span className={cn("inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-medium", className)}>{n} {label}</span>;
 }
 
-function OwnerCard({ owner: o }: { owner: ProviderOwnerRow }) {
+function OwnerCard({ owner: o, onViewFacilities }: {
+  owner: ProviderOwnerRow;
+  onViewFacilities: (userId: string, ownerLabel: string) => void;
+}) {
   const plan = PLAN_META[o.plan_state];
   const PlanIcon = plan.icon;
   const needs = actionNeeded(o);
+  const reasons = ownerRiskFlags(o);
   const onboardingIncomplete = !o.onboarding_completed_at;
+  const label = ownerName(o);
   const profileHref = `/admin/providers/account/${o.user_id}`;
 
   return (
@@ -243,14 +425,14 @@ function OwnerCard({ owner: o }: { owner: ProviderOwnerRow }) {
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
               <Link to={profileHref} className="font-semibold text-foreground hover:underline truncate">
-                {ownerName(o)}
+                {label}
               </Link>
               <Badge variant="outline" className={cn("gap-1 text-[11px]", plan.className)}>
                 <PlanIcon className="h-3 w-3" />{plan.label}
               </Badge>
               {o.plan_state === "grace" && o.grace_expires_at && (
                 <span className="text-[11px] text-violet-700 dark:text-violet-400">
-                  until {new Date(o.grace_expires_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+                  until {fmtDate(o.grace_expires_at)}
                 </span>
               )}
               {needs && (
@@ -292,13 +474,28 @@ function OwnerCard({ owner: o }: { owner: ProviderOwnerRow }) {
                 <span className="text-muted-foreground">· Updated {new Date(o.last_facility_update).toLocaleDateString()}</span>
               )}
             </div>
+            {needs && reasons.length > 0 && (
+              <p className="mt-2 text-[11px] text-amber-700 dark:text-amber-400">
+                <span className="font-medium">Needs attention:</span> {reasons.map((r) => r.label).join(" · ")}
+              </p>
+            )}
           </div>
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 flex-row gap-2 sm:flex-col">
             <Button asChild size="sm" className="gap-1.5">
               <Link to={profileHref}>
                 <ExternalLink className="h-3.5 w-3.5" /> Open profile
               </Link>
             </Button>
+            {o.total_facilities > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                onClick={() => onViewFacilities(o.user_id, label)}
+              >
+                <Building2 className="h-3.5 w-3.5" /> Facilities
+              </Button>
+            )}
           </div>
         </div>
       </CardContent>

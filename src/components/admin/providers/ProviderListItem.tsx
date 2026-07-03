@@ -204,7 +204,7 @@ export function ProviderListItem({
               <Link
                 to={`/admin/providers/account/${provider.user_id}`}
                 onClick={(e) => e.stopPropagation()}
-                className="hidden md:flex items-center gap-1 text-primary hover:underline"
+                className="inline-flex items-center gap-1 text-primary hover:underline"
                 aria-label={`Open owner account profile for ${provider.name}`}
                 title="Open the owner's account profile"
               >

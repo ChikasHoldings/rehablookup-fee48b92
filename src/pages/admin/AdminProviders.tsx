@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, Download, Trash2, Loader2, Info, ExternalLink, ShieldCheck, FileCheck, RefreshCw, ToggleRight, Link2, Users, Building2 } from "lucide-react";
+import { Search, Download, Trash2, Loader2, Info, ExternalLink, ShieldCheck, FileCheck, RefreshCw, ToggleRight, Link2, Users, Building2, X, UserCog } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -45,7 +45,8 @@ import {
 } from "./adminProvidersConfig";
 import { isActiveProRow } from "@/lib/proAccess";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { OwnersTab } from "@/components/admin/providers/OwnersTab";
+import { OwnersTab, OWNERS_QUERY_KEY } from "@/components/admin/providers/OwnersTab";
+import type { ProviderOwnerRow } from "@/lib/providerOwners";
 
 function useDebounce(value: string, delay: number) {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -78,18 +79,63 @@ export default function AdminProviders() {
   const [selectedProvider, setSelectedProvider] = useState<Facility | null>(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
 
-  // Sync state → URL on every change. `replace: true` keeps the
-  // browser history short. Skip the default "all" tab to keep the
-  // URL tidy. Loop-guard compares before writing.
+  // Owner scope — when set (via the Owners tab "Facilities" action or a shared
+  // link), the Facilities list is constrained to a single owner's listings.
+  const ownerFilter = searchParams.get("owner");
+  const [ownerFilterLabel, setOwnerFilterLabel] = useState<string | null>(null);
+
+  // Sync state → URL on every change. `replace: true` keeps the browser
+  // history short. We start from the CURRENT params (not a blank set) so the
+  // Owners-tab namespaced params (oq/plan/…) and the `owner` scope survive —
+  // this page only owns view/q/tab. Loop-guard compares before writing.
   useEffect(() => {
-    const next = new URLSearchParams();
-    if (view === "facilities") next.set("view", "facilities");
-    if (searchQuery) next.set("q", searchQuery);
-    if (activeTab && activeTab !== "all") next.set("tab", activeTab);
+    const next = new URLSearchParams(searchParams);
+    if (view === "facilities") next.set("view", "facilities"); else next.delete("view");
+    if (searchQuery) next.set("q", searchQuery); else next.delete("q");
+    if (activeTab && activeTab !== "all") next.set("tab", activeTab); else next.delete("tab");
     if (next.toString() !== searchParams.toString()) {
       setSearchParams(next, { replace: true });
     }
   }, [view, searchQuery, activeTab, searchParams, setSearchParams]);
+
+  // Deep-link from an owner row into the Facilities tab, pre-scoped to that
+  // owner. Clears any facility text search / status tab so the scope is the
+  // only active constraint.
+  const viewOwnerFacilities = useCallback((userId: string, ownerLabel: string) => {
+    setOwnerFilterLabel(ownerLabel);
+    setView("facilities");
+    setActiveTab("all");
+    setSearchInput("");
+    setSearchParams((prev) => {
+      const n = new URLSearchParams(prev);
+      n.set("view", "facilities");
+      n.set("owner", userId);
+      n.delete("q");
+      n.delete("tab");
+      return n;
+    }, { replace: true });
+  }, [setSearchParams]);
+
+  const clearOwnerFilter = useCallback(() => {
+    setOwnerFilterLabel(null);
+    setSearchParams((prev) => {
+      const n = new URLSearchParams(prev);
+      n.delete("owner");
+      return n;
+    }, { replace: true });
+  }, [setSearchParams]);
+
+  // Resolve a display name for the owner scope. Prefer the label captured on
+  // navigation; fall back to the cached Owners rollup for shared links; else a
+  // neutral placeholder. Never blocks the list — purely cosmetic for the banner.
+  const ownerFilterName = useMemo(() => {
+    if (ownerFilterLabel) return ownerFilterLabel;
+    if (!ownerFilter) return null;
+    const cached = queryClient.getQueryData<ProviderOwnerRow[]>(OWNERS_QUERY_KEY);
+    const row = cached?.find((o) => o.user_id === ownerFilter);
+    if (!row) return null;
+    return [row.first_name, row.last_name].filter(Boolean).join(" ").trim() || row.email || null;
+  }, [ownerFilter, ownerFilterLabel, queryClient]);
   
   
   // Image flagging state
@@ -389,13 +435,14 @@ export default function AdminProviders() {
   // Fetch total count for current filter — drives pagination.
   // Uses the shared TAB_FILTERS config so count + list never drift.
   const { data: totalCount } = useQuery({
-    queryKey: ["admin-providers-count", activeTab, searchQuery],
+    queryKey: ["admin-providers-count", activeTab, searchQuery, ownerFilter],
     queryFn: async () => {
       const base = supabase.from("facilities").select("id", { count: "exact", head: true });
       const filter = TAB_FILTERS[activeTab as AdminProvidersTab] ?? TAB_FILTERS.all;
       const resolved = await filter(base, { supabase, selectCols: "id" });
       if (resolved === null) return 0; // short-circuit when sibling subquery returned []
-      const { count, error } = await applyProviderSearch(resolved, searchQuery);
+      const scoped = ownerFilter ? resolved.eq("user_id", ownerFilter) : resolved;
+      const { count, error } = await applyProviderSearch(scoped, searchQuery);
       if (error) throw error;
       return count || 0;
     },
@@ -409,7 +456,7 @@ export default function AdminProviders() {
 
 
   const { data: providers, isLoading } = useQuery({
-    queryKey: ["admin-providers", activeTab, searchQuery, currentPage],
+    queryKey: ["admin-providers", activeTab, searchQuery, currentPage, ownerFilter],
     queryFn: async () => {
       try {
         const from = (currentPage - 1) * pageSize;
@@ -429,7 +476,8 @@ export default function AdminProviders() {
         });
         if (resolved === null) return []; // short-circuit when sibling subquery returned []
 
-        const { data, error } = await applyProviderSearch(resolved, searchQuery);
+        const scoped = ownerFilter ? resolved.eq("user_id", ownerFilter) : resolved;
+        const { data, error } = await applyProviderSearch(scoped, searchQuery);
         if (error) throw error;
         return data as Facility[];
       } catch (error) {
@@ -684,6 +732,12 @@ export default function AdminProviders() {
     setCurrentPage(1);
   }, [searchQuery, setCurrentPage]);
 
+  // Reset to page 1 whenever the owner scope is applied or cleared, so a deep
+  // page from a prior view can't land the admin on an empty page.
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [ownerFilter, setCurrentPage]);
+
   const handleStatusChange = (id: string, newStatus: string) => {
     updateProvider.mutate({
       id,
@@ -816,13 +870,34 @@ export default function AdminProviders() {
 
         {/* Owners tab — account-level view (one row per provider owner). */}
         <TabsContent value="owners" className="mt-4">
-          <OwnersTab />
+          <OwnersTab onViewOwnerFacilities={viewOwnerFacilities} />
         </TabsContent>
 
         {/* Facilities tab — the existing listing-level management surface,
             preserved verbatim (stats, status filters, search, bulk actions,
             moderation controls, detail modal). */}
         <TabsContent value="facilities" className="mt-4 space-y-4 sm:space-y-6">
+
+      {/* Owner scope banner — set when arriving from an Owners-tab row. Makes
+          the single-owner constraint explicit and links to the full profile. */}
+      {ownerFilter && (
+        <Card className="border-primary/30 bg-primary/5">
+          <CardContent className="p-3 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-sm min-w-0">
+              <UserCog className="h-4 w-4 text-primary shrink-0" />
+              <span className="text-foreground truncate">
+                Showing facilities for{" "}
+                <Link to={`/admin/providers/account/${ownerFilter}`} className="font-semibold text-primary hover:underline">
+                  {ownerFilterName ?? "one owner account"}
+                </Link>
+              </span>
+            </div>
+            <Button variant="ghost" size="sm" className="h-8 gap-1.5" onClick={clearOwnerFilter}>
+              <X className="h-3.5 w-3.5" /> Clear
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Interactive Stats Charts */}
       <ProviderStatsCharts
