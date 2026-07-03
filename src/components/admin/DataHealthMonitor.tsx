@@ -8,6 +8,7 @@ import {
   Server,
   Zap,
   FileText,
+  AlertTriangle,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,11 +28,13 @@ interface TableStats {
 export function DataHealthMonitor() {
   const queryClient = useQueryClient();
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [lastSyncTime, setLastSyncTime] = useState<Date>(new Date());
+  // Null until the first realtime event actually arrives — initialising to
+  // `now` would display the mount time as if a sync had happened.
+  const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
   const [realtimeStatus, setRealtimeStatus] = useState<"connected" | "disconnected" | "connecting">("connecting");
 
   // Fetch comprehensive table statistics
-  const { data: tableStats, isLoading: loadingStats, refetch: refetchStats } = useQuery({
+  const { data: tableStats, isLoading: loadingStats, isError: statsError, refetch: refetchStats } = useQuery({
     queryKey: ["data-health-table-stats"],
     queryFn: async () => {
       const tables: TableStats[] = [];
@@ -245,7 +248,7 @@ export function DataHealthMonitor() {
               realtimeStatus === "connected" ? "text-green-600" : 
               realtimeStatus === "connecting" ? "text-amber-600" : "text-red-600"
             )}>
-              Last sync: {lastSyncTime.toLocaleTimeString()}
+              Last sync: {lastSyncTime ? lastSyncTime.toLocaleTimeString() : "—"}
             </p>
           </div>
 
@@ -257,6 +260,8 @@ export function DataHealthMonitor() {
             </div>
             {loadingStats ? (
               <Skeleton className="h-6 w-24" />
+            ) : statsError ? (
+              <p className="text-sm font-medium text-red-600">Unavailable</p>
             ) : (
               <>
                 <p className="text-lg font-bold text-blue-700">
@@ -281,6 +286,12 @@ export function DataHealthMonitor() {
               {[1, 2, 3, 4, 5, 6].map((i) => (
                 <Skeleton key={i} className="h-12 w-full" />
               ))}
+            </div>
+          ) : statsError ? (
+            <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed p-6 text-center">
+              <AlertTriangle className="h-5 w-5 text-red-500" />
+              <p className="text-sm text-muted-foreground">Table statistics failed to load.</p>
+              <Button variant="outline" size="sm" onClick={() => refetchStats()}>Retry</Button>
             </div>
           ) : (
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">

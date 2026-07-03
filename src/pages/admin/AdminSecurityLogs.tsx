@@ -74,6 +74,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { isValidIp } from "@/lib/ipValidation";
 import { CalendarIcon } from "lucide-react";
 import { toast } from "sonner";
 import { logAdminAction, AdminAuditActions } from "@/hooks/useAdminAuditLog";
@@ -127,10 +128,6 @@ const ipLocationCache = new Map<string, IpLocation>();
 // truncation banner so the admin can narrow the window.
 const RATE_LIMIT_LOG_CAP = 10_000;
 
-// Permissive enough to catch typo'd addresses (e.g. trailing whitespace
-// stripped) without false-rejecting valid emails or v4/v6 IPs.
-const IPV4_REGEX = /^(\d{1,3}\.){3}\d{1,3}$/;
-const IPV6_REGEX = /^[0-9a-fA-F:]+$/;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const URL_TAB_VALUES = new Set(["activity", "suspicious", "blocked"]);
@@ -163,7 +160,9 @@ function validateBlockIdentifier(
   if (type === "email") {
     if (!EMAIL_REGEX.test(trimmed)) return "Not a valid email address";
   } else {
-    if (!IPV4_REGEX.test(trimmed) && !IPV6_REGEX.test(trimmed)) {
+    // Shared strict validator — rejects out-of-range octets (999.1.1.1) and a
+    // bare ":" that the previous permissive regexes let through.
+    if (!isValidIp(trimmed)) {
       return "Not a valid IPv4 or IPv6 address";
     }
   }

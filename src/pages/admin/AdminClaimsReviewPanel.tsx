@@ -273,12 +273,21 @@ function AdminClaimsReviewPanel() {
 
   // Reject modal
   const [rejectTarget, setRejectTarget] = useState<ClaimRow | null>(null);
+  // Manual verification-complete confirmation. For email/SMS methods this is an
+  // override that bypasses the automated claimant-proven flow, so it is
+  // confirmed, role-gated (canApproveClaims), and audited.
+  const [verifyTarget, setVerifyTarget] = useState<ClaimRow | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
   const [approvalNotes, setApprovalNotes] = useState("");
   // Claim IDs where the side-effect notification email failed. The DB write
   // already committed, so we surface a per-row "Resend notification" button
   // and let the admin retry. Cleared when fetchClaims() refreshes.
   const [emailFailedForClaimId, setEmailFailedForClaimId] = useState<string | null>(null);
+  // Persist the full claim (not just its id) so the resend control survives the
+  // post-action fetchClaims() — after an approve, the claim leaves the default
+  // "pending" filter and its row (and per-row resend button) disappears, so the
+  // recovery action must live in a filter-independent banner.
+  const [emailFailedClaim, setEmailFailedClaim] = useState<ClaimRow | null>(null);
   const [resendPending, setResendPending] = useState<string | null>(null);
 
   /**
@@ -412,6 +421,7 @@ function AdminClaimsReviewPanel() {
       if (error) throw error;
       toast.success("Notification email resent.");
       setEmailFailedForClaimId(null);
+      setEmailFailedClaim(null);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Resend failed");
     } finally {
@@ -460,6 +470,12 @@ function AdminClaimsReviewPanel() {
   async function markVerificationComplete(claim: ClaimRow) {
     setActionPending(claim.id);
     try {
+      // Capture the acting admin up front so the audit row is always attributed.
+      const { data: userData, error: userErr } = await supabase.auth.getUser();
+      if (userErr) throw new Error(`Could not verify admin session: ${userErr.message}`);
+      const adminUserId = userData.user?.id;
+      if (!adminUserId) throw new Error("Sign-in expired — please log back in.");
+
       const { data: updated, error: updErr } = await supabase
         .from("facility_claim_requests")
         .update({
@@ -477,7 +493,24 @@ function AdminClaimsReviewPanel() {
       if (!updated || updated.length === 0) {
         throw new Error("Update was blocked — the claim may have been actioned by another admin. Refresh to see current status.");
       }
+
+      // Audit the decision. For email/SMS methods this is a manual override of
+      // the automated verification, so the trail is important.
+      const isOverride = claim.verification_method !== "document_upload";
+      try {
+        await supabase.from("admin_audit_log").insert({
+          admin_user_id: adminUserId,
+          action_type: isOverride ? "claim_verification_override" : "claim_verification_marked_complete",
+          target_type: "facility_claim_request",
+          target_id: claim.id,
+          details: { verification_method: claim.verification_method, manual_override: isOverride },
+        });
+      } catch (auditErr) {
+        console.warn("[AdminClaims] verification audit write failed", auditErr);
+      }
+
       toast.success("Verification marked complete");
+      setVerifyTarget(null);
       await fetchClaims();
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Update failed";
@@ -588,8 +621,9 @@ function AdminClaimsReviewPanel() {
         // Email failed but DB write committed — surface a persistent banner
         // with a manual resend button instead of a transient warning toast.
         setEmailFailedForClaimId(claim.id);
+        setEmailFailedClaim(claim);
         toast.warning(
-          "Approval saved. The notification email could not be sent — use the Resend button on the claim row to retry.",
+          "Approval saved. The notification email could not be sent — use the Resend button in the banner above to retry.",
           { duration: 8000 },
         );
       } else {
@@ -626,8 +660,10 @@ function AdminClaimsReviewPanel() {
         sendEmailFn: "send-claim-rejection-email",
       });
       if (result.emailSent === false) {
+        setEmailFailedForClaimId(claim.id);
+        setEmailFailedClaim({ ...claim, status: "rejected" });
         toast.warning(
-          "Rejection saved but the notification email failed to send.",
+          "Rejection saved but the notification email failed to send — use the Resend button in the banner above to retry.",
           { duration: 8000 },
         );
       } else {
@@ -663,6 +699,41 @@ function AdminClaimsReviewPanel() {
           Refresh
         </Button>
       </div>
+
+      {/* Filter-independent email-failure recovery. The just-actioned claim
+          may no longer be in the visible (filtered) list, so the resend control
+          lives here rather than on the row. */}
+      {emailFailedClaim && (
+        <div className="flex flex-col gap-3 rounded-lg border border-amber-300 bg-amber-50/70 p-4 dark:border-amber-800 dark:bg-amber-950/30 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-2.5">
+            <Mail className="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden />
+            <div>
+              <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">
+                Notification email not delivered
+              </p>
+              <p className="text-xs text-amber-800/80 dark:text-amber-200/70">
+                The {emailFailedClaim.status === "approved" ? "approval" : "rejection"} decision for{" "}
+                <span className="font-medium">{emailFailedClaim.facilities?.name ?? "the facility"}</span> was saved, but
+                the email to {emailFailedClaim.claimant_name} could not be sent. Retry so they're notified.
+              </p>
+            </div>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <Button
+              size="sm"
+              onClick={() => resendApprovalEmail(emailFailedClaim)}
+              disabled={resendPending === emailFailedClaim.id}
+              aria-label={`Resend notification email to ${emailFailedClaim.claimant_name}`}
+            >
+              <RefreshCw className={`mr-1.5 h-3.5 w-3.5 ${resendPending === emailFailedClaim.id ? "animate-spin" : ""}`} aria-hidden />
+              {resendPending === emailFailedClaim.id ? "Sending…" : "Resend email"}
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => { setEmailFailedClaim(null); setEmailFailedForClaimId(null); }}>
+              Dismiss
+            </Button>
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
@@ -893,16 +964,18 @@ function AdminClaimsReviewPanel() {
                                   Mark under review
                                 </Button>
                               )}
-                              {claim.verification_method === "document_upload" &&
+                              {canApproveClaims &&
                                 claim.verification_status !== "verified" && (
                                   <Button
                                     variant="outline"
                                     size="sm"
                                     disabled={actionPending === claim.id}
-                                    onClick={() => markVerificationComplete(claim)}
+                                    onClick={() => setVerifyTarget(claim)}
                                   >
                                     <ShieldCheck className="h-4 w-4 mr-1.5" aria-hidden />
-                                    Mark verification complete
+                                    {claim.verification_method === "document_upload"
+                                      ? "Mark verification complete"
+                                      : "Override verification"}
                                   </Button>
                                 )}
                               {canApproveClaims && (
@@ -947,6 +1020,42 @@ function AdminClaimsReviewPanel() {
           </TableBody>
         </Table>
       </div>
+
+      {/* Manual verification-complete / override confirmation */}
+      <AlertDialog open={!!verifyTarget} onOpenChange={(open) => { if (!open) setVerifyTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {verifyTarget?.verification_method === "document_upload"
+                ? "Mark verification complete?"
+                : "Override verification?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {verifyTarget?.verification_method === "document_upload" ? (
+                <>Confirm you have reviewed the uploaded documents for{" "}
+                <span className="font-medium">{verifyTarget?.claimant_name}</span> and they establish
+                ownership of <span className="font-medium">{verifyTarget?.facilities?.name ?? "this facility"}</span>.
+                This unlocks the Approve action.</>
+              ) : (
+                <>This is a <span className="font-medium">manual override</span>. The automated{" "}
+                {verifyTarget?.verification_method === "sms_phone" ? "SMS" : "email"} verification for{" "}
+                <span className="font-medium">{verifyTarget?.claimant_name}</span> ({verifyTarget?.claimant_email})
+                has not completed. Only override if you have independently confirmed they control{" "}
+                <span className="font-medium">{verifyTarget?.facilities?.name ?? "this facility"}</span>. This action is logged.</>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={actionPending === verifyTarget?.id}
+              onClick={() => { if (verifyTarget) markVerificationComplete(verifyTarget); }}
+            >
+              {verifyTarget?.verification_method === "document_upload" ? "Mark complete" : "Override & mark verified"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Approve confirmation */}
       <AlertDialog open={!!approveTarget} onOpenChange={(open) => { if (!open) { setApproveTarget(null); setApprovalNotes(""); } }}>

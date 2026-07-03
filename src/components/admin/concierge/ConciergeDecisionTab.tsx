@@ -57,9 +57,13 @@ export function ConciergeDecisionTab({ caseData }: ConciergeDecisionTabProps) {
     return <div className="space-y-3"><Skeleton className="h-24" /><Skeleton className="h-24" /></div>;
   }
 
+  // Match the response values the Introductions tab actually persists: a
+  // decline is stored as "not_available" (the dropdown value), and "declined"
+  // is the legacy/alias value — count both. Anything not yet accepted/declined
+  // (including "no_response") is pending.
   const acceptedIntros = introductions?.filter(i => i.provider_response === "interested" || i.provider_response === "accepted") || [];
-  const declinedIntros = introductions?.filter(i => i.provider_response === "declined") || [];
-  const pendingIntros = introductions?.filter(i => !i.provider_response || i.provider_response === "pending") || [];
+  const declinedIntros = introductions?.filter(i => i.provider_response === "declined" || i.provider_response === "not_available") || [];
+  const pendingIntros = introductions?.filter(i => !i.provider_response || i.provider_response === "pending" || i.provider_response === "no_response") || [];
 
   return (
     <div className="space-y-4">

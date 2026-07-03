@@ -18,13 +18,19 @@ interface UseAdminIdleTimeoutOptions {
 }
 
 export function useAdminIdleTimeout({ userId, enabled, onTimeout }: UseAdminIdleTimeoutOptions) {
-  const lastActivityRef = useRef(Date.now());
+  // Timestamp of the last time we (re)armed the idle timer. The activity
+  // throttle is measured against THIS, not against the last activity event —
+  // otherwise, during sustained activity (continuous typing/scrolling with
+  // gaps < 10s) the reset condition never becomes true and an actively-working
+  // admin gets logged out at the 30-minute mark. Measuring from the last reset
+  // guarantees the timer is re-armed at least once per 10s of ongoing activity.
+  const lastResetRef = useRef(Date.now());
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const pingIntervalRef = useRef<ReturnType<typeof setInterval>>();
   const hasTimedOut = useRef(false);
 
   const resetTimer = useCallback(() => {
-    lastActivityRef.current = Date.now();
+    lastResetRef.current = Date.now();
     hasTimedOut.current = false;
 
     if (timeoutRef.current) {
@@ -62,12 +68,12 @@ export function useAdminIdleTimeout({ userId, enabled, onTimeout }: UseAdminIdle
 
     // Set up activity listeners
     const handleActivity = () => {
-      const now = Date.now();
-      // Debounce: only reset if >10 seconds since last activity
-      if (now - lastActivityRef.current > 10000) {
+      // Throttle: re-arm the idle timer at most once per 10s, measured from the
+      // last reset. During sustained activity this still re-arms every 10s, so
+      // an actively-working admin is never logged out mid-session.
+      if (Date.now() - lastResetRef.current > 10000) {
         resetTimer();
       }
-      lastActivityRef.current = now;
     };
 
     for (const event of ACTIVITY_EVENTS) {

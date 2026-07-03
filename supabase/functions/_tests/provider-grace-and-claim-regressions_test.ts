@@ -181,9 +181,12 @@ Deno.test("gap G3: dashboard surfaces pending/rejected claims + sidebar has Clai
 
 Deno.test("gap G4: dashboard status labels suspended as Paused, not Live", async () => {
   const src = await read("src/pages/provider/Dashboard.tsx");
+  // Labels now derive from the shared getListingStatusMeta (which maps a
+  // suspended facility to "Paused" and surfaces rejected/needs_edits distinctly);
+  // the 2026-07-03 pre-launch batch replaced the inline map.
   assert(
-    /f\.suspended === true\)\s*\{\s*return\s*\{\s*label: "Paused"/.test(src),
-    "suspended facilities must render Paused",
+    /getListingStatusMeta\(f\.status, f\.suspended\)/.test(src),
+    "dashboard status must derive from the shared getListingStatusMeta",
   );
   assert(
     /liveCount = facilities\?\.filter\(\(f\) => f\.status === "approved" && f\.suspended !== true\)/.test(src),

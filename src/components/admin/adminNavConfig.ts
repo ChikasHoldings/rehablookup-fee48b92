@@ -57,7 +57,7 @@ const superAdminNav: NavSection[] = [
   {
     sectionLabel: "",
     entries: [
-      { to: "/admin", icon: LayoutDashboard, label: "Dashboard", end: true, permission: "dashboard" },
+      { to: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard", end: true, permission: "dashboard" },
     ],
   },
   {
@@ -125,7 +125,7 @@ const managerNav: NavSection[] = [
   {
     sectionLabel: "",
     entries: [
-      { to: "/admin", icon: LayoutDashboard, label: "Dashboard", end: true, permission: "dashboard" },
+      { to: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard", end: true, permission: "dashboard" },
     ],
   },
   {
@@ -167,7 +167,7 @@ const advisorNav: NavSection[] = [
   {
     sectionLabel: "",
     entries: [
-      { to: "/admin", icon: LayoutDashboard, label: "Dashboard", end: true, permission: "dashboard" },
+      { to: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard", end: true, permission: "dashboard" },
     ],
   },
   {
@@ -200,7 +200,7 @@ const customerRepNav: NavSection[] = [
   {
     sectionLabel: "",
     entries: [
-      { to: "/admin", icon: LayoutDashboard, label: "Dashboard", end: true, permission: "dashboard" },
+      { to: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard", end: true, permission: "dashboard" },
     ],
   },
   {

@@ -23,6 +23,7 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -223,16 +224,38 @@ export default function AdminReVerificationQueue() {
     });
   }, [events, search]);
 
-  const counts = useMemo(() => {
-    const open = events.filter((e) =>
-      ["pending", "notified", "lapsed"].includes(e.resolution),
-    ).length;
-    const review = events.filter(
-      (e) => e.resolution === "pending_review",
-    ).length;
-    const hard = events.filter((e) => e.severity === "hard").length;
-    return { open, review, hard };
-  }, [events]);
+  // KPI counts come from dedicated unfiltered head-count queries so the
+  // tiles reflect the whole queue, not the currently-filtered list (which
+  // would read 0 for a bucket the active status/severity filter excludes).
+  const { data: kpiCounts, refetch: refetchKpiCounts } = useQuery({
+    queryKey: ["reverification-kpi-counts"],
+    queryFn: async () => {
+      const results = await Promise.all([
+        supabase
+          .from("re_verification_events")
+          .select("id", { count: "exact", head: true })
+          .in("resolution", ["pending", "notified", "lapsed"]),
+        supabase
+          .from("re_verification_events")
+          .select("id", { count: "exact", head: true })
+          .eq("resolution", "pending_review"),
+        supabase
+          .from("re_verification_events")
+          .select("id", { count: "exact", head: true })
+          .eq("severity", "hard"),
+      ]);
+      for (const r of results) {
+        if (r.error) throw r.error;
+      }
+      const [open, review, hard] = results;
+      return {
+        open: open.count ?? 0,
+        review: review.count ?? 0,
+        hard: hard.count ?? 0,
+      };
+    },
+    staleTime: 30_000,
+  });
 
   async function submitResolution() {
     if (!resolveDialog) return;
@@ -253,6 +276,7 @@ export default function AdminReVerificationQueue() {
     setResolveDialog(null);
     setResolveNotes("");
     fetchEvents();
+    refetchKpiCounts();
   }
 
   return (
@@ -288,7 +312,7 @@ export default function AdminReVerificationQueue() {
           <div className="text-xs uppercase tracking-wide text-muted-foreground">
             Open
           </div>
-          <div className="text-2xl font-semibold mt-1">{counts.open}</div>
+          <div className="text-2xl font-semibold mt-1">{kpiCounts ? kpiCounts.open : "—"}</div>
           <div className="text-xs text-muted-foreground mt-1">
             Pending / notified / lapsed
           </div>
@@ -297,7 +321,7 @@ export default function AdminReVerificationQueue() {
           <div className="text-xs uppercase tracking-wide text-muted-foreground">
             Awaiting review
           </div>
-          <div className="text-2xl font-semibold mt-1">{counts.review}</div>
+          <div className="text-2xl font-semibold mt-1">{kpiCounts ? kpiCounts.review : "—"}</div>
           <div className="text-xs text-muted-foreground mt-1">
             Hard signals (config gates auto-suspend)
           </div>
@@ -306,7 +330,7 @@ export default function AdminReVerificationQueue() {
           <div className="text-xs uppercase tracking-wide text-muted-foreground">
             Hard severity
           </div>
-          <div className="text-2xl font-semibold mt-1">{counts.hard}</div>
+          <div className="text-2xl font-semibold mt-1">{kpiCounts ? kpiCounts.hard : "—"}</div>
           <div className="text-xs text-muted-foreground mt-1">
             Closed-status, license-revoked, etc.
           </div>

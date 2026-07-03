@@ -44,11 +44,11 @@ const PRIORITY_OPTIONS = [
   { value: "urgent", label: "Urgent" },
 ];
 
-const ACTION_LABELS: Record<BulkSupportAction, { title: string; verb: string; icon: React.ElementType; danger?: boolean }> = {
-  update_status: { title: "Change status", verb: "Update", icon: RefreshCw },
-  update_priority: { title: "Change priority", verb: "Update", icon: Flag },
-  assign: { title: "Reassign", verb: "Reassign", icon: ArrowRightLeft },
-  delete: { title: "Delete tickets", verb: "Delete", icon: Trash2, danger: true },
+const ACTION_LABELS: Record<BulkSupportAction, { title: string; verb: string; pastVerb: string; icon: React.ElementType; danger?: boolean }> = {
+  update_status: { title: "Change status", verb: "Update", pastVerb: "Updated", icon: RefreshCw },
+  update_priority: { title: "Change priority", verb: "Update", pastVerb: "Updated", icon: Flag },
+  assign: { title: "Reassign", verb: "Reassign", pastVerb: "Reassigned", icon: ArrowRightLeft },
+  delete: { title: "Delete tickets", verb: "Delete", pastVerb: "Deleted", icon: Trash2, danger: true },
 };
 
 /**
@@ -100,9 +100,9 @@ export function BulkSupportTicketActionDialog({
     onSuccess: (res) => {
       const noun = res.succeeded === 1 ? "ticket" : "tickets";
       if (res.errored === 0 && res.skipped === 0) {
-        toast.success(`${config.verb}d ${res.succeeded} ${noun}`);
+        toast.success(`${config.pastVerb} ${res.succeeded} ${noun}`);
       } else {
-        const summary = `${config.verb}d ${res.succeeded} · ${res.skipped} skipped · ${res.errored} errored`;
+        const summary = `${config.pastVerb} ${res.succeeded} · ${res.skipped} skipped · ${res.errored} errored`;
         if (res.errored > 0) {
           (res.succeeded > 0 ? toast.warning : toast.error)(summary);
         } else {

@@ -110,7 +110,10 @@ export function BulkEscalationActionDialog({
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      return data as { succeeded: number; skipped: number; errored: number };
+      // Coerce a null/absent body to a zeroed summary so onSuccess never
+      // dereferences null (the edge function should always return counts, but
+      // a 2xx with an empty body must not throw outside the error handler).
+      return (data ?? { succeeded: 0, skipped: 0, errored: 0 }) as { succeeded: number; skipped: number; errored: number };
     },
     onSuccess: (res) => {
       const noun = res.succeeded === 1 ? "escalation" : "escalations";

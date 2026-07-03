@@ -245,7 +245,7 @@ export default function AdminSubscriptions() {
   }, [invalidateSubscriptionQueries, queryClient]);
 
   /* ───── Data queries ───── */
-  const { data: stripeStats, isLoading: isLoadingStripe, error: stripeError } = useQuery({
+  const { data: stripeStats, isLoading: isLoadingStripe, error: stripeError, refetch: refetchStripe } = useQuery({
     queryKey: ["admin-subscription-stats"],
     queryFn: async () => {
       const { data, error } = await supabase.functions.invoke("get-revenue-stats");
@@ -478,6 +478,27 @@ export default function AdminSubscriptions() {
 
         {/* ═══════ Overview Tab ═══════ */}
         <TabsContent value="overview" className="space-y-6">
+          {/* Revenue-feed error banner — without this, a failed get-revenue-stats
+              call renders as plausible $0 MRR / 0 active on the primary revenue
+              page, masking an outage as real (zero) data. */}
+          {stripeError && !isLoadingStripe && (
+            <Card className="border-destructive/40 bg-destructive/5">
+              <CardContent className="p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-start gap-2.5">
+                  <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">Revenue data failed to load</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      The figures below may be incomplete or show zeros. This does not mean revenue is $0 — retry to reload.
+                    </p>
+                  </div>
+                </div>
+                <Button variant="outline" size="sm" className="shrink-0" onClick={() => refetchStripe()}>
+                  Retry
+                </Button>
+              </CardContent>
+            </Card>
+          )}
           {/* Revenue Stats */}
           <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
             {[

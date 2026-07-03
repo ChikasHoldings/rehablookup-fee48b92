@@ -256,11 +256,28 @@ export default function AdminEmailLogs() {
   const { data: stats } = useQuery({
     queryKey: ["email-stats", timeRange],
     queryFn: async () => {
+      const start = getTimeRangeStart(timeRange);
+
+      // Prefer the server-side aggregate — it dedups + buckets across the FULL
+      // window with no ~1000-row PostgREST cap. Fall back to the capped
+      // client-side computation if the RPC isn't deployed yet.
+      const { data: agg, error: rpcErr } = await supabase.rpc("admin_email_log_stats", {
+        p_start: start ?? undefined,
+      });
+      if (!rpcErr && Array.isArray(agg) && agg.length > 0) {
+        const r = agg[0];
+        return {
+          total: Number(r.total) || 0,
+          sent: Number(r.sent) || 0,
+          failed: Number(r.failed) || 0,
+          suppressed: Number(r.suppressed) || 0,
+        };
+      }
+
       let query = supabase
         .from("email_tracking_events")
         .select("email_id, event_type, created_at");
 
-      const start = getTimeRangeStart(timeRange);
       if (start) query = query.gte("created_at", start);
 
       const { data } = await query;

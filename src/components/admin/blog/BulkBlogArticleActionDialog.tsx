@@ -30,6 +30,7 @@ interface BulkBlogArticleActionDialogProps {
 const ACTION_CONFIG: Record<BulkBlogAction, {
   title: string;
   verb: string;
+  pastVerb: string;
   icon: React.ElementType;
   danger?: boolean;
   description: string;
@@ -39,6 +40,7 @@ const ACTION_CONFIG: Record<BulkBlogAction, {
   publish: {
     title: "Publish articles",
     verb: "Publish",
+    pastVerb: "Published",
     icon: Globe,
     description: "Sets every selected article to status=published. Already-published articles are skipped. First publish stamps published_at.",
     endpoint: "update_status",
@@ -47,6 +49,7 @@ const ACTION_CONFIG: Record<BulkBlogAction, {
   unpublish: {
     title: "Unpublish (back to draft)",
     verb: "Unpublish",
+    pastVerb: "Unpublished",
     icon: FileText,
     description: "Moves every selected article back to status=draft. Already-draft articles are skipped. published_at is preserved.",
     endpoint: "update_status",
@@ -55,6 +58,7 @@ const ACTION_CONFIG: Record<BulkBlogAction, {
   archive: {
     title: "Archive articles",
     verb: "Archive",
+    pastVerb: "Archived",
     icon: Archive,
     description: "Sets every selected article to status=archived. Already-archived articles are skipped.",
     endpoint: "update_status",
@@ -63,6 +67,7 @@ const ACTION_CONFIG: Record<BulkBlogAction, {
   feature: {
     title: "Feature articles",
     verb: "Feature",
+    pastVerb: "Featured",
     icon: Star,
     description: "Sets featured=true on every selected article. Already-featured articles are skipped.",
     endpoint: "set_featured",
@@ -71,6 +76,7 @@ const ACTION_CONFIG: Record<BulkBlogAction, {
   unfeature: {
     title: "Unfeature articles",
     verb: "Unfeature",
+    pastVerb: "Unfeatured",
     icon: Star,
     description: "Sets featured=false on every selected article. Already-not-featured articles are skipped.",
     endpoint: "set_featured",
@@ -79,6 +85,7 @@ const ACTION_CONFIG: Record<BulkBlogAction, {
   delete: {
     title: "Delete articles",
     verb: "Delete",
+    pastVerb: "Deleted",
     icon: Trash2,
     danger: true,
     description: "Permanently deletes the selected articles. Super-admin only. Cannot be undone.",
@@ -122,9 +129,9 @@ export function BulkBlogArticleActionDialog({
     onSuccess: (res) => {
       const noun = res.succeeded === 1 ? "article" : "articles";
       if (res.errored === 0 && res.skipped === 0) {
-        toast.success(`${config.verb}ed ${res.succeeded} ${noun}`);
+        toast.success(`${config.pastVerb} ${res.succeeded} ${noun}`);
       } else {
-        const summary = `${config.verb}ed ${res.succeeded} · ${res.skipped} skipped · ${res.errored} errored`;
+        const summary = `${config.pastVerb} ${res.succeeded} · ${res.skipped} skipped · ${res.errored} errored`;
         if (res.errored > 0) {
           (res.succeeded > 0 ? toast.warning : toast.error)(summary);
         } else {
