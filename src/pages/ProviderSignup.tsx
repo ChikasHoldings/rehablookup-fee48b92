@@ -1753,23 +1753,10 @@ export default function ProviderSignup({
                     <p className="text-xs text-muted-foreground text-right">{formData.description.length}/2000</p>
                   </div>
 
-                  {/* International Patients */}
-                  <div className="flex items-start space-x-3 p-3 rounded-lg bg-muted/50 border border-border">
-                    <Checkbox
-                      id="acceptsInternationalPatients"
-                      checked={formData.acceptsInternationalPatients}
-                      onCheckedChange={(checked) => updateFormData("acceptsInternationalPatients", checked === true)}
-                      className="mt-0.5"
-                    />
-                    <div className="space-y-1">
-                      <Label htmlFor="acceptsInternationalPatients" className="text-sm font-medium cursor-pointer">
-                        Accept International Patients
-                      </Label>
-                      <p className="text-xs text-muted-foreground">
-                        Check this if your facility can accommodate patients traveling from outside the United States
-                      </p>
-                    </div>
-                  </div>
+                  {/* International-patients is a Concierge Partner capability,
+                      not a self-serve signup flag — a new listing is never an
+                      active partner (the server trigger rejects it on INSERT).
+                      It's enabled later via the Concierge Partner upgrade. */}
                 </div>
               </div>
             )}

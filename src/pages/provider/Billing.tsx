@@ -407,31 +407,10 @@ export default function ProviderSubscription() {
           </Card>
         )}
 
-        {isIncomplete && (
-          <Card>
-            <CardContent className="p-5 flex items-center gap-3">
-              <Loader2 className="h-5 w-5 animate-spin text-primary" aria-hidden />
-              <div className="flex-1">
-                <p className="font-medium text-foreground">Finalizing your first invoice…</p>
-                <p className="text-sm text-muted-foreground mt-0.5">
-                  Stripe is settling your first charge. Pro benefits unlock as soon
-                  as it clears — this usually takes under a minute. If it stays here,
-                  open the billing portal to check your payment method, or contact
-                  support.
-                </p>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleManageBilling}
-                disabled={portalLoading}
-                className="shrink-0"
-              >
-                Billing portal
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+        {/* The `incomplete` finalizing state renders once, in the main content
+            slot below (IncompletePendingCard) — no separate top banner, so the
+            provider never sees two identical "Finalizing your first invoice…"
+            cards. */}
 
         {isMonthlyPro && subscription && !isCancelScheduled && (
           <SwitchToAnnualBanner
@@ -464,6 +443,16 @@ export default function ProviderSubscription() {
               />
             )}
           </>
+        ) : isIncomplete && subscription ? (
+          // Pro checkout completed but the first invoice hasn't cleared yet.
+          // Show ONLY a finalizing/pending state — never the upgrade cards —
+          // so the provider can't start a second checkout (the server also
+          // now blocks a duplicate checkout for incomplete subscriptions).
+          <IncompletePendingCard
+            onManage={handleManageBilling}
+            managing={portalLoading}
+            onRefresh={() => invalidateSub(facilityId)}
+          />
         ) : (
           <>
             <PromoCountdownBanner facilityId={facilityId} targets={["pro"]} />
@@ -474,6 +463,48 @@ export default function ProviderSubscription() {
         </div>
       </div>
     </>
+  );
+}
+
+/**
+ * Shown when a facility has a Pro subscription in the `incomplete` state — the
+ * checkout finished but Stripe hasn't confirmed the first invoice yet. We must
+ * NOT offer upgrade choices here (that would let the provider start a second
+ * checkout) and must NOT claim Pro is active before the webhook confirms.
+ */
+function IncompletePendingCard({
+  onManage,
+  managing,
+  onRefresh,
+}: {
+  onManage: () => void;
+  managing: boolean;
+  onRefresh: () => void;
+}) {
+  return (
+    <Card>
+      <CardContent className="p-5 md:p-6 space-y-4">
+        <div className="flex items-center gap-3">
+          <Loader2 className="h-5 w-5 animate-spin text-[#1B365D]" aria-hidden />
+          <div className="flex-1">
+            <p className="font-semibold text-slate-900">Finalizing your first invoice…</p>
+            <p className="text-xs text-slate-600 mt-0.5">
+              Your Pro checkout is complete. We're waiting for the first payment to clear —
+              this usually takes a few seconds. Your plan activates automatically once it does.
+            </p>
+          </div>
+          <Badge variant="secondary">Pending</Badge>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" onClick={onRefresh}>
+            Check again
+          </Button>
+          <Button variant="outline" size="sm" onClick={onManage} disabled={managing}>
+            Manage payment
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 

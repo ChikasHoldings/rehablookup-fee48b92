@@ -44,6 +44,7 @@ import { ConciergeAnalyticsWidget } from "@/components/provider/marketing/Concie
 import { FreeTierValueTeaser } from "@/components/provider/FreeTierValueTeaser";
 import { PlanGraceBanner } from "@/components/provider/PlanGraceBanner";
 import { getCachedSession } from "@/lib/sessionCache";
+import { getListingStatusMeta } from "@/lib/listingStatus";
 
 // Compact directory-style metric tile. Hairline border, white bg, no
 // shadow lift on hover — just a subtle border accent. Title sits as a
@@ -489,44 +490,19 @@ export default function ProviderDashboardPage() {
   };
 
   const getStatusConfig = (f: { status: string; suspended?: boolean | null }) => {
-    // Suspension takes precedence over approval — a paused listing is NOT
-    // live (matches the shared getListingStatusMeta / ListingCard semantics;
-    // this local map previously showed suspended-approved rows as "Live").
-    if (f.suspended === true) {
-      return {
-        label: "Paused",
-        icon: AlertCircle,
-        bgClass: "bg-amber-100",
-        textClass: "text-amber-800",
-        dotClass: "bg-amber-500",
-      };
-    }
-    switch (f.status) {
-      case "approved":
-        return { 
-          label: "Live", 
-          icon: CheckCircle, 
-          bgClass: "bg-success/10",
-          textClass: "text-success",
-          dotClass: "bg-success"
-        };
-      case "pending":
-        return { 
-          label: "Under Review", 
-          icon: Clock, 
-          bgClass: "bg-warning/10",
-          textClass: "text-warning",
-          dotClass: "bg-warning"
-        };
-      default:
-        return { 
-          label: "Not Listed", 
-          icon: AlertCircle, 
-          bgClass: "bg-muted",
-          textClass: "text-muted-foreground",
-          dotClass: "bg-muted-foreground"
-        };
-    }
+    // Labels come from the shared getListingStatusMeta so rejected /
+    // needs_edits / pending_review each read distinctly (e.g. "Not Approved",
+    // "Changes Requested") instead of collapsing to a misleading "Not Listed".
+    // This local map only supplies the dashboard's per-tone styling.
+    const meta = getListingStatusMeta(f.status, f.suspended);
+    const TONE_STYLE = {
+      live: { icon: CheckCircle, bgClass: "bg-success/10", textClass: "text-success", dotClass: "bg-success" },
+      review: { icon: Clock, bgClass: "bg-warning/10", textClass: "text-warning", dotClass: "bg-warning" },
+      attention: { icon: AlertCircle, bgClass: "bg-red-100", textClass: "text-red-700", dotClass: "bg-red-500" },
+      paused: { icon: AlertCircle, bgClass: "bg-amber-100", textClass: "text-amber-800", dotClass: "bg-amber-500" },
+      draft: { icon: AlertCircle, bgClass: "bg-muted", textClass: "text-muted-foreground", dotClass: "bg-muted-foreground" },
+    } as const;
+    return { label: meta.label, ...TONE_STYLE[meta.tone] };
   };
 
   // ---- derived overview values ----
