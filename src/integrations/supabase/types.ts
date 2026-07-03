@@ -8478,6 +8478,15 @@ export type Database = {
         Args: { p_inquiry_id: string; p_new_status: string; p_reason?: string }
         Returns: undefined
       }
+      admin_email_log_stats: {
+        Args: { p_start?: string }
+        Returns: {
+          total: number
+          sent: number
+          failed: number
+          suppressed: number
+        }[]
+      }
       admin_list_provider_owners: {
         Args: never
         Returns: {

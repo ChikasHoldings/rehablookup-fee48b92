@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { logAdminAction, AdminAuditActions } from "@/hooks/useAdminAuditLog";
+import { isValidIpOrCidr } from "@/lib/ipValidation";
 
 interface IPWhitelistDialogProps {
   trigger?: React.ReactNode;
@@ -118,23 +119,15 @@ export function IPWhitelistDialog({ trigger }: IPWhitelistDialogProps) {
     },
   });
 
-  // Validate IP address format
-  const isValidIP = (ip: string) => {
-    // IPv4 validation
-    const ipv4Regex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
-    // CIDR notation
-    const cidrRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\/(?:[0-9]|[1-2][0-9]|3[0-2])$/;
-    return ipv4Regex.test(ip) || cidrRegex.test(ip);
-  };
-
   const handleAddIP = () => {
     if (!newIP.trim()) {
       toast.error("Please enter an IP address");
       return;
     }
-    if (!isValidIP(newIP.trim())) {
-      toast.error("Invalid IP address format", { 
-        description: "Use format like 192.168.1.1 or 192.168.1.0/24" 
+    // Shared validator — accepts IPv4/IPv6 and in-range CIDR for both families.
+    if (!isValidIpOrCidr(newIP.trim())) {
+      toast.error("Invalid IP address format", {
+        description: "Use IPv4/IPv6 or CIDR, e.g. 192.168.1.1, 192.168.1.0/24, 2001:db8::1, or 2001:db8::/32",
       });
       return;
     }

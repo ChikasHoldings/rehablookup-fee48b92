@@ -273,6 +273,10 @@ function AdminClaimsReviewPanel() {
 
   // Reject modal
   const [rejectTarget, setRejectTarget] = useState<ClaimRow | null>(null);
+  // Manual verification-complete confirmation. For email/SMS methods this is an
+  // override that bypasses the automated claimant-proven flow, so it is
+  // confirmed, role-gated (canApproveClaims), and audited.
+  const [verifyTarget, setVerifyTarget] = useState<ClaimRow | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
   const [approvalNotes, setApprovalNotes] = useState("");
   // Claim IDs where the side-effect notification email failed. The DB write
@@ -466,6 +470,12 @@ function AdminClaimsReviewPanel() {
   async function markVerificationComplete(claim: ClaimRow) {
     setActionPending(claim.id);
     try {
+      // Capture the acting admin up front so the audit row is always attributed.
+      const { data: userData, error: userErr } = await supabase.auth.getUser();
+      if (userErr) throw new Error(`Could not verify admin session: ${userErr.message}`);
+      const adminUserId = userData.user?.id;
+      if (!adminUserId) throw new Error("Sign-in expired — please log back in.");
+
       const { data: updated, error: updErr } = await supabase
         .from("facility_claim_requests")
         .update({
@@ -483,7 +493,24 @@ function AdminClaimsReviewPanel() {
       if (!updated || updated.length === 0) {
         throw new Error("Update was blocked — the claim may have been actioned by another admin. Refresh to see current status.");
       }
+
+      // Audit the decision. For email/SMS methods this is a manual override of
+      // the automated verification, so the trail is important.
+      const isOverride = claim.verification_method !== "document_upload";
+      try {
+        await supabase.from("admin_audit_log").insert({
+          admin_user_id: adminUserId,
+          action_type: isOverride ? "claim_verification_override" : "claim_verification_marked_complete",
+          target_type: "facility_claim_request",
+          target_id: claim.id,
+          details: { verification_method: claim.verification_method, manual_override: isOverride },
+        });
+      } catch (auditErr) {
+        console.warn("[AdminClaims] verification audit write failed", auditErr);
+      }
+
       toast.success("Verification marked complete");
+      setVerifyTarget(null);
       await fetchClaims();
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Update failed";
@@ -937,16 +964,18 @@ function AdminClaimsReviewPanel() {
                                   Mark under review
                                 </Button>
                               )}
-                              {claim.verification_method === "document_upload" &&
+                              {canApproveClaims &&
                                 claim.verification_status !== "verified" && (
                                   <Button
                                     variant="outline"
                                     size="sm"
                                     disabled={actionPending === claim.id}
-                                    onClick={() => markVerificationComplete(claim)}
+                                    onClick={() => setVerifyTarget(claim)}
                                   >
                                     <ShieldCheck className="h-4 w-4 mr-1.5" aria-hidden />
-                                    Mark verification complete
+                                    {claim.verification_method === "document_upload"
+                                      ? "Mark verification complete"
+                                      : "Override verification"}
                                   </Button>
                                 )}
                               {canApproveClaims && (
@@ -991,6 +1020,42 @@ function AdminClaimsReviewPanel() {
           </TableBody>
         </Table>
       </div>
+
+      {/* Manual verification-complete / override confirmation */}
+      <AlertDialog open={!!verifyTarget} onOpenChange={(open) => { if (!open) setVerifyTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {verifyTarget?.verification_method === "document_upload"
+                ? "Mark verification complete?"
+                : "Override verification?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {verifyTarget?.verification_method === "document_upload" ? (
+                <>Confirm you have reviewed the uploaded documents for{" "}
+                <span className="font-medium">{verifyTarget?.claimant_name}</span> and they establish
+                ownership of <span className="font-medium">{verifyTarget?.facilities?.name ?? "this facility"}</span>.
+                This unlocks the Approve action.</>
+              ) : (
+                <>This is a <span className="font-medium">manual override</span>. The automated{" "}
+                {verifyTarget?.verification_method === "sms_phone" ? "SMS" : "email"} verification for{" "}
+                <span className="font-medium">{verifyTarget?.claimant_name}</span> ({verifyTarget?.claimant_email})
+                has not completed. Only override if you have independently confirmed they control{" "}
+                <span className="font-medium">{verifyTarget?.facilities?.name ?? "this facility"}</span>. This action is logged.</>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={actionPending === verifyTarget?.id}
+              onClick={() => { if (verifyTarget) markVerificationComplete(verifyTarget); }}
+            >
+              {verifyTarget?.verification_method === "document_upload" ? "Mark complete" : "Override & mark verified"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Approve confirmation */}
       <AlertDialog open={!!approveTarget} onOpenChange={(open) => { if (!open) { setApproveTarget(null); setApprovalNotes(""); } }}>

@@ -1091,29 +1091,41 @@ export default function AdminSettings() {
                         {maintenanceEnabled ? "Maintenance mode active" : "Operational"}
                       </p>
                     </div>
-                    <div className="p-4 rounded-lg bg-success/10 border border-success/20">
-                      <div className="flex items-center gap-2 text-success mb-1">
+                    {/* Database is a REAL signal — the platform-stats query is a
+                        live DB read, so its failure means we can't confirm the
+                        connection. Show "Unavailable" instead of a false green. */}
+                    <div className={cn(
+                      "p-4 rounded-lg border",
+                      statsError ? "bg-destructive/10 border-destructive/20" : "bg-success/10 border-success/20",
+                    )}>
+                      <div className={cn("flex items-center gap-2 mb-1", statsError ? "text-destructive" : "text-success")}>
                         <Database className="h-4 w-4" />
                         <span className="text-sm font-medium">Database</span>
                       </div>
-                      <p className="text-2xl font-bold text-success">Connected</p>
-                      <p className="text-xs text-success/80 mt-1">{stats?.totalFacilities || 0} facilities, {stats?.totalLeads || 0} leads</p>
+                      <p className={cn("text-2xl font-bold", statsError ? "text-destructive" : "text-success")}>
+                        {statsError ? "Unavailable" : "Connected"}
+                      </p>
+                      <p className={cn("text-xs mt-1", statsError ? "text-destructive/80" : "text-success/80")}>
+                        {statsError ? "Could not read platform data" : `${stats?.totalFacilities || 0} facilities, ${stats?.totalLeads || 0} leads`}
+                      </p>
                     </div>
-                    <div className="p-4 rounded-lg bg-success/10 border border-success/20">
-                      <div className="flex items-center gap-2 text-success mb-1">
+                    {/* Config facts (not live probes) — labelled honestly so they
+                        don't read as green health during a provider outage. */}
+                    <div className="p-4 rounded-lg bg-muted/50 border">
+                      <div className="flex items-center gap-2 text-muted-foreground mb-1">
                         <Mail className="h-4 w-4" />
                         <span className="text-sm font-medium">Email Service</span>
                       </div>
-                      <p className="text-2xl font-bold text-success">Active</p>
-                      <p className="text-xs text-success/80 mt-1">Resend configured</p>
+                      <p className="text-2xl font-bold text-foreground">Configured</p>
+                      <p className="text-xs text-muted-foreground mt-1">Resend provider</p>
                     </div>
-                    <div className="p-4 rounded-lg bg-success/10 border border-success/20">
-                      <div className="flex items-center gap-2 text-success mb-1">
+                    <div className="p-4 rounded-lg bg-muted/50 border">
+                      <div className="flex items-center gap-2 text-muted-foreground mb-1">
                         <Zap className="h-4 w-4" />
                         <span className="text-sm font-medium">Edge Functions</span>
                       </div>
-                      <p className="text-2xl font-bold text-success">Running</p>
-                      <p className="text-xs text-success/80 mt-1">
+                      <p className="text-2xl font-bold text-foreground">Deployed</p>
+                      <p className="text-xs text-muted-foreground mt-1">
                         {edgeFunctionsCount != null
                           ? `${edgeFunctionsCount} functions deployed`
                           : "Deployed via supabase/functions/"}
@@ -1500,7 +1512,7 @@ export default function AdminSettings() {
                     <Activity className="h-5 w-5 text-primary" />
                     Security Status
                   </CardTitle>
-                  <CardDescription>Current security feature status</CardDescription>
+                  <CardDescription>Configured security features (platform configuration, not live probes)</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
@@ -2324,17 +2336,17 @@ export default function AdminSettings() {
                 </CardHeader>
                 <CardContent>
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    <div className="p-4 rounded-lg bg-success/10 border border-success/20">
-                      <div className="flex items-center gap-2 text-success mb-1">
+                    <div className="p-4 rounded-lg bg-muted/50 border">
+                      <div className="flex items-center gap-2 text-muted-foreground mb-1">
                         <Mail className="h-4 w-4" />
                         <span className="text-sm font-medium">Email Service</span>
                       </div>
-                      <p className="text-2xl font-bold text-success">Active</p>
-                      <p className="text-xs text-success/80 mt-1">Resend configured</p>
+                      <p className="text-2xl font-bold text-foreground">Configured</p>
+                      <p className="text-xs text-muted-foreground mt-1">Resend provider</p>
                     </div>
                     <div className={cn(
                       "p-4 rounded-lg border",
-                      getSetting('daily_summary_enabled') 
+                      getSetting('daily_summary_enabled')
                         ? "bg-success/10 border-success/20" 
                         : "bg-muted/50"
                     )}>
