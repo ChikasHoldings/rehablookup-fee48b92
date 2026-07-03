@@ -59,18 +59,16 @@ Additional confirmations:
    `admin-register-stripe-webhook`, set `STRIPE_WEBHOOK_SECRET`, send a Stripe
    test event, and confirm a row lands in `stripe_webhook_events`.
 
-2. **Migration ledger drift.** `supabase_migrations.schema_migrations` max
-   version is **`20260829000500`** with **0 rows recorded after it**, yet every
-   later migration's objects (the cap trigger, verified gate, embed RPCs,
-   storage cap, `plan_change_audit`, `provider_plan_grants`, etc.) **are live**
-   — they were applied out-of-band via direct SQL rather than through the
-   migration runner. The protections are safe *today*, but a `supabase db push`
-   or `db reset` would replay `20260829000600` → `20260829005500` against a DB
-   that already has those objects; any non-idempotent statement would error and
-   could abort the deploy. Recommended remediation: reconcile the ledger
-   (backfill the applied versions into `schema_migrations`) so the recorded
-   history matches reality — this is a production-state write and should be done
-   deliberately, not silently.
+2. **Migration ledger drift — RESOLVED 2026-07-03 (see Remediation below).**
+   `supabase_migrations.schema_migrations` max version was **`20260829000500`**
+   with **0 rows recorded after it**, yet every later migration's objects (the
+   cap trigger, verified gate, embed RPCs, storage cap, `plan_change_audit`,
+   `provider_plan_grants`, etc.) were **live** — applied out-of-band via direct
+   SQL rather than through the migration runner. Safe *today*, but a
+   `supabase db push` / `db reset` would have replayed `20260829000600` →
+   `20260829005500` against a DB that already had those objects, and any
+   non-idempotent statement would have errored mid-deploy. Reconciling the
+   ledger uncovered one genuinely **un-applied** migration (see Remediation §1).
 
 3. **Minor / low-severity** (from the code re-read, no live exposure):
    - `get-facility-plan` retains a legacy Stripe-by-email fallback that can
@@ -81,10 +79,62 @@ Additional confirmations:
    - HIBP leaked-password protection is still disabled (owner-only Auth
      dashboard toggle; already tracked in the prelaunch config doc).
 
+## Remediation performed (2026-07-03, live)
+
+Both non-leak gaps were driven to closure where possible. All DB checks were
+verified before and after.
+
+### 1. Un-applied migration `20260829002400` — found and applied
+Reconciling the ledger required verifying each post-`000500` migration's
+objects actually exist live (so we mark applied only what is real). A per-
+migration signature probe over all 43 came back **42 applied, 1 not**:
+`20260829002400_concierge_messages_sender_type_guard` (MSG-7). The live
+`concierge_messages_insert_consolidated` INSERT policy was the *pre-2400*
+version — its seeker branch scoped `thread_type='advisor'` + `sender_id` but
+**did not pin `sender_type='seeker'`**, so a seeker could insert an in-thread
+message spoofing `sender_type='advisor'`/`'facility'` (visible to
+advisor/admin). This was a real, if low-severity, RLS gap the merged migration
+was meant to close but that never reached production.
+
+- **Fix:** applied the `002400` guard **in place via `ALTER POLICY`** (atomic;
+  no drop window; identical end state to the migration's DROP+CREATE). The
+  seeker branch now requires `sender_type = 'seeker'::text`.
+- **Verified safe first:** the seeker UI (`AdvisorMessaging.tsx`) already
+  inserts `sender_type: "seeker"`; providers use `"provider"`, advisors
+  `"advisor"`; no app path posts a seeker message with any other type and no
+  path inserts `sender_type='facility'`. So the tighter check blocks only the
+  spoof, not legitimate messaging. Post-change readback confirms the seeker
+  branch now carries the `sender_type='seeker'` pin.
+
+### 2. Migration ledger reconciled
+Backfilled `supabase_migrations.schema_migrations` with all **43**
+post-`000500` versions (`20260829000600` … `20260829005500`), idempotently
+(`WHERE NOT EXISTS`). Post-state:
+- ledger max version = `20260829005500` (was `20260829000500`);
+- row count `826 → 869` (+43, exactly the 43 backfilled);
+- **all 546 repo migration files** now have a matching ledger row (an `EXCEPT`
+  of every repo version against the ledger returns **empty**) — so a future
+  `supabase db push` against production replays nothing and cannot error.
+
+### 3. Stripe webhook — still owner-only (cannot be done from here)
+Registration needs three things not available to an automated agent by design:
+a **service-role JWT** to invoke `admin-register-stripe-webhook` (it hard-
+rejects non-`service_role` callers), a live **`STRIPE_SECRET_KEY`** on the
+function, and the ability to store the returned signing secret as the
+**`STRIPE_WEBHOOK_SECRET`** function secret (dashboard-only). Runbook:
+1. From a service-role context, `POST` to
+   `…/functions/v1/admin-register-stripe-webhook` (empty body → prod URL). It
+   returns `{ endpointId, url, events, secret }`.
+2. Paste `secret` into Supabase → Edge Functions → secrets as
+   `STRIPE_WEBHOOK_SECRET` (confirm `STRIPE_SECRET_KEY` is also set).
+3. Send a Stripe test event; confirm a row lands in `stripe_webhook_events`.
+Until then the paid tier is non-functional (fail-closed — no false Pro grants).
+
 ## Bottom line
 
-The Free→Pro entitlement leak is closed at every layer, and the fixes are
-confirmed live in production. The two items that still need attention are
-**registering the Stripe webhook** (so paying customers actually get Pro) and
-**reconciling the migration ledger** (so a future deploy doesn't diverge) —
-neither reopens the leak.
+The Free→Pro entitlement leak is closed at every layer and confirmed live in
+production. Reconciling the migration ledger additionally **uncovered and
+closed** a never-applied RLS guard (`002400`, seeker `sender_type` spoofing)
+and eliminated the deploy-replay hazard (ledger now matches all 546 repo
+migrations). The one remaining item is **registering the Stripe webhook** — an
+owner-only operational step that does not reopen the leak.
