@@ -8478,6 +8478,28 @@ export type Database = {
         Args: { p_inquiry_id: string; p_new_status: string; p_reason?: string }
         Returns: undefined
       }
+      admin_list_provider_owners: {
+        Args: never
+        Returns: {
+          created_at: string
+          email: string
+          email_verified_at: string
+          first_name: string
+          grace_expires_at: string
+          has_stripe_customer: boolean
+          last_facility_update: string
+          last_name: string
+          live_count: number
+          onboarding_completed_at: string
+          pending_count: number
+          phone: string
+          plan_state: string
+          rejected_count: number
+          suspended_count: number
+          total_facilities: number
+          user_id: string
+        }[]
+      }
       assess_login_risk: {
         Args: {
           p_browser?: string

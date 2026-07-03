@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, Download, Trash2, Loader2, Info, ExternalLink, ShieldCheck, FileCheck, RefreshCw, ToggleRight, Link2 } from "lucide-react";
+import { Search, Download, Trash2, Loader2, Info, ExternalLink, ShieldCheck, FileCheck, RefreshCw, ToggleRight, Link2, Users, Building2 } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -44,6 +44,8 @@ import {
   type AdminProvidersTab,
 } from "./adminProvidersConfig";
 import { isActiveProRow } from "@/lib/proAccess";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { OwnersTab } from "@/components/admin/providers/OwnersTab";
 
 function useDebounce(value: string, delay: number) {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -67,6 +69,12 @@ export default function AdminProviders() {
   const [searchInput, setSearchInput] = useState(() => searchParams.get("q") ?? "");
   const searchQuery = useDebounce(searchInput, 350);
   const [activeTab, setActiveTab] = useState(() => searchParams.get("tab") ?? "all");
+  // Top-level section: Owners (account-level, default) vs Facilities (the
+  // existing listing-level view). Distinct from `activeTab`, which is the
+  // Facilities-tab status filter.
+  const [view, setView] = useState<"owners" | "facilities">(
+    () => (searchParams.get("view") === "facilities" ? "facilities" : "owners"),
+  );
   const [selectedProvider, setSelectedProvider] = useState<Facility | null>(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
 
@@ -75,12 +83,13 @@ export default function AdminProviders() {
   // URL tidy. Loop-guard compares before writing.
   useEffect(() => {
     const next = new URLSearchParams();
+    if (view === "facilities") next.set("view", "facilities");
     if (searchQuery) next.set("q", searchQuery);
     if (activeTab && activeTab !== "all") next.set("tab", activeTab);
     if (next.toString() !== searchParams.toString()) {
       setSearchParams(next, { replace: true });
     }
-  }, [searchQuery, activeTab, searchParams, setSearchParams]);
+  }, [view, searchQuery, activeTab, searchParams, setSearchParams]);
   
   
   // Image flagging state
@@ -796,8 +805,24 @@ export default function AdminProviders() {
       {/* Header */}
       <div>
         <h1 className="text-xl sm:text-2xl font-bold text-foreground">Provider Management</h1>
-        <p className="text-xs sm:text-sm text-muted-foreground">Manage facilities, subscriptions, and placement network</p>
+        <p className="text-xs sm:text-sm text-muted-foreground">Manage provider owner accounts and their facility listings</p>
       </div>
+
+      <Tabs value={view} onValueChange={(v) => setView(v as "owners" | "facilities")}>
+        <TabsList>
+          <TabsTrigger value="owners" className="gap-1.5"><Users className="h-4 w-4" />Owners</TabsTrigger>
+          <TabsTrigger value="facilities" className="gap-1.5"><Building2 className="h-4 w-4" />Facilities</TabsTrigger>
+        </TabsList>
+
+        {/* Owners tab — account-level view (one row per provider owner). */}
+        <TabsContent value="owners" className="mt-4">
+          <OwnersTab />
+        </TabsContent>
+
+        {/* Facilities tab — the existing listing-level management surface,
+            preserved verbatim (stats, status filters, search, bulk actions,
+            moderation controls, detail modal). */}
+        <TabsContent value="facilities" className="mt-4 space-y-4 sm:space-y-6">
 
       {/* Interactive Stats Charts */}
       <ProviderStatsCharts
@@ -1002,6 +1027,8 @@ export default function AdminProviders() {
           />
         </div>
       </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Provider Detail Modal */}
       <ProviderDetailModal

@@ -20,7 +20,9 @@ import {
   Bell,
   ThumbsUp,
   ThumbsDown,
+  UserCog,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -198,6 +200,18 @@ export function ProviderListItem({
               <Calendar className="h-3 w-3" />
               {formatDistanceToNow(new Date(provider.created_at), { addSuffix: true })}
             </span>
+            {provider.user_id && (
+              <Link
+                to={`/admin/providers/account/${provider.user_id}`}
+                onClick={(e) => e.stopPropagation()}
+                className="hidden md:flex items-center gap-1 text-primary hover:underline"
+                aria-label={`Open owner account profile for ${provider.name}`}
+                title="Open the owner's account profile"
+              >
+                <UserCog className="h-3 w-3" />
+                Owner
+              </Link>
+            )}
           </div>
         </div>
       </div>
