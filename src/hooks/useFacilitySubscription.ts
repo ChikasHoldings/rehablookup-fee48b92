@@ -119,9 +119,10 @@ export function useFacilitySubscription(
     staleTime: 1000 * 30,
     refetchInterval: options.pollWhilePending
       ? (query) => {
-          // Stop polling the moment the subscription is active.
+          // Stop polling the moment the subscription is live Pro (active or
+          // trialing — both render as Pro, so neither should keep polling).
           const data = query.state.data as FacilitySubscriptionRow | null;
-          if (data?.status === "active") return false;
+          if (data?.status === "active" || data?.status === "trialing") return false;
           return pollingIntervalFor(query.state.dataUpdateCount);
         }
       : false,

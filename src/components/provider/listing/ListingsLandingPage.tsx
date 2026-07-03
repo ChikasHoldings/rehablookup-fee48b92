@@ -32,7 +32,10 @@ export function ListingsLandingPage({ onEditListing, onAddListing }: ListingsLan
   const active = facilities.filter((f) => !f.suspended);
   const paused = facilities.filter((f) => f.suspended);
   const live = active.filter((f) => f.status === "approved").length;
-  const pending = active.filter((f) => f.status === "pending").length;
+  // Both `pending` and `pending_review` render as "Under Review" on the cards
+  // (shared getListingStatusMeta), so the tile must count both or it disagrees
+  // with the rows.
+  const pending = active.filter((f) => f.status === "pending" || f.status === "pending_review").length;
   const total = facilities.length;
 
   const [previewOpen, setPreviewOpen] = useState(false);

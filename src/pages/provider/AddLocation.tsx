@@ -449,9 +449,17 @@ export default function AddLocationPage() {
             variant: "destructive",
           });
         } else {
+          // The authoritative cap is the enforce_facility_limit DB trigger; if
+          // the client-side pre-check was stale (cache race) it raises here.
+          // Don't surface the raw Postgres message — route the cap case to the
+          // upgrade path and everything else to a friendly generic error.
+          const rawMsg = (insertError as { message?: string }).message ?? "";
+          const isCapError = /limit reached|facility limit|plan allows/i.test(rawMsg);
           toast({
-            title: "Could not create facility",
-            description: insertError.message,
+            title: isCapError ? "Listing limit reached" : "Could not create facility",
+            description: isCapError
+              ? "You've reached your plan's listing limit. Upgrade to Pro from Billing to add more locations."
+              : "Something went wrong creating your facility. Please try again, or contact support if it keeps happening.",
             variant: "destructive",
           });
         }

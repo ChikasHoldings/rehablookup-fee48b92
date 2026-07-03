@@ -31,6 +31,7 @@ import { cn } from '@/lib/utils';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useSelectedFacility } from '@/contexts/SelectedFacilityContext';
 import { useProStatus } from '@/hooks/useProStatus';
+import { useProFacilityIds } from '@/hooks/useProFacilityIds';
 import { ProviderPageHeader } from '@/components/provider/ProviderPageHeader';
 
 import { ReviewStatsCards } from '@/components/provider/reviews/ReviewStatsCards';
@@ -80,6 +81,12 @@ export default function ProviderReviews() {
   const requestFacilityId =
     facilityFilter !== "all" ? facilityFilter : selectedFacility?.id;
   const { data: requestProStatus } = useProStatus(requestFacilityId);
+  // Respond is Pro-gated PER FACILITY. In the "All Locations" view a review can
+  // belong to any of the provider's facilities, so gate each card on its own
+  // facility's Pro state (not the single selected/filter facility's) — else a
+  // mixed-tier provider is denied Respond on a paying Pro facility or offered it
+  // on a Free one (where the server trigger then rejects the response).
+  const { data: proFacilityIds } = useProFacilityIds();
   // Review-request invite dialog state. Lives at the page level so the
   // hero CTA can open it and the dialog handles its own form state +
   // submit via the send-review-request edge function.
@@ -498,7 +505,7 @@ export default function ProviderReviews() {
                   key={review.id}
                   review={review}
                   showFacility={facilities.length > 1}
-                  canRespond={requestProStatus?.isPro === true}
+                  canRespond={proFacilityIds?.has(review.facility_id) === true}
                   onSubmitResponse={submitResponse}
                   onUpdateResponse={updateResponse}
                   onDeleteResponse={deleteResponse}

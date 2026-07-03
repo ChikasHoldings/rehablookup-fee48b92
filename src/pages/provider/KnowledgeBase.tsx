@@ -114,7 +114,7 @@ Navigate to **Settings > Profile** to update:
 In **Settings > Notifications** you can control:
 - **New lead alerts** — Instant email when a family submits an inquiry
 - **Placement introductions** — Alerts when our concierge team sends a matched case
-- **Billing events** — Payment confirmations and low-balance warnings
+- **Billing events** — Payment confirmations and renewal reminders
 
 ## Best Practices
 
@@ -201,7 +201,7 @@ Quality images help families visualize your facility and make confident decision
 
 - **Show variety:** exterior, bedrooms, common areas, dining, outdoor spaces
 - **Use natural lighting** for the most inviting look
-- **Keep file sizes under 5MB** per image — WebP format is preferred for faster load times
+- **Keep file sizes under 10MB** per image (the upload limit) — WebP format is preferred for faster load times
 - **Avoid stock photos** — families can tell, and it reduces trust
 - Check our **Image Guidelines** page (accessible from My Listing) for detailed specs
     `,

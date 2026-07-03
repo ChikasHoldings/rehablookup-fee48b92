@@ -121,7 +121,7 @@ export function CentralizedLeadAnalyticsDashboard({ dateRange, facilityId }: Cen
       <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
         <KPICard title="Total Inquiries" value={analytics.totalLeads} icon={MessageSquare} trend={analytics.growthRate} color="blue" />
         <KPICard title="This Period" value={analytics.thisMonthLeads} icon={TrendingUp} trend={analytics.growthRate} subtitle={`vs ${analytics.lastMonthLeads} prior`} color="primary" />
-        <KPICard title="Unlocked" value={unlockedInquiries} icon={Unlock} subtitle={`of ${analytics.totalLeads} total`} color="purple" />
+        <KPICard title="Engaged" value={unlockedInquiries} icon={Unlock} subtitle={`of ${analytics.totalLeads} total`} color="purple" />
         <KPICard title="Conversion" value={`${conversionRate}%`} icon={Target} subtitle={`${analytics.conversionFunnel.converted} admitted`} color="emerald" />
       </div>
 
@@ -269,7 +269,7 @@ export function CentralizedLeadAnalyticsDashboard({ dateRange, facilityId }: Cen
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <p className="font-semibold text-foreground text-xs">Ready to convert more inquiries?</p>
-            <p className="text-xs text-muted-foreground mt-0.5">View and unlock pending inquiries to start conversations.</p>
+            <p className="text-xs text-muted-foreground mt-0.5">View and respond to pending inquiries to start conversations.</p>
           </div>
           <Button asChild size="sm" className="shrink-0 h-8 text-xs">
             <Link to="/provider/inquiries">View Inquiries</Link>
