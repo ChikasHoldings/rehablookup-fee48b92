@@ -1024,6 +1024,43 @@ Deno.serve(async (req) => {
       reason: `admin: ${parsed.data.reason}`,
       triggeredBy: user.id,
     });
+
+    // Unified activity trail: an admin moved money. subscription_cancellations
+    // already carries the per-scope refund rows; this adds the admin-actor
+    // event to admin_audit_log so ProviderActivityTimeline / Admin Provider
+    // Profile (which read admin_audit_log) surface it. Best-effort — a logging
+    // failure must never turn a successful cancellation into a 500, and this
+    // runs ONLY after cancellation succeeds so a failed cancel logs nothing.
+    try {
+      const svc = clientFromEnv();
+      const { data: subInfo } = await svc
+        .from("facility_subscriptions")
+        .select("facility_id, provider_id, stripe_subscription_id")
+        .eq("id", parsed.data.subscription_id)
+        .maybeSingle();
+      await svc.from("admin_audit_log").insert({
+        admin_user_id: user.id,
+        action_type: "admin_subscription_cancellation",
+        target_type: "facility_subscription",
+        target_id: parsed.data.subscription_id,
+        details: {
+          scope: parsed.data.scope,
+          reason: parsed.data.reason,
+          facility_id: (subInfo as { facility_id?: string } | null)?.facility_id ?? null,
+          provider_id: (subInfo as { provider_id?: string } | null)?.provider_id ?? null,
+          stripe_subscription_id: (subInfo as { stripe_subscription_id?: string } | null)?.stripe_subscription_id ?? null,
+          total_refund_cents: result.totalRefundCents,
+          pro_refund_cents: result.proRefundCents ?? null,
+          featured_refund_cents: result.featuredRefundCents ?? null,
+          concierge_refund_cents: result.conciergeRefundCents ?? null,
+          stripe_refund_ids: result.stripeRefundIds,
+          cancellation_row_ids: result.cancellationRowIds,
+        },
+      });
+    } catch (auditErr) {
+      console.warn("[admin-cancel-subscription] admin_audit_log insert failed (non-fatal)", auditErr);
+    }
+
     return new Response(JSON.stringify({ ok: true, ...result }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

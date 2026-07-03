@@ -71,7 +71,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PhoneInput } from "@/components/ui/phone-input";
@@ -424,9 +423,9 @@ export default function AddLocationPage() {
       } else if (draft.accepting_admissions === "no") {
         insertPayload.accepting_admissions = false;
       }
-      if (draft.accepts_international_patients) {
-        insertPayload.accepts_international_patients = true;
-      }
+      // accepts_international_patients is intentionally never sent from the
+      // create flow — it's a Concierge Partner capability enabled post-upgrade,
+      // and the server trigger rejects it on INSERT for non-partners.
       if (draft.year_established) {
         const y = Number(draft.year_established);
         if (Number.isInteger(y)) insertPayload.year_established = y;
@@ -1145,22 +1144,11 @@ function Step1Identity({
           </SelectContent>
         </Select>
       </Field>
-      <Field
-        label="International patients"
-        hint="Shown on your public page so families searching from outside the US know you accept them."
-      >
-        <label className="flex items-center gap-2.5 cursor-pointer rounded-md border border-slate-200 px-3 py-2.5 hover:bg-slate-50">
-          <Checkbox
-            checked={draft.accepts_international_patients}
-            onCheckedChange={(c) =>
-              updateField("accepts_international_patients", c === true)
-            }
-          />
-          <span className="text-sm text-slate-700">
-            This facility accepts international patients
-          </span>
-        </label>
-      </Field>
+      {/* International-patients is a Concierge Partner capability, not a
+          self-serve flag. A brand-new listing is never an active partner, so
+          the option isn't offered at create time (the server trigger also
+          rejects accepts_international_patients=true on INSERT for non-partners).
+          It becomes available after a facility upgrades to Concierge Partner. */}
     </div>
   );
 }

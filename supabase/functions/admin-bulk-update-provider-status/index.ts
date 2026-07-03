@@ -18,7 +18,7 @@
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 
-const VERSION = "1.0.0";
+const VERSION = "1.1.0";
 const MAX_PER_REQUEST = 100;
 
 const VALID_STATUSES = new Set([
@@ -27,6 +27,11 @@ const VALID_STATUSES = new Set([
   "rejected",
   "draft",
 ]);
+
+// Statuses that carry an admin reason and notify the provider that action is
+// needed. rejection_reason is persisted on the facility for these and cleared
+// for every other status.
+const REASON_STATUSES = new Set(["rejected", "needs_edits"]);
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -131,6 +136,10 @@ Deno.serve(async (req) => {
       if (newStatus === "approved" && facility.user_id && !facility.claimed_at) {
         update.claimed_at = now;
       }
+      // Persist the reason on the listing for rejected/needs_edits so the
+      // provider can see WHY on their dashboard; clear it on any other status
+      // (e.g. a later approval) so a stale reason never lingers.
+      update.rejection_reason = REASON_STATUSES.has(newStatus) ? (reason ?? null) : null;
 
       const { error: updateErr } = await adminClient
         .from("facilities")
@@ -155,6 +164,32 @@ Deno.serve(async (req) => {
           reason,
         },
       });
+
+      // Tell the provider their listing needs action (best-effort; never
+      // fails the status update). Uses the existing provider_notifications
+      // bell surface + /provider/notifications; the reason is included where
+      // given so the provider isn't left guessing.
+      if (REASON_STATUSES.has(newStatus) && facility.user_id) {
+        const isRejected = newStatus === "rejected";
+        const title = isRejected ? "Listing not approved" : "Listing changes requested";
+        const lead = isRejected
+          ? `Your listing "${facility.name}" wasn't approved.`
+          : `Your listing "${facility.name}" needs changes before it can go live.`;
+        const message = `${lead}${reason ? ` Reason: ${reason}` : ""} Open your listings to update and resubmit.`;
+        try {
+          const { error: notifErr } = await adminClient.from("provider_notifications").insert({
+            user_id: facility.user_id,
+            facility_id: id,
+            type: isRejected ? "facility_rejected" : "facility_needs_edits",
+            title,
+            message,
+            metadata: { facility_id: id, status: newStatus, reason: reason ?? null, link: "/provider/listings" },
+          });
+          if (notifErr) console.warn(`[admin-bulk-update-provider-status] provider notify failed for ${id}: ${notifErr.message}`);
+        } catch (notifEx) {
+          console.warn(`[admin-bulk-update-provider-status] provider notify threw for ${id}`, notifEx);
+        }
+      }
 
       results.push({ id, status: "updated" });
     }

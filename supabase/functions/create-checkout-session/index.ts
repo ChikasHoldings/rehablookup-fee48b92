@@ -188,10 +188,28 @@ Deno.serve(async (req) => {
       (facSub as { tier: string | null }).tier === "pro" &&
       (facSub as { status: string }).status === "active";
 
+    // A NEW Pro checkout must be blocked whenever a Pro row already exists in
+    // ANY unresolved payment state — active, trialing, past_due, or incomplete
+    // (first invoice not yet cleared). Only canceled / expired / inactive /
+    // unpaid-abandoned rows may restart checkout. This prevents the
+    // double-checkout the audit found where an `incomplete` subscription still
+    // rendered the upgrade cards. Add-ons keep requiring a TRULY active Pro
+    // (activePro) below.
+    const PENDING_OR_ACTIVE_PRO_STATUSES = new Set([
+      "active",
+      "trialing",
+      "past_due",
+      "incomplete",
+    ]);
+    const pendingOrActivePro =
+      !!facSub &&
+      (facSub as { tier: string | null }).tier === "pro" &&
+      PENDING_OR_ACTIVE_PRO_STATUSES.has((facSub as { status: string }).status);
+
     if (intent === "initial_subscription") {
-      if (activePro) {
+      if (pendingOrActivePro) {
         return json(409, {
-          error: "This facility already has an active Pro subscription.",
+          error: "This facility already has a Pro subscription that is active or still being finalized.",
           code: "ALREADY_PRO",
         });
       }

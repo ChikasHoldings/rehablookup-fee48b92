@@ -1996,6 +1996,7 @@ export type Database = {
           profile_completion_celebrated: boolean | null
           profile_reminder_count: number | null
           profile_reminder_sent_at: string | null
+          rejection_reason: string | null
           reply_email: string | null
           reply_email_verified: boolean | null
           reply_email_verified_at: string | null
@@ -2074,6 +2075,7 @@ export type Database = {
           profile_completion_celebrated?: boolean | null
           profile_reminder_count?: number | null
           profile_reminder_sent_at?: string | null
+          rejection_reason?: string | null
           reply_email?: string | null
           reply_email_verified?: boolean | null
           reply_email_verified_at?: string | null
@@ -2152,6 +2154,7 @@ export type Database = {
           profile_completion_celebrated?: boolean | null
           profile_reminder_count?: number | null
           profile_reminder_sent_at?: string | null
+          rejection_reason?: string | null
           reply_email?: string | null
           reply_email_verified?: boolean | null
           reply_email_verified_at?: string | null

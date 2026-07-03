@@ -22,7 +22,7 @@ import {
   AlertCircle,
   ChevronRight,
 } from "lucide-react";
-import { useFacilityLimits } from "@/hooks/useFacilityLimits";
+import { useProStatus } from "@/hooks/useProStatus";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -83,10 +83,14 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
     confirmFacilitySwitch, 
     cancelFacilitySwitch 
   } = useSelectedFacility();
-  const { planTier } = useFacilityLimits();
+  // Plan badge is scoped to the SELECTED facility (mixed-plan providers must
+  // not see account-wide Pro on a Free facility). Same facility-scoped
+  // semantics as Dashboard's has_active_pro() check. Grace grants no Pro
+  // subscription row, so a grace facility correctly reads as not-Pro here.
+  const { data: proStatus } = useProStatus(selectedFacility?.id ?? facilityId);
 
   const recentNotifications = notifications.slice(0, 5);
-  const isPro = planTier === "pro";
+  const isPro = proStatus?.isPro ?? false;
   const approvedFacilities = facilities.filter(f => f.status === "approved" && !f.suspended);
   const pendingFacilities = facilities.filter(f => f.status === "pending" && !f.suspended);
   const suspendedFacilities = facilities.filter(f => f.suspended);
@@ -465,7 +469,7 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm text-muted-foreground">{facility.name}</p>
-                          <p className="text-xs text-muted-foreground/70 truncate">Paused — upgrade to reactivate</p>
+                          <p className="text-xs text-muted-foreground/70 truncate">Paused — contact support to reactivate</p>
                         </div>
                         <div className="shrink-0">
                           <Lock className="h-3.5 w-3.5 text-muted-foreground" />

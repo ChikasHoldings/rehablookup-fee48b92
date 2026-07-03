@@ -49,7 +49,9 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
   const navigate = useNavigate();
   const [, startTransition] = useTransition();
   const { selectedFacility } = useSelectedFacility();
-  const { data: proStatus } = useProStatus();
+  // Scope the Pro badge to the SELECTED facility so a mixed-plan provider sees
+  // Free/Pro consistently with the header + dashboard (was account-wide).
+  const { data: proStatus } = useProStatus(selectedFacility?.id);
   const { count: pendingDomesticCount } = usePendingConciergeCount(selectedFacility?.id);
   const { count: pendingInquiriesCount } = usePendingInquiriesCount();
 
