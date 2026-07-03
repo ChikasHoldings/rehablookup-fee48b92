@@ -446,6 +446,11 @@ verify_jwt = true
 [functions.admin-manage-invoice]
 verify_jwt = true
 
+[functions.admin-stripe-webhook-doctor]
+# admin-* → platform JWT required (a service-role key is a valid JWT); the
+# function additionally self-gates on role='service_role'.
+verify_jwt = true
+
 [functions.admin-register-stripe-webhook]
 verify_jwt = true
 
@@ -510,6 +515,10 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.placement-cron]
+verify_jwt = false
+
+[functions.enforce-plan-grace-cron]
+# pg_cron only — gated by X-Cron-Secret in-function (assertCronSecret).
 verify_jwt = false
 
 [functions.placement-monitor]

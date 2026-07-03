@@ -33,7 +33,10 @@
 // ============================================================================
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 
-const VERSION = "2.0.0";
+// 2.1.0 (2026-07-03): owned facilities (user_id set) are non-claimable even
+// when claimed_at is NULL — closes third-party claims against provider-created
+// listings.
+const VERSION = "2.1.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -131,7 +134,12 @@ Deno.serve(async (req) => {
     if (fErr) { log("ERROR", "facility lookup", { error: fErr.message }); return json(500, { error: "Internal error", code: "FACILITY_LOOKUP_FAILED" }); }
     if (!facility) return json(404, { error: "Facility not found", code: "FACILITY_NOT_FOUND" });
     if (facility.status !== "approved") return json(409, { error: "This facility is not currently accepting claims", code: "FACILITY_NOT_CLAIMABLE" });
-    if (facility.claimed_at && facility.user_id) return json(409, { error: "This facility has already been claimed", code: "FACILITY_ALREADY_CLAIMED" });
+    // Ownership (user_id set) makes a listing non-claimable, however it was
+    // established. The old guard required claimed_at TOO, which is only ever
+    // written by the claim-approval flow — so provider-CREATED facilities
+    // (user_id set, claimed_at NULL) were claimable by third parties
+    // (2026-07-03 audit, gap G1).
+    if (facility.user_id) return json(409, { error: "This facility is already managed by a provider account", code: "FACILITY_ALREADY_CLAIMED" });
 
     const { data: existing, error: exErr } = await svc
       .from("facility_claim_requests")

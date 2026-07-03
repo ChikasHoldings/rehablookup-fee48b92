@@ -25,6 +25,11 @@ on:
         required: true
         default: 'main'
         type: string
+      functions:
+        description: 'Optional explicit function list (whitespace/comma separated). When set, skips the diff discovery and deploys exactly these.'
+        required: false
+        default: ''
+        type: string
       dry_run:
         description: 'Dry run: print the list of functions but DO NOT deploy.'
         required: true
@@ -64,21 +69,29 @@ jobs:
       - name: Discover functions to deploy
         id: discover
         run: |
-          BASE="${{ inputs.base_branch }}"
-          echo "Comparing against origin/$BASE"
-          git fetch origin "$BASE" --quiet
+          EXPLICIT="${{ inputs.functions }}"
+          if [ -n "$EXPLICIT" ]; then
+            # Explicit list mode — deploy exactly what the caller named.
+            mapfile -t FNS < <(echo "$EXPLICIT" | tr ', ' '\n\n' | sed '/^$/d' | sort -u)
+            echo "Explicit list mode: ${#FNS[@]} functions requested:"
+            printf '  %s\n' "${FNS[@]}"
+          else
+            BASE="${{ inputs.base_branch }}"
+            echo "Comparing against origin/$BASE"
+            git fetch origin "$BASE" --quiet
 
-          # Find every function dir whose index.ts has any diff vs base.
-          # Excludes _shared (those are imports, not deployable functions).
-          mapfile -t FNS < <(
-            git diff --name-only "origin/$BASE"...HEAD -- 'supabase/functions/*/index.ts' \
-              | grep -v '^supabase/functions/_shared/' \
-              | awk -F/ '{print $3}' \
-              | sort -u
-          )
+            # Find every function dir whose index.ts has any diff vs base.
+            # Excludes _shared (those are imports, not deployable functions).
+            mapfile -t FNS < <(
+              git diff --name-only "origin/$BASE"...HEAD -- 'supabase/functions/*/index.ts' \
+                | grep -v '^supabase/functions/_shared/' \
+                | awk -F/ '{print $3}' \
+                | sort -u
+            )
 
-          echo "Found ${#FNS[@]} functions modified on this branch vs origin/$BASE:"
-          printf '  %s\n' "${FNS[@]}"
+            echo "Found ${#FNS[@]} functions modified on this branch vs origin/$BASE:"
+            printf '  %s\n' "${FNS[@]}"
+          fi
 
           # Save to output for next step
           {
@@ -128,9 +141,26 @@ jobs:
               continue
             fi
 
+            # verify_jwt comes from supabase/config.toml per function.
+            # Passing a blanket --no-verify-jwt here (the previous behavior)
+            # silently disabled platform JWT enforcement on every function
+            # this workflow ever touched, overriding config.toml — the
+            # 2026-07-02 audit found 80 functions drifted this way. Default
+            # is JWT ON unless config.toml explicitly says verify_jwt = false.
+            VJ=$(awk -v section="[functions.$FN]" '
+              $0 == section { in_section=1; next }
+              /^\[/ { in_section=0 }
+              in_section && $1 == "verify_jwt" { print $3; exit }
+            ' supabase/config.toml)
+            FLAGS=()
+            if [ "$VJ" = "false" ]; then
+              FLAGS+=(--no-verify-jwt)
+            fi
+            echo "  verify_jwt(config.toml): ${VJ:-<unset → JWT ON>}"
+
             if supabase functions deploy "$FN" \
               --project-ref mldbxpntzcjalgjmwnqa \
-              --no-verify-jwt; then
+              "${FLAGS[@]}"; then
               OK=$((OK+1))
               echo "  ✓ deployed $FN"
             else

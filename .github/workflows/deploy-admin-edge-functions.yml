@@ -63,9 +63,20 @@ jobs:
             auto-status-transition \
           ; do
             echo "=== Deploying $fn (critical) ==="
+            # verify_jwt comes from supabase/config.toml per function —
+            # never pass a blanket --no-verify-jwt (2026-07-02 audit: it
+            # silently disabled platform JWT enforcement on every function
+            # this workflow touched).
+            VJ=$(awk -v section="[functions.$fn]" '
+              $0 == section { in_section=1; next }
+              /^\[/ { in_section=0 }
+              in_section && $1 == "verify_jwt" { print $3; exit }
+            ' supabase/config.toml)
+            FLAGS=()
+            if [ "$VJ" = "false" ]; then FLAGS+=(--no-verify-jwt); fi
             supabase functions deploy "$fn" \
               --project-ref mldbxpntzcjalgjmwnqa \
-              --no-verify-jwt
+              "${FLAGS[@]}"
           done
 
       - name: Deploy OPTIONAL admin functions (14)
@@ -91,9 +102,20 @@ jobs:
             admin-bulk-update-blog-articles \
           ; do
             echo "=== Deploying $fn (optional) ==="
+            # verify_jwt comes from supabase/config.toml per function —
+            # never pass a blanket --no-verify-jwt (2026-07-02 audit: it
+            # silently disabled platform JWT enforcement on every function
+            # this workflow touched).
+            VJ=$(awk -v section="[functions.$fn]" '
+              $0 == section { in_section=1; next }
+              /^\[/ { in_section=0 }
+              in_section && $1 == "verify_jwt" { print $3; exit }
+            ' supabase/config.toml)
+            FLAGS=()
+            if [ "$VJ" = "false" ]; then FLAGS+=(--no-verify-jwt); fi
             supabase functions deploy "$fn" \
               --project-ref mldbxpntzcjalgjmwnqa \
-              --no-verify-jwt
+              "${FLAGS[@]}"
           done
 
       - name: Summary

@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef, Suspense } from "react";
-import { Navigate, Outlet, useNavigate, useLocation } from "react-router-dom";
+import { Link, Navigate, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AccessDenied } from "./AccessDenied";
 import { ProviderHeader } from "./ProviderHeader";
@@ -282,22 +282,16 @@ function ProviderShellContent() {
   //    hasn't resolved yet.  Return null while the polling useEffect retries.
   if (role === null) return null;
 
-  // 6. Suspended listing — lock out the dashboard immediately.
-  //    Suspension is admin-controlled via facilities.suspended (set by
-  //    AdminProviders), NOT profiles.status (which doesn't exist). `facility`
-  //    resolves to the selected/primary facility; only block when suspended is
-  //    explicitly true so the shell renders normally while the query is
-  //    in-flight (no flicker for active accounts).
-  if (facility?.suspended === true) {
-    return (
-      <AccessDenied
-        requiredRole="provider"
-        title="Account suspended"
-        message="This facility has been suspended. Contact our support team to resolve this or appeal the decision."
-        action={{ label: "Contact support", href: "/provider-support" }}
-      />
-    );
-  }
+  // 6. Suspended listing — DO NOT lock the portal. Suspension is a
+  //    per-FACILITY state (facilities.suspended, admin-controlled), not an
+  //    account state. The previous hard AccessDenied return here locked a
+  //    provider out of the ENTIRE portal whenever the resolved facility was
+  //    suspended — including Billing (they couldn't even cancel or upgrade),
+  //    Settings, and the paused-listing editor UX that ListingEditor /
+  //    ListingsLandingPage were built to show (2026-07-03 audit, gap G0).
+  //    Per-facility surfaces render their own paused states; the shell just
+  //    surfaces a banner (below) so the state is legible everywhere.
+  const selectedFacilitySuspended = facility?.suspended === true;
 
   // role === "provider" falls through to the full shell below.
   // Also suppress while a useEffect redirect is in flight.
@@ -373,6 +367,23 @@ function ProviderShellContent() {
           className="flex-1 min-w-0 min-h-0 overflow-x-hidden overflow-y-auto bg-slate-50"
         >
           <DunningBanner />
+          {selectedFacilitySuspended && (
+            <div
+              className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-amber-300 bg-amber-50 px-4 py-2 text-sm text-amber-900"
+              role="status"
+            >
+              <span className="font-medium">
+                {facility?.name ? `"${facility.name}" is currently paused` : "This listing is currently paused"}
+              </span>
+              <span className="text-amber-800">
+                It isn't shown publicly right now. Your account, billing, and other
+                listings are unaffected.
+              </span>
+              <Link to="/provider-support" className="font-medium underline underline-offset-2">
+                Contact support
+              </Link>
+            </div>
+          )}
           <ProviderErrorBoundary>
             <Suspense fallback={null}>
               <Outlet />
