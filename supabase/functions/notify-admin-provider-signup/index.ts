@@ -17,6 +17,22 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+/**
+ * This function runs with verify_jwt = false, so every field below is
+ * attacker-supplied. zod bounds their length but not their content, and they
+ * were interpolated straight into the admin email — enough to plant arbitrary
+ * markup (e.g. a phishing "Review Now" link) in a mail our own admins trust.
+ * Mirrors provider-interest-submit, which already escapes.
+ */
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 type SignupNotification = z.infer<typeof SignupNotificationSchema>;
 
 Deno.serve(async (req) => {
@@ -221,13 +237,13 @@ Deno.serve(async (req) => {
                 <tr>
                   <td style="padding: 20px;">
                     <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 18px; font-weight: 600; color: #1B365D;">
-                      ${facilityName}
+                      ${escapeHtml(facilityName)}
                     </p>
                     <p style="margin: 0 0 6px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; color: #64748b;">
-                      ${city}, ${state}
+                      ${escapeHtml(city)}, ${escapeHtml(state)}
                     </p>
                     <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; color: #64748b;">
-                      ${providerEmail}
+                      ${escapeHtml(providerEmail)}
                     </p>
                   </td>
                 </tr>

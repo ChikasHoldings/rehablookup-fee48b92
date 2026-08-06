@@ -16,6 +16,64 @@ interface SelectedFacilityContextType {
 
 const SelectedFacilityContext = createContext<SelectedFacilityContextType | undefined>(undefined);
 
+/**
+ * Drop every cached provider snapshot from localStorage.
+ *
+ * `selectedFacilityData` is read synchronously at mount by getInitialFacility(),
+ * and useProviderData seeds its placeholderData from `provider-data-<facilityId>`
+ * (keyed by facility only, not by user). Signing out cleared the React state and
+ * the React Query cache but left both of these on disk, so the next provider to
+ * sign in on a shared machine rendered the previous one's facility name, logo,
+ * address, contact details and lead counts until their own queries resolved.
+ * Called on sign-out and whenever a different user signs in.
+ */
+function clearCachedProviderScope() {
+  try {
+    localStorage.removeItem("selectedFacilityId");
+    localStorage.removeItem("selectedFacilityData");
+    localStorage.removeItem(CACHE_OWNER_KEY);
+    for (const key of Object.keys(localStorage)) {
+      if (key.startsWith("provider-data-")) localStorage.removeItem(key);
+    }
+  } catch {
+    // Storage unavailable (private mode / quota) — nothing cached to leak.
+  }
+}
+
+/**
+ * Records which user the cached snapshots above belong to.
+ *
+ * Clearing on SIGNED_OUT / a different SIGNED_IN only covers a handover that
+ * happens inside one page life. When the first provider's session simply
+ * lapses or the tab is closed, the next provider arrives on a fresh load where
+ * currentUserId starts null, so the "user changed" comparison can't fire — yet
+ * getInitialFacility() has already returned the previous provider's facility
+ * synchronously. Stamping an owner lets that first resolve detect the mismatch.
+ */
+const CACHE_OWNER_KEY = "selectedFacilityOwnerId";
+
+function rememberCacheOwner(userId: string | null) {
+  try {
+    if (userId) localStorage.setItem(CACHE_OWNER_KEY, userId);
+  } catch {
+    // Storage unavailable — the mismatch check below then simply won't apply.
+  }
+}
+
+function cachedScopeBelongsToSomeoneElse(userId: string): boolean {
+  try {
+    const owner = localStorage.getItem(CACHE_OWNER_KEY);
+    const hasCache =
+      localStorage.getItem("selectedFacilityData") !== null ||
+      localStorage.getItem("selectedFacilityId") !== null;
+    // An unstamped cache predates this check — treat it as foreign rather than
+    // trusting it, so a snapshot written before this shipped can't leak either.
+    return hasCache && owner !== userId;
+  } catch {
+    return false;
+  }
+}
+
 // Get initial facility from localStorage synchronously
 function getInitialFacility(): ProviderFacility | null {
   try {
@@ -63,9 +121,18 @@ export function SelectedFacilityProvider({ children }: { children: ReactNode }) 
       if (currentUserId && newUserId && currentUserId !== newUserId) {
         if (import.meta.env.DEV) console.log("[SelectedFacilityContext] User changed, resetting hydration");
         hydratedRef.current = false;
+        clearCachedProviderScope();
+        setSelectedFacilityState(null);
+      } else if (newUserId && cachedScopeBelongsToSomeoneElse(newUserId)) {
+        // Fresh page load carrying the previous provider's snapshot — the
+        // comparison above can't catch this because currentUserId is still null.
+        if (import.meta.env.DEV) console.log("[SelectedFacilityContext] Cached scope belongs to another user, purging");
+        hydratedRef.current = false;
+        clearCachedProviderScope();
         setSelectedFacilityState(null);
       }
-      
+
+      if (newUserId) rememberCacheOwner(newUserId);
       setCurrentUserId(newUserId);
     };
     
@@ -78,11 +145,13 @@ export function SelectedFacilityProvider({ children }: { children: ReactNode }) 
       if (event === 'SIGNED_OUT') {
         if (import.meta.env.DEV) console.log("[SelectedFacilityContext] User signed out, clearing state");
         hydratedRef.current = false;
+        clearCachedProviderScope();
         setSelectedFacilityState(null);
         setCurrentUserId(null);
       } else if (event === 'SIGNED_IN' && currentUserId && newUserId !== currentUserId) {
         if (import.meta.env.DEV) console.log("[SelectedFacilityContext] Different user signed in, resetting");
         hydratedRef.current = false;
+        clearCachedProviderScope();
         setSelectedFacilityState(null);
         setCurrentUserId(newUserId);
       } else if (newUserId) {

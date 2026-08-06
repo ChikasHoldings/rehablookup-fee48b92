@@ -11,6 +11,12 @@
 // they can be cleaned up.
 // ============================================================================
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
+import {
+  checkRateLimit,
+  logRateLimitAttempt,
+  getRequestIdentifier,
+  rateLimitResponse,
+} from "../_shared/rate-limit.ts";
 
 const VERSION = "2.2.0";
 const MAX_ATTEMPTS = 5;
@@ -91,16 +97,46 @@ Deno.serve(async (req: Request) => {
     const SUPABASE_SRK = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const svc = createClient(SUPABASE_URL, SUPABASE_SRK);
 
+    // Per-caller throttle. MAX_ATTEMPTS below is counted per code ROW, so a
+    // caller could previously burn 5 guesses, request a fresh code, and repeat
+    // — thousands of guesses a day against a 6-digit space, with nothing
+    // capping the caller itself. verify_jwt=true does not help: the publishable
+    // key every anonymous visitor holds satisfies it.
+    const rlId = getRequestIdentifier(req);
+    const rl = await checkRateLimit(svc, {
+      identifier: rlId,
+      actionType: "verify_code",
+      maxAttempts: 10,
+      windowMinutes: 15,
+    });
+    if (!rl.allowed) {
+      log("WARN", "rate limited");
+      return rateLimitResponse(corsHeaders);
+    }
+    await logRateLimitAttempt(svc, rlId, "verify_code", true);
+
     const now = new Date().toISOString();
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
-    // Idempotency: already verified within 24h for THIS purpose.
+    // Idempotency: the SAME code re-submitted within 24h still succeeds, so a
+    // double-click or client retry doesn't read as "invalid code".
+    //
+    // `code` is part of the match on purpose. This lookup used to key on
+    // (email, purpose, verified) alone and return verified:true — plus call
+    // markAuthUserConfirmed() — without ever comparing the submitted code. Any
+    // 6-digit string therefore passed for 24h after that address last verified,
+    // which defeats the email-ownership proof outright: knowing a target's
+    // address was enough to set their auth.users.email_confirmed_at and
+    // profiles.email_verified_at by POSTing "000000". A non-matching code now
+    // falls through to the normal path below, which fails closed because that
+    // row is already verified=true.
     const { data: recent } = await svc
       .from("email_verification_codes")
-      .select("id, verified_at")
+      .select("id, code, verified_at")
       .eq("email", email)
       .eq("purpose", purpose)
       .eq("verified", true)
+      .eq("code", code)
       .not("verified_at", "is", null)
       .gte("verified_at", twentyFourHoursAgo)
       .order("verified_at", { ascending: false })

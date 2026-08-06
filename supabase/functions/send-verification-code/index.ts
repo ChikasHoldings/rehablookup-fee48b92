@@ -20,6 +20,7 @@
 // ============================================================================
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 import { Resend } from "https://esm.sh/resend@2.0.0?target=denonext";
+import { generateOtpCode } from "../_shared/otp-code.ts";
 
 const VERSION = "2.1.0";
 const OTP_TTL_MIN = 10;
@@ -31,9 +32,10 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-function generateCode(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-}
+// Code generation lives in _shared/otp-code.ts (Web Crypto). This file used a
+// local Math.random() implementation, which is a seeded xorshift128+ in V8 and
+// therefore predictable from a handful of observed outputs — not acceptable for
+// an authentication factor.
 
 function emailHtml(code: string): string {
   return `<!DOCTYPE html><html><head><meta charset="utf-8"></head>
@@ -121,7 +123,7 @@ Deno.serve(async (req) => {
       .eq("purpose", purpose)
       .eq("verified", false);
 
-    const code = generateCode();
+    const code = generateOtpCode();
     const expiresAt = new Date(Date.now() + OTP_TTL_MIN * 60 * 1000).toISOString();
 
     const { error: insertError } = await supabase
