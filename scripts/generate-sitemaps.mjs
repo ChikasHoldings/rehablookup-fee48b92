@@ -3,7 +3,6 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { discoverPrerenderedPaths } from "./lib/prerender-discovery.mjs";
-import { extractSpaRoutes } from "./lib/extract-spa-routes.mjs";
 
 // Vercel-redirect sources must NEVER ship in the sitemap. Listing a URL
 // that 301-redirects produces a "Page with redirect" GSC error: Google
@@ -70,7 +69,58 @@ const targets = [
 // SPA route handles every value of the trailing param (state/city/slug).
 //
 // `/center/` is always included — it's the facility profile namespace.
-const STATIC_DYNAMIC_PREFIXES = ["/center/"];
+// (Formerly an allowlist of prefixes kept in the sitemap without a prerendered
+// page — notably /center/. No longer needed: build:vercel builds those pages
+// before generate:sitemaps runs, so they satisfy the prerendered-file check
+// on their own, and anything that does NOT is a genuine soft-404.)
+
+// Shrink guard — see the end of filterSitemapXml().
+//
+// Checked per URL family (first path segment) rather than per file. A
+// whole-file ratio cannot see this: /center/ is only ~11% of sitemap.xml, so
+// losing every facility page moves the file-level number from 9% to 19% and
+// any threshold loose enough to avoid false alarms sails right past it.
+// Per-family, the same event reads as "/center lost 100% of 4,233 URLs",
+// which is unmistakable.
+//
+// The failure mode this catches is a generator that didn't run (or was
+// reordered after this script) — it wipes out ~100% of its family, whereas
+// real content churn retires URLs a few at a time. 90% leaves room for even
+// a drastic legitimate pruning.
+const MIN_FAMILY_URLS_FOR_GUARD = 100;
+const MAX_FAMILY_NO_PRERENDER_SHARE = 0.9;
+
+/**
+ * Raised by the shrink guard. Distinct from a fetch/network failure because
+ * generateSitemapFile() deliberately swallows those and keeps the existing
+ * file — the right call for a flaky upstream, but exactly wrong here: a
+ * missing generator is a build defect that must stop the deploy rather than
+ * quietly republish a stale sitemap.
+ */
+class MissingGeneratorError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "MissingGeneratorError";
+  }
+}
+
+/**
+ * Whether the page generators could actually have run in this environment.
+ *
+ * They read the project URL + publishable key (see
+ * generate-facility-profiles-html.mjs) and no-op without them, so a checkout
+ * with no credentials legitimately has no /center/ HTML even though the
+ * upstream sitemap still lists thousands of facilities. Enforcing the shrink
+ * guard there would fail CI for an environment limitation rather than a real
+ * regression, so we downgrade it to a warning and only hard-fail where the
+ * pages were genuinely buildable — which is the deploy path that matters.
+ */
+function pageGeneratorsCouldRun() {
+  const url = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
+  const key =
+    process.env.SUPABASE_ANON_KEY ?? process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  return Boolean(url && key);
+}
 
 // Paths to drop from every regenerated sitemap. These were cleaned out of
 // the committed sitemap files in an earlier hotfix (PR #4 / commit
@@ -146,22 +196,47 @@ function canonicalizePath(p) {
 }
 
 /**
- * Filter sitemap XML to keep only URLs that have:
- *   - a prerendered HTML file (flat or nested), OR
- *   - are in the runtime allowlist (SPA-rendered hubs), OR
- *   - match a dynamic prefix allowlist (e.g. /center/).
+ * Filter sitemap XML to keep only URLs backed by a prerendered HTML file
+ * (flat or nested).
+ *
+ * A prerendered file is the ONLY thing that makes a URL indexable here.
+ * middleware.ts serves crawlers the prerendered HTML and rewrites everything
+ * else to the SPA shell, which has no server-rendered content — so a URL that
+ * merely matches an SPA route or a dynamic prefix returns either a hard 404 or
+ * a 200 carrying the generic homepage shell. Google reads the latter as a soft
+ * 404 and drops the URL.
+ *
+ * This used to keep a URL when it was an SPA static route or merely *started
+ * with* a dynamic prefix, regardless of whether a page existed. That shipped
+ * 3,354 dead URLs (9.8% of sitemap.xml) — every /insurance/<plan>/<state>/<city>
+ * and /treatment-types/<type>/<state>/<city> combination the SPA could route
+ * but no generator had built — and feeding those to Search Console is what
+ * deindexed them.
+ *
+ * Safe for dynamically-built families like /center/: build:vercel runs every
+ * HTML generator (generate:facility-profiles-html, generate:all-missing-html,
+ * …) BEFORE generate:sitemaps, so discoverPrerenderedPaths() already sees them
+ * by the time this runs.
  *
  * Also strips any URLs ending in .html (canonical is extensionless) and
  * rewrites every `<loc>` to its canonical lowercase / no-trailing-slash
  * form so we never publish inconsistent URLs to Search Console.
  */
-function filterSitemapXml(xml, prerenderedPaths, stats, spaRoutes) {
-  const { staticRoutes, dynamicPrefixes } = spaRoutes;
-  const allDynamicPrefixes = [...new Set([...dynamicPrefixes, ...STATIC_DYNAMIC_PREFIXES])];
-
+function filterSitemapXml(xml, prerenderedPaths, stats) {
   const before = (xml.match(/<url>/g) || []).length;
   let kept = 0;
+  let droppedNoPrerender = 0;
   const droppedSamples = [];
+  // family (first path segment) -> { seen, missing } for the shrink guard
+  const familyStats = new Map();
+  const familyOf = (p) => "/" + (p.split("/")[1] || "");
+  const noteFamily = (p, missing) => {
+    const key = familyOf(p);
+    const e = familyStats.get(key) || { seen: 0, missing: 0 };
+    e.seen++;
+    if (missing) e.missing++;
+    familyStats.set(key, e);
+  };
   // Per-sitemap dedupe — if the upstream edge fn emits the same URL twice
   // in one sitemap, the validator counts each repeat as a hard error.
   // First occurrence wins; subsequent ones are dropped silently.
@@ -199,10 +274,9 @@ function filterSitemapXml(xml, prerenderedPaths, stats, spaRoutes) {
       if (droppedSamples.length < 5) droppedSamples.push(`${loc} (redirect-source)`);
       return "";
     }
-    const hasPrerender = prerenderedPaths.has(norm);
-    const inStatic = staticRoutes.has(norm) || norm === "/";
-    const inDynamic = allDynamicPrefixes.some((pref) => norm.startsWith(pref) && norm.length > pref.length);
-    if (hasPrerender || inStatic || inDynamic) {
+    const hasPrerender = prerenderedPaths.has(norm) || norm === "/";
+    noteFamily(norm, !hasPrerender);
+    if (hasPrerender) {
       // Rewrite <loc> to canonical form. Build absolute URL using the
       // original origin so we don't accidentally swap hosts.
       let canonicalLoc = loc;
@@ -223,27 +297,63 @@ function filterSitemapXml(xml, prerenderedPaths, stats, spaRoutes) {
       const rewritten = block.replace(/<loc>\s*[^<\s]+\s*<\/loc>/, `<loc>${canonicalLoc}</loc>`);
       return rewritten;
     }
-    if (droppedSamples.length < 5) droppedSamples.push(`${loc} (no prerender, no SPA route)`);
+    droppedNoPrerender++;
+    if (droppedSamples.length < 5) droppedSamples.push(`${loc} (no prerendered page — would soft-404)`);
     return "";
   });
 
   stats.before += before;
   stats.kept += kept;
   stats.dropped += before - kept;
+  stats.droppedNoPrerender += droppedNoPrerender;
   if (droppedSamples.length) stats.samples.push(...droppedSamples);
+
+  // Guard against a gutted sitemap. Now that a prerendered file is the sole
+  // admission test, a generator that silently failed or was reordered to run
+  // AFTER this script strips its entire family of URLs — skipping
+  // generate:facility-profiles-html takes out every /center/ page. That is
+  // never a legitimate content change, so fail the build loudly instead of
+  // publishing the remains to Search Console.
+  for (const [family, { seen, missing }] of familyStats) {
+    if (seen < MIN_FAMILY_URLS_FOR_GUARD) continue;
+    const lostShare = missing / seen;
+    if (lostShare > MAX_FAMILY_NO_PRERENDER_SHARE) {
+      const detail =
+        `${missing}/${seen} URLs (${(lostShare * 100).toFixed(1)}%) under ` +
+        `\`${family}\` have no prerendered page. An entire family disappearing ` +
+        `means the generator that builds it did not run before generate:sitemaps ` +
+        `— check the build:vercel step order — not that the pages were ` +
+        `legitimately removed. Publishing would feed Search Console a sitemap of ` +
+        `soft 404s.`;
+      if (!pageGeneratorsCouldRun()) {
+        console.warn(
+          `[sitemap] WARNING (not enforced — no Supabase credentials in this ` +
+            `environment, so the page generators could not run): ${detail}`,
+        );
+        continue;
+      }
+      throw new MissingGeneratorError(`[sitemap] refusing to publish: ${detail}`);
+    }
+  }
 
   return filtered;
 }
 
-async function generateSitemapFile({ type, fileName }, prerenderedPaths, stats, spaRoutes) {
+async function generateSitemapFile({ type, fileName }, prerenderedPaths, stats) {
   const filePath = path.join(publicDir, fileName);
   try {
     let xml = await fetchSitemap(type);
+    // NOTE: MissingGeneratorError from the filter is rethrown by the catch
+    // below — it must fail the build, not fall back to the existing file.
     // Sitemap-index files are meta — don't filter URLs, they list other sitemaps.
-    if (type !== "index") xml = filterSitemapXml(xml, prerenderedPaths, stats, spaRoutes);
+    if (type !== "index") xml = filterSitemapXml(xml, prerenderedPaths, stats);
     await writeFile(filePath, xml, "utf8");
     console.log(`[sitemap] generated ${fileName}`);
   } catch (error) {
+    // A missing generator is a build defect, not a flaky upstream. Falling
+    // back to the existing file here would republish a stale sitemap and hide
+    // the very regression the guard exists to catch.
+    if (error instanceof MissingGeneratorError) throw error;
     if (await fileExists(filePath)) {
       console.warn(`[sitemap] failed to refresh ${fileName}; keeping existing file.`, error);
       return;
@@ -434,12 +544,9 @@ async function main() {
   const prerenderedPaths = discoverPrerenderedPaths(publicDir);
   console.log(`[sitemap] discovered ${prerenderedPaths.size} prerendered routes (hybrid layout)`);
 
-  const spaRoutes = await extractSpaRoutes();
-  console.log(`[sitemap] discovered ${spaRoutes.staticRoutes.size} static SPA routes and ${spaRoutes.dynamicPrefixes.length} dynamic prefixes from src/App.tsx`);
-
-  const stats = { before: 0, kept: 0, dropped: 0, samples: [] };
+  const stats = { before: 0, kept: 0, dropped: 0, droppedNoPrerender: 0, samples: [] };
   for (const target of targets) {
-    await generateSitemapFile(target, prerenderedPaths, stats, spaRoutes);
+    await generateSitemapFile(target, prerenderedPaths, stats);
   }
 
   // Guarantee every static /center/*.html mirror has a sitemap entry — see

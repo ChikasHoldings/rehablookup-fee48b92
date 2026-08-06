@@ -1,5 +1,9 @@
 import Stripe from "https://esm.sh/stripe@18.5.0?target=denonext";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
+import {
+  getSubscriptionPeriodEndISO,
+  getSubscriptionPeriodStartISO,
+} from "../_shared/stripe-subscription-period.ts";
 
 const VERSION = "1.0.1";
 
@@ -106,12 +110,8 @@ Deno.serve(async (req) => {
     let subscriptionStart: string | null = null;
     
     try {
-      if (subscription.current_period_end) {
-        subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
-      }
-      if (subscription.current_period_start) {
-        subscriptionStart = new Date(subscription.current_period_start * 1000).toISOString();
-      }
+      subscriptionEnd = getSubscriptionPeriodEndISO(subscription);
+      subscriptionStart = getSubscriptionPeriodStartISO(subscription);
     } catch (dateError) {
       logStep("Warning: Could not parse subscription dates", { error: String(dateError) });
     }

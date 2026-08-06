@@ -139,7 +139,11 @@ const SearchResults = () => {
   const type = searchParams.get("type") || "";
   const stateParam = searchParams.get("state") || ""; // Support direct state filtering from near-me pages
   const queryParam = searchParams.get("q") || ""; // Free-text search from header/seeker
-  const currentPage = parseInt(searchParams.get("page") || "1", 10);
+  // A non-numeric ?page= (mangled external link) used to parse to NaN, which
+  // survived the clamp below and made the grid slice(NaN, NaN) → zero cards
+  // rendered under a non-zero result count.
+  const parsedPage = parseInt(searchParams.get("page") || "1", 10);
+  const currentPage = Number.isFinite(parsedPage) && parsedPage >= 1 ? parsedPage : 1;
   // Normalize unknown/removed sorts (e.g. a stale ?sort=reviews bookmark — the
   // review sort was removed pending review-count data on public_facilities) to
   // the default, so the Select doesn't render blank and the switch doesn't hit

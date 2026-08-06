@@ -4,6 +4,7 @@ import { requireAdmin } from "../_shared/require-admin.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0?target=denonext";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 import { sendEmailWithRetry, sleep, BULK_SEND_DELAY_MS, BULK_BATCH_LIMIT } from "../_shared/resilient-email-sender.ts";
+import { getSubscriptionPeriodEndDate } from "../_shared/stripe-subscription-period.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -330,10 +331,12 @@ Deno.serve(async (req) => {
         riskFactors.push(`Low lead activity (${leadsUnlocked || 0} unlocked)`);
       }
 
-      const subscriptionEnd = new Date(subscription.current_period_end * 1000);
-      const daysUntilRenewal = Math.floor((subscriptionEnd.getTime() - now.getTime()) / (24 * 60 * 60 * 1000));
-      
-      if (daysUntilRenewal <= 7 && daysInactive > 7) {
+      const subscriptionEnd = getSubscriptionPeriodEndDate(subscription);
+      const daysUntilRenewal = subscriptionEnd
+        ? Math.floor((subscriptionEnd.getTime() - now.getTime()) / (24 * 60 * 60 * 1000))
+        : null;
+
+      if (daysUntilRenewal !== null && daysUntilRenewal <= 7 && daysInactive > 7) {
         riskScore += 25;
         riskFactors.push(`Subscription renews in ${daysUntilRenewal} days`);
       }

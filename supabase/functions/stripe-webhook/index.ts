@@ -10,6 +10,12 @@
 import Stripe from "https://esm.sh/stripe@18.5.0?target=denonext";
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 import { Resend } from "https://esm.sh/resend@2.0.0?target=denonext";
+import {
+  getSubscriptionPeriodEndDate,
+  getSubscriptionPeriodEndISO,
+  getSubscriptionPeriodStartDate,
+  getSubscriptionPeriodStartISO,
+} from "../_shared/stripe-subscription-period.ts";
 
 // ── inlined from _shared/subscription-math.ts ─────────────
 // subscription-math.ts
@@ -2264,6 +2270,12 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Hoisted so the outer catch can release the dedup claim: both are declared
+  // inside the try below, but the catch needs them to make Stripe's retry
+  // effective. See the release block in that catch.
+  let claimedEventId: string | null = null;
+  let adminClientForCleanup: SupabaseClient | null = null;
+
   try {
     logStep("Webhook received");
 
@@ -2279,6 +2291,7 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
       { auth: { persistSession: false } }
     );
+    adminClientForCleanup = supabaseAdmin;
 
     const body = await req.text();
     const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
@@ -2375,6 +2388,9 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+      // We own the event from here on; the outer catch must release this
+      // claim if processing fails, or Stripe's retry is ignored as a duplicate.
+      claimedEventId = event.id;
     } catch (dedupErr) {
       // Round-31 audit fix: same as the !claimError branch — if the
       // dedup machinery is unavailable, return 500 so Stripe retries,
@@ -2478,7 +2494,12 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
           logStep("Activating Pro subscription", { subscriptionId, facilityId });
 
           const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-          const currentPeriodEnd = new Date(subscription.current_period_end * 1000).toISOString();
+          // Basil (2025-03-31+) moved the billing period onto the subscription
+          // ITEM. Reading the removed top-level field yielded `new Date(NaN)`,
+          // whose .toISOString() threw a RangeError HERE — before the
+          // facility_subscriptions upsert below — so a paid Pro checkout
+          // activated nothing. A null period is stored rather than thrown on.
+          const currentPeriodEnd = getSubscriptionPeriodEndISO(subscription);
 
           // Payment-confirmation gate (2026-07-02 entitlement audit): a
           // Checkout session can complete while payment is still pending
@@ -2508,7 +2529,8 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
           // (the helpers that read monthly elapsed time look at the latter first,
           // falling back to period_start for annual). For monthly, both point at the
           // current 30-day window's start; for annual they stay aligned.
-          const periodStartISO = new Date(subscription.current_period_start * 1000).toISOString();
+          const periodStartISO =
+            getSubscriptionPeriodStartISO(subscription) ?? new Date().toISOString();
 
           const { error: proError } = await supabaseAdmin
             .from("facility_subscriptions")
@@ -2623,7 +2645,7 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
         cancelAtPeriodEnd: subscription.cancel_at_period_end,
       });
 
-      const currentPeriodEnd = new Date(subscription.current_period_end * 1000).toISOString();
+      const currentPeriodEnd = getSubscriptionPeriodEndISO(subscription);
       // Round-31 audit fix + 2026-07-02 entitlement audit: map Stripe's
       // status enum onto the stored statuses explicitly.
       //   incomplete        → incomplete. It was previously mapped to
@@ -2683,11 +2705,14 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
         }
       }
 
+      // Only write the period when Stripe actually gave us one — otherwise the
+      // status/cancel flags still sync, but a previously-stored good period
+      // end is left intact rather than being nulled out.
       const { error: updateError } = await supabaseAdmin
         .from("facility_subscriptions")
         .update({
           status: mappedStatus,
-          current_period_end: currentPeriodEnd,
+          ...(currentPeriodEnd ? { current_period_end: currentPeriodEnd } : {}),
           cancel_at_period_end: subscription.cancel_at_period_end ?? false,
           updated_at: new Date().toISOString(),
         })
@@ -2699,14 +2724,16 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
       // renewal event would otherwise leave its period stale. These two updates
       // are no-ops for the Pro sub (its id isn't in the add-on columns) and
       // refresh the add-on period when it's an add-on sub that renewed.
-      await supabaseAdmin
-        .from("facility_subscriptions")
-        .update({ featured_current_period_end: currentPeriodEnd, updated_at: new Date().toISOString() })
-        .eq("featured_stripe_subscription_id", subscription.id);
-      await supabaseAdmin
-        .from("facility_subscriptions")
-        .update({ concierge_current_period_end: currentPeriodEnd, updated_at: new Date().toISOString() })
-        .eq("concierge_stripe_subscription_id", subscription.id);
+      if (currentPeriodEnd) {
+        await supabaseAdmin
+          .from("facility_subscriptions")
+          .update({ featured_current_period_end: currentPeriodEnd, updated_at: new Date().toISOString() })
+          .eq("featured_stripe_subscription_id", subscription.id);
+        await supabaseAdmin
+          .from("facility_subscriptions")
+          .update({ concierge_current_period_end: currentPeriodEnd, updated_at: new Date().toISOString() })
+          .eq("concierge_stripe_subscription_id", subscription.id);
+      }
 
       if (updateError) {
         logStep("Error updating subscription", { error: updateError.message });
@@ -2802,13 +2829,20 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
             }
 
             if (subscription.cancel_at_period_end) {
-              const endDate = new Date(subscription.current_period_end * 1000).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+              const endDateValue = getSubscriptionPeriodEndDate(subscription);
+              const endDate = endDateValue
+                ? endDateValue.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
+                : null;
               await supabaseAdmin.from("provider_notifications").insert({
                 user_id: proSub.provider_id,
                 facility_id: proSub.facility_id,
                 type: "subscription_pending_cancel",
                 title: "Pro Cancellation Scheduled",
-                message: `Your Pro subscription will end on ${endDate}. You'll retain Pro benefits until then. You can resubscribe anytime.`,
+                // Without a resolvable period the date is omitted rather than
+                // rendered as "Invalid Date" in the provider's notification.
+                message: endDate
+                  ? `Your Pro subscription will end on ${endDate}. You'll retain Pro benefits until then. You can resubscribe anytime.`
+                  : `Your Pro subscription is scheduled to end at the close of the current billing period. You'll retain Pro benefits until then. You can resubscribe anytime.`,
                 metadata: { subscription_id: subscription.id, cancel_date: endDate },
               });
               logStep("Pending cancellation notification sent to provider");
@@ -3086,7 +3120,7 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
             const stripeSubId = invoice.subscription as string;
             try {
               const sub = await stripe.subscriptions.retrieve(stripeSubId);
-              const newPeriodEnd = new Date(sub.current_period_end * 1000).toISOString();
+              const newPeriodEnd = getSubscriptionPeriodEndISO(sub);
               const { data: facSubRow } = await supabaseAdmin
                 .from("facility_subscriptions")
                 .select("current_period_end")
@@ -3096,7 +3130,7 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
               // True renewal = new period_end strictly LATER than stored.
               // (Equal = same period, no boundary crossing. Earlier = clock
               // skew or a Stripe-side downgrade we should not act on here.)
-              if (storedEnd && newPeriodEnd > storedEnd) {
+              if (storedEnd && newPeriodEnd && newPeriodEnd > storedEnd) {
                 shouldResetReminders = true;
               } else if (!storedEnd && invoice.billing_reason === "subscription_cycle") {
                 // First time seeing this sub in our DB, and Stripe says
@@ -3291,9 +3325,7 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
       }
 
       if (subMetadataType === "featured_addon" && addonFacilityId) {
-        const periodEnd = subscription.current_period_end
-          ? new Date(subscription.current_period_end * 1000).toISOString()
-          : null;
+        const periodEnd = getSubscriptionPeriodEndISO(subscription);
         const addonResult = await activateFeaturedAddon(supabaseAdmin, {
           facilityId: addonFacilityId,
           stripeSubscriptionId: subscription.id,
@@ -3415,9 +3447,7 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
       }
 
       if (subMetadataType === "concierge_addon" && addonFacilityId) {
-        const periodEnd = subscription.current_period_end
-          ? new Date(subscription.current_period_end * 1000).toISOString()
-          : null;
+        const periodEnd = getSubscriptionPeriodEndISO(subscription);
         // Round-31 audit fix: pass user-selected levels of care
         // (collected at checkout time by create-checkout-session and
         // stored in subscription.metadata.levels_of_care as a
@@ -3578,8 +3608,8 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
                     billingPeriod,
                     paidAmountCents: paidCents,
                     fullMonthlyRateCents: TIER_PRICING.featured.fullMonthlyRateCents,
-                    periodStart: new Date(featuredSub.current_period_start * 1000),
-                    periodEnd: new Date(featuredSub.current_period_end * 1000),
+                    periodStart: getSubscriptionPeriodStartDate(featuredSub) ?? undefined,
+                    periodEnd: getSubscriptionPeriodEndDate(featuredSub) ?? undefined,
                   });
                   let stripeRefundId: string | null = null;
                   if (refund.refundCents > 0 && chargeId) {
@@ -4376,12 +4406,56 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
       }
     }
 
+    // Close out the dedup claim so the row doesn't sit in 'received'
+    // forever (cleanup_old_stripe_webhook_events otherwise force-finalizes
+    // it an hour later).
+    try {
+      await supabaseAdmin.rpc("mark_stripe_webhook_event_processed", {
+        p_event_id: event.id,
+        p_status: "processed",
+      });
+    } catch (markErr) {
+      logStep("Could not mark event processed (non-fatal)", { error: String(markErr) });
+    }
+
     return new Response(JSON.stringify({ received: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
+
+    // Release the dedup claim before returning 500. claim_stripe_webhook_event
+    // commits its row up front, so without this the Stripe retry re-claims,
+    // gets `claimed === false`, and returns 200 {duplicate:true} — silently
+    // skipping every side effect. The 500 below only actually buys a retry if
+    // the claim is gone, so a mid-handler failure would otherwise drop the
+    // event permanently (lost Pro activation, missed refund, stale
+    // subscription row). Deleting rather than marking 'failed' is what makes
+    // the row re-claimable; the financial uniques (credit_transactions,
+    // lead_unlocks, pro_subscriptions) still prevent double-spend on reprocess.
+    if (claimedEventId && adminClientForCleanup) {
+      try {
+        const { error: releaseErr } = await adminClientForCleanup
+          .from("stripe_webhook_events")
+          .delete()
+          .eq("event_id", claimedEventId);
+        if (releaseErr) {
+          logStep("CRITICAL - could not release dedup claim; Stripe retry will be ignored", {
+            eventId: claimedEventId,
+            error: releaseErr.message,
+          });
+        } else {
+          logStep("Released dedup claim so Stripe's retry reprocesses", { eventId: claimedEventId });
+        }
+      } catch (releaseErr) {
+        logStep("CRITICAL - releasing dedup claim threw; Stripe retry will be ignored", {
+          eventId: claimedEventId,
+          error: String(releaseErr),
+        });
+      }
+    }
+
     // Stripe-side will retry on 500 anyway — but the operator needs to
     // see the original exception in Sentry to debug WHY it 500'd.
     await captureEdgeException(error, { functionSlug: "stripe-webhook" });

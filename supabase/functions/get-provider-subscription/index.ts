@@ -1,5 +1,9 @@
 import Stripe from "https://esm.sh/stripe@18.5.0?target=denonext";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
+import {
+  getSubscriptionPeriodEndISO,
+  getSubscriptionPeriodStartISO,
+} from "../_shared/stripe-subscription-period.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -194,15 +198,14 @@ Deno.serve(async (req) => {
     const subscriptionData = activeSubscription ? {
       id: activeSubscription.id,
       status: activeSubscription.status,
-      // Guard the period fields: some subscription states (e.g. incomplete)
-      // can omit them, and `new Date(undefined * 1000).toISOString()` throws a
-      // RangeError that 500s the whole admin detail modal. Fall back to null.
-      current_period_start: activeSubscription.current_period_start
-        ? new Date(activeSubscription.current_period_start * 1000).toISOString()
-        : null,
-      current_period_end: activeSubscription.current_period_end
-        ? new Date(activeSubscription.current_period_end * 1000).toISOString()
-        : null,
+      // Read the period off the subscription ITEM: Stripe's Basil API removed
+      // the subscription-level fields, so the old top-level read resolved to
+      // null here and the renewal date silently vanished from the UI. The
+      // resolver still falls back to the legacy fields and returns null rather
+      // than an Invalid Date, so the RangeError that used to 500 the admin
+      // detail modal stays fixed.
+      current_period_start: getSubscriptionPeriodStartISO(activeSubscription),
+      current_period_end: getSubscriptionPeriodEndISO(activeSubscription),
       cancel_at_period_end: activeSubscription.cancel_at_period_end,
       canceled_at: activeSubscription.canceled_at ? new Date(activeSubscription.canceled_at * 1000).toISOString() : null,
       created: new Date(activeSubscription.created * 1000).toISOString(),
