@@ -18,44 +18,22 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 import { assertCronSecret } from "../_shared/cron-auth.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0?target=denonext";
+// Use the shared sender rather than a local one: it checks suppressed_emails
+// before sending and records email_tracking_events. The local copy this
+// replaced did neither, so seekers who had bounced, complained, or
+// unsubscribed kept receiving saved-search alerts.
+import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
 
-// Minimal inline sender. We deliberately don't import the project-wide
-// resilient-email-sender helper because (a) cross-function imports aren't
-// available in the MCP edge-function deploy path used here, and (b) the
-// dedup/idempotency we need is already enforced upstream via
-// saved_searches.last_alert_sent_at + isDue().
+// This function used to hand-roll a local sender, on the reasoning that
+// (a) cross-function imports weren't available in the deploy path and (b)
+// saved_searches.last_alert_sent_at + isDue() already gave us the dedup we
+// needed. (a) is not true — this file has always imported
+// ../_shared/cron-auth.ts and the daily cron run succeeds — and (b) only ever
+// covered cadence, never the suppression list, so unsubscribed and hard-bounced
+// seekers kept getting alerts. It now uses the shared sender like every other
+// email path.
 const BULK_SEND_DELAY_MS = 200;
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
-
-interface EmailParams {
-  from: string;
-  to: string | string[];
-  subject: string;
-  html: string;
-}
-
-async function sendEmailWithRetry(
-  resend: Resend,
-  params: EmailParams,
-  maxAttempts = 2
-): Promise<{ success: boolean; error?: string }> {
-  let lastErr: unknown = null;
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    try {
-      const res = await resend.emails.send(params);
-      if ((res as { error?: { message?: string } } | undefined)?.error) {
-        const errMsg = (res as { error?: { message?: string } }).error?.message ?? "unknown";
-        lastErr = errMsg;
-      } else {
-        return { success: true };
-      }
-    } catch (err) {
-      lastErr = err;
-    }
-    if (attempt < maxAttempts) await sleep(500 * attempt);
-  }
-  return { success: false, error: String(lastErr) };
-}
 
 const VERSION = "1.0.0";
 const LOG = `[SAVED-SEARCH-ALERTS v${VERSION}]`;
@@ -296,6 +274,7 @@ Deno.serve(async (req) => {
     let skippedNotDue = 0;
     let skippedNoMatches = 0;
     let skippedNoEmail = 0;
+    let skippedSuppressed = 0;
     let failed = 0;
 
     for (const s of searches) {
@@ -339,14 +318,28 @@ Deno.serve(async (req) => {
       });
 
       try {
-        const result = await sendEmailWithRetry(resend, {
-          from: FROM_ADDRESS,
-          to: [email],
-          subject: `${totalCount} new ${totalCount === 1 ? "match" : "matches"} for "${s.name}"`,
-          html,
-        });
-        if (result.success) {
-          sent++;
+        const result = await sendEmailWithRetry(
+          supabase,
+          resend,
+          {
+            from: FROM_ADDRESS,
+            to: [email],
+            subject: `${totalCount} new ${totalCount === 1 ? "match" : "matches"} for "${s.name}"`,
+            html,
+          },
+          {
+            emailType: "saved_search_alert",
+            // One alert per saved search per day, so a cron re-run cannot
+            // double-send the same digest.
+            idempotencyKey: `saved-search-${s.id}-${now.toISOString().slice(0, 10)}`,
+          },
+        );
+        if (result.success || result.suppressed || result.deduplicated) {
+          // A suppressed or already-sent recipient is a completed decision,
+          // not a failure — stamp the search so the next run doesn't
+          // reconsider it immediately.
+          if (result.success) sent++;
+          else skippedSuppressed++;
           await supabase
             .from("saved_searches")
             .update({
@@ -365,7 +358,7 @@ Deno.serve(async (req) => {
       await sleep(BULK_SEND_DELAY_MS);
     }
 
-    const summary = { sent, skippedNotDue, skippedNoMatches, skippedNoEmail, failed, total: searches.length };
+    const summary = { sent, skippedNotDue, skippedNoMatches, skippedNoEmail, skippedSuppressed, failed, total: searches.length };
     console.log(LOG, "done", summary);
 
     return new Response(JSON.stringify({ success: true, ...summary }), {

@@ -35,6 +35,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 import Stripe from "https://esm.sh/stripe@18.5.0?target=denonext";
 import { z } from "https://esm.sh/zod@3.23.8?target=denonext";
+import { getSubscriptionPeriodEnd } from "../_shared/stripe-subscription-period.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -253,7 +254,25 @@ Deno.serve(async (req) => {
     );
   }
 
-  const monthlyPeriodEnd = monthlySub.current_period_end; // unix seconds
+  // unix seconds. Stripe's Basil API moved this onto the subscription item, so
+  // the old top-level read was `undefined` — and an undefined
+  // billing_cycle_anchor makes Stripe anchor the annual subscription at NOW,
+  // billing immediately for a month the customer has already paid: precisely
+  // the double-billing window the anchor exists to prevent. Fail closed
+  // instead, before the monthly sub is touched.
+  const monthlyPeriodEnd = getSubscriptionPeriodEnd(monthlySub);
+  if (monthlyPeriodEnd === null) {
+    console.error("[switch-to-annual] could not resolve monthly period end", {
+      subscriptionId: sub.stripe_subscription_id,
+    });
+    return new Response(
+      JSON.stringify({
+        error: "Could not determine your current billing period. Please contact support.",
+        code: "missing_period_end",
+      }),
+      { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
+  }
 
   // Idempotency guard (sequential): if a prior switch already tagged this
   // monthly sub, an annual sub is already being created — returning here

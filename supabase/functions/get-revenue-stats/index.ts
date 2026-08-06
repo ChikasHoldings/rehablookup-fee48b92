@@ -1,5 +1,6 @@
 import Stripe from "https://esm.sh/stripe@18.5.0?target=denonext";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
+import { getSubscriptionPeriodEndDate } from "../_shared/stripe-subscription-period.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -162,10 +163,9 @@ Deno.serve(async (req) => {
         ? new Date(canceledTimestamp * 1000)
         : null;
 
-      const periodEndTimestamp = sub.current_period_end;
-      const periodEndDate = periodEndTimestamp && !isNaN(periodEndTimestamp)
-        ? new Date(periodEndTimestamp * 1000)
-        : null;
+      // Basil moved the billing period onto the subscription item; the old
+      // top-level read resolved to null and every row fell back to "now".
+      const periodEndDate = getSubscriptionPeriodEndDate(sub);
 
       if (sub.status === "active") {
         activeCount++;

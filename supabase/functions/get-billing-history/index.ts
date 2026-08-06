@@ -1,5 +1,9 @@
 import Stripe from "https://esm.sh/stripe@18.5.0?target=denonext";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
+import {
+  getSubscriptionPeriodEnd,
+  getSubscriptionPeriodStart,
+} from "../_shared/stripe-subscription-period.ts";
 
 // Pro product IDs - includes legacy IDs for backward compatibility
 const PRO_PRODUCT_IDS = [
@@ -89,8 +93,8 @@ Deno.serve(async (req) => {
     const subscriptionData = activeSubscription ? {
       id: activeSubscription.id,
       status: activeSubscription.status,
-      current_period_start: activeSubscription.current_period_start,
-      current_period_end: activeSubscription.current_period_end,
+      current_period_start: getSubscriptionPeriodStart(activeSubscription),
+      current_period_end: getSubscriptionPeriodEnd(activeSubscription),
       cancel_at_period_end: activeSubscription.cancel_at_period_end,
       canceled_at: activeSubscription.canceled_at,
       plan: planName,

@@ -16,6 +16,7 @@ import {
   type PlanType,
 } from "../_shared/email-templates.ts";
 import { sendEmailWithRetry, sleep, BULK_SEND_DELAY_MS } from "../_shared/resilient-email-sender.ts";
+import { getSubscriptionPeriodEndDate } from "../_shared/stripe-subscription-period.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -122,7 +123,14 @@ Deno.serve(async (req) => {
         if (subscriptions.data.length === 0) continue;
 
         const subscription = subscriptions.data[0];
-        const subscriptionEnd = new Date(subscription.current_period_end * 1000);
+        const subscriptionEnd = getSubscriptionPeriodEndDate(subscription);
+        if (!subscriptionEnd) {
+          logStep("Skipping user — subscription has no resolvable billing period", {
+            email: profile.email,
+            subscriptionId: subscription.id,
+          });
+          continue;
+        }
         const daysUntilExpiry = Math.ceil((subscriptionEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
         const productId = subscription.items.data[0].price.product as string;
         

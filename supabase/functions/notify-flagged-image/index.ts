@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 import { Resend } from "https://esm.sh/resend@2.0.0?target=denonext";
 import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
+import { requireAdmin } from "../_shared/require-admin.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
@@ -25,6 +26,27 @@ const REASON_LABELS: Record<string, string> = {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  // SECURITY: deployed with verify_jwt = false and no caller check, so anyone
+  // who knew the URL could POST a facility_id — semi-public via the directory —
+  // and repeatedly email that facility's owner "an image on your profile has
+  // been flagged", while injecting provider_notifications rows. There are
+  // exactly two legitimate callers, so accept either and reject everything
+  // else: report-image posts the service-role key server-to-server, and the
+  // admin panel (AdminProviders.tsx) invokes it with an admin's user JWT.
+  {
+    const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "").trim();
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    const isServiceRole = !!serviceKey && token === serviceKey;
+
+    if (!isServiceRole) {
+      const auth = await requireAdmin(req);
+      if (!auth.ok) {
+        logStep("Rejected unauthenticated caller");
+        return auth.response;
+      }
+    }
   }
 
   try {

@@ -265,7 +265,18 @@ export function SeekerShell() {
   }
 
   // Show empty state ONLY for authenticated seekers (not admins/providers in transit).
-  if (isAuthenticated && profile === null && userRole === "seeker") {
+  // /account/settings is exempt: it is where the profile row actually gets
+  // created (it upserts seeker_profiles), and it is the destination of this
+  // empty state's own CTA. Gating it too made the button a no-op that
+  // re-rendered the same card, leaving a seeker with no profile row — e.g. one
+  // whose signup metadata lacked account_type='seeker', so handle_new_seeker
+  // never inserted — permanently unable to reach any part of their account.
+  if (
+    isAuthenticated &&
+    profile === null &&
+    userRole === "seeker" &&
+    location.pathname !== "/account/settings"
+  ) {
     return (
       <SeekerEmptyState
         onCompleteProfile={() => navigate('/account/settings')}

@@ -20,6 +20,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
+    # Job-level so the live post-deploy steps below can gate on it. A step's
+    # own `env:` block is NOT in scope for that same step's `if:` (the
+    # conditional is evaluated before step env is applied), so declaring it
+    # per-step made `if: env.VERCEL_URL != ''` always false and both live
+    # checks silently skipped even when the secret was set.
+    env:
+      VERCEL_URL: ${{ secrets.VERCEL_URL }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -27,7 +35,9 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          # Track .nvmrc (22) so CI validates on the same major as the
+          # dev/production builds instead of drifting a version behind.
+          node-version-file: .nvmrc
           cache: "npm"
 
       - name: Install dependencies
@@ -62,8 +72,6 @@ jobs:
       # apex). Skips silently otherwise so PRs don't fail before cutover.
       - name: Post-deploy Vercel validator (live crawl)
         if: env.VERCEL_URL != ''
-        env:
-          VERCEL_URL: ${{ secrets.VERCEL_URL }}
         run: npm run validate:vercel-deploy
 
       # Live hub & near-me coverage: every prerendered hub must return 200
@@ -72,8 +80,6 @@ jobs:
       # and stale canonicals before they hit Google.
       - name: Verify hub & near-me routes (live)
         if: env.VERCEL_URL != ''
-        env:
-          VERCEL_URL: ${{ secrets.VERCEL_URL }}
         run: node scripts/check-hub-routes.mjs --host "$VERCEL_URL" --concurrency 16
 
 
