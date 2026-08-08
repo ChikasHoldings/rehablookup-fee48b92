@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { parseFunctionError } from "@/lib/contracts/friendly-error-messages";
 import { cn } from "@/lib/utils";
 import { PLANS, type Plan } from "@/lib/planConstants";
 import { trackEvent } from "@/lib/analytics";
@@ -79,6 +80,38 @@ export function PlanStep({ onAdvance, onBack }: PlanStepProps) {
   const [busy, setBusy] = useState<"free" | "pro" | null>(null);
   const [confirmingPro, setConfirmingPro] = useState(false);
   const confirmPollRef = useRef<number | null>(null);
+
+  // Pro is only purchasable once the provider owns a listing:
+  // facility_subscriptions is keyed on facility_id, and a CLAIM doesn't set
+  // facilities.user_id until an admin approves it. So a claim-first provider
+  // has nothing to attach a subscription to and create-checkout refuses with
+  // NO_FACILITY_FOR_PRO. Surfacing that on the card avoids a dead-end click.
+  //
+  // Starts null ("unknown") and only ever disables the CTA on a definitive
+  // zero — a failed read leaves Pro purchasable and lets the server decide.
+  const [ownsFacility, setOwnsFacility] = useState<boolean | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const userId = sessionData.session?.user.id;
+        if (!userId) return;
+        const { count, error } = await supabase
+          .from("facilities")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId);
+        if (cancelled || error) return;
+        setOwnsFacility((count ?? 0) > 0);
+      } catch (e) {
+        console.warn("[PlanStep] owned-facility check failed", e);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  const proBlockedPendingClaim = ownsFacility === false;
 
   const checkoutResult = searchParams.get("checkout"); // 'success' | 'cancel' | null
 
@@ -171,8 +204,13 @@ export function PlanStep({ onAdvance, onBack }: PlanStepProps) {
     // normally lands within 1-2s, but cold-start + network + DB
     // contention can stretch to ~15s under load. 30s is well within
     // user attention span and dramatically reduces the "stuck"
-    // outcome. The dashboard ProBenefitsWidget also runs a fallback
-    // poll so even a 30s timeout here is recoverable on reload.
+    // outcome.
+    //
+    // NOTE: there is no dashboard-side retry. ProBenefitsWidget just
+    // reads useProStatus once and renders nothing when it says Free, so
+    // a timeout here is only recovered by the provider reloading after
+    // the webhook lands. The admin_notifications row written below is
+    // the ops-side backstop.
     const deadline = Date.now() + 30_000;
     while (Date.now() < deadline) {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -301,7 +339,21 @@ export function PlanStep({ onAdvance, onBack }: PlanStepProps) {
       });
       if (error) {
         console.error("[PlanStep] create-checkout failed", error);
-        toast.error("Couldn't start Checkout. Please try again.");
+        // Non-2xx bodies live on error.context, not error.message — without
+        // parsing it every server-side refusal collapsed into a generic
+        // "try again", which is actively misleading for the cases the user
+        // can't retry their way out of (e.g. NO_FACILITY_FOR_PRO, where Pro
+        // simply isn't purchasable until their claim is approved).
+        const { code, message } = await parseFunctionError(error);
+        if (code === "NO_FACILITY_FOR_PRO") {
+          toast.message(
+            message ??
+              "Pro activates once your listing is live. Continue with Free — you can upgrade from billing after approval.",
+            { duration: 8000 },
+          );
+        } else {
+          toast.error(message ?? "Couldn't start Checkout. Please try again.");
+        }
         setBusy(null);
         return;
       }
@@ -365,10 +417,15 @@ export function PlanStep({ onAdvance, onBack }: PlanStepProps) {
         />
         <PlanCard
           plan={PLANS.pro}
-          ctaLabel="Continue with Pro"
+          ctaLabel={proBlockedPendingClaim ? "Available after approval" : "Continue with Pro"}
           ctaBusy={busy === "pro"}
-          ctaDisabled={busy !== null}
+          ctaDisabled={busy !== null || proBlockedPendingClaim}
           onSelect={handlePro}
+          footnote={
+            proBlockedPendingClaim
+              ? "Pro switches on once your claim is approved — we'll email you, and you can upgrade from your billing page in one click. Continue with Free for now."
+              : undefined
+          }
         />
       </div>
 
@@ -388,12 +445,15 @@ function PlanCard({
   ctaBusy,
   ctaDisabled,
   onSelect,
+  footnote,
 }: {
   plan: Plan;
   ctaLabel: string;
   ctaBusy: boolean;
   ctaDisabled: boolean;
   onSelect: () => void;
+  /** Overrides plan.note — used to explain a disabled CTA. */
+  footnote?: string;
 }) {
   const isPro = plan.id === "pro";
   return (
@@ -450,8 +510,10 @@ function PlanCard({
           </>
         )}
       </Button>
-      {plan.note && (
-        <p className="text-[11px] text-slate-500 mt-2.5 text-center">{plan.note}</p>
+      {(footnote ?? plan.note) && (
+        <p className="text-[11px] text-slate-500 mt-2.5 text-center">
+          {footnote ?? plan.note}
+        </p>
       )}
     </div>
   );

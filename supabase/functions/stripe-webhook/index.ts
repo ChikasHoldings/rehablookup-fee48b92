@@ -16,6 +16,10 @@ import {
   getSubscriptionPeriodStartDate,
   getSubscriptionPeriodStartISO,
 } from "../_shared/stripe-subscription-period.ts";
+import {
+  normalizeFacilityIdMetadata,
+  resolveProFacilityId,
+} from "../_shared/pro-checkout-facility.ts";
 
 // ── inlined from _shared/subscription-math.ts ─────────────
 // subscription-math.ts
@@ -2480,7 +2484,6 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
 
       // PRO_SUBSCRIPTION (annual)
       if (session.mode === "subscription" && metadataType === "pro_subscription") {
-        const facilityId = session.metadata?.facility_id;
         // create-checkout-session used to write `provider_user_id`;
         // it now writes both (canonical `user_id` + the legacy key as
         // a fallback during the rollover window). Accept either so
@@ -2489,6 +2492,68 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
           session.metadata?.user_id ?? session.metadata?.provider_user_id;
         const subscriptionId = session.subscription as string;
         const customerId = session.customer as string;
+
+        // create-checkout used to emit `facility_id: ""` whenever the caller
+        // didn't supply one — which the onboarding PlanStep and the
+        // UpgradeDialog never did. An empty string is falsy, so the guard
+        // below skipped the ONLY facility_subscriptions writer in the
+        // codebase: the provider was charged, activateProBenefits flipped
+        // profiles.plan, but every Pro gate (useProStatus, useFacility-
+        // Subscription, has_active_pro) reads the missing row and reported
+        // Free. create-checkout now resolves the id up front; this fallback
+        // repairs sessions that were already open when that shipped.
+        let ownedFacilityId: string | null = null;
+        if (!normalizeFacilityIdMetadata(session.metadata?.facility_id) && userId) {
+          const { data: ownedFacility, error: ownedErr } = await supabaseAdmin
+            .from("facilities")
+            .select("id")
+            .eq("user_id", userId)
+            // Earliest-created = the provider's primary listing. Must match
+            // create-checkout's ordering so a redelivery resolves identically.
+            .order("created_at", { ascending: true })
+            .limit(1)
+            .maybeSingle();
+          if (ownedErr) {
+            logStep("Facility fallback lookup failed", { error: ownedErr.message, userId });
+          } else {
+            ownedFacilityId = (ownedFacility as { id?: string } | null)?.id ?? null;
+          }
+        }
+        const facilityResolution = resolveProFacilityId({
+          metadataFacilityId: session.metadata?.facility_id,
+          ownedFacilityId,
+        });
+        const facilityId = facilityResolution.facilityId;
+        if (facilityResolution.source === "owner-fallback") {
+          logStep("Recovered facility_id from provider ownership", { facilityId, userId });
+        }
+
+        // Paid, but there is nothing to attach the subscription to. Never
+        // return a silent 200 here — that is money taken with no record.
+        if (subscriptionId && userId && !facilityId) {
+          logStep("Pro checkout completed with no resolvable facility", { userId, subscriptionId });
+          try {
+            await supabaseAdmin.from("admin_notifications").insert({
+              type: "pro_activation_no_facility",
+              title: "Pro payment received but no facility to activate",
+              message:
+                `User ${userId} completed Stripe Checkout for Pro (subscription ${subscriptionId}, ` +
+                `event ${event.id}) but owns no facility row, so facility_subscriptions could not be ` +
+                `written and Pro is NOT active. Usually an unapproved claim. Approve the claim then ` +
+                `re-run activation, or refund the subscription.`,
+              metadata: {
+                user_id: userId,
+                stripe_subscription_id: subscriptionId,
+                stripe_customer_id: customerId,
+                stripe_event_id: event.id,
+              } as Record<string, unknown>,
+            });
+          } catch (adminErr) {
+            logStep("admin_notifications insert failed (pro no-facility)", {
+              error: adminErr instanceof Error ? adminErr.message : String(adminErr),
+            });
+          }
+        }
 
         if (subscriptionId && facilityId && userId) {
           logStep("Activating Pro subscription", { subscriptionId, facilityId });
@@ -3279,14 +3344,29 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
           if (!cust.deleted) {
             const custEmail = (cust as Stripe.Customer).email;
             if (custEmail) {
-              const { data: existingProRow } = await supabaseAdmin
-                .from("facility_subscriptions")
-                .select("id, stripe_subscription_id, status, tier, current_period_end")
-                .eq("status", "active")
-                .eq("tier", "pro")
-                .neq("stripe_subscription_id", subscription.id)
+              // Scope to THIS provider. Without the provider_id filter the
+              // query matched any active Pro row in the table, so every new
+              // Pro subscriber past the first raised a bogus
+              // "duplicate_active_pro_subscription" alert — noise that buries
+              // the real activation failures during a signup push.
+              const { data: dupProfile } = await supabaseAdmin
+                .from("profiles")
+                .select("user_id")
+                .eq("email", custEmail)
                 .limit(1)
                 .maybeSingle();
+              const dupProviderId = (dupProfile as { user_id?: string } | null)?.user_id ?? null;
+              const { data: existingProRow } = dupProviderId
+                ? await supabaseAdmin
+                    .from("facility_subscriptions")
+                    .select("id, stripe_subscription_id, status, tier, current_period_end")
+                    .eq("provider_id", dupProviderId)
+                    .eq("status", "active")
+                    .eq("tier", "pro")
+                    .neq("stripe_subscription_id", subscription.id)
+                    .limit(1)
+                    .maybeSingle()
+                : { data: null };
               if (existingProRow) {
                 logStep("Pro downgrade-then-upgrade race detected — existing active Pro row found", {
                   newStripeSubId: subscription.id,

@@ -38,7 +38,12 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 function extractDomain(input: string | null | undefined): string | null {
   if (!input || typeof input !== "string") return null;
   try {
-    const u = new URL(input.startsWith("http") ? input : `https://${input}`);
+    // Case-INSENSITIVE scheme test. With a case-sensitive startsWith("http"),
+    // a website stored as "HTTPS://example.org" got "https://" prepended,
+    // parsed to the host "https", and the provider could never satisfy the
+    // domain check. Mirrors facilityHostFromWebsite in
+    // src/lib/claimVerification.ts — keep the two in lockstep.
+    const u = new URL(/^https?:\/\//i.test(input) ? input : `https://${input}`);
     return u.hostname.replace(/^www\./i, "").toLowerCase();
   } catch {
     return null;
