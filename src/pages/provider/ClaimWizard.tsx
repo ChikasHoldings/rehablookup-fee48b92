@@ -456,6 +456,7 @@ export default function ClaimWizard({ embedded = false, slugProp, onCancel }: Cl
           <UnavailableState
             title="We couldn't find this facility"
             body="The listing may have been removed, or the link is mistyped."
+            onPickAnother={embedded ? onCancel : undefined}
           />
         )}
 
@@ -463,6 +464,7 @@ export default function ClaimWizard({ embedded = false, slugProp, onCancel }: Cl
           <UnavailableState
             title="This facility is already claimed"
             body="Someone has already verified ownership of this listing. If you believe this is an error, contact support."
+            onPickAnother={embedded ? onCancel : undefined}
           />
         )}
 
@@ -953,7 +955,21 @@ function Step2YourRole({
 
 // ─── Placeholders ─────────────────────────────────────────────────────────
 
-function UnavailableState({ title, body }: { title: string; body: string }) {
+function UnavailableState({
+  title,
+  body,
+  onPickAnother,
+}: {
+  title: string;
+  body: string;
+  /**
+   * Embedded-mode escape hatch. Without it the only action here is a link to
+   * /provider/onboarding, which re-reads the SAME stored selected_facility_id
+   * and renders this same dead card — a loop with no way out. onPickAnother
+   * clears the selection and returns the user to find_or_list.
+   */
+  onPickAnother?: () => void;
+}) {
   return (
     <Card className="p-6 md:p-7 space-y-4">
       <div className="flex items-start gap-3">
@@ -964,12 +980,19 @@ function UnavailableState({ title, body }: { title: string; body: string }) {
         </div>
       </div>
       <div>
-        <Button asChild variant="outline">
-          <Link to="/provider/onboarding">
+        {onPickAnother ? (
+          <Button variant="outline" onClick={onPickAnother}>
             <ArrowLeft className="h-4 w-4 mr-1.5" aria-hidden />
-            Back to onboarding
-          </Link>
-        </Button>
+            Pick a different facility
+          </Button>
+        ) : (
+          <Button asChild variant="outline">
+            <Link to="/provider/onboarding">
+              <ArrowLeft className="h-4 w-4 mr-1.5" aria-hidden />
+              Back to onboarding
+            </Link>
+          </Button>
+        )}
       </div>
     </Card>
   );
