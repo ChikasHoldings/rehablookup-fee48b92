@@ -81,6 +81,38 @@ export function PlanStep({ onAdvance, onBack }: PlanStepProps) {
   const [confirmingPro, setConfirmingPro] = useState(false);
   const confirmPollRef = useRef<number | null>(null);
 
+  // Pro is only purchasable once the provider owns a listing:
+  // facility_subscriptions is keyed on facility_id, and a CLAIM doesn't set
+  // facilities.user_id until an admin approves it. So a claim-first provider
+  // has nothing to attach a subscription to and create-checkout refuses with
+  // NO_FACILITY_FOR_PRO. Surfacing that on the card avoids a dead-end click.
+  //
+  // Starts null ("unknown") and only ever disables the CTA on a definitive
+  // zero — a failed read leaves Pro purchasable and lets the server decide.
+  const [ownsFacility, setOwnsFacility] = useState<boolean | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const userId = sessionData.session?.user.id;
+        if (!userId) return;
+        const { count, error } = await supabase
+          .from("facilities")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId);
+        if (cancelled || error) return;
+        setOwnsFacility((count ?? 0) > 0);
+      } catch (e) {
+        console.warn("[PlanStep] owned-facility check failed", e);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  const proBlockedPendingClaim = ownsFacility === false;
+
   const checkoutResult = searchParams.get("checkout"); // 'success' | 'cancel' | null
 
   // Handle return-from-Checkout side effects on first render only.
@@ -385,10 +417,15 @@ export function PlanStep({ onAdvance, onBack }: PlanStepProps) {
         />
         <PlanCard
           plan={PLANS.pro}
-          ctaLabel="Continue with Pro"
+          ctaLabel={proBlockedPendingClaim ? "Available after approval" : "Continue with Pro"}
           ctaBusy={busy === "pro"}
-          ctaDisabled={busy !== null}
+          ctaDisabled={busy !== null || proBlockedPendingClaim}
           onSelect={handlePro}
+          footnote={
+            proBlockedPendingClaim
+              ? "Pro switches on once your claim is approved — we'll email you, and you can upgrade from your billing page in one click. Continue with Free for now."
+              : undefined
+          }
         />
       </div>
 
@@ -408,12 +445,15 @@ function PlanCard({
   ctaBusy,
   ctaDisabled,
   onSelect,
+  footnote,
 }: {
   plan: Plan;
   ctaLabel: string;
   ctaBusy: boolean;
   ctaDisabled: boolean;
   onSelect: () => void;
+  /** Overrides plan.note — used to explain a disabled CTA. */
+  footnote?: string;
 }) {
   const isPro = plan.id === "pro";
   return (
@@ -470,8 +510,10 @@ function PlanCard({
           </>
         )}
       </Button>
-      {plan.note && (
-        <p className="text-[11px] text-slate-500 mt-2.5 text-center">{plan.note}</p>
+      {(footnote ?? plan.note) && (
+        <p className="text-[11px] text-slate-500 mt-2.5 text-center">
+          {footnote ?? plan.note}
+        </p>
       )}
     </div>
   );
