@@ -76,6 +76,10 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { parseFunctionError } from "@/lib/contracts/friendly-error-messages";
 import {
+  emailMatchesFacilityWebsite,
+  facilityHostFromWebsite,
+} from "@/lib/claimVerification";
+import {
   AlertCircle,
   AlertTriangle,
   ArrowLeft,
@@ -1209,27 +1213,10 @@ interface MethodPickerProps {
   onBack: () => void;
 }
 
-/**
- * Extracts a normalized hostname from a URL string. Returns null for
- * unparseable input. Strips a leading "www.".
- */
-function hostnameFromUrl(url?: string | null): string | null {
-  if (!url) return null;
-  const trimmed = url.trim();
-  if (!trimmed) return null;
-  try {
-    const u = new URL(trimmed.startsWith("http") ? trimmed : `https://${trimmed}`);
-    return u.hostname.toLowerCase().replace(/^www\./, "");
-  } catch {
-    return null;
-  }
-}
-
-/** Returns the apex domain (last two labels) of a hostname. */
-function apexDomain(host: string): string {
-  const parts = host.split(".").filter(Boolean);
-  return parts.length >= 2 ? parts.slice(-2).join(".") : host;
-}
+// Host extraction + domain-match rules live in @/lib/claimVerification so the
+// picker's recommendation can't drift from what
+// initiate-claim-email-verification actually accepts. See that module for why
+// the drift mattered.
 
 /**
  * Round-30 merge: the 3-way verification picker was replaced with an
@@ -1256,16 +1243,8 @@ function MethodPicker({
 }: MethodPickerProps) {
   const hasWebsite = !!facility.website?.trim();
   const hasPhone = !!facility.phone?.trim();
-  const emailDomainMatch = (() => {
-    if (!hasWebsite || !claimantEmail) return false;
-    const facilityHost = hostnameFromUrl(facility.website);
-    if (!facilityHost) return false;
-    const emailHost = claimantEmail.includes("@")
-      ? claimantEmail.split("@")[1]?.toLowerCase().trim()
-      : "";
-    if (!emailHost) return false;
-    return apexDomain(emailHost) === apexDomain(facilityHost);
-  })();
+  const emailDomainMatch =
+    hasWebsite && emailMatchesFacilityWebsite(claimantEmail, facility.website);
   const bestMethod: VerificationMethod = emailDomainMatch
     ? "email_domain"
     : hasPhone
@@ -1315,7 +1294,9 @@ function MethodPicker({
   if (bestMethod === "email_domain") {
     primary = {
       icon: Mail,
-      heading: `We'll verify by email at ${apexDomain(hostnameFromUrl(facility.website) ?? "")}`,
+      // Show the host the server actually checks against, so the heading and
+      // any DOMAIN_MISMATCH message name the same domain.
+      heading: `We'll verify by email at ${facilityHostFromWebsite(facility.website) ?? ""}`,
       sub: `Your signed-in email (${claimantEmail}) already lives on this facility's domain — we'll send a 6-digit code there.`,
       cta: "Send verification code",
       onCta: () => onPick("email_domain"),
@@ -1535,16 +1516,12 @@ function EmailInputView({
   const [submitting, setSubmitting] = useState(false);
   const [expectedDomain, setExpectedDomain] = useState<string | null>(null);
 
-  const domainHint = useMemo(() => {
-    if (!facilityWebsite) return null;
-    try {
-      return new URL(
-        facilityWebsite.startsWith("http") ? facilityWebsite : `https://${facilityWebsite}`,
-      ).hostname.replace(/^www\./, "");
-    } catch {
-      return null;
-    }
-  }, [facilityWebsite]);
+  // Same extraction the server uses, so the "use an email at @x" hint always
+  // names the domain DOMAIN_MISMATCH would name.
+  const domainHint = useMemo(
+    () => facilityHostFromWebsite(facilityWebsite),
+    [facilityWebsite],
+  );
 
   const emailValid =
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(state.verificationEmail.trim());
