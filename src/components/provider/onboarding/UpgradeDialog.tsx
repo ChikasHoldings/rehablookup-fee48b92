@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { parseFunctionError } from "@/lib/contracts/friendly-error-messages";
 import { PLANS } from "@/lib/planConstants";
 
 interface UpgradeDialogProps {
@@ -56,7 +57,17 @@ export function UpgradeDialog({ open, onOpenChange, feature, returnTo }: Upgrade
         body: { successUrl, cancelUrl },
       });
       if (error) {
-        toast.error("Couldn't start Checkout. Please try again.");
+        // The real reason is in the non-2xx body on error.context; error.message
+        // is only Supabase's generic "non-2xx status code" string.
+        const { code, message } = await parseFunctionError(error);
+        if (code === "NO_FACILITY_FOR_PRO") {
+          toast.message(
+            message ?? "Pro activates once your listing is live.",
+            { duration: 8000 },
+          );
+        } else {
+          toast.error(message ?? "Couldn't start Checkout. Please try again.");
+        }
         setBusy(false);
         return;
       }

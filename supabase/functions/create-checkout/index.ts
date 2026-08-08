@@ -1,6 +1,7 @@
 import Stripe from "https://esm.sh/stripe@18.5.0?target=denonext";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 import { PriceResolutionError, selectActivePriceId } from "../_shared/stripe-price.ts";
+import { resolveProFacilityId } from "../_shared/pro-checkout-facility.ts";
 
 const VERSION = "1.0.3";
 
@@ -42,6 +43,39 @@ async function resolveProPriceId(stripe: Stripe): Promise<string> {
     limit: 2,
   });
   return selectActivePriceId(found.data);
+}
+
+/**
+ * Resolve the facility the Pro subscription should be recorded against.
+ *
+ * `facility_subscriptions` is keyed on facility_id (NOT NULL, unique), and
+ * the stripe-webhook's checkout.session.completed handler is the ONLY writer
+ * of that row. It reads the id straight out of `session.metadata.facility_id`
+ * — so a session created without one produces a paid Stripe subscription that
+ * is never recorded, leaving the provider on Free after being charged.
+ *
+ * Callers that already know the facility (Billing page → create-checkout-
+ * session) pass it explicitly. The onboarding PlanStep and the UpgradeDialog
+ * don't, so we resolve it here from the caller's own listings rather than
+ * shipping an empty string into Stripe metadata.
+ *
+ * Picks the provider's earliest-created listing (their primary) so the choice
+ * is deterministic across retries — a webhook redelivery must land on the same
+ * facility row it did the first time.
+ */
+async function resolveProviderFacilityId(
+  supabase: ReturnType<typeof createClient>,
+  userId: string,
+): Promise<string | null> {
+  const { data, error } = await supabase
+    .from("facilities")
+    .select("id")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new Error(`facility lookup failed: ${error.message}`);
+  return (data as { id?: string } | null)?.id ?? null;
 }
 
 function isSameOrigin(candidate: unknown, origin: string): candidate is string {
@@ -91,6 +125,97 @@ Deno.serve(async (req) => {
     const user = userData.user;
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep(requestId, "User authenticated", { userId: user.id, email: user.email });
+
+    // Resolve the facility BEFORE touching Stripe. Without one, the webhook
+    // cannot write facility_subscriptions and the provider would be charged
+    // for a Pro plan that never activates — so this fails closed rather than
+    // opening a Checkout we can't honour.
+    const requestedFacilityId = resolveProFacilityId({
+      metadataFacilityId: facilityId,
+    }).facilityId;
+
+    // A caller-supplied id must be verified against ownership before it
+    // reaches Stripe metadata. facility_subscriptions is upserted
+    // `onConflict: facility_id`, so an unchecked id would let anyone who
+    // completes a $99 checkout overwrite a DIFFERENT provider's live Pro row
+    // — knocking a paying customer off Pro. create-checkout-session already
+    // enforces this (NOT_OWNER); create-checkout did not.
+    if (requestedFacilityId) {
+      const { data: ownedMatch, error: ownErr } = await supabaseClient
+        .from("facilities")
+        .select("id")
+        .eq("id", requestedFacilityId)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (ownErr) {
+        logStep(requestId, "Ownership check errored", { reason: ownErr.message });
+        return new Response(
+          JSON.stringify({
+            error: "We couldn't verify your listing. Please refresh and try again.",
+            code: "FACILITY_LOOKUP_FAILED",
+            requestId,
+            _version: VERSION,
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 503 },
+        );
+      }
+      if (!ownedMatch) {
+        logStep(requestId, "Rejected facility_id not owned by caller", {
+          userId: user.id,
+          requestedFacilityId,
+        });
+        return new Response(
+          JSON.stringify({
+            error: "You can only upgrade a listing you manage.",
+            code: "NOT_OWNER",
+            requestId,
+            _version: VERSION,
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 403 },
+        );
+      }
+    }
+
+    let resolvedFacilityId = requestedFacilityId;
+    if (!resolvedFacilityId) {
+      try {
+        resolvedFacilityId = resolveProFacilityId({
+          ownedFacilityId: await resolveProviderFacilityId(supabaseClient, user.id),
+        }).facilityId;
+      } catch (lookupErr) {
+        logStep(requestId, "Facility resolution errored", { reason: String(lookupErr) });
+        return new Response(
+          JSON.stringify({
+            error: "We couldn't load your listing. Please refresh and try again.",
+            code: "FACILITY_LOOKUP_FAILED",
+            requestId,
+            _version: VERSION,
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 503 },
+        );
+      }
+    }
+    if (!resolvedFacilityId) {
+      // Reached by a provider whose only listing is an unapproved CLAIM:
+      // facilities.user_id isn't set until an admin approves the claim, so
+      // they own nothing to attach a subscription to yet. Taking $99 here
+      // would be charging for benefits we cannot apply.
+      logStep(requestId, "No owned facility — refusing to open Checkout", { userId: user.id });
+      return new Response(
+        JSON.stringify({
+          error:
+            "Pro activates once your listing is live. We'll email you when your claim is approved — you can upgrade from your billing page then.",
+          code: "NO_FACILITY_FOR_PRO",
+          requestId,
+          _version: VERSION,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 409 },
+      );
+    }
+    logStep(requestId, "Facility resolved for Pro subscription", {
+      facilityId: resolvedFacilityId,
+      suppliedByCaller: !!facilityId,
+    });
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
@@ -150,8 +275,18 @@ Deno.serve(async (req) => {
         limit: 5,
         created: { gte: thirtyMinAgo },
       });
+      // Scoped to Pro sessions only. Featured / Concierge add-on checkouts
+      // (create-checkout-session) are ALSO mode:"subscription", so an
+      // unscoped match would hand a provider who clicked "Upgrade to Pro"
+      // the URL of a half-finished add-on purchase — billing them for the
+      // wrong product.
       const openSession = recentSessions.data.find(
-        (s) => s.status === "open" && s.mode === "subscription" && s.url,
+        (s) =>
+          s.status === "open" &&
+          s.mode === "subscription" &&
+          s.metadata?.type === "pro_subscription" &&
+          s.metadata?.facility_id === resolvedFacilityId &&
+          s.url,
       );
       if (openSession?.url) {
         logStep(requestId, "Reusing open Checkout session (single-flight)", {
@@ -280,7 +415,10 @@ Deno.serve(async (req) => {
       metadata: {
         user_id: user.id,
         type: "pro_subscription",
-        facility_id: facilityId || "",
+        // Always a real uuid — the webhook skips the facility_subscriptions
+        // upsert entirely when this is blank, which silently swallowed paid
+        // onboarding upgrades.
+        facility_id: resolvedFacilityId,
         plan: "pro",
         plan_tier: "pro",
         plan_name: "Pro",
@@ -294,7 +432,7 @@ Deno.serve(async (req) => {
         metadata: {
           user_id: user.id,
           type: "pro_subscription",
-          facility_id: facilityId || "",
+          facility_id: resolvedFacilityId,
           plan: "pro",
           plan_tier: "pro",
           plan_name: "Pro",

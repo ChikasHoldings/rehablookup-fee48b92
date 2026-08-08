@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { parseFunctionError } from "@/lib/contracts/friendly-error-messages";
 import { cn } from "@/lib/utils";
 import { PLANS, type Plan } from "@/lib/planConstants";
 import { trackEvent } from "@/lib/analytics";
@@ -171,8 +172,13 @@ export function PlanStep({ onAdvance, onBack }: PlanStepProps) {
     // normally lands within 1-2s, but cold-start + network + DB
     // contention can stretch to ~15s under load. 30s is well within
     // user attention span and dramatically reduces the "stuck"
-    // outcome. The dashboard ProBenefitsWidget also runs a fallback
-    // poll so even a 30s timeout here is recoverable on reload.
+    // outcome.
+    //
+    // NOTE: there is no dashboard-side retry. ProBenefitsWidget just
+    // reads useProStatus once and renders nothing when it says Free, so
+    // a timeout here is only recovered by the provider reloading after
+    // the webhook lands. The admin_notifications row written below is
+    // the ops-side backstop.
     const deadline = Date.now() + 30_000;
     while (Date.now() < deadline) {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -301,7 +307,21 @@ export function PlanStep({ onAdvance, onBack }: PlanStepProps) {
       });
       if (error) {
         console.error("[PlanStep] create-checkout failed", error);
-        toast.error("Couldn't start Checkout. Please try again.");
+        // Non-2xx bodies live on error.context, not error.message — without
+        // parsing it every server-side refusal collapsed into a generic
+        // "try again", which is actively misleading for the cases the user
+        // can't retry their way out of (e.g. NO_FACILITY_FOR_PRO, where Pro
+        // simply isn't purchasable until their claim is approved).
+        const { code, message } = await parseFunctionError(error);
+        if (code === "NO_FACILITY_FOR_PRO") {
+          toast.message(
+            message ??
+              "Pro activates once your listing is live. Continue with Free — you can upgrade from billing after approval.",
+            { duration: 8000 },
+          );
+        } else {
+          toast.error(message ?? "Couldn't start Checkout. Please try again.");
+        }
         setBusy(null);
         return;
       }
