@@ -1,7 +1,8 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 /**
  * Axe-core accessibility audit across the top 20 routes from the
@@ -39,6 +40,13 @@ import { join } from "node:path";
  * triage violations one route at a time — every new commit that fixes a
  * violation should remove its waiver here.
  */
+
+// package.json sets "type": "module", so __dirname does not exist here. It was
+// a hard ReferenceError at import time, and because Playwright fails the whole
+// RUN when any spec file fails to load, this one line took the entire E2E
+// suite offline — a11y, visual, auth-guard and all. Derived from
+// import.meta.url the same way every scripts/*.mjs does.
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const MANIFEST_PATH = join(__dirname, "..", "..", "public", "prerender-manifest.json");
 

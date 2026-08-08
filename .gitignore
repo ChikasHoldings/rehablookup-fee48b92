@@ -34,3 +34,11 @@ crawl-404-report.md
 *.njsproj
 *.sln
 *.sw?
+
+# Playwright run artifacts. `playwright test` writes error-context.md /
+# screenshots / traces here on failure, and --update-snapshots writes new
+# baselines next to the specs. Neither belongs in git — a `git add -A` after a
+# local E2E run would otherwise sweep in hundreds of generated files.
+test-results/
+playwright-report/
+blob-report/
