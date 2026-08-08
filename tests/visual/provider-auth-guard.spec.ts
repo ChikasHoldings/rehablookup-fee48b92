@@ -68,12 +68,24 @@ test.describe("Provider auth guard — anonymous user", () => {
 
       // Extra: must NOT show a bare empty page (login form should be present)
       // This guards against a silent white-screen redirect failure.
-      const loginHeading = page.locator("h1, h2").filter({
-        hasText: /sign in|log in|welcome back/i,
-      });
+      //
+      // The login page renders its heading responsively: a desktop-only
+      // marketing panel (`hidden lg:flex`) carries <h1>Welcome Back</h1>, and a
+      // mobile-only block (`lg:hidden`) carries <h1>Sign In</h1>. "Welcome Back"
+      // comes FIRST in the DOM, so `.first()` selected the display:none desktop
+      // heading on the mobile-320 and tablet-768 projects and asserted it was
+      // visible — failing on every provider route at 2 of 3 viewports even
+      // though the page rendered correctly.
+      //
+      // Filter to the heading actually shown at this viewport, so the check
+      // still catches a genuine white-screen without being viewport-dependent.
+      const loginHeading = page
+        .locator("h1, h2")
+        .filter({ hasText: /sign in|log in|welcome back/i })
+        .filter({ visible: true });
       await expect(
         loginHeading.first(),
-        "Login page heading must be visible after redirect",
+        "A login page heading must be visible after redirect",
       ).toBeVisible({ timeout: 5000 });
     });
   }
