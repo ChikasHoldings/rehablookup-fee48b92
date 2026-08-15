@@ -29,6 +29,13 @@ function matchMediaSync(query: string): boolean {
   return true;
 }
 
+// Tests that opt into `@vitest-environment node` (e.g. the PGlite-backed
+// database regression suites) have no DOM. Everything below this point is
+// jsdom-only stubbing, so skip it rather than throwing at setup time. jsdom
+// runs are unaffected.
+const HAS_DOM = typeof window !== "undefined";
+
+if (HAS_DOM) {
 Object.defineProperty(window, "matchMedia", {
   writable: true,
   configurable: true,
@@ -64,4 +71,5 @@ window.scrollTo = (() => {}) as typeof window.scrollTo;
 // flow calls it on every step transition.
 if (!Element.prototype.scrollIntoView) {
   Element.prototype.scrollIntoView = function () {};
+}
 }
