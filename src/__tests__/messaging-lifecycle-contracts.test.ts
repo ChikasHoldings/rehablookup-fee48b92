@@ -107,9 +107,15 @@ describe("messaging lifecycle contracts", () => {
     expect(src).toMatch(/callerId !== existing\.user_id/);
   });
 
-  // MSG-9 — every seeker-facing concierge notification type deep-links into the
-  // concierge section (not the generic inbox).
-  it("seekerNotificationRouting routes the full concierge type set to /account/concierge", () => {
+  // MSG-9 — every seeker-facing concierge notification type still has an
+  // EXPLICIT route entry rather than falling through to the generic inbox.
+  //
+  // Directory cutover stage 1 retired the /account/concierge workspace but
+  // deliberately left send-concierge-notifications (and the rows it has
+  // already written) untouched, so these types can still reach a seeker's
+  // inbox. The original intent of this guard — no emitted type dead-ends on
+  // the generic fallback — is preserved; only the destination changed.
+  it("seekerNotificationRouting gives the full concierge type set an explicit fallback route", () => {
     const src = read("src/lib/seekerNotificationRouting.tsx");
     for (const t of [
       "concierge_introductions_sent",
@@ -122,8 +128,10 @@ describe("messaging lifecycle contracts", () => {
       "concierge_move_in_scheduled",
       "concierge_moved_in",
     ]) {
-      expect(src, t).toMatch(new RegExp(`${t}:\\s*"/account/concierge"`));
+      expect(src, t).toMatch(new RegExp(`${t}:\\s*"/account/saved"`));
     }
+    // The retired workspace must not be a routing target anymore.
+    expect(src).not.toMatch(/:\s*"\/account\/concierge"/);
   });
 
   // The dispatchers stay verify_jwt=false (anon allow-list) — the gate is the

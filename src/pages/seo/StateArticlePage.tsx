@@ -137,10 +137,10 @@ export default function StateArticlePage() {
             {/* Bottom CTA - mobile */}
             <div className="mt-10 rounded-xl border border-primary/20 bg-primary/5 p-6 lg:hidden">
               <h3 className="text-lg font-bold text-foreground">Need Help Finding Treatment in {stateName}?</h3>
-              <p className="text-sm text-muted-foreground mt-2">Our concierge team matches you with the right program — free and confidential.</p>
+              <p className="text-sm text-muted-foreground mt-2">Compare programs side by side, then contact them directly — free, no account required.</p>
               <div className="flex flex-col sm:flex-row gap-3 mt-4">
-                <Link to="/concierge" className="flex-1">
-                  <Button className="w-full" size="lg">Get Matched Free <ArrowRight className="w-4 h-4 ml-1" /></Button>
+                <Link to="/search-results" className="flex-1">
+                  <Button className="w-full" size="lg">Browse Treatment Centers <ArrowRight className="w-4 h-4 ml-1" /></Button>
                 </Link>
                 <Link to="/rehab-centers" className="flex-1">
                   <Button variant="outline" className="w-full" size="lg">Browse Facilities</Button>
@@ -156,10 +156,10 @@ export default function StateArticlePage() {
               <div className="rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/20 p-6">
                 <Phone className="w-8 h-8 text-primary mb-3" />
                 <h3 className="text-lg font-bold text-foreground">Need Help Finding Treatment?</h3>
-                <p className="text-sm text-muted-foreground mt-2">Our concierge team matches you with the right program in {stateName} — free and confidential.</p>
-                <Link to="/concierge">
+                <p className="text-sm text-muted-foreground mt-2">Compare {stateName} programs side by side, then contact them directly — free, no account required.</p>
+                <Link to="/search-results">
                   <Button className="w-full mt-4" size="lg">
-                    Get Matched Free <ArrowRight className="w-4 h-4 ml-1" />
+                    Browse Treatment Centers <ArrowRight className="w-4 h-4 ml-1" />
                   </Button>
                 </Link>
                 <Link to="/rehab-centers" className="block mt-3">

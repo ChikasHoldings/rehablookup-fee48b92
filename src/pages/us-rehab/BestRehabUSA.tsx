@@ -6,7 +6,7 @@ import {
   InternationalFAQ,
   WhyUSATreatment,
   StateDestinations,
-  PlacementCTA
+  DirectorySearchCTA
 } from "./components";
 
 const BestRehabUSA = () => {
@@ -41,7 +41,7 @@ const BestRehabUSA = () => {
     },
     {
       question: "How do I verify a US rehab center's quality?",
-      answer: "Check for Joint Commission or CARF accreditation, verify state licensing, review staff credentials, ask about evidence-based treatment modalities, and request outcome data. Our placement specialists pre-vet all facilities in our network."
+      answer: "Check for Joint Commission or CARF accreditation, verify state licensing, review staff credentials, ask about evidence-based treatment modalities, and request outcome data. Every listing shows the accreditations and licences on file for that facility."
     },
     {
       question: "Can I tour US rehab facilities before committing?",
@@ -53,7 +53,7 @@ const BestRehabUSA = () => {
     <Layout>
       <SEO
         title="Best Rehab in USA | Top-Rated Addiction Treatment Centers America"
-        description="Find the best rehab centers in the USA. Top-rated addiction treatment facilities with proven outcomes, world-class staff, and luxury amenities. Expert placement for international patients."
+        description="Find the best rehab centers in the USA. Top-rated addiction treatment facilities with proven outcomes, world-class staff, and luxury amenities. Listings cover programs that accept international patients."
         canonical="/us-rehab/best-rehab-usa"
         keywords={["best rehab in USA", "top rehab centers America", "best addiction treatment USA", "highest rated rehab USA", "best drug rehab America", "best alcohol rehab USA"]}
         structuredData={schemaData}
@@ -91,7 +91,7 @@ const BestRehabUSA = () => {
         schemaId="best-rehab-usa-faq"
       />
 
-      <PlacementCTA 
+      <DirectorySearchCTA 
         title="Find the Best Treatment for Your Needs"
         description="Our specialists connect you with America's top-rated facilities based on your specific requirements, preferences, and budget."
       />

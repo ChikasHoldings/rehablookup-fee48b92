@@ -1,11 +1,10 @@
 import { useMemo, useRef, useState, useEffect } from "react";
-import { Search, Heart } from "lucide-react";
+import { Search } from "lucide-react";
 import { Link } from "react-router-dom";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { useFacilityChildData } from "@/hooks/useFacilityChildData";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
-import { buildConciergeHref } from "@/lib/conciergeHref";
 
 // Adapts the legacy snapshot row shape (camelCase facilityType/logoUrl)
 // AND the new public_facilities row shape (snake_case facility_type/logo_url)
@@ -59,11 +58,8 @@ function toCardData(
 interface ResponsiveListingGridProps {
   facilities: Record<string, unknown>[];
   maxItems?: number;
-  /** Forwarded to /concierge as prefill / attribution. */
-  conciergeLocation?: string;
-  conciergeTreatment?: string;
-  conciergeInsurance?: string;
-  conciergeSource?: string;
+  /** Location string used to pre-seed the "widen the search" link. */
+  nearbyLocation?: string;
   /** When `facilities` is empty, render these as "nearby suggestions" instead of a blank state. */
   nearbyFacilities?: Record<string, unknown>[];
   /** Label shown above nearby fallback (e.g. "Centers in nearby cities"). */
@@ -73,10 +69,7 @@ interface ResponsiveListingGridProps {
 export function ResponsiveListingGrid({
   facilities,
   maxItems = 12,
-  conciergeLocation,
-  conciergeTreatment,
-  conciergeInsurance,
-  conciergeSource = "responsive_listing_grid_empty",
+  nearbyLocation,
   nearbyFacilities,
   nearbyLabel = "Centers in nearby areas",
 }: ResponsiveListingGridProps) {
@@ -140,7 +133,13 @@ export function ResponsiveListingGrid({
     el.scrollBy({ left: amount, behavior: "smooth" });
   };
 
-  // Empty state: render nearby suggestions if available, otherwise CTA fallback
+  // Empty state: render nearby suggestions if available, otherwise a
+  // directory fallback. "Widen the search" keeps the visitor's area but
+  // drops the narrowing filters — the usual reason a listing view is dry.
+  const widerSearchHref = nearbyLocation
+    ? `/search-results?location=${encodeURIComponent(nearbyLocation)}`
+    : "/search-results";
+
   if (items.length === 0) {
     const nearby = (nearbyFacilities || []).slice(0, maxItems);
 
@@ -156,17 +155,10 @@ export function ResponsiveListingGrid({
             {nearby.map((facility) => renderCard(facility))}
           </div>
           <div className="flex justify-center pt-2">
-            <Link
-              to={buildConciergeHref({
-                location: conciergeLocation,
-                treatment: conciergeTreatment,
-                insurance: conciergeInsurance,
-                source: conciergeSource,
-              })}
-            >
+            <Link to={widerSearchHref}>
               <Button variant="outline" className="gap-2">
-                <Heart className="h-4 w-4" />
-                Get Personalized Help
+                <Search className="h-4 w-4" />
+                Widen the search
               </Button>
             </Link>
           </div>
@@ -181,7 +173,7 @@ export function ResponsiveListingGrid({
         </div>
         <h3 className="text-lg font-semibold text-foreground mb-2">No Facilities Listed Yet</h3>
         <p className="text-muted-foreground mb-6 max-w-md">
-          We're expanding our network in this area. Browse all centers nationwide or let our team find the right match for you.
+          No listings match this view yet. Browse every center nationwide, or widen the search to nearby areas.
         </p>
         <div className="flex flex-col sm:flex-row gap-3">
           <Link to="/search-results">
@@ -190,17 +182,10 @@ export function ResponsiveListingGrid({
               Browse All Centers
             </Button>
           </Link>
-          <Link
-            to={buildConciergeHref({
-              location: conciergeLocation,
-              treatment: conciergeTreatment,
-              insurance: conciergeInsurance,
-              source: conciergeSource,
-            })}
-          >
+          <Link to={widerSearchHref}>
             <Button className="gap-2">
-              <Heart className="h-4 w-4" />
-              Get Personalized Help
+              <Search className="h-4 w-4" />
+              Widen the search
             </Button>
           </Link>
         </div>

@@ -1,6 +1,6 @@
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
-import { InternationalPageHero, StateDestinations, InternationalFAQ, PlacementCTA } from "./components";
+import { InternationalPageHero, StateDestinations, InternationalFAQ, DirectorySearchCTA } from "./components";
 import { Zap, Phone, Shield, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ const FastAdmissionRehabUSA = () => {
     { question: "Can international patients get same-day admission?", answer: "If you're already in the United States, yes—many facilities accept same-day walk-ins. For patients abroad, we can have a bed reserved and admission paperwork completed within 24 hours while you arrange travel." },
     { question: "What do I need for fast admission?", answer: "A valid passport, travel visa (B-2 or ESTA), a brief medical history, current medications list, and payment method. Our team can expedite the intake process to minimize delays." },
     { question: "Is rapid admission safe for medical detox?", answer: "Absolutely. Facilities with fast-admission protocols maintain 24/7 medical staff ready for immediate intake. Medical assessments are conducted upon arrival to ensure safe detoxification." },
-    { question: "Can I reserve a bed while I arrange travel?", answer: "Yes. Many facilities will hold a bed for 48–72 hours with a deposit. Our team coordinates reservation, travel, and admission timing to ensure seamless placement." },
+    { question: "Can I reserve a bed while I arrange travel?", answer: "Yes. Many facilities will hold a bed for 48–72 hours with a deposit. Ask the facility's admissions team directly about holding a bed while you arrange travel." },
   ];
 
   return (
@@ -58,7 +58,7 @@ const FastAdmissionRehabUSA = () => {
           </motion.div>
           <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
             {[
-              { icon: Phone, time: "Within 1 Hour", title: "Clinical Assessment", desc: "Confidential phone evaluation with a placement specialist. We identify the right program and confirm availability." },
+              { icon: Phone, time: "Within 1 Hour", title: "Clinical Assessment", desc: "Call a facility's published admissions line for a confidential clinical evaluation and to confirm availability." },
               { icon: Zap, time: "Within 24 Hours", title: "Admission Confirmed", desc: "Bed reserved, intake paperwork completed, and travel or transport arrangements initiated." },
               { icon: Shield, time: "Upon Arrival", title: "Medical Intake", desc: "Immediate medical evaluation, vitals monitoring, and safe detox protocol initiated by 24/7 clinical staff." },
             ].map((step, i) => (
@@ -81,13 +81,13 @@ const FastAdmissionRehabUSA = () => {
         <div className="container mx-auto px-4 text-center">
           <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
             <h2 className="text-xl md:text-2xl font-bold text-foreground mb-3">Need Immediate Help?</h2>
-            <p className="text-muted-foreground mb-6 max-w-lg mx-auto">Our 24/7 placement team can have you admitted to a top U.S. facility within hours.</p>
+            <p className="text-muted-foreground mb-6 max-w-lg mx-auto">Listings publish admissions phone numbers — call a facility directly to ask about same-day availability.</p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6">
                 <Link to="/international/apply" className="flex items-center gap-2">Get Admitted Now <ArrowRight className="h-4 w-4" /></Link>
               </Button>
               <Button asChild variant="outline" size="lg" className="px-8 py-6">
-                <Link to="/concierge">Speak to an Advisor</Link>
+                <Link to="/search-results">Browse Treatment Centers</Link>
               </Button>
             </div>
           </motion.div>
@@ -96,7 +96,7 @@ const FastAdmissionRehabUSA = () => {
 
       <StateDestinations title="States With Fastest Admissions" subtitle="These states have the highest concentration of facilities offering same-day and next-day intake." />
       <InternationalFAQ title="Fast Admission FAQs" subtitle="Common questions about rapid intake and immediate admission to U.S. rehab centers." faqs={faqs} schemaId="fast-admission-rehab-faq" />
-      <PlacementCTA title="Don't Wait — Get Placed Today" description="Every day without treatment matters. Our team expedites your admission so you can start healing immediately." />
+      <DirectorySearchCTA title="Find Programs With Open Admissions" description="Listings show published admissions phone numbers — call a facility directly to ask about current availability." />
     </Layout>
   );
 };

@@ -454,7 +454,7 @@ ${gtagSnippet()}
             <li><a href="/resources">All Recovery Resources</a></li>
             <li><a href="/rehab-centers">Find Rehab Centers</a></li>
             <li><a href="/treatment-types">Treatment Types</a></li>
-            <li><a href="/concierge">Free Placement Help</a></li>
+            <li><a href="/compare">Compare Facilities</a></li>
           </ul>
         </section>
       </article>

@@ -5,4 +5,4 @@ export { InternationalFAQ } from './InternationalFAQ';
 export { WhyUSATreatment } from './WhyUSATreatment';
 export { StateDestinations } from './StateDestinations';
 export { TreatmentCategories } from './TreatmentCategories';
-export { PlacementCTA } from './PlacementCTA';
+export { DirectorySearchCTA } from './DirectorySearchCTA';

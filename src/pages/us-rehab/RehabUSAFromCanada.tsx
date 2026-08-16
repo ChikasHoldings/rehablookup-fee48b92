@@ -125,7 +125,7 @@ export default function RehabUSAFromCanada() {
           <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-5">
             {[
               { step: "1", title: "Apply Online", desc: "Complete our confidential intake form with your treatment needs and preferences." },
-              { step: "2", title: "Get Matched", desc: "Our advisors match you with facilities that accept Canadian patients." },
+              { step: "2", title: "Compare Programs", desc: "Filter listings for programs that state they accept Canadian patients." },
               { step: "3", title: "Arrange Travel", desc: "We coordinate travel logistics, border documentation, and admissions." },
               { step: "4", title: "Begin Treatment", desc: "Arrive at your facility and begin your personalized recovery program." },
             ].map((item, i) => (
@@ -211,7 +211,7 @@ export default function RehabUSAFromCanada() {
                 <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-3">Ready to Begin Your Recovery?</h2>
                 <p className="text-sm sm:text-base text-muted-foreground mb-8 max-w-xl mx-auto leading-relaxed">Our team specializes in helping Canadian patients access the best US treatment programs.</p>
                 <div className="flex flex-wrap justify-center gap-x-6 gap-y-3 mb-8">
-                  {["Confidential Consultation", "No-Obligation", "Canadian Specialist Advisors"].map(item => (
+                  {["Search Privately", "No-Obligation", "Canadian Specialist Advisors"].map(item => (
                     <div key={item} className="flex items-center gap-2 text-sm text-muted-foreground">
                       <CheckCircle className="h-4 w-4 text-primary shrink-0" />
                       <span>{item}</span>
@@ -239,7 +239,7 @@ export default function RehabUSAFromCanada() {
                   { href: "/us-rehab/uae-middle-east", label: "UAE & Middle East" },
                   { href: "/us-rehab/european-patients", label: "European Patients" },
                   { href: "/us-rehab/australian-patients", label: "Australian Patients" },
-                  { href: "/international", label: "International Placement" },
+                  { href: "/international", label: "International Patients" },
                 ].map((link) => (
                   <Link key={link.href} to={link.href} className="group flex items-center justify-between rounded-lg px-3 py-2 hover:bg-muted/50 transition-colors">
                     <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">{link.label}</span>

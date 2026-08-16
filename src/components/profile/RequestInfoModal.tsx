@@ -16,8 +16,8 @@ import {
   Shield,
   Crown,
   Users,
-  Heart,
   MapPin,
+  Scale,
   CheckCircle,
   Loader2,
   Sparkles,
@@ -115,13 +115,13 @@ function CapacityWarning({
     });
   }, [facility.id, facility.name, facility.city, facility.state]);
 
-  const handleFindAvailable = () => {
-    trackCapacityEvent("capacity_find_available_clicked", facility.id, {
+  const handleCompare = () => {
+    trackCapacityEvent("capacity_compare_clicked", facility.id, {
       facilityName: facility.name,
-      destination: "/concierge",
+      destination: "/compare",
     });
     onOpenChange(false);
-    navigate("/concierge");
+    navigate("/compare");
   };
 
   const handleBrowseOther = () => {
@@ -158,19 +158,19 @@ function CapacityWarning({
           <Button
             type="button"
             className="w-full"
-            onClick={handleFindAvailable}
+            onClick={handleBrowseOther}
           >
-            <Heart className="h-4 w-4 mr-2" />
-            Use Concierge Service
+            <MapPin className="h-4 w-4 mr-2" />
+            Browse Other Centers in {facility.city}
           </Button>
           <Button
             type="button"
             variant="outline"
             className="w-full"
-            onClick={handleBrowseOther}
+            onClick={handleCompare}
           >
-            <MapPin className="h-4 w-4 mr-2" />
-            Browse Other Centers in {facility.city}
+            <Scale className="h-4 w-4 mr-2" />
+            Compare Facilities
           </Button>
         </div>
         
@@ -244,7 +244,7 @@ function ModalSuccessView({
   loadingNearby,
   onClose,
   onNearbyRequest,
-  onConcierge,
+  onKeepSearching,
   isPro,
   contact,
 }: { 
@@ -255,7 +255,7 @@ function ModalSuccessView({
   loadingNearby: boolean;
   onClose: () => void;
   onNearbyRequest: (facility: NearbyFacility) => void;
-  onConcierge: () => void;
+  onKeepSearching: () => void;
   isPro: boolean;
   contact?: ModalContactRecap;
 }) {
@@ -415,9 +415,9 @@ function ModalSuccessView({
         </div>
       )}
       
-      {/* Concierge CTA */}
+      {/* Keep-searching CTA */}
       <button
-        onClick={onConcierge}
+        onClick={onKeepSearching}
         className="w-full p-4 rounded-xl bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 hover:border-primary/40 transition-all text-left group"
       >
         <div className="flex items-start gap-3">
@@ -426,10 +426,10 @@ function ModalSuccessView({
           </div>
           <div className="flex-1">
             <div className="font-semibold text-foreground mb-1">
-              Want help finding the best fit?
+              Keep comparing centers
             </div>
             <p className="text-sm text-muted-foreground">
-              Our Placement Service matches you with verified treatment centers based on your unique needs.
+              Search the full directory by location, level of care, and insurance — you can contact as many facilities as you like.
             </p>
           </div>
           <ArrowRight className="h-5 w-5 text-primary opacity-0 group-hover:opacity-100 transition-opacity mt-2" />
@@ -604,13 +604,15 @@ export function RequestInfoModal({
     onOpenChange(false);
   };
 
-  const handleConcierge = () => {
+  const handleKeepSearching = () => {
     if (safeFacilityId) {
-      trackAnalyticsEvent("concierge_conversion", safeFacilityId, {
+      trackAnalyticsEvent("keep_searching_click", safeFacilityId, {
         fromFacilityName: safeFacilityName,
       });
     }
-    navigate("/concierge");
+    navigate(
+      `/search-results?location=${encodeURIComponent(`${facility.city}, ${facility.state}`)}`,
+    );
     onOpenChange(false);
   };
 
@@ -697,7 +699,7 @@ export function RequestInfoModal({
         loadingNearby={loadingNearby}
         onClose={() => onOpenChange(false)}
         onNearbyRequest={handleNearbyRequest}
-        onConcierge={handleConcierge}
+        onKeepSearching={handleKeepSearching}
         isPro={isPro}
         contact={{
           email: contact.email,

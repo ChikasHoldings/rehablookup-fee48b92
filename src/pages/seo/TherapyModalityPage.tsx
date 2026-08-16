@@ -634,7 +634,7 @@ export default function TherapyModalityPage() {
       showInsuranceLinks
       showNearMeLinks
       ctaTitle={`Find Programs Using ${modality.conditionName}`}
-      ctaSubtitle={`Our concierge team matches you with treatment programs that use ${modality.conditionName.toLowerCase()} and other evidence-based approaches. Free and confidential.`}
+      ctaSubtitle={`Search treatment programs that list ${modality.conditionName.toLowerCase()} and other evidence-based approaches, then contact them directly.`}
     >
       <SmartInternalLinks pageType="state" stateSlug="" stateName="" />
     </SEOLandingTemplate>

@@ -5,7 +5,7 @@ import {
   InternationalHero,
   CountriesServed,
   InternationalFAQ,
-  PlacementCTA
+  DirectorySearchCTA
 } from "./components";
 import { Link } from "react-router-dom";
 import { MapPin, Sun, Mountain, Sparkles, Heart } from "lucide-react";
@@ -97,7 +97,7 @@ const LuxuryRehabArizona = () => {
 
       <CountriesServed />
       <InternationalFAQ title="Arizona Treatment FAQs" subtitle="Everything you need to know about luxury rehab in the Grand Canyon State." faqs={customFAQs} schemaId="luxury-rehab-arizona-faq" />
-      <PlacementCTA title="Find Your Arizona Treatment Center" description="From Sedona's spiritual healing to Scottsdale's luxury resorts, we'll place you in the perfect Arizona facility." />
+      <DirectorySearchCTA title="Find Your Arizona Treatment Center" description="Filter Arizona listings by city, level of care, and insurance, then contact facilities directly." />
     </Layout>
   );
 };

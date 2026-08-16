@@ -17,7 +17,7 @@ import {
   type TreatmentType,
 } from "@/utils/stateContentGenerator";
 import {
-  Search, ArrowRight, Shield, Clock, CheckCircle, MapPin, Heart,
+  Search, ArrowRight, Shield, Clock, CheckCircle, MapPin,
 } from "lucide-react";
 
 interface TreatmentConfig {
@@ -154,7 +154,7 @@ const StateTreatmentExpandedPage = ({ treatmentKey }: StateTreatmentExpandedPage
     <Layout>
       <SEO
         title={`${config.label} Centers in ${stateName} (${abbreviation}) | Find Treatment`}
-        description={`Find accredited ${config.label.toLowerCase()} in ${stateName}. Compare verified programs, verify insurance, and get matched with the right facility. ${cities.length}+ cities covered.`}
+        description={`Find accredited ${config.label.toLowerCase()} in ${stateName}. Compare verified programs, check insurance, and contact the facilities that fit. ${cities.length}+ cities covered.`}
         canonical={`/treatment-types/${config.slug}/${stateSlug}`}
         // Thin near-duplicate of /rehab-centers/:state — Google was choosing
         // one as canonical anyway. Keep the page reachable for users (linked
@@ -357,9 +357,9 @@ const StateTreatmentExpandedPage = ({ treatmentKey }: StateTreatmentExpandedPage
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">
-              <Link to="/concierge">
-                <Heart className="mr-2 h-4 w-4" />
-                Get Matched Free
+              <Link to="/search-results">
+                <Search className="mr-2 h-4 w-4" />
+                Browse Treatment Centers
               </Link>
             </Button>
           </div>
@@ -383,7 +383,7 @@ const StateTreatmentExpandedPage = ({ treatmentKey }: StateTreatmentExpandedPage
         ]}
         insuranceLinks={[
           { title: "Insurance Guide", href: "/insurance" },
-          { title: "Verify Coverage", href: "/concierge" },
+          { title: "Check Insurance Coverage", href: "/insurance" },
         ]}
       />
     </Layout>

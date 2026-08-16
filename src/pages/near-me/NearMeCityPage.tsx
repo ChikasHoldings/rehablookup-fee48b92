@@ -44,12 +44,12 @@ function generateCityFAQs(
   // Add intent-specific FAQs to differentiate pages
   if (slug.includes("emergency") || slug.includes("same-day") || slug.includes("immediate") || slug.includes("24-7")) {
     base.push(
-      { question: `Can I get same-day admission to rehab in ${cityName}?`, answer: `Many treatment centers in ${cityName} offer same-day or next-day admission for urgent cases. Call facilities directly or use our concierge service for immediate placement assistance.` },
-      { question: `What should I do in an addiction emergency in ${cityName}?`, answer: `For immediate danger, call 911. For urgent treatment needs, contact our 24/7 concierge service or call SAMHSA's helpline at 1-800-662-4357. Several ${cityName} facilities accept walk-ins for crisis situations.` }
+      { question: `Can I get same-day admission to rehab in ${cityName}?`, answer: `Many treatment centers in ${cityName} offer same-day or next-day admission for urgent cases. Call the facility's published admissions line directly to confirm current availability.` },
+      { question: `What should I do in an addiction emergency in ${cityName}?`, answer: `For immediate danger, call 911. For urgent treatment needs, call SAMHSA's free 24/7 National Helpline at 1-800-662-4357. Several ${cityName} facilities accept walk-ins for crisis situations.` }
     );
   } else if (slug.includes("free") || slug.includes("affordable") || slug.includes("low-cost") || slug.includes("medicaid")) {
     base.push(
-      { question: `How can I afford rehab in ${cityName} without insurance?`, answer: `${cityName} has several options: state-funded programs, non-profit facilities, sliding-scale fee centers, and SAMHSA grant-funded treatment. Our concierge team can help identify no-cost options near you.` },
+      { question: `How can I afford rehab in ${cityName} without insurance?`, answer: `${cityName} has several options: state-funded programs, non-profit facilities, sliding-scale fee centers, and SAMHSA grant-funded treatment. Filter the directory by insurance accepted to surface Medicaid and sliding-scale programs near you.` },
       { question: `Does Medicaid cover rehab in ${cityName}, ${stateAbbr}?`, answer: `Yes, Medicaid covers substance abuse treatment in ${stateAbbr}. Coverage includes detox, inpatient, outpatient, and medication-assisted treatment. Not all facilities accept Medicaid — verify with each provider.` }
     );
   } else if (slug.includes("womens") || slug.includes("mens") || slug.includes("teen") || slug.includes("veterans") || slug.includes("lgbtq") || slug.includes("senior")) {
@@ -70,7 +70,7 @@ function generateCityFAQs(
   } else {
     base.push(
       { question: `Does insurance cover ${label.toLowerCase()} in ${cityName}?`, answer: `Most health insurance plans cover ${treatmentType.toLowerCase()} in ${cityName} under the Mental Health Parity Act. This includes Medicaid, Medicare, and most private insurance. Verify coverage with the specific facility.` },
-      { question: `How do I choose a ${label.toLowerCase()} center in ${cityName}?`, answer: `Look for accreditation (CARF or Joint Commission), verify licensing, check insurance acceptance, review treatment approaches, and consider location and aftercare planning. Our free concierge can help match you.` }
+      { question: `How do I choose a ${label.toLowerCase()} center in ${cityName}?`, answer: `Look for accreditation (CARF or Joint Commission), verify licensing, check insurance acceptance, review treatment approaches, and consider location and aftercare planning. Compare candidates side by side before you contact them.` }
     );
   }
 
@@ -212,7 +212,7 @@ export default function NearMeCityPage() {
             <p className="mt-2 text-muted-foreground">
               {facilities.length > 0
                 ? `Browse ${facilities.length} verified facilities in ${cityData.name}.`
-                : `Explore ${nearMeType.treatmentType.toLowerCase()} options near ${cityData.name}. Browse statewide or use our free concierge.`}
+                : `Explore ${nearMeType.treatmentType.toLowerCase()} options near ${cityData.name}. Browse statewide listings.`}
             </p>
           </div>
 
@@ -227,7 +227,7 @@ export default function NearMeCityPage() {
                 No listings in {cityData.name} yet
               </h3>
               <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                We're expanding our directory. Browse {stateData.name} statewide or use our concierge service for personalized matching.
+                We're expanding our directory. Browse {stateData.name} statewide listings in the meantime.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Link to={`/${nearMeType.slug}/${stateData.slug}`}>
@@ -235,9 +235,9 @@ export default function NearMeCityPage() {
                     View {stateData.name} Centers <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
-                <Link to="/concierge">
+                <Link to="/search-results">
                   <Button className="gap-2">
-                    Free Concierge Help <ArrowRight className="h-4 w-4" />
+                    Search Treatment Centers <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
               </div>

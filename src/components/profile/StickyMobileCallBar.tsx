@@ -35,7 +35,7 @@ interface StickyMobileCallBarProps {
  * Conditional render
  * ──────────────────
  * If no phone number is available, the component renders nothing — the
- * page should fall back to its in-page CTA (e.g. concierge form).
+ * page should fall back to its in-page CTA (e.g. the request-info form).
  */
 export function StickyMobileCallBar({
   facilityName,

@@ -622,7 +622,7 @@ export default function SeekerSignup() {
                     <User className="h-5 w-5" />
                   </div>
                   <div>
-                    <p className="font-medium">Placement Service</p>
+                    <p className="font-medium">Compare Facilities</p>
                     <p className="text-sm text-white/70">Get personalized placement assistance</p>
                   </div>
                 </div>

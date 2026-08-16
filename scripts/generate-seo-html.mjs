@@ -646,7 +646,7 @@ async function generateStateArticlePages() {
           <h2>Finding Quality Treatment in ${state}</h2>
           <p>Choosing the right rehab center in ${state} requires evaluating accreditation, treatment approaches, staff qualifications, and insurance acceptance. This guide helps you navigate the process with confidence.</p>
           <h2>Resources</h2>
-          <ul><li><a href="/rehab-centers/${slug}">All Rehab Centers in ${state}</a></li><li><a href="/locations">Browse All Locations</a></li><li><a href="/concierge">Free Placement Help</a></li></ul>`,
+          <ul><li><a href="/rehab-centers/${slug}">All Rehab Centers in ${state}</a></li><li><a href="/locations">Browse All Locations</a></li><li><a href="/compare">Compare Facilities</a></li></ul>`,
         breadcrumbs: [
           { name: "Home", url: "/" },
           { name: state, url: `/rehab-centers/${slug}` },
@@ -682,7 +682,7 @@ async function generateCityPages() {
         <h2>Insurance & Payment</h2>
         <p>Most rehab centers in ${city.city} accept major insurance plans. Verify your coverage with our free insurance check tool to find in-network facilities near you.</p>
         <h2>Getting Help in ${city.city}</h2>
-        <p>If you or a loved one needs help with addiction in ${city.city}, our concierge team can match you with accredited programs based on your needs, insurance, and preferences.</p>`,
+        <p>If you or a loved one needs help with addiction in ${city.city}, search the directory to compare accredited programs by level of care, insurance accepted, and location.</p>`,
       breadcrumbs: [
         { name: "Home", url: "/" },
         { name: "Locations", url: "/locations" },

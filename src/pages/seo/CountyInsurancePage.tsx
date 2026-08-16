@@ -76,7 +76,7 @@ export default function CountyInsurancePage() {
     },
     {
       question: `How do I find ${insurer.name}-accepting rehab centers in ${countyData.name} County?`,
-      answer: `Use RehabLookup to search verified treatment centers in ${countyData.name} County that accept ${insurer.name}. You can filter by treatment type, compare facilities in ${cityList}, and verify insurance coverage directly with admissions teams. Our concierge service can also match you with in-network ${insurer.name} providers.`,
+      answer: `Use RehabLookup to search verified treatment centers in ${countyData.name} County that accept ${insurer.name}. You can filter by treatment type, compare facilities in ${cityList}, and verify insurance coverage directly with admissions teams. Filter the directory by insurance accepted to surface in-network ${insurer.name} providers.`,
     },
     {
       question: `What types of treatment does ${insurer.name} cover in ${stateData.name}?`,

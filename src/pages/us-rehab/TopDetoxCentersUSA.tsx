@@ -1,6 +1,6 @@
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
-import { InternationalPageHero, WhyUSATreatment, StateDestinations, CountriesServed, InternationalFAQ, PlacementCTA } from "./components";
+import { InternationalPageHero, WhyUSATreatment, StateDestinations, CountriesServed, InternationalFAQ, DirectorySearchCTA } from "./components";
 import { CheckCircle } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -10,7 +10,7 @@ const TopDetoxCentersUSA = () => {
     { question: "How long does detox last at top US facilities?", answer: "Duration depends on the substance: alcohol (3–7 days), opioids (5–10 days), benzodiazepines (7–14+ days), and stimulants (3–7 days). Top facilities customize protocols based on individual medical needs and addiction severity." },
     { question: "Do top detox centers also offer full rehab?", answer: "Yes. Most top-tier detox centers offer integrated treatment tracks, transitioning patients seamlessly from detox into residential or intensive outpatient programs without interrupting care." },
     { question: "How do I know a detox center is truly 'top-rated'?", answer: "Look for accreditation (Joint Commission, CARF), state licensing, board-certified physicians, published outcomes data, and positive patient reviews. Our team pre-vets all facilities in our network." },
-    { question: "Can international patients access top US detox centers?", answer: "Absolutely. Our international placement service specializes in connecting global patients with America's highest-rated detox and treatment facilities, handling visa guidance, travel logistics, and admission coordination." },
+    { question: "Can international patients access top US detox centers?", answer: "Many US detox centers accept international patients. Listings show which programs state that they do; contact a facility's admissions team directly to confirm visa, travel, and intake requirements." },
   ];
 
   return (
@@ -81,7 +81,7 @@ const TopDetoxCentersUSA = () => {
       <StateDestinations title="Top States for Medical Detox" subtitle="These states have the highest concentration of accredited, top-rated detox facilities." />
       <CountriesServed />
       <InternationalFAQ title="Top Detox Center FAQs" subtitle="Common questions about America's highest-rated detoxification facilities." faqs={faqs} schemaId="top-detox-usa-faq" />
-      <PlacementCTA title="Access America's Top Detox Centers" description="Our placement team connects you with the nation's highest-rated detox facilities based on your specific substance, medical needs, and preferences." />
+      <DirectorySearchCTA title="Access America's Top Detox Centers" description="Filter detox listings by location, medical detox capability, and accepted insurance, then contact facilities directly." />
     </Layout>
   );
 };

@@ -834,9 +834,9 @@ const ArticleDetail = () => {
                 <p className="text-sm text-white/80 mb-4">
                   Our free service connects you with verified rehab centers.
                 </p>
-                <Link to="/concierge">
+                <Link to="/search-results">
                   <Button variant="secondary" size="sm" className="w-full bg-white text-primary hover:bg-white/90">
-                    Get Free Help
+                    Search Treatment Centers
                   </Button>
                 </Link>
               </div>
@@ -899,9 +899,9 @@ const ArticleDetail = () => {
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
-                <Link to="/concierge">
+                <Link to="/search-results">
                   <Button size="lg" variant="outline" className="gap-2 border-white/30 text-white hover:bg-white/10">
-                    Get Free Help
+                    Search Treatment Centers
                   </Button>
                 </Link>
               </div>

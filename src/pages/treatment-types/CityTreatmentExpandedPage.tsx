@@ -11,7 +11,7 @@ import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
 import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 import { shouldEmitFAQSchema, getFacilityDensity, getUrbanClassification } from "@/utils/seoPageValidator";
 import {
-  Search, ArrowRight, Shield, Phone,
+  Search, ArrowRight, Shield,
 } from "lucide-react";
 
 interface CityTreatmentConfig {
@@ -273,10 +273,10 @@ const CityTreatmentExpandedPage = ({ treatmentKey }: CityTreatmentExpandedPagePr
                 {config.heroDescription} Compare verified programs in {cityName}.
               </p>
               <div className="flex flex-wrap gap-2.5">
-                <Link to="/concierge">
+                <Link to="/search-results">
                   <Button size="default" className="gap-2 shadow-lg shadow-black/20">
-                    <Phone className="h-4 w-4" />
-                    Get Matched Free
+                    <Search className="h-4 w-4" />
+                    Browse Treatment Centers
                   </Button>
                 </Link>
                 <Link to={`/rehab-centers/${stateSlug}/${citySlug}`}>
@@ -374,11 +374,11 @@ const CityTreatmentExpandedPage = ({ treatmentKey }: CityTreatmentExpandedPagePr
               Start {config.label} in {cityName} Today
             </h2>
             <p className="text-muted-foreground mb-8">
-              Our concierge team will match you with the best {config.label.toLowerCase()} programs in {cityName}. Confidential. No obligation.
+              Compare {config.label.toLowerCase()} programs in {cityName} side by side, then contact them directly. Free to search, no obligation.
             </p>
-            <Link to="/concierge">
+            <Link to="/search-results">
               <Button size="lg" className="gap-2">
-                Get Matched Free <ArrowRight className="h-4 w-4" />
+                Browse Treatment Centers <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
           </div>

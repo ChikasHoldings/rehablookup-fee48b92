@@ -106,7 +106,7 @@ export default function DemographicTreatmentPage() {
       showInsuranceLinks
       showNearMeLinks
       ctaTitle={`Find ${config.population} Treatment Programs`}
-      ctaSubtitle={`Our concierge team will match you with accredited programs specializing in ${config.population.toLowerCase()} care. Confidential. No obligation.`}
+      ctaSubtitle={`Compare accredited programs specializing in ${config.population.toLowerCase()} care, then contact them directly. Free to search, no obligation.`}
     />
   );
 }

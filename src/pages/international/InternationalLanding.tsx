@@ -30,13 +30,13 @@ import internationalTherapyImg from "@/assets/international-therapy.jpg";
 const TRUST_FEATURES = [
   { 
     icon: Clock, 
-    title: "24-Hour Response",
-    description: "Dedicated placement advisors respond within one business day"
+    title: "Direct Contact",
+    description: "Every listing publishes the facility's own admissions contact"
   },
   { 
     icon: Shield, 
-    title: "Discreet & Confidential",
-    description: "Private coordination with no public records or exposure"
+    title: "Search Anonymously",
+    description: "Browse and compare without an account or personal details"
   },
   { 
     icon: Building2, 
@@ -45,8 +45,8 @@ const TRUST_FEATURES = [
   },
   { 
     icon: Plane, 
-    title: "Travel Coordination",
-    description: "We help coordinate intake timing and travel logistics"
+    title: "Travel Guidance",
+    description: "Guides on visas, timing, and travel to US treatment"
   },
 ];
 
@@ -64,7 +64,7 @@ const WHY_US_TREATMENT = [
   {
     icon: Sparkles,
     title: "Luxury & Executive Care",
-    description: "World-class amenities, private rooms, gourmet meals, and concierge-level service."
+    description: "World-class amenities, private rooms, gourmet meals, and high-touch service."
   },
   {
     icon: Users,
@@ -75,66 +75,65 @@ const WHY_US_TREATMENT = [
 
 const STEPS = [
   {
-    title: "Complete Application",
-    description: "Fill out our comprehensive intake form with your treatment needs and preferences",
+    title: "Search the directory",
+    description: "Filter US listings by level of care, location, and insurance accepted",
   },
   {
-    title: "Get Placed",
-    description: "Our team identifies best-fit U.S. facilities based on your specific criteria",
+    title: "Compare programs",
+    description: "Review accreditation, services, and published pricing side by side",
   },
   {
-    title: "Confirm Admission",
-    description: "We coordinate directly with the facility to secure your placement",
+    title: "Contact the facility",
+    description: "Call or message the facility's admissions team about intake and travel",
   },
 ];
 
 const FAQ_ITEMS = [
   {
-    question: "How much does placement cost?",
-    answer: "Our placement service is completely free for clients and families. There is no fee to submit your intake or to be matched with treatment facilities. We're able to offer this at no cost because participating treatment centers fund the platform — your placement guidance stays independent and free.",
+    question: "How much does it cost to use RehabLookup?",
+    answer: "Nothing. Searching the directory, comparing facilities, and contacting them is free for individuals and families, with no account required. Listed treatment centers fund the platform through optional subscriptions and advertising.",
   },
   {
-    question: "Do you work with luxury and executive programs?",
-    answer: "Yes. We maintain relationships with premium treatment facilities including luxury residential programs, executive rehabs with private accommodations, and high-end clinical centers across the United States.",
+    question: "Are luxury and executive programs listed?",
+    answer: "Yes. The directory includes luxury residential programs, executive rehabs with private accommodations, and high-end clinical centers across the United States, alongside standard and low-cost options.",
   },
   {
-    question: "Can you help clients from Europe, Middle East, or Asia?",
-    answer: "Absolutely. We serve clients from all regions globally. Our team is experienced in coordinating international placements and communicates across time zones to ensure a seamless process.",
+    question: "Can I use RehabLookup from Europe, the Middle East, or Asia?",
+    answer: "Yes. The directory is open worldwide. Listings indicate which facilities state that they accept international patients so you can shortlist before contacting their admissions teams.",
   },
   {
-    question: "What happens after I complete the application?",
-    answer: "After submitting your intake, you'll receive a confirmation email. Within 24 hours, a placement advisor will review your case and begin identifying suitable treatment options. You'll receive personalized recommendations and next steps via email or phone.",
+    question: "What happens after I contact a facility?",
+    answer: "Your inquiry goes to that facility. Their admissions team responds directly about clinical fit, availability, visa and travel questions, and next steps. RehabLookup is not part of that conversation.",
   },
   {
     question: "Is RehabLookup a treatment provider?",
-    answer: "No. RehabLookup is a placement coordination service. We help individuals and families compare treatment options and coordinate placement with independent, licensed treatment facilities. All clinical decisions are made by the facilities themselves.",
+    answer: "No. RehabLookup is an independent directory of licensed treatment facilities. We do not provide treatment, arrange admissions, or make clinical recommendations — all clinical decisions are made by the facilities themselves.",
   },
 ];
 
 const TRUST_STATS = [
   { value: "50+", label: "Countries Served", icon: Globe },
   { value: "1,000+", label: "US Facilities", icon: Building2 },
-  { value: "24hr", label: "Response Time", icon: Clock },
+  { value: "Free", label: "To Search", icon: Clock },
 ];
 
 export default function InternationalLanding() {
   return (
     <>
       <SEO
-        title="U.S. Treatment Placement for International Clients | RehabLookup"
-        description="Private placement service for international patients seeking treatment in the United States. Vetted facilities, discreet coordination, 24-hour response."
+        title="US Treatment Centers for International Patients | RehabLookup"
+        description="Search and compare licensed US addiction-treatment centers, including programs that accept international patients. Free to browse, contact facilities directly."
         canonical="/international"
-        keywords={["international rehab", "US addiction treatment", "global rehab placement", "travel for treatment", "executive rehab", "luxury rehab USA"]}
+        keywords={["international rehab", "US addiction treatment", "rehab directory", "travel for treatment", "executive rehab", "luxury rehab USA"]}
         structuredData={[
-          // Free placement service — mirrors the Concierge landing's
-          // Service+Offer setup (price=0).
+          // Directory service — free to search, no placement offering.
           {
             "@context": "https://schema.org",
             "@type": "Service",
-            name: "International Treatment Placement",
-            serviceType: "Addiction Treatment Placement",
+            name: "US Treatment Center Directory for International Patients",
+            serviceType: "Addiction Treatment Directory",
             description:
-              "Free concierge placement service that matches international clients with vetted U.S. addiction treatment centers.",
+              "Free directory for searching and comparing licensed US addiction-treatment centers, including programs that accept international patients.",
             provider: {
               "@type": "Organization",
               name: "RehabLookup",
@@ -151,8 +150,8 @@ export default function InternationalLanding() {
               priceCurrency: "USD",
               availability: "https://schema.org/InStock",
               description:
-                "Free placement service for international clients and families.",
-              url: "https://rehablookup.com/international/apply",
+                "Free to search, compare, and contact listed treatment centers.",
+              url: "https://rehablookup.com/search-results",
             },
           },
         ]}
@@ -191,7 +190,7 @@ export default function InternationalLanding() {
               >
                 <div className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/20 px-4 py-2 mb-6">
                   <Globe className="h-4 w-4 text-accent" />
-                  <span className="text-sm font-medium text-white/90">International Placement Services</span>
+                  <span className="text-sm font-medium text-white/90">International Patients</span>
                 </div>
                 
                 <h1 className="text-[1.625rem] sm:text-3xl md:text-4xl lg:text-[2.75rem] font-bold text-white mb-3 tracking-tight leading-tight">
@@ -199,18 +198,18 @@ export default function InternationalLanding() {
                 </h1>
                 
                 <p className="text-base md:text-lg text-white/85 mb-4 leading-relaxed max-w-2xl mx-auto px-2">
-                  Expert placement into America's finest treatment centers. We handle everything—from placement to admission—so you can focus on recovery.
+                  Search and compare licensed US treatment centers, including programs that accept international patients, then contact their admissions teams directly.
                 </p>
 
-                {/* Free service — surfaced above the fold so international
-                    clients know there's no cost before starting the intake. */}
+                {/* Free to search — surfaced above the fold so international
+                    visitors know there's no cost or account needed. */}
                 <div className="flex flex-wrap items-center justify-center gap-2 mb-6 text-sm text-white/80">
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-400/15 border border-emerald-400/30 px-3 py-1 text-emerald-100">
                     <span className="font-semibold">100% free</span>
-                    <span>placement service</span>
+                    <span>to search</span>
                   </span>
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 border border-white/20 px-3 py-1">
-                    No fee, ever
+                    No account required
                   </span>
                 </div>
 
@@ -219,13 +218,13 @@ export default function InternationalLanding() {
                   className="h-12 md:h-14 px-6 md:px-10 text-base font-semibold bg-accent hover:bg-accent/90 text-accent-foreground shadow-lg shadow-accent/25 w-full sm:w-auto"
                   asChild
                 >
-                  <Link to="/international/apply">
-                    Start your free intake
+                  <Link to="/search-results">
+                    Search treatment centers
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>
                 </Button>
                 <p className="mt-3 text-xs text-white/60">
-                  Free for clients and families. No placement fee, no deposit.
+                  Free to browse. RehabLookup is a directory, not a treatment provider.
                 </p>
               </motion.div>
             </div>
@@ -249,7 +248,7 @@ export default function InternationalLanding() {
                     <CheckCircle2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-accent shrink-0" />
                     <span className="text-lg sm:text-xl md:text-2xl font-bold">100%</span>
                   </div>
-                  <p className="text-xs sm:text-sm text-primary-foreground/80">Free Placement Service</p>
+                  <p className="text-xs sm:text-sm text-primary-foreground/80">Free To Search</p>
                 </div>
               </div>
             </div>
@@ -325,7 +324,7 @@ export default function InternationalLanding() {
                       "Executives requiring discreet, private programs",
                       "Families seeking specialized clinical care",
                       "Individuals needing dual-diagnosis treatment",
-                      "Clients looking for luxury or concierge-level care"
+                      "People looking for luxury or executive programs"
                     ].map((item, index) => (
                       <li key={index} className="flex items-start gap-2.5 md:gap-3">
                         <CheckCircle2 className="h-4 w-4 md:h-5 md:w-5 text-primary shrink-0 mt-0.5" />
@@ -335,7 +334,7 @@ export default function InternationalLanding() {
                   </ul>
                   <div className="mt-6 md:mt-8">
                     <Button asChild size="lg" className="w-full sm:w-auto">
-                      <Link to="/international/apply">
+                      <Link to="/search-results">
                         Find Treatment
                         <ArrowRight className="ml-2 h-4 w-4" />
                       </Link>
@@ -404,7 +403,7 @@ export default function InternationalLanding() {
               <div className="text-center mb-10 sm:mb-14">
                 <p className="text-xs sm:text-sm font-semibold text-primary uppercase tracking-wide mb-2 sm:mb-3">How It Works</p>
                 <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-3 sm:mb-4 px-2">
-                  A Streamlined Placement Process
+                  How the directory works
                 </h2>
                 <p className="text-sm sm:text-base text-muted-foreground max-w-lg mx-auto">
                   A streamlined process to connect you with the right treatment program
@@ -510,14 +509,14 @@ export default function InternationalLanding() {
                   Ready to Begin Your Recovery Journey?
                 </h2>
                 <p className="text-sm md:text-base text-primary-foreground/80 max-w-xl mx-auto mb-6 md:mb-8">
-                  Take the first step towards accessing world-class treatment in the United States. Our advisors are standing by to help.
+                  Search licensed US treatment centers, compare programs side by side, and contact their admissions teams directly.
                 </p>
                 <Button 
                   size="lg" 
                   className="h-11 md:h-12 px-6 md:px-8 text-sm md:text-base font-semibold bg-accent hover:bg-accent/90 text-accent-foreground shadow-lg w-full sm:w-auto" 
                   asChild
                 >
-                  <Link to="/international/apply">
+                  <Link to="/search-results">
                     Find Treatment
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>

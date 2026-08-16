@@ -12,7 +12,7 @@ import { FindByStateSection } from "@/components/home/FindByStateSection";
 import { HomepageTopFacilitiesGrid } from "@/components/home/HomepageTopFacilitiesGrid";
 import { TrustRibbon } from "@/components/conversion/TrustRibbon";
 import { useNewCtaSystem } from "@/hooks/useNewCtaSystem";
-// TrustStrip moved to /concierge
+// TrustStrip is no longer rendered on the homepage.
 import { LazySection } from "@/components/ui/lazy-section";
 import { useGeoLocation } from "@/hooks/useGeoLocation";
 import { useCountUp } from "@/hooks/useCountUp";
@@ -129,11 +129,11 @@ const Index = () => {
   // let the JSX render a skeleton in its place rather than "0+".
   const facilitiesCount = useCountUp({ to: stats?.facilityCount ?? 0 });
   const statesCount = useCountUp({ to: stats?.stateCount ?? 0 });
-  // Geo-derived location string (e.g. "Boise, ID") forwarded to /concierge
-  // so the intake form can prefill the visitor's preferred location without
-  // asking them to retype it. Falls back gracefully when geo isn't ready.
+  // Geo-derived location string (e.g. "Boise, ID") used to pre-seed the
+  // "centers near you" search link so the visitor doesn't have to retype
+  // their area. Falls back gracefully when geo isn't ready.
   const homepageGeo = useGeoLocation();
-  const homepageConciergeLocation =
+  const homepageNearbyLocation =
     homepageGeo.city && homepageGeo.regionCode
       ? `${homepageGeo.city}, ${homepageGeo.regionCode}`
       : homepageGeo.regionCode || "";
@@ -194,7 +194,7 @@ const Index = () => {
             "@context": "https://schema.org",
             "@type": "Service",
             name: "Addiction Treatment Center Directory",
-            serviceType: "Treatment Center Placement",
+            serviceType: "Treatment Center Directory",
             provider: {
               "@type": "Organization",
               name: "RehabLookup",
@@ -203,12 +203,12 @@ const Index = () => {
               "@type": "Country",
               name: "United States",
             },
-            description: "Free service connecting individuals with verified addiction treatment centers",
+            description: "Free directory for searching and comparing verified addiction treatment centers",
             offers: {
               "@type": "Offer",
               price: "0",
               priceCurrency: "USD",
-              description: "Free treatment center placement service",
+              description: "Free to search, compare, and contact listed treatment centers",
             },
           },
         ]}
@@ -324,8 +324,6 @@ const Index = () => {
           </div>
         </div>
       </section>
-
-      {/* TrustStrip moved to /concierge — see ConciergeLanding.tsx */}
 
       {/* Calm reassurance ribbon — only renders when the
           NEW_CTA_SYSTEM flag is on. Sits directly below the navy
@@ -561,7 +559,7 @@ const Index = () => {
                   { name: "All Locations", href: "/locations" },
                   { name: "Cost Estimator", href: "/cost-estimator" },
                   { name: "Provider Resources", href: "/provider-resources" },
-                  { name: "Concierge Service", href: "/concierge" },
+                  { name: "Compare Facilities", href: "/compare" },
                   { name: "Search Centers", href: "/search-results" },
                 ].map((link) => (
                   <Link
@@ -602,7 +600,7 @@ const Index = () => {
           on the left. Replaced the previous lightweight rounded-card
           to give the scroll-end more visual weight. */}
       <Suspense fallback={<div style={{ minHeight: "440px" }} aria-hidden="true" />}>
-        <RecoveryJourneyCTA conciergeLocation={homepageConciergeLocation} />
+        <RecoveryJourneyCTA nearbyLocation={homepageNearbyLocation} />
       </Suspense>
 
       <LazySection fallbackHeight="300px">

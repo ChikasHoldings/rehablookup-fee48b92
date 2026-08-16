@@ -335,7 +335,6 @@ export const analytics = {
     enqueue("promo_applied", { promo: promoCode, discount, plan_id: planId }, "subscription"),
   checkoutAbandoned: (planId: string, planName: string, price: number) =>
     enqueue("subscription_abandon", { plan_id: planId, plan_name: planName, price }, "subscription"),
-  conciergeIntakeSubmitted: () => enqueue("concierge_intake_submitted", undefined, "concierge"),
   beginInternationalCheckout: (country: string) =>
     enqueue("international_checkout_begin", { country }, "international"),
   internationalPaymentComplete: (sessionId: string) =>

@@ -4,7 +4,7 @@ import {
   InternationalHero,
   CountriesServed,
   InternationalFAQ,
-  PlacementCTA
+  DirectorySearchCTA
 } from "./components";
 import { Lock, EyeOff, Shield, UserX, MapPin, Key } from "lucide-react";
 
@@ -88,7 +88,7 @@ const PrivateRehabAmerica = () => {
 
       <CountriesServed />
       <InternationalFAQ title="Private Treatment FAQs" subtitle="Common questions about confidential addiction treatment in America." faqs={customFAQs} schemaId="private-rehab-faq" />
-      <PlacementCTA title="Your Privacy is Our Priority" description="Discrete, confidential placement into America's most private treatment facilities. Your secret is safe with us." />
+      <DirectorySearchCTA title="Your Privacy is Our Priority" description="Browse private and executive treatment listings anonymously — no account required to search or contact a facility." />
     </Layout>
   );
 };

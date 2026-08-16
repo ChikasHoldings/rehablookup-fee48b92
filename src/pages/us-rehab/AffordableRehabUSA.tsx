@@ -1,6 +1,6 @@
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
-import { InternationalPageHero, StateDestinations, InternationalFAQ, PlacementCTA } from "./components";
+import { InternationalPageHero, StateDestinations, InternationalFAQ, DirectorySearchCTA } from "./components";
 import { CheckCircle } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -17,7 +17,7 @@ const AffordableRehabUSA = () => {
     { question: "Can I find good rehab in the USA for under $20,000?", answer: "Yes. Many CARF and Joint Commission accredited facilities offer comprehensive programs in this range. Focus on clinical quality indicators like accreditation, staff credentials, and evidence-based practices rather than luxury amenities." },
     { question: "Are affordable US rehab centers lower quality?", answer: "Not necessarily. Cost reflects amenities and location more than clinical quality. Many mid-range facilities employ highly credentialed staff and use the same evidence-based protocols as luxury centers." },
     { question: "What states offer the best value for rehab?", answer: "Arizona, Tennessee, Texas, Georgia, and Colorado offer excellent treatment quality at lower costs than coastal states. These states have thriving recovery communities and experienced treatment providers." },
-    { question: "How can I reduce the cost of rehab in the USA?", answer: "Negotiate self-pay rates, consider non-coastal locations, ask about intensive shorter programs, explore payment plans, and let our placement team identify value-optimized programs." },
+    { question: "How can I reduce the cost of rehab in the USA?", answer: "Negotiate self-pay rates, consider non-coastal locations, ask about intensive shorter programs, explore payment plans, and and use the insurance and level-of-care filters to surface programs in your price range." },
   ];
 
   return (
@@ -78,7 +78,7 @@ const AffordableRehabUSA = () => {
 
       <StateDestinations title="Best-Value States for Treatment" subtitle="These states offer accredited programs at competitive price points with strong recovery communities." />
       <InternationalFAQ title="Affordable Rehab FAQs" subtitle="Common questions about finding quality treatment at competitive prices." faqs={faqs} schemaId="affordable-rehab-usa-faq" />
-      <PlacementCTA title="Find Quality Treatment Within Your Budget" description="Our placement specialists identify accredited programs that deliver exceptional care at a price point that works for you." />
+      <DirectorySearchCTA title="Find Quality Treatment Within Your Budget" description="Filter by insurance accepted and level of care to find accredited programs that fit your budget." />
     </Layout>
   );
 };

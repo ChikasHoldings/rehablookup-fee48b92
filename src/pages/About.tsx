@@ -536,7 +536,7 @@ const About = () => {
               { year: "2024", title: "Founded", desc: "RehabLookup launched with a mission to bring transparency to addiction treatment search." },
               { year: "2024", title: "First 100 Facilities", desc: "Onboarded 100+ verified treatment centers across 25 states." },
               { year: "2025", title: "Nationwide Coverage", desc: "Expanded to all 50 states with 500+ verified facilities on a transparent flat-fee subscription model." },
-              { year: "2026", title: "Platform 2.0", desc: "Launched the provider dashboard, concierge placement, and performance analytics for treatment centers." },
+              { year: "2026", title: "Platform 2.0", desc: "Launched the provider dashboard, listing management, and performance analytics for treatment centers." },
             ].map((milestone, idx) => (
               <div key={idx} className="flex gap-4">
                 <div className="flex flex-col items-center">
@@ -656,10 +656,10 @@ const About = () => {
             </div>
             
             <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
-              <Link to="/concierge">
+              <Link to="/search-results">
                 <Button size="sm" className="w-full gap-2 sm:w-auto">
-                  <Heart className="h-4 w-4" />
-                  Find Treatment
+                  <Search className="h-4 w-4" />
+                  Search Treatment Centers
                 </Button>
               </Link>
               <Link to="/contact">

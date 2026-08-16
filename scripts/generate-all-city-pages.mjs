@@ -220,7 +220,7 @@ function renderPage(city, allCitiesInState, facilities = []) {
 
     ${renderCta(
       `Get confidential help in ${city.cityName}`,
-      `Verified ${city.cityName}, ${city.stateAbbr} treatment options — free placement guidance from licensed coordinators.`,
+      `Verified ${city.cityName}, ${city.stateAbbr} treatment options — compare programs, insurance accepted, and levels of care.`,
     )}
 
     <p class="small"><a href="/rehab-centers/${city.stateSlug}">All Rehab Centers in ${escHtml(city.stateName)}</a> &middot; <a href="/rehab-centers">Browse All States</a> &middot; <a href="/resources">Recovery Resources</a></p>

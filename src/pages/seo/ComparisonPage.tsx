@@ -17,7 +17,6 @@ import {
   ArrowRight,
   Shield,
   CheckCircle,
-  Phone,
   Search,
 } from "lucide-react";
 
@@ -100,9 +99,9 @@ export default function ComparisonPage() {
 
           <div className="mt-4 flex flex-wrap gap-2.5">
             <Button asChild size="default" className="gap-2 shadow-lg shadow-black/20">
-              <Link to="/concierge">
-                <Phone className="h-4 w-4" />
-                Get Personalized Help
+              <Link to="/search-results">
+                <Search className="h-4 w-4" />
+                Search Treatment Centers
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>

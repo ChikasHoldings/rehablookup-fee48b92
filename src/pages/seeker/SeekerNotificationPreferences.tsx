@@ -288,7 +288,7 @@ export default function SeekerNotificationPreferences() {
 
         {/* In-App Notifications — the master toggle for everything that
             shows up in the in-app inbox: facility responses, review
-            approvals/rejections/responses, concierge updates. */}
+            approvals/rejections/responses. */}
         <Card>
           <CardHeader className="pb-3 px-4 sm:px-6">
             <div className="flex items-center gap-2">
@@ -303,7 +303,7 @@ export default function SeekerNotificationPreferences() {
             <PreferenceToggle
               id="browser_notifications"
               label="In-App Inbox Notifications"
-              description="Notifications when a facility responds, your review is approved or receives a reply, and concierge updates."
+              description="Notifications when a facility responds, or your review is approved or receives a reply."
               checked={preferences.browser_notifications}
               saving={savingKey === 'browser_notifications'}
               onCheckedChange={(v) => updatePreference('browser_notifications', v)}

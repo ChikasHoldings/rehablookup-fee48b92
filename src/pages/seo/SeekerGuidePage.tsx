@@ -101,7 +101,7 @@ export default function SeekerGuidePage() {
       showInsuranceLinks
       showNearMeLinks
       ctaTitle="Need Help Finding Treatment?"
-      ctaSubtitle="Our concierge team provides free, confidential guidance to help your family find the right treatment program. Call or submit a request today."
+      ctaSubtitle="Search licensed treatment programs, compare them side by side, and contact the ones that fit — free, and no account required."
     />
   );
 }

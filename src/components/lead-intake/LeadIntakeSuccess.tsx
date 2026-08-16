@@ -248,7 +248,7 @@ export function LeadIntakeSuccess({ facilityName, facilityId, leadId, firstName,
           </div>
         </div>
 
-        {/* Concierge CTA - Professional Design */}
+        {/* Keep-searching CTA */}
         <div className="bg-card border border-border rounded-2xl p-6 text-left">
           <div className="flex items-start gap-4 mb-4">
             <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
@@ -256,17 +256,17 @@ export function LeadIntakeSuccess({ facilityName, facilityId, leadId, firstName,
             </div>
             <div>
               <h3 className="font-semibold text-foreground text-base mb-1">
-                Want help finding the best fit?
+                Keep comparing your options
               </h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Our Placement Service connects you with verified treatment centers based on your unique needs.
+                Most people contact several centers before deciding. Search by location, level of care, and insurance accepted.
               </p>
             </div>
           </div>
           
-          <Link to="/concierge">
+          <Link to="/search-results">
             <Button className="w-full h-11 gap-2 group">
-              Find Treatment
+              Search Treatment Centers
               <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
             </Button>
           </Link>

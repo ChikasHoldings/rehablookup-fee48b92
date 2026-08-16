@@ -1,6 +1,6 @@
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
-import { InternationalPageHero, CountriesServed, InternationalFAQ, PlacementCTA } from "./components";
+import { InternationalPageHero, CountriesServed, InternationalFAQ, DirectorySearchCTA } from "./components";
 import { CheckCircle, TrendingUp, Shield, CreditCard } from "lucide-react";
 import { motion } from "framer-motion";
 import heroImg from "@/assets/hero-international-rehab.jpg";
@@ -132,7 +132,7 @@ const CostOfRehabUSA = () => {
 
       <CountriesServed />
       <InternationalFAQ title="Cost & Payment FAQs" subtitle="Common questions about paying for addiction treatment in the United States." faqs={faqs} schemaId="cost-rehab-usa-faq" />
-      <PlacementCTA title="Get a Personalized Cost Estimate" description="Our placement team provides transparent pricing and helps identify the best program within your budget." />
+      <DirectorySearchCTA title="Compare Treatment Costs" description="Listings show published pricing and accepted insurance where facilities provide it — compare before you call." />
     </Layout>
   );
 };

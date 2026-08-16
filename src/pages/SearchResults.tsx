@@ -12,33 +12,10 @@ import { scrollToTopSmooth } from "@/hooks/useScrollToTop";
 import { SearchResultsForm } from "@/components/search/SearchResultsForm";
 import { SaveSearchButton } from "@/components/search/SaveSearchButton";
 
-import { NoResultsConciergeCTA } from "@/components/search/NoResultsConciergeCTA";
+import { NoResultsDirectoryCTA } from "@/components/search/NoResultsDirectoryCTA";
 import { AreaWaitlistCapture } from "@/components/seo/AreaWaitlistCapture";
-import { 
-  Heart, 
-  MapPin, 
-  Search, 
-  X, 
-  ArrowUpDown, 
-  ChevronLeft, 
-  ChevronRight, 
-  Phone,
-  SlidersHorizontal,
-  Building2,
-  Shield,
-  Star,
-  DollarSign,
-  Sparkles,
-  ChevronDown,
-  Navigation,
-  CreditCard,
-  Share2,
-  Check,
-  AlertCircle,
-  RefreshCw
-} from "lucide-react";
+import { MapPin, Search, X, ArrowUpDown, ChevronLeft, ChevronRight, Phone, SlidersHorizontal, Building2, Shield, Star, DollarSign, Sparkles, ChevronDown, Navigation, CreditCard, Share2, Check, AlertCircle, RefreshCw, Scale } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import supportSpecialistImg from "@/assets/support-specialist.png";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -1099,27 +1076,27 @@ const SearchResults = () => {
     </div>
   );
 
-  // Concierge CTA — rendered OUTSIDE the FilterSidebar component so it
-  // sits below the divider stack with its own breathing room. Was
+  // Directory helper CTA — rendered OUTSIDE the FilterSidebar component so
+  // it sits below the divider stack with its own breathing room. Was
   // previously the last child of FilterSidebar which made it inherit
   // the new divide-y rule and stack visually adjacent to the filter
   // sections; the standalone block reads more like a contextual
   // affordance, less like another filter.
-  const ConciergeSidebarCTA = () => (
+  const DirectoryHelperCTA = () => (
     <div className="mt-5 rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-4 border border-primary/15">
       <div className="flex items-center gap-3 mb-3">
-        <div className="relative h-10 w-10 rounded-full overflow-hidden border-2 border-primary/20 shrink-0">
-          <img src={supportSpecialistImg} alt="RehabLookup support specialist" className="h-full w-full object-cover object-top scale-110" />
+        <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-primary/20 bg-primary/10 shrink-0">
+          <Scale className="h-4 w-4 text-primary" />
         </div>
         <div className="min-w-0">
-          <p className="text-xs font-semibold text-foreground">Need help choosing?</p>
-          <p className="text-xs text-muted-foreground">Free, confidential guidance</p>
+          <p className="text-xs font-semibold text-foreground">Narrowed it down?</p>
+          <p className="text-xs text-muted-foreground">Compare your shortlist side by side</p>
         </div>
       </div>
-      <Link to="/concierge">
+      <Link to="/compare">
         <Button size="sm" className="w-full gap-2 text-xs">
-          <Heart className="h-3.5 w-3.5" />
-          Get Matched Free
+          <Scale className="h-3.5 w-3.5" />
+          Compare Facilities
         </Button>
       </Link>
     </div>
@@ -1224,7 +1201,7 @@ const SearchResults = () => {
             </div>
             <div className="p-4 flex-1 overflow-y-auto">
               <FilterSidebar />
-              <ConciergeSidebarCTA />
+              <DirectoryHelperCTA />
             </div>
             {/* Sticky "Show results" footer — closes the sheet and confirms the
                 filter set is applied. Matches iOS / Android filter-sheet
@@ -1277,7 +1254,7 @@ const SearchResults = () => {
                   </div>
                   <FilterSidebar />
                 </div>
-                <ConciergeSidebarCTA />
+                <DirectoryHelperCTA />
               </div>
             </aside>
 
@@ -1536,7 +1513,7 @@ const SearchResults = () => {
                   {/* End-of-results helper bands. Two compact sections
                       that catch the visitor who scrolled the full list
                       without clicking through:
-                       (1) "What to do next" — concierge match + cost
+                       (1) "What to do next" — widen the search + cost
                            estimator + insurance verification — three
                            lateral actions that don't require picking a
                            specific facility yet.
@@ -1560,23 +1537,22 @@ const SearchResults = () => {
                     </header>
 
                     <div className="grid gap-4 md:grid-cols-3">
-                      <Link
-                        to="/concierge"
+                      <Link to="/search-results"
                         className="group flex flex-col rounded-2xl border border-border bg-card p-5 hover:border-primary/40 hover:shadow-md transition-all"
                       >
                         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 mb-3">
-                          <Heart className="h-5 w-5" />
+                          <Search className="h-5 w-5" />
                         </div>
                         <h3 className="font-semibold text-foreground text-base mb-1.5 group-hover:text-primary transition-colors">
-                          Talk to our placement team
+                          Widen your search
                         </h3>
                         <p className="text-sm text-muted-foreground leading-relaxed flex-1">
-                          Five-minute call — we match you with verified facilities that take
-                          your insurance, have a bed available, and fit your situation.
-                          Free, confidential.
+                          Drop the level-of-care or insurance filter, or look at nearby
+                          cities — many people travel a short distance for the right
+                          program.
                         </p>
                         <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-primary group-hover:gap-2 transition-all">
-                          Start a free match
+                          Browse all centers
                           <ChevronRight className="h-3.5 w-3.5" />
                         </span>
                       </Link>
@@ -1688,8 +1664,8 @@ const SearchResults = () => {
               ) : (
                 /* Empty State */
                 <div className="flex flex-col items-center justify-center py-12 px-4 animate-fade-in">
-                  {/* Phase 1: zero-result conversion CTA — Concierge match */}
-                  <NoResultsConciergeCTA
+                  {/* Zero-result recovery CTA — widen the search */}
+                  <NoResultsDirectoryCTA
                     location={location}
                     treatmentTypes={selectedTreatmentTypes}
                     insuranceTypes={selectedInsuranceTypes}
@@ -1857,10 +1833,10 @@ const SearchResults = () => {
                     <Link to="/rehab-centers">
                       <Button className="gap-2">Browse All Centers</Button>
                     </Link>
-                    <Link to="/concierge">
+                    <Link to="/search-results">
                       <Button variant="secondary" className="gap-2">
-                        <Heart className="h-4 w-4" />
-                        Get Personalized Help
+                        <Search className="h-4 w-4" />
+                        Search Treatment Centers
                       </Button>
                     </Link>
                   </div>

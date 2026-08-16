@@ -38,7 +38,7 @@ export const comparisonPageConfigs: ComparisonPageConfig[] = [
       },
       {
         heading: "Which Should You Choose?",
-        content: "The right choice depends on the severity of addiction, your home environment, work/family obligations, insurance coverage, and prior treatment history. Many people benefit from starting with inpatient and transitioning to outpatient. Our concierge team can help you determine the best path."
+        content: "The right choice depends on the severity of addiction, your home environment, work/family obligations, insurance coverage, and prior treatment history. Many people benefit from starting with inpatient and transitioning to outpatient. A facility's clinical intake team can assess which level of care fits your situation."
       },
     ],
     comparisonTable: {
@@ -56,7 +56,7 @@ export const comparisonPageConfigs: ComparisonPageConfig[] = [
     faqs: [
       { question: "Is inpatient rehab more effective than outpatient?", answer: "Research shows inpatient rehab has higher completion rates for severe addictions due to the structured, immersive environment. However, outpatient can be equally effective for mild-to-moderate cases when combined with a strong support system." },
       { question: "Can I work while in outpatient rehab?", answer: "Yes, outpatient programs are designed to accommodate work and family schedules. Evening and weekend sessions are commonly available." },
-      { question: "How do I know which level of care I need?", answer: "An addiction specialist or our concierge team can assess your situation and recommend the right level of care based on addiction severity, mental health, and personal circumstances." },
+      { question: "How do I know which level of care I need?", answer: "An addiction specialist — your doctor, or the clinical intake team at any listed facility — can assess your situation and recommend the right level of care based on addiction severity, mental health, and personal circumstances." },
       { question: "Does insurance cover both inpatient and outpatient?", answer: "Most health insurance plans cover both levels of care under the Mental Health Parity Act. Coverage varies by plan — verify with your insurer or use our free insurance check tool." },
     ],
     relatedSlugs: ["detox-vs-rehab", "luxury-vs-standard-rehab", "how-to-choose-rehab"],
@@ -209,7 +209,7 @@ export const comparisonPageConfigs: ComparisonPageConfig[] = [
       { question: "What is the most important factor when choosing rehab?", answer: "Clinical quality and fit for your specific needs matter most. Look for accredited facilities with experienced staff, evidence-based approaches, and a treatment philosophy that resonates with you." },
       { question: "Should I choose a rehab close to home or far away?", answer: "Both have benefits. Nearby rehab allows family involvement; distant rehab removes you from triggers. Consider your home environment and support system." },
       { question: "How do I know if a rehab center is legitimate?", answer: "Check for CARF or Joint Commission accreditation, verify state licensing, read reviews from multiple sources, and ask about staff credentials and treatment outcomes." },
-      { question: "Can a placement advisor help me choose?", answer: "Yes, our free concierge service matches you with verified programs based on your specific needs, insurance, budget, and preferences. It's confidential and no-obligation." },
+      { question: "How do I compare programs fairly?", answer: "Use the compare page to put candidates side by side — levels of care, services, accepted insurance, accreditations, and reviews in one view — then call the two or three that fit best. Browsing and comparing is free and requires no account." },
     ],
     relatedSlugs: ["inpatient-vs-outpatient-rehab", "luxury-vs-standard-rehab", "30-day-vs-90-day-rehab"],
   },
@@ -267,7 +267,7 @@ export const comparisonPageConfigs: ComparisonPageConfig[] = [
       },
       {
         heading: "Options If You Can't Afford Rehab",
-        content: "Free and low-cost options include state-funded treatment centers, non-profit rehab programs, sliding-scale fee facilities, Medicaid-covered programs, SAMHSA grant-funded facilities, and faith-based recovery programs. Our concierge team can help find affordable options."
+        content: "Free and low-cost options include state-funded treatment centers, non-profit rehab programs, sliding-scale fee facilities, Medicaid-covered programs, SAMHSA grant-funded facilities, and faith-based recovery programs. Filter the directory by insurance accepted to surface Medicaid, sliding-scale, and state-funded options."
       },
     ],
     faqs: [
@@ -301,7 +301,7 @@ export const comparisonPageConfigs: ComparisonPageConfig[] = [
     faqs: [
       { question: "Should I stage an intervention?", answer: "A professional interventionist can guide conversations effectively. DIY interventions can backfire. Consider consulting a CRAFT-trained therapist or professional interventionist." },
       { question: "Can I visit my loved one in rehab?", answer: "Most programs allow visits during designated times, typically after an initial stabilization period (usually 1–2 weeks). Policies vary by facility." },
-      { question: "How do I find the right rehab for my loved one?", answer: "Consider their specific needs (substance type, co-occurring disorders, demographics), insurance coverage, preferred location, and treatment philosophy. Our concierge service can help match them for free." },
+      { question: "How do I find the right rehab for my loved one?", answer: "Consider their specific needs (substance type, co-occurring disorders, demographics), insurance coverage, preferred location, and treatment philosophy, then use the directory filters to build a shortlist and compare candidates side by side." },
     ],
     relatedSlugs: ["what-to-expect-in-rehab", "how-to-choose-rehab"],
   },

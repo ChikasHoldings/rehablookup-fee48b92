@@ -120,7 +120,7 @@ const DEEP_LINKS = [
   "/rehab-marketing/california",
   "/rehab-marketing/alabama/county/calhoun/dual-diagnosis",
   "/rehab-marketing/pennsylvania/county/york/insurance/cigna",
-  "/concierge",
+  "/compare",
   "/for-providers",
   "/resources",
 ];

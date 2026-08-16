@@ -39,7 +39,7 @@ export function ProvidersCTA() {
     {
       Icon: BarChart3,
       title: "Simple Tools",
-      body: "Dashboard, analytics, and concierge handoff in one place.",
+      body: "Dashboard, analytics, and inquiry management in one place.",
     },
   ];
 

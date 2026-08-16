@@ -208,9 +208,9 @@ export default function CountyPage() {
             </p>
             <div className="mt-4 flex flex-col sm:flex-row gap-2.5">
               <Button asChild size="default" className="bg-white text-primary hover:bg-white/90 shadow-lg gap-2">
-                <Link to="/concierge">
-                  <Phone className="h-4 w-4" />
-                  Get Free Placement Help
+                <Link to="/search-results">
+                  <Search className="h-4 w-4" />
+                  Browse Treatment Centers
                 </Link>
               </Button>
               <Button
@@ -329,7 +329,7 @@ export default function CountyPage() {
                   <Link to={`/rehab-centers/${stateSlug}`}>Browse {stateData.name}</Link>
                 </Button>
                 <Button asChild variant="outline">
-                  <Link to="/concierge">Free Placement Help</Link>
+                  <Link to="/search-results">Browse Treatment Centers</Link>
                 </Button>
               </div>
             </div>
@@ -581,13 +581,13 @@ export default function CountyPage() {
             Find Treatment in {countyData.name} County Today
           </h2>
           <p className="text-lg opacity-90 mb-6 max-w-2xl mx-auto">
-            Our concierge team will match you with the best treatment programs in {countyData.name} County, {stateData.abbreviation}. Confidential. No obligation.
+            Compare treatment programs in {countyData.name} County, {stateData.abbreviation} side by side, then contact them directly. Free to search, no obligation.
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
             <Button asChild size="lg" className="bg-white text-primary hover:bg-white/90 shadow-lg">
-              <Link to="/concierge">
-                <Phone className="mr-2 h-5 w-5" />
-                Get Free Placement Help
+              <Link to="/search-results">
+                <Search className="mr-2 h-5 w-5" />
+                Browse Treatment Centers
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10">

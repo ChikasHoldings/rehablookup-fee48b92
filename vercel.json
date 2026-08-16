@@ -22,8 +22,23 @@
       "statusCode": 301
     },
     {
+      "source": "/concierge",
+      "destination": "/search-results",
+      "statusCode": 301
+    },
+    {
       "source": "/concierge/create-password",
-      "destination": "/concierge/thank-you",
+      "destination": "/search-results",
+      "statusCode": 301
+    },
+    {
+      "source": "/concierge/intake",
+      "destination": "/search-results",
+      "statusCode": 301
+    },
+    {
+      "source": "/concierge/thank-you",
+      "destination": "/search-results",
       "statusCode": 301
     },
     {
@@ -97,13 +112,18 @@
       "statusCode": 301
     },
     {
+      "source": "/international/apply",
+      "destination": "/international",
+      "statusCode": 301
+    },
+    {
       "source": "/international/intake",
-      "destination": "/international/apply",
+      "destination": "/international",
       "statusCode": 301
     },
     {
       "source": "/international/thank-you",
-      "destination": "/concierge/thank-you",
+      "destination": "/international",
       "statusCode": 301
     },
     {
@@ -123,7 +143,7 @@
     },
     {
       "source": "/placement-help",
-      "destination": "/concierge",
+      "destination": "/search-results",
       "statusCode": 301
     },
     {
@@ -228,22 +248,22 @@
     },
     {
       "source": "/request-help",
-      "destination": "/concierge",
+      "destination": "/search-results",
       "statusCode": 301
     },
     {
       "source": "/request-help/create-password",
-      "destination": "/concierge/thank-you",
+      "destination": "/search-results",
       "statusCode": 301
     },
     {
       "source": "/request-help/intake",
-      "destination": "/concierge/intake",
+      "destination": "/search-results",
       "statusCode": 301
     },
     {
       "source": "/request-help/thank-you",
-      "destination": "/concierge/thank-you",
+      "destination": "/search-results",
       "statusCode": 301
     },
     {
@@ -1123,15 +1143,27 @@
     {
       "source": "/apple-app-site-association",
       "headers": [
-        { "key": "Content-Type", "value": "application/json" },
-        { "key": "Cache-Control", "value": "public, max-age=3600" }
+        {
+          "key": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600"
+        }
       ]
     },
     {
       "source": "/.well-known/apple-app-site-association",
       "headers": [
-        { "key": "Content-Type", "value": "application/json" },
-        { "key": "Cache-Control", "value": "public, max-age=3600" }
+        {
+          "key": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600"
+        }
       ]
     }
   ]

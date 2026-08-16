@@ -4,7 +4,7 @@ import {
   InternationalHero,
   CountriesServed,
   InternationalFAQ,
-  PlacementCTA
+  DirectorySearchCTA
 } from "./components";
 import { Briefcase, Laptop, Clock, Shield, Users, Phone } from "lucide-react";
 
@@ -88,7 +88,7 @@ const ExecutiveRehabUSA = () => {
 
       <CountriesServed />
       <InternationalFAQ title="Executive Treatment FAQs" subtitle="Common questions about executive rehab programs in the United States." faqs={customFAQs} schemaId="executive-rehab-faq" />
-      <PlacementCTA title="Find Your Executive Program" description="Discreet placement into America's top executive treatment programs. Maintain your career while investing in your health." />
+      <DirectorySearchCTA title="Find Your Executive Program" description="Discreet placement into America's top executive treatment programs. Maintain your career while investing in your health." />
     </Layout>
   );
 };

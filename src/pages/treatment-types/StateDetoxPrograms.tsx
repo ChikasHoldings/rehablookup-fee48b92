@@ -260,7 +260,7 @@ const StateDetoxPrograms = () => {
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Button asChild size="lg" variant="secondary"><Link to="/rehab-centers"><Search className="mr-2 h-4 w-4" />Find Treatment</Link></Button>
             <Button asChild size="lg" variant="outline" className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">
-              <Link to="/concierge"><Heart className="mr-2 h-4 w-4" />Get Matched Free</Link>
+              <Link to="/search-results"><Search className="mr-2 h-4 w-4" />Browse Treatment Centers</Link>
             </Button>
           </div>
         </div>
@@ -281,7 +281,7 @@ const StateDetoxPrograms = () => {
         ]}
         insuranceLinks={[
           { title: "Insurance Guide", href: "/insurance" },
-          { title: "Verify Coverage", href: "/concierge" },
+          { title: "Check Insurance Coverage", href: "/insurance" },
         ]}
       />
     </Layout>

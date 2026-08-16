@@ -25,7 +25,6 @@ import { useState, useCallback, memo, useRef, useEffect, forwardRef } from "reac
 import { supabase } from "@/integrations/supabase/client";
 import { useProviderEventTracking } from "@/hooks/useProviderEventTracking";
 import { trackEvent } from "@/lib/analytics";
-import { buildConciergeHref } from "@/lib/conciergeHref";
 
 import { formatPhoneNumber, getPhoneDigits } from "@/lib/phoneUtils";
 import { useFavorites } from "@/hooks/useFavorites";
@@ -478,19 +477,16 @@ export const SearchResultCard = memo(forwardRef<HTMLElement, SearchResultCardPro
               <ArrowRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-0.5" aria-hidden="true" />
             </Button>
             <Link 
-              to={buildConciergeHref({
-                location: `${center.city}, ${center.state}`,
-                source: "search_card_concierge_fallback",
-              })}
+              to={`/search-results?location=${encodeURIComponent(`${center.city}, ${center.state}`)}`}
               onClick={() =>
-                trackEvent("card_concierge_fallback_click", {
+                trackEvent("card_nearby_search_click", {
                   event_category: "Conversion",
                   event_label: center.id ?? center.name,
                   surface: "search_card",
                 })
               }
               className="sm:w-auto focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg"
-              aria-label={`Let our team match you with a center in ${center.city}`}
+              aria-label={`See other treatment centers in ${center.city}`}
             >
               <Button 
                 size="default"
@@ -498,9 +494,9 @@ export const SearchResultCard = memo(forwardRef<HTMLElement, SearchResultCardPro
                 tabIndex={-1}
                 className="w-full sm:w-auto h-10 text-sm font-semibold gap-2 rounded-lg group/btn"
               >
-                <Heart className="h-4 w-4" aria-hidden="true" />
-                <span className="md:hidden">Get Matched</span>
-                <span className="hidden md:inline">Match Me Free</span>
+                <MapPin className="h-4 w-4" aria-hidden="true" />
+                <span className="md:hidden">Nearby</span>
+                <span className="hidden md:inline">See Centers Nearby</span>
               </Button>
             </Link>
           </div>

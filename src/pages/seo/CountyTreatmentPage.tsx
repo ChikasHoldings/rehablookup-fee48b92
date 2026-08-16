@@ -118,7 +118,7 @@ export default function CountyTreatmentPage() {
     },
     {
       question: `How do I find the best ${treatment.label.toLowerCase()} near ${countyData.name} County?`,
-      answer: `Start by comparing verified facilities in the ${countyData.name} County area on RehabLookup. Look for programs with proper state licensing, accreditation from bodies like JCAHO or CARF, evidence-based treatment approaches, and positive patient outcomes. Our concierge service can also provide personalized recommendations based on your specific needs.`,
+      answer: `Start by comparing verified facilities in the ${countyData.name} County area on RehabLookup. Look for programs with proper state licensing, accreditation from bodies like JCAHO or CARF, evidence-based treatment approaches, and positive patient outcomes. Use the filters and the compare page to narrow the list before you call.`,
     },
   ];
 

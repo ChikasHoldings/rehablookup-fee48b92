@@ -101,7 +101,7 @@ export default function TreatmentHubPage() {
       showInsuranceLinks
       showNearMeLinks
       ctaTitle={`Find ${config.title} Today`}
-      ctaSubtitle={`Our concierge team will match you with accredited ${config.title.toLowerCase()} based on your specific needs, insurance, and preferences.`}
+      ctaSubtitle={`Filter accredited ${config.title.toLowerCase()} by insurance accepted, level of care, and location, then contact them directly.`}
     />
   );
 }

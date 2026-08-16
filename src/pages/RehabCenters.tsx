@@ -6,7 +6,7 @@ import { SEO, generateDirectoryCollectionSchema } from "@/components/SEO";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { LocationStatTile } from "@/components/seo/LocationStatTile";
 import { SearchForm } from "@/components/search/SearchForm";
-import { NoResultsConciergeCTA } from "@/components/search/NoResultsConciergeCTA";
+import { NoResultsDirectoryCTA } from "@/components/search/NoResultsDirectoryCTA";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { TreatmentCenterCardSkeletonGrid } from "@/components/skeletons/TreatmentCenterCardSkeleton";
 import { HomepageGeoFeaturedRail } from "@/components/featured/HomepageGeoFeaturedRail";
@@ -773,7 +773,7 @@ const RehabCenters = () => {
                 </h3>
                 <p className="mt-2 text-sm text-muted-foreground max-w-xl mx-auto">
                   This combination is rare in our verified directory. Try one of the
-                  options below — or talk to our placement team and we'll match you
+                  options below — or widen the search and compare
                   with vetted centers nationwide, free.
                 </p>
 
@@ -788,12 +788,11 @@ const RehabCenters = () => {
                     <Phone className="h-4 w-4" aria-hidden="true" />
                     Call 1-800-662-4357
                   </a>
-                  <Link
-                    to="/concierge"
+                  <Link to="/search-results"
                     className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-card px-5 py-2.5 text-sm font-semibold text-foreground hover:border-primary/30 hover:text-primary transition-colors w-full sm:w-auto"
                   >
-                    <Heart className="h-4 w-4" aria-hidden="true" />
-                    Get matched, free
+                    <Search className="h-4 w-4" aria-hidden="true" />
+                    Browse all centers
                     <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
                   </Link>
                 </div>
@@ -926,8 +925,8 @@ const RehabCenters = () => {
                 </div>
               </div>
 
-              {/* Concierge fallback (already wired with telemetry) */}
-              <NoResultsConciergeCTA
+              {/* Zero-result recovery CTA (already wired with telemetry) */}
+              <NoResultsDirectoryCTA
                 treatmentTypes={browseTreatment ? [browseTreatmentLabel || browseTreatment] : []}
                 insuranceTypes={browseInsurance ? [browseInsuranceLabel || browseInsurance] : []}
                 source="rehab_centers_directory"
@@ -1131,10 +1130,10 @@ const RehabCenters = () => {
             </div>
             
             <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
-              <Link to="/concierge">
+              <Link to="/search-results">
                 <Button size="sm" className="w-full gap-2 sm:w-auto">
-                  <Heart className="h-4 w-4" />
-                  Find Treatment
+                  <Search className="h-4 w-4" />
+                  Search Treatment Centers
                 </Button>
               </Link>
               <Link to="/contact">

@@ -131,7 +131,7 @@ export default function InsuranceStatePage() {
         },
         {
           heading: `How to Verify Your ${insurer.name} Benefits`,
-          content: `To check your ${insurer.name} coverage for rehab in ${stateConfig.state}: 1) Call the member services number on your insurance card, 2) Ask about "substance use disorder" or "behavioral health" benefits, 3) Inquire about in-network vs. out-of-network coverage levels, 4) Confirm pre-authorization requirements, 5) Ask about the number of covered treatment days. Many facilities listed on RehabLookup offer complimentary ${insurer.name} benefits verification — contact them directly or use our concierge service for personalized assistance.`,
+          content: `To check your ${insurer.name} coverage for rehab in ${stateConfig.state}: 1) Call the member services number on your insurance card, 2) Ask about "substance use disorder" or "behavioral health" benefits, 3) Inquire about in-network vs. out-of-network coverage levels, 4) Confirm pre-authorization requirements, 5) Ask about the number of covered treatment days. Many facilities listed on RehabLookup offer complimentary ${insurer.name} benefits verification — contact their admissions teams directly to request it.`,
         },
         {
           heading: `Treatment Options in ${stateConfig.state}`,

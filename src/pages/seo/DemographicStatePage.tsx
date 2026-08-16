@@ -59,7 +59,7 @@ export default function DemographicStatePage() {
   const faqs = [
     {
       question: `Are there ${demographic.title.toLowerCase()} programs in ${stateName}?`,
-      answer: `Yes, ${stateName} offers specialized ${demographic.title.toLowerCase()} programs that address the unique needs of this population. These programs provide tailored treatment approaches, age-appropriate or culturally sensitive care, and specialized therapeutic modalities. ${facilities.length > 0 ? `RehabLookup lists ${facilities.length}+ verified programs in ${stateName}.` : `Contact our concierge team for personalized matching.`}`,
+      answer: `Yes, ${stateName} offers specialized ${demographic.title.toLowerCase()} programs that address the unique needs of this population. These programs provide tailored treatment approaches, age-appropriate or culturally sensitive care, and specialized therapeutic modalities. ${facilities.length > 0 ? `RehabLookup lists ${facilities.length}+ verified programs in ${stateName}.` : `Use the filters to narrow by level of care and insurance.`}`,
     },
     {
       question: `What makes ${demographic.title.toLowerCase()} different from general rehab?`,
@@ -71,7 +71,7 @@ export default function DemographicStatePage() {
     },
     {
       question: `How do I find the best ${demographic.title.toLowerCase()} program in ${stateName}?`,
-      answer: `Look for programs with staff experienced in treating this specific population, proper accreditation (JCAHO or CARF), evidence-based treatment approaches, and strong aftercare support. RehabLookup verifies all listed facilities for licensing and clinical quality. Our free concierge service can also match you with the most appropriate program.`,
+      answer: `Look for programs with staff experienced in treating this specific population, proper accreditation (JCAHO or CARF), evidence-based treatment approaches, and strong aftercare support. RehabLookup verifies all listed facilities for licensing and clinical quality. Use the filters to narrow by level of care, insurance, and specialty before you contact a program.`,
     },
   ];
 
@@ -120,7 +120,7 @@ export default function DemographicStatePage() {
     <SEOLandingTemplate
       title={pageTitle}
       metaTitle={`${demographic.title} in ${stateName} (${abbreviation}) — Find Programs | RehabLookup`}
-      metaDescription={`Find ${demographic.title.toLowerCase()} programs in ${stateName}. Compare ${facilities.length}+ verified facilities with specialized care. Get matched today.`}
+      metaDescription={`Find ${demographic.title.toLowerCase()} programs in ${stateName}. Compare ${facilities.length}+ verified facilities with specialized care and contact them directly.`}
       canonical={`https://rehablookup.com/${slug}`}
       noindex={!validation.shouldIndex}
       structuredData={structuredData}

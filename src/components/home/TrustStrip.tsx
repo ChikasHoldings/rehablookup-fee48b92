@@ -51,7 +51,7 @@ export function TrustStrip() {
       label: "Vetted treatment centers",
     },
     { icon: Clock, value: "~60 min", label: "Average match time" },
-    { icon: Users, value: "Free", label: "Confidential placement" },
+    { icon: Users, value: "Free", label: "Free to search" },
     {
       icon: Scale,
       value: "Transparent",

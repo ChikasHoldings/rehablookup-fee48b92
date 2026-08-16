@@ -205,7 +205,7 @@ export default function CityTreatmentPage() {
       showInsuranceLinks
       showNearMeLinks
       ctaTitle={`Start ${treatment.label} in ${city.city} Today`}
-      ctaSubtitle={`Our concierge team will match you with the best ${treatment.label.toLowerCase()} programs in ${city.city}. Confidential. No obligation.`}
+      ctaSubtitle={`Compare ${treatment.label.toLowerCase()} programs in ${city.city} side by side, then contact them directly. Free to search, no obligation.`}
       waitlistAreaSlug={slug}
       waitlistAreaLabel={`${treatment.pluralLabel} in ${city.city}, ${city.stateAbbr}`}
       waitlistCity={city.city}

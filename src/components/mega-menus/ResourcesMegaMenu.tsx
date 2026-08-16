@@ -119,13 +119,13 @@ export function ResourcesMegaMenu({ onNavigate }: MegaMenuProps) {
           {/* CTA */}
           <div className="mt-3 pt-3 border-t border-border/30">
             <div className="rounded-lg bg-gradient-to-br from-primary/[0.06] to-accent/[0.06] border border-primary/10 p-3">
-              <p className="text-sm font-bold text-foreground mb-0.5">Need Help?</p>
+              <p className="text-sm font-bold text-foreground mb-0.5">Looking for a center?</p>
               <p className="text-xs text-muted-foreground leading-snug mb-2.5">
-                Free confidential treatment matching.
+                Search and compare licensed treatment providers.
               </p>
-              <Link to="/concierge" onClick={onNavigate}>
+              <Link to="/search-results" onClick={onNavigate}>
                 <Button size="sm" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 text-xs font-semibold gap-1.5">
-                  Get Matched <ArrowRight className="h-3 w-3" />
+                  Search Centers <ArrowRight className="h-3 w-3" />
                 </Button>
               </Link>
             </div>

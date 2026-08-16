@@ -43,7 +43,7 @@ interface FacilityCardProps {
  * component delegates rendering to `SearchResultCard` so authenticated
  * seekers see the same card UX as anon visitors on /search-results
  * (phone CTA, proximity badge, treatment chips, insurance count, Featured
- * crown, compare, message-center modal, match-me-free concierge fallback,
+ * crown, compare, message-center modal,
  * impression + click-to-call analytics). Previously the seeker panel had
  * its own slimmer card — visual + feature drift had accumulated.
  *

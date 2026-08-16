@@ -180,7 +180,7 @@ export default function RehabUSAFromEurope() {
                 <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-3">Start Your Recovery Journey</h2>
                 <p className="text-sm sm:text-base text-muted-foreground mb-8 max-w-xl mx-auto leading-relaxed">Our international team understands European patient needs. Confidential consultation available in English.</p>
                 <div className="flex flex-wrap justify-center gap-x-6 gap-y-3 mb-8">
-                  {["Confidential Consultation", "ESTA & Visa Guidance", "Multilingual Support"].map(item => (
+                  {["Search Privately", "ESTA & Visa Guidance", "Multilingual Support"].map(item => (
                     <div key={item} className="flex items-center gap-2 text-sm text-muted-foreground">
                       <CheckCircle className="h-4 w-4 text-primary shrink-0" />
                       <span>{item}</span>
@@ -208,7 +208,7 @@ export default function RehabUSAFromEurope() {
                   { href: "/us-rehab/canadian-patients", label: "Canadian Patients" },
                   { href: "/us-rehab/uae-middle-east", label: "UAE & Middle East" },
                   { href: "/us-rehab/australian-patients", label: "Australian Patients" },
-                  { href: "/international", label: "International Placement" },
+                  { href: "/international", label: "International Patients" },
                 ].map((link) => (
                   <Link key={link.href} to={link.href} className="group flex items-center justify-between rounded-lg px-3 py-2 hover:bg-muted/50 transition-colors">
                     <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">{link.label}</span>

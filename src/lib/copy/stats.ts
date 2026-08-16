@@ -1,8 +1,8 @@
 /**
  * Single source of truth for top-line stats shown on marketing surfaces
- * (concierge landing, About, future homepage hero, etc.).
+ * (About, homepage hero, SEO landings, etc.).
  *
- * Why this exists: the same numbers were drifting across pages — concierge
+ * Why this exists: the same numbers were drifting across pages —
  * said "1,000+ partner facilities" while About already said "3,800+ verified
  * facilities", and another card claimed a "4.9 client rating" with no
  * AggregateRating schema or review corpus to back it. Centralizing here

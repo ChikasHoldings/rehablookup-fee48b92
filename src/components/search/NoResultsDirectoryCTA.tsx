@@ -1,10 +1,10 @@
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Heart, ShieldCheck, Clock, Sparkles, ArrowRight } from "lucide-react";
+import { MapPin, ShieldCheck, Scale, Sparkles, ArrowRight, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { trackEvent } from "@/lib/analytics";
 
-interface NoResultsConciergeCTAProps {
+interface NoResultsDirectoryCTAProps {
   /** Search location the user typed, e.g. "Boise, ID" or "90210" */
   location?: string;
   /** Selected treatment types (slugs or labels) */
@@ -16,26 +16,27 @@ interface NoResultsConciergeCTAProps {
 }
 
 /**
- * Zero-result conversion card.
+ * Zero-result recovery card.
  *
- * When a search returns 0 verified facilities we still have a valuable
- * visitor — surface the Concierge placement service so they can convert
- * instead of bouncing. Pre-fills `/concierge` with the user's search
- * context via query params.
+ * Replaces the former NoResultsConciergeCTA, which pushed a visitor with
+ * no matches into the retired RehabLookup placement funnel (directory
+ * cutover stage 1). A directory answers a dead-end search by helping the
+ * visitor widen it, so this card offers the two moves that actually
+ * work: drop the filters, or browse by location.
  */
-export function NoResultsConciergeCTA({
+export function NoResultsDirectoryCTA({
   location,
   treatmentTypes = [],
   insuranceTypes = [],
   source = "search_results",
-}: NoResultsConciergeCTAProps) {
-  // Build a prefilled concierge URL so step 1 already knows what we know.
-  const params = new URLSearchParams();
-  params.set("from", source);
-  if (location) params.set("location", location);
-  if (treatmentTypes[0]) params.set("treatment", treatmentTypes[0]);
-  if (insuranceTypes[0]) params.set("insurance", insuranceTypes[0]);
-  const conciergeHref = `/concierge?${params.toString()}`;
+}: NoResultsDirectoryCTAProps) {
+  // Re-run the search with the location kept but the narrowing filters
+  // (level of care, insurance) dropped — the usual reason a search is dry.
+  const broaderParams = new URLSearchParams();
+  if (location) broaderParams.set("location", location);
+  const broaderHref = broaderParams.toString()
+    ? `/search-results?${broaderParams.toString()}`
+    : "/search-results";
 
   // Fire view event once when this CTA is rendered.
   useEffect(() => {
@@ -67,13 +68,13 @@ export function NoResultsConciergeCTA({
         <div>
           <h3 className="text-xl md:text-2xl font-bold text-foreground mb-1.5">
             {location
-              ? `No verified centers in ${location} yet — let our team find one for you`
-              : "Let our placement team find the right center for you"}
+              ? `No listings match those filters in ${location}`
+              : "No listings match those filters"}
           </h3>
           <p className="text-sm text-muted-foreground">
-            Our admissions specialists work with vetted facilities nationwide.
-            Tell us what you need and we&apos;ll match you with options that
-            fit — typically within an hour.
+            Try removing the level-of-care or insurance filters, or widen the
+            area — the directory covers licensed programs in all 50 states, and
+            many people travel to a neighbouring city for the right program.
           </p>
         </div>
       </div>
@@ -81,34 +82,42 @@ export function NoResultsConciergeCTA({
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5 text-xs">
         <div className="flex items-center gap-2 rounded-lg border border-border bg-background/60 px-3 py-2">
           <ShieldCheck className="h-4 w-4 text-primary shrink-0" />
-          <span className="text-foreground font-medium">100% confidential</span>
+          <span className="text-foreground font-medium">Licensed providers</span>
         </div>
         <div className="flex items-center gap-2 rounded-lg border border-border bg-background/60 px-3 py-2">
-          <Clock className="h-4 w-4 text-primary shrink-0" />
-          <span className="text-foreground font-medium">Match in ~60 minutes</span>
+          <Scale className="h-4 w-4 text-primary shrink-0" />
+          <span className="text-foreground font-medium">Compare side by side</span>
         </div>
         <div className="flex items-center gap-2 rounded-lg border border-border bg-background/60 px-3 py-2">
-          <Heart className="h-4 w-4 text-primary shrink-0" />
-          <span className="text-foreground font-medium">Vetted facilities only</span>
+          <MapPin className="h-4 w-4 text-primary shrink-0" />
+          <span className="text-foreground font-medium">All 50 states</span>
         </div>
       </div>
 
-      <Button
-        asChild
-        variant="success"
-        size="lg"
-        className="w-full gap-2"
-        onClick={handleClick}
-      >
-        <Link to={conciergeHref}>
-          <Heart className="h-4 w-4" />
-          Match Me With a Verified Center
-          <ArrowRight className="h-4 w-4" />
-        </Link>
-      </Button>
+      <div className="flex flex-col sm:flex-row gap-3">
+        <Button
+          asChild
+          variant="success"
+          size="lg"
+          className="flex-1 gap-2"
+          onClick={handleClick}
+        >
+          <Link to={broaderHref}>
+            <Search className="h-4 w-4" />
+            {location ? "Search without filters" : "Browse all centers"}
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </Button>
+        <Button asChild variant="outline" size="lg" className="flex-1 gap-2">
+          <Link to="/locations">
+            <MapPin className="h-4 w-4" />
+            Browse by location
+          </Link>
+        </Button>
+      </div>
 
       <p className="text-xs text-muted-foreground text-center mt-3">
-        No obligation. We never share your information without permission.
+        Browsing the directory is free and requires no account.
       </p>
     </div>
   );

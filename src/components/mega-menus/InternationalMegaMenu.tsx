@@ -13,7 +13,7 @@ interface MegaMenuProps {
 // Country / region landing pages (informational SEO content). The
 // dedicated "/international" paid-placement entry was retired with
 // the international placement product on 2026-05-20; international
-// seekers are now routed to the same concierge intake as US seekers.
+// seekers are now routed to the same directory search as US seekers.
 const countryPages = [
   { href: "/us-rehab/international-patients", label: "International Patients (overview)", flag: "🌐" },
   { href: "/us-rehab/uk-patients", label: "United Kingdom & Ireland", flag: "🇬🇧" },
@@ -112,22 +112,21 @@ export function InternationalMegaMenu({ onNavigate }: MegaMenuProps) {
             ))}
           </div>
 
-          {/* CTA — now points seekers to the unified concierge intake.
-              The dedicated international-application flow was retired
-              alongside the paid placement product. */}
+          {/* CTA — directory search. The international application flow ran
+              through the retired placement pipeline. */}
           <div className="mt-3 pt-3 border-t border-border/30">
-            <Link to="/concierge" onClick={onNavigate} className="group block">
+            <Link to="/search-results" onClick={onNavigate} className="group block">
               <div className="rounded-lg bg-gradient-to-br from-primary/[0.06] to-accent/[0.06] border border-primary/10 p-3">
                 <div className="flex items-center gap-2 mb-2">
                   <Plane className="h-4 w-4 text-accent" />
-                  <p className="text-sm font-bold text-foreground">Talk to a Coordinator</p>
+                  <p className="text-sm font-bold text-foreground">Search US Treatment Centers</p>
                 </div>
                 <p className="text-xs text-muted-foreground leading-snug mb-2.5">
-                  Our advisors match international seekers with US programs
-                  that handle travel and admissions directly.
+                  Browse licensed US programs, check which accept international
+                  patients, and contact their admissions teams directly.
                 </p>
                 <Button size="sm" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 text-xs font-semibold gap-1.5">
-                  Start Free Intake <ArrowRight className="h-3 w-3" />
+                  Search Centers <ArrowRight className="h-3 w-3" />
                 </Button>
               </div>
             </Link>
@@ -177,12 +176,12 @@ export function InternationalMegaMenuMobile({ onNavigate }: MegaMenuProps) {
         </div>
       </div>
 
-      {/* CTA — unified concierge intake; international applicant flow retired 2026-05-20. */}
+      {/* CTA — directory search. */}
       <div className="border-t border-border/30 pt-2 mx-2">
-        <PrefetchLink to="/concierge" onClick={onNavigate}
+        <PrefetchLink to="/search-results" onClick={onNavigate}
           className="flex items-center gap-2 px-1 py-2 text-sm text-accent font-semibold">
           <Plane className="h-4 w-4" />
-          Start Free Concierge Intake <ArrowRight className="h-3.5 w-3.5" />
+          Search US Treatment Centers <ArrowRight className="h-3.5 w-3.5" />
         </PrefetchLink>
       </div>
     </div>

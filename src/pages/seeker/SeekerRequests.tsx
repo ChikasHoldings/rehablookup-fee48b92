@@ -249,11 +249,10 @@ export default function SeekerRequests() {
   } | null>(null);
   const [viewedLeadIds, setViewedLeadIds] = useState<Set<string>>(new Set());
   const [filterTab, setFilterTab] = useState<FilterTab>("all");
-  // Counts of the OTHER inquiry types so this inbox can surface links to
-  // /account/concierge and /account/international when the seeker has work
-  // in those flows. The leads list above stays the primary feed.
-  const [conciergeCount, setConciergeCount] = useState<number>(0);
-  // International placement product retired 2026-05-20.
+  // Counts of the OTHER seeker artefacts so this inbox can cross-link to
+  // them. The leads list above stays the primary feed. The concierge/
+  // placement case count was removed in directory cutover stage 1 —
+  // RehabLookup no longer runs placement cases for seekers.
   const [vobCount, setVobCount] = useState<number>(0);
   const [savedSearchCount, setSavedSearchCount] = useState<number>(0);
   const { toast } = useToast();
@@ -430,8 +429,8 @@ export default function SeekerRequests() {
     return () => { isCancelled = true; };
   }, [isAuthenticated, isReady, email, userId, fetchRequests]);
 
-  // Fetch the user's concierge + VOB + saved-search counts so we can
-  // render cross-link cards at the top of the inbox. RLS on each table
+  // Fetch the user's VOB + saved-search counts so we can render
+  // cross-link cards at the top of the inbox. RLS on each table
   // gates by user_id (set by link-inquiry-to-user on signup).
   //
   // Failures are console.warn'd rather than toasted — the cross-link
@@ -440,21 +439,13 @@ export default function SeekerRequests() {
   // failing source is suppressed (the count stays 0 + warn).
   useEffect(() => {
     if (!isAuthenticated || !userId) {
-      setConciergeCount(0);
       setVobCount(0);
       setSavedSearchCount(0);
       return;
     }
     let cancelled = false;
     (async () => {
-      // International placement product retired 2026-05-20 — only
-      // domestic concierge, VOB requests, and saved searches remain.
-      const [conc, vob, saved] = await Promise.all([
-        supabase
-          .from("concierge_inquiries")
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", userId)
-          .not("status", "in", "(closed,completed)"),
+      const [vob, saved] = await Promise.all([
         supabase
           .from("insurance_verification_requests")
           .select("id", { count: "exact", head: true })
@@ -465,10 +456,8 @@ export default function SeekerRequests() {
           .eq("user_id", userId),
       ]);
       if (cancelled) return;
-      if (conc.error) console.warn("[SeekerRequests] concierge count failed:", conc.error.message);
       if (vob.error) console.warn("[SeekerRequests] VOB count failed:", vob.error.message);
       if (saved.error) console.warn("[SeekerRequests] saved-search count failed:", saved.error.message);
-      setConciergeCount(conc.error ? 0 : (conc.count ?? 0));
       setVobCount(vob.error ? 0 : (vob.count ?? 0));
       setSavedSearchCount(saved.error ? 0 : (saved.count ?? 0));
     })();
@@ -633,30 +622,10 @@ export default function SeekerRequests() {
           </div>
         </div>
 
-        {/* Cross-link cards: surface the seeker's open concierge + international
-            + insurance-verification + saved-search work so this page acts as a
-            true inbox. */}
-        {(conciergeCount > 0 || vobCount > 0 || savedSearchCount > 0) && (
+        {/* Cross-link cards: surface the seeker's insurance-verification +
+            saved-search work so this page acts as a true inbox. */}
+        {(vobCount > 0 || savedSearchCount > 0) && (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 mb-4">
-            {conciergeCount > 0 && (
-              <Link to="/account/concierge" className="block">
-                <Card className="hover:border-primary/40 transition-colors">
-                  <CardContent className="p-4 flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
-                      <Building2 className="h-5 w-5 text-emerald-600" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold">Concierge placement</p>
-                      <p className="text-xs text-muted-foreground">
-                        {conciergeCount} active case{conciergeCount === 1 ? "" : "s"}
-                      </p>
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
-                  </CardContent>
-                </Card>
-              </Link>
-            )}
-            {/* International placement card retired 2026-05-20 with the paid product. */}
             {vobCount > 0 && (
               <Link to="/account/insurance-verifications" className="block">
                 <Card className="hover:border-primary/40 transition-colors">

@@ -24,15 +24,19 @@ describe("resolveNotificationRoute", () => {
 
   it("falls back to metadata.link when no top-level link is set", () => {
     expect(
-      resolveNotificationRoute(make({ metadata: { link: "/account/concierge" }, type: "concierge_options_ready" })),
-    ).toBe("/account/concierge");
+      resolveNotificationRoute(make({ metadata: { link: "/account/saved" }, type: "saved_facility" })),
+    ).toBe("/account/saved");
   });
 
   it("routes lead_message to the requests page (regression: was missing from the table)", () => {
     expect(resolveNotificationRoute(make({ type: "lead_message" }))).toBe("/account/requests");
   });
 
-  it("routes every concierge_* type to /account/concierge", () => {
+  // Directory cutover stage 1: the seeker placement workspace is retired.
+  // Rows of these types still exist in seeker_notifications (the producing
+  // edge functions were deliberately left untouched in this stage), so the
+  // resolver must send them somewhere real rather than a dead route.
+  it("routes every retired concierge_* type to the saved-facilities fallback", () => {
     for (const type of [
       "concierge_intake_received",
       "concierge_options_ready",
@@ -41,8 +45,37 @@ describe("resolveNotificationRoute", () => {
       "concierge_case_closed",
       "concierge_moved_in",
       "concierge_message_received",
+      "concierge_tour_proposed",
+      "concierge_admission_updated",
+      "placement_intro",
     ]) {
-      expect(resolveNotificationRoute(make({ type }))).toBe("/account/concierge");
+      expect(resolveNotificationRoute(make({ type }))).toBe("/account/saved");
+    }
+  });
+
+  it("no type in the route table points at a retired concierge/placement route", () => {
+    for (const type of [
+      "concierge_intake_received",
+      "concierge_matches_found",
+      "concierge_introductions_sent",
+      "concierge_options_ready",
+      "concierge_provider_interested",
+      "concierge_provider_confirmed",
+      "concierge_progress_update",
+      "concierge_advisor_assigned",
+      "concierge_placement_complete",
+      "concierge_case_closed",
+      "concierge_message_received",
+      "concierge_tour_proposed",
+      "concierge_tour_confirmed",
+      "concierge_tour_completed",
+      "concierge_tour_cancelled",
+      "concierge_admission_updated",
+      "concierge_move_in_scheduled",
+      "concierge_moved_in",
+      "placement_intro",
+    ]) {
+      expect(resolveNotificationRoute(make({ type }))).not.toMatch(/\/account\/(concierge|placements)/);
     }
   });
 

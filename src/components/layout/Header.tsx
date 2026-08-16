@@ -3,7 +3,7 @@ import headerLogo from "@/assets/logo-header.webp";
 import { Link, useLocation } from "react-router-dom";
 import { PrefetchLink } from "@/components/PrefetchLink";
 import { Button } from "@/components/ui/button";
-import { Menu, X, ChevronRight, Heart, MapPin, BookOpen, Building2, User, ChevronDown, Search, Globe, ArrowRight } from "lucide-react";
+import { Menu, X, ChevronRight, MapPin, BookOpen, Building2, User, ChevronDown, Search, Globe, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -80,7 +80,7 @@ const megaMenuItems: MegaMenuItem[] = [
 
 // Standalone nav links (no mega-menu)
 const standaloneLinks: NavLink[] = [
-  { href: "/concierge", label: "Concierge" },
+  { href: "/search-results", label: "Search Centers" },
 ];
 
 // Icon mapping for mobile nav
@@ -89,7 +89,7 @@ const navIcons: Record<string, React.ElementType> = {
   "resources": BookOpen,
   "international": Globe,
   "for-providers": Building2,
-  "/concierge": Heart,
+  "/search-results": Search,
 };
 
 // Which mega-menu component to render
@@ -114,7 +114,7 @@ function MegaMenuMobileContent({ id, onNavigate }: { id: string; onNavigate: () 
 }
 
 export function Header({ 
-  ctaLink = "/concierge",
+  ctaLink = "/search-results",
   ctaLabel = "Find Treatment",
   variant = "default"
 }: HeaderProps) {
@@ -302,7 +302,7 @@ export function Header({
               )}
             </div>
 
-            {/* Concierge - standalone link */}
+            {/* Search Centers - standalone directory link */}
             {standaloneLinks.map((link) => (
               <PrefetchLink
                 key={link.href}
@@ -385,8 +385,8 @@ export function Header({
                   );
                 })}
                 <DropdownMenuItem asChild>
-                  <PrefetchLink to="/concierge" className="w-full cursor-pointer" onClick={() => setMoreDropdownOpen(false)}>
-                    Concierge
+                  <PrefetchLink to="/search-results" className="w-full cursor-pointer" onClick={() => setMoreDropdownOpen(false)}>
+                    Search Centers
                   </PrefetchLink>
                 </DropdownMenuItem>
               </DropdownMenuContent>

@@ -20,7 +20,7 @@ const REPLY_MAX = 5000;
 
 const CATEGORY_LABELS: Record<string, string> = {
   account: "Account",
-  request_help: "Placement help",
+  request_help: "Inquiry help",
   technical: "Technical",
   feedback: "Feedback",
   billing: "Billing",

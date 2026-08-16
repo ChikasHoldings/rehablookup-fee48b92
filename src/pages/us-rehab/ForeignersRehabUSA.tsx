@@ -1,6 +1,6 @@
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
-import { InternationalPageHero, CountriesServed, InternationalFAQ, WhyUSATreatment, PlacementCTA } from "./components";
+import { InternationalPageHero, CountriesServed, InternationalFAQ, WhyUSATreatment, DirectorySearchCTA } from "./components";
 import { Link } from "react-router-dom";
 import { Globe, FileCheck, Shield, Heart } from "lucide-react";
 import { motion } from "framer-motion";
@@ -107,7 +107,7 @@ const ForeignersRehabUSA = () => {
 
       <CountriesServed />
       <InternationalFAQ title="International Admissions FAQs" subtitle="Common questions from international patients about attending rehab in the United States." faqs={faqs} schemaId="foreigners-rehab-usa-faq" />
-      <PlacementCTA title="Get Started as an International Patient" description="Our advisors specialize in international admissions and will guide you through every step of the process." />
+      <DirectorySearchCTA title="Search US Treatment Centers" description="Browse US treatment listings and contact the facilities that handle international admissions directly." />
     </Layout>
   );
 };

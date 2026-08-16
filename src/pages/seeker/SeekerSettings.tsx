@@ -1407,7 +1407,7 @@ export default function SeekerSettings() {
                         <li>Your profile, name, contact info, and photo</li>
                         <li>Your saved favorites and saved searches</li>
                         <li>Your reviews and review responses</li>
-                        <li>Your inquiry and concierge history</li>
+                        <li>Your inquiry history</li>
                         <li>Your sign-in identity</li>
                       </ul>
                       <span className="block pt-2">

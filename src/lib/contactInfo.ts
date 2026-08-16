@@ -1,6 +1,8 @@
 /**
  * Centralized contact info — single source of truth for the
- * RehabLookup concierge phone number across the public app.
+ * RehabLookup support phone number across the public app.
+ * Named CONCIERGE_* for historical reasons; renaming the exports is Stage-2
+ * cleanup since the free-tier inquiry backend still surfaces this line.
  *
  * Use these constants instead of re-hardcoding the number; formatting
  * changes (vanity number, area-code rotation, dial-code formatting)

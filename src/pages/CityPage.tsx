@@ -255,10 +255,10 @@ const CityPage = () => {
               Verified treatment programs in {cityData.name}, {stateData.abbreviation}.
             </p>
             <div className="mt-4 flex flex-col sm:flex-row gap-2.5">
-              <Link to="/concierge">
+              <Link to="/search-results">
                 <Button size="default" className="gap-2 w-full sm:w-auto shadow-lg shadow-black/20">
-                  <Heart className="h-4 w-4" />
-                  Get Personalized Help
+                  <Search className="h-4 w-4" />
+                  Search Treatment Centers
                 </Button>
               </Link>
               <Link to={`/search-results?location=${encodeURIComponent(fullLocation)}`}>
@@ -435,8 +435,8 @@ const CityPage = () => {
                 <Link to={`/rehab-centers/${stateData.slug}`}>
                   <Button variant="outline">View All {stateData.name} Centers</Button>
                 </Link>
-                <Link to="/concierge">
-                  <Button>Get Personalized Help</Button>
+                <Link to="/search-results">
+                  <Button>Search Treatment Centers</Button>
                 </Link>
               </div>
             </div>
@@ -853,10 +853,10 @@ const CityPage = () => {
               insurance coverage, and preferences.
             </p>
             <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link to="/concierge">
+              <Link to="/search-results">
                 <Button size="lg" className="gap-2">
-                  <Heart className="h-4 w-4" />
-                  Find Treatment
+                  <Search className="h-4 w-4" />
+                  Search Treatment Centers
                 </Button>
               </Link>
               <Link to={`/rehab-centers/${stateData.slug}`}>

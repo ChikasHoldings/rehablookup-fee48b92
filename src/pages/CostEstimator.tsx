@@ -617,9 +617,9 @@ const CostEstimator = () => {
                       {/* CTAs */}
                       <div className="grid sm:grid-cols-2 gap-3 pt-2">
                         <Button asChild size="lg" className="w-full">
-                          <Link to="/concierge">
-                            <Heart className="h-4 w-4 mr-2" />
-                            Get Matched to Treatment
+                          <Link to="/search-results">
+                            <Search className="h-4 w-4 mr-2" />
+                            Search Treatment Centers
                           </Link>
                         </Button>
                         <Button asChild variant="outline" size="lg" className="w-full">

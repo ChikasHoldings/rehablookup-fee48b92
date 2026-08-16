@@ -39,7 +39,7 @@ const ALWAYS = [
   ["/treatment-types/detox-programs", 200, ["detox"]],
   ["/insurance", 200, ["insurance"]],
   ["/insurance/aetna-rehab", 200, ["Aetna"]],
-  ["/concierge", 200, ["concierge"]],
+  ["/compare", 200, ["compare"]],
   ["/about", 200, ["About"]],
   ["/sitemap-index.xml", 200, ["<sitemapindex"]],
   ["/sitemap.xml", 200, ["<urlset"]],

@@ -5,7 +5,7 @@ import {
   InternationalHero,
   CountriesServed,
   InternationalFAQ,
-  PlacementCTA
+  DirectorySearchCTA
 } from "./components";
 import { Link } from "react-router-dom";
 import { MapPin, Star, Sun, Waves, Mountain } from "lucide-react";
@@ -97,7 +97,7 @@ const LuxuryRehabCalifornia = () => {
 
       <CountriesServed />
       <InternationalFAQ title="California Treatment FAQs" subtitle="Everything you need to know about luxury rehab in California." faqs={customFAQs} schemaId="luxury-rehab-california-faq" />
-      <PlacementCTA title="Find Your California Treatment Center" description="From Malibu oceanfront to LA executive programs, we'll place you in the perfect California facility." />
+      <DirectorySearchCTA title="Find Your California Treatment Center" description="Filter California listings by city, level of care, and insurance, then contact facilities directly." />
     </Layout>
   );
 };

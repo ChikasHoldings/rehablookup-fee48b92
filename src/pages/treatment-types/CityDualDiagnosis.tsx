@@ -6,7 +6,6 @@ import { statesData } from "@/data/locationSeoData";
 import {
   Brain,
   ArrowRight,
-  Phone,
   CheckCircle,
   Shield,
   Clock,
@@ -223,10 +222,10 @@ const CityDualDiagnosis = () => {
                 ))}
               </div>
               <div className="mt-6 text-center">
-                <Link to="/concierge">
+                <Link to="/search-results">
                   <Button className="gap-2">
-                    <Phone className="h-4 w-4" />
-                    Get a Free Assessment
+                    <Search className="h-4 w-4" />
+                    Browse Treatment Centers
                   </Button>
                 </Link>
               </div>

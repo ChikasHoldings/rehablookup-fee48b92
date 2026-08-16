@@ -79,12 +79,12 @@
     },
     {
       "source": "/request-help",
-      "destination": "/concierge",
+      "destination": "/search-results",
       "permanent": true
     },
     {
       "source": "/placement-help",
-      "destination": "/concierge",
+      "destination": "/search-results",
       "permanent": true
     },
     {

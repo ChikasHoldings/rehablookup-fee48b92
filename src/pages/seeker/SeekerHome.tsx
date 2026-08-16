@@ -7,8 +7,8 @@ import {
   MapPin,
   FileText,
   HelpCircle,
+  Scale,
   Shield,
-  Phone,
   Heart,
   Building2,
   Star,
@@ -150,15 +150,13 @@ export default function SeekerHome() {
     }
   }, [searchQuery, selectedType, selectedState, sortBy, currentPage, searchParams, setSearchParams]);
 
-  // Returning-seeker KPIs + intake-resume card.
-  // Fetch counts and the most-recent active concierge inquiry so we can
-  // greet a returning user with "you have N open inquiries" / "resume your
-  // intake" instead of a pure-discovery feed.
+  // Returning-seeker KPIs. Directory cutover stage 1 removed the
+  // placement-case count and the "resume your intake" card — RehabLookup
+  // no longer runs placement cases for seekers, so the strip now covers
+  // inquiries, unread notifications and saved facilities only.
   const [seekerKpis, setSeekerKpis] = useState<{
     inquiriesOpen: number;
     inquiriesUnread: number;
-    conciergeOpen: number;
-    resumeInquiry: { id: string; primary_concern: string | null; level_of_care: string | null; updated_at: string } | null;
   } | null>(null);
 
   // Track the auth user-id so we re-fetch KPIs when the user signs in
@@ -190,8 +188,6 @@ export default function SeekerHome() {
       // authUserId already reflects the current session (seeded from storage
       // and kept in sync via onAuthStateChange), so use it directly instead of
       // an extra supabase.auth.getUser() round-trip on every mount.
-      // International placement product retired 2026-05-20 — only
-      // domestic concierge cases remain in the seeker KPI summary.
       // .error checked on every individual call below; the entire KPI
       // strip is suppressed if any single call fails so we don't
       // surface partial / misleading numbers (e.g. "0 inquiries" when
@@ -202,21 +198,8 @@ export default function SeekerHome() {
       // — the previous fallback `.then(r=>r,()=>({data:[]}))` ate the
       // failure silently and the KPI strip rendered "0 inquiries"
       // even for users with multiple pending leads.
-      const [leadsRes, conciergeRes, draftRes, notifRes] = await Promise.all([
+      const [leadsRes, notifRes] = await Promise.all([
         supabase.rpc("get_seeker_submitted_leads"),
-        supabase
-          .from("concierge_inquiries")
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", authUserId)
-          .not("status", "in", "(closed,completed)"),
-        supabase
-          .from("concierge_inquiries")
-          .select("id, primary_concern, level_of_care, updated_at, intake_submitted_at, status")
-          .eq("user_id", authUserId)
-          .is("intake_submitted_at", null)
-          .order("updated_at", { ascending: false })
-          .limit(1)
-          .maybeSingle(),
         supabase
           .from("seeker_notifications")
           .select("id", { count: "exact", head: true })
@@ -227,8 +210,6 @@ export default function SeekerHome() {
 
       const errors = [
         (leadsRes as { error?: { message?: string } }).error,
-        conciergeRes.error,
-        draftRes.error,
         notifRes.error,
       ].filter(Boolean);
       if (errors.length > 0) {
@@ -250,8 +231,6 @@ export default function SeekerHome() {
       setSeekerKpis({
         inquiriesOpen,
         inquiriesUnread: notifRes.count ?? 0,
-        conciergeOpen: conciergeRes.count ?? 0,
-        resumeInquiry: draftRes.data ?? null,
       });
     })();
     return () => { cancelled = true; };
@@ -462,7 +441,7 @@ export default function SeekerHome() {
               <CardContent className="space-y-1">
                 {[
                   { to: "/rehab-centers", icon: Building2, label: "Find Rehab Centers" },
-                  { to: "/account/concierge", icon: HelpCircle, label: "Placement Service" },
+                  { to: "/compare", icon: HelpCircle, label: "Compare Facilities" },
                   { to: "/how-it-works", icon: Star, label: "How It Works" },
                   { to: "/insurance", icon: Shield, label: "Insurance Coverage" },
                 ].map((link) => (
@@ -515,12 +494,12 @@ export default function SeekerHome() {
             <CardContent className="p-6 sm:p-8 text-center">
               <p className="text-warning font-medium mb-2">Ready to find treatment?</p>
               <h3 className="text-xl font-display font-semibold mb-4 text-foreground">
-                Our placement advisors can connect you with the right treatment center
+                Search licensed treatment centers and contact them directly
               </h3>
               <Button asChild size="lg" className="shadow-lg">
-                <Link to="/account/concierge">
-                  <Phone className="h-4 w-4 mr-2" />
-                  Find Treatment
+                <Link to="/search-results">
+                  <Search className="h-4 w-4 mr-2" />
+                  Search Treatment Centers
                 </Link>
               </Button>
             </CardContent>
@@ -692,29 +671,9 @@ export default function SeekerHome() {
       {/* Returning-seeker KPI strip + intake-resume card.
           Only renders for signed-in users with at least one signal worth
           surfacing; pure anon discovery flow is unaffected. */}
-      {seekerKpis && (seekerKpis.inquiriesOpen > 0 || seekerKpis.conciergeOpen > 0 || seekerKpis.resumeInquiry || seekerKpis.inquiriesUnread > 0) && (
+      {seekerKpis && (seekerKpis.inquiriesOpen > 0 || seekerKpis.inquiriesUnread > 0) && (
         <div className="max-w-6xl mx-auto px-3 sm:px-4 pt-4 sm:pt-5">
-          {seekerKpis.resumeInquiry && (
-            <Card className="mb-3 border-amber-500/30 bg-amber-500/5">
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
-                  <Phone className="h-5 w-5 text-amber-600" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold">Resume your placement intake</p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {seekerKpis.resumeInquiry.primary_concern
-                      ? `Started: ${seekerKpis.resumeInquiry.primary_concern}`
-                      : "You have an unfinished intake — pick up where you left off."}
-                  </p>
-                </div>
-                <Button size="sm" asChild>
-                  <Link to={`/account/concierge/${seekerKpis.resumeInquiry.id}`}>Resume</Link>
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
             <Link to="/account/requests" className="block">
               <Card className="hover:border-primary/40 transition-colors">
                 <CardContent className="p-3 flex items-center gap-2">
@@ -750,19 +709,6 @@ export default function SeekerHome() {
                   <div className="min-w-0">
                     <p className="text-xs text-muted-foreground leading-tight">Saved</p>
                     <p className="text-base font-semibold tabular-nums">{favoritesCount}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-            <Link to="/account/concierge" className="block">
-              <Card className="hover:border-primary/40 transition-colors">
-                <CardContent className="p-3 flex items-center gap-2">
-                  <div className="h-9 w-9 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
-                    <HelpCircle className="h-4 w-4 text-emerald-600" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs text-muted-foreground leading-tight">Placements</p>
-                    <p className="text-base font-semibold tabular-nums">{seekerKpis.conciergeOpen}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -1002,7 +948,7 @@ export default function SeekerHome() {
                 {[
                   { to: "/rehab-centers", icon: Building2, label: "Browse All Centers" },
                   { to: "/insurance", icon: Shield, label: "Insurance Guide" },
-                  { to: "/account/concierge", icon: Phone, label: "Find Treatment" },
+                  { to: "/compare", icon: Scale, label: "Compare Facilities" },
                 ].map((link) => (
                   <Link 
                     key={link.to}
@@ -1022,12 +968,12 @@ export default function SeekerHome() {
                 <div className="p-3 rounded-full bg-primary/10 w-fit mx-auto mb-3">
                   <Heart className="h-5 w-5 text-primary" />
                 </div>
-                <h4 className="font-semibold text-foreground mb-1">Need Help?</h4>
+                <h4 className="font-semibold text-foreground mb-1">Keep looking</h4>
                 <p className="text-xs text-muted-foreground mb-3">
-                  Get placed in treatment
+                  Search the full directory
                 </p>
                 <Button asChild size="sm" className="w-full">
-                  <Link to="/account/concierge">Start Placement</Link>
+                  <Link to="/search-results">Search Centers</Link>
                 </Button>
               </CardContent>
             </Card>

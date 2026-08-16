@@ -17,8 +17,8 @@ export const InternationalHero = ({
   title,
   subtitle,
   description,
-  ctaText = "Start Your Placement",
-  ctaLink = "/international/apply",
+  ctaText = "Search Treatment Centers",
+  ctaLink = "/search-results",
   keywords = [],
   breadcrumbItems,
 }: InternationalHeroProps) => {

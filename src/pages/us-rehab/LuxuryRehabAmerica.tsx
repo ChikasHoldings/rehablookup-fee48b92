@@ -4,7 +4,7 @@ import {
   InternationalHero,
   CountriesServed,
   InternationalFAQ,
-  PlacementCTA
+  DirectorySearchCTA
 } from "./components";
 import { Crown, Star, Utensils, Waves, Dumbbell, Flower2 } from "lucide-react";
 
@@ -83,7 +83,7 @@ const LuxuryRehabAmerica = () => {
 
       <CountriesServed />
       <InternationalFAQ title="Luxury Treatment FAQs" subtitle="Common questions about premium addiction treatment in the United States." faqs={customFAQs} schemaId="luxury-rehab-america-faq" />
-      <PlacementCTA title="Experience Luxury Recovery" description="Let us connect you with America's most exclusive treatment facilities. Personalized placement into the perfect luxury program." />
+      <DirectorySearchCTA title="Experience Luxury Recovery" description="Browse luxury and executive treatment listings, compare amenities and accreditation, then contact them directly." />
     </Layout>
   );
 };

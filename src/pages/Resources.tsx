@@ -507,7 +507,7 @@ export default function Resources() {
                 Ready to Take the Next Step?
               </h2>
               <p className="mb-8 text-white/80 max-w-xl mx-auto">
-                Our free concierge service can help you find the right treatment center for your unique situation.
+                Search the directory by location, level of care, and insurance to find programs that fit your situation.
               </p>
               <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
                 <Link to="/rehab-centers">
@@ -516,9 +516,9 @@ export default function Resources() {
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
-                <Link to="/concierge">
+                <Link to="/search-results">
                   <Button size="lg" variant="outline" className="gap-2 border-white/30 text-white hover:bg-white/10">
-                    Get Free Help
+                    Search Treatment Centers
                   </Button>
                 </Link>
               </div>

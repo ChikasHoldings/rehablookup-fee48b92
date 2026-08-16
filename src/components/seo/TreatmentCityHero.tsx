@@ -8,7 +8,7 @@ import {
   TREATMENT_THEMES,
   type TreatmentThemeKey,
 } from "@/components/seo/treatmentThemes";
-import { ArrowRight, Heart, MapPin, Search, Building2 } from "lucide-react";
+import { ArrowRight, Scale, MapPin, Search, Building2 } from "lucide-react";
 
 interface TreatmentCityHeroProps {
   treatmentKey: TreatmentThemeKey;
@@ -95,20 +95,20 @@ export function TreatmentCityHero({
             Verified {treatmentName.toLowerCase()} programs in {cityName}, {abbreviation}. Compare facilities, insurance, and admission times.
           </p>
           <div className="mt-4 flex flex-col sm:flex-row gap-2.5">
-            <Link to="/concierge">
+            <Link to={`/rehab-centers/${stateSlug}/${citySlug}`}>
               <Button size="default" className="gap-2 w-full sm:w-auto shadow-lg shadow-black/20">
-                <Heart className="h-4 w-4" />
-                Get Personalized Help
+                <Search className="h-4 w-4" />
+                Browse {cityName}
               </Button>
             </Link>
-            <Link to={`/rehab-centers/${stateSlug}/${citySlug}`}>
+            <Link to="/compare">
               <Button
                 size="default"
                 variant="outline"
                 className="gap-2 w-full sm:w-auto border-white/30 bg-white/5 text-white hover:bg-white/15 backdrop-blur-sm"
               >
-                <Search className="h-4 w-4" />
-                Browse {cityName}
+                <Scale className="h-4 w-4" />
+                Compare Facilities
               </Button>
             </Link>
           </div>

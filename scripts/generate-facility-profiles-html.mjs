@@ -909,7 +909,7 @@ ${f.phone ? `<a class="btn btn-secondary" href="tel:${escapeAttr(f.phone)}">Call
 <li><a href="/rehab-centers/${stateSlug}/${cityHrefSlug}">Rehab centers in ${escapeHtml(f.city)}, ${escapeHtml(f.state)}</a></li>
 <li><a href="/rehab-centers/${stateSlug}">All rehab centers in ${escapeHtml(f.state)}</a></li>
 <li><a href="/rehab-centers">Browse the full RehabLookup directory</a></li>
-<li><a href="/concierge">Get a free personalized placement match</a></li>
+<li><a href="/search-results">Search other treatment centers</a></li>
 </ul>
 </section>
 ${faqHtml}

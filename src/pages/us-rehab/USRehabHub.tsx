@@ -8,7 +8,7 @@ import {
   WhyUSATreatment,
   StateDestinations,
   TreatmentCategories,
-  PlacementCTA
+  DirectorySearchCTA
 } from "./components";
 
 const USRehabHub = () => {
@@ -16,7 +16,7 @@ const USRehabHub = () => {
     "@context": "https://schema.org",
     "@type": "Service",
     "name": "US Addiction Treatment for International Patients",
-    "description": "Comprehensive placement service connecting international clients with top-rated addiction treatment centers across the United States.",
+    "description": "Directory of licensed addiction-treatment centers across the United States, including programs that accept international patients.",
     "provider": {
       "@type": "Organization",
       "name": "RehabLookup",
@@ -63,7 +63,7 @@ const USRehabHub = () => {
       <TreatmentCategories />
       <CountriesServed />
       <InternationalFAQ schemaId="us-rehab-faq" />
-      <PlacementCTA />
+      <DirectorySearchCTA />
     </Layout>
   );
 };

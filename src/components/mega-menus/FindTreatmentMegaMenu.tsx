@@ -5,7 +5,7 @@ import {
   MapPin, Search, ArrowRight, Pill, Wine, Brain, Building2, Heart,
   Sparkles, Activity, Users, Shield, ChevronRight,
 } from "lucide-react";
-import conciergeImg from "@/assets/images/concierge-matching.jpg";
+import directorySearchImg from "@/assets/images/concierge-matching.jpg";
 
 interface MegaMenuProps {
   onNavigate?: () => void;
@@ -120,21 +120,21 @@ export function FindTreatmentMegaMenu({ onNavigate }: MegaMenuProps) {
             All treatment types <ArrowRight className="h-3 w-3" />
           </PrefetchLink>
 
-          {/* Concierge CTA with Image */}
-          <Link to="/concierge" onClick={onNavigate} className="group block mt-2.5">
+          {/* Directory search CTA */}
+          <Link to="/search-results" onClick={onNavigate} className="group block mt-2.5">
             <div className="relative rounded-xl overflow-hidden h-[120px]">
-              <img src={conciergeImg} alt="Free treatment matching" className="absolute inset-0 w-full h-full object-cover object-top" loading="lazy" />
+              <img src={directorySearchImg} alt="Search addiction treatment centers" className="absolute inset-0 w-full h-full object-cover object-top" loading="lazy" />
               <div className="absolute inset-0 bg-gradient-to-r from-foreground/85 via-foreground/65 to-foreground/20" />
               <div className="relative h-full flex items-center justify-between px-4">
                 <div>
                   <div className="flex items-center gap-1.5 mb-1">
                     <Sparkles className="h-3.5 w-3.5 text-accent" />
-                    <p className="text-sm font-bold text-white leading-tight">Concierge Placement Service</p>
+                    <p className="text-sm font-bold text-white leading-tight">Search the full directory</p>
                   </div>
-                  <p className="text-xs text-white/75 leading-snug max-w-[260px]">Our specialists personally match you with a verified treatment center tailored to your needs — typically within 24 hours.</p>
+                  <p className="text-xs text-white/75 leading-snug max-w-[260px]">Filter licensed addiction-treatment centers by location, level of care, and insurance — then contact them directly.</p>
                 </div>
                 <div className="h-8 px-4 rounded-lg bg-accent text-accent-foreground text-xs font-semibold flex items-center gap-1.5 shrink-0 group-hover:bg-accent/90 transition-colors shadow-md">
-                  Get Matched <ArrowRight className="h-3.5 w-3.5" />
+                  Search <ArrowRight className="h-3.5 w-3.5" />
                 </div>
               </div>
             </div>

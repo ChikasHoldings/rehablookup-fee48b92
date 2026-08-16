@@ -201,7 +201,7 @@ export default function SeekerNotifications() {
     <>
       <Helmet>
         <title>Notifications | RehabLookup</title>
-        <meta name="description" content="View your notifications about facility updates, request responses, reviews, and concierge service updates." />
+        <meta name="description" content="View your notifications about facility updates, request responses, and reviews." />
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
       <div className="max-w-3xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
@@ -266,7 +266,7 @@ export default function SeekerNotifications() {
               <div className="text-sm min-w-0">
                 <p className="font-medium">Get desktop notifications</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Hear a chime and see a popup when a facility responds, your review is approved, or a concierge match arrives — even while you're in another tab.
+                  Hear a chime and see a popup when a facility responds or your review is approved — even while you're in another tab.
                 </p>
               </div>
               <Button size="sm" onClick={handleEnableBrowserNotifications}>

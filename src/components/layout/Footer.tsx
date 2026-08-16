@@ -68,7 +68,7 @@ const programLinks: FooterLink[] = [
 ];
 
 const internationalLinks: FooterLink[] = [
-  { name: "International Placement", path: "/international", badge: "Hub" },
+  { name: "International Patients", path: "/international", badge: "Hub" },
   { name: "UK & Ireland Patients", path: "/us-rehab/uk-patients" },
   { name: "Canadian Patients", path: "/us-rehab/canadian-patients" },
   { name: "European Patients", path: "/us-rehab/european-patients" },
@@ -111,7 +111,6 @@ const companyLinks: FooterLink[] = [
   { name: "How It Works", path: "/how-it-works" },
   { name: "How We Make Money", path: "/how-we-make-money" },
   { name: "Contact Us", path: "/contact" },
-  { name: "Treatment Placement", path: "/concierge" },
   { name: "Editorial Team", path: "/authors", badge: "New" },
   { name: "Editorial Policy", path: "/editorial-policy" },
   { name: "Medical Disclaimer", path: "/medical-disclaimer" },
@@ -291,19 +290,19 @@ export const Footer = memo(function Footer() {
               </div>
               <div>
                 <p className="text-[15px] font-bold text-primary-foreground leading-tight">
-                  Need Help Finding the Right Treatment?
+                  Looking for a Treatment Center?
                 </p>
                 <p className="text-[13px] text-primary-foreground/70 mt-0.5 leading-snug">
-                  Our specialists match you with verified, accredited U.S. facilities — confidentially.
+                  Search and compare licensed U.S. addiction-treatment providers, then contact them directly.
                 </p>
               </div>
             </div>
             <div className="flex flex-col sm:flex-row gap-2.5 shrink-0">
               <Link
-                to="/concierge/intake"
+                to="/search-results"
                 className="inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-accent-foreground shadow-sm hover:bg-accent/90 transition-all duration-150"
               >
-                Get Matched Now <ArrowRight className="h-3.5 w-3.5" />
+                Search Treatment Centers <ArrowRight className="h-3.5 w-3.5" />
               </Link>
               <Link
                 to="/international"

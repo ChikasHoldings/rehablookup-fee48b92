@@ -101,7 +101,7 @@ const platformLinks = [
   { href: "/providers/resources", label: "Resource Hub" },
   { href: "/provider-faq", label: "Provider FAQ" },
   { href: "/how-it-works", label: "How It Works" },
-  { href: "/concierge", label: "Concierge Placement" },
+  { href: "/search-results", label: "Search the Directory" },
   { href: "/provider-support", label: "Get Support" },
 ];
 

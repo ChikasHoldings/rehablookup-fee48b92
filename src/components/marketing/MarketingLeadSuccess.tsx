@@ -236,7 +236,7 @@ export function MarketingLeadSuccess({ leadId, matchedFacilities }: MarketingLea
           </div>
         )}
 
-        {/* Concierge Upsell */}
+        {/* Keep-searching prompt */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -247,10 +247,10 @@ export function MarketingLeadSuccess({ leadId, matchedFacilities }: MarketingLea
             <Sparkles className="h-6 w-6 text-violet-600" />
           </div>
           <h2 className="text-xl sm:text-2xl font-bold text-violet-900 mb-2">
-            Want a Dedicated Placement Advisor?
+            Keep comparing your options
           </h2>
           <p className="text-sm sm:text-base text-violet-700 mb-5 max-w-xl mx-auto">
-            Our Concierge team handles everything — insurance verification, facility introductions, and personalized matching — so you don't have to navigate this alone.
+            Most people contact several centers before deciding. Search the directory by location, level of care, and insurance — you can reach out to as many as you like.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
             <Button
@@ -258,12 +258,12 @@ export function MarketingLeadSuccess({ leadId, matchedFacilities }: MarketingLea
               size="lg"
               className="bg-violet-600 hover:bg-violet-700 text-white shadow-lg hover:shadow-xl transition-all"
             >
-              <Link to="/concierge">
-                Get Expert Help — Free
+              <Link to="/search-results">
+                Search Treatment Centers
                 <ArrowRight className="h-4 w-4 ml-2" />
               </Link>
             </Button>
-            <span className="text-xs text-violet-600">No fee for clients • Personalized placement</span>
+            <span className="text-xs text-violet-600">Free to search • No account required</span>
           </div>
         </motion.div>
 

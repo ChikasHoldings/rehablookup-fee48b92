@@ -10,7 +10,7 @@ import { TrustBar } from "@/components/seo/TrustBar";
 import { ConversionSection } from "@/components/seo/ConversionSection";
 import { ComparisonSection } from "@/components/seo/ComparisonSection";
 import { AreaWaitlistCapture } from "@/components/seo/AreaWaitlistCapture";
-import { InlineMiniIntake } from "@/components/seo/InlineMiniIntake";
+import { InlineMiniSearch } from "@/components/seo/InlineMiniSearch";
 import { LocationStatTile } from "@/components/seo/LocationStatTile";
 import {
   InternalLinkingSection,
@@ -134,10 +134,10 @@ export function SEOLandingTemplate({
   showTreatmentLinks = true,
   showInsuranceLinks = true,
   showNearMeLinks = false,
-  ctaTitle = "Ready to Start Your Recovery?",
-  ctaSubtitle = "Connect with accredited treatment facilities that match your needs. Our team is available 24/7.",
-  ctaButtonText = "Get Help Now",
-  ctaButtonLink = "/concierge",
+  ctaTitle = "Compare Treatment Centers",
+  ctaSubtitle = "Search licensed addiction-treatment providers, compare programs and insurance, then contact them directly.",
+  ctaButtonText = "Search Treatment Centers",
+  ctaButtonLink = "/search-results",
   waitlistAreaSlug,
   waitlistAreaLabel,
   waitlistCity,
@@ -259,7 +259,7 @@ export function SEOLandingTemplate({
 
             <div className="mt-4 flex flex-col sm:flex-row gap-2.5">
               <Button asChild variant="hero" size="default" className="gap-2 shadow-lg shadow-black/30">
-                <Link to={ctaButtonLink || "/concierge"}>
+                <Link to={ctaButtonLink || "/search-results"}>
                   {ctaButtonText}
                   <ArrowRight className="h-4 w-4" />
                 </Link>
@@ -289,7 +289,7 @@ export function SEOLandingTemplate({
                 value={isLoading ? "—" : (facilityCount ?? facilities.length).toLocaleString()}
                 icon={Building2}
               />
-              <LocationStatTile size="sm" label="24/7 Concierge" value="Live" icon={Phone} />
+              <LocationStatTile size="sm" label="Listings" value="Updated daily" icon={Building2} />
               <div className="hidden md:block">
                 <LocationStatTile size="sm" label="Insurance" value="Most plans" icon={Shield} />
               </div>
@@ -302,7 +302,7 @@ export function SEOLandingTemplate({
         <div className="relative z-10 border-t border-white/10 bg-black/30 backdrop-blur-sm">
           <div className="container py-3">
             <div className="max-w-2xl">
-              <InlineMiniIntake source="seo_landing_hero" />
+              <InlineMiniSearch source="seo_landing_hero" />
             </div>
           </div>
         </div>
@@ -393,20 +393,20 @@ export function SEOLandingTemplate({
               <div className="text-center py-12 rounded-2xl border bg-card">
                 <Building2 className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-foreground mb-2">
-                  Talk to a Placement Advisor
+                  No listings match this view yet
                 </h3>
                 <p className="text-muted-foreground mb-2">
-                  Our licensed placement advisors will personally match you with verified treatment centers — typically within 24 hours.
+                  Try widening your search — nearby cities and neighbouring states often have programs that fit.
                 </p>
                 <p className="text-sm text-muted-foreground mb-6">
-                  Over 16,000 treatment centers are available nationwide through our network.
+                  Over 16,000 treatment centers are listed nationwide in the directory.
                 </p>
                 <div className="flex flex-wrap items-center justify-center gap-3">
                   <Button asChild variant="default">
-                    <Link to="/concierge/intake">Get Matched Now</Link>
+                    <Link to="/search-results">Browse Nationwide</Link>
                   </Button>
                   <Button asChild variant="outline">
-                    <Link to="/search-results">Browse Nationwide</Link>
+                    <Link to="/locations">Browse by Location</Link>
                   </Button>
                 </div>
               </div>
@@ -444,13 +444,13 @@ export function SEOLandingTemplate({
                 <p className="text-sm md:text-base text-muted-foreground leading-relaxed">{introContent}</p>
               </div>
               <div className="grid grid-cols-1 gap-3">
-                <Link to="/concierge" className="flex items-center gap-3 rounded-xl border bg-card p-3 hover:border-primary/40 hover:shadow-sm transition-all group">
+                <Link to="/compare" className="flex items-center gap-3 rounded-xl border bg-card p-3 hover:border-primary/40 hover:shadow-sm transition-all group">
                   <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                    <Phone className="h-4 w-4 text-primary" />
+                    <Building2 className="h-4 w-4 text-primary" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">Free Consultation</p>
-                    <p className="text-xs text-muted-foreground truncate">Speak with an advisor</p>
+                    <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">Compare Facilities</p>
+                    <p className="text-xs text-muted-foreground truncate">Side-by-side comparison</p>
                   </div>
                 </Link>
                 <Link to="/insurance" className="flex items-center gap-3 rounded-xl border bg-card p-3 hover:border-primary/40 hover:shadow-sm transition-all group">
@@ -548,7 +548,7 @@ export function SEOLandingTemplate({
       <section className="py-8 bg-muted/30">
         <div className="container max-w-2xl">
           <p className="text-center text-sm font-semibold text-muted-foreground mb-4 uppercase tracking-wide">Get Personalized Help — Free &amp; Confidential</p>
-          <InlineMiniIntake source="seo_landing_mid" defaultTreatment="" />
+          <InlineMiniSearch source="seo_landing_mid" defaultTreatment="" />
         </div>
       </section>
 
@@ -563,8 +563,8 @@ export function SEOLandingTemplate({
             <p className="text-white/80 mb-6 max-w-xl mx-auto">{ctaSubtitle}</p>
             <div className="flex flex-wrap items-center justify-center gap-3">
               <Button asChild variant="hero-light" size="lg">
-                <Link to={ctaButtonLink || "/concierge"}>
-                  <Phone className="h-4 w-4 mr-1" />
+                <Link to={ctaButtonLink || "/search-results"}>
+                  <Search className="h-4 w-4 mr-1" />
                   {ctaButtonText}
                 </Link>
               </Button>

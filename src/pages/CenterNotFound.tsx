@@ -11,8 +11,6 @@ import {
   Search,
   MapPin,
   ArrowLeft,
-  HeartHandshake,
-  Phone,
   Compass,
   ShieldCheck,
   Flag,
@@ -42,7 +40,7 @@ interface CenterNotFoundProps {
  *   - Give them an immediate retry path: a search box that submits to
  *     /search-results so they don't have to backtrack.
  *   - Surface the most common recovery actions (browse directory,
- *     concierge, popular treatment categories) so the visit is not wasted.
+ *     search, popular treatment categories) so the visit is not wasted.
  *   - Stay out of Google's index (noindex) so this page doesn't compete
  *     with real listings.
  */
@@ -155,14 +153,14 @@ const CenterNotFound = ({ attemptedSlug, reason = "missing" }: CenterNotFoundPro
                   Browse All Centers
                 </Button>
               </Link>
-              <Link to="/concierge">
+              <Link to="/search-results">
                 <Button
                   variant="outline"
                   size="lg"
                   className="gap-2 w-full sm:w-auto border-primary/30 hover:bg-primary/5"
                 >
-                  <HeartHandshake className="h-4 w-4" />
-                  Talk to a Placement Advisor
+                  <Search className="h-4 w-4" />
+                  Search Treatment Centers
                 </Button>
               </Link>
             </div>
@@ -237,26 +235,25 @@ const CenterNotFound = ({ attemptedSlug, reason = "missing" }: CenterNotFoundPro
                   </li>
                 </ul>
                 <p className="mt-4 text-xs text-muted-foreground">
-                  Our concierge team can match you with a verified treatment
-                  center — usually within 24 hours.
+                  Search the directory to find another licensed
+                  treatment center in this area.
                 </p>
               </CardContent>
             </Card>
           </div>
 
-          {/* Concierge CTA */}
+          {/* Directory search CTA */}
           <div className="mt-10 text-center p-6 rounded-xl bg-primary/5 border border-primary/10">
             <p className="text-sm text-muted-foreground mb-2">
-              Need immediate help?
+              Still looking?
             </p>
             <p className="font-display font-semibold text-foreground mb-3">
-              Our placement advisors are available 24/7 to connect you with the
-              right treatment center.
+              Browse and compare licensed treatment centers across the directory.
             </p>
-            <Link to="/concierge">
+            <Link to="/search-results">
               <Button variant="default" className="gap-2">
-                <Phone className="h-4 w-4" />
-                Find Treatment Now
+                <Search className="h-4 w-4" />
+                Search Treatment Centers
               </Button>
             </Link>
           </div>

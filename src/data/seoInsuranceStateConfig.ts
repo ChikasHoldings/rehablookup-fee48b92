@@ -135,7 +135,7 @@ export function getInsuranceStateFAQs(
     },
     {
       question: `How do I find ${insurer.name} in-network rehab centers in ${state.state}?`,
-      answer: `You can find in-network ${insurer.name} rehab centers in ${state.state} by: 1) Searching our RehabLookup directory and filtering by insurance accepted, 2) Calling ${insurer.name} member services to request a list of in-network behavioral health providers, 3) Using our concierge service for personalized facility matching with ${insurer.name} benefits verification. ${details.specialNote}.`,
+      answer: `You can find in-network ${insurer.name} rehab centers in ${state.state} by: 1) Searching our RehabLookup directory and filtering by insurance accepted, 2) Calling ${insurer.name} member services to request a list of in-network behavioral health providers, 3) Asking a listed facility's admissions team to verify your ${insurer.name} benefits — most do this at no cost. ${details.specialNote}.`,
     },
     {
       question: `What does ${insurer.name} typically cover for rehab treatment in ${state.state}?`,

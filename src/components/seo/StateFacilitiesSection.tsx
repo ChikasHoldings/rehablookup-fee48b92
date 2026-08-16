@@ -141,17 +141,17 @@ export function StateFacilitiesSection({
           <div className="text-center py-12 rounded-2xl border bg-card max-w-2xl mx-auto">
             <Building2 className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-foreground mb-2">
-              Talk to a Placement Advisor in {stateName}
+              No {stateName} listings match this view yet
             </h3>
             <p className="text-muted-foreground mb-2">
-              Our licensed placement advisors will personally match you with verified centers in {stateName} or nearby states — typically within 24 hours.
+              Widen the search to nearby cities or neighbouring states — the directory covers licensed programs nationwide.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-3 mt-6">
               <Button asChild variant="default">
-                <Link to="/concierge/intake">Get Matched Now</Link>
+                <Link to="/search-results">Browse Nationwide</Link>
               </Button>
               <Button asChild variant="outline">
-                <Link to="/search-results">Browse Nationwide</Link>
+                <Link to="/locations">Browse by Location</Link>
               </Button>
             </div>
           </div>

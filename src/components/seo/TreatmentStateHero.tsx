@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { LocationStatTile } from "@/components/seo/LocationStatTile";
 import { TREATMENT_THEMES, type TreatmentThemeKey } from "@/components/seo/treatmentThemes";
-import { ArrowRight, Heart, MapPin, Search, Activity, Building2 } from "lucide-react";
+import { ArrowRight, Scale, MapPin, Search, Activity, Building2 } from "lucide-react";
 
 export type { TreatmentThemeKey };
 
@@ -93,20 +93,20 @@ export function TreatmentStateHero({
               Verified {treatmentName.toLowerCase()} programs across {stateName} · {cities.length}+ cities
             </p>
             <div className="mt-4 flex flex-col sm:flex-row gap-2.5">
-              <Link to="/concierge">
+              <Link to={`/rehab-centers/${stateSlug}`}>
                 <Button size="default" className="gap-2 w-full sm:w-auto shadow-lg shadow-black/20">
-                  <Heart className="h-4 w-4" />
-                  Get Personalized Help
+                  <Search className="h-4 w-4" />
+                  Browse {abbreviation}
                 </Button>
               </Link>
-              <Link to={`/rehab-centers/${stateSlug}`}>
+              <Link to="/compare">
                 <Button
                   size="default"
                   variant="outline"
                   className="gap-2 w-full sm:w-auto border-white/30 bg-white/5 text-white hover:bg-white/15 backdrop-blur-sm"
                 >
-                  <Search className="h-4 w-4" />
-                  Browse {abbreviation}
+                  <Scale className="h-4 w-4" />
+                  Compare Facilities
                 </Button>
               </Link>
             </div>

@@ -122,20 +122,20 @@ export default function SocialLanding() {
             </section>
           )}
           
-          {/* CTA into the concierge intake. This is a generic "find treatment"
+          {/* CTA into the directory. This is a generic "find treatment"
               landing with no specific facility, so it must NOT use the
               facility-required LeadIntakeForm (which dead-ends on submit with
-              "select a treatment center"). Route to the facility-less concierge
-              intake instead, preserving UTM/campaign params for attribution. */}
+              "select a treatment center"). Route to search instead, preserving
+              UTM/campaign params for attribution. */}
           <section className="text-center space-y-3 pt-2">
             <Button asChild size="lg" className="w-full sm:w-auto h-12 px-8 text-base">
-              <Link to={`/concierge/intake${searchParams.toString() ? `?${searchParams.toString()}` : ""}`}>
-                Find Treatment Options
+              <Link to={`/search-results${searchParams.toString() ? `?${searchParams.toString()}` : ""}`}>
+                Search Treatment Centers
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
             <p className="text-xs text-muted-foreground">
-              Free &amp; confidential — takes about 2 minutes.
+              Free to search — no account required.
             </p>
           </section>
         </div>

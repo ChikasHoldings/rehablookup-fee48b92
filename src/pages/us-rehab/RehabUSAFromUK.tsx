@@ -125,7 +125,7 @@ export default function RehabUSAFromUK() {
           <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-5">
             {[
               { step: "1", title: "Apply Online", desc: "Complete our confidential intake form with your treatment needs." },
-              { step: "2", title: "Get Matched", desc: "Our UK-experienced advisors match you with ideal US facilities." },
+              { step: "2", title: "Compare Programs", desc: "Filter listings by level of care, insurance, and location to build a shortlist." },
               { step: "3", title: "Arrange Travel", desc: "We coordinate flights, ESTA, and airport transfers." },
               { step: "4", title: "Begin Recovery", desc: "Arrive and begin your personalised treatment programme." },
             ].map((item, i) => (
@@ -241,9 +241,9 @@ export default function RehabUSAFromUK() {
                   <span>UK Patient Specialist Team</span>
                 </div>
                 <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-3">Start Your American Recovery Journey</h2>
-                <p className="text-sm sm:text-base text-muted-foreground mb-8 max-w-xl mx-auto leading-relaxed">Our UK-experienced advisors understand your needs. Get placed in premium US facilities with full travel coordination.</p>
+                <p className="text-sm sm:text-base text-muted-foreground mb-8 max-w-xl mx-auto leading-relaxed">Browse US treatment listings, check which ones state they accept international patients, and contact them directly.</p>
                 <div className="flex flex-wrap justify-center gap-x-6 gap-y-3 mb-8">
-                  {["Confidential Consultation", "ESTA Guidance", "Airport Transfers"].map(item => (
+                  {["Search Privately", "ESTA Guidance", "Airport Transfers"].map(item => (
                     <div key={item} className="flex items-center gap-2 text-sm text-muted-foreground">
                       <CheckCircle className="h-4 w-4 text-primary shrink-0" />
                       <span>{item}</span>
@@ -271,7 +271,7 @@ export default function RehabUSAFromUK() {
                   { href: "/us-rehab/uae-middle-east", label: "UAE & Middle East" },
                   { href: "/us-rehab/european-patients", label: "European Patients" },
                   { href: "/us-rehab/australian-patients", label: "Australian Patients" },
-                  { href: "/international", label: "International Placement" },
+                  { href: "/international", label: "International Patients" },
                 ].map((link) => (
                   <Link key={link.href} to={link.href} className="group flex items-center justify-between rounded-lg px-3 py-2 hover:bg-muted/50 transition-colors">
                     <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">{link.label}</span>

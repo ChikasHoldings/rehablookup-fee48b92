@@ -7,7 +7,7 @@ import {
   InternationalFAQ,
   WhyUSATreatment,
   StateDestinations,
-  PlacementCTA
+  DirectorySearchCTA
 } from "./components";
 import { Brain, Heart, Shield, Sparkles } from "lucide-react";
 
@@ -84,7 +84,7 @@ const DualDiagnosisUSA = () => {
       <StateDestinations title="Top States for Dual Diagnosis" subtitle="These US states are known for exceptional dual diagnosis programs with leading psychiatric expertise." />
       <CountriesServed />
       <InternationalFAQ title="Dual Diagnosis FAQs" subtitle="Common questions about seeking integrated mental health and addiction treatment in America." faqs={customFAQs} schemaId="dual-diagnosis-usa-faq" />
-      <PlacementCTA title="Find Integrated Treatment" description="Get placed in America's top dual diagnosis programs. Expert psychiatric care meets evidence-based addiction treatment." />
+      <DirectorySearchCTA title="Find Integrated Treatment" description="Browse US dual-diagnosis listings that pair psychiatric care with evidence-based addiction treatment, then contact them directly." />
     </Layout>
   );
 };

@@ -97,13 +97,13 @@ export function seoHeader() {
  * Mid-page CTA strip. Caller can customize the blurb to reference the
  * page's location/treatment type (e.g. "in California" or "in Baldwin County").
  */
-export function seoCtaStrip({ blurb = "We'll help you find verified treatment that fits your needs and insurance." } = {}) {
+export function seoCtaStrip({ blurb = "Filter licensed treatment centers by location, level of care, and insurance accepted." } = {}) {
   return `<div class="rl-cta-strip">
     <div>
-      <h2>Talk to a recovery advocate today</h2>
-      <p>Free, confidential, 24/7. ${blurb}</p>
+      <h2>Search treatment centers</h2>
+      <p>Free to browse, no account required. ${blurb}</p>
     </div>
-    <a href="/concierge" class="rl-cta-btn">Get Personalized Help &rarr;</a>
+    <a href="/search-results" class="rl-cta-btn">Search Treatment Centers &rarr;</a>
   </div>`;
 }
 
@@ -130,7 +130,7 @@ export function seoFooter() {
           <li><a href="/resources/signs-of-addiction">Signs of Addiction</a></li>
           <li><a href="/resources/insurance-coverage-guide">Insurance Guide</a></li>
           <li><a href="/resources/intervention-guide-how-to-plan">Intervention Guide</a></li>
-          <li><a href="/concierge">Free Concierge</a></li>
+          <li><a href="/compare">Compare Facilities</a></li>
         </ul></div>
         <div class="rl-footer-col"><h3>Company</h3><ul>
           <li><a href="/about">About Us</a></li>

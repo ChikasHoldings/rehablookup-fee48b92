@@ -128,29 +128,35 @@ const TYPE_ROUTES: Record<string, string> = {
   review_response: "/account/reviews",
   review_approved: "/account/reviews",
   review_rejected: "/account/reviews",
-  // Concierge flow. The full set below mirrors every seeker-facing `type`
-  // written to seeker_notifications by send-concierge-notifications /
-  // send-tour-notifications — without an entry these deep-linked to the generic
-  // inbox (/account/notifications) instead of the concierge section.
-  concierge_intake_received: "/account/concierge",
-  concierge_matches_found: "/account/concierge",
-  concierge_introductions_sent: "/account/concierge",
-  concierge_options_ready: "/account/concierge",
-  concierge_provider_interested: "/account/concierge",
-  concierge_provider_confirmed: "/account/concierge",
-  concierge_progress_update: "/account/concierge",
-  concierge_advisor_assigned: "/account/concierge",
-  concierge_placement_complete: "/account/concierge",
-  concierge_case_closed: "/account/concierge",
-  concierge_message_received: "/account/concierge",
-  concierge_tour_proposed: "/account/concierge",
-  concierge_tour_confirmed: "/account/concierge",
-  concierge_tour_completed: "/account/concierge",
-  concierge_tour_cancelled: "/account/concierge",
-  concierge_admission_updated: "/account/concierge",
-  concierge_move_in_scheduled: "/account/concierge",
-  concierge_moved_in: "/account/concierge",
-  placement_intro: "/account/concierge",
+  // Retired concierge/placement flow (directory cutover stage 1).
+  //
+  // These rows already exist in seeker_notifications and the producing edge
+  // functions have NOT been touched in this stage, so a seeker can still open
+  // a notification of one of these types. The workspace they used to deep-link
+  // into (/account/concierge) is gone, so they now resolve to saved facilities
+  // — a real page the seeker can act on — instead of a dead route.
+  //
+  // DB enum values and existing rows are deliberately left in place; retiring
+  // them is Stage 2 work.
+  concierge_intake_received: "/account/saved",
+  concierge_matches_found: "/account/saved",
+  concierge_introductions_sent: "/account/saved",
+  concierge_options_ready: "/account/saved",
+  concierge_provider_interested: "/account/saved",
+  concierge_provider_confirmed: "/account/saved",
+  concierge_progress_update: "/account/saved",
+  concierge_advisor_assigned: "/account/saved",
+  concierge_placement_complete: "/account/saved",
+  concierge_case_closed: "/account/saved",
+  concierge_message_received: "/account/saved",
+  concierge_tour_proposed: "/account/saved",
+  concierge_tour_confirmed: "/account/saved",
+  concierge_tour_completed: "/account/saved",
+  concierge_tour_cancelled: "/account/saved",
+  concierge_admission_updated: "/account/saved",
+  concierge_move_in_scheduled: "/account/saved",
+  concierge_moved_in: "/account/saved",
+  placement_intro: "/account/saved",
   // Facility / saved flow
   saved_facility: "/account/saved",
   facility_update: "/account/saved",

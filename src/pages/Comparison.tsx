@@ -553,8 +553,8 @@ export default function Comparison() {
                           <Link to={path}>View profile</Link>
                         </Button>
                         <Button asChild size="sm" variant="outline" className="w-full">
-                          <Link to={`/concierge?facility=${encodeURIComponent(d.facility.id)}`}>
-                            Get matched
+                          <Link to={`/search-results?location=${encodeURIComponent(`${d.facility.city}, ${d.facility.state}`)}`}>
+                            Centers nearby
                           </Link>
                         </Button>
                       </div>

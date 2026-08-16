@@ -9,7 +9,6 @@ const routePrefetchMap: Record<string, () => Promise<unknown>> = {
   "/search-results": () => import("@/pages/SearchResults"),
   "/locations": () => import("@/pages/Locations"),
   "/treatment-types": () => import("@/pages/TreatmentTypes"),
-  "/concierge": () => import("@/pages/concierge/ConciergeLanding"),
   "/how-it-works": () => import("@/pages/HowItWorks"),
   "/for-providers": () => import("@/pages/ForProviders"),
   "/insurance": () => import("@/pages/Insurance"),
@@ -26,7 +25,6 @@ const routePrefetchMap: Record<string, () => Promise<unknown>> = {
   "/account/settings": () => import("@/pages/seeker/SeekerSettings"),
   "/account/notifications": () => import("@/pages/seeker/SeekerNotifications"),
   "/account/help": () => import("@/pages/seeker/SeekerHelp"),
-  "/account/concierge": () => import("@/pages/seeker/SeekerConcierge"),
   // Provider panel routes (lazy loaded)
   "/provider/dashboard": () => import("@/pages/provider/Dashboard"),
   "/provider/listings": () => import("@/pages/provider/MyListings"),

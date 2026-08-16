@@ -5,7 +5,7 @@ import {
   InternationalHero,
   CountriesServed,
   InternationalFAQ,
-  PlacementCTA
+  DirectorySearchCTA
 } from "./components";
 import { Link } from "react-router-dom";
 import { Waves, Star, Shield, Sunset, Heart, Sparkles } from "lucide-react";
@@ -91,7 +91,7 @@ const MalibuRehabCenters = () => {
 
       <CountriesServed />
       <InternationalFAQ title="Malibu Treatment FAQs" subtitle="Everything you need to know about luxury rehab in Malibu." faqs={customFAQs} schemaId="malibu-rehab-faq" />
-      <PlacementCTA title="Experience Malibu Treatment" description="Let us connect you with Malibu's most exclusive oceanfront treatment facilities. Your healing journey in paradise awaits." />
+      <DirectorySearchCTA title="Experience Malibu Treatment" description="Browse Malibu-area treatment listings, compare programs and amenities, then contact their admissions teams." />
     </Layout>
   );
 };

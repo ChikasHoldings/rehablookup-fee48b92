@@ -1,6 +1,6 @@
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
-import { InternationalPageHero, InternationalFAQ, PlacementCTA } from "./components";
+import { InternationalPageHero, InternationalFAQ, DirectorySearchCTA } from "./components";
 import { DollarSign, CreditCard, Landmark, Percent, CheckCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import heroImg from "@/assets/hero-international-rehab.jpg";
@@ -98,7 +98,7 @@ const PayingForRehabUSANoInsurance = () => {
       </section>
 
       <InternationalFAQ title="Payment & Financing FAQs" subtitle="Common questions about paying for addiction treatment in the USA as an international patient." faqs={faqs} schemaId="paying-rehab-usa-faq" />
-      <PlacementCTA title="Get a Personalized Payment Plan" description="Our team helps international patients navigate costs and find programs that fit their budget—with no insurance required." />
+      <DirectorySearchCTA title="Get a Personalized Payment Plan" description="Our team helps international patients navigate costs and find programs that fit their budget—with no insurance required." />
     </Layout>
   );
 };

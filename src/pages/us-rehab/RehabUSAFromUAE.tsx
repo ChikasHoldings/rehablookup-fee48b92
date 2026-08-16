@@ -260,7 +260,7 @@ export default function RehabUSAFromUAE() {
                   <span>Gulf Region Specialist Team</span>
                 </div>
                 <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-3">Begin Your Confidential Recovery</h2>
-                <p className="text-sm sm:text-base text-muted-foreground mb-8 max-w-xl mx-auto leading-relaxed">Our advisors understand Middle Eastern client needs. Discreet, luxury US placement with full cultural accommodations.</p>
+                <p className="text-sm sm:text-base text-muted-foreground mb-8 max-w-xl mx-auto leading-relaxed">Browse US treatment listings, including programs that publish cultural and dietary accommodations, and contact them directly.</p>
                 <Button asChild size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground text-base px-8 py-6 shadow-lg shadow-accent/25">
                   <Link to="/international/apply" className="flex items-center gap-2">Apply for Treatment <ArrowRight className="h-5 w-5" /></Link>
                 </Button>
@@ -282,7 +282,7 @@ export default function RehabUSAFromUAE() {
                   { href: "/us-rehab/canadian-patients", label: "Canadian Patients" },
                   { href: "/us-rehab/european-patients", label: "European Patients" },
                   { href: "/us-rehab/australian-patients", label: "Australian Patients" },
-                  { href: "/international", label: "International Placement" },
+                  { href: "/international", label: "International Patients" },
                 ].map((link) => (
                   <Link key={link.href} to={link.href} className="group flex items-center justify-between rounded-lg px-3 py-2 hover:bg-muted/50 transition-colors">
                     <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">{link.label}</span>

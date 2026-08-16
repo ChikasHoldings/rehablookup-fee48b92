@@ -9,7 +9,7 @@ type TrustItem = {
 };
 
 const trustItems: TrustItem[] = [
-  { icon: Shield, text: "No Placement Fees for Clients" },
+  { icon: Shield, text: "Free for People Seeking Care" },
   {
     icon: CheckCircle,
     text: "Verified Rehab Facilities",

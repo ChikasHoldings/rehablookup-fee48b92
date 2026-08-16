@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, CheckCircle, Phone } from "lucide-react";
+import { ArrowRight, CheckCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 
@@ -84,9 +84,9 @@ export const InternationalPageHero = ({
               size="lg"
               className="text-base px-7 py-6 border-white/30 text-white hover:bg-white/10 hover:text-white backdrop-blur-sm"
             >
-              <Link to="/concierge" className="flex items-center gap-2">
-                <Phone className="h-4 w-4" />
-                Speak to an Advisor
+              <Link to="/search-results" className="flex items-center gap-2">
+                <Search className="h-4 w-4" />
+                Browse Treatment Centers
               </Link>
             </Button>
           </div>

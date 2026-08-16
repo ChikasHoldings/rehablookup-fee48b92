@@ -102,7 +102,7 @@ export default function MarketingLanding() {
     <>
       <Helmet>
         <title>Find Trusted Addiction Treatment Centers | RehabLookup</title>
-        <meta name="description" content="Get matched with top-rated, verified treatment centers near you in under 2 minutes. Free, confidential, available 24/7." />
+        <meta name="description" content="Search and compare top-rated, verified treatment centers near you. Free, confidential, no account required." />
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
 
@@ -171,7 +171,7 @@ export default function MarketingLanding() {
                 onClick={scrollToForm}
                 className="mt-8 inline-flex items-center gap-2 bg-accent text-accent-foreground px-7 py-3.5 rounded-full font-semibold text-base shadow-lg hover:bg-accent/90 transition-all active:scale-[0.98]"
               >
-                Get Matched Now
+                Search Treatment Centers
                 <ArrowRight className="h-5 w-5" />
               </button>
             </div>
@@ -192,7 +192,7 @@ export default function MarketingLanding() {
               </div>
               <div>
                 <div className="text-xl sm:text-2xl md:text-3xl font-bold text-primary tabular-nums">24/7</div>
-                <div className="text-xs sm:text-sm text-muted-foreground mt-0.5">Free Concierge</div>
+                <div className="text-xs sm:text-sm text-muted-foreground mt-0.5">Free To Search</div>
               </div>
             </div>
           </div>
@@ -226,7 +226,7 @@ export default function MarketingLanding() {
         <section className="py-10 sm:py-14 md:py-16 bg-background">
           <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-3xl">
             <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground text-center [text-wrap:balance]">How It Works</h2>
-            <p className="text-sm text-muted-foreground text-center mt-2 max-w-md mx-auto">Get matched online in minutes — no phone calls required</p>
+            <p className="text-sm text-muted-foreground text-center mt-2 max-w-md mx-auto">Search and compare online in minutes — no phone calls required</p>
 
             <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
               {[

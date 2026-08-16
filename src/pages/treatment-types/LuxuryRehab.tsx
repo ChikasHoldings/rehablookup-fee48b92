@@ -9,7 +9,6 @@ import {
   Shield,
   Heart,
   ChevronRight,
-  Phone,
   Building2,
   Users,
   Utensils,
@@ -189,13 +188,13 @@ export default function LuxuryRehab() {
               Find Your Ideal Luxury Treatment Center
             </h2>
             <p className="text-white/80 mb-6 max-w-xl mx-auto">
-              Our concierge team specializes in matching you with premium facilities that fit your needs, preferences, and insurance. Confidential and personalized.
+              Compare premium and executive programs side by side — amenities, accreditation, and insurance accepted — then contact them directly.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-3">
               <Button asChild variant="hero-light" size="lg">
-                <Link to="/concierge/intake">
-                  <Phone className="h-4 w-4 mr-1" />
-                  Get Matched Now
+                <Link to="/search-results">
+                  <Search className="h-4 w-4 mr-1" />
+                  Search Treatment Centers
                 </Link>
               </Button>
               <Button asChild variant="hero-secondary" size="lg" className="border-white/30 text-white hover:bg-white/10">

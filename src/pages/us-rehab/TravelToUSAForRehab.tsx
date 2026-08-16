@@ -1,13 +1,13 @@
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
-import { InternationalPageHero, CountriesServed, InternationalFAQ, PlacementCTA } from "./components";
+import { InternationalPageHero, CountriesServed, InternationalFAQ, DirectorySearchCTA } from "./components";
 import { Plane, FileCheck, Home, CreditCard, CheckCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import heroImg from "@/assets/hero-international-rehab.jpg";
 
 const travelSteps = [
-  { icon: FileCheck, title: "1. Initial Assessment", description: "Confidential clinical intake and treatment matching. Our advisors evaluate your needs and recommend ideal U.S. programs." },
+  { icon: FileCheck, title: "1. Initial Assessment", description: "Search the directory by level of care, location, and insurance to build a shortlist of US programs." },
   { icon: Plane, title: "2. Visa & Travel Planning", description: "Guidance on B-2 visa applications, ESTA waivers, and medical travel documentation. We coordinate with the facility for admission letters." },
   { icon: Home, title: "3. Arrival & Admission", description: "Airport pickup, luxury transport to your facility, and seamless check-in. Many centers offer private transfer services." },
   { icon: CreditCard, title: "4. Treatment & Aftercare", description: "World-class clinical care followed by comprehensive discharge planning and international aftercare coordination." },
@@ -25,7 +25,7 @@ const TravelToUSAForRehab = () => {
     "@context": "https://schema.org",
     "@type": "Service",
     name: "Travel to USA for Rehab",
-    description: "Complete guide to traveling to the United States for addiction treatment. Visa guidance, facility selection, and personalized placement for international patients.",
+    description: "Complete guide to traveling to the United States for addiction treatment. Visa guidance, facility selection, and listing coverage for international patients.",
     provider: { "@type": "Organization", name: "RehabLookup", url: "https://rehablookup.com" },
     areaServed: { "@type": "Country", name: "United States" },
   };
@@ -42,7 +42,7 @@ const TravelToUSAForRehab = () => {
     <Layout>
       <SEO
         title="Travel to USA for Rehab | International Treatment Guide"
-        description="Complete guide to traveling to the United States for addiction treatment. Visa guidance, travel logistics, facility selection, and personalized placement for international patients."
+        description="Complete guide to traveling to the United States for addiction treatment. Visa guidance, travel logistics, facility selection, and listing coverage for international patients."
         canonical="/travel-to-usa-for-rehab"
         keywords={["travel to USA for rehab", "fly to America for treatment", "international rehab travel", "medical travel rehab USA", "rehab abroad in USA"]}
         structuredData={schemaData}
@@ -59,7 +59,7 @@ const TravelToUSAForRehab = () => {
         title="Travel to the USA for World-Class Rehab"
         subtitle="Your Complete Guide to Addiction Treatment Abroad"
         description="Thousands of international patients travel to the United States each year for addiction treatment. We handle the logistics so you can focus on recovery."
-        trustPoints={["Visa Guidance", "Airport Transfers", "24/7 Concierge", "HIPAA Protected"]}
+        trustPoints={["Visa Guidance Articles", "Licensed Facilities", "50+ Countries", "HIPAA Protected"]}
         heroImage={heroImg}
         heroAlt="International patient traveling to USA for addiction treatment"
       />
@@ -132,7 +132,7 @@ const TravelToUSAForRehab = () => {
 
       <CountriesServed />
       <InternationalFAQ title="Travel to USA for Rehab FAQs" subtitle="Common questions about traveling internationally for addiction treatment." faqs={faqs} schemaId="travel-usa-rehab-faq" />
-      <PlacementCTA title="Ready to Travel for Treatment?" description="Our international placement team coordinates everything—from facility selection to airport pickup. Start your journey today." />
+      <DirectorySearchCTA title="Search US Treatment Centers" description="Browse US treatment listings, check which ones list international admissions, and contact them directly about travel and intake." />
     </Layout>
   );
 };

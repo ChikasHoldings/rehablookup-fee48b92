@@ -158,7 +158,6 @@ export const resolveContentGroup = (pathname: string): string => {
   if (p.startsWith("/account/") || p.startsWith("/seeker/")) return "seeker_panel";
   if (p.startsWith("/provider/")) return "provider_panel";
   if (p.startsWith("/admin/")) return "admin_panel";
-  if (p.startsWith("/concierge")) return "concierge";
   if (p.startsWith("/blog") || p.startsWith("/articles")) return "blog";
   return "other";
 };

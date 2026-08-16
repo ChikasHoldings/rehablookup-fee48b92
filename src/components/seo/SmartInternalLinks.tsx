@@ -230,7 +230,7 @@ export function SmartInternalLinks({
         { label: "Treatment Types Guide", href: "/treatment-types" },
         { label: "Insurance Coverage", href: "/insurance" },
         { label: "Find a Rehab Center", href: "/search-results" },
-        { label: "Get Matched Free", href: "/concierge" },
+        { label: "Compare Facilities", href: "/compare" },
       ],
     });
   }

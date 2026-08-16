@@ -208,15 +208,10 @@ const ProviderBrandingPage = lazy(() => import("./pages/provider-guides/Provider
 const ProviderResourceHub = lazy(() => import("./pages/providers/ProviderResourceHub"));
 const ProviderResourceArticle = lazy(() => import("./pages/providers/ProviderResourceArticle"));
 
-// Concierge Placement (Paid Service) - lazy load
-const ConciergeLanding = lazy(() => import("./pages/concierge/ConciergeLanding"));
-const ConciergeIntake = lazy(() => import("./pages/concierge/ConciergeIntake"));
-const ConciergeThankYou = lazy(() => import("./pages/concierge/ConciergeThankYou"));
+// Public Concierge/placement pages were removed in directory cutover stage 1.
+// Their routes are now redirects (see ConciergeToSearchRedirect below).
 
-
-// International placement — informational landing page. The intake itself
-// runs through the same free concierge placement pipeline as domestic
-// (ConciergeIntake variant="international"); there is no separate paid product.
+// International — informational directory landing page.
 const InternationalLanding = lazy(() => import("./pages/international/InternationalLanding"));
 const AdLanding = lazy(() => import("./pages/AdLanding"));
 const SocialLanding = lazy(() => import("./pages/SocialLanding"));
@@ -270,7 +265,6 @@ const SeekerNotificationPreferences = lazy(() => import("./pages/seeker/SeekerNo
 const SeekerSearch = lazy(() => import("./pages/seeker/SeekerSearch"));
 const SeekerHelp = lazy(() => import("./pages/seeker/SeekerHelp"));
 const SeekerSupport = lazy(() => import("./pages/seeker/SeekerSupport"));
-const SeekerConcierge = lazy(() => import("./pages/seeker/SeekerConcierge"));
 const SeekerInsuranceVerifications = lazy(() => import("./pages/seeker/SeekerInsuranceVerifications"));
 const SeekerSavedSearches = lazy(() => import("./pages/seeker/SeekerSavedSearches"));
 
@@ -579,6 +573,32 @@ const SafeBrowserRouter = React.forwardRef<HTMLDivElement, BrowserRouterProps>(
 );
 SafeBrowserRouter.displayName = "SafeBrowserRouter";
 
+
+// ── Directory cutover (stage 1) ──────────────────────────────────────
+// The public Concierge/placement product is retired from the consumer
+// surface. Legacy URLs (/concierge, /concierge/intake, /request-help,
+// /placement-help, /international/apply …) still receive traffic from
+// backlinks, bookmarks and previously-indexed pages, so they must land
+// on a useful directory experience rather than a 404.
+//
+// The old intake accepted ?location / ?treatment / ?insurance, which are
+// exactly the params /search-results already understands, so a legacy
+// link keeps the seeker's intent. Everything else (?from, ?channel, ?id,
+// attribution tags) is dropped — those only meant something to the
+// retired intake funnel.
+const CONCIERGE_PARAMS_CARRIED_TO_SEARCH = ["location", "treatment", "insurance", "state", "q"] as const;
+
+function ConciergeToSearchRedirect() {
+  const loc = useLocation();
+  const incoming = new URLSearchParams(loc.search);
+  const carried = new URLSearchParams();
+  for (const key of CONCIERGE_PARAMS_CARRIED_TO_SEARCH) {
+    const value = incoming.get(key)?.trim();
+    if (value) carried.set(key, value);
+  }
+  const qs = carried.toString();
+  return <Navigate to={qs ? `/search-results?${qs}` : "/search-results"} replace />;
+}
 
 function DualDiagnosisStateRedirect() {
   const { stateSlug } = useParams();
@@ -1168,18 +1188,21 @@ const AppInner = () => {
 
              {/* Additional City+Treatment Combo Routes - handled by SmartCatchAll */}
 
-            {/* Concierge Placement Routes - /concierge is canonical */}
-            <Route path="/concierge" element={<PublicRouteGuard><ConciergeLanding /></PublicRouteGuard>} />
-            <Route path="/concierge/intake" element={<PublicRouteGuard><ConciergeIntake /></PublicRouteGuard>} />
-            <Route path="/concierge/thank-you" element={<PublicRouteGuard><ConciergeThankYou /></PublicRouteGuard>} />
-            
-            {/* Legacy concierge redirects */}
-            <Route path="/concierge/create-password" element={<Navigate to="/concierge/thank-you" replace />} />
-            <Route path="/request-help" element={<Navigate to="/concierge" replace />} />
-            <Route path="/request-help/intake" element={<Navigate to="/concierge/intake" replace />} />
-            <Route path="/request-help/thank-you" element={<Navigate to="/concierge/thank-you" replace />} />
-            <Route path="/request-help/create-password" element={<Navigate to="/concierge/thank-you" replace />} />
-            
+            {/* Retired public Concierge/placement product (directory cutover
+                stage 1). RehabLookup no longer runs a consumer placement
+                service, so every legacy entry point lands on the directory
+                search surface, carrying the seeker's location/treatment/
+                insurance intent forward. Kept as redirects (not deleted) so
+                existing backlinks and bookmarks don't 404. */}
+            <Route path="/concierge" element={<ConciergeToSearchRedirect />} />
+            <Route path="/concierge/intake" element={<ConciergeToSearchRedirect />} />
+            <Route path="/concierge/thank-you" element={<ConciergeToSearchRedirect />} />
+            <Route path="/concierge/create-password" element={<ConciergeToSearchRedirect />} />
+            <Route path="/request-help" element={<ConciergeToSearchRedirect />} />
+            <Route path="/request-help/intake" element={<ConciergeToSearchRedirect />} />
+            <Route path="/request-help/thank-you" element={<ConciergeToSearchRedirect />} />
+            <Route path="/request-help/create-password" element={<ConciergeToSearchRedirect />} />
+
             {/* Legacy /treatment/ redirects to /treatment-types/ */}
             <Route path="/treatment/dual-diagnosis" element={<Navigate to="/treatment-types/dual-diagnosis-treatment" replace />} />
             <Route path="/treatment/dual-diagnosis/:stateSlug" element={<DualDiagnosisStateRedirect />} />
@@ -1190,13 +1213,15 @@ const AppInner = () => {
             <Route path="/treatment/alcohol-rehab" element={<Navigate to="/treatment-types/alcohol-rehabilitation" replace />} />
             <Route path="/treatment/alcohol-rehab/:stateSlug" element={<AlcoholStateRedirect />} />
 
-            {/* International Placement Routes — informational landing + the
-                same free concierge intake, tagged international. No payment. */}
+            {/* International — informational directory landing. The old
+                /international/apply intake ran through the same retired
+                concierge placement pipeline, so it now returns to the
+                informational hub instead of an intake wizard. */}
             <Route path="/international" element={<PublicRouteGuard><InternationalLanding /></PublicRouteGuard>} />
-            <Route path="/international/apply" element={<PublicRouteGuard><ConciergeIntake variant="international" /></PublicRouteGuard>} />
-            <Route path="/international/intake" element={<Navigate to="/international/apply" replace />} />
-            <Route path="/international/thank-you" element={<Navigate to="/concierge/thank-you" replace />} />
-            <Route path="/placement-help" element={<Navigate to="/concierge" replace />} />
+            <Route path="/international/apply" element={<Navigate to="/international" replace />} />
+            <Route path="/international/intake" element={<Navigate to="/international" replace />} />
+            <Route path="/international/thank-you" element={<Navigate to="/international" replace />} />
+            <Route path="/placement-help" element={<ConciergeToSearchRedirect />} />
             
             {/* US Rehab - International SEO Landing Pages */}
             <Route path="/us-rehab" element={<PublicRouteGuard><USRehabHub /></PublicRouteGuard>} />
@@ -1398,10 +1423,17 @@ const AppInner = () => {
               <Route path="search" element={<SeekerSearch />} />
               <Route path="help" element={<SeekerHelp />} />
               <Route path="support" element={<SeekerSupport />} />
-              <Route path="concierge" element={<SeekerConcierge />} />
-              <Route path="concierge/:inquiryId" element={<SeekerConcierge />} />
-              {/* International placements are concierge inquiries (tagged international). */}
-              <Route path="international" element={<Navigate to="/account/concierge" replace />} />
+              {/* Retired seeker placement workspace (directory cutover stage 1).
+                  RehabLookup no longer operates placement cases, advisor
+                  threads, tour or admission tracking for seekers. Legacy
+                  deep-links — including notification links already written to
+                  seeker_notifications rows — resolve to the saved-facilities
+                  view instead of 404ing. */}
+              <Route path="concierge" element={<Navigate to="/account/saved" replace />} />
+              <Route path="concierge/:inquiryId" element={<Navigate to="/account/saved" replace />} />
+              <Route path="placements" element={<Navigate to="/account/saved" replace />} />
+              <Route path="placements/:inquiryId" element={<Navigate to="/account/saved" replace />} />
+              <Route path="international" element={<Navigate to="/account/saved" replace />} />
               <Route path="insurance-verifications" element={<SeekerInsuranceVerifications />} />
               <Route path="saved-searches" element={<SeekerSavedSearches />} />
               <Route path="*" element={<Navigate to="/account" replace />} />

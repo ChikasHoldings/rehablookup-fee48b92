@@ -66,9 +66,9 @@ export const CountriesServed = () => {
         <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
             { value: "50+", label: "Countries Served" },
-            { value: "2,500+", label: "International Placements" },
+            { value: "2,500+", label: "International Enquiries" },
             { value: "24hr", label: "Response Time" },
-            { value: "98%", label: "Placement Success" },
+            { value: "50+", label: "Countries Reached" },
           ].map((stat) => (
             <div key={stat.label} className="text-center p-5 bg-background rounded-xl border border-border/50">
               <div className="text-2xl md:text-3xl font-bold text-primary mb-1">{stat.value}</div>
@@ -79,7 +79,7 @@ export const CountriesServed = () => {
 
         <p className="text-center text-sm text-muted-foreground mt-10 max-w-2xl mx-auto leading-relaxed">
           Whether you're seeking treatment from Europe, the Middle East, Asia, or elsewhere,
-          our placement specialists ensure a seamless experience from inquiry to admission.
+          listings show which programs handle international admissions so you can contact them directly.
         </p>
       </div>
     </section>

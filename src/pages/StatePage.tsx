@@ -26,7 +26,7 @@ import { Button } from "@/components/ui/button";
 import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 import { RelatedLinksSection, defaultInsuranceLinks } from "@/components/seo/RelatedLinksSection";
 import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
-import { InlineIntakeForm } from "@/components/conversion/InlineIntakeForm";
+import { InlineMiniSearch } from "@/components/seo/InlineMiniSearch";
 import { LocationStatTile } from "@/components/seo/LocationStatTile";
 import { 
   MapPin, 
@@ -281,10 +281,10 @@ const StatePage = () => {
                 Compare verified addiction treatment programs across {stateData.cities.length} {stateData.name} cities. Filter by care level, insurance, and city.
               </p>
               <div className="mt-6 flex flex-col sm:flex-row gap-3">
-                <Link to="/concierge">
+                <Link to="/search-results">
                   <Button size="lg" className="gap-2 w-full sm:w-auto shadow-lg shadow-black/20">
-                    <Heart className="h-4 w-4" />
-                    Get Personalized Help
+                    <Search className="h-4 w-4" />
+                    Search Treatment Centers
                   </Button>
                 </Link>
                 <Link to={`/search-results?location=${encodeURIComponent(stateData.name)}`}>
@@ -456,14 +456,14 @@ const StatePage = () => {
               <p className="mt-2 text-muted-foreground">
                 We're actively adding verified treatment centers in {stateData.name}.
               </p>
-              <Link to="/concierge" className="mt-6 inline-block">
-                <Button>Get Personalized Help</Button>
+              <Link to="/search-results" className="mt-6 inline-block">
+                <Button>Search Treatment Centers</Button>
               </Link>
             </div>
           )}
 
-          <InlineIntakeForm
-            heading={`Find ${stateData.name} treatment programs`}
+          <InlineMiniSearch
+            source="state_page_inline"
             className="mt-10 max-w-xl mx-auto"
           />
         </div>
@@ -918,10 +918,10 @@ const StatePage = () => {
               Get personalized recommendations based on your needs.
             </p>
             <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link to="/concierge">
+              <Link to="/search-results">
                 <Button size="lg" className="gap-2">
-                  <Heart className="h-4 w-4" />
-                  Find Treatment
+                  <Search className="h-4 w-4" />
+                  Search Treatment Centers
                 </Button>
               </Link>
               <Link to="/rehab-centers">

@@ -21,7 +21,7 @@ interface InternationalFAQProps {
 const defaultFAQs: FAQItem[] = [
   {
     question: "How do international patients pay for US treatment?",
-    answer: "Most international patients pay directly (self-pay) for treatment, as US insurance typically doesn't cover foreign residents. Many luxury and private rehab centers offer competitive pricing for international clients, often including concierge services, airport transfers, and aftercare planning. Payment plans and financing options are available at select facilities. Our placement specialists can help you find centers that match your budget."
+    answer: "Most international patients pay directly (self-pay) for treatment, as US insurance typically doesn't cover foreign residents. Many luxury and private rehab centers offer competitive pricing for international clients, often including concierge services, airport transfers, and aftercare planning. Payment plans and financing options are available at select facilities — listings show published pricing where the facility provides it, so you can compare before you call."
   },
   {
     question: "Do US rehabs accept patients without US insurance?",
@@ -41,7 +41,7 @@ const defaultFAQs: FAQItem[] = [
   },
   {
     question: "How do I get from the airport to the facility?",
-    answer: "Most treatment centers offer airport pickup services, especially for international patients. Our placement specialists coordinate all transportation logistics, ensuring you're met at the airport and safely transported to your treatment facility. Private car services and even helicopter transfers are available for luxury programs."
+    answer: "Most treatment centers offer airport pickup services, especially for international patients. Ask the facility's admissions team directly about airport pickup when you contact them — private car services and even helicopter transfers are available at some luxury programs."
   },
   {
     question: "Can family members visit during treatment?",
@@ -49,7 +49,7 @@ const defaultFAQs: FAQItem[] = [
   },
   {
     question: "What languages do US rehabs support?",
-    answer: "Many US treatment centers have multilingual staff and offer translation services. Spanish, French, German, Arabic, Mandarin, and other languages are commonly supported. When you work with our placement service, we match you with facilities that can accommodate your language preferences."
+    answer: "Many US treatment centers have multilingual staff and offer translation services. Spanish, French, German, Arabic, Mandarin, and other languages are commonly supported. Ask a facility's admissions team which languages its clinical staff supports before you commit."
   },
   {
     question: "Why choose US treatment over rehab in my home country?",

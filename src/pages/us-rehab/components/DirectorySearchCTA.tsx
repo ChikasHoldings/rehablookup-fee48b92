@@ -2,19 +2,27 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, CheckCircle, Sparkles } from "lucide-react";
 
-interface PlacementCTAProps {
+interface DirectorySearchCTAProps {
   title?: string;
   description?: string;
   buttonText?: string;
   buttonLink?: string;
 }
 
-export const PlacementCTA = ({
-  title = "Ready to Start Your Recovery Journey?",
-  description = "Our dedicated international placement team is available 24/7 to help you find the perfect treatment program in the United States.",
-  buttonText = "Start Your Placement",
-  buttonLink = "/international/apply"
-}: PlacementCTAProps) => {
+/**
+ * End-of-page CTA for the /us-rehab international SEO pages.
+ *
+ * Directory cutover stage 1: this used to sell a RehabLookup international
+ * placement service ("start your placement", visa + travel coordination).
+ * RehabLookup does not operate that service, so the card now points at the
+ * directory itself.
+ */
+export const DirectorySearchCTA = ({
+  title = "Search US Treatment Centers",
+  description = "Browse licensed US addiction-treatment programs, check which ones list international admissions, and contact their admissions teams directly.",
+  buttonText = "Search Treatment Centers",
+  buttonLink = "/search-results"
+}: DirectorySearchCTAProps) => {
   return (
     <section className="py-16 md:py-20 bg-background">
       <div className="container mx-auto px-4">
@@ -28,7 +36,7 @@ export const PlacementCTA = ({
               {/* Badge */}
               <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-1.5 rounded-full text-sm font-medium mb-6">
                 <Sparkles className="h-4 w-4" />
-                <span>Personalized Placement Service</span>
+                <span>Free Directory Search</span>
               </div>
 
               <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
@@ -40,7 +48,7 @@ export const PlacementCTA = ({
 
               {/* Benefits */}
               <div className="flex flex-wrap justify-center gap-x-6 gap-y-3 mb-8">
-                {["Confidential Consultation", "Visa Support", "Travel Coordination"].map((item) => (
+                {["No account required", "Filter by level of care", "Contact facilities directly"].map((item) => (
                   <div key={item} className="flex items-center gap-2 text-sm text-muted-foreground">
                     <CheckCircle className="h-4 w-4 text-primary shrink-0" />
                     <span>{item}</span>
@@ -62,7 +70,7 @@ export const PlacementCTA = ({
 
               {/* Trust */}
               <p className="mt-6 text-muted-foreground/70 text-xs">
-                Trusted by over 2,500 international families since 2020
+                RehabLookup is an independent directory — we do not operate treatment programs.
               </p>
             </div>
           </div>

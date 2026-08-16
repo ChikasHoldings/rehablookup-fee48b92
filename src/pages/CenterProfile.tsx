@@ -12,8 +12,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { RequestInfoModal } from "@/components/profile/RequestInfoModal";
-import { FacilityTourRequestModal } from "@/components/facility/FacilityTourRequestModal";
-import { ProfileConciergeRescue } from "@/components/profile/ProfileConciergeRescue";
 import { useFacilityRating } from "@/hooks/useFacilityRating";
 import { useFavorites } from "@/hooks/useFavorites";
 import {
@@ -32,7 +30,6 @@ import {
   Image as ImageIcon,
   MessageSquare,
   Flag,
-  CalendarCheck,
   Bed,
   Mail,
   ShieldCheck,
@@ -40,7 +37,6 @@ import {
   ChevronDown,
   ChevronUp,
   ChevronRight,
-  Handshake,
   GlobeIcon,
 } from "lucide-react";
 import { CenterProfileSkeleton } from "@/components/skeletons/CenterProfileSkeleton";
@@ -59,7 +55,7 @@ import { FacilityPhotoGallery } from "@/components/facility/FacilityPhotoGallery
 import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 import { PageFAQ } from "@/components/seo/PageFAQ";
 import { buildProfileFAQs } from "@/lib/buildProfileFAQs";
-import { ConciergeCTACard } from "@/components/concierge/ConciergeCTACard";
+import { ProfileDirectoryCTACard } from "@/components/profile/ProfileDirectoryCTACard";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { loadFacilityBySlug } from "@/hooks/useFacilityBySlug";
 import { loadFacilityDetails } from "@/hooks/useFacilityDetails";
@@ -75,7 +71,7 @@ import { TherapyApproachesGrid } from "@/components/facility-profile/TherapyAppr
 import { InsuranceShowcase } from "@/components/facility-profile/InsuranceShowcase";
 import { AccreditationsPanel } from "@/components/facility-profile/AccreditationsPanel";
 import { RelatedNearby } from "@/components/facility-profile/RelatedNearby";
-import { InlineIntakeForm } from "@/components/conversion/InlineIntakeForm";
+import { InlineMiniSearch } from "@/components/seo/InlineMiniSearch";
 
 interface FacilityData {
   id: string;
@@ -242,7 +238,6 @@ const CenterProfile = () => {
   const [logoError, setLogoError] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [requestModalOpen, setRequestModalOpen] = useState(false);
-  const [tourModalOpen, setTourModalOpen] = useState(false);
   // Anon and authed visitors can save a facility from the public profile.
   // Guest favorites are kept in localStorage and migrated to user_favorites
   // on signin via the useFavorites hook.
@@ -1061,12 +1056,6 @@ const CenterProfile = () => {
                     Insurance
                   </span>
                 )}
-                {facility.concierge_network_opted_in && (
-                  <span className="shrink-0 inline-flex items-center gap-1.5 text-xs font-semibold text-sky-700 dark:text-sky-400 bg-sky-500/10 rounded-full px-3 py-1.5 border border-sky-200 dark:border-sky-800">
-                    <Handshake className="h-3.5 w-3.5" />
-                    Accepts Placements
-                  </span>
-                )}
                 {facility.accepts_international_patients && (
                   <span className="shrink-0 inline-flex items-center gap-1.5 text-xs font-semibold text-violet-700 dark:text-violet-400 bg-violet-500/10 rounded-full px-3 py-1.5 border border-violet-200 dark:border-violet-800">
                     <GlobeIcon className="h-3.5 w-3.5" />
@@ -1325,11 +1314,11 @@ const CenterProfile = () => {
                       </div>
                     </a>
                   ) : (
-                    // Non-Pro facilities don't expose their direct phone, but we
-                    // still need a one-tap dial option for mobile users so we
-                    // route them to our placement helpline. The number lives in
-                    // env (VITE_CONCIERGE_HELPLINE) with a stable fallback so
-                    // the link works even before the env is set.
+                    // Non-Pro facilities don't expose their direct phone here,
+                    // so surface the free public SAMHSA National Helpline as a
+                    // one-tap fallback for mobile users. The number lives in
+                    // env (VITE_CONCIERGE_HELPLINE) with SAMHSA's published
+                    // number as the stable default.
                     <a
                       href={`tel:${(import.meta.env.VITE_CONCIERGE_HELPLINE as string | undefined) || "+18006624357"}`}
                       onClick={() => trackInteraction("call")}
@@ -1337,11 +1326,11 @@ const CenterProfile = () => {
                     >
                       <Phone className="h-4 w-4 text-emerald-600 mt-0.5 shrink-0" />
                       <div className="min-w-0">
-                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-0.5">Call our helpline</p>
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-0.5">SAMHSA National Helpline</p>
                         <p className="text-sm text-primary font-semibold group-hover:underline">
                           {(import.meta.env.VITE_CONCIERGE_HELPLINE_DISPLAY as string | undefined) || "1-800-662-4357"}
                         </p>
-                        <p className="text-[11px] text-muted-foreground mt-0.5">Free, confidential — we'll route you to the right team.</p>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">Free, confidential treatment referral line operated by SAMHSA — not by RehabLookup.</p>
                       </div>
                     </a>
                   )}
@@ -1480,12 +1469,10 @@ const CenterProfile = () => {
                 );
               })()}
 
-              {/* Inline 3-field intake widget — quiet conversion path
-                  for seekers who read the FAQ and want to talk to
-                  someone. Self-gates via NEW_CTA_SYSTEM; renders nothing
-                  when the flag is off so the profile is unchanged. */}
-              <InlineIntakeForm
-                heading={`Get help finding care like ${facility.name}`}
+              {/* Inline directory search — for seekers who read the FAQ
+                  and want to widen the comparison set. */}
+              <InlineMiniSearch
+                source="center_profile_inline"
                 className="max-w-xl mx-auto"
               />
 
@@ -1582,10 +1569,10 @@ const CenterProfile = () => {
                 {/* (Quick Facts sidebar card removed — its data already
                     appears in the page's QuickFactsStrip + the body
                     sections above. The sidebar now leads with the
-                    primary contact CTAs and Concierge card directly.) */}
+                    primary contact CTAs and the directory card.) */}
 
-                {/* Concierge CTA Card */}
-                <ConciergeCTACard />
+                {/* Keep-looking directory card */}
+                <ProfileDirectoryCTACard city={facility.city} state={facility.state} />
               </div>
             </div>
           </div>
@@ -1630,7 +1617,7 @@ const CenterProfile = () => {
                 sidebar version — same data already lives in the page's
                 QuickFactsStrip near the top.) */}
 
-            <ConciergeCTACard compact />
+            <ProfileDirectoryCTACard compact city={facility.city} state={facility.state} />
           </div>
 
           {/* Related nearby — 3 sibling facilities in the same state +
@@ -1657,26 +1644,16 @@ const CenterProfile = () => {
           because this page is dedicated to one specific facility;
           surfacing a "Featured near here" strip would compete with
           the focused profile if placed above the fold. Placed AFTER
-          the profile content (above the passive concierge rescue) so
-          users who scrolled the whole profile see "More Featured
-          facilities in {city}" as a natural next step. Renders nothing
-          when the city bucket has no active Featured subscribers. */}
+          the profile content so users who scrolled the whole profile
+          see "More Featured facilities in {city}" as a natural next
+          step. Renders nothing when the city bucket has no active
+          Featured subscribers. */}
       <LandingFeaturedSection
         placement_type="city"
         placement_value={facility.city ? slugifyName(facility.city) : null}
         slot_count={6}
         title={`More Featured Facilities in ${facility.city}`}
         subtitle="Other verified centers near here, sponsored by their providers."
-      />
-
-      {/* Passive concierge rescue — inline, never a popup. Honors discovery-first policy. */}
-      <ProfileConciergeRescue
-        facility={{
-          id: facility.id,
-          name: facility.name,
-          city: facility.city,
-          state: facility.state,
-        }}
       />
 
       {/* Request Info / Message Center Modal.
@@ -1714,17 +1691,6 @@ const CenterProfile = () => {
         prefillData={prefillDataFromNav}
       />
 
-      {/* Tour Request Modal — schedule a visit. Reachable from the sticky
-          mobile CTA bar below + the "Schedule a Tour" link on the sidebar.
-          Routes seekers with an active concierge inquiry through the
-          concierge_tour_requests path, others through submit-qualified-lead. */}
-      <FacilityTourRequestModal
-        open={tourModalOpen}
-        onClose={() => setTourModalOpen(false)}
-        facilityId={facility.id}
-        facilityName={facility.name}
-      />
-
       {/* Sticky mobile CTA bar — persistent at the viewport bottom on mobile
           so seekers always have a one-tap path to convert without scrolling
           back to the hero. Hidden on md+ where the hero/sidebar CTAs are
@@ -1743,43 +1709,29 @@ const CenterProfile = () => {
             <Phone className="h-5 w-5 text-emerald-600" />
             <span className="text-[11px] font-semibold text-emerald-700">Call</span>
           </a>
-          {/* Request info / Get matched (unclaimed routes to concierge). */}
+          {/* Request information from this facility. */}
           <button
             type="button"
             onClick={() => handleRequestInfoOpen("sticky_mobile_request")}
             className="flex flex-col items-center justify-center gap-0.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 px-2 py-2 transition-colors"
           >
             <MessageSquare className="h-5 w-5" />
-            <span className="text-[11px] font-semibold">
-              {claimFlags && !claimFlags.is_claimed ? "Get matched" : "Request"}
+            <span className="text-[11px] font-semibold">Request info</span>
+          </button>
+          {/* Save. RehabLookup-coordinated tour scheduling was retired in
+              the directory cutover — saving the listing is the directory
+              action that belongs in this slot for every claim state. */}
+          <button
+            type="button"
+            onClick={() => toggleFavorite(facility.id)}
+            className="flex flex-col items-center justify-center gap-0.5 rounded-lg border border-border hover:bg-muted/40 px-2 py-2 transition-colors"
+            aria-label={isFavorite(facility.id) ? "Remove from saved" : "Save to favorites"}
+          >
+            <Heart className={cn("h-5 w-5", isFavorite(facility.id) && "fill-rose-500 text-rose-500")} />
+            <span className="text-[11px] font-semibold text-foreground">
+              {isFavorite(facility.id) ? "Saved" : "Save"}
             </span>
           </button>
-          {/* Tour. Only for claimed listings — unclaimed have no provider
-              to tour with. */}
-          {(!claimFlags || claimFlags.is_claimed) ? (
-            <button
-              type="button"
-              onClick={() => setTourModalOpen(true)}
-              className="flex flex-col items-center justify-center gap-0.5 rounded-lg border border-border hover:bg-muted/40 px-2 py-2 transition-colors"
-            >
-              <CalendarCheck className="h-5 w-5 text-foreground" />
-              <span className="text-[11px] font-semibold text-foreground">Tour</span>
-            </button>
-          ) : (
-            // For unclaimed listings, the third slot becomes a Save button so
-            // the bar isn't lopsided.
-            <button
-              type="button"
-              onClick={() => toggleFavorite(facility.id)}
-              className="flex flex-col items-center justify-center gap-0.5 rounded-lg border border-border hover:bg-muted/40 px-2 py-2 transition-colors"
-              aria-label={isFavorite(facility.id) ? "Remove from saved" : "Save to favorites"}
-            >
-              <Heart className={cn("h-5 w-5", isFavorite(facility.id) && "fill-rose-500 text-rose-500")} />
-              <span className="text-[11px] font-semibold text-foreground">
-                {isFavorite(facility.id) ? "Saved" : "Save"}
-              </span>
-            </button>
-          )}
         </div>
       </div>
 

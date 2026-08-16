@@ -32,7 +32,6 @@ const publicPageMap: Record<string, () => Promise<unknown>> = {
   "/treatment-types": () => import("@/pages/TreatmentTypes"),
   "/how-it-works": () => import("@/pages/HowItWorks"),
   "/for-providers": () => import("@/pages/ForProviders"),
-  "/concierge": () => import("@/pages/concierge/ConciergeLanding"),
   // /international prefetch retired 2026-05-20 — route now redirects to /us-rehab/international-patients.
   "/resources": () => import("@/pages/Resources"),
   "/insurance": () => import("@/pages/Insurance"),
@@ -49,7 +48,6 @@ const seekerPageMap: Record<string, () => Promise<unknown>> = {
   "/account/settings": () => import("@/pages/seeker/SeekerSettings"),
   "/account/notifications": () => import("@/pages/seeker/SeekerNotifications"),
   "/account/help": () => import("@/pages/seeker/SeekerHelp"),
-  "/account/concierge": () => import("@/pages/seeker/SeekerConcierge"),
 };
 
 const providerPageMap: Record<string, () => Promise<unknown>> = {
@@ -129,15 +127,14 @@ export function prefetchRoute(path: string): void {
 export function prefetchAdjacentRoutes(currentPath: string): void {
   const adjacentMap: Record<string, string[]> = {
     // Public
-    "/": ["/rehab-centers", "/locations", "/concierge"],
+    "/": ["/rehab-centers", "/locations", "/treatment-types"],
     "/rehab-centers": ["/locations", "/treatment-types"],
     "/locations": ["/rehab-centers"],
     
     // Seeker
-    "/account": ["/account/saved", "/account/requests", "/account/concierge"],
+    "/account": ["/account/saved", "/account/requests", "/account/reviews"],
     "/account/saved": ["/account", "/account/requests"],
     "/account/requests": ["/account", "/account/saved"],
-    "/account/concierge": ["/account"],
     "/account/settings": ["/account", "/account/notifications"],
     
     // Provider
@@ -246,7 +243,6 @@ export function preloadSeekerPages(): void {
     () => import("@/pages/seeker/SeekerSettings"),
     () => import("@/pages/seeker/SeekerNotifications"),
     () => import("@/pages/seeker/SeekerHelp"),
-    () => import("@/pages/seeker/SeekerConcierge"),
   ];
   
   pages.forEach((load, i) => {
@@ -267,7 +263,6 @@ export function preloadPublicPages(): void {
   
   const pages = [
     () => import("@/pages/SearchResults"),
-    () => import("@/pages/concierge/ConciergeLanding"),
     () => import("@/pages/Insurance"),
     // InternationalLanding prefetch retired 2026-05-20.
     () => import("@/pages/ForProviders"),

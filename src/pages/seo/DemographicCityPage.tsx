@@ -79,7 +79,7 @@ export default function DemographicCityPage() {
     },
     {
       question: `How do I find the best ${demographic.title.toLowerCase()} program in ${cityName}?`,
-      answer: `Look for programs with experienced staff, proper accreditation (JCAHO or CARF), evidence-based treatment, and strong aftercare support. RehabLookup verifies all listed facilities. Our free concierge service can also match you with the most appropriate program in ${cityName}.`,
+      answer: `Look for programs with experienced staff, proper accreditation (JCAHO or CARF), evidence-based treatment, and strong aftercare support. RehabLookup verifies all listed facilities. Use the filters to narrow by level of care, insurance, and specialty before you contact a program in ${cityName}.`,
     },
   ];
 
@@ -127,7 +127,7 @@ export default function DemographicCityPage() {
     <SEOLandingTemplate
       title={pageTitle}
       metaTitle={`${demographic.title} in ${cityName}, ${abbreviation} — Find Programs | RehabLookup`}
-      metaDescription={`Find ${demographic.title.toLowerCase()} programs in ${cityName}, ${stateName}. Compare verified facilities with specialized care. Get matched today.`}
+      metaDescription={`Find ${demographic.title.toLowerCase()} programs in ${cityName}, ${stateName}. Compare verified facilities with specialized care and contact them directly.`}
       canonical={`https://rehablookup.com${canonicalPath}`}
       noindex={!validation.shouldIndex}
       structuredData={structuredData}

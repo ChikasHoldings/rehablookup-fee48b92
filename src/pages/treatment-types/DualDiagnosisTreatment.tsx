@@ -9,7 +9,6 @@ import { ResponsiveListingGrid } from "@/components/listings/ResponsiveListingGr
 import {
   Brain,
   ArrowRight,
-  Phone,
   CheckCircle,
   Shield,
   Clock,
@@ -338,10 +337,10 @@ const DualDiagnosisTreatment = () => {
                     ))}
                   </ul>
                   <div className="mt-6">
-                    <Link to="/concierge">
+                    <Link to="/search-results">
                       <Button className="gap-2">
-                        <Phone className="h-4 w-4" />
-                        Get a Free Assessment
+                        <Search className="h-4 w-4" />
+                        Browse Treatment Centers
                       </Button>
                     </Link>
                   </div>

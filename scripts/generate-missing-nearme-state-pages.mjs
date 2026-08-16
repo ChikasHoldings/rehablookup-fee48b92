@@ -229,7 +229,7 @@ function renderPage({ nm, state }) {
 
     ${renderCta(
       `Find ${nm.label.toLowerCase()} in ${state.name}`,
-      `Free, confidential placement help from licensed coordinators familiar with ${state.name} providers.`,
+      `Browse and compare licensed ${state.name} treatment providers, then contact them directly.`,
     )}
 
     <p class="small"><a href="/rehab-centers">Browse All States</a> &middot; <a href="/resources">Recovery Resources</a> &middot; <a href="/">Home</a></p>

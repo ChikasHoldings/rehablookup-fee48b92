@@ -13,7 +13,7 @@ import {
   generateStateTreatmentFAQs,
   generateStateTreatmentChecklist,
 } from "@/utils/stateContentGenerator";
-import { Clock, Shield, CheckCircle, ArrowRight, Search, Heart, Activity,
+import { Clock, Shield, CheckCircle, ArrowRight, Search, Activity,
 } from "lucide-react";
 import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
 
@@ -234,9 +234,9 @@ const StateAlcoholRehab = () => {
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">
-              <Link to="/concierge">
-                <Heart className="mr-2 h-4 w-4" />
-                Get Matched Free
+              <Link to="/search-results">
+                <Search className="mr-2 h-4 w-4" />
+                Browse Treatment Centers
               </Link>
             </Button>
           </div>
@@ -260,7 +260,7 @@ const StateAlcoholRehab = () => {
         ]}
         insuranceLinks={[
           { title: "Insurance Guide", href: "/insurance" },
-          { title: "Verify Coverage", href: "/concierge" },
+          { title: "Check Insurance Coverage", href: "/insurance" },
         ]}
       />
     </Layout>

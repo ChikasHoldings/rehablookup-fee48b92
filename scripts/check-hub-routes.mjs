@@ -3,7 +3,7 @@
  * Hub & near-me live route checker.
  *
  * For every prerendered hub route in /public (state hubs, city hubs, near-me
- * pages, treatment-types, insurance, concierge, etc.), this script:
+ * pages, treatment-types, insurance, etc.), this script:
  *
  *   1. Reads the *expected* <title> and canonical from the local prerendered
  *      HTML (the file that will ship to Vercel).
@@ -69,7 +69,6 @@ const HUB_PREFIXES = [
   "/best-rehab-centers-in-",
   "/treatment-types",
   "/insurance",
-  "/concierge",
   "/us-rehab",
   "/state-rehab-guides",
   "/provider-guides",

@@ -153,7 +153,7 @@ export default function BestInStatePage() {
       showInsuranceLinks
       showNearMeLinks
       ctaTitle={`Find the Best Treatment in ${stateConfig.state}`}
-      ctaSubtitle={`Our concierge team will match you with top-rated programs in ${stateConfig.state}. Confidential. No obligation.`}
+      ctaSubtitle={`Compare top-rated programs in ${stateConfig.state} side by side, then contact them directly. Free to search, no obligation.`}
     />
   );
 }

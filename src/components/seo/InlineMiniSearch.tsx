@@ -3,18 +3,19 @@ import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Heart, ShieldCheck, ArrowRight } from "lucide-react";
+import { Search, ShieldCheck, ArrowRight } from "lucide-react";
 import { z } from "zod";
 import { analytics } from "@/lib/analytics";
-import { buildConciergeHref } from "@/lib/conciergeHref";
-import { emitConciergeFunnelEvent } from "@/lib/conciergeAnalytics";
 
 /**
- * InlineMiniIntake — 3-field above-the-fold capture for SEO landing pages.
- * Submits by routing to /concierge with prefill params (no PII transmitted
- * here; the full intake form on /concierge collects PII under its own
- * validation + RLS rules). Analytics events fire on submit so the funnel
- * can attribute SEO landing → concierge starts (analytics provider removed).
+ * InlineMiniSearch — 2-field above-the-fold directory search for SEO
+ * landing pages.
+ *
+ * Replaces the former InlineMiniIntake, which fed the retired concierge
+ * placement funnel (directory cutover stage 1). It never collected PII
+ * then and does not now: the two inputs are pre-filled search filters
+ * that route straight to /search-results, which already understands
+ * `location` and `treatment`.
  */
 
 const schema = z.object({
@@ -22,7 +23,7 @@ const schema = z.object({
   levelOfCare: z.string().trim().max(40).optional(),
 });
 
-interface InlineMiniIntakeProps {
+interface InlineMiniSearchProps {
   source: string;
   defaultTreatment?: string;
   className?: string;
@@ -36,11 +37,11 @@ const LEVEL_OF_CARE_OPTIONS = [
   { value: "dual-diagnosis", label: "Dual Diagnosis" },
 ];
 
-export function InlineMiniIntake({
+export function InlineMiniSearch({
   source,
   defaultTreatment,
   className,
-}: InlineMiniIntakeProps) {
+}: InlineMiniSearchProps) {
   const navigate = useNavigate();
   const [location, setLocation] = useState("");
   const [levelOfCare, setLevelOfCare] = useState(defaultTreatment ?? "");
@@ -55,42 +56,32 @@ export function InlineMiniIntake({
     }
     setError(null);
 
-    analytics.ctaClick("Inline Mini Intake", source);
-    emitConciergeFunnelEvent("concierge_intake_started", {
-      source,
-      has_location: true,
-      has_treatment: Boolean(parsed.data.levelOfCare),
-      has_insurance: false,
-      applied_any_field: true,
-    });
+    analytics.ctaClick("Inline Mini Search", source);
 
-    navigate(
-      buildConciergeHref({
-        location: parsed.data.location,
-        treatment: parsed.data.levelOfCare || undefined,
-        source,
-      }),
-    );
+    const params = new URLSearchParams();
+    params.set("location", parsed.data.location);
+    if (parsed.data.levelOfCare) params.set("treatment", parsed.data.levelOfCare);
+    navigate(`/search-results?${params.toString()}`);
   };
 
   return (
     <form
       onSubmit={handleSubmit}
       className={`rounded-xl border border-white/20 bg-white/95 p-4 sm:p-5 shadow-lg backdrop-blur-sm text-foreground ${className ?? ""}`}
-      aria-label="Free treatment matching"
+      aria-label="Search treatment centers"
     >
       <div className="mb-3 flex items-center gap-2">
-        <Heart className="h-4 w-4 text-primary" aria-hidden />
-        <p className="text-sm font-semibold">Free, confidential matching — answer 2 quick questions</p>
+        <Search className="h-4 w-4 text-primary" aria-hidden />
+        <p className="text-sm font-semibold">Search treatment centers by location and level of care</p>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
         <div className="space-y-1">
-          <Label htmlFor="mini-intake-location" className="text-xs text-muted-foreground">
-            Your location
+          <Label htmlFor="mini-search-location" className="text-xs text-muted-foreground">
+            Location
           </Label>
           <Input
-            id="mini-intake-location"
+            id="mini-search-location"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
             placeholder="City, state, or zip"
@@ -100,11 +91,11 @@ export function InlineMiniIntake({
           />
         </div>
         <div className="space-y-1">
-          <Label htmlFor="mini-intake-care" className="text-xs text-muted-foreground">
+          <Label htmlFor="mini-search-care" className="text-xs text-muted-foreground">
             Type of program
           </Label>
           <select
-            id="mini-intake-care"
+            id="mini-search-care"
             value={levelOfCare}
             onChange={(e) => setLevelOfCare(e.target.value)}
             className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -115,7 +106,7 @@ export function InlineMiniIntake({
           </select>
         </div>
         <Button type="submit" size="lg" className="gap-1.5">
-          Get Help
+          Search
           <ArrowRight className="h-4 w-4" />
         </Button>
       </div>
@@ -126,7 +117,7 @@ export function InlineMiniIntake({
 
       <p className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
         <ShieldCheck className="h-3.5 w-3.5" aria-hidden />
-        100% confidential. No obligation. We never sell your information.
+        Browsing is free and anonymous — no account required.
       </p>
     </form>
   );

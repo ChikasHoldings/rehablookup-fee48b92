@@ -28,8 +28,8 @@ const benefits = [
   },
   {
     icon: Plane,
-    title: "Concierge Services",
-    description: "Airport pickup, visa support documentation, and full-service coordination for a seamless treatment experience."
+    title: "International Admissions",
+    description: "Many US centers publish support for international patients — airport pickup, visa documentation, and travel logistics. Listings show which ones do."
   }
 ];
 

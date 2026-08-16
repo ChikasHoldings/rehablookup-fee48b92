@@ -345,7 +345,7 @@ export default function ExpandedTreatmentHubPage() {
       showTreatmentLinks
       showInsuranceLinks
       ctaTitle={`Find ${config.title} Near You`}
-      ctaSubtitle={`Our concierge team will match you with the best ${config.title.toLowerCase()} programs. Free and confidential.`}
+      ctaSubtitle={`Compare ${config.title.toLowerCase()} programs side by side, then contact them directly. Free to search.`}
     />
   );
 }

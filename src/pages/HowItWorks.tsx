@@ -59,12 +59,12 @@ const steps = [
     icon: MessageSquare,
     image: step3Image,
     title: "Connect Directly",
-    description: "Contact treatment centers directly through our platform or speak with our specialists who can help guide you to the right program.",
+    description: "Contact treatment centers directly — call their published admissions line, visit their website, or send an inquiry through the listing.",
     details: [
       "Direct contact with facilities",
-      "Free consultation with specialists",
-      "Insurance verification assistance",
-      "Admission coordination support",
+      "Published admissions phone numbers",
+      "Insurance accepted, listed per facility",
+      "Save and compare before you reach out",
     ],
     gradient: "from-emerald-500/20 to-teal-500/20",
     iconBg: "from-emerald-500 to-teal-500",
@@ -375,10 +375,10 @@ const HowItWorks = () => {
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
-                <Link to="/concierge">
+                <Link to="/search-results">
                   <Button variant="outline" size="default" className="gap-2 font-semibold">
-                    <MessageSquare className="h-4 w-4" />
-                    Concierge Service
+                    <Search className="h-4 w-4" />
+                    Search Centers
                   </Button>
                 </Link>
               </div>

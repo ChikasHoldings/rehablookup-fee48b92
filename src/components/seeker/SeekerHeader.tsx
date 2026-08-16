@@ -4,7 +4,7 @@ import { Link, NavLink, useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import {
   Home, Send, Heart, Star, Settings, LogOut, LogIn,
-  Search, Bell, BellOff, X, MapPin, Building2, ChevronRight, HeartHandshake,
+  Search, Bell, BellOff, X, MapPin, Building2, ChevronRight,
   CheckCheck, HelpCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -42,7 +42,7 @@ interface SearchResult {
 
 const navItems = [
   { to: "/account", icon: Home, label: "Home" },
-  { to: "/account/concierge", icon: HeartHandshake, label: "Concierge" },
+  { to: "/account/saved", icon: Heart, label: "Saved" },
   { to: "/account/requests", icon: Send, label: "Inbox" },
   { to: "/account/reviews", icon: Star, label: "My Reviews" },
 ];
@@ -183,8 +183,7 @@ export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = 
     // so the dropdown and the page never disagree about where a given
     // notification type should land. Previously the header had its own
     // stale tables (e.g. it routed "inquiry_update" / "inquiry_status"
-    // which no edge function actually emits, while concierge types fell
-    // through to /account/notifications instead of /account/concierge).
+    // which no edge function actually emits).
     navigate(resolveNotificationRoute(notification));
   };
 
@@ -497,12 +496,6 @@ export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = 
                   <Link to="/account" className="flex items-center gap-2.5 py-2">
                     <Home className="h-4 w-4 text-muted-foreground" />
                     Dashboard
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild className="rounded-lg">
-                  <Link to="/account/concierge" className="flex items-center gap-2.5 py-2">
-                    <HeartHandshake className="h-4 w-4 text-muted-foreground" />
-                    Concierge
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild className="rounded-lg">

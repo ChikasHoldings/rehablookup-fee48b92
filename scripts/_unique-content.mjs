@@ -293,8 +293,8 @@ export function renderCta(headline, copy) {
   return `<div class="cta">
       <h2>${escHtml(headline)}</h2>
       <p>${escHtml(copy)}</p>
-      <a href="/concierge">Get Free Help</a>
-      <a href="/search-results" style="background:#fff;color:#1B365D">Browse Centers</a>
+      <a href="/search-results">Search Treatment Centers</a>
+      <a href="/compare" style="background:#fff;color:#1B365D">Compare Facilities</a>
     </div>`;
 }
 

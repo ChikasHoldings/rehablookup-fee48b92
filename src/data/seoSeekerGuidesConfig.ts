@@ -43,7 +43,7 @@ export const seekerGuidePages: SeekerGuideConfig[] = [
     resources: [
       { label: "Find Treatment Centers", href: "/rehab-centers" },
       { label: "Insurance Coverage Guide", href: "/does-insurance-cover-rehab" },
-      { label: "Concierge Placement Service", href: "/concierge" },
+      { label: "Search Treatment Centers", href: "/search-results" },
       { label: "Inpatient vs Outpatient", href: "/inpatient-vs-outpatient-rehab" },
     ],
     faqs: [
@@ -80,7 +80,7 @@ export const seekerGuidePages: SeekerGuideConfig[] = [
       { label: "How to Stage an Intervention", href: "/how-to-stage-an-intervention" },
       { label: "Find Treatment Centers", href: "/rehab-centers" },
       { label: "Insurance Coverage Guide", href: "/does-insurance-cover-rehab" },
-      { label: "Concierge Placement Service", href: "/concierge" },
+      { label: "Search Treatment Centers", href: "/search-results" },
     ],
     faqs: [
       { question: "How do I know if it's addiction or just heavy use?", answer: "The key distinction is loss of control. If your loved one can't consistently moderate their use, continues despite negative consequences, experiences withdrawal when stopping, and prioritizes substance use over responsibilities and relationships, these are clinical indicators of addiction (substance use disorder) requiring professional assessment." },
@@ -152,7 +152,7 @@ export const seekerGuidePages: SeekerGuideConfig[] = [
       { label: "Find Treatment Centers", href: "/rehab-centers" },
       { label: "Inpatient Rehab Guide", href: "/inpatient-rehab" },
       { label: "How Much Does Rehab Cost?", href: "/rehab-cost" },
-      { label: "Concierge Placement Service", href: "/concierge" },
+      { label: "Search Treatment Centers", href: "/search-results" },
     ],
     faqs: [
       { question: "How often can I contact my loved one in rehab?", answer: "Communication policies vary by facility and treatment phase. Most programs allow weekly phone calls after the initial stabilization period (first 5-7 days). Family therapy sessions are typically scheduled 1-2 times per week. Visitation may be available on designated days. These boundaries support treatment engagement — they're not punishment." },
@@ -165,7 +165,7 @@ export const seekerGuidePages: SeekerGuideConfig[] = [
     slug: "how-to-find-rehab-for-family-member",
     title: "How to Find Rehab for a Family Member",
     metaTitle: "How to Find Rehab for a Family Member — Step-by-Step",
-    metaDescription: "Step-by-step guide to finding the right rehab for a family member. Insurance verification, program types, questions to ask, and placement help.",
+    metaDescription: "Step-by-step guide to finding the right rehab for a family member. Insurance verification, program types, and questions to ask before you commit.",
     heroSubtitle: "A practical, step-by-step guide to finding and securing the right treatment program for your loved one — from research to admission.",
     introContent: "Finding the right rehab for a family member can feel overwhelming — hundreds of facilities, different program types, insurance complexities, and the pressure of making the right choice during a crisis. This guide simplifies the process into manageable steps, helping you evaluate programs, verify insurance, ask the right questions, and navigate admission efficiently. Whether you're planning ahead or responding to an emergency, these steps will help you find quality, accredited treatment matched to your loved one's specific needs.",
     sections: [
@@ -182,20 +182,20 @@ export const seekerGuidePages: SeekerGuideConfig[] = [
       "Request insurance verification from top programs",
       "Compare programs on clinical quality and fit",
       "Prepare for admission (documents, packing, logistics)",
-      "Consider concierge placement for expert guidance",
+      "Compare several programs before committing",
     ],
     resources: [
       { label: "Search Treatment Centers", href: "/rehab-centers" },
       { label: "Insurance Coverage Guide", href: "/does-insurance-cover-rehab" },
       { label: "How Much Does Rehab Cost?", href: "/rehab-cost" },
-      { label: "Concierge Placement Service", href: "/concierge" },
+      { label: "Search Treatment Centers", href: "/search-results" },
       { label: "Inpatient vs Outpatient", href: "/inpatient-vs-outpatient-rehab" },
     ],
     faqs: [
-      { question: "How long does it take to get into rehab?", answer: "Many facilities offer same-day to 48-hour admission. The timeline depends on insurance verification (often completed in hours), bed availability, and medical needs. For urgent cases (fentanyl use, suicidal ideation), emergency admission is typically available. Our concierge service can expedite placement within hours." },
+      { question: "How long does it take to get into rehab?", answer: "Many facilities offer same-day to 48-hour admission. The timeline depends on insurance verification (often completed in hours), bed availability, and medical needs. For urgent cases (fentanyl use, suicidal ideation), emergency admission is typically available. Calling a facility's admissions line directly is the fastest route — many can confirm availability the same day." },
       { question: "Can I choose rehab for my adult family member?", answer: "You can research, recommend, and facilitate admission, but an adult must consent to voluntary treatment (except in states with involuntary commitment laws for substance abuse — known as Casey's Law or Marchman Act). You can absolutely do the legwork of finding the right program, verifying insurance, and having everything ready so that when they agree, admission is immediate." },
       { question: "Is it better to go to rehab near home or far away?", answer: "Both approaches have merit. Near home: easier family involvement, familiar aftercare resources, lower travel costs. Far away: removes them from triggers and drug connections, provides fresh environment, and makes it harder to leave treatment impulsively. The best choice depends on their specific situation, support system, and treatment history." },
-      { question: "Should I use a placement service?", answer: "Placement services (like our concierge) have deep knowledge of programs, relationships with admissions teams, and can match specific needs with appropriate facilities quickly. They're particularly valuable in crisis situations, for complex cases (dual diagnosis, specialized needs), or when you're overwhelmed by options. Quality placement services are free to families or included in treatment costs." },
+      { question: "Should I use a placement service?", answer: "Some families use independent placement consultants, particularly in a crisis or for complex cases. If you do, ask directly how the service is paid: some are paid by the facilities they refer to, which is a conflict of interest worth knowing about. RehabLookup is not a placement service — it is a directory you search yourself, and it never refers you to a specific facility." },
     ],
   },
   {
@@ -219,13 +219,13 @@ export const seekerGuidePages: SeekerGuideConfig[] = [
       "Explore nonprofit and faith-based treatment options",
       "Inquire about medical financing (CareCredit, Prosper)",
       "Contact local community health centers for referrals",
-      "Consider our concierge service for free placement guidance",
+      "Save a shortlist and compare it side by side",
     ],
     resources: [
       { label: "Free Rehab Options", href: "/free-rehab-options" },
       { label: "Medicaid Rehab Centers", href: "/medicaid-rehab-centers" },
       { label: "Insurance Coverage Guide", href: "/does-insurance-cover-rehab" },
-      { label: "Concierge Placement Service", href: "/concierge" },
+      { label: "Search Treatment Centers", href: "/search-results" },
     ],
     faqs: [
       { question: "Can I get into rehab with no money and no insurance?", answer: "Yes. State-funded programs, nonprofit organizations, faith-based centers, and scholarship programs provide free treatment for qualifying individuals. SAMHSA's helpline (1-800-662-4357) can connect you with local no-cost options immediately." },
@@ -369,13 +369,13 @@ export const seekerGuidePages: SeekerGuideConfig[] = [
       { label: "Find Treatment Centers", href: "/rehab-centers" },
       { label: "Insurance Coverage Guide", href: "/does-insurance-cover-rehab" },
       { label: "How to Find Rehab", href: "/how-to-find-rehab-for-family-member" },
-      { label: "Concierge Placement Service", href: "/concierge" },
+      { label: "Search Treatment Centers", href: "/search-results" },
     ],
     faqs: [
       { question: "Can I be fired for going to rehab?", answer: "Under FMLA and ADA, you cannot be fired for seeking substance abuse treatment if you request leave proactively. However, these protections don't apply if you violate a workplace drug policy or if your employer has fewer than 50 employees. Seeking treatment before any workplace incident provides the strongest legal protection." },
       { question: "Do I have to tell my boss I'm going to rehab?", answer: "No. You can request medical leave without disclosing the specific condition. FMLA requires a healthcare provider's certification of a 'serious health condition' but does not require a specific diagnosis to be shared with your employer. Speak with HR, not your direct manager, for maximum confidentiality." },
       { question: "Will my coworkers find out?", answer: "Your employer is legally required to maintain confidentiality about your medical information. HR should only share that you're on approved medical leave. If coworkers ask, you can simply say you're taking care of a health matter. Your company cannot disclose the nature of your leave." },
-      { question: "What if I'm self-employed or work for a small company?", answer: "FMLA and ADA protections have eligibility requirements that may not cover small businesses. If you're self-employed or work for a small company, explore outpatient treatment options (IOP, evening programs) that allow you to continue working. Our concierge team can help find programs that fit your work schedule." },
+      { question: "What if I'm self-employed or work for a small company?", answer: "FMLA and ADA protections have eligibility requirements that may not cover small businesses. If you're self-employed or work for a small company, explore outpatient treatment options (IOP, evening programs) that allow you to continue working. Filter the directory for outpatient, evening, and IOP programs that fit around a work schedule." },
     ],
   },
   {
@@ -405,7 +405,7 @@ export const seekerGuidePages: SeekerGuideConfig[] = [
       { label: "Senior Treatment Programs", href: "/senior-addiction-treatment" },
       { label: "Medicare Rehab Coverage", href: "/insurance/medicare-rehab" },
       { label: "Find Treatment Centers", href: "/rehab-centers" },
-      { label: "Concierge Placement Service", href: "/concierge" },
+      { label: "Search Treatment Centers", href: "/search-results" },
     ],
     faqs: [
       { question: "Is it too late for a senior to go to rehab?", answer: "It's never too late. Research shows seniors have excellent treatment outcomes — often better than younger adults. Older adults tend to be more committed to treatment, have fewer competing social pressures, and respond well to structured programs. Recovery at any age significantly improves quality of life and health." },
@@ -435,7 +435,7 @@ export const seekerGuidePages: SeekerGuideConfig[] = [
       "Understand that changing levels is normal and expected",
       "Plan for the full continuum, not just the first phase",
       "Discuss ASAM level recommendations with your treatment team",
-      "Use our concierge service for expert level-of-care guidance",
+      "Read the level-of-care guide before you shortlist",
     ],
     resources: [
       { label: "What Is Detox?", href: "/what-is-detox" },
@@ -477,7 +477,7 @@ export const seekerGuidePages: SeekerGuideConfig[] = [
       { label: "How to Help an Alcoholic Family Member", href: "/how-to-help-alcoholic-family-member" },
       { label: "Couples Rehab Programs", href: "/couples-rehab-near-me" },
       { label: "Family Therapy for Addiction", href: "/family-therapy-for-addiction" },
-      { label: "Concierge Placement Service", href: "/concierge" },
+      { label: "Search Treatment Centers", href: "/search-results" },
     ],
     faqs: [
       { question: "Can a relationship survive addiction?", answer: "Yes, many relationships not only survive but become stronger through the recovery process. Success requires both parties' commitment to growth, professional support (therapy), willingness to address underlying issues, and patience. Recovery creates an opportunity to build something healthier than the pre-addiction relationship." },

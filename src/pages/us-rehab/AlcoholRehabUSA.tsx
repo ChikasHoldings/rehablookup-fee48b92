@@ -7,7 +7,7 @@ import {
   InternationalFAQ,
   WhyUSATreatment,
   StateDestinations,
-  PlacementCTA
+  DirectorySearchCTA
 } from "./components";
 import { Wine, Shield, Heart, Clock } from "lucide-react";
 
@@ -84,7 +84,7 @@ const AlcoholRehabUSA = () => {
       <StateDestinations title="Top States for Alcohol Rehab" subtitle="These US states are renowned for their exceptional alcohol treatment programs and recovery-friendly environments." />
       <CountriesServed />
       <InternationalFAQ title="Alcohol Treatment FAQs" subtitle="Common questions about seeking alcohol addiction treatment in the United States." faqs={customFAQs} schemaId="alcohol-rehab-usa-faq" />
-      <PlacementCTA title="Find Your Alcohol Treatment Program" description="Get placed in America's best alcohol rehab centers. Medical detox, luxury care, and lasting recovery." />
+      <DirectorySearchCTA title="Find Your Alcohol Treatment Program" description="Browse US alcohol-rehab listings by level of care — medical detox, residential, outpatient — and contact them directly." />
     </Layout>
   );
 };

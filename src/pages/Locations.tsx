@@ -16,7 +16,6 @@ import {
   ArrowRight,
   Globe,
   Compass,
-  Heart,
   X,
   TrendingUp,
   Shield,
@@ -474,10 +473,10 @@ const Locations = () => {
               insurance coverage, and specific recovery needs.
             </p>
             <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link to="/concierge">
+              <Link to="/search-results">
                 <Button size="xl" className="gap-2.5 px-8 min-w-[200px]">
-                  <Heart className="h-5 w-5" />
-                  Find Treatment
+                  <Search className="h-5 w-5" />
+                  Search Treatment Centers
                 </Button>
               </Link>
               <Link to="/rehab-centers">

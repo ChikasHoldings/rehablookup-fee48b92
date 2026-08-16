@@ -7,7 +7,7 @@ import {
   TREATMENT_THEMES,
   type TreatmentThemeKey,
 } from "@/components/seo/treatmentThemes";
-import { Heart, Search, Building2, MapPin, Activity } from "lucide-react";
+import { Scale, Search, Building2, MapPin, Activity } from "lucide-react";
 
 interface TreatmentHubHeroProps {
   treatmentKey: TreatmentThemeKey;
@@ -78,20 +78,20 @@ export function TreatmentHubHero({
             {subtitle}
           </p>
           <div className="mt-4 flex flex-col sm:flex-row gap-2.5">
-            <Link to="/concierge">
+            <Link to="/search-results">
               <Button size="default" className="gap-2 w-full sm:w-auto shadow-lg shadow-black/20">
-                <Heart className="h-4 w-4" />
-                Get Personalized Help
+                <Search className="h-4 w-4" />
+                Browse All Centers
               </Button>
             </Link>
-            <Link to="/search-results">
+            <Link to="/compare">
               <Button
                 size="default"
                 variant="outline"
                 className="gap-2 w-full sm:w-auto border-white/30 bg-white/5 text-white hover:bg-white/15 backdrop-blur-sm"
               >
-                <Search className="h-4 w-4" />
-                Browse All Centers
+                <Scale className="h-4 w-4" />
+                Compare Facilities
               </Button>
             </Link>
           </div>

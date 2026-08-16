@@ -45,7 +45,7 @@ const ROUTES = [
   "/treatment-types",
   "/treatment-types/detox-programs",
   "/insurance/aetna-rehab",
-  "/concierge",
+  "/compare",
   "/for-providers",
   "/resources",
 ];

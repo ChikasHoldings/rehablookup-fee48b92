@@ -125,7 +125,7 @@ export default function RehabUSAFromAustralia() {
           <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-5">
             {[
               { step: "1", title: "Apply Online", desc: "Complete our confidential intake form with your treatment preferences." },
-              { step: "2", title: "Get Matched", desc: "Our team matches you with US facilities suited to your clinical needs." },
+              { step: "2", title: "Compare Programs", desc: "Filter listings by level of care and location to build a shortlist of US programs." },
               { step: "3", title: "Arrange Travel", desc: "We coordinate ESTA, flights from Sydney/Melbourne, and arrival logistics." },
               { step: "4", title: "Begin Recovery", desc: "Arrive at your facility and begin your personalised treatment programme." },
             ].map((item, i) => (
@@ -262,7 +262,7 @@ export default function RehabUSAFromAustralia() {
                   { href: "/us-rehab/canadian-patients", label: "Canadian Patients" },
                   { href: "/us-rehab/uae-middle-east", label: "UAE & Middle East" },
                   { href: "/us-rehab/european-patients", label: "European Patients" },
-                  { href: "/international", label: "International Placement" },
+                  { href: "/international", label: "International Patients" },
                 ].map((link) => (
                   <Link key={link.href} to={link.href} className="group flex items-center justify-between rounded-lg px-3 py-2 hover:bg-muted/50 transition-colors">
                     <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">{link.label}</span>

@@ -7,7 +7,7 @@ import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSec
 import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
 import { shouldEmitFAQSchema } from "@/utils/seoPageValidator";
 import { statesData } from "@/data/locationSeoData";
-import { ArrowRight, Shield, MapPin, Phone } from "lucide-react";
+import { ArrowRight, Shield, MapPin } from "lucide-react";
 import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
 
 interface HubConfig {
@@ -224,10 +224,10 @@ const ExpandedTreatmentNationalHub = ({ treatmentKey }: ExpandedTreatmentNationa
               <p className="text-sm md:text-base text-white/85 max-w-2xl mb-4">
                 {config.heroSubtitle}
               </p>
-              <Link to="/concierge">
+              <Link to="/search-results">
                 <Button size="default" className="gap-2 shadow-lg shadow-black/20">
-                  <Phone className="h-4 w-4" />
-                  Get Matched Free
+                  <Search className="h-4 w-4" />
+                  Browse Treatment Centers
                 </Button>
               </Link>
             </div>
@@ -303,11 +303,11 @@ const ExpandedTreatmentNationalHub = ({ treatmentKey }: ExpandedTreatmentNationa
               Find {config.title} Near You
             </h2>
             <p className="text-muted-foreground mb-8">
-              Our concierge team matches you with the best {config.title.toLowerCase()} based on your needs, location, and insurance. Free and confidential.
+              Filter {config.title.toLowerCase()} by location, level of care, and insurance accepted, then contact them directly.
             </p>
-            <Link to="/concierge">
+            <Link to="/search-results">
               <Button size="lg" className="gap-2">
-                Get Matched Free <ArrowRight className="h-4 w-4" />
+                Browse Treatment Centers <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
           </div>

@@ -73,7 +73,7 @@ export function FeedbackForm({ onSubmit, isSubmitting }: FeedbackFormProps) {
           id="feedback"
           value={feedback}
           onChange={(e) => setFeedback(e.target.value.slice(0, MAX_FEEDBACK_LENGTH))}
-          placeholder="How was your experience with our concierge service? Any suggestions for improvement?"
+          placeholder="How was your experience searching the directory? Any suggestions for improvement?"
           rows={4}
           maxLength={MAX_FEEDBACK_LENGTH}
         />

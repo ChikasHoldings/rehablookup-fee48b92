@@ -7,7 +7,6 @@ import {
   Star,
   Bell,
   MoreHorizontal,
-  HeartHandshake,
   FileText,
   Settings,
   LogIn,
@@ -31,7 +30,7 @@ interface SeekerMobileNavProps extends React.HTMLAttributes<HTMLElement> {
 const navItems = [
   { href: "/account", label: "Home", icon: Home },
   { href: "/account/search", label: "Search", icon: Search },
-  { href: "/account/concierge", label: "Concierge", icon: HeartHandshake },
+  { href: "/account/saved", label: "Saved", icon: Heart },
   { href: "/account/requests", label: "Inbox", icon: FileText },
 ];
 
@@ -45,12 +44,11 @@ export function SeekerMobileNav({ isAuthenticated = false, ...props }: SeekerMob
     prefetchRoute(path);
   }, []);
 
-  const isMoreActive = ["/account/settings", "/account/saved", "/account/reviews", "/account/notifications", "/account/notification-preferences", "/account/help", "/login"].some(
+  const isMoreActive = ["/account/settings", "/account/reviews", "/account/notifications", "/account/notification-preferences", "/account/help", "/login"].some(
     path => location.pathname.startsWith(path)
   );
 
   const moreItems = isAuthenticated ? [
-    { href: "/account/saved", label: "Saved Facilities", icon: Heart },
     { href: "/account/reviews", label: "My Reviews", icon: Star },
     { href: "/account/notifications", label: "Notifications", icon: Bell },
     { href: "/account/settings", label: "Settings", icon: Settings },

@@ -22,7 +22,6 @@ import {
   Stethoscope,
   Sparkles,
   ArrowRight,
-  Heart,
   Leaf,
   LucideIcon,
   Clock,
@@ -37,7 +36,7 @@ import {
 } from "lucide-react";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { TOPIC_HERO_IMAGES } from "@/data/locationImages";
-import { InlineIntakeForm } from "@/components/conversion/InlineIntakeForm";
+import { InlineMiniSearch } from "@/components/seo/InlineMiniSearch";
 
 interface TreatmentType {
   icon: LucideIcon;
@@ -619,12 +618,11 @@ const TreatmentTypes = () => {
         </div>
       </section>
 
-      {/* Inline 3-field intake widget — quiet conversion path after
-          seekers have browsed treatment types. Self-gates via
-          NEW_CTA_SYSTEM; renders nothing when the flag is off. */}
+      {/* Inline directory search — lets a seeker who has just read about
+          the levels of care jump straight into filtered results. */}
       <section className="py-8 md:py-10">
         <div className="container max-w-xl">
-          <InlineIntakeForm heading="Not sure which level of care fits?" />
+          <InlineMiniSearch source="treatment_types_inline" />
         </div>
       </section>
 
@@ -655,10 +653,10 @@ const TreatmentTypes = () => {
                 Our specialists can help you find the right treatment program. Free and confidential.
               </p>
               <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
-                <Link to="/concierge">
+                <Link to="/search-results">
                   <Button size="lg" className="gap-2 font-semibold">
-                    <Heart className="h-4 w-4" />
-                    Find Treatment
+                    <Search className="h-4 w-4" />
+                    Search Treatment Centers
                   </Button>
                 </Link>
                 <Link to="/rehab-centers">

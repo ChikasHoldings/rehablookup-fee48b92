@@ -1,4 +1,3 @@
-import sarahImg from "@/assets/testimonials/sarah-m.jpg";
 import michaelImg from "@/assets/testimonials/michael-t.jpg";
 import jenniferImg from "@/assets/testimonials/jennifer-k.jpg";
 import davidImg from "@/assets/testimonials/david-r.jpg";
@@ -16,10 +15,8 @@ import karenImg from "@/assets/testimonials/karen-mitchell.jpg";
 import carlosImg from "@/assets/testimonials/carlos-martinez.jpg";
 import deniseImg from "@/assets/testimonials/denise-w.jpg";
 import diegoImg from "@/assets/testimonials/diego-s.jpg";
-import lisaImg from "@/assets/testimonials/lisa-h.jpg";
 import richardImg from "@/assets/testimonials/richard-p.jpg";
 import graceImg from "@/assets/testimonials/grace-c.jpg";
-import markSusanImg from "@/assets/testimonials/mark-susan.jpg";
 import andreImg from "@/assets/testimonials/andre-j.jpg";
 import catherineImg from "@/assets/testimonials/catherine-b.jpg";
 import brianImg from "@/assets/testimonials/brian-e.jpg";
@@ -30,7 +27,6 @@ import elenaImg from "@/assets/testimonials/elena-r.jpg";
 import tanyaImg from "@/assets/testimonials/tanya-w.jpg";
 import joseImg from "@/assets/testimonials/jose-m.jpg";
 import christineImg from "@/assets/testimonials/christine-b.jpg";
-import kevinImg from "@/assets/testimonials/kevin-n.jpg";
 import meganImg from "@/assets/testimonials/megan-r.jpg";
 import darnellImg from "@/assets/testimonials/darnell-j.jpg";
 import jasonImg from "@/assets/testimonials/jason-f.jpg";
@@ -69,15 +65,6 @@ export interface Testimonial {
 }
 
 export const seekerTestimonials: Testimonial[] = [
-  {
-    name: "Sarah M.",
-    location: "San Diego, CA",
-    quote: "I was overwhelmed trying to find help for my son. RehabLookup's concierge team walked me through every step — from verifying insurance to scheduling tours. He's been sober 14 months now.",
-    rating: 5,
-    role: "family",
-    context: "Found treatment for her son",
-    avatar: sarahImg,
-  },
   {
     name: "Michael T.",
     location: "Houston, TX",
@@ -160,15 +147,6 @@ export const seekerTestimonials: Testimonial[] = [
     avatar: diegoImg,
   },
   {
-    name: "Lisa H.",
-    location: "Minneapolis, MN",
-    quote: "After my daughter's overdose scare, we didn't want to wait weeks for help. The concierge team helped us find a detox facility quickly. She's now thriving in a sober living home.",
-    rating: 5,
-    role: "family",
-    context: "Found detox placement for daughter",
-    avatar: lisaImg,
-  },
-  {
     name: "Richard P.",
     location: "Philadelphia, PA",
     quote: "At 62, I thought I was too old for rehab. RehabLookup found me a program specifically for older adults dealing with prescription medication dependency. The staff understood my situation without judgment. I wish I'd done this years ago.",
@@ -185,15 +163,6 @@ export const seekerTestimonials: Testimonial[] = [
     role: "seeker",
     context: "Found executive treatment program",
     avatar: graceImg,
-  },
-  {
-    name: "Mark & Susan D.",
-    location: "Columbus, OH",
-    quote: "We spent $40,000 on a facility we found through Google that was completely wrong for our son. With RehabLookup, the concierge team matched him with the right level of care from the start. He completed the program and is now mentoring others in recovery.",
-    rating: 5,
-    role: "family",
-    context: "Found right-fit program after prior failure",
-    avatar: markSusanImg,
   },
   {
     name: "Brian E.",
@@ -231,15 +200,6 @@ export const seekerTestimonials: Testimonial[] = [
     role: "seeker",
     context: "Healthcare professional program",
     avatar: christineImg,
-  },
-  {
-    name: "Kevin N.",
-    location: "Portland, OR",
-    quote: "My wife's drinking had escalated over the pandemic. Every facility I called made me feel like a number. The RehabLookup concierge actually listened to what our family was going through and found a program with strong family therapy. She's 14 months sober and our marriage survived.",
-    rating: 5,
-    role: "family",
-    context: "Found treatment for his wife",
-    avatar: kevinImg,
   },
   {
     name: "Megan R.",

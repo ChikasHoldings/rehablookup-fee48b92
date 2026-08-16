@@ -339,7 +339,7 @@ const coreBestInStateConfigs: BestInStateConfig[] = [
     ],
     faqs: [
       { question: "Does Illinois Medicaid cover rehab?", answer: "Yes, Illinois expanded Medicaid provides comprehensive addiction treatment coverage including detox, residential, outpatient, MAT, counseling, and peer support services." },
-      { question: "How do I find rehab in Chicago?", answer: "Chicago offers hundreds of treatment options. Use RehabLookup to compare verified facilities, call the Illinois Helpline (1-833-234-6343), or contact our concierge for personalized matching. Consider proximity to your support system, program specialties, and insurance network when choosing." },
+      { question: "How do I find rehab in Chicago?", answer: "Chicago offers hundreds of treatment options. Use RehabLookup to compare verified facilities, or call the Illinois Helpline (1-833-234-6343). Consider proximity to your support system, program specialties, and insurance network when choosing." },
       { question: "How much does rehab cost in Illinois?", answer: "Illinois rehab costs range from free (Medicaid/state-funded) to $40,000+ per month for luxury programs. Standard private insurance programs in the Chicago area average $12,000-$25,000 for 30 days. Downstate and suburban programs may offer lower rates." },
     ],
   },

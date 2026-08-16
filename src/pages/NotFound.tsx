@@ -20,10 +20,9 @@ import {
   Search, 
   ArrowLeft, 
   MapPin, 
-  Phone, 
   FileText, 
   Building2, 
-  HeartHandshake,
+  Scale,
   HelpCircle,
   Shield
 } from "lucide-react";
@@ -250,7 +249,7 @@ const NotFound = () => {
 
   const popularLinks = [
     { label: "Find Rehab Centers", href: "/rehab-centers", icon: Building2 },
-    { label: "Concierge Service", href: "/concierge", icon: HeartHandshake },
+    { label: "Compare Facilities", href: "/compare", icon: Scale },
     { label: "How It Works", href: "/how-it-works", icon: HelpCircle },
     { label: "Insurance Coverage", href: "/insurance", icon: Shield },
   ];
@@ -500,10 +499,10 @@ const NotFound = () => {
                   Browse the Directory
                 </Button>
               </Link>
-              <Link to="/concierge" className="w-full sm:w-auto">
+              <Link to="/search-results" className="w-full sm:w-auto">
                 <Button variant="outline" size="lg" className="gap-2 w-full sm:w-auto border-primary/30 hover:bg-primary/5">
-                  <Phone className="h-4 w-4" />
-                  Find Treatment
+                  <Search className="h-4 w-4" />
+                  Search Treatment Centers
                 </Button>
               </Link>
             </div>
@@ -575,10 +574,10 @@ const NotFound = () => {
             <h2 className="font-display font-semibold text-foreground mb-3">
               Our support team is available 24/7 to connect you with treatment
             </h2>
-            <Link to="/concierge">
+            <Link to="/search-results">
               <Button variant="default" className="gap-2">
-                <Phone className="h-4 w-4" />
-                Find Treatment
+                <Search className="h-4 w-4" />
+                Search Treatment Centers
               </Button>
             </Link>
           </div>

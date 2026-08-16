@@ -259,7 +259,7 @@ function buildInsurance(urlPath, parts) {
       ]},
       { h: `Finding ${planName}-Accepting Rehab in ${locale}`, body: [
         `Treatment centers in ${locale} that accept ${planName} are listed across all major levels of care. Whether you need short-term detox, a 30/60/90-day residential program, or flexible outpatient care, you can filter by your insurance plan and the type of program you need.`,
-        `If you are unsure whether a facility accepts your specific ${planName} plan, our concierge team can verify benefits with your insurer at no cost.`,
+        `If you are unsure whether a facility accepts your specific ${planName} plan, call the facility using the phone number on its listing and ask them to verify your benefits.`,
       ]},
       { h: "Verify Your Benefits", body: [
         `Before you contact a treatment center, request a free, confidential benefits verification. We confirm your deductible, copay, out-of-pocket maximum, and prior authorization requirements so there are no surprises after admission.`,
@@ -352,7 +352,7 @@ function buildNearMe(urlPath, parts) {
         `When evaluating programs in ${state}, look for state licensure, third-party accreditation (Joint Commission, CARF), evidence-based clinical practices, and aftercare support.`,
       ]},
       { h: "How to Get Started", body: [
-        `Browse listings, compare programs, and contact admissions directly. If you are not sure which level of care is right, request a free assessment from our concierge team.`,
+        `Browse listings, compare programs, and contact admissions directly. If you are not sure which level of care is right, a facility\u2019s admissions team can walk you through the options.`,
       ]},
     ],
     faqs: [
@@ -438,7 +438,7 @@ function buildRehabCenters(urlPath, parts) {
         `When comparing options, look for state licensure, third-party accreditation, clinical credentials, and clearly described aftercare planning.`,
       ]},
       { h: "What Programs Cost", body: [
-        `Treatment cost depends on level of care, length of stay, and insurance coverage. RehabLookup lists insurance acceptance for each facility, and our concierge team can verify your benefits at no cost.`,
+        `Treatment cost depends on level of care, length of stay, and insurance coverage. RehabLookup lists insurance acceptance for each facility so you can shortlist before you call.`,
       ]},
     ],
     faqs: [

@@ -444,7 +444,7 @@ export function useRoleBasedRedirect() {
     // Public content routes accessible by all authenticated roles
     const PUBLIC_CONTENT_ROUTES = [
       "/rehab-centers", "/locations", "/center/", "/treatment-types",
-      "/search-results", "/concierge", "/how-it-works", "/insurance",
+      "/search-results", "/compare", "/how-it-works", "/insurance",
       "/international", "/about", "/contact", "/faq", "/resources",
       "/best-rehab-centers-in-", "/alcohol-rehab-in-", "/drug-rehab-in-",
       "/detox-centers-in-", "/inpatient-rehab-in-", "/outpatient-rehab-in-",

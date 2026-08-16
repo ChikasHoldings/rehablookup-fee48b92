@@ -1,13 +1,12 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Search, ArrowRight, Sparkles, MapPin, Building2 } from "lucide-react";
-import { buildConciergeHref } from "@/lib/conciergeHref";
 import { useDirectoryStats } from "@/hooks/useDirectoryStats";
 
 interface RecoveryJourneyCTAProps {
-  /** Optional location string (e.g. "Boise, ID") forwarded to /concierge
-   *  as prefill / attribution; passed in by the homepage. */
-  conciergeLocation?: string;
+  /** Optional location string (e.g. "Boise, ID") used to pre-seed the
+   *  secondary "centers near you" search; passed in by the homepage. */
+  nearbyLocation?: string;
 }
 
 /**
@@ -15,8 +14,8 @@ interface RecoveryJourneyCTAProps {
  * directory — not a treatment provider. Two paths to the same goal
  * (finding the right facility):
  *
- *   • Primary  — search the directory yourself      → /search-results
- *   • Secondary — get a free personalized match     → /concierge
+ *   • Primary  — search the whole directory          → /search-results
+ *   • Secondary — jump to centers near the visitor   → /search-results?location
  *
  * Wording intentionally avoids advisor / helpline framing ("call us",
  * "talk to a counselor", "24/7 available") so visitors don't mistake
@@ -26,7 +25,7 @@ interface RecoveryJourneyCTAProps {
  * mobile. Right column is an inline SVG sunrise — brand navy + gold,
  * ~1.5KB markup, no external fetch, no CLS.
  */
-export function RecoveryJourneyCTA({ conciergeLocation = "" }: RecoveryJourneyCTAProps) {
+export function RecoveryJourneyCTA({ nearbyLocation = "" }: RecoveryJourneyCTAProps) {
   // Same source of truth as the hero trust bar and TrustRibbon so the
   // three surfaces never disagree on the count.
   const { stats } = useDirectoryStats();
@@ -73,7 +72,7 @@ export function RecoveryJourneyCTA({ conciergeLocation = "" }: RecoveryJourneyCT
             <p className="mt-3 md:mt-4 text-base md:text-lg text-slate-600 leading-relaxed max-w-xl">
               RehabLookup is an independent directory of verified addiction-treatment
               facilities across the U.S. Search by location, insurance, and level of
-              care — or let our free concierge surface the best matches for you.
+              care, compare programs side by side, then contact them directly.
             </p>
 
             {/* CTAs */}
@@ -90,13 +89,14 @@ export function RecoveryJourneyCTA({ conciergeLocation = "" }: RecoveryJourneyCT
               </Button>
 
               <Link
-                to={buildConciergeHref({
-                  location: conciergeLocation,
-                  source: "homepage_recovery_journey_cta",
-                })}
+                to={
+                  nearbyLocation
+                    ? `/search-results?location=${encodeURIComponent(nearbyLocation)}`
+                    : "/locations"
+                }
                 className="inline-flex items-center gap-1 text-sm font-semibold text-[#1B365D] hover:text-[#142a4a] underline underline-offset-4 decoration-[#1B365D]/40 hover:decoration-[#1B365D] transition-colors"
               >
-                Get a personalized match
+                {nearbyLocation ? `Centers near ${nearbyLocation}` : "Browse by location"}
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </div>

@@ -19,7 +19,7 @@ import { useSupportTickets } from "@/lib/support/useSupportTickets";
 
 const SEEKER_CATEGORIES = [
   { value: "account", label: "Account" },
-  { value: "request_help", label: "Placement / inquiry help" },
+  { value: "request_help", label: "Help with an inquiry" },
   { value: "technical", label: "Technical issue" },
   { value: "feedback", label: "Feedback" },
   { value: "other", label: "Other" },

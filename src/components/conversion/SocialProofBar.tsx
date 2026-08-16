@@ -12,7 +12,7 @@ const STATS: StatItem[] = [
   { icon: MapPin, value: "All 50", label: "States Covered" },
   { icon: Users, value: "Free", label: "For Clients" },
   { icon: ShieldCheck, value: "HIPAA", label: "Compliant" },
-  { icon: Star, value: "4.8★", label: "Advisor Rating" },
+  { icon: Star, value: "4.8★", label: "Directory Rating" },
 ];
 
 interface SocialProofBarProps {
@@ -23,7 +23,7 @@ interface SocialProofBarProps {
 
 /**
  * A compact social proof bar showing real platform statistics.
- * Use on the homepage hero, SEO landing pages, and the concierge landing page
+ * Use on the homepage hero and SEO landing pages
  * to build immediate trust with first-time visitors.
  */
 export function SocialProofBar({ className, variant = "bar" }: SocialProofBarProps) {

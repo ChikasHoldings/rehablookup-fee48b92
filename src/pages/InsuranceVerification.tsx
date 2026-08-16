@@ -184,7 +184,7 @@ export default function InsuranceVerification() {
                   <Link to="/rehab-centers">Browse treatment centers</Link>
                 </Button>
                 <Button asChild variant="outline">
-                  <Link to="/concierge">Talk to a placement specialist</Link>
+                  <Link to="/search-results">Browse treatment centers</Link>
                 </Button>
               </div>
             </CardContent>

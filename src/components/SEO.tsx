@@ -187,9 +187,8 @@ export function SEO({
     },
     serviceType: [
       "Addiction Treatment Directory",
-      "Rehabilitation Center Referral",
-      "Treatment Placement Concierge",
-      "Insurance Verification",
+      "Treatment Center Search",
+      "Facility Comparison",
     ],
     knowsAbout: [
       "Addiction Treatment",

@@ -439,10 +439,10 @@ const Contact = () => {
                       For immediate treatment assistance, our specialists are ready to help you find the right care.
                     </p>
                     <div className="flex flex-wrap gap-3">
-                      <Link to="/concierge">
+                      <Link to="/search-results">
                         <Button size="sm" className="gap-2 h-10">
-                          <Heart className="h-4 w-4" />
-                          Concierge Service
+                          <Search className="h-4 w-4" />
+                          Search Centers
                         </Button>
                       </Link>
                       <Link to="/rehab-centers">

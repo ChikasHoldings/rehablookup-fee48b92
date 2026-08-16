@@ -7,7 +7,7 @@ import {
   InternationalFAQ,
   WhyUSATreatment,
   StateDestinations,
-  PlacementCTA
+  DirectorySearchCTA
 } from "./components";
 import { Pill, Brain, Shield, Users } from "lucide-react";
 
@@ -84,7 +84,7 @@ const DrugRehabUSA = () => {
       <StateDestinations title="Top States for Drug Rehab" subtitle="These US states offer exceptional drug treatment programs with cutting-edge therapies and supportive recovery environments." />
       <CountriesServed />
       <InternationalFAQ title="Drug Treatment FAQs" subtitle="Common questions about seeking drug addiction treatment in the United States." faqs={customFAQs} schemaId="drug-rehab-usa-faq" />
-      <PlacementCTA title="Find Your Drug Treatment Program" description="Get placed in America's leading drug rehab centers. Medical detox, MAT, and comprehensive recovery support." />
+      <DirectorySearchCTA title="Find Your Drug Treatment Program" description="Search US drug-rehab listings by level of care — medical detox, MAT, residential, outpatient — and contact them directly." />
     </Layout>
   );
 };

@@ -461,7 +461,7 @@ function renderPage({ prefix, city, facilities = [] }) {
 
     ${renderCta(
       `Find ${label.toLowerCase()} in ${city.city}`,
-      `Verified ${city.city}, ${city.stateAbbr} ${label.toLowerCase()} options — free placement guidance from licensed coordinators.`,
+      `Verified ${city.city}, ${city.stateAbbr} ${label.toLowerCase()} options — compare programs, insurance accepted, and levels of care.`,
     )}
 
     <p class="small"><a href="/rehab-centers">Browse All Treatment Centers</a> &middot; <a href="/resources">Recovery Resources</a> &middot; <a href="/">Home</a></p>

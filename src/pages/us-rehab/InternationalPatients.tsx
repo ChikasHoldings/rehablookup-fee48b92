@@ -77,7 +77,7 @@ const InternationalPatients = () => {
               { icon: Globe, value: "50+", label: "Countries Served" },
               { icon: Building2, value: "1,000+", label: "US Facilities" },
               { icon: Clock, value: "24hr", label: "Response Time" },
-              { icon: Shield, value: "98%", label: "Placement Success" },
+              { icon: Shield, value: "50+", label: "Countries Reached" },
             ].map((s) => (
               <div key={s.label} className="px-1">
                 <div className="flex items-center justify-center gap-1.5 mb-0.5">
@@ -168,7 +168,7 @@ const InternationalPatients = () => {
           <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-5">
             {[
               { step: "1", title: "Apply Online", desc: "Complete our confidential intake form with your treatment needs." },
-              { step: "2", title: "Get Matched", desc: "Our advisors match you with facilities that accept international patients." },
+              { step: "2", title: "Compare Programs", desc: "Filter listings for programs that state they accept international patients." },
               { step: "3", title: "Arrange Travel", desc: "We coordinate visa documents, flights, and airport transfers." },
               { step: "4", title: "Begin Recovery", desc: "Arrive and begin your personalised treatment programme." },
             ].map((item, i) => (
@@ -221,7 +221,7 @@ const InternationalPatients = () => {
               <div className="relative text-center">
                 <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-1.5 rounded-full text-sm font-medium mb-6">
                   <Sparkles className="h-4 w-4" />
-                  <span>International Placement Service</span>
+                  <span>International Patients</span>
                 </div>
                 <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-3">Start Your US Treatment Journey</h2>
                 <p className="text-sm sm:text-base text-muted-foreground mb-8 max-w-xl mx-auto leading-relaxed">Our international team is ready to guide you through every step — from initial enquiry to admission and beyond.</p>

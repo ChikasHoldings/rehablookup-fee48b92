@@ -1,13 +1,19 @@
 /**
- * Regression guards for the Concierge Workflows lifecycle hardening pass.
+ * Regression guards for the Concierge Workflows lifecycle hardening pass,
+ * updated for directory cutover stage 1.
  *
  * These are source-contract tests (like broken-links-checker): they lock the
- * specific defects fixed in this pass so they can't silently regress. The
+ * specific defects fixed in each pass so they can't silently regress. The
  * concierge tables have 0 live rows, so behavior is otherwise only exercised
  * by RLS role-simulation — these assertions guard the client/edge wiring.
+ *
+ * Stage 1 removed the seeker-facing placement workspace but deliberately left
+ * every table, RPC, RLS policy and edge function in place. The assertions
+ * below therefore check the frontend no longer reaches those surfaces, and
+ * that legacy deep-links still resolve.
  */
 import { describe, it, expect } from "vitest";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
 
 const root = resolve(__dirname, "../..");
@@ -23,25 +29,57 @@ describe("concierge lifecycle contracts", () => {
     expect(src).not.toMatch(/payment_status\s*:/);
   });
 
-  // C1 — seeker placement confirmation must go through the security-definer RPC
-  // (a direct UPDATE of seeker_confirmed/placed_facility_id is rejected by the
-  // guard_seeker_inquiry_update trigger), and C2 — the matched-options list must
-  // read via get_seeker_introductions (seekers have no RLS read on the table).
-  it("SeekerProviderReviewCard uses the seeker RPCs, not blocked direct table access", () => {
-    const src = read("src/components/seeker/placement/SeekerProviderReviewCard.tsx");
-    expect(src).toMatch(/rpc\(\s*["']seeker_confirm_placement["']/);
-    expect(src).toMatch(/rpc\(\s*["']get_seeker_introductions["']/);
-    // Must NOT directly read concierge_introductions (RLS gives the seeker 0 rows)
-    expect(src).not.toMatch(/from\(\s*["']concierge_introductions["']/);
-    // Must NOT directly write the guard-protected confirmation columns
-    expect(src).not.toMatch(/seeker_confirmed:\s*true/);
+  // C1/C2 superseded by directory cutover stage 1: the seeker placement
+  // workspace (and SeekerProviderReviewCard with it) is removed from the
+  // frontend entirely, which is a strictly stronger guarantee than "it uses
+  // the security-definer RPCs" — there is no seeker-side client left to reach
+  // concierge_introductions or the guard-protected confirmation columns.
+  // The RPCs, tables and RLS guards are deliberately untouched.
+  it("the seeker placement workspace is removed from the frontend", () => {
+    for (const rel of [
+      "src/components/seeker/placement/SeekerProviderReviewCard.tsx",
+      "src/components/seeker/placement/AdvisorMessaging.tsx",
+      "src/components/seeker/placement/PlacementStatusCard.tsx",
+      "src/pages/seeker/SeekerConcierge.tsx",
+    ]) {
+      expect(existsSync(resolve(root, rel))).toBe(false);
+    }
   });
 
-  // C8 — the seeker placement-reminder email must link to the real route.
-  it("placement-monitor reminder links to /account/concierge, not the dead /seeker/concierge", () => {
+  it("no frontend source calls the seeker placement RPCs or reads concierge_introductions", () => {
+    const offenders: string[] = [];
+    const walk = (dir: string) => {
+      for (const entry of readdirSync(resolve(root, dir), { withFileTypes: true })) {
+        const rel = `${dir}/${entry.name}`;
+        if (entry.isDirectory()) {
+          // Admin/provider concierge surfaces are Stage-2 scope and still read
+          // these tables under their own (non-seeker) RLS policies.
+          if (rel.includes("/admin") || rel.includes("/provider")) continue;
+          walk(rel);
+        } else if (/\.(ts|tsx)$/.test(entry.name)) {
+          const src = readFileSync(resolve(root, rel), "utf8");
+          if (/rpc\(\s*["'](seeker_confirm_placement|get_seeker_introductions)["']/.test(src)) {
+            offenders.push(rel);
+          }
+        }
+      }
+    };
+    walk("src");
+    expect(offenders).toEqual([]);
+  });
+
+  // C8 — the seeker placement-reminder email still links to /account/concierge.
+  // That route survives as a redirect to /account/saved (App.tsx), so already
+  // sent emails resolve instead of 404ing. placement-monitor itself is
+  // deliberately NOT modified in this stage.
+  it("placement-monitor reminder links to a route that still resolves", () => {
     const src = read("supabase/functions/placement-monitor/index.ts");
     expect(src).not.toMatch(/\/seeker\/concierge/);
     expect(src).toMatch(/\/account\/concierge/);
+    const app = read("src/App.tsx");
+    // /account/concierge must remain registered (as a redirect) so the link
+    // in already-delivered emails does not dead-end.
+    expect(app).toMatch(/path="concierge"\s+element=\{<Navigate to="\/account\/saved"/);
   });
 
   // C3 — the RedirectedInquiries feature (which surfaced full seeker PII to a

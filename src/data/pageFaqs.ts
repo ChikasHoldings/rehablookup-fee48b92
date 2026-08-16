@@ -2,12 +2,12 @@ import type { FAQItem } from "@/components/seo/PageFAQ";
 
 // ─── Homepage ─────────────────────────────────────────────────────────────────
 export const homeFaqs: FAQItem[] = [
-  { question: "How does RehabLookup help me find a treatment center?", answer: "RehabLookup connects you with verified, accredited addiction treatment centers across the United States. You can search by location, treatment type, insurance, and specialty — or use our placement service to be matched by a specialist." },
+  { question: "How does RehabLookup help me find a treatment center?", answer: "RehabLookup is a directory of verified, accredited addiction treatment centers across the United States. Search by location, treatment type, insurance, and specialty, compare candidates side by side, save a shortlist, then contact the facilities directly." },
   { question: "Is RehabLookup a treatment center?", answer: "No. RehabLookup is a directory and placement platform. We help individuals and families find and compare legitimate treatment facilities, but we do not provide medical care directly." },
-  { question: "Does it cost anything to search for treatment?", answer: "Searching and browsing treatment centers on RehabLookup is completely free. Our placement service is also offered at no cost to clients." },
+  { question: "Does it cost anything to search for treatment?", answer: "No. Searching, comparing, saving, and contacting treatment centers on RehabLookup is completely free for individuals and families, and no account is required to browse." },
   { question: "Are the facilities on RehabLookup verified?", answer: "Yes. All listed facilities go through a verification process that checks licensing, accreditation, and operational status before they appear on the platform." },
   { question: "Can I search for rehab centers by insurance?", answer: "Absolutely. You can filter results by insurance provider to find facilities that accept your specific plan, including Aetna, BCBS, Cigna, UnitedHealthcare, Medicare, and Medicaid." },
-  { question: "How quickly can I get placed in a treatment center?", answer: "Many facilities offer same-day or next-day admission. Through our placement service, we can often connect you with an available facility within 24–48 hours." },
+  { question: "How quickly can I get into a treatment center?", answer: "Many facilities offer same-day or next-day admission. Admission timing is set by the facility — call the admissions number on a listing to confirm current bed availability and start insurance verification." },
   { question: "Can I find rehab centers near me on RehabLookup?", answer: "Yes. Use our location search to find rehab centers near your city, state, or ZIP code. Each listing shows distance, accepted insurance, treatment programs, and verified contact information." },
   { question: "What should I look for when choosing a rehab center?", answer: "Look for state licensing, accreditation (such as Joint Commission or CARF), evidence-based treatments, qualified clinical staff, dual diagnosis capability if needed, and transparent pricing or insurance acceptance." },
   { question: "Is my information kept private when I contact a center?", answer: "Yes. All inquiries on RehabLookup are confidential. Your contact details are only shared with the facility you choose to engage with, and never sold or used for unrelated marketing." },
@@ -15,12 +15,12 @@ export const homeFaqs: FAQItem[] = [
 
 // ─── Contact Page ─────────────────────────────────────────────────────────────
 export const contactFaqs: FAQItem[] = [
-  { question: "How quickly will RehabLookup respond to my message?", answer: "Our support team responds to most inquiries within 1–2 business days. For urgent treatment questions, we recommend using our placement service, which connects you with a specialist who can respond same-day." },
-  { question: "What's the best way to contact RehabLookup for treatment help?", answer: "If you're looking for treatment placement, use our free placement service for the fastest response. For general questions, partnership inquiries, or feedback, email us at help@rehablookup.com." },
-  { question: "Can I speak with someone directly about a loved one's addiction?", answer: "Yes. Our placement specialists are trained to help families navigate the treatment process. Submit a placement request and a specialist will reach out to discuss options confidentially." },
+  { question: "How quickly will RehabLookup respond to my message?", answer: "Our support team responds to most inquiries about the directory within 1–2 business days. For urgent treatment questions, contact a facility directly using the admissions number on its listing — that is always the fastest route." },
+  { question: "What's the best way to contact RehabLookup?", answer: "Email help@rehablookup.com for questions about the directory itself — a listing that looks wrong, a technical problem, partnership inquiries, or feedback. For treatment questions, contact facilities directly through their listings." },
+  { question: "Can I speak with someone directly about a loved one's addiction?", answer: "Yes — every listing publishes the facility's own admissions line, and their intake teams are trained to talk families through the process confidentially. For free 24/7 support from a public resource, call the SAMHSA National Helpline at 1-800-662-4357." },
   { question: "Does RehabLookup offer 24/7 emergency support?", answer: "RehabLookup is a directory and placement platform, not a crisis line. If you or someone you love is in immediate danger, call 988 (Suicide & Crisis Lifeline) or SAMHSA's free 24/7 helpline at 1-800-662-4357." },
   { question: "How can treatment providers list their facility on RehabLookup?", answer: "Treatment providers can apply to list their facility through our 'For Providers' page. All listings go through a verification process that checks licensing, accreditation, and operational status." },
-  { question: "Is there a cost to contact RehabLookup?", answer: "No. Contacting RehabLookup is completely free, whether you're seeking treatment, asking a question, or exploring our placement service. We never charge clients for matching or support." },
+  { question: "Is there a cost to contact RehabLookup?", answer: "No. Contacting RehabLookup is completely free. We never charge people seeking treatment for anything — the directory is funded by optional provider subscriptions and clearly-labeled advertising." },
 ];
 
 // ─── Treatment Types Hub ──────────────────────────────────────────────────────
@@ -35,7 +35,7 @@ export const treatmentTypesFaqs: FAQItem[] = [
 // ─── Insurance Hub ────────────────────────────────────────────────────────────
 export const insuranceFaqs: FAQItem[] = [
   { question: "Does insurance cover addiction treatment?", answer: "Yes. Under the Affordable Care Act (ACA) and the Mental Health Parity Act, most health insurance plans are required to cover substance abuse treatment at the same level as other medical care, including detox, inpatient, and outpatient programs." },
-  { question: "How do I verify my insurance coverage for rehab?", answer: "You can call the number on the back of your insurance card, use our insurance guide pages to understand your specific plan's coverage, or contact our placement service for complimentary benefits verification." },
+  { question: "How do I verify my insurance coverage for rehab?", answer: "Call the number on the back of your insurance card, read our insurance guide pages to understand your plan's coverage, or ask a facility's admissions team to verify your benefits — most do this at no cost." },
   { question: "What if I don't have insurance?", answer: "Many treatment facilities offer sliding-scale fees, payment plans, or scholarship programs. State-funded and nonprofit centers also provide low-cost or free treatment options. Medicaid may also cover rehab in your state." },
   { question: "Does Medicare or Medicaid cover rehab?", answer: "Yes. Medicare Part A covers inpatient rehab, and Part B covers outpatient treatment. Medicaid coverage varies by state but generally includes detox, inpatient, and outpatient addiction treatment services." },
   { question: "Will my insurance cover out-of-state treatment?", answer: "Many PPO plans cover out-of-network providers, including out-of-state facilities. HMO plans may have stricter network requirements. It's important to verify with your insurer before traveling for treatment." },
@@ -49,22 +49,13 @@ export const locationsFaqs: FAQItem[] = [
   { question: "Are there rehab centers in rural areas?", answer: "Yes. While major metro areas have more options, many states have quality treatment facilities in suburban and rural communities. Our search tools help you find facilities regardless of your location." },
 ];
 
-// ─── Concierge / Placement ────────────────────────────────────────────────────
-export const conciergeFaqs: FAQItem[] = [
-  { question: "What is the placement service?", answer: "Our placement service matches you with a verified treatment facility based on your specific needs, insurance, location preferences, and treatment goals. A specialist handles the research and coordination so you can focus on recovery." },
-  { question: "How does the matching process work?", answer: "You share details about your situation through a brief intake form. Our specialists review your needs, verify insurance benefits, and identify the best-fit facilities from our network. You then receive personalized recommendations." },
-  { question: "Is the placement service confidential?", answer: "Absolutely. All information you share is protected under strict privacy standards. We never share your personal details without your explicit consent." },
-  { question: "How quickly will I hear back after submitting a request?", answer: "Most clients receive their first facility recommendations within 24–48 hours. For urgent situations, we prioritize fast responses and can often connect you with a facility the same day." },
-  { question: "Can you help with international patients?", answer: "Yes. We have a dedicated international placement program that assists patients from the UK, Canada, Europe, the Middle East, and Australia with finding U.S.-based treatment, including guidance on travel, visas, and payment." },
-];
-
 // ─── International Hub ────────────────────────────────────────────────────────
 export const internationalFaqs: FAQItem[] = [
   { question: "Why do international patients choose U.S. rehab centers?", answer: "The U.S. offers some of the world's most advanced addiction treatment programs, including cutting-edge therapies, luxury facilities, strict privacy protections (HIPAA), and high success rates — particularly for complex cases involving dual diagnosis." },
   { question: "Do I need a special visa to attend rehab in the USA?", answer: "Most international patients can attend treatment on a B-2 tourist visa with a medical treatment letter. Some may qualify for other visa categories. We recommend consulting with an immigration attorney for your specific situation." },
   { question: "How much does rehab in the USA cost for international patients?", answer: "Costs vary widely depending on the facility and program type. Luxury and private programs typically range from $20,000–$80,000+ per month. More affordable options are available starting around $5,000–$15,000 per month." },
   { question: "Is my information protected under U.S. law?", answer: "Yes. All treatment information is protected under HIPAA (Health Insurance Portability and Accountability Act) and 42 CFR Part 2, which provides some of the strongest patient privacy protections in the world." },
-  { question: "Can you help arrange travel and logistics?", answer: "Our international placement team can assist with coordinating facility admission, providing documentation for visa applications, and connecting you with travel coordination services." },
+  { question: "Can facilities help arrange travel and logistics?", answer: "Many US centers that accept international patients will help coordinate admission timing, provide documentation for visa applications, and arrange airport transfers. Ask their admissions team directly when you contact them." },
 ];
 
 // ─── For Providers ────────────────────────────────────────────────────────────
@@ -77,7 +68,7 @@ export const forProvidersFaqs: FAQItem[] = [
 
 // ─── How It Works ─────────────────────────────────────────────────────────────
 export const howItWorksFaqs: FAQItem[] = [
-  { question: "Is RehabLookup really free to use?", answer: "Yes. Searching for treatment centers, comparing facilities, and using our placement service is completely free for individuals and families seeking help." },
+  { question: "Is RehabLookup really free to use?", answer: "Yes. Searching for treatment centers, comparing facilities, saving a shortlist, and contacting providers is completely free for individuals and families seeking help." },
   { question: "How are treatment centers ranked on RehabLookup?", answer: "Facilities are ranked based on a combination of factors including verification status, profile completeness, accreditations, response rate, and user engagement — not by how much they pay." },
   { question: "Can I save and compare treatment centers?", answer: "Yes. Create a free account to save facilities to your favorites list and compare them side by side based on treatments offered, insurance accepted, location, and reviews." },
   { question: "What happens after I contact a facility?", answer: "The facility's admissions team will reach out to discuss your needs, verify insurance, and walk you through their intake process. You are never obligated to enroll." },
@@ -87,7 +78,7 @@ export const howItWorksFaqs: FAQItem[] = [
 export const aboutFaqs: FAQItem[] = [
   { question: "Who created RehabLookup?", answer: "RehabLookup was created to address the difficulty people face in finding legitimate, verified addiction treatment. Our team combines technology with healthcare expertise to connect clients with quality facilities." },
   { question: "Is RehabLookup affiliated with any treatment centers?", answer: "No. RehabLookup is an independent platform. We are not owned by or affiliated with any specific treatment center, ensuring unbiased results for every user." },
-  { question: "How does RehabLookup make money?", answer: "RehabLookup offers premium listing features and placement services for treatment providers. Searchers always have free, unbiased access to the full directory." },
+  { question: "How does RehabLookup make money?", answer: "Treatment providers can pay for optional premium listing features and clearly-labeled Featured advertising. Organic rankings are never sold, and people searching for treatment always have free access to the full directory." },
   { question: "How can I provide feedback or report an issue?", answer: "You can reach us through our contact page or email help@rehablookup.com. We take all feedback seriously and investigate any reports about listed facilities." },
 ];
 

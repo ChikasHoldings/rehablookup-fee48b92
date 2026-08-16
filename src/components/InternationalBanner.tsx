@@ -71,7 +71,7 @@ export function InternationalBanner() {
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <Globe className="h-4 w-4 shrink-0 hidden sm:block" />
           <p className="text-sm font-medium truncate">
-            Outside the U.S.? Talk to a coordinator about US treatment options.
+            Outside the U.S.? Browse US treatment centers that accept international patients.
           </p>
         </div>
 
@@ -82,7 +82,7 @@ export function InternationalBanner() {
             variant="secondary"
             className="h-9 md:h-7 text-xs font-semibold whitespace-nowrap"
           >
-            <Link to="/concierge">Talk to a Coordinator</Link>
+            <Link to="/search-results">Search US Centers</Link>
           </Button>
 
           <button

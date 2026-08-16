@@ -52,12 +52,12 @@ function generateCountyFAQs(
   if (slug.includes("emergency") || slug.includes("same-day") || slug.includes("immediate")) {
     faqs.push({
       question: `Can I get emergency rehab admission in ${countyName}?`,
-      answer: `Several treatment centers in ${countyName} offer urgent or same-day admission. For immediate help, call our concierge or SAMHSA's helpline at 1-800-662-4357.`,
+      answer: `Several treatment centers in ${countyName} offer urgent or same-day admission. For immediate help, call SAMHSA's free 24/7 National Helpline at 1-800-662-4357.`,
     });
   } else if (slug.includes("free") || slug.includes("affordable") || slug.includes("low-cost") || slug.includes("medicaid")) {
     faqs.push({
       question: `Are there free or low-cost rehab options in ${countyName}?`,
-      answer: `Yes, ${countyName} has state-funded and non-profit treatment programs. Many accept Medicaid and offer sliding-scale fees. Our concierge team can help identify affordable options.`,
+      answer: `Yes, ${countyName} has state-funded and non-profit treatment programs. Many accept Medicaid and offer sliding-scale fees. Filter listings by insurance accepted to surface those options.`,
     });
   } else {
     faqs.push({
@@ -216,7 +216,7 @@ export default function NearMeCountyPage() {
             <p className="mt-2 text-muted-foreground">
               {facilities.length > 0
                 ? `Browse ${facilities.length} verified facilities serving ${countyName}.`
-                : `Explore ${nearMeType.treatmentType.toLowerCase()} options in ${countyName}. Browse statewide or use our free concierge service.`}
+                : `Explore ${nearMeType.treatmentType.toLowerCase()} options in ${countyName}. Browse statewide listings.`}
             </p>
           </div>
 
@@ -230,9 +230,7 @@ export default function NearMeCountyPage() {
               nearbyFacilities={nearbyFacilities}
               nearbyLabel={`Centers in nearby ${stateInfo.name} counties`}
               maxItems={12}
-              conciergeLocation={`${countyName}, ${stateInfo.abbreviation}`}
-              conciergeTreatment={nearMeType.treatmentType}
-              conciergeSource="near_me_county_nearby_fallback"
+              nearbyLocation={`${countyName}, ${stateInfo.abbreviation}`}
             />
           ) : (
             <div className="text-center py-12 bg-muted/30 rounded-lg">
@@ -241,7 +239,7 @@ export default function NearMeCountyPage() {
                 No listings in {countyName} yet
               </h3>
               <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                We're expanding our directory. Browse {stateInfo.name} statewide or use our concierge.
+                We're expanding our directory. Browse {stateInfo.name} statewide listings in the meantime.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Link to={`/${nearMeType.slug}/${stateInfo.slug}`}>
@@ -249,9 +247,9 @@ export default function NearMeCountyPage() {
                     View {stateInfo.name} <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
-                <Link to="/concierge">
+                <Link to="/search-results">
                   <Button className="gap-2">
-                    Free Concierge Help <ArrowRight className="h-4 w-4" />
+                    Search Treatment Centers <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
               </div>
