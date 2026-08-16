@@ -1020,12 +1020,12 @@ function checkProductClassification() {
 // all use them correctly. So this rule reads only the two Pro-lifecycle copy
 // regions, located by their own anchors, and only after comments are removed.
 //
-// NEGATION IS CLAIM-LOCAL, NOT LINE-LOCAL.
-// ────────────────────────────────────────
+// NEGATION IS CLAIM-LOCAL, NOT LINE-LOCAL AND NOT CLAUSE-LOCAL.
+// ─────────────────────────────────────────────────────────────
 // The first version of this rule skipped an entire LINE as soon as the line
 // contained any neutralizing word:
 //
-//     if (NEUTRALIZED.test(line)) continue;   // ← the defect
+//     if (NEUTRALIZED.test(line)) continue;   // ← the first defect
 //
 // That closed the cross-line hole (a disclaimer in one paragraph excusing a
 // false claim in another) and left the same-line hole wide open. One truthful
@@ -1039,55 +1039,98 @@ function checkProductClassification() {
 //     Your directory position is unchanged, and Pro boosts you higher in search.
 //     Pro includes Featured placement, although verification is independent.
 //
-// A disclaimer only ever holds harmless the clause it actually governs. So the
-// region is now broken into CLAUSE-SIZED units and each prohibited claim is
-// judged inside its own unit, by two independent tests:
+// The fix for that was clause splitting plus a whole-clause assertion override:
 //
-//   1. CLAUSE SPLITTING — sentence terminators, semicolons, bullets, markup
-//      boundaries, contrastive conjunctions (but / although / though / yet /
-//      whereas / however) and `, and`-style coordination all start a new unit.
-//      A disclaimer therefore cannot reach across the punctuation into the
-//      next assertion.
+//     const disclaimed = NEUTRALIZER.test(unit) && !ASSERTION.test(unit);
 //
-//   2. ASSERTION OVERRIDE — within a single unit, a neutralizing word excuses
-//      a claim only when the unit makes no grant/removal assertion. "Featured
-//      remains independent" is a disclaimer; "Featured remains independent,
-//      but Pro includes priority placement" asserts (`includes`), so the
-//      disclaimer no longer excuses it even if the splitter had missed the
-//      comma.
+// which is the SECOND defect. It reads any assertion verb anywhere in the
+// clause as proof the clause is asserting — but a NEGATED assertion verb is
+// not an affirmative assertion. "Pro does not include Featured" contains both
+// `does not` and `include`, so the disclaimer was discarded and the guard
+// rejected the single clearest sentence the contract could possibly want. The
+// same false positive hit `never boosts`, `does not provide verification`,
+// `does not grant a verified badge`, `does not improve search placement`,
+// `will not increase directory visibility` and `does not remove Featured`.
 //
-// The two are deliberately redundant: either alone catches every case above,
-// so a gap in one is covered by the other.
+// A guard that rejects truthful, explicit contract language is not safe: it
+// pushes authors toward vaguer wording, which is the outcome this file exists
+// to prevent. So negation is now scoped to the CLAIM it actually governs, by
+// three layers, coarsest first:
+//
+//   1. CLAUSE SPLITTING (unchanged) — sentence terminators, semicolons,
+//      bullets, markup boundaries, contrastive conjunctions (but / although /
+//      though / yet / whereas / however) and `, and`-style coordination all
+//      start a new unit. A disclaimer cannot reach across the punctuation.
+//
+//   2. SEGMENT BOUNDING — inside a unit, a coordinator (and / or / nor / plus,
+//      plus the contrastives again for redundancy) bounds how far a negation
+//      reaches. This is what separates the two halves of
+//      "Pro does not include Featured and it boosts search rank" when no comma
+//      invited the splitter to act: the first half is genuinely negated, the
+//      second half is a live claim, and only the second is reported.
+//
+//   3. ASSERTION-LOCAL NEGATION — within a segment the negation holds until
+//      the first AFFIRMATIVE assertion verb, i.e. one that is not itself
+//      preceded by `not` / `n't` / `never` / `cannot`. Everything from that
+//      verb onward is affirmative residue and is judged normally. So
+//      "Pro does not include Featured" negates through to the end (its only
+//      assertion is negated), while "Pro is unchanged in that it includes
+//      Featured" stops the disclaimer dead at `includes`.
+//
+// Negation is deliberately BIDIRECTIONAL within its segment, because the
+// truthful copy states the subject before it is held harmless — "your listing's
+// … verification status are determined independently", "Featured is independent
+// of Pro". Layer 3 is what keeps that from becoming the old whole-clause
+// blanket: the disclaimer covers the segment only up to the first live verb.
+//
+// Claims are matched against the affirmative residue rather than the raw
+// clause, so a mixed sentence reports exactly the false half and stays silent
+// about the true half.
 //
 // Anchors fail closed: if a region cannot be found the rule reports that
 // rather than passing, so renaming the block never silently disables it.
 //
-// The matcher proves itself against the exact bypasses above on every run
-// (see PRO_COPY_MATCHER_FIXTURES) before it is trusted to judge the repo.
+// The matcher proves itself on every run against all three classes — truthful
+// negated claims that must PASS, affirmative prohibited claims that must FAIL,
+// and mixed true+false clauses that must FAIL (see PRO_COPY_MATCHER_FIXTURES)
+// — before it is trusted to judge the repo.
 // ═══════════════════════════════════════════════════════════════════════════
 
 /** HTML comments live inside template literals, so stripJs cannot see them. */
 const stripHtmlComments = (src) => src.replace(/<!--[\s\S]*?-->/g, "");
 
 /**
- * Words that explicitly hold a signal harmless. These are the wording the
- * contract wants, so they must not be mistaken for the claim they disclaim —
- * but only for a claim in the SAME clause, and only when that clause is not
- * simultaneously asserting something (see PRO_COPY_ASSERTION).
+ * Words that explicitly hold a signal harmless — the wording the contract
+ * wants, so they must never be mistaken for the claim they disclaim.
+ *
+ * `not` is listed bare rather than as `does not` / `will not` / `is not`, so
+ * every auxiliary and the passive ("is not affected", "not tied to") are
+ * covered by one token. `no` is deliberately NOT here: "no longer" is a
+ * REMOVAL assertion in the cancellation copy, and reading it as a disclaimer
+ * would let "Featured placement is no longer active" through.
  */
-const PRO_COPY_NEUTRALIZER =
-  /\b(?:unchanged|unaffected|not\s+affected|isn't\s+affected|independent|independently|separate|separately|unrelated|regardless|never|no\s+effect|no\s+impact|no\s+bearing|not\s+influenced|not\s+determined|not\s+tied|does\s+not|do\s+not|doesn't|don't|cannot|can't|will\s+not|won't)\b/i;
+const PRO_COPY_NEGATION =
+  /\b(?:not|never|cannot|unchanged|unaffected|independent|independently|separate|separately|unrelated|untouched|regardless|no\s+effect|no\s+impact|no\s+bearing)\b|n't/i;
 
 /**
- * Verbs that assert Pro grants or withdraws something. Their presence means the
- * clause is making a claim, so a neutralizing word in the same clause is
- * describing a DIFFERENT signal and cannot excuse it.
+ * A negation immediately governing the verb that follows it, allowing a couple
+ * of intervening words ("does not ever include"). Applied to the text BEFORE an
+ * assertion verb, this is what distinguishes `does not include` from `includes`.
+ */
+const ASSERTION_NEGATED_BEFORE = /(?:\bnot\b|\bnever\b|\bcannot\b|n't)\s+(?:\w+\s+){0,2}$/i;
+
+/**
+ * Verbs that assert Pro grants or withdraws something. An AFFIRMATIVE one ends
+ * the reach of a disclaimer in its segment; a negated one does not.
  *
  * Deliberately excludes `restore`, `resubscribe`, `feature(s)`, `determined`
  * and `affect` — all appear in the current truthful copy.
  */
 const PRO_COPY_ASSERTION =
-  /\b(?:includes?|including|included|gives?|giving|gave|grants?|granted|provides?|provided|unlocks?|unlocked|adds?|added|boosts?|boosted|boosting|improves?|improved|increases?|increased|raises?|raised|elevates?|elevated|promotes?|promoted|upgrades?|upgraded|earns?|earned|receives?|received|gains?|gained|comes?\s+with|no\s+longer|loses?|losing|lost|removes?|removed|revokes?|revoked|withdrawn|withdraws?|paused?|expires?|expired|forfeits?|forfeited|downgrades?|downgraded)\b/i;
+  /\b(?:includes?|including|included|gives?|giving|gave|grants?|granted|provides?|provided|unlocks?|unlocked|adds?|added|boosts?|boosted|boosting|improves?|improved|increases?|increased|raises?|raised|elevates?|elevated|promotes?|promoted|upgrades?|upgraded|earns?|earned|receives?|received|gains?|gained|comes?\s+with|no\s+longer|loses?|losing|lost|removes?|removed|revokes?|revoked|withdrawn|withdraws?|paused?|expires?|expired|forfeits?|forfeited|downgrades?|downgraded|lowers?|lowered|lowering|drops?|dropped|reduces?|reduced|demotes?|demoted|buries|buried|worsens?|worsened|decreases?|decreased)\b/i;
+
+/** `matchAll` needs its own global copy; the source of truth stays above. */
+const PRO_COPY_ASSERTION_G = new RegExp(PRO_COPY_ASSERTION.source, "gi");
 
 /** Words that describe a position in the directory's organic order. */
 const ORGANIC_POSITION =
@@ -1096,6 +1139,14 @@ const ORGANIC_POSITION =
 /** Words that describe that position being better than it otherwise would be. */
 const POSITION_IMPROVEMENT =
   /\b(?:higher|highest|top|better|best|improved?|improves|boost|boosts|boosted|boosting|increased?|increases|premium|priority|prioritized?|elevated?|promoted?|above|ahead|preferential|prominent|greater)\b/i;
+
+/**
+ * …and words that describe it being worse. The cancellation direction needs its
+ * own vocabulary: "cancelling Pro lowers your search position" sells organic
+ * order exactly as much as "Pro raises it" does, but shares none of its words.
+ */
+const POSITION_DEGRADATION =
+  /\b(?:lower|lowers|lowered|lowering|drop|drops|dropped|dropping|reduce|reduces|reduced|reducing|demote|demotes|demoted|bury|buries|buried|worse|worsen|worsens|below|behind|decrease|decreases|decreased|fall|falls|fell|slip|slips|slipped|downgrade|downgrades|downgraded)\b/i;
 
 /**
  * Assertions that Pro itself grants or withdraws trust, position or inventory.
@@ -1118,6 +1169,10 @@ const PRO_COPY_CLAIMS = [
   {
     test: (u) => POSITION_IMPROVEMENT.test(u) && ORGANIC_POSITION.test(u),
     claim: "an improved organic position",
+  },
+  {
+    test: (u) => POSITION_DEGRADATION.test(u) && ORGANIC_POSITION.test(u),
+    claim: "a reduced organic position",
   },
   { test: (u) => /\brank(?:ing|ings|ed|s)?\b/i.test(u), claim: "organic ranking" },
   {
@@ -1189,16 +1244,53 @@ function proCopyUnits(region) {
 }
 
 /**
- * Every prohibited claim asserted in `region`, with the clause that asserts it.
- * A claim survives only if its own clause disclaims it and asserts nothing.
+ * Coordinators that bound how far a negation reaches inside one clause unit.
+ *
+ * The clause splitter only breaks on `, and` — with the comma. Bare
+ * coordination ("Pro does not include Featured and it boosts search rank")
+ * arrives here as a single unit, and this is what stops the negation at the
+ * conjunction so the second half is still judged.
+ */
+const CLAIM_SEGMENT_BOUNDARY =
+  /\b(?:and|or|nor|plus|but|yet|although|though|whereas|however|while|meanwhile)\b/gi;
+
+const claimSegments = (unit) => unit.split(CLAIM_SEGMENT_BOUNDARY).filter((s) => s.trim());
+
+/**
+ * The part of a segment a negation does NOT hold harmless.
+ *
+ * An unnegated segment is entirely affirmative. A negated one is disclaimed
+ * from its start — the truthful copy names the signal before neutralizing it
+ * ("its verification status are determined independently") — up to the first
+ * AFFIRMATIVE assertion verb, which resumes live claim territory. A verb that
+ * is itself negated ("does not include") is not that resumption point, which
+ * is the whole difference between this and the whole-clause override it
+ * replaces.
+ */
+function affirmativeResidue(segment) {
+  if (!PRO_COPY_NEGATION.test(segment)) return segment;
+
+  for (const m of segment.matchAll(PRO_COPY_ASSERTION_G)) {
+    if (ASSERTION_NEGATED_BEFORE.test(segment.slice(0, m.index))) continue;
+    return segment.slice(m.index);
+  }
+  return "";
+}
+
+/**
+ * Every prohibited claim asserted in `region`, with the affirmative text that
+ * asserts it. A claim survives only where a negation actually governs it, so a
+ * sentence that is half true and half false reports only its false half.
  */
 function findProCopyViolations(region) {
   const found = [];
   for (const unit of proCopyUnits(region)) {
-    const disclaimed = PRO_COPY_NEUTRALIZER.test(unit) && !PRO_COPY_ASSERTION.test(unit);
-    if (disclaimed) continue;
-    for (const { test, claim } of PRO_COPY_CLAIMS) {
-      if (test(unit)) found.push({ claim, unit });
+    for (const segment of claimSegments(unit)) {
+      const residue = affirmativeResidue(segment).trim();
+      if (!residue) continue;
+      for (const { test, claim } of PRO_COPY_CLAIMS) {
+        if (test(residue)) found.push({ claim, unit: residue });
+      }
     }
   }
   return found;
@@ -1208,21 +1300,28 @@ function findProCopyViolations(region) {
  * The matcher's own regression suite, run on every invocation. `expect: true`
  * means at least one violation; `expect: false` means none.
  *
- * The `false` cases are the current shipped copy and the independence wordings
- * the contract explicitly wants — a false positive here is as much a bug as a
- * missed claim, because it would push authors toward vaguer disclaimers.
+ * Three classes, and a refactor that breaks ANY of them fails this check:
+ *
+ *   A. truthful NEGATED claims → PASS. A guard that rejects "Pro does not
+ *      include Featured" is not a strict guard, it is a broken one: it makes
+ *      the plainest statement of the contract unwriteable and rewards vagueness.
+ *   B. simple AFFIRMATIVE prohibited claims → FAIL.
+ *   C. MIXED clauses, one true half and one false half → FAIL. These are the
+ *      load-bearing cases: they are the only ones that can tell claim-local
+ *      negation apart from both blanket rules that preceded it.
  */
 const PRO_COPY_MATCHER_FIXTURES = [
-  // ── must FAIL: the same-line disclaimer escapes ──────────────────────────
-  ["same-line period bypass", "<p>Verification is unchanged. Pro includes priority ranking.</p>", true],
-  ["same-line contrast bypass", "<p>Featured remains independent, but Pro includes priority placement.</p>", true],
-  ["semicolon bypass", "<p>Your verification is not affected; Pro gives higher search placement.</p>", true],
-  ["trust claim after disclaimer", "<p>Featured is separate. Pro gives a verified badge.</p>", true],
-  ["coordinated boost bypass", "<p>Your directory position is unchanged, and Pro boosts you higher in search.</p>", true],
-  ["reversed order", "<p>Pro includes Featured placement, although verification is independent.</p>", true],
-  ["original regression", "<p>✓ Featured placement &amp; priority ranking</p>", true],
-  ["claim hidden in a visible attribute", '<img alt="Pro includes priority ranking">', true],
-  // ── must PASS: the shipped copy and the wordings the contract wants ──────
+  // ── A. must PASS: truthful negated claims ───────────────────────────────
+  ["negated Featured grant", "<p>Pro does not include Featured.</p>", false],
+  ["negated ranking boost", "<p>Pro never boosts organic ranking.</p>", false],
+  ["negated verification grant", "<p>Pro does not provide verification.</p>", false],
+  ["negated badge grant", "<p>Pro does not grant a verified badge.</p>", false],
+  ["negated placement improvement", "<p>Pro does not improve search placement.</p>", false],
+  ["negated visibility increase", "<p>Pro will not increase directory visibility.</p>", false],
+  ["negated Featured removal", "<p>Cancelling Pro does not remove Featured.</p>", false],
+  ["negated verification change", "<p>Cancelling Pro does not change verification.</p>", false],
+  ["negated ranking loss", "<p>Cancelling Pro does not lower organic ranking.</p>", false],
+  // ── A. must PASS: the shipped copy and the independence wordings ─────────
   [
     "shipped payment-success disclaimer",
     "<p>Pro is a set of listing features. Your listing's directory position and its " +
@@ -1241,7 +1340,47 @@ const PRO_COPY_MATCHER_FIXTURES = [
   ["truthful Pro benefits", "<p>✓ Public phone number and Call button on your listing</p>", false],
   ["truthful listing cap", "<p>✓ Up to 5 facility listings</p>", false],
   ["cancellation effects", "<p>• Your public phone number and Call button are no longer shown</p>", false],
+  // ── B. must FAIL: the same claims, affirmed ─────────────────────────────
+  ["affirmed Featured grant", "<p>Pro includes Featured.</p>", true],
+  ["affirmed ranking boost", "<p>Pro boosts organic ranking.</p>", true],
+  ["affirmed verification grant", "<p>Pro provides verification.</p>", true],
+  ["affirmed badge grant", "<p>Pro grants a verified badge.</p>", true],
+  ["affirmed placement improvement", "<p>Pro improves search placement.</p>", true],
+  ["affirmed visibility increase", "<p>Pro increases directory visibility.</p>", true],
+  ["affirmed Featured removal", "<p>Cancelling Pro removes Featured.</p>", true],
+  ["affirmed ranking loss", "<p>Cancelling Pro lowers organic ranking.</p>", true],
+  ["affirmed verification removal", "<p>Cancelling Pro removes verification.</p>", true],
+  // ── C. must FAIL: a true negation cannot mask a second, false claim ──────
+  ["mixed contrast after negation", "<p>Pro does not affect verification, but Pro includes Featured.</p>", true],
+  ["mixed semicolon after independence", "<p>Featured is independent; Pro boosts organic ranking.</p>", true],
+  ["mixed concessive after negation", "<p>Pro never changes verification, yet it gives higher placement.</p>", true],
+  ["mixed bare coordination", "<p>Pro does not include Featured and it boosts search rank.</p>", true],
+  ["mixed priority placement", "<p>Pro does not provide verification, but it includes priority placement.</p>", true],
+  [
+    "mixed cancellation degradation",
+    "<p>Cancelling Pro does not remove Featured, but it lowers your search position.</p>",
+    true,
+  ],
+  // ── B/C. the original bypasses a disclaimer used to excuse ──────────────
+  ["same-line period bypass", "<p>Verification is unchanged. Pro includes priority ranking.</p>", true],
+  ["same-line contrast bypass", "<p>Featured remains independent, but Pro includes priority placement.</p>", true],
+  ["semicolon bypass", "<p>Your verification is not affected; Pro gives higher search placement.</p>", true],
+  ["trust claim after disclaimer", "<p>Featured is separate. Pro gives a verified badge.</p>", true],
+  ["coordinated boost bypass", "<p>Your directory position is unchanged, and Pro boosts you higher in search.</p>", true],
+  ["reversed order", "<p>Pro includes Featured placement, although verification is independent.</p>", true],
+  ["original regression", "<p>✓ Featured placement &amp; priority ranking</p>", true],
+  ["claim hidden in a visible attribute", '<img alt="Pro includes priority ranking">', true],
 ];
+
+/**
+ * The mixed clause whose FALSE half must be reported WITHOUT its true half —
+ * the one property neither blanket rule could have: "safe" would have reported
+ * nothing, "unsafe" would have reported Featured too.
+ */
+const PRO_COPY_CLAIM_LOCALITY_FIXTURE = {
+  sample: "<p>Pro does not include Featured and it boosts search rank.</p>",
+  forbidden: /featured/i,
+};
 
 function checkProCopyMatcher() {
   for (const [name, sample, shouldFail] of PRO_COPY_MATCHER_FIXTURES) {
@@ -1258,10 +1397,21 @@ function checkProCopyMatcher() {
       fail(
         "pro-lifecycle-copy",
         `the Pro copy matcher rejects the truthful control "${name}" (as ` +
-          `${hits[0].claim}) — an explicit independence statement must be allowed`,
+          `${hits[0].claim}) — an explicitly negated or independent statement must be allowed`,
         `${sample.trim().slice(0, 120)} → "${hits[0].unit.slice(0, 80)}"`,
       );
     }
+  }
+
+  const { sample, forbidden } = PRO_COPY_CLAIM_LOCALITY_FIXTURE;
+  const masked = findProCopyViolations(sample).filter((h) => forbidden.test(h.unit));
+  if (masked.length > 0) {
+    fail(
+      "pro-lifecycle-copy",
+      "the Pro copy matcher reports the truthfully negated half of a mixed clause — " +
+        "negation must be claim-local, so only the affirmative claim beside it is a violation",
+      `${sample.trim().slice(0, 120)} → "${masked[0].unit.slice(0, 80)}"`,
+    );
   }
 }
 
@@ -1341,4 +1491,5 @@ console.log("  • Pro identity is canonical is_pro everywhere; no list can elev
 console.log("  • the deployable stripe-webhook is generated from a pristine entrypoint");
 console.log("  • Pro and Featured Stripe products are disjoint; Featured is never a Pro tier");
 console.log("  • Pro lifecycle emails promise no Featured, ranking or verification benefit");
-console.log("  • a disclaimer excuses only its own clause, never a claim beside it");
+console.log("  • a disclaimer excuses only the claim it governs — a true negation");
+console.log("    stays legal, and cannot shelter a false claim beside it");
