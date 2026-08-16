@@ -996,6 +996,124 @@ function checkProductClassification() {
   }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// 8. PRO LIFECYCLE MESSAGING — what the automated emails promise
+//
+// The DB, the scorer and the frontend can all be correct while the Stripe
+// webhook still *tells the provider* they bought something else. That is
+// exactly what shipped: the payment-success email advertised
+// "Featured placement & priority ranking" as a Pro benefit and the
+// cancellation email reported the same pair as removed. Neither is a Pro
+// entitlement — Featured is independent paid inventory and organic order is
+// computed by calculate-ranking-scores from neutral signals — so both
+// statements were false in the same direction, and the cancellation one also
+// implied that dropping Pro withdrew an independent Featured entitlement and
+// changed the listing's directory standing.
+//
+// Copy is load-bearing here: an outbound email is the only part of the
+// contract the customer actually reads, and it is the part that survives a
+// correct backend.
+//
+// SCOPED, NOT WORD-BANNED. "Featured", "ranking", "verified" and "priority"
+// are legitimate throughout this file — the Featured add-on branch, the
+// legacy-product classifier, the Concierge flow and the retirement comments
+// all use them correctly. So this rule reads only the two Pro-lifecycle copy
+// regions, located by their own anchors, and only after comments are removed.
+//
+// A truthful disclaimer is not a claim: a sentence that says the directory
+// position or verification status is *unchanged* / *independent* / *not
+// affected* is the wording we want, so neutralized lines are skipped and the
+// ban applies to what is left — the assertions.
+//
+// Anchors fail closed: if a region cannot be found the rule reports that
+// rather than passing, so renaming the block never silently disables it.
+// ═══════════════════════════════════════════════════════════════════════════
+
+/** HTML comments live inside template literals, so stripJs cannot see them. */
+const stripHtmlComments = (src) => src.replace(/<!--[\s\S]*?-->/g, "");
+
+/**
+ * Sentences that explicitly hold a signal harmless. These are the wording the
+ * contract wants, so they must not be mistaken for the claim they disclaim.
+ */
+const NEUTRALIZED =
+  /\b(?:unchanged|unaffected|not affected|independent|independently|separately|does not|do not|no effect|never)\b/i;
+
+/** Assertions that Pro itself grants or withdraws trust, position or inventory. */
+const PRO_COPY_CLAIMS = [
+  { re: /featured/i, claim: "Featured placement (Featured is independent paid inventory, not a Pro benefit)" },
+  { re: /priority\s+(?:ranking|placement|position|listing)/i, claim: "priority ranking / priority placement" },
+  {
+    re: /(?:higher|top|better|improved|boosted?|increased?|premium)\s+(?:ranking|rank|placement|position|visibility|search)/i,
+    claim: "an improved organic position",
+  },
+  { re: /\brank(?:ing|ed|s)?\b/i, claim: "organic ranking" },
+  { re: /verif(?:y|ied|ication)/i, claim: "verification / trust status" },
+  { re: /\btrusted\b|\bvetted\b|\baccredited\b/i, claim: "a trust designation" },
+];
+
+/**
+ * Pro-lifecycle copy regions, each located by an anchor that belongs to the
+ * copy itself rather than to a line number.
+ */
+const PRO_COPY_REGIONS = [
+  {
+    label: "Pro payment-success / renewal benefits block",
+    // const proBenefits = isPro ? `…` : "";
+    re: /const\s+proBenefits\s*=\s*isPro[\s\S]{0,2000}?:\s*""/,
+  },
+  {
+    label: "Pro cancellation email to the provider",
+    // the provider-facing cancel email, terminated by its own emailType tag
+    re: /subject:\s*[`"']Your Pro Subscription Has Been Cancelled[`"'][\s\S]{0,4000}?emailType:\s*"stripe_cancel_provider"/,
+  },
+];
+
+function checkProLifecycleCopy() {
+  // BOTH the human-maintained source and the deployable artifact: the artifact
+  // is what actually runs, and a hand-edit there would otherwise be invisible.
+  const files = [
+    "supabase/functions/stripe-webhook/entrypoint.ts",
+    "supabase/functions/stripe-webhook/index.ts",
+  ];
+
+  for (const rel of files) {
+    if (!exists(rel)) {
+      fail("pro-lifecycle-copy", `${rel} is missing — Pro lifecycle copy cannot be checked`, rel);
+      continue;
+    }
+    const src = stripHtmlComments(stripJs(read(rel)));
+
+    for (const region of PRO_COPY_REGIONS) {
+      const match = src.match(region.re);
+      if (!match) {
+        fail(
+          "pro-lifecycle-copy",
+          `cannot locate the ${region.label} — its anchor moved or was renamed, ` +
+            "so this rule can no longer prove the copy is truthful",
+          rel,
+        );
+        continue;
+      }
+
+      // Line-at-a-time so one truthful disclaimer cannot excuse a false claim
+      // sitting beside it in the same block.
+      for (const line of match[0].split("\n")) {
+        if (NEUTRALIZED.test(line)) continue;
+        for (const { re, claim } of PRO_COPY_CLAIMS) {
+          if (re.test(line)) {
+            fail(
+              "pro-lifecycle-copy",
+              `the ${region.label} tells the provider that Pro grants or removes ${claim}`,
+              `${rel}: ${line.trim().slice(0, 160)}`,
+            );
+          }
+        }
+      }
+    }
+  }
+}
+
 checkDatabase();
 checkRanking();
 checkFrontend();
@@ -1003,6 +1121,7 @@ checkSearchTrust();
 checkCanonicalPro();
 checkWebhookGeneration();
 checkProductClassification();
+checkProLifecycleCopy();
 
 if (violations.length > 0) {
   console.error("\n✖ directory trust / ranking contract violated\n");
@@ -1032,3 +1151,4 @@ console.log("  • no result-set count is described as verified (source + built 
 console.log("  • Pro identity is canonical is_pro everywhere; no list can elevate it");
 console.log("  • the deployable stripe-webhook is generated from a pristine entrypoint");
 console.log("  • Pro and Featured Stripe products are disjoint; Featured is never a Pro tier");
+console.log("  • Pro lifecycle emails promise no Featured, ranking or verification benefit");

@@ -943,3 +943,123 @@ zero: the code contract is safe for any number of legacy Featured subscriptions
 in any metadata state.
 
 **B3 not started. Stage 4 not started. No broad Bucket-A cleanup.**
+
+---
+
+# Phase 1A.1 — Pro lifecycle benefit copy truth hotfix
+
+Independent verification of the deployed Phase 1A webhook found that the
+*backend* contract was correct while the *outbound email copy* still sold the
+two things Pro is not allowed to sell. Both statements survived every previous
+guard because every previous guard checked mechanism — a predicate around a
+trust column, a subscription lookup inside a rank computation, a payment flag
+assigned to a Featured field — and neither of these was a mechanism. They were
+sentences.
+
+## The two false claims
+
+| Where | Copy as shipped in v28 |
+| --- | --- |
+| `invoice.payment_succeeded` → Pro benefits block | `Your Pro Benefits Are Active` / `✓ Featured placement & priority ranking` |
+| `customer.subscription.deleted` → provider cancellation email | `• Featured placement & priority ranking removed` |
+
+Neither is a Pro entitlement. Featured is independent paid inventory
+(`featured_placements` / `facility_subscriptions.has_featured`, served by
+`get-featured-rotation` into a separately labeled rail), and organic order is
+computed by `calculate-ranking-scores` from neutral signals. `activateProBenefits`
+/ `deactivateProBenefits` write exactly one column — the `profiles.plan` mirror.
+
+The cancellation line was the worse of the two: it told a provider that
+cancelling Pro had **withdrawn a Featured entitlement they may still hold** and
+had **moved their listing down**, neither of which happens.
+
+This was load-bearing rather than cosmetic. The next rollout phase deploys
+`calculate-ranking-scores` with all Pro ranking influence removed, so leaving
+the copy in place would have meant an automated payment email promising a
+ranking benefit the product had just been changed to *not* provide.
+
+## The copy now
+
+Payment success / renewal names only what `has_active_pro()` actually unlocks —
+public phone + Call button, enhanced profile media, up to 5 listings — matching
+the already-correct `subscription_active` notification, and closes with a plain
+statement that directory position and verification status are determined
+independently of the subscription.
+
+Cancellation names only the Pro product features that genuinely stop
+(public phone + Call button, enhanced media, extra listings paused) and
+preserves the semantics of the already-correct `subscription_cancelled`
+notification: *your listing, its directory position and its verification status
+are unchanged.*
+
+No entitlement logic, classifier, Stripe product, price, lookup key, refund
+math or persistence path was touched. The change is copy plus comments; the
+generated `index.ts` was reproduced through
+`scripts/inline-stripe-webhook-shared.py --write` and is byte-identical to a
+re-run.
+
+## Guard — `pro-lifecycle-copy`
+
+`check-directory-trust-ranking.mjs` gains an eighth rule covering the layer the
+other seven could not see: **what the automated emails promise**. It reads
+**both** `entrypoint.ts` and the deployable `index.ts`, so a hand-edit to the
+artifact is caught even when the source is clean.
+
+It is scoped, not word-banned. `Featured`, `ranking`, `verified` and `priority`
+are legitimate throughout that file — the Featured add-on branch, the legacy
+product classifier, the Concierge flow — so the rule locates the two
+Pro-lifecycle copy regions by their own anchors (`const proBenefits = isPro …`,
+and the provider cancel email terminated by `emailType: "stripe_cancel_provider"`)
+and scans only those, after JS **and** HTML comments are stripped so that
+documenting the retired wording never trips the rule that retired it.
+
+A truthful disclaimer is not a claim: lines saying a signal is *unchanged*,
+*unaffected*, *independent* or *determined independently* are skipped, and the
+ban applies to the assertions that remain. Anchors **fail closed** — if a region
+cannot be found the rule reports that rather than passing, so renaming the block
+cannot silently disable it.
+
+Verified against 5 injected regressions, each caught and reverted:
+
+| # | Injection | Caught as |
+| --- | --- | --- |
+| 1 | exact `✓ Featured placement & priority ranking` back into the benefits block | Featured placement |
+| 2 | exact `• Featured placement & priority ranking removed` back into the cancel email | Featured placement |
+| 3 | `✓ Priority ranking in search results` hand-edited into **`index.ts` only** | priority ranking / placement |
+| 4 | paraphrase `✓ Higher placement and a verified badge` | improved organic position |
+| 5 | `proBenefits` renamed (anchor removed) | region cannot be located — fail-closed |
+
+## Validation
+
+| Check | Result |
+| --- | --- |
+| `npx tsc --noEmit` | 0 errors |
+| `npm test -- --run` | 1042 passed, 60 files |
+| `npm run lint` | 217 / 181 / 36 — identical to baseline, +0 |
+| `npm run build:vercel` | exit 0, new rule passes in position |
+| Generator `--write` ×2 | byte-identical (`2a9caf2a…efb5`), 241,404 bytes; `--check` clean |
+| Stage-1 / Stage-2 / Stage-3 guards | all pass |
+
+## Daily ranking cron — documented, not touched
+
+Production runs pg_cron job **23** `calculate_ranking_scores`, schedule
+**`0 5 * * *`** (UTC), command
+`SELECT scheduled.call_edge_function('calculate-ranking-scores');`, **active**.
+
+Confirmed read-only. Not disabled, not rescheduled, not invoked. Recorded here
+because the next rollout phase must account for an automatic recomputation at
+05:00 UTC: whichever version of `calculate-ranking-scores` is live at that
+moment is the one that rewrites every score.
+
+## Production — read-only, unchanged
+
+`stripe-webhook` v28 (hash `8b1d131b…db0a0`), `calculate-ranking-scores` v12,
+`get-featured-facilities` v12. Migration head `20260831000000`; B1/B2 migrations
+`20260901000000` / `20260901000100` still unapplied. `ranking_weights` still
+stores `pro_boost: 50`. 3,797 approved raw · 3,794 public · 5 raw verified ·
+0 public verified · 0 subscriptions · 0 placements · 2 raw `featured=true` ·
+0 `is_pro`.
+
+No Edge deploy, no migration, no database write, no ranking recomputation, no
+cron mutation, no Stripe write. **B3 not started. Stage 4 not started. No broad
+Bucket-A cleanup.**

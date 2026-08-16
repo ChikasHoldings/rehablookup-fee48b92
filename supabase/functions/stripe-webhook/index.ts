@@ -3989,11 +3989,24 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
                   .maybeSingle();
                 const firstName = providerProfile?.first_name || "Provider";
 
+                // Pro is a PRODUCT tier: it buys listing features, never trust
+                // or position. This block must therefore only name features
+                // has_active_pro() actually unlocks — the public phone + Call
+                // CTA, enhanced-profile media, and the raised listing cap. It
+                // previously advertised Featured placement and priority
+                // ranking, neither of which Pro grants: Featured is paid
+                // inventory (featured_placements /
+                // facility_subscriptions.has_featured) and organic order is
+                // computed by calculate-ranking-scores from neutral signals.
+                // Keep this list in sync with the subscription_active
+                // notification copy above, which is the canonical wording.
                 const proBenefits = isPro
                   ? `<div style="background: #ecfdf5; border-left: 4px solid #059669; padding: 15px; margin: 20px 0;">
-                       <p style="margin: 0; color: #047857; font-weight: 600;">Your Pro Benefits Are Active</p>
-                       <p style="margin: 8px 0 0; color: #047857;">✓ Featured placement & priority ranking</p>
+                       <p style="margin: 0; color: #047857; font-weight: 600;">Your Pro Features Are Active</p>
+                       <p style="margin: 8px 0 0; color: #047857;">✓ Public phone number and Call button on your listing</p>
+                       <p style="margin: 4px 0 0; color: #047857;">✓ Enhanced profile media</p>
                        <p style="margin: 4px 0 0; color: #047857;">✓ Up to 5 facility listings</p>
+                       <p style="margin: 12px 0 0; color: #047857; font-size: 13px;">Pro is a set of listing features. Your listing's directory position and its verification status are determined independently and are not affected by your subscription.</p>
                      </div>`
                   : "";
 
@@ -5167,7 +5180,16 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
                 logStep("Cancel admin email failed", { error: String(emailError) });
               }
 
-              // Send cancellation email to provider
+              // Send cancellation email to provider.
+              //
+              // Cancelling Pro removes Pro PRODUCT features and nothing else,
+              // so this email must not imply that Featured was withdrawn, that
+              // organic position dropped, or that trust status was revoked:
+              // deactivateProBenefits() writes only the profiles.plan mirror,
+              // and Featured is an independent entitlement a provider may
+              // still hold after dropping Pro. Keep this in step with the
+              // subscription_cancelled notification copy above, which is the
+              // canonical wording.
               if (customerEmail) {
                 try {
                   await sendEmailWithRetry(supabaseAdmin, resend, {
@@ -5184,10 +5206,11 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
                           <p style="color: #374151;">Your Pro subscription for <strong>${facilities[0].name}</strong> has been cancelled.</p>
                           <div style="background: #fffbeb; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0;">
                             <p style="margin: 0; color: #92400e; font-weight: 600;">What This Means</p>
-                            <p style="margin: 8px 0 0; color: #92400e;">• Featured placement & priority ranking removed</p>
+                            <p style="margin: 8px 0 0; color: #92400e;">• Your public phone number and Call button are no longer shown</p>
+                            <p style="margin: 4px 0 0; color: #92400e;">• Enhanced profile media is no longer shown</p>
                             <p style="margin: 4px 0 0; color: #92400e;">• Extra listings paused (data preserved)</p>
                           </div>
-                          <p style="color: #374151;">Your data is safe — nothing has been deleted. You can resubscribe anytime to restore all Pro benefits.</p>
+                          <p style="color: #374151;">Your listing, its directory position and its verification status are unchanged. Your data is safe — nothing has been deleted. You can resubscribe anytime to restore your Pro features.</p>
                           <div style="text-align: center; margin: 30px 0;">
                             <a href="https://rehablookup.com/provider/billing" style="background: #1B365D; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">Resubscribe to Pro</a>
                           </div>
