@@ -32,7 +32,7 @@
 import { readFileSync, writeFileSync, readdirSync, statSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { seoCtaStrip, seoFooter } from "./_seo-page-shell.mjs";
+import { seoCtaStrip, seoFooter, seoHeader } from "./_seo-page-shell.mjs";
 import { renderCta } from "./_unique-content.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -47,6 +47,18 @@ const APPLY = process.argv.includes("--apply");
 
 const currentCtaStrip = seoCtaStrip();
 const currentFooter = seoFooter();
+const currentHeader = seoHeader();
+
+// The header's support-phone anchor. Pulled out of seoHeader() rather than
+// written by hand so this file can never describe markup the shell would not
+// actually emit.
+const currentSupportAnchor = currentHeader.match(
+  /<a href="tel:[^"]+" class="rl-helpline"[^>]*>[^<]*<\/a>/,
+)?.[0];
+if (!currentSupportAnchor) {
+  console.error("[sync-prerendered-shell] could not locate the support-phone anchor in seoHeader()");
+  process.exit(2);
+}
 
 const currentResourcesCol = currentFooter.match(
   /<div class="rl-footer-col"><h3>Resources<\/h3>[\s\S]*?<\/ul><\/div>/,
@@ -57,6 +69,17 @@ if (!currentResourcesCol) {
 }
 
 const REPLACEMENTS = [
+  {
+    // RehabLookup's own number was labelled "Call our 24/7 helpline" /
+    // "Call 24/7 · (214) 639-6420" in the header of every prerendered page.
+    // The number is real and stays — it is PLATFORM SUPPORT — but presenting
+    // it as a 24/7 helpline advertised a treatment-navigation service the
+    // directory cutover retired. Real crisis lines (911, 988, SAMHSA) live in
+    // the footer disclaimer and are untouched by this replacement.
+    name: "header support phone (retired 24/7 helpline framing)",
+    from: `<a href="tel:+12146396420" class="rl-helpline" aria-label="Call our 24/7 helpline">Call 24/7 · (214) 639-6420</a>`,
+    to: currentSupportAnchor,
+  },
   {
     name: "cta-strip (retired /concierge placement CTA)",
     from: `<div class="rl-cta-strip">
@@ -128,6 +151,28 @@ const COPY_FIXES = [
     "Free, confidential placement help from licensed coordinators familiar with ",
     "Browse and compare licensed treatment providers in ",
   ],
+  // Resource-article CTA blurb. Removed from generate-resources-html.mjs in
+  // favour of the shared directory default. Listed here as well because those
+  // mirrors are regenerated from live Supabase during build:vercel, so a
+  // partially-regenerated corpus can carry the old blurb.
+  [
+    "Free to browse, no account required. Free, confidential matching to verified treatment centers that fit your needs.",
+    "Free to browse, no account required. Filter licensed treatment centers by location, level of care, and insurance accepted.",
+  ],
+];
+
+// Copy fixes whose surrounding text is templated (state name, city name, …),
+// so an exact-string pair cannot express them. Same intent as COPY_FIXES.
+const REGEX_FIXES = [
+  {
+    name: "county CTA blurb (\"We'll help you find …\" intermediary framing)",
+    // generate-county-pages.mjs used to emit
+    //   "We'll help you find verified treatment in <State>."
+    // which casts RehabLookup as the party doing the finding. The directory
+    // cutover position is that the visitor searches and filters.
+    re: /We(?:'|&#39;|&apos;|’)ll help you find verified treatment in ([^.<]+)\./g,
+    to: "Filter verified treatment centers in $1 by location, level of care, and insurance accepted.",
+  },
 ];
 
 // ── Walk public/ ────────────────────────────────────────────────────────────
@@ -167,6 +212,15 @@ for (const file of htmlFiles(PUBLIC_DIR)) {
     if (html.includes(from)) {
       perReplacement.set("retired placement/coordinator CTA copy", (perReplacement.get("retired placement/coordinator CTA copy") ?? 0) + 1);
       html = html.split(from).join(to);
+    }
+  }
+  for (const r of REGEX_FIXES) {
+    // `re` is a shared /g regex; replace() resets lastIndex itself, but test()
+    // would not — so go straight to replace() and compare.
+    const next = html.replace(r.re, r.to);
+    if (next !== html) {
+      perReplacement.set(r.name, (perReplacement.get(r.name) ?? 0) + 1);
+      html = next;
     }
   }
 

@@ -17,6 +17,12 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { GA_MEASUREMENT_ID } from "./_ga.mjs";
 import { fetchAllFacilities, renderFacilityList, citySlug } from "./_facility-data.mjs";
+// The `seoCtaStrip()` blurb below is state-scoped but describes DIRECTORY
+// activity only. It previously promised, in the first person, that
+// RehabLookup would locate verified treatment in the state on the reader's
+// behalf — intermediary framing the directory cutover retired. This file is
+// scanned by scripts/check-directory-public-shell.mjs; any replacement blurb
+// has to survive it.
 import { seoStyles, seoHeader, seoCtaStrip, seoFooter } from "./_seo-page-shell.mjs";
 
 // Direct TS import — Node 22 strip-types makes this safe at build time.
@@ -172,7 +178,7 @@ function buildHtml({ state, county, urlPath, facilities = [] }) {
       ${facilityList}
       <h2>Frequently Asked Questions</h2>
       ${faqHtml}
-      ${seoCtaStrip({ blurb: `We'll help you find verified treatment in ${escHtml(state.stateName)}.` })}
+      ${seoCtaStrip({ blurb: `Filter verified treatment centers in ${escHtml(state.stateName)} by location, level of care, and insurance accepted.` })}
       <p style="margin-top:24px"><a href="/rehab-centers/${state.stateSlug}">All ${escHtml(state.stateName)} Rehab Centers</a> &middot; <a href="/">Home</a></p>
     </div>
   </main>

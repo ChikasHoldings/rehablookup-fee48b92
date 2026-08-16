@@ -26,6 +26,15 @@ import { writeFile, mkdir, readdir, unlink } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { gtagSnippet } from "./_ga.mjs";
+// `seoCtaStrip()` is called with NO custom blurb on purpose. This generator
+// used to pass a blurb offering a free and confidential matching service to
+// verified facilities — i.e. it advertised a RehabLookup intermediary role the
+// directory cutover retired, on every one of the ~200 generated resource
+// articles. The shared default describes directory activity only ("Filter
+// licensed treatment centers by location, level of care, and insurance
+// accepted."), and nothing about a resource article warrants overriding it.
+// This file is scanned by scripts/check-directory-public-shell.mjs, so a
+// reintroduced blurb fails the build here rather than one regeneration later.
 import { seoStyles, seoHeader, seoCtaStrip, seoFooter } from "./_seo-page-shell.mjs";
 // Shared with src/pages/ArticleDetail.tsx so the static mirror and the
 // hydrated React page cannot drift. Loaded via Node's TypeScript type
@@ -458,7 +467,7 @@ ${gtagSnippet()}
         ${article.content ? `<div class="article-body">
         ${renderContentBlocks(article.content)}
         </div>` : ""}
-        ${seoCtaStrip({ blurb: "Free, confidential matching to verified treatment centers that fit your needs." })}
+        ${seoCtaStrip()}
         <section class="related" aria-label="Related resources">
           <h2>Explore More Resources</h2>
           <ul>

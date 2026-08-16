@@ -917,3 +917,292 @@ truth for what the public actually sees, and the CMS cannot regress these two pa
 **No Stage 2 inquiry-routing work has started.** Backend coordinator routing, the
 `submit-*`/`match-concierge-intake`/`placement-*` edge functions, Stripe, Pro, Featured,
 `facility_subscriptions`, and all provider/admin surfaces are untouched by this hotfix.
+
+---
+
+# Independent Verification Hotfix #3 — public positioning (matching CTA + support line)
+
+**Starting SHA:** `6eb235277519d4639c427c4f1c4e14107a3a1bfa` (tip of
+`directory-cutover-01-public-seeker` after hotfix #2)
+
+This is still Stage 1. No Stage-2 inquiry-routing work was started.
+
+## The Preview was healthy — and still wrong
+
+Independent verification confirmed everything hotfix #2 claimed:
+
+- Vercel Preview `dpl_6i72VRWkT2F7KZjoWtBM9XxPPYtf` reached **READY** on
+  `6eb2352`.
+- `generate:resources-html` ran against **live** Supabase inside that build and
+  regenerated the resource mirrors from production rows.
+- Both stale Platform News articles were correctly overridden; no `/concierge`
+  or `/concierge/intake` CTA survived on either.
+- No production Supabase write occurred.
+
+Then the verifier fetched the **actual HTML from the READY deployment** rather
+than trusting the local build, and found two public-positioning contradictions
+that every prior check had passed over.
+
+### Miss 1 — a matching-service CTA on every resource article
+
+`scripts/generate-resources-html.mjs` called:
+
+```js
+seoCtaStrip({
+  blurb: "Free, confidential matching to verified treatment centers that fit your needs."
+})
+```
+
+So every generated `/resources/<slug>` page told the reader RehabLookup would
+match them to treatment centers. Stage 1's target is a **directory** — search →
+filter → compare → inspect → save → contact the facility — not
+*submit information → RehabLookup matches you*.
+
+### Miss 2 — the support number sold as a treatment helpline
+
+`scripts/_seo-page-shell.mjs` rendered RehabLookup's own number as:
+
+```html
+<a href="tel:+12146396420" aria-label="Call our 24/7 helpline">Call 24/7 · (214) 639-6420</a>
+```
+
+on all ~46k prerendered pages, and root `index.html` paired the same number with
+a "Confidential, 24/7" promise. The homepage description (from
+`src/lib/seo/titles.ts`) additionally advertised "Free insurance verification.
+24/7 confidential help." — two services RehabLookup does not perform: carrier
+verification is done by facility admissions teams, and there is no
+non-placement support policy in this repository establishing a 24/7 service
+level.
+
+## Why the existing guard allowed both
+
+Every rule in `check-directory-public-shell.mjs` required either a **first-person
+possessive** (`our…`, `RehabLookup's…`) or a **retired product name** (`the
+concierge placement network`, `24/7 placement advisors`, …). That was the right
+shape for the copy hotfixes #1 and #2 chased, and it is why those rules could be
+added without a single false positive across 46k artifacts.
+
+Both of these claims market by **context** instead. "Free, confidential matching
+to verified treatment centers" has no possessive and names no product — it is
+RehabLookup's own site chrome, sitting directly above RehabLookup's own CTA
+button, and that placement is what makes it a first-person claim. Same for the
+phone: the words "Call 24/7 · helpline" are only a RehabLookup claim because the
+number beside them is RehabLookup's.
+
+Two structural gaps compounded it:
+
+1. **Caller-supplied blurbs were invisible to the guard.** It scanned the shared
+   `_seo-page-shell.mjs`, whose *default* blurb was already directory-safe. The
+   offending copy lived in a **caller**, and the pages it fed are regenerated
+   from live Supabase during `build:vercel` — so no committed artifact carried
+   it either. Exactly the hotfix-#2 failure mode, one layer up.
+2. **`check:prerendered-shell` is a drift check, not a content check.** It only
+   knows fragments it has been told about.
+
+## What changed
+
+### Resource CTA (Task 1)
+
+`generate-resources-html.mjs` now calls `seoCtaStrip()` with **no blurb**, so it
+inherits the shared directory-safe default:
+
+> **Search treatment centers**
+> Free to browse, no account required. Filter licensed treatment centers by
+> location, level of care, and insurance accepted.
+> **[Search Treatment Centers →]** → `/search-results`
+
+No substitute phrasing was introduced — not "personalized matching", "find your
+best match", "we match you", "care navigation" or "placement guidance".
+
+### SEO CTA call-site audit (Task 2)
+
+Every caller of `seoCtaStrip()` was inspected:
+
+| Call site | Blurb | Verdict |
+| --- | --- | --- |
+| `generate-resources-html.mjs:461` | custom — "Free, confidential matching to verified treatment centers that fit your needs." | **FIXED** — custom blurb removed, now uses the shared default |
+| `generate-county-pages.mjs:175` | custom — "We'll help you find verified treatment in `<State>`." | **FIXED** — "we'll help you find" casts RehabLookup as the intermediary; now "Filter verified treatment centers in `<State>` by location, level of care, and insurance accepted." |
+| `generate-seo-html.mjs:315` | none (shared default) | already directory-safe |
+| `generate-missing-html.mjs:87` | none | already directory-safe |
+| `generate-gsc-recovery-html.mjs:222` | none | already directory-safe |
+| `generate-all-missing-html.mjs:171` | none | already directory-safe |
+| `generate-remaining-nearme.mjs:116` | none | already directory-safe |
+| `generate-missing-nearme-html.mjs:115` | none | already directory-safe |
+| `generate-final-missing.mjs:128` | none | already directory-safe |
+| `sync-prerendered-shell.mjs:48` | none — reads the helper to derive current markup | not a page emitter |
+
+The equivalent static CTA helper `renderCta()` in `_unique-content.mjs` and its
+three callers were audited on the same criteria:
+
+| Call site | Copy | Verdict |
+| --- | --- | --- |
+| `_unique-content.mjs:292` `renderCta()` | actions are `Search Treatment Centers` → `/search-results` and `Compare Facilities` → `/compare` | already directory-safe |
+| `generate-all-city-pages.mjs:221` | "Verified `<City>`, `<ST>` treatment options — compare programs, insurance accepted, and levels of care." | already directory-safe (body copy fixed in hotfix #1) |
+| `generate-missing-city-treatment-pages.mjs:462` | "…compare programs, insurance accepted, and levels of care." | already directory-safe |
+| `generate-missing-nearme-state-pages.mjs:230` | "Browse and compare licensed `<State>` treatment providers, then contact them directly." | already directory-safe |
+
+`generate-facility-profiles-html.mjs` builds its own CTA rather than using either
+helper; its copy ("Get verified program details, insurance verification, and
+admissions information **directly from this facility**") attributes the work to
+the facility, not to RehabLookup, so it is directory-safe as written.
+
+**All other call sites were already directory-safe.** Only the two custom
+`seoCtaStrip()` blurbs described RehabLookup as an intermediary.
+
+One phrase was audited and deliberately left alone: `generate-all-city-pages.mjs`
+uses the headline "Get confidential help in `<City>`" above buttons that read
+*Search Treatment Centers* and *Compare Facilities*. It describes the reader's
+goal, not a service RehabLookup performs, and its body copy already lists
+directory actions — changing it would be removing legitimate vocabulary rather
+than an intermediary claim.
+
+### Support-phone semantics (Task 3)
+
+`214-639-6420` / `tel:+12146396420` **stays**. It is RehabLookup's real general
+support number and it is not being hidden. What changed is how it is *labelled*:
+
+| Surface | Before | After |
+| --- | --- | --- |
+| `_seo-page-shell.mjs` header (~46k pages) | `Call 24/7 · (214) 639-6420`, `aria-label="Call our 24/7 helpline"` | `Support · (214) 639-6420`, `aria-label="RehabLookup support — (214) 639-6420"` |
+| `index.html` noscript hero | `📞 Call Now: 214-639-6420 — Confidential, 24/7` | `Need help using RehabLookup? Support: 214-639-6420` |
+| `index.html` noscript closing CTA | `📞 214-639-6420` (unlabelled) | `Questions about the directory? RehabLookup Support: 214-639-6420` |
+| `index.html` footer | `… \| 214-639-6420` | unchanged — already neutral |
+
+No promise of treatment recommendations, placement assistance, matching,
+admission coordination, clinical guidance or crisis counselling is attached to
+it, and no "24/7" claim is made about it.
+
+**Genuine crisis resources are untouched and stay clearly distinct:** 911, 988
+(Suicide & Crisis Lifeline) and SAMHSA's National Helpline (1-800-662-4357)
+continue to appear, correctly attributed, in the shared footer disclaimer on
+every page and in the homepage FAQ. Nothing implies the 214 number is SAMHSA.
+
+The CSS class `.rl-helpline` is deliberately **not** renamed: it is a styling
+hook inlined into ~46k committed pages whose `<style>` blocks
+`sync-prerendered-shell.mjs` does not rewrite, so renaming it would unstyle the
+whole corpus for no reader-visible benefit.
+
+### Root meta copy (Task 4)
+
+`DESCRIPTIONS.home` in `src/lib/seo/titles.ts` — which `vite.config.ts`
+substitutes into `index.html`'s `description`, `og:description` and
+`twitter:description` at build time, and which `src/pages/Index.tsx` feeds to
+`<SEO />` — changed from:
+
+> Search 3,800+ verified addiction treatment centers. Compare drug rehab, alcohol treatment, detox programs. **Free insurance verification. 24/7 confidential help.**
+
+to:
+
+> Search 3,800+ verified addiction treatment centers. Compare drug rehab, alcohol treatment and detox programs **by location, level of care and insurance.**
+
+150 characters, inside the SERP budget. The static values in `index.html` were
+set to the same string so source and build agree. Search intent is preserved —
+treatment-center search, comparison, drug rehab, alcohol treatment, detox,
+levels of care, insurance — expressed as directory *actions the visitor takes*
+rather than services RehabLookup performs. Canonical, `og:*`, `twitter:*`,
+structured data and indexing directives are unchanged.
+
+### Public-directory guard (Task 5)
+
+`check-directory-public-shell.mjs` gained two rule families. **No existing rule
+or exemption was weakened.**
+
+**Matching-offer rules (5 new).** They name the *offer shape* rather than
+requiring a possessive:
+
+- `confidential matching to … treatment centers` (the exact shipped string and
+  close variants)
+- `matching to … that fit your needs`
+- free / personalized / instant matching to centers, facilities, providers or
+  programs
+- `we'll match you` / `find your best match`
+- `we'll (help you) find <treatment|rehab|centers|facilities|programs>`
+
+The bare word **`matching` is not banned** — editorial content legitimately
+matches patients to a level of care and insurers run network matching, and a
+test asserts that prose survives.
+
+**Support-number semantics (9 new claims).** These are anchored to
+RehabLookup's number: the document is split into block-level segments and a
+claim only counts if it appears in the **same block** as the 214 number.
+Character-distance windows were tried first and produced a false positive —
+the shared footer carries "free, confidential, 24/7" for SAMHSA on every page —
+so block scoping is what makes SAMHSA / 988 / 911 and third-party helplines
+structurally unreachable by these rules. `class=` / `id=` attributes are
+stripped before matching so the `.rl-helpline` styling hook is not read as copy;
+`aria-label` is **not** stripped, because screen-reader users hear it.
+
+Scope additions: the guard now also scans `generate-resources-html.mjs` and
+`generate-county-pages.mjs` — the only two generators that pass caller-supplied
+CTA blurbs — so a reintroduced blurb fails at the source instead of one full
+regeneration later. `index.html`, `public/**/*.html`, `dist/**/*.html`,
+`_seo-page-shell.mjs` and `_unique-content.mjs` remain in scope exactly as
+before.
+
+The guard's CLI half now runs behind an `invokedDirectly` check and its rule
+tables plus `scanText()` / `phoneSemanticViolations()` are exported, so the test
+suite drives **the same rules CI enforces** rather than a copy that could drift.
+
+### Committed-corpus sync
+
+`sync-prerendered-shell.mjs` gained the header-anchor replacement (derived live
+from `seoHeader()`, never hand-written) and a `REGEX_FIXES` mechanism for
+templated copy, used for the per-state county blurb. Applying it rewrote
+**46,670** committed pages; the entire `public/` diff is exactly those two
+substitutions and nothing else.
+
+## Regression tests (Task 7)
+
+New: `src/lib/__tests__/directoryPublicPositioning.test.ts` — 50 tests, no
+network.
+
+- **Resource CTA** — the real `renderArticleHtml()` over committed fixtures
+  asserts the matching blurb is absent (and `confidential matching`,
+  `matching to treatment centers`, `that fit your needs` with it), the
+  directory-safe CTA is present, the button targets `/search-results`, and the
+  emitted strip equals `seoCtaStrip()` verbatim so any reintroduced caller blurb
+  fails whatever its wording.
+- **Support-number semantics** — root `index.html`, the shared header and a
+  generated article each assert the number is still present and dialable, then
+  that it carries no placement / matching / advisor / "24/7 confidential help" /
+  "our 24/7 helpline" coupling.
+- **Root meta** — the three description tags stay in sync, the copy keeps its
+  search terms, stays ≤160 chars, and canonical/OG/Twitter/indexing are intact.
+- **The guard catches what shipped** — the exact READY-Preview CTA markup and the
+  exact header anchor are asserted to *fail* the guard, alongside seven close
+  variants, plus narrowness tests proving editorial "matching", "you'll find",
+  facility concierge amenities, and SAMHSA/988/911 copy (including a SAMHSA line
+  sitting beside the RehabLookup support line) are **not** flagged.
+
+All prior coverage is untouched: `directoryArticleOverride.test.ts` and the rest
+of the suite still pass — 584 tests across 47 files.
+
+## Deliberately deferred
+
+- **`CONCIERGE_PHONE_DISPLAY` / `CONCIERGE_PHONE_TEL` in
+  `src/lib/contactInfo.ts` are NOT renamed.** Stage-2/backend code still
+  consumes them; renaming is later cleanup. Only their *public presentation*
+  changed, and the values are unchanged.
+- **The two stale `blog_articles` rows are still not normalized.** Still a
+  backend/data-cleanup dependency (see hotfix #2).
+- **Provider/admin concierge surfaces** remain later-stage scope.
+- **`supabase/functions/prerender-for-bots/index.ts`** carries its own
+  homepage description including "24/7 confidential help". It is an Edge
+  Function, and this hotfix deploys none — flagged here as a Stage-2 item.
+- The cosmetic `"4 min read min read"` duplication on article pages was left
+  alone; it is not part of this cutover.
+
+## Confirmations for this hotfix
+
+- No Supabase writes. No migrations. No Edge Function changes.
+- No Stripe, Pro, Featured, `facility_subscriptions`, checkout, webhook or
+  entitlement changes.
+- No changes under `supabase/`, `src/pages/provider/`, `src/pages/admin/`,
+  `src/components/provider/` or `src/components/admin/`.
+- No inquiry-routing work; `submit-qualified-lead`, `submit-marketing-lead`,
+  `submit-concierge-intake`, `match-concierge-intake`,
+  `notify-free-tier-inquiry-redirect`, `placement-monitor` and `placement-cron`
+  are untouched.
+- No validator disabled or weakened. Baseline lint is unchanged (216 problems
+  before and after); no baseline lint was "fixed".
+- Preview not promoted to production; `main` not merged.

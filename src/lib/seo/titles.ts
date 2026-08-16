@@ -86,6 +86,15 @@ export const TITLES = {
  * Mirrors TITLES so SSR↔SPA parity covers description too.
  */
 export const DESCRIPTIONS = {
+  // Directory-compatible homepage description. The previous copy ended
+  // "Free insurance verification. 24/7 confidential help." — two claims
+  // RehabLookup does not fulfil: it does not run carrier verification
+  // (facility admissions teams do) and it does not staff a 24/7 treatment
+  // help line. Search intent is preserved by keeping the same high-value
+  // terms (search, compare, drug rehab, alcohol treatment, detox, insurance,
+  // levels of care, nationwide coverage) as directory ACTIONS the visitor
+  // performs, rather than services RehabLookup performs for them.
+  // Budget: <=160 chars, so Google renders it without truncation.
   home:
-    "Search 3,800+ verified addiction treatment centers. Compare drug rehab, alcohol treatment, detox programs. Free insurance verification. 24/7 confidential help.",
+    "Search 3,800+ verified addiction treatment centers. Compare drug rehab, alcohol treatment and detox programs by location, level of care and insurance.",
 } as const;

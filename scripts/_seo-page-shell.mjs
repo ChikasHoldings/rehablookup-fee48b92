@@ -12,7 +12,7 @@
 // What this exports:
 //   - seoStyles()   → the <style> block (inline; SEO pages stay self-
 //     contained, no external stylesheet)
-//   - seoHeader()   → branded <header> with logo, primary nav, helpline CTA
+//   - seoHeader()   → branded <header> with logo, primary nav, support link
 //   - seoCtaStrip() → mid-page "Search treatment centers" CTA
 //   - seoFooter()   → 4-column footer with SAMHSA/988 disclaimer + legal nav
 //
@@ -25,9 +25,29 @@
 //   </div></main>
 //   ${seoFooter()}                          // bottom of <body>
 
-const HELPLINE = "+12146396420";
-const HELPLINE_DISPLAY = "(214) 639-6420";
+// RehabLookup's own support line — help USING the directory. It is not a
+// clinical line, not a way to have a facility picked for you, and not a crisis
+// line. The header presentation must therefore stay neutral: the directory
+// cutover retired the seeker-facing placement product, so the previous label
+// (an always-available call-us framing) advertised a service RehabLookup no
+// longer operates. Real crisis resources (911, 988, SAMHSA 1-800-662-4357) are
+// carried separately in seoFooter()'s disclaimer and must stay distinct.
+//
+// scripts/check-directory-public-shell.mjs scans this file and enforces both
+// halves of that: how the number reads, and what it is offered as.
+//
+// The constant names mirror src/lib/contactInfo.ts, whose CONCIERGE_* exports
+// are renamed in a later cleanup stage (Stage-2 backend code still consumes
+// them).
+const SUPPORT_PHONE = "+12146396420";
+const SUPPORT_PHONE_DISPLAY = "(214) 639-6420";
 
+// NOTE on `.rl-helpline`: that class is a CSS hook only — the copy it styles is
+// now neutral platform support (see seoHeader). The name is deliberately NOT
+// renamed. This style block is inlined into ~46k already-committed prerendered
+// pages, and sync-prerendered-shell.mjs rewrites markup fragments rather than
+// styles, so a rename would unstyle the entire committed corpus. The comment
+// lives here rather than inside the CSS so it is not shipped to every visitor.
 export function seoStyles() {
   return `<style>
     /* Branded layout for prerendered SEO pages — visible to Googlebot and
@@ -88,7 +108,7 @@ export function seoHeader() {
         <a href="/resources">Resources</a>
         <a href="/for-providers">For Providers</a>
       </nav>
-      <a href="tel:${HELPLINE}" class="rl-helpline" aria-label="Call our 24/7 helpline">Call 24/7 · ${HELPLINE_DISPLAY}</a>
+      <a href="tel:${SUPPORT_PHONE}" class="rl-helpline" aria-label="RehabLookup support — ${SUPPORT_PHONE_DISPLAY}">Support · ${SUPPORT_PHONE_DISPLAY}</a>
     </div>
   </header>`;
 }
