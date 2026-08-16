@@ -98,6 +98,14 @@ export function FeaturedStripCard({
       ? `${locs.join(" · ")}${insurance.length > 0 ? `. In-network with ${insurance.slice(0, 2).join(", ")}.` : "."}`
       : null);
 
+  // PRE-GATED BY THE SERVER. `display_phone` is null unless the facility has
+  // canonical active Pro — get-featured-rotation resolves has_active_pro() per
+  // facility and withholds the number otherwise. Being IN this rail means the
+  // facility bought Featured (paid visibility), which does NOT unlock a phone;
+  // a Featured-only or fallback-pool facility arrives here with null and the
+  // Call action is not rendered. The rotation payload carries no is_pro field,
+  // so there is deliberately no second client-side gate — do not synthesize
+  // one from `verified` or from rail membership.
   const callPhone = facility.display_phone;
   const detailHref = facility.slug ? `/center/${facility.slug}` : null;
 

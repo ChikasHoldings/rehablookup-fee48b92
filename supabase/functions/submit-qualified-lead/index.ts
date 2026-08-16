@@ -383,16 +383,38 @@ export function describeEmailInput(field: string, value: unknown): EmailInputDia
 }
 
 // ── submit-qualified-lead entrypoint body ─────────────────────────
-// Directory cutover stage 2 (inquiry-routing cutover): this function now
-// serves EXACTLY ONE product — an on-platform inquiry to an ACTIVE PRO
-// facility, delivered to that one facility. Every other facility state
-// (Free, unclaimed, Featured-only, suspended-subscription, or an
-// entitlement check we could not confirm) returns DIRECT_CONTACT_REQUIRED
-// and RehabLookup collects nothing. The retired free-tier concierge
-// redirect (concierge_inquiries + advisor assignment + coordinator email +
-// notify-free-tier-inquiry-redirect) is gone from this path — see
-// docs/directory-cutover-stage-02-inquiry-routing.md.
-const VERSION = "3.0.0";
+// Directory cutover stage 2, as amended by the inquiry-model amendment.
+//
+// THE PRODUCT
+//   A seeker picks ONE facility and sends it an inquiry. That inquiry is
+//   delivered to that facility and to nobody else. RehabLookup does not
+//   sell it, auction it, redistribute it, match it, assign an advisor to it,
+//   convert it into a Concierge case, or offer the seeker an alternative
+//   provider. `leads.facility_id` is the whole routing table.
+//
+// WHAT CHANGED IN 3.1.0
+//   3.0.0 gated inquiry ELIGIBILITY on has_active_pro(): a Free, unclaimed
+//   or Featured-only facility got DIRECT_CONTACT_REQUIRED and the seeker was
+//   told to phone the facility themselves. That is reversed here.
+//
+//     • ENTITLEMENT NO LONGER DECIDES WHO MAY RECEIVE AN INQUIRY.
+//       Any approved, non-suspended facility may receive one.
+//     • Entitlement now decides PUBLIC PHONE VISIBILITY ONLY, and that is
+//       enforced in the public read path (public_facilities.phone,
+//       get-public-facilities, get-featured-rotation, the static generator)
+//       — not here. This function never publishes a facility phone.
+//
+//   DIRECT_CONTACT_REQUIRED is therefore fully retired server-side: this
+//   function no longer emits it under any condition. The client keeps a
+//   defensive handler for it only to survive the rollout window in which an
+//   older deployed copy of this function is still live.
+//
+// WHAT MUST NEVER COME BACK
+//   concierge_inquiries writes, advisor assignment, concierge_case_events,
+//   introductions, alternative-facility matching, notify-free-tier-inquiry-
+//   redirect, process-lead-redistribution, lead_distributions inserts.
+//   See docs/directory-cutover-stage-02-inquiry-model-amendment.md.
+const VERSION = "3.1.0";
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
@@ -421,37 +443,42 @@ function errorResponse(
   );
 }
 
-// ============ DIRECT-CONTACT ENVELOPE (stage 2) ============
-// Returned whenever the selected facility is NOT a confirmed active Pro
-// listing. It is deliberately NOT a successful submission:
-//   • no lead id, no inquiry id, no confirmation_path
-//   • no `routing_mode` — RehabLookup is not routing anything
-//   • no seeker PII echoed back
-// It carries only the public facility identity the client already had, so
-// the UI can switch to the facility's own Call / Website / Directions
-// actions. `reason` is a non-sensitive diagnostic:
-//   "facility_not_pro"        — has_active_pro() resolved false
-//   "entitlement_unconfirmed" — the RPC errored; we fail SAFE to direct contact
-const DIRECT_CONTACT_ACTION = "DIRECT_CONTACT_REQUIRED";
+// ============ DELIVERY STATE (3.1.0) ============
+// Every accepted inquiry is stored against the ONE facility the seeker
+// selected. What differs is whether a verified human recipient could be
+// notified, and the seeker is told the truth either way.
+//
+//   "delivered_to_provider" — the listing is claimed; the inquiry was stored
+//                             AND the provider was notified on their
+//                             configured channels.
+//   "stored_pending_claim"  — the listing is approved but UNCLAIMED
+//                             (facilities.user_id IS NULL). The inquiry is
+//                             still stored against that facility and stays
+//                             pinned to it, and provider RLS means whoever
+//                             later claims the listing inherits it. But no
+//                             PII is emailed anywhere.
+//
+// Why an unclaimed listing is not simply mailed at facilities.email: that
+// column is import provenance (SAMHSA / scrape / admin entry), not a verified
+// destination belonging to someone who has proven they operate the facility.
+// Mailing a seeker's name, email, phone and clinical context to an unverified
+// address because a column happened to be non-empty is a PII disclosure, not
+// a delivery. The inquiry is never rerouted, never sent to an alternative
+// facility, never handed to an advisor, and never converted into a Concierge
+// case to make the flow "work".
+type DeliveryState = "delivered_to_provider" | "stored_pending_claim";
 
-function directContactResponse(
-  facilityId: string,
-  facilityName: string | null,
-  reason: "facility_not_pro" | "entitlement_unconfirmed",
-) {
-  return new Response(
-    JSON.stringify({
-      ok: true,
-      action: DIRECT_CONTACT_ACTION,
-      direct_contact_required: true,
-      facility_id: facilityId,
-      facility_name: facilityName,
-      reason,
-      _version: VERSION,
-    }),
-    { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-  );
-}
+// ============ DIRECT_CONTACT_REQUIRED — FULLY RETIRED IN 3.1.0 ============
+// Pro entitlement no longer gates inquiry eligibility, so no facility is
+// short-circuited here any more and this function NEVER emits
+// `action: "DIRECT_CONTACT_REQUIRED"`. There is deliberately no constant and
+// no helper for it left in this file — reintroducing one would be a
+// regression, not a feature.
+//
+// The CLIENT still recognises the string defensively, because during the
+// controlled rollout an OLD deployed copy of this function can answer a NEW
+// client. There it is treated as a non-success (no delivered state, no
+// Concierge navigation, no Free phone reveal) — see RequestInfoModal.
 
 // ============ LOGGING ============
 const generateRequestId = () => crypto.randomUUID().slice(0, 8);
@@ -703,11 +730,17 @@ function getSeekerConfirmationEmail(
     preferredContact?: string;
     message?: string;
     submittedAt?: Date;
+    deliveryState?: DeliveryState;
   } = {}
 ): string {
   const firstName = name.split(" ")[0];
   const submittedAt = details.submittedAt ?? new Date();
   const safeFacility = escapeHtml(facilityName);
+  // Truthful delivery language. We never claim a facility received something
+  // when no verified recipient exists, and we never promise a response time,
+  // a callback window, or any RehabLookup follow-up — the facility responds,
+  // on its own terms, or it does not.
+  const pendingClaim = details.deliveryState === "stored_pending_claim";
   const urgencyLine = formatUrgency(details.urgency);
   const careLine = formatLevelOfCare(details.levelOfCare);
   const insuranceLine = details.insuranceType ? escapeHtml(details.insuranceType) : "—";
@@ -733,7 +766,7 @@ function getSeekerConfirmationEmail(
               <div style="font-size: 48px; margin-bottom: 16px;">✉️</div>
               <p style="margin: 0 0 8px 0; font-size: 12px; color: rgba(255,255,255,0.7); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; text-transform: uppercase; letter-spacing: 1px;">REHABLOOKUP</p>
               <h1 style="margin: 0; font-size: 24px; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 600;">
-                Inquiry sent to ${safeFacility}
+                ${pendingClaim ? `Your inquiry for ${safeFacility}` : `Inquiry sent to ${safeFacility}`}
               </h1>
               <p style="margin: 8px 0 0 0; color: rgba(255,255,255,0.85); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px;">Submitted ${formatSubmittedAt(submittedAt)}</p>
             </td>
@@ -744,7 +777,9 @@ function getSeekerConfirmationEmail(
                 Hi ${escapeHtml(firstName)},
               </p>
               <p style="margin: 0 0 24px 0; color: #374151; font-size: 15px; line-height: 1.6;">
-                Your inquiry has been delivered to <strong style="color: #0f766e;">${safeFacility}</strong>. Here's a copy of what you submitted so you have it for your records.
+                ${pendingClaim
+                  ? `Your inquiry was recorded for <strong style="color: #0f766e;">${safeFacility}</strong>. This listing is not yet managed by the facility on RehabLookup, so we cannot confirm that anyone there has seen it. If you would like to reach them now, contact the facility directly using their own website or address. Here's a copy of what you submitted so you have it for your records.`
+                  : `Your inquiry was sent to <strong style="color: #0f766e;">${safeFacility}</strong>. They can respond using the contact information you provided. Here's a copy of what you submitted so you have it for your records.`}
               </p>
 
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; margin-bottom: 24px;">
@@ -771,12 +806,20 @@ function getSeekerConfirmationEmail(
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 10px; margin-bottom: 24px;">
                 <tr>
                   <td style="padding: 20px;">
-                    <p style="margin: 0 0 12px 0; font-size: 15px; font-weight: 600; color: #0f766e;">📞 What happens next</p>
-                    <ol style="margin: 0; padding: 0 0 0 20px; color: #115e59; font-size: 14px; line-height: 1.7;">
-                      <li><strong>Within a few hours:</strong> ${safeFacility} will review your inquiry.</li>
-                      <li><strong>Within 24–48 hours:</strong> An admissions specialist will reach out via your preferred method (${preferredLine}).</li>
-                      <li><strong>On the call:</strong> You can ask about programs, insurance coverage, and start dates — no obligation.</li>
-                    </ol>
+                    <p style="margin: 0 0 12px 0; font-size: 15px; font-weight: 600; color: #0f766e;">What happens next</p>
+                    ${pendingClaim ? `
+                    <ul style="margin: 0; padding: 0 0 0 20px; color: #115e59; font-size: 14px; line-height: 1.7;">
+                      <li>Your inquiry stays with ${safeFacility}. It is not shared with any other facility.</li>
+                      <li>If the facility claims its RehabLookup listing, your inquiry will be waiting for them.</li>
+                      <li>To reach them sooner, contact ${safeFacility} directly, or keep comparing centers in the directory.</li>
+                    </ul>
+                    ` : `
+                    <ul style="margin: 0; padding: 0 0 0 20px; color: #115e59; font-size: 14px; line-height: 1.7;">
+                      <li>Your inquiry went to ${safeFacility} only. It is not shared with any other facility.</li>
+                      <li>They can respond using the contact details you provided (${preferredLine}).</li>
+                      <li>Anything about programs, insurance coverage, availability and cost is answered by the facility itself.</li>
+                    </ul>
+                    `}
                   </td>
                 </tr>
               </table>
@@ -798,7 +841,7 @@ function getSeekerConfirmationEmail(
                       RehabLookup
                     </p>
                     <p style="margin: 0 0 16px 0; color: #93c5fd; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px;">
-                      Connecting families with quality care
+                      A directory of treatment centers
                     </p>
                     <p style="margin: 0; color: rgba(255,255,255,0.5); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px;">
                       © ${new Date().getFullYear()} RehabLookup. All rights reserved.
@@ -830,10 +873,17 @@ function getFacilityNotificationEmail(
     submittedAt?: Date;
   }
 ): string {
-  // Pro-tier providers receive every lead with FULL PII directly in this
-  // email. (Free-tier facilities never reach this code path — their leads
-  // are routed to concierge upstream.) No masking, no unlock CTA, no
-  // pay-per-lead step under the flat-fee monetization model.
+  // Provider-facing copy for a NEW FACILITY INQUIRY.
+  //
+  // This is a directory notification, not a sales artefact. It is sent to
+  // every claimed facility that receives an inquiry — Free, Featured-only and
+  // Pro alike — with the seeker's contact details in full, because the whole
+  // point is that the facility can reply. There is no masking, no unlock CTA,
+  // no per-lead purchase, and no conversion coaching: the retired sales-era
+  // copy ("View lead in dashboard", "respond within the first hour and
+  // convert up to 7× more leads") has been removed, not reworded. Nothing
+  // here may imply RehabLookup selected, screened, matched or vouched for
+  // this facility, or that the seeker is a purchased "lead".
   const safeName = escapeHtml(leadName);
   const safeEmail = details.email ? escapeHtml(details.email) : "(not provided)";
   const safePhone = details.phone ? escapeHtml(details.phone) : "(not provided)";
@@ -872,7 +922,7 @@ function getFacilityNotificationEmail(
           <tr>
             <td style="background: #ffffff; padding: 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; border-left: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb;">
               <p style="margin: 0 0 24px 0; color: #374151; font-size: 15px; line-height: 1.6;">
-                A potential client just submitted an inquiry through your <strong>${safeFacility}</strong> profile on RehabLookup.
+                Someone searching the RehabLookup directory selected <strong>${safeFacility}</strong> and sent you an inquiry. It was sent to your facility only.
               </p>
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 24px;">
                 <tr>
@@ -911,12 +961,12 @@ function getFacilityNotificationEmail(
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border: 2px solid #10b981; border-radius: 12px; margin-bottom: 24px;">
                 <tr>
                   <td style="padding: 20px;">
-                    <p style="margin: 0 0 8px 0; font-size: 15px; font-weight: 600; color: #065f46;">📞 Reach out to ${escapeHtml(firstName)} now</p>
+                    <p style="margin: 0 0 8px 0; font-size: 15px; font-weight: 600; color: #065f46;">Respond to ${escapeHtml(firstName)}</p>
                     <p style="margin: 0 0 16px 0; font-size: 13px; color: #047857; line-height: 1.6;">
-                      Providers who respond within the first hour convert up to 7× more leads than those who wait a day. Their preferred contact method is <strong>${preferredDisplay}</strong>.
+                      Reply using the contact information they provided. Their preferred contact method is <strong>${preferredDisplay}</strong>.
                     </p>
                     <a href="https://rehablookup.com/provider/inquiries" style="display: inline-block; background: #1B365D; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: 600; font-size: 14px;">
-                      View lead in dashboard
+                      View inquiry
                     </a>
                   </td>
                 </tr>
@@ -925,7 +975,7 @@ function getFacilityNotificationEmail(
                 <tr>
                   <td style="padding: 16px;">
                     <p style="margin: 0; font-size: 13px; color: #1e40af; line-height: 1.5;">
-                      💡 <strong>Tip:</strong> Providers who respond within the first hour convert up to 7× more leads than those who wait a day.
+                      This inquiry was sent to your facility only. RehabLookup does not share it with other facilities, and does not contact the seeker on your behalf.
                     </p>
                   </td>
                 </tr>
@@ -941,7 +991,7 @@ function getFacilityNotificationEmail(
                       RehabLookup
                     </p>
                     <p style="margin: 0 0 16px 0; color: #93c5fd; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px;">
-                      Connecting families with quality care
+                      A directory of treatment centers
                     </p>
                     <a href="https://rehablookup.com/provider/settings" style="color: #93c5fd; text-decoration: none; font-size: 12px;">Notification settings</a>
                     <p style="margin: 16px 0 0 0; color: rgba(255,255,255,0.5); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px;">
@@ -1007,15 +1057,19 @@ Deno.serve(async (req) => {
     }
 
     // ═════════════════════════════════════════════════════════════════
-    // STAGE-2 ENTITLEMENT GATE — runs BEFORE any PII-dependent work.
+    // DESTINATION RESOLUTION — runs BEFORE any PII-dependent work.
     // ═════════════════════════════════════════════════════════════════
-    // Everything below this gate (sanitising the seeker's name/email/phone,
-    // the blocked-identifier lookup, the email-verification lookup, the
-    // idempotency probe, the duplicate query, the PII/IP rate-limit
-    // queries, the lead insert) only ever runs for a CONFIRMED active Pro
-    // facility. A non-Pro request therefore never causes RehabLookup to
-    // read, write, or log seeker PII — the caller is told to contact the
-    // facility directly instead. Only the facility identifier is parsed
+    // Everything below (sanitising the seeker's name/email/phone, the
+    // blocked-identifier lookup, the email-verification lookup, the
+    // idempotency probe, the duplicate query, the PII/IP rate-limit queries,
+    // the inquiry insert) only ever runs once the selected facility has been
+    // resolved from trusted server-side data and confirmed to exist, be
+    // approved, and not be suspended.
+    //
+    // The ordering requirement survives the 3.1.0 amendment even though the
+    // entitlement gate is gone: an inquiry aimed at a missing, unapproved or
+    // suspended facility must be rejected WITHOUT RehabLookup reading,
+    // writing or logging seeker PII. Only the facility identifier is parsed
     // here; do not move PII handling above this point.
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     const requestedFacilityId =
@@ -1050,38 +1104,39 @@ Deno.serve(async (req) => {
       return errorResponse(400, "facility_not_accepting", "This facility is not currently accepting inquiries", "facilityId");
     }
 
-    // ===== PRO ENTITLEMENT =====
-    // has_active_pro() is the single canonical, grace-aware entitlement rule
-    // (tier='pro' AND (active within current_period_end OR past_due grace)).
-    // It is NOT re-implemented here, and Pro is NEVER inferred from the
-    // client's `facilityPlan`, from Featured status, from a badge, from
-    // ownership, from claim state, or from a Stripe customer id.
+    // ═════════════════════════════════════════════════════════════════
+    // IMMUTABLE DESTINATION ESTABLISHED
     //
-    // Fail-safe: anything other than a confirmed `true` — false, null, or an
-    // RPC error — returns DIRECT_CONTACT_REQUIRED. We never hand seeker PII
-    // to a facility whose entitlement we could not confirm, and an
-    // entitlement failure is NEVER routed into concierge.
-    const { data: isProTier, error: tierErr } = await supabase.rpc("has_active_pro", {
-      p_facility_id: requestedFacilityId,
-    });
+    // `requestedFacilityId` is now a confirmed, approved, non-suspended
+    // facility resolved from trusted server-side data. It is the ONLY
+    // destination this request can ever have. Nothing below may substitute,
+    // add, fan out to, or fall back to a different facility.
+    //
+    // NO ENTITLEMENT GATE HERE — BY DESIGN (3.1.0).
+    //   Inquiry eligibility is deliberately NOT a function of has_active_pro(),
+    //   Featured, claim state, verified status, or any payment state. A Free
+    //   claimed listing, a Featured-only non-Pro listing and an active Pro
+    //   listing all receive the seeker's inquiry on identical terms, stored
+    //   identically, with no priority lane for the paying facility. Pro is
+    //   buying a product feature (public phone visibility, enforced in the
+    //   public READ path), not a different seeker's inquiry.
+    //
+    // Delivery capability — NOT eligibility — is resolved here, before any
+    // PII is touched, so the notification decision is made from facility
+    // identity alone.
+    const facilityIsClaimed = !!facility.user_id;
+    const deliveryState: DeliveryState = facilityIsClaimed
+      ? "delivered_to_provider"
+      : "stored_pending_claim";
 
-    if (tierErr) {
-      log(requestId, "WARN", "has_active_pro check failed — direct contact required (fail-safe)", {
-        facilityId: requestedFacilityId,
-        err: tierErr.message,
-      });
-      return directContactResponse(requestedFacilityId, facility.name ?? null, "entitlement_unconfirmed");
-    }
-
-    if (isProTier !== true) {
-      log(requestId, "INFO", "Non-Pro facility — direct contact required", {
+    if (!facilityIsClaimed) {
+      log(requestId, "INFO", "Unclaimed listing — inquiry will be stored, provider notification suppressed", {
         facilityId: requestedFacilityId,
       });
-      return directContactResponse(requestedFacilityId, facility.name ?? null, "facility_not_pro");
     }
 
     // ═════════════════════════════════════════════════════════════════
-    // ACTIVE PRO ONLY BELOW THIS LINE — PII processing begins here.
+    // SEEKER PII PROCESSING BEGINS HERE — never move it above this line.
     // ═════════════════════════════════════════════════════════════════
 
     // ===== INPUT SANITIZATION =====
@@ -1264,14 +1319,24 @@ Deno.serve(async (req) => {
     // business hour" confirmation, invoked notify-free-tier-inquiry-redirect,
     // and returned /inquiry/confirmation/:id.
     //
-    // RehabLookup is a directory, not a placement service. That entire
-    // branch is gone: non-Pro facilities are now short-circuited by the
-    // entitlement gate at the top of this handler, which returns
-    // DIRECT_CONTACT_REQUIRED before any seeker PII is touched. Nothing
-    // below this comment may reintroduce a concierge/advisor/matching
-    // write — see docs/directory-cutover-stage-02-inquiry-routing.md.
+    // RehabLookup is a directory, not a placement service. That entire branch
+    // is gone, and it is not coming back through a side door: as of 3.1.0 a
+    // Free / Featured-only / unclaimed facility is no longer short-circuited
+    // at all — it simply receives the seeker's inquiry like any other
+    // facility. There is therefore NO "what do we do with a non-Pro seeker"
+    // question left for a concierge/advisor/matching path to answer.
+    //
+    // Nothing below this comment may write concierge_inquiries, create a
+    // concierge_case_events row, assign an advisor, create an introduction,
+    // insert lead_distributions, call notify-free-tier-inquiry-redirect or
+    // process-lead-redistribution, or surface an alternative facility.
+    // See docs/directory-cutover-stage-02-inquiry-model-amendment.md.
 
-    // ===== LEAD INSERTION (Pro-tier flow) =====
+    // ===== INQUIRY INSERTION (one row, one facility) =====
+    // `leads` is historical table naming retained for backward compatibility
+    // (renaming it is a needless production risk). Conceptually a row here is
+    // a FACILITY INQUIRY: it is not a saleable lead, has no exclusivity or
+    // redistribution window, no credit cost, and no unlock step.
     // The exclusive_until / extended_until / redistribution_status fields
     // were part of the per-lead-sale monetization (process-lead-redistribution
     // cron that rotated unfulfilled leads to other facilities for resale).
@@ -1380,6 +1445,7 @@ Deno.serve(async (req) => {
           preferredContact: data.preferredContact,
           message: data.message,
           submittedAt: now,
+          deliveryState,
         }),
       }, {
         emailType: "seeker_inquiry_confirmation",
@@ -1403,7 +1469,11 @@ Deno.serve(async (req) => {
       .eq("user_id", facility.user_id)
       .maybeSingle();
 
-    const masterEnabled = notifPrefs?.notify_new_leads ?? true;
+    // An unclaimed listing has no provider account, so every channel is off:
+    // `notify_new_leads` defaults to true for a missing preferences row, which
+    // would otherwise open the email branch for a facility with no verified
+    // human behind it.
+    const masterEnabled = facilityIsClaimed && (notifPrefs?.notify_new_leads ?? true);
     const emailEnabled = masterEnabled && (notifPrefs?.email_lead_alerts ?? true);
     const smsEnabled = masterEnabled && (notifPrefs?.sms_lead_alerts ?? false);
     const inAppEnabled = masterEnabled && (notifPrefs?.browser_notifications ?? true);
@@ -1417,9 +1487,16 @@ Deno.serve(async (req) => {
       .eq("user_id", facility.user_id)
       .maybeSingle();
 
-    const notificationEmail = (facility.reply_email_verified && facility.reply_email) 
-      ? facility.reply_email 
-      : (profile?.email || facility.email);
+    // Recipient resolution, most-trusted first. The `facility.email` fallback
+    // is permitted ONLY for a claimed listing, where a real provider account
+    // owns the row and has had the opportunity to correct it. For an unclaimed
+    // listing that column is unverified import provenance, so it is never used
+    // — `facilityIsClaimed` is false there and the whole branch is skipped.
+    const notificationEmail = facilityIsClaimed
+      ? ((facility.reply_email_verified && facility.reply_email)
+          ? facility.reply_email
+          : (profile?.email || facility.email))
+      : null;
 
     if (emailEnabled && notificationEmail) {
       try {
@@ -1644,8 +1721,17 @@ Deno.serve(async (req) => {
       JSON.stringify({
         success: true,
         leadId: lead.id,
+        facilityId: data.facilityId,
         facilityName: facility.name,
-        message: "Your inquiry has been sent successfully!",
+        // Lets the UI render truthful confirmation copy. An unclaimed listing
+        // is stored and pinned, but nobody was notified, so the client must
+        // not claim it was "sent to" anyone.
+        deliveryState,
+        message:
+          deliveryState === "stored_pending_claim"
+            ? "Your inquiry was recorded for this facility."
+            : "Your inquiry was sent to this facility.",
+        _version: VERSION,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

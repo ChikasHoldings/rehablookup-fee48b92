@@ -36,7 +36,7 @@ export default function SeekerSaved() {
       // flags everywhere else in the app uses.
       const { data, error: queryError } = await supabase
         .from('public_facilities')
-        .select('id, name, city, state, phone, facility_type, slug, description, logo_url, gallery_urls, verified, year_established')
+        .select('id, name, city, state, phone, facility_type, slug, description, logo_url, gallery_urls, verified, year_established, is_pro')
         .in('id', favorites)
         .limit(500);
 
@@ -57,6 +57,8 @@ export default function SeekerSaved() {
           gallery_urls: (f.gallery_urls as string[] | null) ?? null,
           verified: (f.verified as boolean | null) ?? null,
           year_established: (f.year_established as number | null) ?? null,
+          // Canonical Pro — the only key that publishes the facility phone.
+          planTier: f.is_pro === true ? "pro" : "free",
         }));
         setFacilities(mappedFacilities);
         setError(null);

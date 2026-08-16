@@ -1,19 +1,25 @@
 /**
- * Directory cutover stage 2 — facility-contact UI contract.
+ * Contact Facility modal — INQUIRY + PHONE-VISIBILITY contract.
  *
- * Proves that the selected-facility contact surface is split cleanly in two:
+ * The previous version of this suite asserted the OLD split: Pro got the
+ * inquiry form, everyone else got a direct-contact panel with the facility's
+ * phone number on it. Both halves are now wrong, so the suite was rewritten
+ * rather than patched.
  *
- *   ACTIVE PRO  → the on-platform Request Info form is mounted for that one
- *                 facility, exactly as before.
- *   EVERYTHING  → a direct-contact panel built only from the facility's own
- *   ELSE          published details. No seeker PII intake, no email
- *                 verification, no edge-function call, no coordinator /
- *                 advisor / matching promise.
+ * WHAT IS ASSERTED NOW
+ *   • Free, Featured-only and Pro all mount the SAME inquiry form, bound to
+ *     the one selected facility.
+ *   • The facility's PHONE appears only for canonical active Pro — never for
+ *     Free, never for Featured-only, and never reconstructed from a stale
+ *     payload the parent surface happened to be holding.
+ *   • Preferred-contact options follow the SEEKER's phone, not the facility's
+ *     tier.
+ *   • A transitional DIRECT_CONTACT_REQUIRED from an older backend is treated
+ *     as a failure, not a success, and still reveals no phone.
  *
- * `LeadIntakeForm` is stubbed here so these tests assert *whether* the PII
- * form is mounted (and with which facility) without re-walking its multi-step
- * flow — that flow keeps its own end-to-end coverage in
- * src/components/lead-intake/RequestInfoForm.test.tsx.
+ * `FacilityInquiryForm` is stubbed so these tests assert *whether* the form is
+ * mounted and with which facility, without re-walking its field-level flow —
+ * that has its own coverage in FacilityInquiryForm.test.tsx.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
@@ -22,16 +28,13 @@ import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 const mockState = {
-  invokeMock: vi.fn(),
   facilityRow: null as Record<string, unknown> | null,
   facilityError: null as unknown,
 };
 
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
-    functions: {
-      invoke: (...args: unknown[]) => mockState.invokeMock(...args),
-    },
+    functions: { invoke: vi.fn() },
     from: () => {
       const chain: Record<string, unknown> = {};
       chain.select = () => chain;
@@ -40,63 +43,81 @@ vi.mock("@/integrations/supabase/client", () => ({
         data: mockState.facilityRow,
         error: mockState.facilityError,
       });
-      chain.single = async () => ({
-        data: mockState.facilityRow,
-        error: mockState.facilityError,
-      });
       return chain;
     },
   },
 }));
 
-/** Records how (and whether) the PII form was mounted. */
-const leadFormProps = { current: null as Record<string, unknown> | null };
+/** Records how (and whether) the inquiry form was mounted. */
+const formProps = { current: null as Record<string, unknown> | null };
 
-vi.mock("@/components/lead-intake", () => ({
-  LeadIntakeForm: (props: Record<string, unknown>) => {
-    leadFormProps.current = props;
-    return (
-      <div data-testid="lead-intake-form">
-        <label htmlFor="stub-email">Email Address</label>
-        <input id="stub-email" name="email" />
-        <button
-          type="button"
-          onClick={() => (props.onDirectContactRequired as (() => void) | undefined)?.()}
-        >
-          simulate DIRECT_CONTACT_REQUIRED
-        </button>
-      </div>
-    );
-  },
-}));
+vi.mock("@/components/profile/FacilityInquiryForm", async () => {
+  const { useState } = await import("react");
+  return {
+    // Mirrors the real component's contract: once submitted it RETURNS the
+    // caller's renderSuccess output in place of the form, rather than merely
+    // invoking it.
+    FacilityInquiryForm: (props: Record<string, unknown>) => {
+      formProps.current = props;
+      const [submitted, setSubmitted] = useState(false);
+
+      if (submitted) {
+        return (
+          <>
+            {(props.renderSuccess as (a: Record<string, unknown>) => React.ReactNode)({
+              firstName: "Jordan",
+              email: "jordan@example.com",
+              deliveryState: "delivered_to_provider",
+            })}
+          </>
+        );
+      }
+
+      return (
+        <div data-testid="facility-inquiry-form">
+          <span data-testid="bound-facility-id">{String(props.facilityId)}</span>
+          <button
+            type="button"
+            onClick={() => (props.onDirectContactRequired as (() => void) | undefined)?.()}
+          >
+            simulate DIRECT_CONTACT_REQUIRED
+          </button>
+          <button type="button" onClick={() => setSubmitted(true)}>
+            simulate success
+          </button>
+        </div>
+      );
+    },
+  };
+});
 
 import { RequestInfoModal } from "./RequestInfoModal";
 
 const FACILITY_ID = "5e41c64a-9708-4ca1-b5cd-feb35c96ab50";
+const FACILITY_PHONE = "(931) 685-0957";
+const FACILITY_PHONE_DIGITS = "9316850957";
 
-function proRow(overrides: Record<string, unknown> = {}) {
+function row(overrides: Record<string, unknown> = {}) {
   return {
     id: FACILITY_ID,
     name: "Cascadia Recovery Center",
-    phone: "5035550142",
-    website: "https://cascadia.example",
-    address: "120 River Rd",
+    phone: FACILITY_PHONE,
+    website: "https://cascadia.example.org",
+    address: "77 Cascadia Avenue",
     city: "Portland",
     state: "OR",
-    zip_code: "97201",
-    slug: "cascadia-recovery-center",
+    zip_code: "97209",
+    slug: "cascadia-recovery-center-portland-or",
     status: "approved",
-    is_pro: true,
+    is_pro: false,
     ...overrides,
   };
 }
 
-function renderModal(facilityOverrides: Record<string, unknown> = {}) {
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false, gcTime: 0 } },
-  });
+function renderModal(parentFacility: Record<string, unknown> = {}) {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
-    <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={client}>
       <MemoryRouter>
         <RequestInfoModal
           open
@@ -106,11 +127,7 @@ function renderModal(facilityOverrides: Record<string, unknown> = {}) {
             name: "Cascadia Recovery Center",
             city: "Portland",
             state: "OR",
-            slug: "cascadia-recovery-center",
-            logo_url: null,
-            phone: "5035550142",
-            verified: true,
-            ...facilityOverrides,
+            ...parentFacility,
           }}
         />
       </MemoryRouter>
@@ -118,220 +135,214 @@ function renderModal(facilityOverrides: Record<string, unknown> = {}) {
   );
 }
 
-/** Copy that would imply RehabLookup handles the inquiry itself. */
-const PLACEMENT_PROMISE_PATTERNS = [
-  /care coordinator/i,
-  /coordinator will/i,
-  /\badvisor\b/i,
-  /we'll match you/i,
-  /matched (facilit|option|program)/i,
-  /placement (support|specialist|assistance)/i,
-  /our team will (follow up|match)/i,
-  /we'll find/i,
-  /introduce you/i,
-];
-
-function expectNoPlacementPromises() {
-  const text = document.body.textContent ?? "";
-  for (const pattern of PLACEMENT_PROMISE_PATTERNS) {
-    expect(text).not.toMatch(pattern);
-  }
-}
+/** Everything the user could possibly read, including hidden/SR-only nodes. */
+const documentText = () => document.body.textContent ?? "";
+const documentHtml = () => document.body.innerHTML;
 
 beforeEach(() => {
-  mockState.invokeMock = vi.fn().mockResolvedValue({ data: {}, error: null });
   mockState.facilityRow = null;
   mockState.facilityError = null;
-  leadFormProps.current = null;
+  formProps.current = null;
+  vi.clearAllMocks();
 });
 
-describe("RequestInfoModal — FREE / non-Pro facility", () => {
-  it("renders no lead-intake form and no seeker PII fields", async () => {
-    mockState.facilityRow = proRow({ is_pro: false });
-    renderModal();
-
-    await screen.findByTestId("direct-contact-call");
-
-    expect(screen.queryByTestId("lead-intake-form")).toBeNull();
-    expect(leadFormProps.current).toBeNull();
-    expect(document.querySelector('input[name="email"]')).toBeNull();
-    expect(document.querySelector('input[type="tel"]')).toBeNull();
-    expect(screen.queryByLabelText(/email/i)).toBeNull();
-    expect(screen.queryByText(/verification code/i)).toBeNull();
+describe.each([
+  ["Free / non-Pro", { is_pro: false }],
+  ["Featured-only, non-Pro", { is_pro: false, featured: true, verified: true }],
+])("phone-hidden tier — %s", (_label, flags) => {
+  beforeEach(() => {
+    mockState.facilityRow = row(flags);
   });
 
-  it("never calls submit-qualified-lead or submit-marketing-lead", async () => {
-    mockState.facilityRow = proRow({ is_pro: false });
+  it("mounts the inquiry form bound to the selected facility", async () => {
     renderModal();
-
-    await screen.findByTestId("direct-contact-call");
-
-    const invoked = mockState.invokeMock.mock.calls.map((c) => c[0]);
-    expect(invoked).not.toContain("submit-qualified-lead");
-    expect(invoked).not.toContain("submit-marketing-lead");
-    expect(invoked).not.toContain("submit-concierge-intake");
-    expect(invoked).not.toContain("send-verification-code");
-    expect(invoked).not.toContain("verify-code");
-    expect(invoked).not.toContain("check-email-verified");
+    expect(await screen.findByTestId("facility-inquiry-form")).toBeInTheDocument();
+    expect(screen.getByTestId("bound-facility-id")).toHaveTextContent(FACILITY_ID);
+    expect(formProps.current?.facilityId).toBe(FACILITY_ID);
   });
 
-  it("makes no coordinator, advisor, or matching promise", async () => {
-    mockState.facilityRow = proRow({ is_pro: false });
+  it("renders the facility name and a directory-safe framing", async () => {
     renderModal();
-    await screen.findByTestId("direct-contact-call");
-    expectNoPlacementPromises();
+    await screen.findByTestId("facility-inquiry-form");
+    expect(documentText()).toMatch(/Cascadia Recovery Center/);
+    expect(documentText()).toMatch(/Send an inquiry directly to this treatment center/i);
   });
 
-  it("renders the facility's own phone action when a phone exists", async () => {
-    mockState.facilityRow = proRow({ is_pro: false });
+  it("does NOT render the facility phone number anywhere", async () => {
     renderModal();
+    await screen.findByTestId("facility-inquiry-form");
 
-    const call = await screen.findByTestId("direct-contact-call");
-    expect(call.getAttribute("href")).toBe("tel:+15035550142");
+    expect(documentText()).not.toContain(FACILITY_PHONE);
+    // Digits in any formatting, anywhere in the DOM including sr-only nodes.
+    expect(documentHtml().replace(/\D/g, "")).not.toContain(FACILITY_PHONE_DIGITS);
   });
 
-  it("renders the facility website action when a website exists", async () => {
-    mockState.facilityRow = proRow({ is_pro: false });
+  it("renders no Call action and no facility tel: link", async () => {
     renderModal();
+    await screen.findByTestId("facility-inquiry-form");
 
-    const website = await screen.findByTestId("direct-contact-website");
-    expect(website.getAttribute("href")).toBe("https://cascadia.example/");
-    expect(website.getAttribute("rel")).toContain("noopener");
-  });
-
-  it("hides the website action when the facility has no website", async () => {
-    mockState.facilityRow = proRow({ is_pro: false, website: null });
-    renderModal();
-
-    await screen.findByTestId("direct-contact-call");
-    expect(screen.queryByTestId("direct-contact-website")).toBeNull();
-  });
-
-  it("renders directions when there is real location data", async () => {
-    mockState.facilityRow = proRow({ is_pro: false });
-    renderModal();
-
-    const directions = await screen.findByTestId("direct-contact-directions");
-    expect(directions.getAttribute("href")).toContain(
-      encodeURIComponent("120 River Rd, Portland, OR, 97201"),
+    expect(screen.queryByTestId("pro-call-facility")).not.toBeInTheDocument();
+    const telHrefs = Array.from(document.querySelectorAll('a[href^="tel:"]')).map((a) =>
+      (a.getAttribute("href") ?? "").replace(/\D/g, ""),
     );
+    // 988 / 911 crisis lines are allowed; the facility number is not.
+    expect(telHrefs).not.toContain(FACILITY_PHONE_DIGITS);
+    for (const h of telHrefs) expect(["988", "911"]).toContain(h);
   });
 
-  it("hides directions when location data is too thin to point a map at", async () => {
-    // A bare state would send the seeker to a region centroid — worse than
-    // showing nothing. We never manufacture an address.
-    mockState.facilityRow = proRow({
-      is_pro: false,
-      address: null,
-      city: null,
-      zip_code: null,
-      state: "OR",
-    });
-    renderModal({ city: null });
-
-    await screen.findByTestId("direct-contact-call");
-    expect(screen.queryByTestId("direct-contact-directions")).toBeNull();
-  });
-
-  it("falls back to a safe keep-searching state when no contact method exists", async () => {
-    mockState.facilityRow = proRow({
-      is_pro: false,
-      phone: null,
-      website: null,
-      address: null,
-      city: null,
-      zip_code: null,
-      state: null,
-    });
-    renderModal({ phone: null, city: null, state: null });
-
-    await screen.findByTestId("direct-contact-continue-search");
-
-    expect(
-      screen.getByText(/direct contact information is not available/i),
-    ).toBeInTheDocument();
-    expect(screen.getByTestId("direct-contact-compare")).toBeInTheDocument();
-    expect(screen.queryByTestId("direct-contact-call")).toBeNull();
-    expect(screen.queryByTestId("lead-intake-form")).toBeNull();
-    expectNoPlacementPromises();
-  });
-
-  it("treats a Featured-but-not-Pro listing exactly like any other non-Pro listing", async () => {
-    mockState.facilityRow = proRow({ is_pro: false });
-    renderModal({ featured: true });
-
-    await screen.findByTestId("direct-contact-call");
-    expect(screen.queryByTestId("lead-intake-form")).toBeNull();
-  });
-
-  it("fails safe to direct contact when the facility lookup errors", async () => {
-    mockState.facilityRow = null;
-    mockState.facilityError = { message: "network down" };
+  it("shows no upgrade-to-Pro upsell to the seeker", async () => {
     renderModal();
-
-    await screen.findByTestId("direct-contact-continue-search");
-    expect(screen.queryByTestId("lead-intake-form")).toBeNull();
-    expectNoPlacementPromises();
+    await screen.findByTestId("facility-inquiry-form");
+    expect(documentText()).not.toMatch(/upgrade to pro/i);
+    expect(documentText()).not.toMatch(/pro (?:provider|plan) to (?:see|view|unlock)/i);
   });
 
-  it("shows a safe failure state (never a generic PII form) when the facility record is missing", async () => {
-    renderModal({ id: null });
+  it("still offers website and directions when the data is real", async () => {
+    renderModal();
+    await screen.findByTestId("facility-inquiry-form");
+    expect(screen.getByTestId("facility-website")).toBeInTheDocument();
+    expect(screen.getByTestId("facility-directions")).toBeInTheDocument();
+  });
 
-    await screen.findByTestId("direct-contact-continue-search");
-    expect(screen.getByText(/couldn't load this facility's details/i)).toBeInTheDocument();
-    expect(screen.queryByTestId("lead-intake-form")).toBeNull();
-    expect(mockState.invokeMock).not.toHaveBeenCalled();
-    expectNoPlacementPromises();
+  it("ignores a phone the parent surface tries to pass in", async () => {
+    // The prop type no longer accepts `phone`, but a stale JS caller could
+    // still spread one in. It must not reach the DOM.
+    renderModal({ phone: FACILITY_PHONE } as Record<string, unknown>);
+    await screen.findByTestId("facility-inquiry-form");
+    expect(documentHtml().replace(/\D/g, "")).not.toContain(FACILITY_PHONE_DIGITS);
   });
 });
 
-describe("RequestInfoModal — ACTIVE PRO facility", () => {
-  it("mounts the Request Info form bound to the one selected facility", async () => {
-    mockState.facilityRow = proRow();
-    renderModal();
-
-    await screen.findByTestId("lead-intake-form");
-
-    expect(leadFormProps.current?.facilityId).toBe(FACILITY_ID);
-    expect(leadFormProps.current?.facilityName).toBe("Cascadia Recovery Center");
-    expect(screen.queryByTestId("direct-contact-call")).toBeNull();
+describe("phone-visible tier — active Pro", () => {
+  beforeEach(() => {
+    mockState.facilityRow = row({ is_pro: true });
   });
 
-  it("keeps the facility identity and a direct call CTA visible", async () => {
-    mockState.facilityRow = proRow();
+  it("mounts the same inquiry form, bound to the same facility", async () => {
     renderModal();
+    expect(await screen.findByTestId("facility-inquiry-form")).toBeInTheDocument();
+    expect(formProps.current?.facilityId).toBe(FACILITY_ID);
+  });
 
-    await screen.findByTestId("lead-intake-form");
+  it("shows the facility phone and a Call action", async () => {
+    renderModal();
+    await screen.findByTestId("facility-inquiry-form");
 
-    expect(screen.getByText("Cascadia Recovery Center")).toBeInTheDocument();
-    expect(screen.getByText("Portland, OR")).toBeInTheDocument();
-    expect(screen.getByText("Pro Provider")).toBeInTheDocument();
-    expect(
-      screen.getByLabelText(/call cascadia recovery center at/i),
-    ).toHaveAttribute("href", "tel:+15035550142");
+    const call = screen.getByTestId("pro-call-facility");
+    expect(call).toBeInTheDocument();
+    expect(call.getAttribute("href")?.replace(/\D/g, "")).toContain(FACILITY_PHONE_DIGITS);
+    expect(documentText()).toMatch(/Call facility/i);
+  });
+
+  it("does not imply payment means quality or recommendation", async () => {
+    renderModal();
+    await screen.findByTestId("facility-inquiry-form");
+    expect(documentText()).not.toMatch(/recommended|preferred provider|best facility|trusted because/i);
   });
 });
 
-describe("RequestInfoModal — server-authoritative downgrade", () => {
-  it("switches to direct contact instead of claiming the facility received the inquiry", async () => {
-    // The client believed this facility was Pro, but `submit-qualified-lead`
-    // re-resolved has_active_pro() and answered DIRECT_CONTACT_REQUIRED.
-    mockState.facilityRow = proRow();
+describe("phone visibility is driven ONLY by canonical is_pro", () => {
+  it.each([
+    ["false", false],
+    ["null", null],
+    ["undefined", undefined],
+    ["the string 'true'", "true"],
+    ["1", 1],
+  ])("hides the phone when is_pro is %s", async (_label, value) => {
+    mockState.facilityRow = row({ is_pro: value });
     renderModal();
+    await screen.findByTestId("facility-inquiry-form");
+    expect(screen.queryByTestId("pro-call-facility")).not.toBeInTheDocument();
+    expect(documentHtml().replace(/\D/g, "")).not.toContain(FACILITY_PHONE_DIGITS);
+  });
 
-    await screen.findByTestId("lead-intake-form");
+  it("does not unlock the phone from featured or verified", async () => {
+    mockState.facilityRow = row({ is_pro: false, featured: true, verified: true });
+    renderModal();
+    await screen.findByTestId("facility-inquiry-form");
+    expect(screen.queryByTestId("pro-call-facility")).not.toBeInTheDocument();
+  });
+});
 
-    await userEvent.click(
-      screen.getByRole("button", { name: /simulate DIRECT_CONTACT_REQUIRED/i }),
-    );
+describe("success state", () => {
+  beforeEach(() => {
+    mockState.facilityRow = row({ is_pro: false });
+  });
+
+  it("renders a clean confirmation naming the selected facility", async () => {
+    const user = userEvent.setup();
+    renderModal();
+    await screen.findByTestId("facility-inquiry-form");
+    await user.click(screen.getByRole("button", { name: /simulate success/i }));
+
+    const success = await screen.findByTestId("inquiry-success");
+    expect(success).toHaveTextContent("Cascadia Recovery Center");
+    expect(success).toHaveTextContent(/Inquiry sent/i);
+  });
+
+  it("makes no matching, Concierge, or response-time promise", async () => {
+    const user = userEvent.setup();
+    renderModal();
+    await screen.findByTestId("facility-inquiry-form");
+    await user.click(screen.getByRole("button", { name: /simulate success/i }));
+    await screen.findByTestId("inquiry-success");
+
+    const text = documentText();
+    expect(text).not.toMatch(/concierge|care coordinator|advisor|we'?ll match|matched/i);
+    expect(text).not.toMatch(/within (?:an? )?(?:hour|24|business day)/i);
+    expect(text).not.toMatch(/admissions specialist will reach out/i);
+  });
+});
+
+describe("transitional DIRECT_CONTACT_REQUIRED defence", () => {
+  beforeEach(() => {
+    mockState.facilityRow = row({ is_pro: false });
+  });
+
+  it("does not render a success state when an older backend rejects the inquiry", async () => {
+    const user = userEvent.setup();
+    renderModal();
+    await screen.findByTestId("facility-inquiry-form");
+    await user.click(screen.getByRole("button", { name: /simulate DIRECT_CONTACT_REQUIRED/i }));
 
     await waitFor(() => {
-      expect(screen.queryByTestId("lead-intake-form")).toBeNull();
+      expect(screen.getByTestId("facility-unavailable")).toBeInTheDocument();
     });
+    expect(screen.queryByTestId("inquiry-success")).not.toBeInTheDocument();
+    expect(documentText()).toMatch(/Nothing was sent and nothing was saved/i);
+  });
 
-    expect(screen.getByTestId("direct-contact-call")).toBeInTheDocument();
-    expect(screen.queryByText(/request sent/i)).toBeNull();
-    expect(screen.queryByText(/has been delivered to/i)).toBeNull();
-    expectNoPlacementPromises();
+  it("still reveals no facility phone in the fallback state", async () => {
+    const user = userEvent.setup();
+    renderModal();
+    await screen.findByTestId("facility-inquiry-form");
+    await user.click(screen.getByRole("button", { name: /simulate DIRECT_CONTACT_REQUIRED/i }));
+    await screen.findByTestId("facility-unavailable");
+
+    expect(documentHtml().replace(/\D/g, "")).not.toContain(FACILITY_PHONE_DIGITS);
+  });
+
+  it("offers self-service alternatives instead of navigating into Concierge", async () => {
+    const user = userEvent.setup();
+    renderModal();
+    await screen.findByTestId("facility-inquiry-form");
+    await user.click(screen.getByRole("button", { name: /simulate DIRECT_CONTACT_REQUIRED/i }));
+    await screen.findByTestId("facility-unavailable");
+
+    expect(screen.getByTestId("inquiry-continue-search")).toBeInTheDocument();
+    expect(screen.getByTestId("inquiry-compare")).toBeInTheDocument();
+    expect(documentText()).not.toMatch(/concierge/i);
+  });
+});
+
+describe("unresolvable facility", () => {
+  it("collects nothing when the facility record cannot be loaded", async () => {
+    mockState.facilityRow = null;
+    renderModal();
+
+    await waitFor(() => {
+      expect(screen.getByTestId("facility-unavailable")).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId("facility-inquiry-form")).not.toBeInTheDocument();
   });
 });

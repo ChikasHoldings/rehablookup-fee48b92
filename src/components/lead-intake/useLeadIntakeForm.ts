@@ -102,6 +102,23 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  /**
+   * Truthful delivery state reported by submit-qualified-lead ≥3.1.0.
+   *
+   *   "delivered_to_provider" — claimed listing; the provider was notified.
+   *   "stored_pending_claim"  — approved but UNCLAIMED listing. The inquiry is
+   *                             stored and pinned to that facility, but there
+   *                             is no verified recipient, so nobody was
+   *                             emailed. The success UI must say so rather
+   *                             than claim it was delivered.
+   *
+   * Null when talking to an older deployment that does not report it; the UI
+   * then falls back to neutral "sent" wording, which is accurate for the
+   * claimed-facility case that older build could reach.
+   */
+  const [deliveryState, setDeliveryState] = useState<
+    "delivered_to_provider" | "stored_pending_claim" | null
+  >(null);
   
   // Email verification state
   const [codeSent, setCodeSent] = useState(false);
@@ -535,6 +552,16 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
         return;
       }
 
+      // Record how the server actually delivered this inquiry, so the success
+      // view can tell the truth. Unknown/absent values stay null rather than
+      // being coerced to "delivered".
+      const reportedState = data?.deliveryState;
+      setDeliveryState(
+        reportedState === "stored_pending_claim" || reportedState === "delivered_to_provider"
+          ? reportedState
+          : null,
+      );
+
       // Clear saved form data and idempotency key
       localStorage.removeItem(STORAGE_KEY);
       idempotencyKeyRef.current = null;
@@ -577,6 +604,7 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
     // Submission
     isSubmitting,
     isSubmitted,
+    deliveryState,
     handleSubmit,
     
     // Email verification

@@ -8,47 +8,63 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { trackEvent } from "@/lib/analytics";
+import { gaFacilityContact } from "@/lib/ga";
 import {
   Building2,
-  Shield,
-  Crown,
   MapPin,
   CheckCircle,
-  Sparkles,
-  ArrowRight,
-  Mail,
   Phone,
-  MessageSquare,
-  User,
-  Clock,
-  Lock,
-  BadgeCheck,
-  LifeBuoy,
+  Globe,
+  ExternalLink,
   Search,
   Scale,
+  LifeBuoy,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { LeadIntakeForm } from "@/components/lead-intake";
 import { formatPhoneNumber, getPhoneDigits } from "@/lib/phoneUtils";
-import { FacilityDirectContact } from "@/components/profile/FacilityDirectContact";
+import { FacilityInquiryForm } from "@/components/profile/FacilityInquiryForm";
 import {
-  useFacilityContactRouting,
-  type FacilityDirectContactInfo,
-} from "@/hooks/useFacilityContactRouting";
+  useFacilityContactCapabilities,
+  buildDirectionsUrl,
+  buildWebsiteUrl,
+} from "@/hooks/useFacilityContactCapabilities";
+
+/**
+ * Contact <Facility> — the public selected-facility inquiry experience.
+ *
+ * The filename is retained to avoid pointless route/import churn; the product
+ * concept is "Contact this facility", not a placement intake, a lead form, or
+ * a matching questionnaire.
+ *
+ * ONE MODEL FOR EVERY TIER
+ *   Free, claimed, unclaimed and Featured-only listings all get the same
+ *   inquiry form, submitting to the same backend, stored the same way. The
+ *   only thing an active Pro subscription changes here is the contact strip:
+ *   Pro publishes the facility's phone number and a one-tap Call action.
+ *
+ * WHAT THE SEEKER MUST NEVER SEE
+ *   • a Free facility's phone number, in any form — no digits, no tel:, no
+ *     masked hint that reconstructs it, no RehabLookup support number
+ *     substituted in its place
+ *   • an upsell. There is no "upgrade to Pro to see the phone" message. The
+ *     patient experience is not an advertisement for our own pricing page.
+ *   • any claim that payment implies quality, trust, or recommendation.
+ */
 
 interface RequestInfoModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   /**
-   * Facility details already loaded by the parent surface. These are used
-   * for the header identity strip and as a fallback source of public
-   * contact data — they are NEVER used to decide whether the on-platform
-   * inquiry form may be shown. That decision is resolved from the canonical
-   * entitlement (`public_facilities.is_pro` = `has_active_pro()`) by
-   * `useFacilityContactRouting`, and re-checked server-side on submit.
+   * Facility details already loaded by the parent surface, used ONLY for the
+   * header identity strip while the canonical record loads.
+   *
+   * Note there is deliberately no `phone` in this shape. A parent-supplied
+   * phone was previously used as a fallback contact source, which is exactly
+   * how a Free number could reach the UI from a stale or pre-migration
+   * payload. Phone comes from the entitlement-resolved capability hook or it
+   * does not come at all.
    */
   facility: {
     id?: string | null;
@@ -58,9 +74,6 @@ interface RequestInfoModalProps {
     slug?: string | null;
     logo_url?: string | null;
     featured?: boolean;
-    /** Public business phone (already PII-ungated in public_facilities view). */
-    phone?: string | null;
-    /** Admin-verified accreditation flag — drives the "Verified" header badge. */
     verified?: boolean | null;
   } | null;
   prefillData?: {
@@ -71,244 +84,119 @@ interface RequestInfoModalProps {
   };
 }
 
-// Inquiry analytics (no PII; only facility id + non-sensitive flags)
-const trackAnalyticsEvent = (
-  eventType: string,
-  facilityId: string,
-  metadata?: Record<string, unknown>
-) => {
+const track = (event: string, facilityId: string | null, metadata?: Record<string, unknown>) => {
   try {
-    trackEvent(eventType, {
-      event_category: "LeadForm",
-      event_label: facilityId,
+    trackEvent(event, {
+      event_category: "FacilityInquiry",
+      event_label: facilityId ?? "unknown",
       ...metadata,
     });
   } catch {
-    // best-effort
+    /* analytics is best-effort and never blocks contact */
   }
 };
 
-const PREFERRED_CONTACT_LABEL: Record<string, string> = {
-  call: "Phone call",
-  phone: "Phone call",
-  text: "Text message (SMS)",
-  sms: "Text message (SMS)",
-  email: "Email",
-};
-const BEST_TIME_LABEL: Record<string, string> = {
-  morning: "Morning (8am–12pm)",
-  afternoon: "Afternoon (12pm–5pm)",
-  evening: "Evening (5pm–8pm)",
-  anytime: "Anytime",
-};
-function maskPhoneDisplay(phone?: string) {
-  if (!phone) return "";
-  const digits = phone.replace(/\D/g, "");
-  if (digits.length < 4) return phone;
-  return `••• ••• ${digits.slice(-4)}`;
-}
-
-interface ModalContactRecap {
-  email?: string;
-  phone?: string;
-  preferredContact?: string;
-  bestTimeToCall?: string;
-}
-
 /**
- * Post-submit view for an ACTIVE PRO inquiry only.
+ * Post-submit confirmation.
  *
- * The inquiry went to exactly one facility — the one the seeker selected.
- * There is no "and here are other centers we sent it to", no coordinator,
- * and no matching. The keep-comparing CTA below is plain directory
- * navigation the seeker drives themselves.
+ * The wording tracks what actually happened. `stored_pending_claim` means the
+ * listing is approved but unclaimed: the inquiry is stored and pinned to that
+ * facility, but no verified recipient exists, so claiming it was "sent to
+ * them" would be a lie. No response-time promise is made in either case — the
+ * facility replies on its own terms, or it does not, and RehabLookup does not
+ * follow up, match, or escalate.
  */
-function ModalSuccessView({
+function InquirySuccessView({
   firstName,
   facilityName,
+  email,
+  deliveryState,
+  websiteUrl,
+  directionsUrl,
   onClose,
   onKeepSearching,
-  contact,
+  onCompare,
 }: {
   firstName: string;
-  facilityName?: string | null;
+  facilityName: string;
+  email: string;
+  deliveryState: "delivered_to_provider" | "stored_pending_claim" | null;
+  websiteUrl: string | null;
+  directionsUrl: string | null;
   onClose: () => void;
   onKeepSearching: () => void;
-  contact?: ModalContactRecap;
+  onCompare: () => void;
 }) {
-  const preferredLabel = contact?.preferredContact
-    ? PREFERRED_CONTACT_LABEL[contact.preferredContact] ?? contact.preferredContact
-    : null;
-  const bestTimeLabel = contact?.bestTimeToCall
-    ? BEST_TIME_LABEL[contact.bestTimeToCall] ?? contact.bestTimeToCall
-    : null;
-  const hasContactRecap = !!(contact && (contact.email || contact.phone || preferredLabel));
+  const pendingClaim = deliveryState === "stored_pending_claim";
 
   return (
-    <div className="px-6 pb-6 pt-2 space-y-5">
+    <div className="px-5 sm:px-6 pt-4 pb-6 space-y-5" data-testid="inquiry-success">
       <div className="text-center space-y-3">
         <div className="mx-auto w-14 h-14 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-          <CheckCircle className="h-7 w-7 text-emerald-600 dark:text-emerald-400" />
+          <CheckCircle className="h-7 w-7 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
         </div>
         <div>
           <h3 className="text-lg font-semibold text-foreground">
-            Request Sent, {firstName}!
+            {pendingClaim ? "Inquiry recorded" : "Inquiry sent"}
+            {firstName ? `, ${firstName}` : ""}
           </h3>
-          <p className="text-sm text-muted-foreground mt-1">
-            Your information has been delivered to{" "}
-            <span className="font-semibold text-foreground">{facilityName}</span>.
+          <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
+            {pendingClaim ? (
+              <>
+                Your inquiry was recorded for{" "}
+                <span className="font-semibold text-foreground">{facilityName}</span>. This listing
+                isn't managed by the facility on RehabLookup yet, so we can't confirm anyone there
+                has seen it. To reach them now, use their own website or address.
+              </>
+            ) : (
+              <>
+                Your inquiry was sent to{" "}
+                <span className="font-semibold text-foreground">{facilityName}</span>. They can
+                respond using the contact information you provided.
+              </>
+            )}
           </p>
+          {email && (
+            <p className="text-xs text-muted-foreground mt-2">
+              A copy is on its way to <span className="font-medium break-all">{email}</span>.
+            </p>
+          )}
         </div>
       </div>
 
-      {/* Email-sent status banner */}
-      {contact?.email && (
-        <div
-          role="status"
-          aria-live="polite"
-          className="rounded-xl border border-emerald-200/70 dark:border-emerald-800/50 bg-emerald-50/70 dark:bg-emerald-950/20 p-4 flex items-start gap-3"
-        >
-          <div className="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 shrink-0">
-            <Mail className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
-          </div>
-          <div className="text-sm">
-            <div className="font-semibold text-emerald-900 dark:text-emerald-200 flex items-center gap-1.5">
-              <CheckCircle className="h-3.5 w-3.5" />
-              Confirmation email sent
-            </div>
-            <p className="text-emerald-800/90 dark:text-emerald-300/90 mt-0.5 leading-relaxed">
-              We sent a copy to{" "}
-              <span className="font-medium break-all">{contact.email}</span>.
-              Don't see it within a few minutes? Check your spam folder.
-            </p>
-          </div>
+      {(websiteUrl || directionsUrl) && (
+        <div className="space-y-2.5">
+          {websiteUrl && (
+            <Button asChild variant="outline" size="lg" className="w-full justify-start gap-2 h-11">
+              <a href={websiteUrl} target="_blank" rel="noopener noreferrer nofollow">
+                <Globe className="h-4 w-4" aria-hidden="true" />
+                Visit facility website
+                <ExternalLink className="h-3 w-3 ml-auto opacity-60" aria-hidden="true" />
+              </a>
+            </Button>
+          )}
+          {directionsUrl && (
+            <Button asChild variant="outline" size="lg" className="w-full justify-start gap-2 h-11">
+              <a href={directionsUrl} target="_blank" rel="noopener noreferrer">
+                <MapPin className="h-4 w-4" aria-hidden="true" />
+                Get directions
+                <ExternalLink className="h-3 w-3 ml-auto opacity-60" aria-hidden="true" />
+              </a>
+            </Button>
+          )}
         </div>
       )}
 
-      {/* Contact recap */}
-      {hasContactRecap && (
-        <div className="rounded-xl border border-border/60 bg-card p-4 text-left">
-          <div className="flex items-center justify-between mb-2">
-            <h4 className="text-sm font-semibold text-foreground">
-              Contact details we received
-            </h4>
-            <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
-              Confirmed
-            </span>
-          </div>
-          <ul className="space-y-2 text-sm">
-            <li className="flex items-center gap-2.5">
-              <User className="w-4 h-4 text-muted-foreground shrink-0" />
-              <span className="text-foreground font-medium">{firstName}</span>
-            </li>
-            {contact?.email && (
-              <li className="flex items-center gap-2.5">
-                <Mail className="w-4 h-4 text-muted-foreground shrink-0" />
-                <span className="text-foreground break-all">{contact.email}</span>
-              </li>
-            )}
-            {contact?.phone && (
-              <li className="flex items-center gap-2.5">
-                <Phone className="w-4 h-4 text-muted-foreground shrink-0" />
-                <span className="text-foreground">{maskPhoneDisplay(contact.phone)}</span>
-              </li>
-            )}
-            {preferredLabel && (
-              <li className="flex items-center gap-2.5">
-                <MessageSquare className="w-4 h-4 text-muted-foreground shrink-0" />
-                <span className="text-foreground">
-                  Preferred: <span className="font-medium">{preferredLabel}</span>
-                  {bestTimeLabel ? (
-                    <span className="text-muted-foreground"> · {bestTimeLabel}</span>
-                  ) : null}
-                </span>
-              </li>
-            )}
-          </ul>
-        </div>
-      )}
-
-      {/* Clear next step — the facility responds, not RehabLookup. */}
-      <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-left">
-        <div className="flex items-start gap-3">
-          <div className="p-2 rounded-lg bg-primary/10 shrink-0">
-            <Clock className="h-4 w-4 text-primary" />
-          </div>
-          <div className="text-sm">
-            <div className="font-semibold text-foreground mb-0.5">
-              What happens next
-            </div>
-            <p className="text-muted-foreground leading-relaxed">
-              An admissions specialist from {facilityName} will reach out
-              {preferredLabel ? <> by <span className="font-medium text-foreground">{preferredLabel.toLowerCase()}</span></> : null}
-              {" "}within 24 hours. Keep an eye on your inbox — a confirmation email is on its way.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Keep-searching CTA */}
-      <button
-        onClick={onKeepSearching}
-        className="w-full p-4 rounded-xl bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 hover:border-primary/40 transition-all text-left group"
-      >
-        <div className="flex items-start gap-3">
-          <div className="p-2 rounded-lg bg-primary/10">
-            <Sparkles className="h-5 w-5 text-primary" />
-          </div>
-          <div className="flex-1">
-            <div className="font-semibold text-foreground mb-1">
-              Keep comparing centers
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Search the full directory by location, level of care, and insurance — you can contact as many facilities as you like.
-            </p>
-          </div>
-          <ArrowRight className="h-5 w-5 text-primary opacity-0 group-hover:opacity-100 transition-opacity mt-2" />
-        </div>
-      </button>
-
-      <Button variant="outline" onClick={onClose} className="w-full">
-        Done
-      </Button>
-    </div>
-  );
-}
-
-/**
- * Shown when we could not load the selected facility at all (no id, or the
- * public record is missing). Historically this state fell through to a
- * generic RehabLookup PII form backed by `submit-marketing-lead` with
- * "our team will match you with the right program" copy. That was a
- * placement promise the directory does not make and cannot keep, so the
- * failure state now collects nothing and simply returns the visitor to the
- * directory.
- */
-function FacilityUnavailableState({
-  onContinueSearching,
-  onCompare,
-}: {
-  onContinueSearching: () => void;
-  onCompare: () => void;
-}) {
-  return (
-    <div className="px-5 sm:px-6 pt-4 pb-5 space-y-4">
-      <div className="space-y-1.5">
-        <h3 className="text-base font-semibold text-foreground">
-          We couldn't load this facility's details
-        </h3>
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          Direct contact information is not available for this facility right
-          now. You can keep browsing the directory and reach out to another
-          center.
+      <div className="pt-1 space-y-2.5 border-t border-border/60">
+        <p className="text-xs text-muted-foreground pt-3">
+          You can contact as many centers as you like — comparing options is normal.
         </p>
-      </div>
-      <div className="space-y-2.5">
         <Button
+          variant="outline"
           size="lg"
           className="w-full justify-start gap-2 h-11"
-          onClick={onContinueSearching}
-          data-testid="direct-contact-continue-search"
+          onClick={onKeepSearching}
+          data-testid="inquiry-continue-search"
         >
           <Search className="h-4 w-4" aria-hidden="true" />
           Continue searching
@@ -318,7 +206,85 @@ function FacilityUnavailableState({
           size="lg"
           className="w-full justify-start gap-2 h-11"
           onClick={onCompare}
-          data-testid="direct-contact-compare"
+          data-testid="inquiry-compare"
+        >
+          <Scale className="h-4 w-4" aria-hidden="true" />
+          Compare facilities
+        </Button>
+        <Button variant="ghost" onClick={onClose} className="w-full h-11">
+          Done
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Shown when the selected facility record could not be loaded at all, and as
+ * the defensive landing state when a transitional backend rejects the inquiry.
+ * Collects nothing and promises nothing.
+ */
+function FacilityUnavailableState({
+  reason,
+  websiteUrl,
+  directionsUrl,
+  onContinueSearching,
+  onCompare,
+}: {
+  reason: "missing" | "not_accepted";
+  websiteUrl: string | null;
+  directionsUrl: string | null;
+  onContinueSearching: () => void;
+  onCompare: () => void;
+}) {
+  return (
+    <div className="px-5 sm:px-6 pt-4 pb-5 space-y-4" data-testid="facility-unavailable">
+      <div className="space-y-1.5">
+        <h3 className="text-base font-semibold text-foreground">
+          {reason === "missing"
+            ? "We couldn't load this facility's details"
+            : "This inquiry couldn't be sent"}
+        </h3>
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          {reason === "missing"
+            ? "You can keep browsing the directory and reach out to another center."
+            : "Nothing was sent and nothing was saved. You can contact the facility directly, or keep browsing the directory."}
+        </p>
+      </div>
+      <div className="space-y-2.5">
+        {websiteUrl && (
+          <Button asChild variant="outline" size="lg" className="w-full justify-start gap-2 h-11">
+            <a href={websiteUrl} target="_blank" rel="noopener noreferrer nofollow">
+              <Globe className="h-4 w-4" aria-hidden="true" />
+              Visit facility website
+              <ExternalLink className="h-3 w-3 ml-auto opacity-60" aria-hidden="true" />
+            </a>
+          </Button>
+        )}
+        {directionsUrl && (
+          <Button asChild variant="outline" size="lg" className="w-full justify-start gap-2 h-11">
+            <a href={directionsUrl} target="_blank" rel="noopener noreferrer">
+              <MapPin className="h-4 w-4" aria-hidden="true" />
+              Get directions
+              <ExternalLink className="h-3 w-3 ml-auto opacity-60" aria-hidden="true" />
+            </a>
+          </Button>
+        )}
+        <Button
+          size="lg"
+          className="w-full justify-start gap-2 h-11"
+          onClick={onContinueSearching}
+          data-testid="inquiry-continue-search"
+        >
+          <Search className="h-4 w-4" aria-hidden="true" />
+          Continue searching
+        </Button>
+        <Button
+          variant="outline"
+          size="lg"
+          className="w-full justify-start gap-2 h-11"
+          onClick={onCompare}
+          data-testid="inquiry-compare"
         >
           <Scale className="h-4 w-4" aria-hidden="true" />
           Compare facilities
@@ -328,338 +294,263 @@ function FacilityUnavailableState({
   );
 }
 
-export function RequestInfoModal({
-  open,
-  onOpenChange,
-  facility,
-  prefillData,
-}: RequestInfoModalProps) {
+export function RequestInfoModal({ open, onOpenChange, facility }: RequestInfoModalProps) {
   const navigate = useNavigate();
-  const [formSubmitted, setFormSubmitted] = useState(false);
   /**
    * Set when the server answers a submission with
-   * `action: "DIRECT_CONTACT_REQUIRED"`. The client's view of entitlement
-   * can be stale (a subscription can lapse between render and submit) and
-   * the server is authoritative, so we drop straight to direct contact
-   * rather than claiming the facility received anything.
+   * `action: "DIRECT_CONTACT_REQUIRED"`.
+   *
+   * DEFENCE IN DEPTH FOR THE ROLLOUT WINDOW ONLY. submit-qualified-lead 3.1.0
+   * never emits this. But the frontend and the function deploy separately, so
+   * a new client can briefly talk to the OLD function, which still short-
+   * circuits every non-Pro facility. If that happens the inquiry was NOT
+   * accepted, so we must not render success, must not navigate into
+   * Concierge, and must not reveal a Free facility's phone as a consolation
+   * — the seeker gets website / directions / keep-searching and nothing else.
+   * This is NOT the final expected non-Pro behaviour; see the rollout order in
+   * docs/directory-cutover-stage-02-inquiry-model-amendment.md.
    */
-  const [serverForcedDirect, setServerForcedDirect] = useState(false);
+  const [serverRejected, setServerRejected] = useState(false);
 
   const safeFacilityId = facility?.id ?? null;
 
-  const { data: routingResult, isLoading: routingLoading } =
-    useFacilityContactRouting(open ? safeFacilityId : null);
+  const { data: caps, isLoading } = useFacilityContactCapabilities(open ? safeFacilityId : null);
 
-  // Canonical entitlement. Anything we have not positively confirmed as an
-  // active Pro listing — still loading, errored, missing, Free, unclaimed,
-  // Featured-only, or overridden by the server — is direct contact.
-  const isPro = !serverForcedDirect && routingResult?.routing === "pro";
+  const resolvedName = caps?.name?.trim() || facility?.name?.trim() || "";
+  const facilityName = resolvedName || "the treatment center you selected";
+  const city = caps?.city?.trim() || facility?.city?.trim() || "";
+  const state = caps?.state?.trim() || facility?.state?.trim() || "";
+  const logoUrl = facility?.logo_url ?? null;
 
-  const resolvedName = routingResult?.contact?.name?.trim() || facility?.name?.trim() || "";
-  const safeFacilityName = resolvedName || "the treatment center you selected";
-  const safeCity = routingResult?.contact?.city?.trim() || facility?.city?.trim() || "";
-  const safeState = routingResult?.contact?.state?.trim() || facility?.state?.trim() || "";
-  const safeLogoUrl = facility?.logo_url ?? null;
-  const safeVerified = facility?.verified === true;
+  // PHONE VISIBILITY — canonical Pro only, and only via the capability hook.
+  // `caps.phone` is already null unless `showPhone`; the second condition is a
+  // belt-and-braces read so a future refactor of the hook cannot silently
+  // un-gate the UI.
+  const showPhone = caps?.showPhone === true;
+  const phoneDigits = showPhone && caps?.phone ? getPhoneDigits(caps.phone) : "";
+  const telLink = phoneDigits.length >= 10 ? `tel:+1${phoneDigits}` : null;
+  const displayPhone = telLink && caps?.phone ? formatPhoneNumber(caps.phone) : null;
 
-  // Public contact data for the direct path. Prefer the freshly-resolved
-  // public_facilities row; fall back to whatever the parent surface already
-  // loaded. Nothing here is invented — a null stays null and its action is
-  // simply not rendered.
-  const directContact: FacilityDirectContactInfo | null = safeFacilityId
-    ? {
-        id: safeFacilityId,
-        name: resolvedName || null,
-        phone: routingResult?.contact?.phone ?? facility?.phone ?? null,
-        website: routingResult?.contact?.website ?? null,
-        address: routingResult?.contact?.address ?? null,
-        city: safeCity || null,
-        state: safeState || null,
-        zipCode: routingResult?.contact?.zipCode ?? null,
-        slug: routingResult?.contact?.slug ?? facility?.slug ?? null,
-      }
-    : null;
+  const websiteUrl = buildWebsiteUrl(caps?.website);
+  const directionsUrl = buildDirectionsUrl(caps ?? null);
 
-  const facilityUnavailable =
-    !safeFacilityId || (!routingLoading && routingResult?.facilityMissing === true);
+  const facilityMissing = !safeFacilityId || (!isLoading && caps?.facilityMissing === true);
+  const canSubmitInquiry = !serverRejected && caps?.canSubmitInquiry === true;
 
-  // Pro-only call-first CTA (the direct panel renders its own).
-  const proPhoneDigits = isPro && directContact?.phone ? getPhoneDigits(directContact.phone) : "";
-  const proTelLink = proPhoneDigits.length >= 10 ? `tel:+1${proPhoneDigits}` : null;
-  const proFormattedPhone = proTelLink ? formatPhoneNumber(directContact!.phone!) : null;
-
-  const handleCallClick = () => {
-    if (safeFacilityId) {
-      trackAnalyticsEvent("inquiry_modal_call_click", safeFacilityId, {
-        facilityName: safeFacilityName,
-        facilityPlan: "pro",
-      });
-    }
-  };
-
-  // Reset transient state when the modal closes.
   useEffect(() => {
-    if (!open) {
-      setFormSubmitted(false);
-      setServerForcedDirect(false);
-    }
+    if (!open) setServerRejected(false);
   }, [open]);
 
   useEffect(() => {
-    if (open && safeFacilityId && !routingLoading) {
-      trackAnalyticsEvent("modal_open", safeFacilityId, {
-        facilityName: safeFacilityName,
-        hasPrefill: !!prefillData,
-        contactRouting: isPro ? "pro" : "direct",
+    if (open && safeFacilityId && !isLoading) {
+      track("contact_modal_opened", safeFacilityId, {
+        facilityName,
+        phoneVisibility: showPhone ? "pro" : "hidden",
+        canSubmitInquiry,
       });
     }
-  }, [open, safeFacilityId, safeFacilityName, prefillData, routingLoading, isPro]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, safeFacilityId, isLoading]);
 
   const handleKeepSearching = useCallback(() => {
-    if (safeFacilityId) {
-      trackAnalyticsEvent("keep_searching_click", safeFacilityId, {
-        fromFacilityName: safeFacilityName,
-      });
-    }
-    const location = [safeCity, safeState].filter(Boolean).join(", ");
+    const location = [city, state].filter(Boolean).join(", ");
     navigate(
-      location
-        ? `/search-results?location=${encodeURIComponent(location)}`
-        : "/search-results",
+      location ? `/search-results?location=${encodeURIComponent(location)}` : "/search-results",
     );
     onOpenChange(false);
-  }, [safeFacilityId, safeFacilityName, safeCity, safeState, navigate, onOpenChange]);
+  }, [city, state, navigate, onOpenChange]);
 
   const handleCompare = useCallback(() => {
     navigate("/compare");
     onOpenChange(false);
   }, [navigate, onOpenChange]);
 
-  /**
-   * Server-authoritative downgrade. Fired by the lead form when
-   * `submit-qualified-lead` returns DIRECT_CONTACT_REQUIRED. We must not
-   * render a success state — the facility did not receive the inquiry.
-   */
-  const handleDirectContactRequired = useCallback(() => {
-    setFormSubmitted(false);
-    setServerForcedDirect(true);
-    if (safeFacilityId) {
-      trackAnalyticsEvent("inquiry_direct_contact_required", safeFacilityId, {
-        facilityName: safeFacilityName,
-        source: "server",
-      });
-    }
-  }, [safeFacilityId, safeFacilityName]);
-
-  const renderSuccess = ({
-    firstName,
-    contact,
-  }: {
-    firstName: string;
-    facilityName?: string | null;
-    contact: {
-      firstName: string;
-      lastName: string;
-      email: string;
-      phone: string;
-      preferredContact: string;
-      bestTimeToCall: string;
-    };
-  }) => {
-    if (!formSubmitted) {
-      setTimeout(() => setFormSubmitted(true), 0);
-    }
-
-    return (
-      <ModalSuccessView
-        firstName={firstName}
-        facilityName={safeFacilityName}
-        onClose={() => onOpenChange(false)}
-        onKeepSearching={handleKeepSearching}
-        contact={{
-          email: contact.email,
-          phone: contact.phone,
-          preferredContact: contact.preferredContact,
-          bestTimeToCall: contact.bestTimeToCall,
-        }}
-      />
-    );
+  const handleCallClick = () => {
+    if (!safeFacilityId) return;
+    track("facility_phone_clicked", safeFacilityId, { surface: "contact_modal" });
+    gaFacilityContact({
+      facility_id: safeFacilityId,
+      method: "call",
+      facility_slug: caps?.slug ?? facility?.slug ?? null,
+      facility_state: state || null,
+    });
   };
 
-  const showTrustStrip = isPro && !formSubmitted;
+  const handleDirectContactRequired = useCallback(() => {
+    setServerRejected(true);
+    if (safeFacilityId) {
+      track("facility_inquiry_rejected_by_server", safeFacilityId, { source: "legacy_backend" });
+    }
+  }, [safeFacilityId]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[92vh] overflow-y-auto p-0 gap-0">
+      <DialogContent
+        className="max-w-xl w-[calc(100vw-1.5rem)] sm:w-full max-h-[92dvh] overflow-y-auto overscroll-contain p-0 gap-0"
+        data-testid="contact-facility-modal"
+        data-phone-visibility={showPhone ? "pro" : "hidden"}
+      >
         <DialogHeader className="sr-only">
-          <DialogTitle>
-            {isPro
-              ? `Request Information from ${safeFacilityName}`
-              : `Contact ${safeFacilityName}`}
-          </DialogTitle>
+          <DialogTitle>Contact {facilityName}</DialogTitle>
           <DialogDescription>
-            {isPro
-              ? "Call the admissions team directly or send a confidential message to connect with this treatment center."
-              : "Contact this treatment center directly by phone, website, or in person."}
+            Send an inquiry directly to this treatment center.
           </DialogDescription>
         </DialogHeader>
 
-        {/* ─── Facility identity strip ───────────────────────────────────── */}
+        {/* ─── Facility identity ─────────────────────────────────────────── */}
         <div className="px-5 sm:px-6 pr-12 pt-5 pb-4 border-b bg-gradient-to-b from-muted/40 to-transparent">
           <div className="flex items-start gap-3.5">
-            <div className={cn(
-              "h-14 w-14 sm:h-16 sm:w-16 rounded-xl flex items-center justify-center shrink-0 overflow-hidden border",
-              isPro
-                ? "bg-gradient-to-br from-amber-100 to-amber-50 border-amber-200/70"
-                : "bg-muted border-border"
-            )}>
-              {safeLogoUrl ? (
-                <img src={safeLogoUrl} alt={`${safeFacilityName} logo`} className="h-full w-full object-contain p-1.5" />
+            <div className="h-14 w-14 rounded-xl flex items-center justify-center shrink-0 overflow-hidden border bg-muted border-border">
+              {logoUrl ? (
+                <img
+                  src={logoUrl}
+                  alt=""
+                  className="h-full w-full object-contain p-1.5"
+                />
               ) : (
-                <Building2 className={cn("h-6 w-6 sm:h-7 sm:w-7", isPro ? "text-amber-600" : "text-muted-foreground")} />
+                <Building2 className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
               )}
             </div>
-
             <div className="flex-1 min-w-0 pt-0.5">
-              <div className="flex items-start gap-2 min-w-0 flex-wrap">
-                <h3
-                  className="font-semibold text-foreground text-base sm:text-lg leading-tight min-w-0 flex-1"
-                  title={safeFacilityName}
-                >
-                  {safeFacilityName}
-                </h3>
-              </div>
-              {(safeCity || safeState) ? (
+              <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">
+                Contact
+              </p>
+              <h2 className="font-semibold text-foreground text-base sm:text-lg leading-tight">
+                {facilityName}
+              </h2>
+              {(city || state) && (
                 <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 flex items-center gap-1">
-                  <MapPin className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0" />
-                  {[safeCity, safeState].filter(Boolean).join(", ")}
+                  <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                  {[city, state].filter(Boolean).join(", ")}
                 </p>
-              ) : (
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Location details unavailable
-                </p>
-              )}
-              {(safeVerified || isPro) && (
-                <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-                  {safeVerified && (
-                    <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-[10px] sm:text-xs px-1.5 py-0.5">
-                      <BadgeCheck className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5" />
-                      Verified
-                    </Badge>
-                  )}
-                  {isPro && (
-                    <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-[10px] sm:text-xs px-1.5 py-0.5">
-                      <Crown className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5" />
-                      Pro Provider
-                    </Badge>
-                  )}
-                </div>
               )}
             </div>
           </div>
+          {canSubmitInquiry && (
+            <p className="text-sm text-muted-foreground mt-3 leading-relaxed">
+              Send an inquiry directly to this treatment center.
+            </p>
+          )}
         </div>
 
-        {/* ─── Trust strip (Pro inquiry form only) ───────────────────────── */}
-        {showTrustStrip && (
-          <div className="px-5 sm:px-6 py-2.5 bg-primary/5 border-b border-primary/10">
-            <div className="flex items-center justify-center gap-3 sm:gap-4 text-[10px] sm:text-xs text-foreground/80 flex-wrap">
-              <span className="flex items-center gap-1 font-medium">
-                <Lock className="h-3 w-3 text-primary" />
-                100% Confidential
-              </span>
-              <span className="text-border" aria-hidden="true">·</span>
-              <span className="flex items-center gap-1 font-medium">
-                <Shield className="h-3 w-3 text-primary" />
-                HIPAA Compliant
-              </span>
-              <span className="text-border" aria-hidden="true">·</span>
-              <span className="flex items-center gap-1 font-medium">
-                <CheckCircle className="h-3 w-3 text-emerald-600" />
-                Free · No Obligation
-              </span>
-            </div>
-          </div>
-        )}
-
         {/* ─── Body ──────────────────────────────────────────────────────── */}
-        {routingLoading && !facilityUnavailable ? (
-          <div className="px-5 sm:px-6 py-6 space-y-3" data-testid="contact-routing-loading">
+        {isLoading && !facilityMissing ? (
+          <div className="px-5 sm:px-6 py-6 space-y-3" data-testid="contact-capabilities-loading">
             <Skeleton className="h-11 w-full rounded-xl" />
             <Skeleton className="h-11 w-full rounded-xl" />
             <Skeleton className="h-11 w-2/3 rounded-xl" />
           </div>
-        ) : facilityUnavailable ? (
+        ) : facilityMissing || !canSubmitInquiry ? (
           <FacilityUnavailableState
+            reason={facilityMissing ? "missing" : "not_accepted"}
+            websiteUrl={websiteUrl}
+            directionsUrl={directionsUrl}
             onContinueSearching={handleKeepSearching}
             onCompare={handleCompare}
           />
-        ) : isPro ? (
-          <>
-            {/* Call-first CTA — the fastest path for a crisis-mode seeker. */}
-            {proTelLink && proFormattedPhone && !formSubmitted && (
-              <div className="px-5 sm:px-6 pt-4 pb-2">
-                <a
-                  href={proTelLink}
-                  onClick={handleCallClick}
-                  className="group flex items-center justify-between gap-3 w-full p-3.5 sm:p-4 rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/25 active:scale-[0.99] transition-all"
-                  aria-label={`Call ${safeFacilityName} at ${proFormattedPhone}`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-full bg-white/15 flex items-center justify-center shrink-0">
-                      <Phone className="h-5 w-5" />
-                    </div>
-                    <div className="text-left min-w-0">
-                      <div className="text-[11px] sm:text-xs uppercase tracking-wide opacity-90 font-medium">
-                        Call admissions now
-                      </div>
-                      <div className="text-base sm:text-lg font-bold leading-tight tabular-nums">
-                        {proFormattedPhone}
-                      </div>
-                    </div>
-                  </div>
-                  <ArrowRight className="h-5 w-5 opacity-70 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all shrink-0" />
-                </a>
-
-                <div className="flex items-center gap-3 mt-4">
-                  <div className="flex-1 h-px bg-border" />
-                  <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider font-medium">
-                    or send a message
+        ) : (
+          <div className="px-5 sm:px-6 py-5 space-y-5">
+            {/* Pro contact strip — secondary to the form, never a trust signal. */}
+            {telLink && displayPhone && (
+              <a
+                href={telLink}
+                onClick={handleCallClick}
+                data-testid="pro-call-facility"
+                className={cn(
+                  "group flex items-center justify-between gap-3 w-full p-3.5 rounded-xl",
+                  "border border-primary/25 bg-primary/5 hover:bg-primary/10 transition-colors",
+                )}
+                aria-label={`Call ${facilityName} at ${displayPhone}`}
+              >
+                <span className="flex items-center gap-3 min-w-0">
+                  <span className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                    <Phone className="h-5 w-5 text-primary" aria-hidden="true" />
                   </span>
-                  <div className="flex-1 h-px bg-border" />
-                </div>
-              </div>
+                  <span className="text-left min-w-0">
+                    <span className="block text-[11px] uppercase tracking-wide text-muted-foreground font-medium">
+                      Call facility
+                    </span>
+                    <span className="block text-base font-semibold text-foreground leading-tight tabular-nums">
+                      {displayPhone}
+                    </span>
+                  </span>
+                </span>
+              </a>
             )}
 
-            <div className="px-1 sm:px-2 pb-2">
-              <LeadIntakeForm
-                facilityId={safeFacilityId ?? undefined}
-                facilityName={safeFacilityName}
-                renderSuccess={renderSuccess}
-                onDirectContactRequired={handleDirectContactRequired}
-              />
-            </div>
-          </>
-        ) : (
-          <FacilityDirectContact
-            contact={directContact}
-            surface="profile_modal"
-            onClose={() => onOpenChange(false)}
-          />
+            <FacilityInquiryForm
+              facilityId={safeFacilityId!}
+              facilityName={facilityName}
+              onDirectContactRequired={handleDirectContactRequired}
+              renderSuccess={({ firstName, email, deliveryState }) => (
+                <InquirySuccessView
+                  firstName={firstName}
+                  facilityName={facilityName}
+                  email={email}
+                  deliveryState={deliveryState}
+                  websiteUrl={websiteUrl}
+                  directionsUrl={directionsUrl}
+                  onClose={() => onOpenChange(false)}
+                  onKeepSearching={handleKeepSearching}
+                  onCompare={handleCompare}
+                />
+              )}
+            />
+
+            {/* Secondary actions — available to every tier when the data is real. */}
+            {(websiteUrl || directionsUrl) && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1 border-t border-border/60">
+                {websiteUrl && (
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="justify-start gap-2 h-11 mt-3"
+                    data-testid="facility-website"
+                  >
+                    <a href={websiteUrl} target="_blank" rel="noopener noreferrer nofollow">
+                      <Globe className="h-4 w-4" aria-hidden="true" />
+                      Facility website
+                      <ExternalLink className="h-3 w-3 ml-auto opacity-60" aria-hidden="true" />
+                    </a>
+                  </Button>
+                )}
+                {directionsUrl && (
+                  <Button
+                    asChild
+                    variant="outline"
+                    className={cn("justify-start gap-2 h-11", websiteUrl ? "sm:mt-3" : "mt-3")}
+                    data-testid="facility-directions"
+                  >
+                    <a href={directionsUrl} target="_blank" rel="noopener noreferrer">
+                      <MapPin className="h-4 w-4" aria-hidden="true" />
+                      Directions
+                      <ExternalLink className="h-3 w-3 ml-auto opacity-60" aria-hidden="true" />
+                    </a>
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
         )}
 
         {/* ─── Crisis footer ─────────────────────────────────────────────── */}
-        {!formSubmitted && (
-          <div className="border-t bg-muted/30 px-5 sm:px-6 py-3">
-            <div className="flex items-start gap-2 text-[11px] sm:text-xs text-muted-foreground leading-relaxed">
-              <LifeBuoy className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-red-500 mt-0.5 shrink-0" aria-hidden="true" />
-              <p>
-                <span className="font-semibold text-foreground">In crisis or need immediate help?</span>{" "}
-                Call <a href="tel:988" className="font-semibold text-primary hover:underline">988</a> (Suicide &amp; Crisis Lifeline)
-                {" "}or <a href="tel:911" className="font-semibold text-primary hover:underline">911</a> for emergencies.
-              </p>
-            </div>
+        <div className="border-t bg-muted/30 px-5 sm:px-6 py-3">
+          <div className="flex items-start gap-2 text-[11px] sm:text-xs text-muted-foreground leading-relaxed">
+            <LifeBuoy className="h-4 w-4 text-red-500 mt-0.5 shrink-0" aria-hidden="true" />
+            <p>
+              <span className="font-semibold text-foreground">In crisis or need immediate help?</span>{" "}
+              Call{" "}
+              <a href="tel:988" className="font-semibold text-primary hover:underline">
+                988
+              </a>{" "}
+              (Suicide &amp; Crisis Lifeline) or{" "}
+              <a href="tel:911" className="font-semibold text-primary hover:underline">
+                911
+              </a>{" "}
+              for emergencies.
+            </p>
           </div>
-        )}
+        </div>
       </DialogContent>
     </Dialog>
   );

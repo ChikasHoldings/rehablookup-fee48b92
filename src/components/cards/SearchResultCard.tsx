@@ -26,7 +26,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useProviderEventTracking } from "@/hooks/useProviderEventTracking";
 import { trackEvent } from "@/lib/analytics";
 
-import { formatPhoneNumber, getPhoneDigits } from "@/lib/phoneUtils";
+import { resolvePublicFacilityPhone } from "@/lib/facilityPhoneVisibility";
 import { useFavorites } from "@/hooks/useFavorites";
 import { CompareButton } from "@/components/comparison/CompareButton";
 import type { ProximityTier } from "@/lib/proximitySearch";
@@ -40,6 +40,8 @@ interface SearchResultCardProps {
     gallery_urls?: string[] | null;
     hasFeaturedSubscription?: boolean;
     hasPaidPlan?: boolean;
+    /** Canonical has_active_pro() projection — the ONLY phone-visibility key. */
+    isPro?: boolean;
     verified?: boolean | null;
     year_established?: number | null;
     facilityType?: string | null;
@@ -146,14 +148,13 @@ export const SearchResultCard = memo(forwardRef<HTMLElement, SearchResultCardPro
   const proximityConfig = proximityTier ? proximityBadgeConfig[proximityTier] : null;
   const ProximityIcon = proximityConfig?.icon;
   
-  // PII gate removed 2026-05-21 — phone shows for every approved
-  // facility, not just paid plans. The Pro / Featured badges are
-  // still surfaced via showFeaturedBadge for sort ordering + marketing
-  // signal, but they no longer control whether the visitor can see
-  // the public business contact number.
-  const formattedPhone = center.phone ? formatPhoneNumber(center.phone) : null;
-  const phoneDigits = center.phone ? getPhoneDigits(center.phone) : null;
-  const telLink = phoneDigits ? `tel:+1${phoneDigits}` : null;
+  // PUBLIC PHONE = ACTIVE PRO ONLY. The 2026-05-21 revision showed the number
+  // for every approved facility; publishing it is a paid contact feature
+  // again. `showFeaturedBadge` deliberately plays no part here — Featured is
+  // paid visibility and must not unlock contact functionality.
+  const publicPhone = resolvePublicFacilityPhone(center);
+  const formattedPhone = publicPhone.display;
+  const telLink = publicPhone.telHref;
 
   useEffect(() => {
     if (!center.isFromDatabase || !center.id || hasTrackedImpression.current) return;
@@ -522,12 +523,12 @@ export const SearchResultCard = memo(forwardRef<HTMLElement, SearchResultCardPro
       </div>
       {/* Contact modal — opens in-place from the card's contact button so
           the seeker stays on /search-results instead of being redirected to
-          the facility detail page. The modal resolves the facility's
-          canonical Pro entitlement itself: ACTIVE PRO listings get the
-          on-platform Request Info form, every other listing gets the
-          facility's own Call / Website / Directions actions with no PII
-          intake. No plan hint is passed from this card — a search-result
-          row has no authoritative entitlement state. */}
+          the facility detail page. Every approved listing gets the same
+          inquiry form; the modal resolves canonical Pro entitlement itself to
+          decide whether the facility's PHONE may be published. No plan hint
+          and no phone are passed from this card — a search-result row has no
+          authoritative entitlement state, and passing a phone here is exactly
+          how a Free number could reach the contact UI from a stale payload. */}
       <RequestInfoModal
         open={inquiryOpen}
         onOpenChange={setInquiryOpen}
@@ -539,7 +540,6 @@ export const SearchResultCard = memo(forwardRef<HTMLElement, SearchResultCardPro
           slug: (center as { slug?: string | null }).slug ?? null,
           logo_url: (center as { logo_url?: string | null }).logo_url ?? null,
           featured: !!showFeaturedBadge,
-          phone: center.phone ?? null,
           verified: center.verified ?? null,
         }}
       />

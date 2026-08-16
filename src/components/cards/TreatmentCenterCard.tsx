@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Crown, ShieldCheck, Clock, CreditCard, Sparkles, Phone, ExternalLink } from "lucide-react";
-import { formatPhoneNumber, getPhoneDigits } from "@/lib/phoneUtils";
+import { resolvePublicFacilityPhone } from "@/lib/facilityPhoneVisibility";
 import { TreatmentCenter } from "@/data/treatmentCenters";
 import { cn } from "@/lib/utils";
 import { buildFacilityPath } from "@/lib/slugUtils";
@@ -106,10 +106,11 @@ export const TreatmentCenterCard = memo(forwardRef<HTMLElement, TreatmentCenterC
 
   const hasInsurance = center.insuranceAccepted && center.insuranceAccepted.length > 0;
 
-  // Format phone number for display and tel link
-  const formattedPhone = center.phone ? formatPhoneNumber(center.phone) : null;
-  const phoneDigits = center.phone ? getPhoneDigits(center.phone) : null;
-  const telLink = phoneDigits ? `tel:+1${phoneDigits}` : null;
+  // PUBLIC PHONE = ACTIVE PRO ONLY (paid contact feature). Featured status
+  // and `verified` are deliberately not consulted.
+  const publicPhone = resolvePublicFacilityPhone(center);
+  const formattedPhone = publicPhone.display;
+  const telLink = publicPhone.telHref;
 
   useEffect(() => {
     if (!center.isFromDatabase || !center.id || hasTrackedImpression.current) return;

@@ -2,65 +2,70 @@
 /**
  * check-inquiry-routing-prerender.mjs
  *
- * Build-time guard for the directory-cutover STAGE 2 PRERENDER CONTRACT:
- * a generated facility profile may only advertise RehabLookup's on-platform
- * Request Information flow when that facility is an ACTIVE PRO listing.
+ * Build-time guard for the STAGE-2 PRERENDER CONTRACT, as amended by the
+ * inquiry-model amendment.
  *
- * Why this exists
- * ───────────────
- * Stage 2 routed the React/SPA facility-contact path by entitlement, and the
- * edge handler refuses a non-Pro inquiry with DIRECT_CONTACT_REQUIRED. But
- * `scripts/generate-facility-profiles-html.mjs` — the crawler-facing static
- * mirror at `/center/<slug>.html` — rendered its "Request Information" CTA
- * and its contact/insurance FAQ answers UNCONDITIONALLY. So a real Free
- * facility's generated page still told Googlebot (and any JS-less visitor)
- * to "use the Request Information form on the RehabLookup profile" and
- * "request a benefits verification through the profile" for a facility whose
- * inquiries the server would reject. Every test passed; the deployed HTML
- * was wrong.
+ * WHAT THE CONTRACT IS NOW
+ * ────────────────────────
+ * The previous contract gated the INQUIRY by entitlement: only a Pro page
+ * could advertise the on-platform form, everyone else got "call the facility
+ * directly" — with the facility's phone number printed on the page.
  *
- * `check:directory-public-shell` did not catch it: that guard hunts retired
- * Concierge/placement MARKETING copy, and "Request Information" is not
- * retired marketing — it is a live, legitimate affordance that is simply
- * entitlement-scoped. This is the complementary ENTITLEMENT check.
+ * Both halves inverted:
+ *
+ *   INQUIRY   Every eligible approved facility may advertise an inquiry to
+ *             ITSELF. This is not an entitlement. The page asserts it with
+ *             data-inquiry-routing="facility", whose only legal value says the
+ *             inquiry goes to the selected facility and nowhere else.
+ *
+ *   PHONE     Publishing the facility's phone number IS the entitlement. The
+ *             page asserts it with data-phone-visibility="pro" | "hidden",
+ *             derived from public_facilities.is_pro (=== true) and nothing
+ *             else. Featured must never produce "pro".
+ *
+ * THE FIXTURE THAT MATTERS
+ * ────────────────────────
+ * The interesting failure is not "a null phone rendered nothing". It is "a
+ * facility whose SOURCE ROW HAS A PHONE rendered nothing anyway". The unit
+ * fixtures in src/__tests__/facility-prerender-contact-routing.test.ts drive
+ * the generator with populated `phone` columns on Free and Featured-only rows
+ * and assert the digits are absent from the output. This script is the
+ * corpus-wide counterpart: it re-checks the same contract on every artifact
+ * actually written to disk.
+ *
+ * SITE SUPPORT PHONE vs FACILITY PHONE
+ * ────────────────────────────────────
+ * The shared SEO shell legitimately carries RehabLookup's own support number
+ * and the 988 / 911 / SAMHSA crisis lines on EVERY page, including Free ones.
+ * Banning `tel:` outright would be both wrong and useless. This guard instead
+ * allowlists exactly those known site-level numbers and treats ANY OTHER tel:
+ * target on a phone-hidden page as a facility-phone leak. That is what makes
+ * the check meaningful rather than decorative.
  *
  * Scope — generated facility profiles only, deliberately
  * ─────────────────────────────────────────────────────
  * Only `public/center/**.html` and `dist/center/**.html` are walked, and
- * within those only pages the facility-profile generator actually produced
- * (identified by `<body data-page="facility-profile">`). Other `/center/`
- * mirrors emitted by the older generic generators carry no entitlement data
- * and are not part of this contract — but they still may not link into the
- * inquiry flow, which rule 0 below enforces for every center page.
- *
- * Provider/admin surfaces, historical migrations, docs and editorial prose
- * are NOT scanned. The words "request information" are not banned anywhere:
- * this guard is about a generated facility page's CONTACT MECHANISM, not
- * about vocabulary.
+ * within those the full contract applies to pages the facility-profile
+ * generator produced (`<body data-page="facility-profile">`). Provider/admin
+ * surfaces, migrations, docs and editorial prose are NOT scanned.
  *
  * Rules
- *   0. any /center/*.html                → `?action=request-info` requires a
- *                                          `data-contact-routing="pro"` page
- *   1. every facility-profile page       → exactly one contact-routing marker,
- *                                          value "pro" or "direct"
- *   2. data-contact-routing="direct"     → no `?action=request-info`, no
- *                                          RehabLookup inquiry-form promise,
- *                                          no "benefits verification through
- *                                          the profile", and the CTA heading
- *                                          is direct contact, not Request
- *                                          Information
- *   3. data-contact-routing="pro"        → the Request Information CTA is
- *                                          allowed, but must target this
- *                                          page's own slug, and must not
- *                                          promise matching / another
- *                                          provider / an advisor or
- *                                          coordinator
+ *   1. every facility-profile page → exactly one data-inquiry-routing marker,
+ *      value "facility"
+ *   2. every facility-profile page → exactly one data-phone-visibility marker,
+ *      value "pro" or "hidden"
+ *   3. every facility-profile page → carries its own inquiry CTA, targeting
+ *      this page's own slug
+ *   4. data-phone-visibility="hidden" → no facility phone anywhere: no
+ *      non-allowlisted tel:, no JSON-LD telephone, no visible Phone: line,
+ *      no "Call <number>" CTA
+ *   5. any page → no matching / Concierge / advisor / redistribution copy
  *
  * Usage
  *   node scripts/check-inquiry-routing-prerender.mjs
  *
  * Exit codes
- *   0  every generated facility page honours the stage-2 contract
+ *   0  every generated facility page honours the contract
  *   1  at least one violation found
  */
 
@@ -76,44 +81,45 @@ export const CENTER_ROOTS = ["public/center", "dist/center"];
 /** Marks a page as produced by generate-facility-profiles-html.mjs. */
 const FACILITY_PAGE_MARKER = /<body[^>]*\bdata-page="facility-profile"/i;
 
-/** The contact-routing marker itself. Exactly one per facility page. */
-const ROUTING_MARKER = /data-contact-routing="([a-z-]*)"/gi;
+const INQUIRY_MARKER = /data-inquiry-routing="([a-z-]*)"/gi;
+const PHONE_MARKER = /data-phone-visibility="([a-z-]*)"/gi;
 
-const VALID_MODES = new Set(["pro", "direct"]);
+const VALID_PHONE_MODES = new Set(["pro", "hidden"]);
 
 /** The live on-platform inquiry affordance. */
 const REQUEST_INFO_LINK = /\?action=request-info/i;
 
 /**
- * Copy that promises RehabLookup's on-platform inquiry flow. Each is
- * phrase-specific: a facility page may legitimately say "contact admissions
- * directly", and editorial pages elsewhere are out of scope entirely.
+ * SITE-LEVEL numbers that legitimately appear on every page via the shared
+ * shell and crisis footer. Compared on digits only, so formatting differences
+ * ("+12146396420" vs "1-800-662-4357") cannot smuggle one past.
+ *
+ * Keep in sync with SUPPORT_PHONE in scripts/_seo-page-shell.mjs.
  */
-const INQUIRY_PROMISES = [
-  {
-    name: '"Request Information" form on a RehabLookup profile',
-    re: /"Request Information" form on (?:the|this)\b/i,
-  },
-  {
-    name: "benefits verification requested through the profile",
-    re: /request a benefits verification through the profile/i,
-  },
-  {
-    name: "send a confidential inquiry through the profile",
-    re: /send a confidential inquiry (?:through|via|on) (?:the|this)\b/i,
-  },
-  {
-    name: "Request Information CTA heading",
-    // The generator's Pro heading. On a direct page it would mean the
-    // primary contact mechanism is still RehabLookup's form.
-    re: /<h2>Request Information from /i,
-  },
-];
+export const ALLOWED_SITE_PHONE_DIGITS = new Set([
+  "12146396420", // RehabLookup support (shell header)
+  "2146396420",
+  "988", // Suicide & Crisis Lifeline
+  "911", // Emergency
+  "18006624357", // SAMHSA National Helpline
+  "8006624357",
+]);
+
+const TEL_LINK = /href="tel:([^"]*)"/gi;
+
+/** JSON-LD telephone property, in either quoting style the generator emits. */
+const JSONLD_TELEPHONE = /"telephone"\s*:/i;
+
+/** The generator's visible phone line. */
+const VISIBLE_PHONE_LINE = /<strong>Phone:<\/strong>/i;
+
+/** The generator's Call CTA button. */
+const CALL_CTA = /<a[^>]*class="btn[^"]*"[^>]*href="tel:/i;
 
 /**
- * Operational promises RehabLookup does not make on any facility page,
- * including a Pro one: the inquiry goes to exactly one selected facility and
- * no staff member coordinates an alternative.
+ * Operational promises RehabLookup does not make on any facility page. The
+ * inquiry goes to exactly one selected facility and no staff member
+ * coordinates an alternative.
  */
 const COORDINATION_PROMISES = [
   {
@@ -132,6 +138,10 @@ const COORDINATION_PROMISES = [
     name: "inquiry distributed to multiple facilities",
     re: /\bsent (?:to|your (?:inquiry|request) to)\s+(?:multiple|several|other)\s+(?:facilities|centers|providers)\b/i,
   },
+  {
+    name: "response-time guarantee",
+    re: /\b(?:responds?|reply|reach out|call you back)\b[^.<]{0,30}\bwithin\s+(?:an?\s+)?(?:\d+\s*)?(?:hour|minute|business day|day)/i,
+  },
 ];
 
 /** Line number of a regex match, for actionable CI output. */
@@ -143,82 +153,94 @@ function push(found, text, index, rule, snippet) {
   found.push({ line: lineOf(text, index), rule, snippet: String(snippet).slice(0, 140) });
 }
 
+const digitsOf = (s) => String(s ?? "").replace(/\D/g, "");
+
 /**
  * Scan one generated `/center/<slug>.html` artifact.
  *
  * @param {string} text  file contents
  * @param {string} slug  the page's slug (filename without .html), used to
- *                       verify a Pro CTA targets its OWN facility
- * @returns {{ isFacilityPage: boolean, mode: string|null,
+ *                       verify the inquiry CTA targets its OWN facility
+ * @returns {{ isFacilityPage: boolean, inquiryMode: string|null,
+ *             phoneMode: string|null,
  *             violations: Array<{line:number, rule:string, snippet:string}> }}
  */
 export function scanCenterPage(text, slug) {
   const violations = [];
   const isFacilityPage = FACILITY_PAGE_MARKER.test(text);
 
-  ROUTING_MARKER.lastIndex = 0;
-  const markers = [...text.matchAll(ROUTING_MARKER)];
-  const mode = markers.length === 1 ? markers[0][1] : null;
-
-  // ── Rule 0 — applies to EVERY center page, generator-owned or not ───────
-  // A page that links into the inquiry flow must be a confirmed-Pro page.
-  const inquiryLink = text.match(REQUEST_INFO_LINK);
-  if (inquiryLink && mode !== "pro") {
-    push(
-      violations,
-      text,
-      inquiryLink.index,
-      "links to the on-platform inquiry flow without a Pro contact-routing marker",
-      inquiryLink[0],
-    );
-  }
+  INQUIRY_MARKER.lastIndex = 0;
+  PHONE_MARKER.lastIndex = 0;
+  const inquiryMarkers = [...text.matchAll(INQUIRY_MARKER)];
+  const phoneMarkers = [...text.matchAll(PHONE_MARKER)];
+  const inquiryMode = inquiryMarkers.length === 1 ? inquiryMarkers[0][1] : null;
+  const phoneMode = phoneMarkers.length === 1 ? phoneMarkers[0][1] : null;
 
   if (!isFacilityPage) {
-    // Legacy/non-facility center mirrors carry no entitlement data. Rule 0
-    // above is the only contract they participate in.
-    return { isFacilityPage, mode, violations };
+    // Legacy/non-facility center mirrors carry no entitlement data. They must
+    // still not link into the inquiry flow, because they cannot assert which
+    // facility the inquiry would belong to.
+    const stray = text.match(REQUEST_INFO_LINK);
+    if (stray && inquiryMode !== "facility") {
+      push(
+        violations,
+        text,
+        stray.index,
+        "non-generator center page links to the inquiry flow without an inquiry-routing marker",
+        stray[0],
+      );
+    }
+    return { isFacilityPage, inquiryMode, phoneMode, violations };
   }
 
-  // ── Rule 1 — exactly one valid marker ───────────────────────────────────
-  if (markers.length !== 1) {
+  // ── Rule 1 — exactly one inquiry-routing marker, value "facility" ────────
+  if (inquiryMarkers.length !== 1) {
     violations.push({
       line: 1,
       rule:
-        markers.length === 0
-          ? "generated facility page has no data-contact-routing marker"
-          : `generated facility page has ${markers.length} data-contact-routing markers (expected exactly 1)`,
-      snippet: markers.map((m) => m[0]).join(" ") || "(none)",
+        inquiryMarkers.length === 0
+          ? "generated facility page has no data-inquiry-routing marker"
+          : `generated facility page has ${inquiryMarkers.length} data-inquiry-routing markers (expected exactly 1)`,
+      snippet: inquiryMarkers.map((m) => m[0]).join(" ") || "(none)",
     });
-    return { isFacilityPage, mode, violations };
-  }
-
-  if (!VALID_MODES.has(mode)) {
+  } else if (inquiryMode !== "facility") {
     violations.push({
-      line: lineOf(text, markers[0].index),
-      rule: `invalid data-contact-routing value (expected "pro" or "direct")`,
-      snippet: markers[0][0],
+      line: lineOf(text, inquiryMarkers[0].index),
+      rule: 'invalid data-inquiry-routing value (the only legal value is "facility")',
+      snippet: inquiryMarkers[0][0],
     });
-    return { isFacilityPage, mode, violations };
   }
 
-  // ── Rule 2 — direct-contact pages ───────────────────────────────────────
-  if (mode === "direct") {
-    for (const rule of INQUIRY_PROMISES) {
-      const m = text.match(rule.re);
-      if (m) {
-        push(
-          violations,
-          text,
-          m.index,
-          `direct-contact page advertises the RehabLookup inquiry flow — ${rule.name}`,
-          m[0],
-        );
-      }
-    }
+  // ── Rule 2 — exactly one phone-visibility marker ─────────────────────────
+  if (phoneMarkers.length !== 1) {
+    violations.push({
+      line: 1,
+      rule:
+        phoneMarkers.length === 0
+          ? "generated facility page has no data-phone-visibility marker"
+          : `generated facility page has ${phoneMarkers.length} data-phone-visibility markers (expected exactly 1)`,
+      snippet: phoneMarkers.map((m) => m[0]).join(" ") || "(none)",
+    });
+    return { isFacilityPage, inquiryMode, phoneMode, violations };
+  }
+  if (!VALID_PHONE_MODES.has(phoneMode)) {
+    violations.push({
+      line: lineOf(text, phoneMarkers[0].index),
+      rule: 'invalid data-phone-visibility value (expected "pro" or "hidden")',
+      snippet: phoneMarkers[0][0],
+    });
+    return { isFacilityPage, inquiryMode, phoneMode, violations };
   }
 
-  // ── Rule 3 — Pro pages ──────────────────────────────────────────────────
-  if (mode === "pro" && inquiryLink) {
+  // ── Rule 3 — the page carries its own inquiry CTA ────────────────────────
+  const inquiryLink = text.match(REQUEST_INFO_LINK);
+  if (!inquiryLink) {
+    violations.push({
+      line: 1,
+      rule: "generated facility page offers no inquiry CTA (every eligible facility may receive one)",
+      snippet: "(missing ?action=request-info)",
+    });
+  } else {
     const own = new RegExp(
       `/center/${slug.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\?action=request-info`,
       "i",
@@ -228,13 +250,57 @@ export function scanCenterPage(text, slug) {
         violations,
         text,
         inquiryLink.index,
-        "Pro inquiry CTA does not target this page's own facility slug",
+        "inquiry CTA does not target this page's own facility slug",
         inquiryLink[0],
       );
     }
   }
 
-  // Coordination promises are forbidden in BOTH modes.
+  // ── Rule 4 — phone-hidden pages must carry no facility phone ─────────────
+  if (phoneMode === "hidden") {
+    TEL_LINK.lastIndex = 0;
+    for (const m of text.matchAll(TEL_LINK)) {
+      const d = digitsOf(m[1]);
+      if (!ALLOWED_SITE_PHONE_DIGITS.has(d)) {
+        push(
+          violations,
+          text,
+          m.index,
+          "phone-hidden page exposes a facility tel: link (site support and crisis lines are allowlisted; this is not one)",
+          m[0],
+        );
+      }
+    }
+
+    const jsonLdTel = text.match(JSONLD_TELEPHONE);
+    if (jsonLdTel) {
+      push(
+        violations,
+        text,
+        jsonLdTel.index,
+        "phone-hidden page emits a JSON-LD telephone property (structured data must match the on-page contract)",
+        jsonLdTel[0],
+      );
+    }
+
+    const visibleLine = text.match(VISIBLE_PHONE_LINE);
+    if (visibleLine) {
+      push(
+        violations,
+        text,
+        visibleLine.index,
+        "phone-hidden page renders a visible facility Phone: line",
+        visibleLine[0],
+      );
+    }
+
+    const callCta = text.match(CALL_CTA);
+    if (callCta) {
+      push(violations, text, callCta.index, "phone-hidden page renders a Call CTA", callCta[0]);
+    }
+  }
+
+  // ── Rule 5 — coordination promises are forbidden in BOTH modes ───────────
   for (const rule of COORDINATION_PROMISES) {
     const m = text.match(rule.re);
     if (m) {
@@ -242,7 +308,7 @@ export function scanCenterPage(text, slug) {
     }
   }
 
-  return { isFacilityPage, mode, violations };
+  return { isFacilityPage, inquiryMode, phoneMode, violations };
 }
 
 /** Recursively yield *.html under a directory. */
@@ -262,8 +328,8 @@ function main() {
   const violations = [];
   let scanned = 0;
   let facilityPages = 0;
-  let proPages = 0;
-  let directPages = 0;
+  let proPhonePages = 0;
+  let hiddenPhonePages = 0;
   const rootsSeen = [];
 
   for (const root of CENTER_ROOTS) {
@@ -276,8 +342,8 @@ function main() {
       const result = scanCenterPage(readFileSync(file, "utf8"), slug);
       if (result.isFacilityPage) {
         facilityPages++;
-        if (result.mode === "pro") proPages++;
-        if (result.mode === "direct") directPages++;
+        if (result.phoneMode === "pro") proPhonePages++;
+        if (result.phoneMode === "hidden") hiddenPhonePages++;
       }
       for (const v of result.violations) {
         violations.push({ rel: relative(ROOT, file), ...v });
@@ -287,18 +353,20 @@ function main() {
 
   console.log(`[inquiry-routing-prerender] scanned ${scanned} /center page(s)`);
   console.log(`  roots            : ${rootsSeen.join(", ") || "none found (skipped)"}`);
-  console.log(`  facility profiles: ${facilityPages} (pro ${proPages} / direct ${directPages})`);
+  console.log(
+    `  facility profiles: ${facilityPages} (phone pro ${proPhonePages} / hidden ${hiddenPhonePages})`,
+  );
 
   if (violations.length === 0) {
     console.log(
-      "✓ every generated facility profile routes contact by entitlement " +
-        "(Pro → on-platform inquiry, everything else → direct facility contact)",
+      "✓ every generated facility profile pins its inquiry to the selected facility, " +
+        "and publishes a phone number only when has_active_pro() is true",
     );
     process.exit(0);
   }
 
   console.error(
-    `\n✗ ${violations.length} stage-2 prerender contract violation(s) in generated facility profiles:\n`,
+    `\n✗ ${violations.length} prerender contract violation(s) in generated facility profiles:\n`,
   );
 
   const byRule = new Map();
@@ -316,9 +384,10 @@ function main() {
 
   console.error(
     "\n  Fix scripts/generate-facility-profiles-html.mjs — never a single generated\n" +
-      "  page. Contact routing is derived from public_facilities.is_pro, which is the\n" +
-      "  build-time projection of has_active_pro(); do not reconstruct subscription\n" +
-      "  rules in JavaScript and do not derive the marker from Featured.\n",
+      "  page. Phone visibility is derived from public_facilities.is_pro, the build-time\n" +
+      "  projection of has_active_pro(); do not reconstruct subscription rules in\n" +
+      "  JavaScript and do not derive phone visibility from Featured. Inquiry routing is\n" +
+      '  always "facility" — the seeker\'s chosen center, and no other.\n',
   );
   process.exit(1);
 }

@@ -5,23 +5,32 @@
 // produces a real `Uint8Array` — jsdom's cross-realm typed arrays break that
 // invariant. The handler itself only needs fetch-API globals, which Node has.
 /**
- * Directory cutover stage 2 — `submit-qualified-lead` routing contract.
+ * `submit-qualified-lead` — SELECTED-FACILITY INQUIRY CONTRACT (v3.1.0).
  *
  * These tests execute the REAL edge-function handler in-process (see
  * helpers/edgeFunctionHarness.ts) against recording stubs, so they prove
- * behaviour and ordering rather than the presence of source strings:
+ * behaviour and ordering rather than the presence of source strings.
  *
- *   A  active Pro                 → lead inserted, no concierge side effects
- *   B  Free / non-Pro             → DIRECT_CONTACT_REQUIRED, zero persistence
- *   C  has_active_pro() errors    → DIRECT_CONTACT_REQUIRED (fail-safe)
- *   D  Featured but not Pro       → DIRECT_CONTACT_REQUIRED
- *   E  unapproved / suspended     → existing safe rejection preserved
- *   F  grace-period Pro           → normal Pro lead path preserved
+ * WHAT CHANGED, AND WHY THESE TESTS WERE REWRITTEN
+ * ────────────────────────────────────────────────
+ * The previous suite asserted the OLD product: Pro facilities received
+ * inquiries and everyone else got DIRECT_CONTACT_REQUIRED with nothing
+ * persisted. That behaviour is intentionally gone, so those tests were not
+ * "fixed" — they were replaced. Keeping them green would have meant keeping
+ * the old behaviour.
  *
- * The critical invariant is that B/C/D short-circuit BEFORE any
- * PII-dependent processing: a request carrying only a facility id — no
- * name, no email, no phone — must still reach DIRECT_CONTACT_REQUIRED,
- * because the platform does not accept those fields for that facility.
+ * THE CONTRACT NOW
+ *   • ANY approved, non-suspended facility may receive an inquiry. Pro,
+ *     Free, Featured-only and unclaimed are all eligible, on identical terms.
+ *   • Entitlement does not appear in the eligibility decision at all.
+ *   • Every inquiry is pinned to `leads.facility_id` = the selected facility.
+ *     Never a second facility, never Concierge, never an advisor, never a
+ *     redistribution queue.
+ *   • An UNCLAIMED listing has no verified recipient, so the inquiry is
+ *     stored but NO PII is emailed anywhere, and the seeker is told the
+ *     truth via deliveryState="stored_pending_claim".
+ *   • Rejections for missing/unapproved/suspended facilities still happen
+ *     BEFORE any PII-dependent processing.
  */
 import { describe, it, expect } from "vitest";
 import { loadEdgeHandler, postJson, type SupabaseStubOptions } from "./helpers/edgeFunctionHarness";
@@ -30,42 +39,67 @@ const FN = "supabase/functions/submit-qualified-lead/index.ts";
 
 const PRO_FACILITY_ID = "11111111-1111-4111-8111-111111111111";
 const FREE_FACILITY_ID = "22222222-2222-4222-8222-222222222222";
+const FEATURED_FACILITY_ID = "33333333-3333-4333-8333-333333333333";
+const UNCLAIMED_FACILITY_ID = "44444444-4444-4444-8444-444444444444";
+const UNKNOWN_FACILITY_ID = "55555555-5555-4555-8555-555555555555";
 
-/** Tables/functions that only the retired concierge redirect ever touched. */
-const CONCIERGE_TABLES = ["concierge_inquiries", "concierge_case_events"];
+/** Tables/functions only the retired concierge/placement product ever touched. */
+const CONCIERGE_TABLES = ["concierge_inquiries", "concierge_case_events", "concierge_introductions"];
 const ADVISOR_TABLES = ["admin_user_profiles"];
+const REDISTRIBUTION_TABLES = ["lead_distributions"];
+const RETIRED_FUNCTIONS = [
+  "notify-free-tier-inquiry-redirect",
+  "process-lead-redistribution",
+  "match-concierge-intake",
+  "send-concierge-introduction",
+];
 
-interface ScenarioOptions {
-  isPro?: boolean | null;
-  proRpcError?: { message: string } | null;
-  facility?: Record<string, unknown> | null;
-  facilityError?: { message: string } | null;
+interface FacilityShape {
+  id: string;
+  name: string;
+  email: string | null;
+  user_id: string | null;
+  status: string;
+  suspended: boolean;
+  reply_email: string | null;
+  reply_email_verified: boolean;
 }
 
-function buildStubOptions(scenario: ScenarioOptions): SupabaseStubOptions {
+function facilityRow(over: Partial<FacilityShape> & { id: string; name: string }): FacilityShape {
+  return {
+    email: "admissions@example.org",
+    user_id: "owner-1",
+    status: "approved",
+    suspended: false,
+    reply_email: null,
+    reply_email_verified: false,
+    ...over,
+  };
+}
+
+interface ScenarioOptions {
+  facility?: FacilityShape | null;
+  facilityError?: { message: string } | null;
+  isPro?: boolean;
+  emailVerified?: boolean;
+  blocked?: boolean;
+  existingLeadCount?: number;
+  idempotentHit?: { id: string } | null;
+}
+
+function buildStubOptions(scenario: ScenarioOptions = {}): SupabaseStubOptions {
   const facility =
     scenario.facility === undefined
-      ? {
-          id: PRO_FACILITY_ID,
-          name: "Cascadia Recovery Center",
-          email: "admissions@cascadia.example",
-          user_id: "owner-1",
-          status: "approved",
-          suspended: false,
-          reply_email: null,
-          reply_email_verified: false,
-        }
+      ? facilityRow({ id: PRO_FACILITY_ID, name: "Cascadia Recovery Center" })
       : scenario.facility;
 
   return {
     onRpc: (name) => {
-      if (name === "has_active_pro") {
-        if (scenario.proRpcError) return { data: null, error: scenario.proRpcError };
-        return { data: scenario.isPro ?? false, error: null };
-      }
-      // Not blocked; email verified — so a Pro run can proceed end-to-end.
-      if (name === "is_identifier_blocked") return { data: false, error: null };
-      if (name === "is_email_verified") return { data: true, error: null };
+      // has_active_pro may or may not be called — the point of 3.1.0 is that
+      // eligibility does not depend on it. Answer honestly if asked.
+      if (name === "has_active_pro") return { data: scenario.isPro ?? false, error: null };
+      if (name === "is_identifier_blocked") return { data: scenario.blocked ?? false, error: null };
+      if (name === "is_email_verified") return { data: scenario.emailVerified ?? true, error: null };
       return { data: null, error: null };
     },
     onSelect: (table) => {
@@ -73,10 +107,12 @@ function buildStubOptions(scenario: ScenarioOptions): SupabaseStubOptions {
         if (scenario.facilityError) return { data: null, error: scenario.facilityError };
         return { data: facility, error: null };
       }
-      // No prior leads: no idempotency hit, no duplicate, no rate limit.
-      if (table === "leads") return { data: null, error: null, count: 0 };
+      if (table === "leads") {
+        if (scenario.idempotentHit) return { data: scenario.idempotentHit, error: null, count: 0 };
+        return { data: null, error: null, count: scenario.existingLeadCount ?? 0 };
+      }
       if (table === "notification_preferences") return { data: null, error: null };
-      if (table === "profiles") return { data: { email: "owner@cascadia.example" }, error: null };
+      if (table === "profiles") return { data: { email: "owner@example.org" }, error: null };
       return { data: null, error: null, count: 0 };
     },
     onInsert: (table) => {
@@ -86,8 +122,8 @@ function buildStubOptions(scenario: ScenarioOptions): SupabaseStubOptions {
   };
 }
 
-/** A complete, valid seeker payload (only ever accepted for active Pro). */
-function proPayload(facilityId: string) {
+/** A complete, valid seeker payload. */
+function seekerPayload(facilityId: string, over: Record<string, unknown> = {}) {
   return {
     facilityId,
     name: "Jordan Rivera",
@@ -102,357 +138,416 @@ function proPayload(facilityId: string) {
     locationCityState: "Portland, OR",
     source: "facility_profile",
     idempotencyKey: "idem-abc-123",
+    ...over,
   };
 }
 
-describe("submit-qualified-lead — stage 2 inquiry routing", () => {
-  // ── CASE A ────────────────────────────────────────────────────────────
-  describe("CASE A — active Pro facility", () => {
-    it("inserts the lead against the one selected facility and creates no concierge data", async () => {
-      const { handler, supabase, emails } = await loadEdgeHandler(
+/** Assert the request produced no placement-era side effects of any kind. */
+function expectNoLegacyRouting(supabase: {
+  insertedTables(): string[];
+  selectedTables(): string[];
+  invokedFunctions(): string[];
+}) {
+  for (const table of [...CONCIERGE_TABLES, ...ADVISOR_TABLES, ...REDISTRIBUTION_TABLES]) {
+    expect(supabase.insertedTables()).not.toContain(table);
+    expect(supabase.selectedTables()).not.toContain(table);
+  }
+  for (const fn of RETIRED_FUNCTIONS) {
+    expect(supabase.invokedFunctions()).not.toContain(fn);
+  }
+}
+
+const leadInsertOf = (supabase: { calls: Array<{ kind: string; target: string; payload?: unknown }> }) =>
+  supabase.calls.find((c) => c.kind === "insert" && c.target === "leads");
+
+describe("submit-qualified-lead — universal selected-facility inquiries", () => {
+  // ── CASE A — CLAIMED FREE FACILITY ──────────────────────────────────────
+  describe("CASE A — claimed Free (non-Pro) facility", () => {
+    const scenario = () =>
+      buildStubOptions({
+        isPro: false,
+        facility: facilityRow({
+          id: FREE_FACILITY_ID,
+          name: "Riverbend Wellness",
+          user_id: "owner-2",
+        }),
+      });
+
+    it("accepts the inquiry and pins it to the selected facility", async () => {
+      const { handler, supabase } = await loadEdgeHandler(FN, scenario());
+      const { status, json } = await postJson(handler, seekerPayload(FREE_FACILITY_ID));
+
+      expect(status).toBe(200);
+      expect(json.success).toBe(true);
+      // The whole point of the amendment: NOT a direct-contact refusal.
+      expect(json.action).toBeUndefined();
+      expect(json.direct_contact_required).toBeUndefined();
+
+      const insert = leadInsertOf(supabase);
+      expect(insert, "no inquiry row was inserted for a Free facility").toBeTruthy();
+      expect((insert!.payload as Record<string, unknown>).facility_id).toBe(FREE_FACILITY_ID);
+    });
+
+    it("reports delivery to the provider and notifies them", async () => {
+      const { handler, supabase, emails } = await loadEdgeHandler(FN, scenario());
+      const { json } = await postJson(handler, seekerPayload(FREE_FACILITY_ID));
+
+      expect(json.deliveryState).toBe("delivered_to_provider");
+      expect(supabase.selectedTables()).toContain("notification_preferences");
+      expect(emails.length).toBeGreaterThan(0);
+    });
+
+    it("creates exactly one inquiry row and no second destination", async () => {
+      const { handler, supabase } = await loadEdgeHandler(FN, scenario());
+      await postJson(handler, seekerPayload(FREE_FACILITY_ID));
+
+      const leadInserts = supabase.calls.filter((c) => c.kind === "insert" && c.target === "leads");
+      expect(leadInserts).toHaveLength(1);
+      expectNoLegacyRouting(supabase);
+    });
+
+    it("uses inquiry language, not lead-sale language, in the provider email", async () => {
+      const { handler, emails } = await loadEdgeHandler(FN, scenario());
+      await postJson(handler, seekerPayload(FREE_FACILITY_ID));
+
+      const providerEmail = emails.find((e) => JSON.stringify(e.to).includes("owner@example.org"));
+      expect(providerEmail, "provider was not notified").toBeTruthy();
+      const html = String(providerEmail!.html ?? "");
+
+      expect(html).toMatch(/inquiry/i);
+      expect(html).toMatch(/View inquiry/i);
+      // Retired sales-era copy.
+      expect(html).not.toMatch(/View lead in dashboard/i);
+      expect(html).not.toMatch(/7×|7x more leads/i);
+      expect(html).not.toMatch(/convert up to/i);
+      expect(html).not.toMatch(/buy lead|purchase this lead|unlock/i);
+      // Must not imply RehabLookup chose this facility.
+      expect(html).not.toMatch(/Connecting families with quality care/i);
+    });
+  });
+
+  // ── CASE B — ACTIVE PRO ─────────────────────────────────────────────────
+  describe("CASE B — active Pro facility", () => {
+    it("stores the inquiry with identical semantics — no priority lane", async () => {
+      const { handler, supabase } = await loadEdgeHandler(FN, buildStubOptions({ isPro: true }));
+      const { status, json } = await postJson(handler, seekerPayload(PRO_FACILITY_ID));
+
+      expect(status).toBe(200);
+      expect(json.success).toBe(true);
+      expect(json.deliveryState).toBe("delivered_to_provider");
+
+      const insert = leadInsertOf(supabase);
+      expect((insert!.payload as Record<string, unknown>).facility_id).toBe(PRO_FACILITY_ID);
+
+      // No Pro-only routing field, queue, or escalation.
+      const payload = insert!.payload as Record<string, unknown>;
+      expect(payload.routing_mode).toBeUndefined();
+      expect(payload.priority_tier).toBeUndefined();
+      expectNoLegacyRouting(supabase);
+    });
+
+    it("never publishes a facility phone number in its response", async () => {
+      const { handler } = await loadEdgeHandler(FN, buildStubOptions({ isPro: true }));
+      const { json } = await postJson(handler, seekerPayload(PRO_FACILITY_ID));
+      // Phone visibility is a READ-path concern; this function must not
+      // become a side channel for it on any tier.
+      expect(JSON.stringify(json)).not.toMatch(/"phone"/);
+    });
+  });
+
+  // ── CASE C — FEATURED, NOT PRO ──────────────────────────────────────────
+  describe("CASE C — Featured add-on but NOT Pro", () => {
+    it("accepts the inquiry exactly like Free, with no Pro-shaped distinction", async () => {
+      const { handler, supabase } = await loadEdgeHandler(
         FN,
-        buildStubOptions({ isPro: true }),
+        buildStubOptions({
+          isPro: false,
+          facility: facilityRow({
+            id: FEATURED_FACILITY_ID,
+            name: "Beacon Ridge Treatment",
+            user_id: "owner-3",
+          }),
+        }),
       );
 
-      const { status, json } = await postJson(handler, proPayload(PRO_FACILITY_ID));
+      const { status, json } = await postJson(handler, seekerPayload(FEATURED_FACILITY_ID));
 
       expect(status).toBe(200);
       expect(json.success).toBe(true);
       expect(json.action).toBeUndefined();
 
-      // Lead inserted, pinned to the selected facility.
-      const leadInsert = supabase.calls.find((c) => c.kind === "insert" && c.target === "leads");
-      expect(leadInsert).toBeTruthy();
-      expect((leadInsert!.payload as Record<string, unknown>).facility_id).toBe(PRO_FACILITY_ID);
+      const insert = leadInsertOf(supabase);
+      expect((insert!.payload as Record<string, unknown>).facility_id).toBe(FEATURED_FACILITY_ID);
+      expectNoLegacyRouting(supabase);
+    });
+  });
 
-      // Entitlement was resolved through the canonical RPC.
-      expect(supabase.rpcNames()).toContain("has_active_pro");
+  // ── CASE D — UNCLAIMED ──────────────────────────────────────────────────
+  describe("CASE D — approved but UNCLAIMED listing (no verified recipient)", () => {
+    const unclaimed = () =>
+      buildStubOptions({
+        isPro: false,
+        facility: facilityRow({
+          id: UNCLAIMED_FACILITY_ID,
+          name: "Tony Rice Center, INC",
+          // The hazard: a populated but UNVERIFIED email from a SAMHSA import.
+          email: "scraped-contact@unverified.example",
+          user_id: null,
+        }),
+      });
 
-      // No concierge / advisor / redistribution side effects whatsoever.
-      for (const table of [...CONCIERGE_TABLES, ...ADVISOR_TABLES]) {
-        expect(supabase.insertedTables()).not.toContain(table);
-        expect(supabase.selectedTables()).not.toContain(table);
-      }
-      expect(supabase.invokedFunctions()).not.toContain("notify-free-tier-inquiry-redirect");
+    it("stores the inquiry pinned to that facility", async () => {
+      const { handler, supabase } = await loadEdgeHandler(FN, unclaimed());
+      const { status, json } = await postJson(handler, seekerPayload(UNCLAIMED_FACILITY_ID));
 
-      // Provider + seeker notification pipeline still runs.
-      expect(supabase.selectedTables()).toContain("notification_preferences");
-      expect(emails.length).toBeGreaterThan(0);
+      expect(status).toBe(200);
+      expect(json.success).toBe(true);
+      const insert = leadInsertOf(supabase);
+      expect(insert, "unclaimed inquiry was not persisted").toBeTruthy();
+      expect((insert!.payload as Record<string, unknown>).facility_id).toBe(UNCLAIMED_FACILITY_ID);
     });
 
-    // ── Stage-2 verification hotfix #1 ──────────────────────────────────
-    // The seeker confirmation email is about the ONE facility the seeker
-    // selected. RehabLookup provides the directory; it does not run a
-    // placement desk, so the email must not promise that staff will connect,
-    // match, find or arrange an alternative provider. The seeker's own next
-    // step is self-service directory search.
-    it("sends a seeker confirmation that promises no alternate-provider coordination", async () => {
-      const { handler, emails } = await loadEdgeHandler(
-        FN,
-        buildStubOptions({ isPro: true }),
-      );
+    it("NEVER emails seeker PII to the unverified facilities.email address", async () => {
+      const { handler, emails } = await loadEdgeHandler(FN, unclaimed());
+      await postJson(handler, seekerPayload(UNCLAIMED_FACILITY_ID));
 
-      await postJson(handler, proPayload(PRO_FACILITY_ID));
+      const recipients = emails.flatMap((e) => (Array.isArray(e.to) ? e.to : [e.to])).map(String);
+      expect(recipients).not.toContain("scraped-contact@unverified.example");
+      for (const r of recipients) {
+        expect(r).not.toMatch(/unverified\.example/);
+      }
+    });
+
+    it("reports the truthful delivery state rather than claiming delivery", async () => {
+      const { handler } = await loadEdgeHandler(FN, unclaimed());
+      const { json } = await postJson(handler, seekerPayload(UNCLAIMED_FACILITY_ID));
+
+      expect(json.deliveryState).toBe("stored_pending_claim");
+      expect(String(json.message)).not.toMatch(/sent to/i);
+    });
+
+    it("sends the seeker a confirmation that does not claim the facility received it", async () => {
+      const { handler, emails } = await loadEdgeHandler(FN, unclaimed());
+      await postJson(handler, seekerPayload(UNCLAIMED_FACILITY_ID));
 
       const seekerEmail = emails.find((e) =>
-        String(e.to ?? "").includes("jordan.rivera@example.com") ||
-        (Array.isArray(e.to) && e.to.some((t) => String(t).includes("jordan.rivera@example.com"))),
+        JSON.stringify(e.to).includes("jordan.rivera@example.com"),
       );
-      expect(seekerEmail, "no seeker confirmation email was sent").toBeTruthy();
+      expect(seekerEmail).toBeTruthy();
       const html = String(seekerEmail!.html ?? "");
-      expect(html).toContain("Cascadia Recovery Center");
+      expect(html).toMatch(/recorded for/i);
+      expect(html).not.toMatch(/delivered to/i);
+      expect(html).not.toMatch(/an admissions specialist will reach out/i);
+    });
 
-      // The retired promise, and every close variant of it.
-      expect(html).not.toMatch(/connect you with another provider/i);
-      expect(html).not.toMatch(/\bconnect you (?:with|to)\b[^.<]{0,40}\b(?:another|other|a different)\b/i);
-      expect(html).not.toMatch(/\bwe(?:'ll| will)\s+(?:help|find|match)\b[^.<]{0,60}\bprovider\b/i);
-      expect(html).not.toMatch(/\b(?:our|rehablookup'?s)\s+(?:advisors?|coordinators?|care team)\b/i);
-      expect(html).not.toMatch(/matched (?:provider|facility)/i);
-
-      // Replaced by the self-service directory destination.
-      expect(html).toContain("https://rehablookup.com/search-results");
-      expect(html).toMatch(/continue searching/i);
-
-      // Still scoped to the single selected facility — no fan-out language.
-      expect(html).not.toMatch(/\bsent (?:to )?(?:multiple|several|other)\s+(?:facilities|centers|providers)\b/i);
+    it("never reroutes it to Concierge, an advisor, or another facility", async () => {
+      const { handler, supabase } = await loadEdgeHandler(FN, unclaimed());
+      await postJson(handler, seekerPayload(UNCLAIMED_FACILITY_ID));
+      expectNoLegacyRouting(supabase);
     });
   });
 
-  // ── CASE B ────────────────────────────────────────────────────────────
-  describe("CASE B — Free / non-Pro facility", () => {
-    it("returns DIRECT_CONTACT_REQUIRED for a full payload and persists nothing", async () => {
+  // ── CASES E/F/G/H — REJECTIONS BEFORE PII ───────────────────────────────
+  describe("safe rejections happen before PII-dependent processing", () => {
+    /** Facility identity only — no name, email, or phone in the body. */
+    const identityOnly = (id: string) => ({ facilityId: id });
+
+    it("CASE E — suspended facility is rejected and nothing is persisted", async () => {
       const { handler, supabase, emails } = await loadEdgeHandler(
         FN,
         buildStubOptions({
-          isPro: false,
-          facility: {
-            id: FREE_FACILITY_ID,
-            name: "Riverbend Wellness",
-            email: "info@riverbend.example",
-            user_id: "owner-2",
-            status: "approved",
-            suspended: false,
-            reply_email: null,
-            reply_email_verified: false,
-          },
+          facility: facilityRow({ id: FREE_FACILITY_ID, name: "Suspended House", suspended: true }),
         }),
       );
-
-      const { status, json } = await postJson(handler, proPayload(FREE_FACILITY_ID));
-
-      expect(status).toBe(200);
-      expect(json.action).toBe("DIRECT_CONTACT_REQUIRED");
-      expect(json.direct_contact_required).toBe(true);
-      expect(json.facility_id).toBe(FREE_FACILITY_ID);
-      expect(json.facility_name).toBe("Riverbend Wellness");
-
-      // Not a successful submission, and carries no routing promise.
-      expect(json.success).toBeUndefined();
-      expect(json.leadId).toBeUndefined();
-      expect(json.inquiry_id).toBeUndefined();
-      expect(json.confirmation_path).toBeUndefined();
-      expect(json.routing_mode).toBeUndefined();
-
-      // No seeker PII echoed back.
-      const body = JSON.stringify(json);
-      expect(body).not.toContain("jordan.rivera@example.com");
-      expect(body).not.toContain("Jordan");
-      expect(body).not.toContain("5035550142");
-
-      // Nothing written anywhere.
-      expect(supabase.insertedTables()).toEqual([]);
-      expect(emails).toEqual([]);
-
-      // No concierge, advisor, or free-tier notification side effects.
-      for (const table of [...CONCIERGE_TABLES, ...ADVISOR_TABLES, "admin_notifications"]) {
-        expect(supabase.selectedTables()).not.toContain(table);
-        expect(supabase.insertedTables()).not.toContain(table);
-      }
-      expect(supabase.invokedFunctions()).toEqual([]);
-    });
-
-    it("reaches DIRECT_CONTACT_REQUIRED with facility identity alone — no name, email or phone", async () => {
-      const { handler, supabase } = await loadEdgeHandler(
-        FN,
-        buildStubOptions({
-          isPro: false,
-          facility: {
-            id: FREE_FACILITY_ID,
-            name: "Riverbend Wellness",
-            status: "approved",
-            suspended: false,
-            user_id: "owner-2",
-            email: null,
-            reply_email: null,
-            reply_email_verified: false,
-          },
-        }),
-      );
-
-      // The platform does not accept seeker fields for this facility, so a
-      // request must not be required to carry them to learn that.
-      const { status, json } = await postJson(handler, { facilityId: FREE_FACILITY_ID });
-
-      expect(status).toBe(200);
-      expect(json.action).toBe("DIRECT_CONTACT_REQUIRED");
-      expect(json.reason).toBe("facility_not_pro");
-      expect(json.error).toBeUndefined();
-
-      // Proves the short-circuit happened before PII-dependent processing:
-      // none of the identity/abuse/rate-limit machinery ran.
-      expect(supabase.rpcNames()).not.toContain("is_identifier_blocked");
-      expect(supabase.rpcNames()).not.toContain("is_email_verified");
-      expect(supabase.selectedTables()).not.toContain("leads");
-      expect(supabase.insertedTables()).toEqual([]);
-
-      // The only reads were facility identity + the entitlement RPC.
-      expect(supabase.selectedTables()).toEqual(["facilities"]);
-      expect(supabase.rpcNames()).toEqual(["has_active_pro"]);
-    });
-
-    it("does not log seeker PII on the direct-contact branch", async () => {
-      const { handler, logs } = await loadEdgeHandler(
-        FN,
-        buildStubOptions({
-          isPro: false,
-          facility: {
-            id: FREE_FACILITY_ID,
-            name: "Riverbend Wellness",
-            status: "approved",
-            suspended: false,
-            user_id: "owner-2",
-            email: null,
-            reply_email: null,
-            reply_email_verified: false,
-          },
-        }),
-      );
-
-      await postJson(handler, proPayload(FREE_FACILITY_ID));
-
-      const joined = logs.join("\n");
-      expect(joined).not.toContain("jordan.rivera@example.com");
-      expect(joined).not.toContain("Jordan Rivera");
-      expect(joined).not.toContain("5035550142");
-    });
-  });
-
-  // ── CASE C ────────────────────────────────────────────────────────────
-  describe("CASE C — entitlement check failure", () => {
-    it("fails SAFE to DIRECT_CONTACT_REQUIRED and persists nothing", async () => {
-      const { handler, supabase, emails } = await loadEdgeHandler(
-        FN,
-        buildStubOptions({ proRpcError: { message: "connection reset" } }),
-      );
-
-      const { status, json } = await postJson(handler, proPayload(PRO_FACILITY_ID));
-
-      expect(status).toBe(200);
-      expect(json.action).toBe("DIRECT_CONTACT_REQUIRED");
-      expect(json.reason).toBe("entitlement_unconfirmed");
-
-      // An entitlement failure must never be routed into concierge, and must
-      // never deliver PII to a facility we could not confirm.
-      expect(supabase.insertedTables()).toEqual([]);
-      expect(supabase.invokedFunctions()).toEqual([]);
-      expect(emails).toEqual([]);
-      expect(json.confirmation_path).toBeUndefined();
-      expect(json.routing_mode).toBeUndefined();
-    });
-  });
-
-  // ── CASE D ────────────────────────────────────────────────────────────
-  describe("CASE D — Featured but not Pro", () => {
-    it("gets the same direct-contact treatment as any other non-Pro facility", async () => {
-      // Featured is a visibility add-on. It is not inquiry entitlement, and
-      // the function never reads a `featured` flag to decide routing.
-      const { handler, supabase } = await loadEdgeHandler(
-        FN,
-        buildStubOptions({
-          isPro: false,
-          facility: {
-            id: FREE_FACILITY_ID,
-            name: "Featured Only Center",
-            featured: true,
-            status: "approved",
-            suspended: false,
-            user_id: "owner-3",
-            email: null,
-            reply_email: null,
-            reply_email_verified: false,
-          },
-        }),
-      );
-
-      const { status, json } = await postJson(handler, proPayload(FREE_FACILITY_ID));
-
-      expect(status).toBe(200);
-      expect(json.action).toBe("DIRECT_CONTACT_REQUIRED");
-      expect(supabase.insertedTables()).toEqual([]);
-    });
-  });
-
-  // ── CASE E ────────────────────────────────────────────────────────────
-  describe("CASE E — unapproved / suspended facility", () => {
-    it("rejects a suspended facility before resolving entitlement", async () => {
-      const { handler, supabase } = await loadEdgeHandler(
-        FN,
-        buildStubOptions({
-          isPro: true,
-          facility: {
-            id: PRO_FACILITY_ID,
-            name: "Suspended Center",
-            status: "approved",
-            suspended: true,
-            user_id: "owner-4",
-            email: null,
-            reply_email: null,
-            reply_email_verified: false,
-          },
-        }),
-      );
-
-      const { status, json } = await postJson(handler, proPayload(PRO_FACILITY_ID));
+      const { status, json } = await postJson(handler, identityOnly(FREE_FACILITY_ID));
 
       expect(status).toBe(400);
       expect(json.code).toBe("facility_not_accepting");
       expect(supabase.insertedTables()).toEqual([]);
+      expect(emails).toEqual([]);
     });
 
-    it("rejects a pending (unapproved) facility", async () => {
-      const { handler } = await loadEdgeHandler(
+    it("CASE F — unapproved facility is rejected and nothing is persisted", async () => {
+      const { handler, supabase, emails } = await loadEdgeHandler(
         FN,
         buildStubOptions({
-          isPro: true,
-          facility: {
-            id: PRO_FACILITY_ID,
-            name: "Pending Center",
-            status: "pending",
-            suspended: false,
-            user_id: "owner-5",
-            email: null,
-            reply_email: null,
-            reply_email_verified: false,
-          },
+          facility: facilityRow({ id: FREE_FACILITY_ID, name: "Pending House", status: "pending" }),
         }),
       );
+      const { status, json } = await postJson(handler, identityOnly(FREE_FACILITY_ID));
 
-      const { status, json } = await postJson(handler, proPayload(PRO_FACILITY_ID));
       expect(status).toBe(400);
       expect(json.code).toBe("facility_not_accepting");
+      expect(supabase.insertedTables()).toEqual([]);
+      expect(emails).toEqual([]);
     });
 
-    it("404s an unknown facility", async () => {
-      const { handler } = await loadEdgeHandler(FN, buildStubOptions({ facility: null }));
-      const { status, json } = await postJson(handler, proPayload(PRO_FACILITY_ID));
+    it("CASE G — unknown facility is rejected safely", async () => {
+      const { handler, supabase } = await loadEdgeHandler(
+        FN,
+        buildStubOptions({ facility: null }),
+      );
+      const { status, json } = await postJson(handler, identityOnly(UNKNOWN_FACILITY_ID));
+
       expect(status).toBe(404);
       expect(json.code).toBe("facility_not_found");
+      expect(supabase.insertedTables()).toEqual([]);
     });
 
-    it("rejects a malformed facility id without touching the database", async () => {
-      const { handler, supabase } = await loadEdgeHandler(FN, buildStubOptions({ isPro: true }));
+    it("CASE H — malformed facility id is rejected before any lookup", async () => {
+      const { handler, supabase } = await loadEdgeHandler(FN, buildStubOptions());
       const { status, json } = await postJson(handler, { facilityId: "not-a-uuid" });
+
       expect(status).toBe(400);
       expect(json.code).toBe("invalid_facility_id");
-      expect(supabase.calls).toEqual([]);
+      expect(supabase.selectedTables()).not.toContain("facilities");
+      expect(supabase.insertedTables()).toEqual([]);
     });
 
-    it("rejects a missing facility id", async () => {
-      const { handler } = await loadEdgeHandler(FN, buildStubOptions({ isPro: true }));
-      const { status, json } = await postJson(handler, { email: "a@b.com" });
+    it("rejects a missing facility id outright", async () => {
+      const { handler } = await loadEdgeHandler(FN, buildStubOptions());
+      const { status, json } = await postJson(handler, {});
       expect(status).toBe(400);
       expect(json.code).toBe("facility_required");
     });
   });
 
-  // ── CASE F ────────────────────────────────────────────────────────────
-  describe("CASE F — grace-period Pro", () => {
-    it("preserves the direct Pro lead path whenever has_active_pro returns true", async () => {
-      // Grace handling (past_due within the dunning window) lives entirely in
-      // has_active_pro(). This function must not reimplement it — it simply
-      // honours a `true`.
+  // ── CASE I — IDEMPOTENCY ────────────────────────────────────────────────
+  describe("CASE I — idempotency", () => {
+    it("does not create a second inquiry for a repeated idempotency key", async () => {
       const { handler, supabase } = await loadEdgeHandler(
         FN,
-        buildStubOptions({ isPro: true }),
+        buildStubOptions({ isPro: false, idempotentHit: { id: "existing-lead-1" } }),
       );
-
-      const { status, json } = await postJson(handler, proPayload(PRO_FACILITY_ID));
+      const { status, json } = await postJson(handler, seekerPayload(PRO_FACILITY_ID));
 
       expect(status).toBe(200);
       expect(json.success).toBe(true);
-      expect(supabase.insertedTables()).toContain("leads");
-      expect(supabase.insertedTables()).not.toContain("concierge_inquiries");
+      expect(supabase.insertedTables()).not.toContain("leads");
     });
+  });
 
-    it("does not read facility_subscriptions or infer Pro from any other source", async () => {
+  // ── CASE J — RATE LIMITING ──────────────────────────────────────────────
+  describe("CASE J — rate limiting is preserved", () => {
+    it("refuses once the per-email hourly threshold is exceeded", async () => {
       const { handler, supabase } = await loadEdgeHandler(
         FN,
-        buildStubOptions({ isPro: true }),
+        buildStubOptions({ existingLeadCount: 50 }),
       );
-      await postJson(handler, proPayload(PRO_FACILITY_ID));
+      const { status, json } = await postJson(handler, seekerPayload(PRO_FACILITY_ID));
 
-      expect(supabase.selectedTables()).not.toContain("facility_subscriptions");
-      expect(supabase.rpcNames().filter((n) => n === "has_active_pro")).toHaveLength(1);
+      expect(status).toBe(429);
+      expect(String(json.code)).toMatch(/rate_limit|duplicate/);
+      expect(supabase.insertedTables()).not.toContain("leads");
+    });
+  });
+
+  // ── CASE K — BLOCKED IDENTIFIER ─────────────────────────────────────────
+  describe("CASE K — blocked identifiers are preserved", () => {
+    it("does not persist an inquiry from a blocked identifier", async () => {
+      const { handler, supabase } = await loadEdgeHandler(
+        FN,
+        buildStubOptions({ blocked: true }),
+      );
+      const { status } = await postJson(handler, seekerPayload(PRO_FACILITY_ID));
+
+      // Returns a success-shaped body on purpose, to avoid revealing the block.
+      expect(status).toBe(200);
+      expect(supabase.insertedTables()).not.toContain("leads");
+    });
+  });
+
+  // ── CASE L — EMAIL VERIFICATION ─────────────────────────────────────────
+  describe("CASE L — server-side email verification is still enforced", () => {
+    it("refuses an unverified email even for an eligible facility", async () => {
+      const { handler, supabase } = await loadEdgeHandler(
+        FN,
+        buildStubOptions({ emailVerified: false }),
+      );
+      const { status, json } = await postJson(handler, seekerPayload(PRO_FACILITY_ID));
+
+      expect(status).toBe(403);
+      expect(json.code).toBe("email_not_verified");
+      expect(supabase.insertedTables()).not.toContain("leads");
+    });
+  });
+
+  // ── CASE M — PII LOGGING ────────────────────────────────────────────────
+  describe("CASE M — seeker PII stays out of routine logs", () => {
+    it("does not write the seeker's full name, email or phone to console logs", async () => {
+      const original = { log: console.log, warn: console.warn, error: console.error };
+      const captured: string[] = [];
+      const capture =
+        () =>
+        (...args: unknown[]) =>
+          captured.push(args.map((a) => (typeof a === "string" ? a : JSON.stringify(a))).join(" "));
+      console.log = capture();
+      console.warn = capture();
+      console.error = capture();
+      try {
+        const { handler } = await loadEdgeHandler(FN, buildStubOptions({ isPro: false }));
+        await postJson(handler, seekerPayload(FREE_FACILITY_ID));
+      } finally {
+        console.log = original.log;
+        console.warn = original.warn;
+        console.error = original.error;
+      }
+
+      const logText = captured.join("\n");
+      expect(logText).not.toContain("jordan.rivera@example.com");
+      expect(logText).not.toContain("5035550142");
+      expect(logText).not.toContain("Jordan Rivera");
+    });
+  });
+
+  // ── CASE N — REDISTRIBUTION ─────────────────────────────────────────────
+  describe("CASE N — a new inquiry cannot enter automated redistribution", () => {
+    it("writes no redistribution ledger row and no redistribution-selection columns", async () => {
+      const { handler, supabase } = await loadEdgeHandler(FN, buildStubOptions({ isPro: false }));
+      await postJson(handler, seekerPayload(FREE_FACILITY_ID));
+
+      expect(supabase.insertedTables()).not.toContain("lead_distributions");
+      expect(supabase.invokedFunctions()).not.toContain("process-lead-redistribution");
+
+      // process-lead-redistribution selects on these columns. A row that never
+      // sets them cannot satisfy its selection criteria.
+      const payload = leadInsertOf(supabase)!.payload as Record<string, unknown>;
+      for (const col of [
+        "exclusive_until",
+        "extended_until",
+        "redistribution_status",
+        "redistributed_at",
+        "redistribution_count",
+      ]) {
+        expect(payload[col]).toBeUndefined();
+      }
+    });
+  });
+
+  // ── DIRECT_CONTACT_REQUIRED IS RETIRED ──────────────────────────────────
+  describe("DIRECT_CONTACT_REQUIRED is no longer emitted", () => {
+    it.each([
+      ["Free", FREE_FACILITY_ID, false],
+      ["Featured non-Pro", FEATURED_FACILITY_ID, false],
+      ["unclaimed", UNCLAIMED_FACILITY_ID, false],
+      ["Pro", PRO_FACILITY_ID, true],
+    ])("never returns it for a %s facility", async (_label, id, isPro) => {
+      const { handler } = await loadEdgeHandler(
+        FN,
+        buildStubOptions({
+          isPro,
+          facility: facilityRow({
+            id,
+            name: "Any Facility",
+            user_id: id === UNCLAIMED_FACILITY_ID ? null : "owner-x",
+          }),
+        }),
+      );
+      const { json } = await postJson(handler, seekerPayload(id));
+
+      expect(json.action).not.toBe("DIRECT_CONTACT_REQUIRED");
+      expect(json.direct_contact_required).toBeUndefined();
+      expect(json.success).toBe(true);
     });
   });
 });

@@ -100,7 +100,8 @@ export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = 
         if (!sanitized) { setIsSearching(false); return; }
 
         const { data, error } = await supabase
-          .from('facilities')
+          // public_facilities — seekers have no raw-table SELECT policy.
+          .from('public_facilities')
           .select('id, name, city, state, slug')
           .eq('status', 'approved')
           .or(`name.ilike.%${sanitized}%,city.ilike.%${sanitized}%,state.ilike.%${sanitized}%`)

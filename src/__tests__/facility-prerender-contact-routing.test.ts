@@ -3,34 +3,40 @@
 // Runs in the node environment (not the suite-wide jsdom default): the module
 // under test is a build script that reads `process.argv` and Node URL helpers.
 /**
- * Directory cutover stage 2, verification hotfix #1 —
- * generated facility profile CONTACT-ROUTING contract.
- *
- * Stage 2 routed the React facility-contact path by entitlement, but the
- * crawler-facing static mirror produced by
- * `scripts/generate-facility-profiles-html.mjs` rendered its "Request
- * Information" CTA and its contact/insurance FAQ answers unconditionally.
- * A real Free facility's generated page therefore advertised an on-platform
- * inquiry form the server would refuse with DIRECT_CONTACT_REQUIRED.
+ * Generated facility profile — INQUIRY ROUTING + PHONE VISIBILITY contract.
  *
  * These tests import the REAL generator and render REAL HTML from fixture
  * rows. They touch no network and no Supabase project: the generator's
  * `main()` is guarded behind an invoked-directly check precisely so this
  * import is inert. Each rendered page is then fed through the REAL build
- * guard (`scripts/check-inquiry-routing-prerender.mjs`), so the fixtures
- * prove the generator and the guard agree.
+ * guard (`scripts/check-inquiry-routing-prerender.mjs`), so the fixtures prove
+ * the generator and the guard agree rather than drifting apart.
  *
- * Fixtures deliberately include a Pro shape. Production had no active Pro
- * facility subscription at verification time, and none was fabricated — the
- * Pro contract is covered here deterministically instead.
+ * THE POINT OF THESE FIXTURES
+ * ───────────────────────────
+ * A test that feeds in `phone: null` and finds no phone in the output proves
+ * nothing — it tests the fixture, not the masking. So the Free and
+ * Featured-only fixtures below carry a POPULATED phone column, exactly as a
+ * real SAMHSA-imported listing does, and assert the digits never reach the
+ * HTML. That is the difference between "we didn't have a number" and "we had
+ * one and withheld it".
+ *
+ * Production had no active Pro facility subscription at verification time and
+ * none was fabricated, so the Pro half of the contract is covered here
+ * deterministically instead.
  */
 import { describe, it, expect } from "vitest";
 // @ts-expect-error — plain .mjs build script, intentionally untyped
-import { renderFacilityHtml, isActivePro, contactRoutingMode } from "../../scripts/generate-facility-profiles-html.mjs";
+import {
+  renderFacilityHtml,
+  isActivePro,
+  inquiryRoutingMode,
+  phoneVisibilityMode,
+} from "../../scripts/generate-facility-profiles-html.mjs";
 // @ts-expect-error — plain .mjs build script, intentionally untyped
 import { scanCenterPage } from "../../scripts/check-inquiry-routing-prerender.mjs";
 
-/** Empty child-table buckets — none of these assertions depend on them. */
+/** Empty child-table buckets — most assertions don't depend on them. */
 function emptyKids() {
   return {
     services: new Map(),
@@ -52,40 +58,82 @@ function kidsWithInsurance(facilityId: string) {
   return kids;
 }
 
-const FREE_FULL = {
-  id: "free-full",
+/**
+ * The digits every non-Pro fixture must NOT leak. Mirrors the real production
+ * row that exposed the bug (Tony Rice Center, INC — approved, unclaimed,
+ * is_pro=false, and a populated phone column).
+ */
+const SOURCE_PHONE = "(931) 685-0957";
+const SOURCE_PHONE_DIGITS = "9316850957";
+
+/** 1. Free CLAIMED facility that HAS a phone in its source data. */
+const FREE_CLAIMED_WITH_PHONE = {
+  id: "free-claimed",
   slug: "tony-rice-center-inc-shelbyville-tn-cfa6cfec",
   name: "Tony Rice Center, INC",
   city: "Shelbyville",
   state: "TN",
   zip_code: "37160",
   address: "1234 Recovery Way",
-  phone: "(931) 555-0100",
+  phone: SOURCE_PHONE,
   website: "https://tonyricecenter.example.org",
   facility_type: "Outpatient Program",
+  is_claimed: true,
   is_pro: false,
 };
 
-const FREE_BARE = {
-  id: "free-bare",
-  slug: "bare-listing-shelbyville-tn",
-  name: "Bare Listing Recovery",
+/** 2. Free facility with website + address (no phone at all). */
+const FREE_WEB_AND_ADDRESS = {
+  id: "free-web",
+  slug: "harbor-point-recovery-shelbyville-tn",
+  name: "Harbor Point Recovery",
   city: "Shelbyville",
   state: "TN",
-  address: null,
+  address: "88 Harbor Point Road",
   phone: null,
-  website: null,
+  website: "https://harborpoint.example.org",
   is_pro: false,
 };
 
-const PRO = {
-  ...FREE_FULL,
+/** 3. FEATURED-ONLY, non-Pro, WITH a phone in source data.
+ *     Featured is paid visibility and must not unlock the number. */
+const FEATURED_ONLY_WITH_PHONE = {
+  id: "featured-only",
+  slug: "beacon-ridge-treatment-nashville-tn",
+  name: "Beacon Ridge Treatment",
+  city: "Nashville",
+  state: "TN",
+  address: "500 Beacon Ridge Drive",
+  phone: SOURCE_PHONE,
+  website: "https://beaconridge.example.org",
+  featured: true,
+  featured_pinned: true,
+  verified: true,
+  is_pro: false,
+};
+
+/** 4. ACTIVE PRO with a phone. */
+const PRO_WITH_PHONE = {
   id: "pro-1",
   slug: "cascadia-recovery-center-portland-or",
   name: "Cascadia Recovery Center",
   city: "Portland",
   state: "OR",
+  zip_code: "97209",
+  address: "77 Cascadia Avenue",
+  phone: SOURCE_PHONE,
+  website: "https://cascadia.example.org",
+  facility_type: "Residential Program",
   is_pro: true,
+};
+
+/** 5. Facility with no phone on either tier. */
+const PRO_NO_PHONE = {
+  ...PRO_WITH_PHONE,
+  id: "pro-nophone",
+  slug: "still-water-recovery-bend-or",
+  name: "Still Water Recovery",
+  phone: null,
 };
 
 const render = (f: Record<string, unknown>, kids = emptyKids()) =>
@@ -94,234 +142,160 @@ const render = (f: Record<string, unknown>, kids = emptyKids()) =>
 /** Run the shipped build guard over a rendered page. */
 const guard = (html: string, slug: string) => scanCenterPage(html, slug);
 
+/** Digits present anywhere in the document, ignoring formatting. */
+function containsPhoneDigits(html: string, digits: string): boolean {
+  // Strip everything but digits from the whole page, then look for the run.
+  // This catches "(931) 685-0957", "931-685-0957", "931.685.0957" and
+  // "tel:+19316850957" alike.
+  return html.replace(/\D/g, "").includes(digits);
+}
+
 describe("facility prerender — entitlement resolution", () => {
   it("treats only is_pro === true as Pro, failing safe on every other shape", () => {
     expect(isActivePro({ is_pro: true })).toBe(true);
     for (const value of [false, null, undefined, "true", 1, {}]) {
-      expect(isActivePro({ is_pro: value }), `is_pro=${JSON.stringify(value)}`).toBe(false);
-      expect(contactRoutingMode({ is_pro: value })).toBe("direct");
+      expect(isActivePro({ is_pro: value })).toBe(false);
+      expect(phoneVisibilityMode({ is_pro: value })).toBe("hidden");
     }
-    expect(isActivePro({})).toBe(false);
-    expect(isActivePro(null)).toBe(false);
-    expect(contactRoutingMode({ is_pro: true })).toBe("pro");
+    expect(phoneVisibilityMode({ is_pro: true })).toBe("pro");
   });
 
   it("never derives Pro from Featured", () => {
-    const html = render({ ...FREE_FULL, featured: true, verified: true });
-    expect(html).toContain('data-contact-routing="direct"');
-    expect(html).not.toContain('data-contact-routing="pro"');
+    expect(isActivePro(FEATURED_ONLY_WITH_PHONE)).toBe(false);
+    expect(phoneVisibilityMode(FEATURED_ONLY_WITH_PHONE)).toBe("hidden");
+  });
+
+  it("routes every inquiry to the selected facility and nowhere else", () => {
+    expect(inquiryRoutingMode()).toBe("facility");
   });
 });
 
-// ── FIXTURE 1 — Free / non-Pro with full contact data ─────────────────────
-describe("FIXTURE 1 — Free facility with phone, website and address", () => {
-  const html = render(FREE_FULL, kidsWithInsurance(FREE_FULL.id));
+describe.each([
+  ["Free claimed facility with a phone in source data", FREE_CLAIMED_WITH_PHONE, true],
+  ["Free facility with website + address, no phone", FREE_WEB_AND_ADDRESS, false],
+  ["Featured-only non-Pro with a phone in source data", FEATURED_ONLY_WITH_PHONE, true],
+])("phone-hidden page — %s", (_label, fixture, sourceHasPhone) => {
+  const html = render(fixture, kidsWithInsurance(fixture.id));
 
-  it('carries exactly one marker, data-contact-routing="direct"', () => {
-    const markers = html.match(/data-contact-routing="[a-z-]*"/g) ?? [];
-    expect(markers).toEqual(['data-contact-routing="direct"']);
+  it('is marked data-phone-visibility="hidden"', () => {
+    expect(html).toContain('data-phone-visibility="hidden"');
+    expect(html).not.toContain('data-phone-visibility="pro"');
   });
 
-  it("offers the facility's own call, website and directions actions", () => {
-    expect(html).toContain(`href="tel:${FREE_FULL.phone}"`);
-    expect(html).toContain(FREE_FULL.website);
-    expect(html).toContain("Visit Facility Website");
-    expect(html).toContain("Get Directions");
-    expect(html).toContain("https://www.google.com/maps/search/");
+  it('is marked data-inquiry-routing="facility"', () => {
+    expect(html).toContain('data-inquiry-routing="facility"');
   });
 
-  it("keeps directory recovery paths available", () => {
-    expect(html).toContain(`href="/center/${FREE_FULL.slug}"`);
-    expect(html).toContain('href="/search-results"');
+  it("still offers an inquiry CTA for its own facility", () => {
+    expect(html).toContain(`/center/${fixture.slug}?action=request-info`);
+    expect(html).toMatch(/Send Inquiry/);
   });
 
-  it("heads the CTA with direct facility contact, not Request Information", () => {
-    expect(html).toContain(`<h2>Contact ${FREE_FULL.name} Directly</h2>`);
-    expect(html).not.toContain(`<h2>Request Information from`);
-  });
-
-  it("contains no on-platform inquiry affordance", () => {
-    expect(html).not.toContain("?action=request-info");
-    expect(html).not.toMatch(/"Request Information" form/i);
-    expect(html).not.toMatch(/send a confidential inquiry (?:through|via|on) (?:the|this)/i);
-  });
-
-  it("does not tell the seeker to request benefits verification through the profile", () => {
-    expect(html).not.toMatch(/request a benefits verification through the profile/i);
-    expect(html).not.toMatch(/\bwe (?:verify|confirm) your benefits\b/i);
-  });
-
-  it("points the insurance FAQ at the facility, in HTML and in JSON-LD alike", () => {
-    const expected = "Contact the facility directly to confirm benefits and out-of-pocket costs.";
-    // Visible FAQ section.
-    expect(html).toContain(expected);
-    // FAQPage JSON-LD built from the same items.
-    const faqLd = extractFaqLd(html);
-    const insurance = faqLd.find((q) => /accept insurance/i.test(q.name));
-    expect(insurance, "insurance FAQ entry missing").toBeTruthy();
-    expect(insurance!.acceptedAnswer.text).toContain(expected);
-    expect(insurance!.acceptedAnswer.text).not.toMatch(/through the profile/i);
-  });
-
-  it("points the contact FAQ at the facility's real channels only", () => {
-    const faqLd = extractFaqLd(html);
-    const contact = faqLd.find((q) => /How do I contact/i.test(q.name));
-    expect(contact, "contact FAQ entry missing").toBeTruthy();
-    const answer = contact!.acceptedAnswer.text;
-    expect(answer).toContain(FREE_FULL.phone);
-    expect(answer).toContain(FREE_FULL.website);
-    expect(answer).toMatch(/contact admissions directly/i);
-    expect(answer).not.toMatch(/Request Information/i);
-    // No unsupported per-facility response-time claim.
-    expect(answer).not.toMatch(/same business day/i);
-  });
-
-  it("makes no unsupported response-time claim anywhere on the page", () => {
-    expect(html).not.toMatch(/typically responds the same business day/i);
-  });
-
-  it("passes the shipped build guard", () => {
-    const result = guard(html, FREE_FULL.slug);
-    expect(result.isFacilityPage).toBe(true);
-    expect(result.mode).toBe("direct");
-    expect(result.violations).toEqual([]);
-  });
-});
-
-// ── FIXTURE 1b — Free / non-Pro with NO published contact channel ─────────
-describe("FIXTURE 1b — Free facility with no phone and no website", () => {
-  const html = render(FREE_BARE);
-
-  it('is still marked data-contact-routing="direct"', () => {
-    const markers = html.match(/data-contact-routing="[a-z-]*"/g) ?? [];
-    expect(markers).toEqual(['data-contact-routing="direct"']);
-  });
-
-  it("manufactures no contact action and never substitutes RehabLookup's number", () => {
-    // Scoped to the CTA block: the shared site header/footer legitimately
-    // carry RehabLookup's own support line and the SAMHSA/988 crisis numbers,
-    // and this hotfix does not touch that chrome.
-    const cta = extractCta(html);
-    expect(cta).not.toContain('href="tel:');
-    expect(cta).not.toContain("Visit Facility Website");
-    // RehabLookup's own support number must not stand in for a missing one.
-    expect(cta).not.toMatch(/\(?214\)?[\s.-]?\d{3}[\s.-]?\d{4}/);
-    // The CTA says so plainly rather than implying channels exist "below".
-    expect(cta).toMatch(/has not published a direct phone number or website/i);
-  });
-
-  it("still offers directions, which are grounded in the row's real city/state", () => {
-    // A map link is a location affordance, not a way to reach admissions —
-    // it is allowed here precisely because city + state are real columns.
-    expect(extractCta(html)).toContain("https://www.google.com/maps/search/");
-  });
-
-  it("still offers safe profile/search recovery", () => {
-    expect(html).toContain(`href="/center/${FREE_BARE.slug}"`);
-    expect(html).toContain('href="/search-results"');
-    expect(html).toContain("Search Other Treatment Centers");
-  });
-
-  it("says plainly that no direct channel was published", () => {
-    expect(html).toMatch(/has not published a direct phone number or website/i);
-  });
-
-  it("offers no on-platform inquiry affordance and passes the build guard", () => {
-    expect(html).not.toContain("?action=request-info");
-    const result = guard(html, FREE_BARE.slug);
-    expect(result.mode).toBe("direct");
-    expect(result.violations).toEqual([]);
-  });
-});
-
-// ── FIXTURE 2 — Active Pro ────────────────────────────────────────────────
-describe("FIXTURE 2 — active Pro facility", () => {
-  const html = render(PRO, kidsWithInsurance(PRO.id));
-
-  it('carries exactly one marker, data-contact-routing="pro"', () => {
-    const markers = html.match(/data-contact-routing="[a-z-]*"/g) ?? [];
-    expect(markers).toEqual(['data-contact-routing="pro"']);
-  });
-
-  it("may offer Request Information, pinned to its own facility slug", () => {
-    expect(html).toContain(`href="/center/${PRO.slug}?action=request-info"`);
-    const links = html.match(/href="\/center\/[^"]*\?action=request-info"/g) ?? [];
-    expect(links).toEqual([`href="/center/${PRO.slug}?action=request-info"`]);
-  });
-
-  it("keeps direct facility contact available alongside the inquiry CTA", () => {
-    expect(html).toContain(`href="tel:${PRO.phone}"`);
-    expect(html).toContain("Visit Facility Website");
-    expect(html).toContain("Get Directions");
-  });
-
-  it("promises no matching, advisor, coordinator or multi-facility distribution", () => {
-    expect(html).not.toMatch(/\bconnect you (?:with|to)\b[^.<]{0,40}\b(?:another|other|a different)\b/i);
-    expect(html).not.toMatch(/\b(?:our|rehablookup'?s)\s+(?:advisors?|coordinators?|care team)\b/i);
-    expect(html).not.toMatch(/\bwe(?:'ll| will)\s+(?:find|match)\b/i);
-    expect(html).toMatch(/Your details go to this facility only/i);
-  });
-
-  it("lets the Pro FAQ reference the on-platform form without overpromising", () => {
-    const faqLd = extractFaqLd(html);
-    const contact = faqLd.find((q) => /How do I contact/i.test(q.name));
-    expect(contact!.acceptedAnswer.text).toMatch(/"Request Information" form/);
-    expect(contact!.acceptedAnswer.text).not.toMatch(/same business day/i);
-    const insurance = faqLd.find((q) => /accept insurance/i.test(q.name));
-    expect(insurance!.acceptedAnswer.text).not.toMatch(
-      /request a benefits verification through the profile/i,
-    );
-  });
-
-  it("passes the shipped build guard", () => {
-    const result = guard(html, PRO.slug);
-    expect(result.isFacilityPage).toBe(true);
-    expect(result.mode).toBe("pro");
-    expect(result.violations).toEqual([]);
-  });
-});
-
-// ── The guard itself must actually fail on the regression it exists for ───
-describe("check:inquiry-routing-prerender catches the stage-2 regression", () => {
-  it("rejects a direct page carrying the pre-hotfix Request Information CTA", () => {
-    const regressed = render(FREE_FULL, kidsWithInsurance(FREE_FULL.id)).replace(
-      `<h2>Contact ${FREE_FULL.name} Directly</h2>`,
-      `<h2>Request Information from ${FREE_FULL.name}</h2>\n<a href="/center/${FREE_FULL.slug}?action=request-info">Request Information</a>`,
-    );
-    const result = guard(regressed, FREE_FULL.slug);
-    expect(result.mode).toBe("direct");
-    expect(result.violations.length).toBeGreaterThan(0);
-    expect(result.violations.map((v: { rule: string }) => v.rule).join(" ")).toMatch(
-      /inquiry flow/i,
-    );
-  });
-
-  it("rejects a facility page with no contact-routing marker at all", () => {
-    const stripped = render(FREE_FULL).replace(/ data-contact-routing="[a-z-]*"/g, "");
-    const result = guard(stripped, FREE_FULL.slug);
-    expect(result.isFacilityPage).toBe(true);
-    expect(result.violations.map((v: { rule: string }) => v.rule).join(" ")).toMatch(
-      /no data-contact-routing marker/i,
-    );
-  });
-});
-
-/** Isolate the contact CTA block from the surrounding shared page chrome. */
-function extractCta(html: string): string {
-  const start = html.indexOf('<div class="cta"');
-  expect(start, "no CTA block in rendered page").toBeGreaterThan(-1);
-  const end = html.indexOf('<section class="related"', start);
-  return html.slice(start, end === -1 ? undefined : end);
-}
-
-/** Pull the FAQPage JSON-LD block out of a rendered page. */
-function extractFaqLd(
-  html: string,
-): Array<{ name: string; acceptedAnswer: { text: string } }> {
-  const blocks = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)];
-  for (const [, body] of blocks) {
-    const parsed = JSON.parse(body.replace(/\\u003c/g, "<"));
-    if (parsed["@type"] === "FAQPage") return parsed.mainEntity;
+  if (sourceHasPhone) {
+    // THE LOAD-BEARING ASSERTION. The source row HAS a phone; the artifact
+    // must not.
+    it("does not leak the phone number that exists in its source data", () => {
+      expect(fixture.phone).toBeTruthy();
+      expect(containsPhoneDigits(html, SOURCE_PHONE_DIGITS)).toBe(false);
+      expect(html).not.toContain(SOURCE_PHONE);
+    });
   }
-  throw new Error("no FAQPage JSON-LD found in rendered page");
-}
+
+  it("emits no facility tel: link", () => {
+    const telTargets = [...html.matchAll(/href="tel:([^"]*)"/g)].map((m) =>
+      m[1].replace(/\D/g, ""),
+    );
+    expect(telTargets).not.toContain(SOURCE_PHONE_DIGITS);
+  });
+
+  it("emits no JSON-LD telephone property", () => {
+    expect(html).not.toMatch(/"telephone"\s*:/);
+  });
+
+  it("renders no visible Phone: line and no Call CTA", () => {
+    expect(html).not.toMatch(/<strong>Phone:<\/strong>/i);
+    expect(html).not.toMatch(/<a[^>]*class="btn[^"]*"[^>]*href="tel:/i);
+  });
+
+  it("does not tell the reader to call in the FAQ", () => {
+    // The contact FAQ must not route a seeker to a number we withhold.
+    expect(html).not.toMatch(/You can call [^<]*at \(?931/i);
+  });
+
+  it("keeps website and directions when the data is real", () => {
+    if (fixture.website) {
+      expect(html).toContain(fixture.website);
+    }
+    if (fixture.address) {
+      expect(html).toMatch(/Get Directions/);
+    }
+  });
+
+  it("passes the shipped build guard", () => {
+    const result = guard(html, fixture.slug);
+    expect(result.isFacilityPage).toBe(true);
+    expect(result.phoneMode).toBe("hidden");
+    expect(result.inquiryMode).toBe("facility");
+    expect(result.violations).toEqual([]);
+  });
+});
+
+describe("phone-pro page — active Pro facility with a phone", () => {
+  const html = render(PRO_WITH_PHONE, kidsWithInsurance(PRO_WITH_PHONE.id));
+
+  it('is marked data-phone-visibility="pro" and data-inquiry-routing="facility"', () => {
+    expect(html).toContain('data-phone-visibility="pro"');
+    expect(html).toContain('data-inquiry-routing="facility"');
+  });
+
+  it("offers the inquiry CTA for its own facility", () => {
+    expect(html).toContain(`/center/${PRO_WITH_PHONE.slug}?action=request-info`);
+  });
+
+  it("publishes the facility phone, a tel: link and JSON-LD telephone", () => {
+    expect(containsPhoneDigits(html, SOURCE_PHONE_DIGITS)).toBe(true);
+    expect(html).toMatch(/href="tel:/);
+    expect(html).toMatch(/"telephone"\s*:/);
+    expect(html).toMatch(/<strong>Phone:<\/strong>/i);
+  });
+
+  it("may reference calling in the contact FAQ", () => {
+    expect(html).toMatch(/You can call /i);
+  });
+
+  it("passes the shipped build guard", () => {
+    const result = guard(html, PRO_WITH_PHONE.slug);
+    expect(result.phoneMode).toBe("pro");
+    expect(result.inquiryMode).toBe("facility");
+    expect(result.violations).toEqual([]);
+  });
+});
+
+describe("facility with no phone at all", () => {
+  const html = render(PRO_NO_PHONE, emptyKids());
+
+  it("still offers the inquiry CTA and passes the guard", () => {
+    expect(html).toContain(`/center/${PRO_NO_PHONE.slug}?action=request-info`);
+    expect(guard(html, PRO_NO_PHONE.slug).violations).toEqual([]);
+  });
+
+  it("emits no telephone anywhere and no Call CTA", () => {
+    expect(html).not.toMatch(/"telephone"\s*:/);
+    expect(html).not.toMatch(/<a[^>]*class="btn[^"]*"[^>]*href="tel:/i);
+  });
+});
+
+describe("no generated facility page promises coordination or a response time", () => {
+  it.each([
+    ["free-claimed", FREE_CLAIMED_WITH_PHONE],
+    ["featured-only", FEATURED_ONLY_WITH_PHONE],
+    ["pro", PRO_WITH_PHONE],
+  ])("%s", (_label, fixture) => {
+    const html = render(fixture, kidsWithInsurance(fixture.id));
+    expect(html).not.toMatch(/care coordinator|our advisors?|treatment specialist matches/i);
+    expect(html).not.toMatch(/within (?:an? )?(?:hour|business day)/i);
+    expect(html).not.toMatch(/we'?ll (?:find|match) (?:you )?(?:a|another)/i);
+    // The inquiry is never described as going anywhere but this facility.
+    expect(html).not.toMatch(/sent to (?:multiple|several|other) (?:facilities|centers)/i);
+  });
+});

@@ -14,6 +14,7 @@
  */
 
 import { Link } from "react-router-dom";
+import { resolvePublicFacilityPhone } from "@/lib/facilityPhoneVisibility";
 import { CheckCircle2, Phone, Star, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -31,6 +32,8 @@ export interface FacilityCardData {
   description: string | null;
   logo_url: string | null;
   phone: string | null;
+  /** Canonical has_active_pro() projection — the ONLY phone-visibility key. */
+  is_pro?: boolean | null;
   verified: boolean | null;
   is_claimed?: boolean;
 }
@@ -278,9 +281,13 @@ export function FacilityCard({
           >
             Claim This Listing
           </Link>
-        ) : (phoneOverride ?? facility.phone) ? (
+        ) : (phoneOverride ?? resolvePublicFacilityPhone(facility).display) ? (
+          // `phoneOverride` is a pre-gated, trusted value supplied by callers
+          // that already resolved entitlement (e.g. the Featured rail, whose
+          // display_phone is Pro-gated server-side). The fallback path applies
+          // the public rule itself: active Pro only.
           <a
-            href={`tel:${phoneOverride ?? facility.phone}`}
+            href={`tel:${phoneOverride ?? resolvePublicFacilityPhone(facility).display}`}
             onClick={onPhoneClick}
             className="inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:border-emerald-300 hover:text-emerald-700"
           >

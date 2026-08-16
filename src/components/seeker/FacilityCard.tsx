@@ -60,6 +60,7 @@ export const FacilityCard = forwardRef<HTMLElement, FacilityCardProps>(
       gallery_urls?: string[] | null;
       hasFeaturedSubscription?: boolean;
       hasPaidPlan?: boolean;
+      isPro?: boolean;
       verified?: boolean | null;
       year_established?: number | null;
       facilityType?: string | null;
@@ -86,6 +87,10 @@ export const FacilityCard = forwardRef<HTMLElement, FacilityCardProps>(
       gallery_urls: facility.gallery_urls,
       hasFeaturedSubscription: facility.featured,
       hasPaidPlan: facility.planTier === "pro",
+      // Canonical Pro drives PHONE VISIBILITY in SearchResultCard. Absent or
+      // non-"pro" resolves to hidden, which is the correct fail-closed
+      // default for a seeker surface that did not select is_pro.
+      isPro: facility.planTier === "pro",
       verified: facility.verified,
       year_established: facility.year_established,
       facilityType: facility.facility_type,

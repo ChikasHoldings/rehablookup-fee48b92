@@ -353,7 +353,8 @@ export default function SeekerRequests() {
         // Surface facility-fetch errors too — without this, the names
         // silently fall back to "Treatment Center" if the join fails.
         const { data: facilitiesData, error: facErr } = await supabase
-          .from("facilities")
+          // public_facilities — seekers have no raw-table SELECT policy.
+          .from("public_facilities")
           .select("id, name, slug, city, state, logo_url")
           .in("id", facilityIds);
         if (facErr) {

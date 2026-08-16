@@ -317,7 +317,7 @@ export default function SeekerReviews() {
       const reviewIds = reviewsData.map(r => r.id);
 
       const [facilitiesResult, responsesResult] = await Promise.all([
-        supabase.from('facilities').select('id, name, slug, city, state, facility_type, logo_url').in('id', facilityIds),
+        supabase.from('public_facilities').select('id, name, slug, city, state, facility_type, logo_url').in('id', facilityIds),
         supabase.from('review_responses').select('id, review_id, response_text, created_at').in('review_id', reviewIds).eq('status', 'active'),
       ]);
 

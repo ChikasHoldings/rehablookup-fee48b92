@@ -29,15 +29,28 @@ import { resolve } from "node:path";
 const root = resolve(__dirname, "../..");
 const read = (rel: string) => readFileSync(resolve(root, rel), "utf8");
 
-/** Every file on the ACTIVE new seeker facility-contact path. */
+/**
+ * Every file on the ACTIVE seeker facility-contact path.
+ *
+ * FacilityDirectContact.tsx and useFacilityContactRouting.ts are deliberately
+ * ABSENT: the inquiry-model amendment deleted them. The "direct contact
+ * instead of a form" experience they implemented no longer exists, and the
+ * `"pro" | "direct"` routing abstraction was replaced by a capability model
+ * (useFacilityContactCapabilities). Dead components are not kept for history.
+ */
 const ACTIVE_CONTACT_PATH = [
   "src/components/profile/RequestInfoModal.tsx",
+  "src/components/profile/FacilityInquiryForm.tsx",
+  "src/hooks/useFacilityContactCapabilities.ts",
+  "src/lib/facilityPhoneVisibility.ts",
+  "src/components/lead-intake/useLeadIntakeForm.ts",
+  "src/components/cards/SearchResultCard.tsx",
+];
+
+/** Files the amendment removed. Their return would be a regression. */
+const RETIRED_FILES = [
   "src/components/profile/FacilityDirectContact.tsx",
   "src/hooks/useFacilityContactRouting.ts",
-  "src/components/lead-intake/LeadIntakeForm.tsx",
-  "src/components/lead-intake/useLeadIntakeForm.ts",
-  "src/components/lead-intake/SingleQuestionFlow.tsx",
-  "src/components/cards/SearchResultCard.tsx",
 ];
 
 /**
@@ -106,28 +119,68 @@ describe("stage 2 — active facility-contact path", () => {
     expect(existsSync(resolve(root, "src/hooks/useFacilitySubscriptionTier.ts"))).toBe(false);
   });
 
-  it("resolves entitlement from the canonical is_pro projection, not facility_subscriptions", () => {
-    const src = read("src/hooks/useFacilityContactRouting.ts");
+  it("deletes the retired direct-contact path rather than keeping it dead", () => {
+    for (const rel of RETIRED_FILES) {
+      expect(existsSync(resolve(root, rel)), `${rel} should have been deleted`).toBe(false);
+    }
+  });
+
+  it("resolves phone visibility from the canonical is_pro projection, not facility_subscriptions", () => {
+    const src = read("src/hooks/useFacilityContactCapabilities.ts");
     expect(src).toMatch(/public_facilities/);
     expect(src).toMatch(/is_pro/);
     expect(stripComments(src)).not.toMatch(/facility_subscriptions/);
+  });
+
+  it("does NOT derive inquiry eligibility from entitlement", () => {
+    // The whole amendment in one assertion: canSubmitInquiry must not be a
+    // function of is_pro.
+    const code = stripComments(read("src/hooks/useFacilityContactCapabilities.ts"));
+    // Inspect the ASSIGNMENT lines only. The interface declaration lists
+    // canSubmitInquiry and showPhone as sibling fields, which a loose
+    // multi-line regex would happily (and wrongly) match.
+    const assignments = code
+      .split("\n")
+      .filter((l) => /\bcanSubmitInquiry\s*:/.test(l) && !/boolean/.test(l));
+    expect(assignments.length, "no canSubmitInquiry assignment found").toBeGreaterThan(0);
+    // Legal values: `isApproved` (the live resolution) or a hard `false`
+    // (the fail-closed UNAVAILABLE constant). Never an entitlement.
+    for (const line of assignments) {
+      expect(line).toMatch(/canSubmitInquiry:\s*(?:isApproved|false)\b/);
+      expect(line).not.toMatch(/is_pro|isPro|showPhone|featured/);
+    }
+    expect(assignments.some((l) => /canSubmitInquiry:\s*isApproved/.test(l))).toBe(true);
+  });
+
+  it("gates phone on exact canonical Pro and never on Featured", () => {
+    const code = stripComments(read("src/lib/facilityPhoneVisibility.ts"));
+    expect(code).toMatch(/isPro !== true/);
+    expect(code).not.toMatch(/featured/i);
   });
 });
 
 describe("stage 2 — submit-qualified-lead source contract", () => {
   const FN = "supabase/functions/submit-qualified-lead/index.ts";
 
-  it("resolves entitlement before any PII-dependent processing", () => {
+  it("resolves the destination before any PII-dependent processing", () => {
     // Scoped to the request handler body — the helper *definitions* above it
     // (checkForDuplicate, isBlocked, …) naturally appear earlier in the file
     // and say nothing about execution order.
+    //
+    // The entitlement gate is gone in 3.1.0, but the ORDERING requirement it
+    // used to satisfy survives: a request aimed at a missing, unapproved or
+    // suspended facility must be rejected without RehabLookup touching seeker
+    // PII. The barrier is now the facility resolution + eligibility check.
     const full = read(FN);
     const handlerStart = full.indexOf("Deno.serve(async (req)");
     expect(handlerStart).toBeGreaterThan(-1);
     const handler = full.slice(handlerStart);
 
-    const entitlement = handler.indexOf('supabase.rpc("has_active_pro"');
-    expect(entitlement).toBeGreaterThan(-1);
+    const facilityLoad = handler.indexOf('from("facilities")');
+    expect(facilityLoad, "facility resolution not found in handler").toBeGreaterThan(-1);
+
+    const eligibility = handler.indexOf('facility.status !== "approved"');
+    expect(eligibility, "approved/suspended check not found").toBeGreaterThan(facilityLoad);
 
     // Nothing that reads, writes, or derives from seeker PII may run first.
     const mustFollow = [
@@ -141,14 +194,26 @@ describe("stage 2 — submit-qualified-lead source contract", () => {
     for (const marker of mustFollow) {
       const idx = handler.indexOf(marker);
       expect(idx, `marker not found in handler: ${marker}`).toBeGreaterThan(-1);
-      expect(idx, `${marker} must run after the entitlement gate`).toBeGreaterThan(entitlement);
+      expect(idx, `${marker} must run after the facility eligibility check`).toBeGreaterThan(
+        eligibility,
+      );
     }
+  });
 
-    // ...and the gate itself must sit after facility identity resolution, so
-    // the direct-contact response can name the facility.
-    const facilityLoad = handler.indexOf('from("facilities")');
-    expect(facilityLoad).toBeGreaterThan(-1);
-    expect(entitlement).toBeGreaterThan(facilityLoad);
+  it("does NOT gate inquiry eligibility on entitlement", () => {
+    const full = read(FN);
+    const handler = full.slice(full.indexOf("Deno.serve(async (req)"));
+    const code = stripComments(handler);
+    // No has_active_pro call, and therefore no way to refuse a Free facility.
+    expect(code).not.toMatch(/rpc\(\s*["']has_active_pro["']/);
+  });
+
+  it("suppresses provider notification when there is no verified recipient", () => {
+    // An unclaimed listing must never have seeker PII mailed to the
+    // unverified facilities.email column.
+    const code = stripComments(read(FN));
+    expect(code).toMatch(/facilityIsClaimed/);
+    expect(code).toMatch(/facilityIsClaimed\s*\?[\s\S]{0,200}reply_email_verified/);
   });
 
   it("writes no concierge, advisor, or free-tier notification side effects", () => {
@@ -169,11 +234,29 @@ describe("stage 2 — submit-qualified-lead source contract", () => {
     expect(stripComments(src)).not.toMatch(/lead_distributions/);
   });
 
-  it("exposes a machine-readable direct-contact contract", () => {
+  it("no longer emits DIRECT_CONTACT_REQUIRED under any condition", () => {
+    // The envelope is retired server-side. Only the client keeps a defensive
+    // handler, for the rollout window in which an older deployed copy of this
+    // function may answer a newer client.
+    const code = stripComments(read(FN));
+    expect(code).not.toMatch(/DIRECT_CONTACT_REQUIRED/);
+    expect(code).not.toMatch(/direct_contact_required/);
+    expect(code).not.toMatch(/entitlement_unconfirmed/);
+    expect(code).not.toMatch(/function directContactResponse/);
+  });
+
+  it("reports a truthful delivery state", () => {
+    const code = stripComments(read(FN));
+    expect(code).toMatch(/stored_pending_claim/);
+    expect(code).toMatch(/delivered_to_provider/);
+  });
+
+  it("bumps the version past the retired 3.0.0 contract", () => {
     const src = read(FN);
-    expect(src).toMatch(/DIRECT_CONTACT_REQUIRED/);
-    expect(src).toMatch(/direct_contact_required/);
-    expect(src).toMatch(/entitlement_unconfirmed/);
+    const m = src.match(/const VERSION = "([^"]+)"/);
+    expect(m, "VERSION constant not found").toBeTruthy();
+    expect(m![1]).not.toBe("3.0.0");
+    expect(m![1]).toMatch(/^3\.[1-9]/);
   });
 });
 
@@ -207,11 +290,21 @@ describe("stage 2 — deliberately deferred surfaces", () => {
     expect(existsSync(resolve(root, "src/pages/InquiryConfirmation.tsx"))).toBe(true);
   });
 
-  it("does not add a database migration", () => {
-    // Stage 2 requires no schema change. A migration added alongside these
-    // changes would mean scope crept into Stage 4.
-    const src = read("src/hooks/useFacilityContactRouting.ts");
-    expect(src).not.toMatch(/drop\s+table/i);
+  it("ships the phone-gating migration as SOURCE that destroys no data", () => {
+    // Unlike the original stage-2 cutover, this amendment DOES require a
+    // schema change: the public phone boundary cannot be enforced in the
+    // frontend. What it must not do is destroy anything — the raw phone stays
+    // stored for provider/admin/internal use.
+    const rel = "supabase/migrations/20260831000000_pro_gate_public_facility_phone.sql";
+    expect(existsSync(resolve(root, rel)), `${rel} missing`).toBe(true);
+    const sql = read(rel);
+    expect(sql).not.toMatch(/drop\s+table/i);
+    expect(sql).not.toMatch(/drop\s+column/i);
+    expect(sql).not.toMatch(/update\s+public\.facilities\s+set\s+phone/i);
+    expect(sql).not.toMatch(/delete\s+from/i);
+    // The two things it MUST do.
+    expect(sql).toMatch(/has_active_pro\(id\)\s+THEN\s+phone/i);
+    expect(sql).toMatch(/DROP POLICY IF EXISTS "facilities_select_public"/);
   });
 
   it("prerender-for-bots and detect-and-prerender still have no app caller", () => {

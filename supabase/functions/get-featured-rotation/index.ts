@@ -119,11 +119,53 @@ const US_STATE_ABBR_TO_NAME: Record<string, string> = {
  * Adds the computed display_phone + position_in_rail per the response
  * contract. Returns the response-shaped array.
  */
+/**
+ * Resolve canonical Pro entitlement for a batch of facilities.
+ *
+ * `public_facilities.is_pro` IS `has_active_pro(id)` — we read the canonical
+ * predicate through the view rather than re-deriving it from
+ * facility_subscriptions here, so there is exactly one definition of "Pro" in
+ * the system (Part 4 of the Stage-2 amendment).
+ *
+ * Fails CLOSED: on any error the set is empty, so no phone is published.
+ */
+async function fetchProFacilityIds(
+  supabase: ReturnType<typeof createClient>,
+  facilityIds: string[],
+): Promise<Set<string>> {
+  if (facilityIds.length === 0) return new Set();
+  const { data, error } = await supabase
+    .from("public_facilities")
+    .select("id, is_pro")
+    .in("id", facilityIds);
+  if (error) {
+    console.error("[get-featured-rotation] pro entitlement fetch failed — withholding phones", error);
+    return new Set();
+  }
+  return new Set(
+    (data ?? [])
+      .filter((r) => (r as { is_pro: boolean | null }).is_pro === true)
+      .map((r) => (r as { id: string }).id),
+  );
+}
+
 async function enrichFacilities(
   supabase: ReturnType<typeof createClient>,
   facilities: FacilityShape[],
   facilityIds: string[],
 ): Promise<Array<Record<string, unknown>>> {
+  // PHONE IS A PRO CONTACT FEATURE.
+  //
+  // Featured is PAID VISIBILITY ONLY and never unlocks contact functionality.
+  // Before this gate, display_phone was published for every rail entry: both
+  // the paid Featured pool (which requires only has_featured /
+  // has_concierge_partner, NOT tier='pro') and the fallback pool (which
+  // requires no subscription at all). A Featured-only or entirely unsubscribed
+  // facility therefore had its raw phone broadcast on a public, verify_jwt=false
+  // endpoint. This function reads with the SERVICE ROLE, so RLS and the
+  // public_facilities mask cannot save it — the gate has to be explicit here.
+  const proFacilityIds = await fetchProFacilityIds(supabase, facilityIds);
+
   const [servicesRes, insuranceRes] = await Promise.all([
     supabase
       .from("facility_services")
@@ -173,9 +215,12 @@ async function enrichFacilities(
       sponsored_tagline: f.sponsored_tagline,
       top_levels_of_care: sortLocs(allServices).slice(0, 3),
       top_insurance: [...allInsurance].sort((a, b) => a.localeCompare(b)).slice(0, 3),
-      display_phone: f.has_facility_verified_contact && f.verified_phone
-        ? f.verified_phone
-        : f.phone,
+      // Exact canonical Pro only. Free / Featured-only / fallback → null.
+      display_phone: proFacilityIds.has(f.facility_id)
+        ? (f.has_facility_verified_contact && f.verified_phone
+            ? f.verified_phone
+            : f.phone)
+        : null,
       position_in_rail: position,
     };
   });

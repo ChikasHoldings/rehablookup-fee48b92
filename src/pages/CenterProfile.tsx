@@ -1,4 +1,5 @@
 import { useParams, Link, useLocation, useNavigate, Navigate } from "react-router-dom";
+import { resolvePublicFacilityPhone } from "@/lib/facilityPhoneVisibility";
 import CenterNotFound from "@/pages/CenterNotFound";
 import { getFacilityPlaceholder } from "@/lib/facilityPlaceholder";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -712,10 +713,27 @@ const CenterProfile = () => {
   // and the dedicated `/provider/facility/:id` route.
   const isOwner = false;
   const isPending = facility.status === "pending";
-  // PII gate removed 2026-05-21 — every approved facility surfaces its
-  // public business contact info (phone, email, website) to every
-  // visitor. The plan tier no longer determines content visibility.
+  // Website and email remain ordinary directory metadata: every approved
+  // facility surfaces them, on every tier. They are NOT monetized.
   const showContactDetails = true;
+  // PUBLIC PHONE IS A PRO CONTACT FEATURE.
+  //
+  // Exact canonical entitlement only — `public_facilities.is_pro` is the
+  // projection of has_active_pro(). Featured, verified, claimed and
+  // has_facility_verified_contact are all irrelevant to this decision;
+  // Featured in particular is paid VISIBILITY and must never unlock a
+  // contact channel.
+  //
+  // Fail closed on anything that is not exactly `true`, so a stale payload,
+  // a pre-migration backend still returning a raw Free number, or a missing
+  // projection all resolve to hidden rather than leaking. There is no
+  // "upgrade to Pro to see the phone" upsell in its place — the seeker
+  // experience is not an advertisement.
+  const facilityPhone = resolvePublicFacilityPhone({
+    isPro: facility.is_pro,
+    phone: facility.phone,
+  });
+  const showFacilityPhone = facilityPhone.visible;
   const yearsInBusiness = getYearsInBusiness(facility.year_established);
 
   // Map gender_served to display label
@@ -760,7 +778,7 @@ const CenterProfile = () => {
           zipCode: facility.zip_code,
           // Phone is a Pro-only contact channel; omit from structured data for
           // non-Pro listings so search engines / rich results match the on-page UX.
-          phone: showContactDetails ? facility.phone : undefined,
+          phone: showFacilityPhone ? facility.phone : undefined,
           description: facility.description || `${facility.name} provides quality addiction treatment in ${facility.city}, ${facility.state}.`,
           image: facility.logo_url || facility.gallery_urls?.[0] || undefined,
           gallery: facility.gallery_urls || undefined,
@@ -1065,9 +1083,13 @@ const CenterProfile = () => {
                   event, and trackInteraction preserves the page-local
                   "call" interaction signal. */}
               {(() => {
-                const callPhone = facility.has_facility_verified_contact && facility.verified_phone
-                  ? facility.verified_phone
-                  : facility.phone;
+                // Pro-only. verified_phone is a provider-supplied display
+                // preference, not an entitlement, so it is still gated.
+                const callPhone = !showFacilityPhone
+                  ? null
+                  : (facility.has_facility_verified_contact && facility.verified_phone
+                      ? facility.verified_phone
+                      : facility.phone);
                 if (!callPhone) return null;
                 return (
                   <Button
@@ -1291,39 +1313,26 @@ const CenterProfile = () => {
                   {/* Phone — only when the facility actually has a number;
                       otherwise fall through to the placement helpline below so
                       we never render an empty label or a dead tel:null link. */}
-                  {showContactDetails && facility.phone ? (
+                  {facilityPhone.visible && (
                     <a
-                      href={`tel:${facility.phone}`}
+                      href={facilityPhone.telHref!}
                       onClick={() => trackInteraction("call")}
                       className="flex items-start gap-3 p-3 rounded-lg bg-muted/40 hover:bg-primary/5 transition-colors group"
                     >
                       <Phone className="h-4 w-4 text-emerald-600 mt-0.5 shrink-0" />
                       <div className="min-w-0">
                         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-0.5">Phone</p>
-                        <p className="text-sm text-primary font-semibold group-hover:underline">{formatPhoneNumber(facility.phone)}</p>
-                      </div>
-                    </a>
-                  ) : (
-                    // Non-Pro facilities don't expose their direct phone here,
-                    // so surface the free public SAMHSA National Helpline as a
-                    // one-tap fallback for mobile users. The number lives in
-                    // env (VITE_CONCIERGE_HELPLINE) with SAMHSA's published
-                    // number as the stable default.
-                    <a
-                      href={`tel:${(import.meta.env.VITE_CONCIERGE_HELPLINE as string | undefined) || "+18006624357"}`}
-                      onClick={() => trackInteraction("call")}
-                      className="flex items-start gap-3 p-3 rounded-lg bg-muted/40 hover:bg-primary/5 transition-colors group"
-                    >
-                      <Phone className="h-4 w-4 text-emerald-600 mt-0.5 shrink-0" />
-                      <div className="min-w-0">
-                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-0.5">SAMHSA National Helpline</p>
-                        <p className="text-sm text-primary font-semibold group-hover:underline">
-                          {(import.meta.env.VITE_CONCIERGE_HELPLINE_DISPLAY as string | undefined) || "1-800-662-4357"}
-                        </p>
-                        <p className="text-[11px] text-muted-foreground mt-0.5">Free, confidential treatment referral line operated by SAMHSA — not by RehabLookup.</p>
+                        <p className="text-sm text-primary font-semibold group-hover:underline">{facilityPhone.display}</p>
                       </div>
                     </a>
                   )}
+                  {/* When the facility publishes no public number, this slot is
+                      simply absent. It is NOT backfilled with a helpline or with
+                      RehabLookup's support line: a number rendered in a
+                      facility's Phone slot reads as that facility's number, and
+                      substituting one would misdirect someone in crisis. The
+                      SAMHSA line remains available in the page's crisis footer,
+                      labelled as SAMHSA's. */}
 
                   {/* Website */}
                   {showContactDetails && facility.website && (
@@ -1527,18 +1536,18 @@ const CenterProfile = () => {
                       Contact Facility
                     </Button>
 
-                    {showContactDetails && facility.phone && (
+                    {facilityPhone.visible && (
                       // Was <a><Button>...</Button></a> — invalid HTML
                       // (nested interactive). Use Button's asChild to
                       // mount the <a> as the root element instead.
                       <Button asChild variant="outline" size="lg" className="w-full gap-2 h-11 text-xs font-semibold">
                         <a
-                          href={`tel:${facility.phone}`}
+                          href={facilityPhone.telHref!}
                           onClick={() => trackInteraction("call")}
-                          aria-label={`Call ${facility.name} at ${formatPhoneNumber(facility.phone)}`}
+                          aria-label={`Call ${facility.name} at ${facilityPhone.display}`}
                         >
                           <Phone className="h-3.5 w-3.5" />
-                          {formatPhoneNumber(facility.phone)}
+                          {facilityPhone.display}
                         </a>
                       </Button>
                     )}
@@ -1586,17 +1595,17 @@ const CenterProfile = () => {
                   <Sparkles className="h-4 w-4" />
                   Contact Facility
                 </Button>
-                {showContactDetails && facility.phone && (
+                {facilityPhone.visible && (
                   // Same asChild fix as the sidebar Call CTA above —
                   // avoid <a><Button></Button></a> nested interactive.
                   <Button asChild variant="outline" size="lg" className="w-full gap-2 h-11 text-xs font-semibold">
                     <a
-                      href={`tel:${facility.phone}`}
+                      href={facilityPhone.telHref!}
                       onClick={() => trackInteraction("call")}
-                      aria-label={`Call ${facility.name} at ${formatPhoneNumber(facility.phone)}`}
+                      aria-label={`Call ${facility.name} at ${facilityPhone.display}`}
                     >
                       <Phone className="h-3.5 w-3.5" />
-                      {formatPhoneNumber(facility.phone)}
+                      {facilityPhone.display}
                     </a>
                   </Button>
                 )}
@@ -1652,10 +1661,10 @@ const CenterProfile = () => {
           canonical, grace-aware Pro entitlement itself
           (public_facilities.is_pro = has_active_pro) rather than
           trusting anything this page computed: an ACTIVE PRO listing
-          gets the on-platform Request Info form, and every other
-          listing gets the facility's own Call / Website / Directions
-          actions with no PII intake. `facilityPlan` is deliberately NOT
-          passed — client-side plan state must never unlock the form. */}
+          gets the same inquiry form. The modal resolves canonical Pro
+          entitlement itself, and that decides only whether the facility's
+          PHONE is published. Neither `facilityPlan` nor `phone` is passed —
+          client-side state must never unlock either the form or the number. */}
       <RequestInfoModal
         open={requestModalOpen}
         onOpenChange={setRequestModalOpen}
@@ -1667,7 +1676,6 @@ const CenterProfile = () => {
           slug: facility.slug,
           logo_url: facility.logo_url,
           featured: facility.featured,
-          phone: facility.phone ?? null,
           verified: facility.verified ?? null,
         }}
         prefillData={prefillDataFromNav}
@@ -1683,9 +1691,9 @@ const CenterProfile = () => {
               never substitutes a RehabLookup support line as a treatment-
               navigation path, so this slot is inert when the listing has no
               published phone number. */}
-          {facility.phone ? (
+          {facilityPhone.visible ? (
             <a
-              href={`tel:${facility.phone}`}
+              href={facilityPhone.telHref!}
               onClick={() => trackInteraction("call")}
               className="flex flex-col items-center justify-center gap-0.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 px-2 py-2 transition-colors"
               aria-label={`Call ${facility.name}`}
@@ -1744,10 +1752,11 @@ const CenterProfile = () => {
           (verified_phone when has_facility_verified_contact, else
           public phone). */}
       {(() => {
-        const callPhone =
-          facility.has_facility_verified_contact && facility.verified_phone
-            ? facility.verified_phone
-            : facility.phone;
+        const callPhone = !showFacilityPhone
+          ? null
+          : (facility.has_facility_verified_contact && facility.verified_phone
+              ? facility.verified_phone
+              : facility.phone);
         return (
           <StickyMobileCallBar
             facilityName={facility.name}

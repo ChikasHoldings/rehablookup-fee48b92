@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { resolvePublicFacilityPhone } from "@/lib/facilityPhoneVisibility";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -500,13 +501,17 @@ export default function Comparison() {
                 {facilities.map((d) => (
                   <Cell key={d.facility.id}>
                     <div className="flex flex-col gap-1.5">
-                      {d.facility.phone ? (
+                      {/* Public phone is an active-Pro contact feature. The
+                          view already masks it, but the client fails closed
+                          too so a pre-migration payload cannot leak a Free
+                          number into the comparison table. */}
+                      {resolvePublicFacilityPhone(d.facility).visible ? (
                         <a
-                          href={`tel:${d.facility.phone}`}
+                          href={resolvePublicFacilityPhone(d.facility).telHref!}
                           className="text-sm text-primary hover:underline flex items-center gap-1.5"
                         >
                           <Phone className="h-3.5 w-3.5" />
-                          {d.facility.phone}
+                          {resolvePublicFacilityPhone(d.facility).display}
                         </a>
                       ) : (
                         <span className="text-xs text-muted-foreground italic flex items-center gap-1.5">

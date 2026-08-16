@@ -181,7 +181,11 @@ export function InquiryDetailModal({ open, onOpenChange, leadId }: Omit<InquiryD
         // Fetch facility info
         if (leadData.facility_id) {
           const { data: facilityData } = await supabase
-            .from("facilities")
+            // public_facilities, not the raw table: ordinary authenticated
+            // seekers no longer hold a SELECT policy on `facilities`, and the
+            // view Pro-masks `phone` so a Free facility's number is not
+            // disclosed here either.
+            .from("public_facilities")
             .select("id, name, slug, city, state, phone, logo_url, facility_type, verified")
             .eq("id", leadData.facility_id)
             .maybeSingle();

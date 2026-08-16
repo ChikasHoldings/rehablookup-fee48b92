@@ -60,9 +60,23 @@ Deno.serve(async (req) => {
     // and the search/sort pipeline in src/pages/SearchResults.tsx — adding a
     // field downstream without surfacing it here was the root cause of
     // several "sort silently does nothing" bugs (see docs/search-audit-
-    // 2026-05-21.md §3). Pro-gated fields (phone/email/website) are masked
-    // to null by the `public_facilities` view for non-Pro facilities; we
-    // pass them through unchanged.
+    // 2026-05-21.md §3).
+    //
+    // PHONE IS PRO-GATED — and it is the ONLY Pro-gated contact field.
+    //   A previous revision of this comment claimed "phone/email/website are
+    //   masked to null by the public_facilities view for non-Pro facilities".
+    //   That was false on three counts: the view's Pro CASE on phone had been
+    //   dropped (20260714000000) so nothing was masked at all, and `email`
+    //   and `website` are not Pro-gated by product decision — website is
+    //   ordinary directory metadata that Free listings keep.
+    //
+    //   The view now masks phone via has_active_pro(id)
+    //   (20260831000000_pro_gate_public_facility_phone.sql). This function
+    //   ALSO masks it below, on the canonical `is_pro` projection, because it
+    //   reads with the SERVICE ROLE — which bypasses RLS by design and would
+    //   happily serialize a raw phone if the view were ever rolled back,
+    //   replaced, or queried before the migration is applied. Defence in
+    //   depth: the response is safe on the OLD schema too.
     const facilitiesData = await fetchAll(
       (from, to) =>
         supabase
@@ -150,7 +164,12 @@ Deno.serve(async (req) => {
     // shared `filterRowsWithKeys` helper drops rows missing a primary key
     // and narrows the resulting type so downstream code can trust `f.id`.
     const facilities = filterRowsWithKeys(facilitiesData, ["id"])
-      .map((f) => ({
+      .map((f) => {
+        // Canonical entitlement, exactly `=== true`. Featured, claimed,
+        // verified and bed_count are all irrelevant here — only an active Pro
+        // subscription publishes a phone number.
+        const isPro = f.is_pro === true;
+        return {
         id: f.id,
         name: f.name,
         slug: f.slug,
@@ -158,7 +177,8 @@ Deno.serve(async (req) => {
         state: f.state,
         zipCode: f.zip_code,
         address: f.address,
-        phone: f.phone,
+        // Fail closed: null unless Pro is positively confirmed.
+        phone: isPro ? f.phone : null,
         email: f.email,
         website: f.website,
         description: f.description || "",
@@ -180,11 +200,12 @@ Deno.serve(async (req) => {
         accessibilityFeatures: f.accessibility_features || [],
         acceptingAdmissions: f.accepting_admissions,
         isClaimed: f.is_claimed || false,
-        isPro: f.is_pro || false,
+        isPro,
         dataSource: f.data_source,
         treatmentTypes: servicesMap.get(f.id) || [],
         insuranceAccepted: insuranceMap.get(f.id) || [],
-      }));
+        };
+      });
 
     logStep("Successfully built facilities snapshot", { count: facilities.length });
 

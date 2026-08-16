@@ -152,8 +152,7 @@ function joinList(arr) {
 // ---------------------------------------------------------------------------
 
 /**
- * Is this facility an ACTIVE Pro listing for the purposes of the static
- * mirror's contact routing?
+ * Is this facility an ACTIVE Pro listing?
  *
  * `public_facilities.is_pro` is the build-time projection of the canonical
  * `has_active_pro(id)` predicate — tier, status, past-due grace and
@@ -161,19 +160,37 @@ function joinList(arr) {
  * reconstruct those rules in JavaScript, and must never read
  * `facility_subscriptions` to infer Pro.
  *
+ * As of the inquiry-model amendment this decides exactly ONE thing: whether
+ * the facility's PHONE NUMBER may be published on the static page (visible
+ * digits, tel: link, JSON-LD telephone, phone-aware contact FAQ). It does NOT
+ * decide whether the page may offer an inquiry CTA — every eligible listing
+ * does.
+ *
  * Fails SAFE: anything that is not literally `true` (false, null, undefined,
- * a string, a missing column because the projection changed) routes to
- * direct facility contact. Over-showing a RehabLookup inquiry form on a Free
- * listing is the failure mode stage 2 exists to prevent, so ambiguity always
- * resolves to "direct".
+ * a string, a missing column because the projection changed) hides the phone.
+ * Publishing a Free facility's number is the failure mode this exists to
+ * prevent, so ambiguity always resolves to hidden.
  */
 function isActivePro(facility) {
   return facility?.is_pro === true;
 }
 
-/** Contact-routing marker value emitted onto every generated facility page. */
-function contactRoutingMode(facility) {
-  return isActivePro(facility) ? "pro" : "direct";
+/**
+ * Inquiry-routing marker emitted onto every generated facility page.
+ *
+ * There is exactly one legal value. A seeker's inquiry goes to the facility
+ * they selected and to nowhere else — never a matching pool, never an
+ * alternative provider, never Concierge. The marker is a constant precisely so
+ * that a future change introducing a second routing mode has to change this
+ * function, the guard, and the tests together.
+ */
+function inquiryRoutingMode() {
+  return "facility";
+}
+
+/** Phone-visibility marker emitted onto every generated facility page. */
+function phoneVisibilityMode(facility) {
+  return isActivePro(facility) ? "pro" : "hidden";
 }
 
 /**
@@ -325,12 +342,14 @@ async function fetchFacilities() {
  * generic copy. The two anchor questions (location, contact) always render
  * because their answers are computable from the row.
  *
- * Entitlement-aware: these same items render as visible HTML AND as FAQPage
- * JSON-LD, so building them once keeps both representations in lock-step.
- * A Free/non-Pro facility has no on-platform inquiry form, so its answers
- * must never tell a seeker to "use the Request Information form" or to
- * "request a benefits verification through the profile" — those affordances
- * do not exist for that facility, in the SPA or on the server.
+ * These same items render as visible HTML AND as FAQPage JSON-LD, so building
+ * them once keeps both representations in lock-step.
+ *
+ * Every eligible facility now has an on-platform inquiry form, so any tier's
+ * answer may reference it. What an answer must NEVER do on a non-Pro listing
+ * is tell the reader to call, or quote the facility's phone digits in prose —
+ * that would contradict the phone contract the rest of the page enforces.
+ * No answer promises a response time.
  */
 function buildFaqItems(facility, facSvc, facIns, facAge, facAcc) {
   const items = [];
@@ -378,11 +397,12 @@ function buildFaqItems(facility, facSvc, facIns, facAge, facAcc) {
       ? " Sliding-scale fees and financial assistance may also be available — verify with the center before admission."
       : "";
     // Benefits are confirmed by the facility's admissions team, never by
-    // RehabLookup. A Free listing has no on-platform inquiry channel at all,
-    // so it points straight at the facility.
+    // RehabLookup. Every tier may be pointed at the inquiry form; only the
+    // wording about HOW to reach them differs, and only because Pro publishes
+    // a phone number.
     const verifySentence = isPro
-      ? ` Coverage details vary by plan and individual benefits — confirm them with ${name}'s admissions team, or send a confidential inquiry through this facility's RehabLookup profile.`
-      : ` Coverage details vary by plan and individual benefits. Contact the facility directly to confirm benefits and out-of-pocket costs.`;
+      ? ` Coverage details vary by plan and individual benefits — confirm them with ${name}'s admissions team by phone, or send an inquiry through this facility's RehabLookup profile.`
+      : ` Coverage details vary by plan and individual benefits — send an inquiry through this facility's RehabLookup profile to confirm benefits and out-of-pocket costs with ${name}.`;
     items.push({
       q: `Does ${name} accept insurance?`,
       a: `${planSentence}${slidingSentence}${verifySentence}`,
@@ -439,38 +459,36 @@ function buildFaqItems(facility, facSvc, facIns, facAge, facAcc) {
 }
 
 /**
- * The contact FAQ answer, entitlement-aware and grounded only in contact
- * channels this facility actually published.
+ * The contact FAQ answer.
  *
- *   ACTIVE PRO   may reference the on-platform Request Information form,
- *                because the React profile renders that form for this
- *                facility and the server accepts an inquiry for it.
- *   OTHERWISE    direct facility contact only. No RehabLookup form, no
- *                confidential-inquiry promise, no benefits verification.
+ * The visible FAQ and the FAQPage JSON-LD are generated from this single
+ * string, so they cannot disagree — and neither may contradict the on-page
+ * phone contract. A Free listing's answer must never tell the reader to call
+ * a number the product deliberately withholds, and must never quote the
+ * digits in prose as a workaround for the missing tel: link.
  *
- * If a Free facility published neither a phone nor a website we say exactly
- * that and fall back to the profile/directory — we never substitute
- * RehabLookup's own support number for a missing facility number.
+ * Every tier gets the inquiry form, because every tier can receive one. Only
+ * an ACTIVE PRO answer may mention calling.
+ *
+ * No response-time promise is made in either branch. If a Free facility
+ * published no website either, we say exactly that and fall back to the
+ * profile/directory — RehabLookup's own support number is never substituted
+ * for a missing facility number.
  */
 function buildContactFaqAnswer(facility, { isPro, website }) {
   const name = facility.name;
-  const phone = facility.phone;
+  // Pro-gated: `facility.phone` may be populated on a Free listing.
+  const phone = isPro ? facility.phone : null;
 
-  if (isPro) {
-    return phone
-      ? `You can call ${name} at ${phone}, or use the "Request Information" form on the ${name} profile to send a confidential inquiry to this facility.`
-      : `Use the "Request Information" form on the ${name} profile to send a confidential inquiry to this facility.`;
+  if (phone) {
+    return `You can call ${name} at ${phone}, or use the inquiry form on the ${name} profile to send a message to this facility. Your inquiry goes to ${name} only.`;
   }
 
-  const channels = [];
-  if (phone) channels.push(`call ${name} directly at ${phone}`);
-  if (website) channels.push(`visit the facility's website at ${website}`);
-
-  if (channels.length === 0) {
-    return `${name} has not published a direct phone number or website on RehabLookup. See the address and location details on the facility profile, or search other treatment centers in ${facility.city}, ${facility.state}.`;
+  if (website) {
+    return `Use the inquiry form on the ${name} profile to send a message to this facility, or visit the facility's website at ${website}. Your inquiry goes to ${name} only — RehabLookup does not share it with other treatment centers. Admissions, availability, insurance, and cost questions are answered by the facility.`;
   }
 
-  return `To reach ${name}, ${joinList(channels)}. Contact admissions directly to confirm insurance benefits, availability, costs, and program details — those questions are handled by the facility, not by RehabLookup.`;
+  return `Use the inquiry form on the ${name} profile to send a message to this facility. Your inquiry goes to ${name} only. See the address and location details on the facility profile, or search other treatment centers in ${facility.city}, ${facility.state}.`;
 }
 
 // ---------------------------------------------------------------------------
@@ -480,21 +498,32 @@ function buildContactFaqAnswer(facility, { isPro, website }) {
 /**
  * Render the contact call-to-action for the static mirror.
  *
- * The static page has exactly two modes, and the wrapper carries a stable
- * `data-contact-routing` marker so `check:inquiry-routing-prerender` can
- * assert the contract on the built artifacts:
+ * THE STATIC CONTRACT (inquiry-model amendment)
  *
- *   data-contact-routing="pro"     ACTIVE Pro only. May offer Request
- *                                  Information for THIS facility, because
- *                                  the React profile renders that form and
- *                                  submit-qualified-lead accepts it.
+ * The previous contract had two modes — Pro got an inquiry CTA, everyone else
+ * got "call them yourself" complete with the facility's phone number. Both
+ * halves of that are now wrong: EVERY eligible facility may receive an
+ * inquiry, and the phone number is the thing Pro actually buys.
  *
- *   data-contact-routing="direct"  Everything else. Direct facility contact
- *                                  only — no ?action=request-info, no
- *                                  RehabLookup inquiry form promise.
+ * Two independent, stable markers replace the single `data-contact-routing`
+ * value, so `check:inquiry-routing-prerender` can assert each axis separately:
  *
- * The marker is derived from `is_pro` alone. Featured is NOT an entitlement
- * and must never produce "pro".
+ *   data-inquiry-routing="facility"   The inquiry goes to THIS facility and
+ *                                     no other. Emitted for every eligible
+ *                                     listing — Free, Featured-only, claimed,
+ *                                     unclaimed and Pro alike. There is no
+ *                                     other legal value: RehabLookup never
+ *                                     routes an inquiry anywhere else.
+ *
+ *   data-phone-visibility="pro"       Active Pro. The facility's phone number
+ *                                     and a tel: link may appear.
+ *   data-phone-visibility="hidden"    Everything else. No phone digits, no
+ *                                     tel:, no JSON-LD telephone, no phone in
+ *                                     the contact FAQ.
+ *
+ * Phone visibility is derived from `is_pro` ALONE, via isActivePro()'s exact
+ * `=== true` test. Featured is paid visibility and must never produce "pro";
+ * neither may `verified`, `is_claimed`, or a non-empty phone column.
  *
  * Every action below is emitted only when the underlying facility data
  * actually exists. Nothing here manufactures a phone number, a website or a
@@ -506,67 +535,36 @@ function renderContactCta(f, slug, mapsUrl) {
   const website = safeExternalUrl(f.website);
   const name = escapeHtml(f.name);
 
-  // Reachable contact channels the facility actually published. Directions
-  // are tracked separately: a map link is a location affordance, not a way to
-  // reach admissions, so it must not make a listing with no phone and no
-  // website read as contactable.
-  const contactChannels = [];
-  if (f.phone) {
-    contactChannels.push(
+  // PHONE — Pro only. On a Free listing the column may well be populated
+  // (SAMHSA imports carry phone numbers); it simply must not be published.
+  const secondaryActions = [];
+  if (isPro && f.phone) {
+    secondaryActions.push(
       `<a class="btn btn-secondary" href="tel:${escapeAttr(f.phone)}">Call ${escapeHtml(f.phone)}</a>`,
     );
   }
+  // Website and directions are ordinary directory metadata on every tier.
   if (website) {
-    contactChannels.push(
+    secondaryActions.push(
       `<a class="btn btn-secondary" href="${escapeAttr(website)}" rel="nofollow noopener" target="_blank">Visit Facility Website</a>`,
     );
   }
   // `mapsUrl` is built from name + address + city + state; city and state are
   // required for a row to render at all, so directions are always grounded in
   // real location data.
-  const locationActions = mapsUrl
-    ? [
-        `<a class="btn btn-secondary" href="${escapeAttr(mapsUrl)}" rel="nofollow noopener" target="_blank">Get Directions</a>`,
-      ]
-    : [];
-  const directActions = [...contactChannels, ...locationActions];
-
-  if (isPro) {
-    return `<div class="cta" data-contact-routing="pro">
-<h2>Request Information from ${name}</h2>
-<p>Send a confidential inquiry to ${name}. Your details go to this facility only — no obligation.</p>
-<div class="cta-actions">
-<a class="btn btn-primary" href="/center/${escapeAttr(slug)}?action=request-info">Request Information</a>
-<a class="btn btn-secondary" href="/center/${escapeAttr(slug)}">View Full Profile</a>
-${directActions.join("\n")}
-</div>
-</div>`;
+  if (mapsUrl) {
+    secondaryActions.push(
+      `<a class="btn btn-secondary" href="${escapeAttr(mapsUrl)}" rel="nofollow noopener" target="_blank">Get Directions</a>`,
+    );
   }
 
-  // Direct-contact mode. The lead paragraph adapts to whether this facility
-  // published any reachable channel, so a listing with neither phone nor
-  // website does not imply contact details exist "below".
-  const hasChannel = contactChannels.length > 0;
-  const lead = hasChannel
-    ? `Admissions, availability, insurance, and cost questions are handled by the facility. Use its published contact information below.`
-    : `Admissions, availability, insurance, and cost questions are handled by the facility. ${name} has not published a direct phone number or website on RehabLookup — use the location details on the full profile, or keep searching the directory.`;
-
-  // Promote the first real facility action to the primary button so the
-  // direct-contact page still leads with a contact channel rather than
-  // rendering an all-secondary row.
-  const directPrimary = hasChannel
-    ? [
-        directActions[0].replace('class="btn btn-secondary"', 'class="btn btn-primary"'),
-        ...directActions.slice(1),
-      ]
-    : directActions;
-
-  return `<div class="cta" data-contact-routing="direct">
-<h2>Contact ${name} Directly</h2>
-<p>${lead}</p>
+  return `<div class="cta" data-inquiry-routing="${inquiryRoutingMode()}" data-phone-visibility="${phoneVisibilityMode(f)}">
+<h2>Contact ${name}</h2>
+<p>Send an inquiry directly to ${name}. It goes to this facility only — RehabLookup does not share it with any other treatment center.</p>
 <div class="cta-actions">
-${directPrimary.join("\n")}
+<a class="btn btn-primary" href="/center/${escapeAttr(slug)}?action=request-info">Send Inquiry</a>
 <a class="btn btn-secondary" href="/center/${escapeAttr(slug)}">View Full Profile</a>
+${secondaryActions.join("\n")}
 <a class="btn btn-secondary" href="/search-results">Search Other Treatment Centers</a>
 </div>
 </div>`;
@@ -874,7 +872,9 @@ function renderFacilityHtml(f, kids) {
           },
         }
       : {}),
-    telephone: f.phone || undefined,
+    // PRO-GATED. Crawler data must agree with the on-page contract: a Free
+    // listing publishes no telephone anywhere, structured data included.
+    telephone: (isActivePro(f) && f.phone) || undefined,
     address: {
       "@type": "PostalAddress",
       streetAddress: f.address || undefined,
@@ -946,7 +946,9 @@ function renderFacilityHtml(f, kids) {
   };
 
   // Only render the pieces we have content for to avoid empty/unverifiable claims.
-  const phoneLine = f.phone
+  // PRO-GATED. Free / Featured-only listings render no phone line at all —
+  // not the digits, not a tel:, not a masked hint.
+  const phoneLine = isActivePro(f) && f.phone
     ? `<p><strong>Phone:</strong> <a href="tel:${escapeAttr(f.phone)}">${escapeHtml(f.phone)}</a></p>`
     : "";
   const addressLine = f.address
@@ -1287,7 +1289,8 @@ export {
   renderContactCta,
   buildFaqItems,
   isActivePro,
-  contactRoutingMode,
+  inquiryRoutingMode,
+  phoneVisibilityMode,
 };
 
 const invokedDirectly =
