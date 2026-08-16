@@ -77,6 +77,13 @@ import {
   normalizeFacilityIdMetadata,
   resolveProFacilityId,
 } from "../_shared/pro-checkout-facility.ts";
+import {
+  deriveTierFlagsFromSubscription,
+  FULL_MONTHLY_CENTS,
+  legacyProductPlanTier,
+  productIdFromPriceProduct,
+  resolveSubscriptionPlan,
+} from "../_shared/stripe-product-classification.ts";
 
 // Version tracking for deployment verification
 // 1.4.0 (2026-07-02 entitlement audit): payment-confirmation gates — no Pro
@@ -99,117 +106,19 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
   console.log(`[STRIPE-WEBHOOK] [${VERSION}] [${timestamp}] ${step}${detailsStr}`);
 };
 
-// Legacy product IDs that map to Pro tier
-const PRO_PRODUCT_IDS = [
-  "prod_TbalLOPujTIoUe", // legacy professional
-  "prod_Tbyz1bf6iYyzYd", // professional
-  "prod_TbalOeJZA2ZoJl", // legacy featured
-  "prod_TbyzJVNOQL71NN", // featured
-];
+// Legacy Stripe product identity lives in _shared/stripe-product-classification.ts
+// as two DISJOINT sets — LEGACY_PRO_PRODUCT_IDS and LEGACY_FEATURED_PRODUCT_IDS —
+// behind classifyLegacyProduct() / legacyProductPlanTier(). There is deliberately
+// no product-id list in this file: the single list that used to live here held
+// both families under the name PRO_PRODUCT_IDS, so every consumer read a Featured
+// product as Pro.
 
-// New flat-fee monetization lookup keys (created by
-// scripts/stripe-setup-monetization.ts). Six keys = three SKUs × two
-// billing intervals. The webhook resolves both billing_period and the
-// tier/addon flags from the lookup_key + price.recurring.interval.
-const LOOKUP_KEYS = {
-  PRO_MONTHLY: "rl_pro_monthly_v1",
-  PRO_ANNUAL: "rl_pro_annual_v1",
-  FEATURED_MONTHLY: "rl_featured_monthly_v1",
-  FEATURED_ANNUAL: "rl_featured_annual_v1",
-  CONCIERGE_MONTHLY: "rl_concierge_monthly_v1",
-  CONCIERGE_ANNUAL: "rl_concierge_annual_v1",
-} as const;
-
-const PRO_KEYS = [LOOKUP_KEYS.PRO_MONTHLY, LOOKUP_KEYS.PRO_ANNUAL] as const;
-const FEATURED_KEYS = [LOOKUP_KEYS.FEATURED_MONTHLY, LOOKUP_KEYS.FEATURED_ANNUAL] as const;
-const CONCIERGE_KEYS = [LOOKUP_KEYS.CONCIERGE_MONTHLY, LOOKUP_KEYS.CONCIERGE_ANNUAL] as const;
-
-// Per-tier full monthly rates in cents. Used both to compute the
-// monthly_equivalent for cancellation math AND, on annual subscriptions,
-// to reconstruct original_annual_cents + discount_applied_cents.
-const FULL_MONTHLY_CENTS = {
-  pro: 9900,        // $99
-  featured: 59900,  // $599
-  concierge: 100000, // $1,000
-} as const;
-
-/**
- * Inspect a Stripe subscription's items and return:
- *   - tier:                "pro" if any item matches a Pro lookup key
- *   - has_featured:        true if any item matches a Featured key
- *   - has_concierge_partner: true if any item matches a Concierge key
- *   - billing_period:      "monthly" | "annual" — inferred from the FIRST
- *                          matched item's recurring.interval. All items
- *                          on the same subscription share one interval
- *                          (Stripe requires this for a single subscription).
- *   - paid_amount_cents:   sum of unit_amount × quantity across all items
- *                          (= what Stripe just charged this period)
- *   - original_annual_cents: for annual subscriptions, the un-discounted
- *                            yearly sticker (full_monthly × 12 × pieces).
- *                            null for monthly.
- *   - discount_applied_cents: for annual, original − paid (≈15%). 0 for monthly.
- * Falls through to {tier:null, matched_new_lookup_keys:false} if no new
- * lookup keys are present (legacy subscriptions still flow through the
- * older code path that follows in checkout.session.completed).
- */
-function deriveTierFlagsFromSubscription(sub: Stripe.Subscription) {
-  let isPro = false;
-  let hasFeatured = false;
-  let hasConcierge = false;
-  let paidAmountCents = 0;
-  let interval: "month" | "year" | null = null;
-  for (const item of sub.items.data) {
-    const lookupKey = item.price.lookup_key as string | null;
-    const itemInterval = item.price.recurring?.interval as "month" | "year" | undefined;
-    if (lookupKey && (PRO_KEYS as readonly string[]).includes(lookupKey)) isPro = true;
-    if (lookupKey && (FEATURED_KEYS as readonly string[]).includes(lookupKey)) hasFeatured = true;
-    if (lookupKey && (CONCIERGE_KEYS as readonly string[]).includes(lookupKey)) hasConcierge = true;
-    // Take the first available recurring interval, regardless of whether
-    // the price carries one of our flat-fee lookup keys. Legacy Pro
-    // subscriptions (created via create-checkout's hardcoded
-    // PRO_PRICE_ID, which has no lookup_key) still need to record their
-    // billing_period — otherwise the caller's fallback "annual" default
-    // mis-classifies a monthly Pro subscription. Also picks up future
-    // price rotations where we forgot to attach a lookup_key.
-    if (interval === null && itemInterval) {
-      interval = itemInterval;
-    }
-    paidAmountCents += (item.price.unit_amount ?? 0) * (item.quantity ?? 1);
-  }
-  // Fall back: if the checkout metadata tagged this as a Pro
-  // subscription but no lookup_key matched (legacy create-checkout
-  // path), treat the whole subscription as Pro.
-  const metaType = ((sub.metadata as Record<string, string> | null)?.type ?? "").toLowerCase();
-  const metaPlanTier = ((sub.metadata as Record<string, string> | null)?.plan_tier ?? "").toLowerCase();
-  if (!isPro && (metaType === "pro_subscription" || metaPlanTier === "pro")) {
-    isPro = true;
-  }
-  const billingPeriod: "monthly" | "annual" | null =
-    interval === "month" ? "monthly" : interval === "year" ? "annual" : null;
-
-  // Reconstruct the sticker price + discount for annual subscribers.
-  // For monthly, original = null and discount = 0 (no annual sticker).
-  let originalAnnualCents: number | null = null;
-  let discountAppliedCents = 0;
-  if (billingPeriod === "annual" && (isPro || hasFeatured || hasConcierge)) {
-    originalAnnualCents =
-      (isPro ? FULL_MONTHLY_CENTS.pro * 12 : 0) +
-      (hasFeatured ? FULL_MONTHLY_CENTS.featured * 12 : 0) +
-      (hasConcierge ? FULL_MONTHLY_CENTS.concierge * 12 : 0);
-    discountAppliedCents = Math.max(0, originalAnnualCents - paidAmountCents);
-  }
-
-  return {
-    tier: isPro ? "pro" : null,
-    has_featured: hasFeatured,
-    has_concierge_partner: hasConcierge,
-    billing_period: billingPeriod,
-    paid_amount_cents: paidAmountCents,
-    original_annual_cents: originalAnnualCents,
-    discount_applied_cents: discountAppliedCents,
-    matched_new_lookup_keys: isPro || hasFeatured || hasConcierge,
-  };
-}
+// The modern flat-fee lookup keys (LOOKUP_KEYS / FULL_MONTHLY_CENTS) and the
+// lookup-key tier derivation (deriveTierFlagsFromSubscription) live alongside
+// the product-id classifier in _shared/stripe-product-classification.ts. All
+// Stripe plan identity is decided in that one pure, dependency-free module so
+// the Vitest suite drives the same code this function runs, rather than a
+// re-implementation that can drift from it.
 
 // Sentry instrumentation. initSentry() is idempotent + no-ops when
 // SENTRY_DSN is unset, so this is safe to leave wired even before the
@@ -612,10 +521,11 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
           } else {
             logStep("Pro subscription activated", { facilityId, currentPeriodEnd });
 
-            // Activate Pro benefits across every facility the provider
-            // owns. The shared helper guards on `featured === true` so
-            // a webhook retry doesn't double-apply the +50 ranking
-            // boost. profiles.plan mirror is part of the helper.
+            // Mirror the provider plan compatibility state via the shared
+            // helper. It writes `profiles.plan` and nothing else — the
+            // facility-level Pro entitlement is derived live from
+            // facility_subscriptions by has_active_pro(). A plain idempotent
+            // UPDATE, so a webhook retry is safe by construction.
             const proResult = await activateProBenefits(supabaseAdmin, userId);
             logStep("Pro benefits activation result (checkout.session.completed)", {
               updated: proResult.facilitiesUpdated.length,
@@ -1090,7 +1000,10 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
             });
             const product = subscription.items.data[0]?.price?.product as Stripe.Product;
             planName = product?.name || "Subscription";
-            if (product?.id && PRO_PRODUCT_IDS.includes(product.id)) planTier = "pro";
+            // Only a recognised Pro product yields the Pro tier. A Featured
+            // product leaves plan_tier null, so the audit row and the
+            // "your Pro benefits" copy below both stay truthful.
+            planTier = legacyProductPlanTier(product?.id);
           } catch (e) {
             logStep("Failed to get subscription details", { error: String(e) });
           }
@@ -1345,9 +1258,10 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
                   console.error("[stripe-webhook] duplicate-Pro admin notify failed", adminErr);
                 }
                 // Continue processing — the new sub's
-                // activateProBenefits is idempotent on featured=true,
-                // so a second Pro activation won't double-apply
-                // benefits. The admin alert ensures a human reconciles.
+                // activateProBenefits only re-asserts the profiles.plan
+                // mirror, so a second Pro activation is a no-op rather
+                // than a double-apply. The admin alert ensures a human
+                // reconciles the duplicate billing window.
               }
             }
           }
@@ -1759,30 +1673,29 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
         const amount = priceItem?.price?.unit_amount || 0;
         const currency = (priceItem?.price?.currency || "usd").toUpperCase();
 
-        // Try the new flat-fee monetization lookup keys first.
-        // If the subscription has any of the six (Pro / Featured /
-        // Concierge × monthly / annual), derive tier + addon flags and
-        // billing_period from those. Falls through to the legacy
-        // PRO_PRODUCT_IDS check otherwise.
+        // The plan decision — tier, label, and what the billed legacy product
+        // IS — comes from the single shared resolver. Modern lookup keys win
+        // when present; otherwise the legacy product-id classifier decides,
+        // and only a recognised PRO product may yield planTier="pro". A
+        // Featured product resolves to legacyClass="featured" with a null
+        // tier under every metadata state, so the activateProBenefits gate
+        // below is unreachable for it.
+        //
+        // The product's display name is fetched only on the legacy path, and
+        // only to label the audit row: classification itself reads the product
+        // id already carried on the subscription item, so knowing a Featured
+        // product is Featured never depends on a Stripe round-trip succeeding.
         const flags = deriveTierFlagsFromSubscription(subscription);
-        if (flags.matched_new_lookup_keys) {
-          planTier = flags.tier;
-          const intervalSuffix = flags.billing_period === "monthly" ? "monthly" : "annual";
-          // Concierge is the mutually-exclusive upgrade that already includes
-          // Featured exposure, so it supersedes the Featured label if both
-          // flags are ever set (a Pro + Featured + Concierge combo no longer
-          // exists as a purchasable state).
-          planName = flags.has_concierge_partner
-            ? `Pro + Concierge (${intervalSuffix})`
-            : flags.has_featured
-              ? `Pro + Featured (${intervalSuffix})`
-              : `Pro (${intervalSuffix})`;
-        } else if (priceItem?.price?.product) {
+        let legacyProductName: string | null = null;
+        if (!flags.matched_new_lookup_keys && priceItem?.price?.product) {
           const product = await stripe.products.retrieve(priceItem.price.product as string);
-          planName = product.name;
+          legacyProductName = product.name;
           productId = product.id;
-          if (productId && PRO_PRODUCT_IDS.includes(productId)) planTier = "pro";
         }
+        const plan = resolveSubscriptionPlan(subscription, legacyProductName);
+        planTier = plan.planTier;
+        planName = plan.planName;
+        const legacyClass = plan.legacyClass;
 
         const { data: profiles } = await supabaseAdmin
           .from("profiles")
@@ -1808,11 +1721,6 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
           }
         }
 
-        // Pro upgrade — activate full benefits (profile.plan mirror,
-        // facilities.featured, +50 ranking) via the shared helper. The
-        // helper is idempotent so this branch is safe to re-enter on
-        // webhook retry. Partial failures emit an admin notification.
-        //
         // 2026-07-02 entitlement audit: gate on the subscription actually
         // being active/trialing. Stripe emits customer.subscription.created
         // for 'incomplete' (3DS/SCA pending) subscriptions too — granting
@@ -1820,6 +1728,125 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
         // transition is handled by customer.subscription.updated.
         const subscriptionEntitled =
           subscription.status === "active" || subscription.status === "trialing";
+
+        // LEGACY FEATURED, missing or unrecognised metadata.type.
+        //
+        // A Featured subscription that carried `metadata.type='featured_addon'`
+        // returned above, through activateFeaturedAddon. This is the fallback
+        // for one that did not: an old subscription shape, a dropped metadata
+        // key, or a malformed type. It used to land in the Pro path and be
+        // granted Pro. It never may.
+        //
+        // planTier is already null by classification, so the Pro activation
+        // below is unreachable for these — the entitlement is fail-closed
+        // regardless of what happens here. What remains is making sure the
+        // purchase is not silently lost:
+        //
+        //   • facility_id present in metadata → route through the SAME
+        //     Featured helper the modern path uses, with the same storage
+        //     contract. No new persistence model is introduced here; the
+        //     canonical Featured-only row model is B3 and is not started.
+        //   • no resolvable facility, or payment not yet confirmed → do NOT
+        //     manufacture an association and do NOT activate on an unpaid
+        //     subscription. Emit an admin reconciliation signal naming the
+        //     actual reason and stop. A human attaches it; the code never
+        //     guesses, and never falls back to Pro.
+        //
+        // Scoped to subscriptions that are not Pro. A single subscription that
+        // legitimately carries BOTH Pro and Featured items keeps its existing
+        // behaviour untouched — this branch exists for the Featured purchase
+        // that would otherwise have been read as a Pro one.
+        if (legacyClass === "featured" && planTier !== "pro") {
+          if (addonFacilityId && subscriptionEntitled) {
+            const legacyPeriodEnd = getSubscriptionPeriodEndISO(subscription);
+            const legacyAddonResult = await activateFeaturedAddon(supabaseAdmin, {
+              facilityId: addonFacilityId,
+              stripeSubscriptionId: subscription.id,
+              currentPeriodEnd: legacyPeriodEnd,
+            });
+            logStep("Legacy Featured product routed to Featured activation", {
+              facilityId: addonFacilityId,
+              stripeSubId: subscription.id,
+              metadataType: subMetadataType ?? null,
+              hasFeaturedSet: legacyAddonResult.has_featured_set,
+              duplicate: legacyAddonResult.duplicateSubscriptionId,
+            });
+            await notifyFeaturedAddonPartialFailure(supabaseAdmin, {
+              eventType: "customer.subscription.created (legacy Featured product)",
+              facilityId: addonFacilityId,
+              stripeSubscriptionId: subscription.id,
+              stripeEventId: event.id,
+              result: legacyAddonResult,
+            });
+            // A duplicate on this path is surfaced, never auto-refunded: the
+            // modern path can auto-refund because create-checkout-session
+            // produced the sub and its shape is known. A legacy sub of unknown
+            // provenance gets a human, not a Stripe write.
+            if (legacyAddonResult.duplicateSubscriptionId) {
+              await supabaseAdmin.from("admin_notifications").insert({
+                type: "legacy_featured_duplicate_subscription",
+                title: "Legacy Featured subscription duplicates a live Featured add-on",
+                message:
+                  `Stripe subscription ${subscription.id} bills a Featured product for ` +
+                  `facility ${addonFacilityId}, which already has a different Featured ` +
+                  `subscription tracked. The existing one was kept and this one was NOT ` +
+                  `modified. Reconcile in Stripe: cancel + refund whichever is redundant.`,
+                metadata: {
+                  facility_id: addonFacilityId,
+                  incoming_stripe_subscription_id: subscription.id,
+                  stripe_customer_id: customerId,
+                  stripe_event_id: event.id,
+                } as Record<string, unknown>,
+              });
+            }
+          } else {
+            // Name the real reason. An unpaid subscription with a perfectly
+            // good facility_id is a different operational situation from a
+            // paid one nobody can attach, and reporting the wrong one sends
+            // whoever picks this up looking for a problem that isn't there.
+            const blockedReason = !addonFacilityId
+              ? `carries no usable metadata.type='featured_addon' / facility_id, so no ` +
+                `facility could be resolved`
+              : `resolves to facility ${addonFacilityId}, but its status is ` +
+                `'${subscription.status}' — Stripe has not confirmed payment, so nothing ` +
+                `was activated`;
+            logStep("Legacy Featured product not activated — reconciliation required", {
+              stripeSubId: subscription.id,
+              metadataType: subMetadataType ?? null,
+              status: subscription.status,
+              facilityId: addonFacilityId ?? null,
+              reason: addonFacilityId ? "payment_not_confirmed" : "no_facility",
+            });
+            await supabaseAdmin.from("admin_notifications").insert({
+              type: "legacy_featured_subscription_unresolved",
+              title: "Featured subscription needs manual reconciliation",
+              message:
+                `Stripe subscription ${subscription.id} (customer ${customerId}) bills a ` +
+                `Featured product but ${blockedReason}. Featured was NOT activated and Pro ` +
+                `was NOT granted — Featured is never a Pro entitlement. Attach the correct ` +
+                `facility and activate Featured manually once payment confirms, or refund ` +
+                `the subscription.`,
+              metadata: {
+                facility_id: addonFacilityId ?? null,
+                blocked_reason: addonFacilityId ? "payment_not_confirmed" : "no_facility",
+                stripe_subscription_id: subscription.id,
+                stripe_customer_id: customerId,
+                customer_email: customerEmail,
+                stripe_event_id: event.id,
+                subscription_status: subscription.status,
+                metadata_type: subMetadataType ?? null,
+                product_id: productIdFromPriceProduct(priceItem?.price?.product),
+              } as Record<string, unknown>,
+            });
+          }
+        }
+
+        // Pro upgrade — mirror the provider plan compatibility state via the
+        // shared helper. The helper writes only `profiles.plan` and is a plain
+        // idempotent UPDATE, so this branch is safe to re-enter on webhook
+        // retry. It does not touch facilities.featured, verification, or
+        // calculated_ranking_score. Partial failures emit an admin
+        // notification.
         if (profile?.user_id && planTier === "pro" && subscriptionEntitled) {
           const proResult = await activateProBenefits(supabaseAdmin, profile.user_id);
           logStep("Pro benefits activation result", {
@@ -2137,8 +2164,9 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
               logStep("No facility_subscriptions row found for cancelled Stripe sub — skipping refund executor", { stripeSubId: subscription.id });
             }
 
-            // Revert Pro benefits via the shared helper (idempotent on
-            // featured=false; mirrors profiles.plan='free').
+            // Revert the provider plan compatibility state via the shared
+            // helper (mirrors profiles.plan='free'; touches no facility
+            // trust, Featured or ranking state).
             const providerId = profiles[0].user_id;
             const revertResult = await deactivateProBenefits(supabaseAdmin, providerId);
             logStep("Pro benefits revert result", {

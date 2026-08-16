@@ -844,12 +844,165 @@ function checkWebhookGeneration() {
   }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// 7. PRODUCT CLASSIFICATION — Featured is not a Pro entitlement
+// ═══════════════════════════════════════════════════════════════════════════
+/**
+ * Pro and Featured are different purchases. Pro ($99/mo) buys PRODUCT FEATURES
+ * — the public facility phone + Call CTA, enhanced media, analytics. Featured
+ * buys labeled VISIBILITY and nothing else: no trust, no verification, no
+ * organic ranking, no phone, no Pro.
+ *
+ * The webhook collapsed that distinction into a single list named
+ * PRO_PRODUCT_IDS which held BOTH Professional products AND BOTH Featured
+ * products. Every branch read membership as a Pro predicate, and on
+ * customer.subscription.created that predicate is the entitlement decision, so
+ * a Featured subscription without the modern featured_addon metadata was
+ * granted Pro.
+ *
+ * The rules are mechanism-shaped: they check the SETS and the MAPPING, in both
+ * the canonical module and the deployable artifact. They do not ban the words
+ * Pro or Featured, which are legitimate product names throughout.
+ */
+function checkProductClassification() {
+  const CLASSIFIER = "supabase/functions/_shared/stripe-product-classification.ts";
+  const ENTRYPOINT = "supabase/functions/stripe-webhook/entrypoint.ts";
+  const ARTIFACT = "supabase/functions/stripe-webhook/index.ts";
+
+  const FEATURED_PRODUCTS = ["prod_TbalOeJZA2ZoJl", "prod_TbyzJVNOQL71NN"];
+  const PRO_PRODUCTS = ["prod_TbalLOPujTIoUe", "prod_Tbyz1bf6iYyzYd"];
+
+  const idSet = (src, namePattern) => {
+    const m = src.match(new RegExp(`${namePattern}\\s*=\\s*\\[([\\s\\S]*?)\\]`));
+    if (!m) return null;
+    return [...m[1].matchAll(/["']([^"']+)["']/g)].map((x) => x[1]);
+  };
+
+  if (!exists(CLASSIFIER)) {
+    fail(
+      "product-classification",
+      "there is no canonical Stripe product classifier; product identity is " +
+        "re-derived per event branch",
+      CLASSIFIER,
+    );
+    return;
+  }
+
+  // The same rules hold for the reviewed source and for the bytes that deploy.
+  for (const file of [CLASSIFIER, ENTRYPOINT, ARTIFACT].filter(exists)) {
+    const code = stripJs(read(file));
+
+    const proIds = idSet(code, "(?<![A-Z_])LEGACY_PRO_PRODUCT_IDS");
+    const featuredIds = idSet(code, "LEGACY_FEATURED_PRODUCT_IDS");
+
+    // A set literally named PRO_PRODUCT_IDS is only a violation when it holds a
+    // Featured product — that mixture is the defect, not the identifier.
+    const legacyMixedSet = idSet(code, "(?<![A-Z_])PRO_PRODUCT_IDS");
+    if (legacyMixedSet) {
+      const bad = legacyMixedSet.filter((id) => FEATURED_PRODUCTS.includes(id));
+      if (bad.length > 0) {
+        fail(
+          "product-classification",
+          `PRO_PRODUCT_IDS contains Featured product ids (${bad.join(", ")}) — a ` +
+            `Featured purchase would be classified Pro and unlock the public ` +
+            `facility phone`,
+          file,
+        );
+      }
+    }
+
+    if (proIds) {
+      const bad = proIds.filter((id) => FEATURED_PRODUCTS.includes(id));
+      if (bad.length > 0) {
+        fail(
+          "product-classification",
+          `the Pro product set contains Featured product ids (${bad.join(", ")})`,
+          file,
+        );
+      }
+      if (featuredIds) {
+        const intersection = proIds.filter((id) => featuredIds.includes(id));
+        if (intersection.length > 0) {
+          fail(
+            "product-classification",
+            `the legacy Pro and Featured product sets intersect (${intersection.join(
+              ", ",
+            )}) — they must be disjoint`,
+            file,
+          );
+        }
+      }
+    }
+
+    if (featuredIds) {
+      const bad = featuredIds.filter((id) => PRO_PRODUCTS.includes(id));
+      if (bad.length > 0) {
+        fail(
+          "product-classification",
+          `the Featured product set contains Pro product ids (${bad.join(", ")}) — ` +
+            `legitimate Pro subscribers would lose their entitlement`,
+          file,
+        );
+      }
+    }
+
+    // No branch may map a product-id list straight onto the Pro tier. One
+    // classifier is used everywhere; a second copy is how the first one drifts.
+    if (/_IDS\s*(?:as\s+readonly\s+string\[\]\s*)?\)?\.includes\([^)]*\)[^;{]{0,40}?planTier\s*=\s*"pro"/.test(code)) {
+      fail(
+        "product-classification",
+        "a product-id membership test assigns planTier='pro' directly — product " +
+          "identity must go through the fail-closed classifier",
+        file,
+      );
+    }
+  }
+
+  // The canonical classifier must actually be fail-closed, and the webhook must
+  // route Featured somewhere other than the Pro path.
+  const cls = stripJs(read(CLASSIFIER));
+  if (!/function\s+classifyLegacyProduct/.test(cls)) {
+    fail(
+      "product-classification",
+      "classifyLegacyProduct is gone — there is no single product classifier",
+      CLASSIFIER,
+    );
+  }
+  if (!/LEGACY_FEATURED_PRODUCT_IDS[\s\S]{0,400}?includes\([\s\S]{0,60}?return\s+"featured"/.test(cls)) {
+    fail(
+      "product-classification",
+      "the classifier no longer resolves Featured products to \"featured\"",
+      CLASSIFIER,
+    );
+  }
+
+  if (exists(ARTIFACT)) {
+    const art = stripJs(read(ARTIFACT));
+    if (!/planTier\s*===\s*"pro"\s*&&\s*subscriptionEntitled/.test(art)) {
+      fail(
+        "product-classification",
+        "the deployable webhook no longer gates Pro activation on the classified tier",
+        ARTIFACT,
+      );
+    }
+    if (!/legacyClass\s*===\s*"featured"/.test(art)) {
+      fail(
+        "product-classification",
+        "the deployable webhook has no legacy-Featured branch, so a Featured " +
+          "subscription without featured_addon metadata takes the Pro path",
+        ARTIFACT,
+      );
+    }
+  }
+}
+
 checkDatabase();
 checkRanking();
 checkFrontend();
 checkSearchTrust();
 checkCanonicalPro();
 checkWebhookGeneration();
+checkProductClassification();
 
 if (violations.length > 0) {
   console.error("\n✖ directory trust / ranking contract violated\n");
@@ -878,3 +1031,4 @@ console.log("  • organic sorts and Featured display carry no payment signal");
 console.log("  • no result-set count is described as verified (source + built bundle)");
 console.log("  • Pro identity is canonical is_pro everywhere; no list can elevate it");
 console.log("  • the deployable stripe-webhook is generated from a pristine entrypoint");
+console.log("  • Pro and Featured Stripe products are disjoint; Featured is never a Pro tier");

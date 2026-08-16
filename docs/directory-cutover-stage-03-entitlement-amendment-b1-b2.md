@@ -747,3 +747,199 @@ raw `facilities`; RLS on. Edge versions unchanged — `stripe-webhook` v27,
 production still Pro-masks `verified` with zero Pro subscribers and the Preview
 shows `verified = false` everywhere. That is expected and is not evidence about
 B1 in either direction.
+
+---
+
+# Verification hotfix #2 — legacy Featured products were classified as Pro
+
+Independent verification of hotfix #1 found one further behavioural entitlement
+defect. The three earlier blockers are unchanged and were not redesigned.
+
+## Root cause — one list, two products
+
+The canonical webhook carried a single product-id list, named `PRO_PRODUCT_IDS`,
+that held **four** ids: both Professional products **and both Featured
+products**.
+
+```ts
+const PRO_PRODUCT_IDS = [
+  "prod_TbalLOPujTIoUe", // legacy professional
+  "prod_Tbyz1bf6iYyzYd", // professional
+  "prod_TbalOeJZA2ZoJl", // legacy featured   ← Featured
+  "prod_TbyzJVNOQL71NN", // featured          ← Featured
+];
+```
+
+Every consumer read membership as a Pro predicate:
+
+```ts
+if (productId && PRO_PRODUCT_IDS.includes(productId)) planTier = "pro";
+```
+
+On `customer.subscription.created` that classification **is** the entitlement
+decision — `planTier === "pro" && subscriptionEntitled` calls
+`activateProBenefits()`. So a Featured subscription reaching the legacy
+product-id fallback (no `metadata.type='featured_addon'`, no Featured lookup
+key) was granted Pro: `profiles.plan='pro'`, and with a Pro row in
+`facility_subscriptions`, `has_active_pro()` → `public_facilities.is_pro` → the
+**public facility phone and the Call CTA**. Paid visibility became a product and
+trust entitlement.
+
+The modern add-on path was already safe — `metadata.type='featured_addon'`
+routes to `activateFeaturedAddon()` and returns before the Pro path — and is
+untouched. The defect was the legacy / missing-metadata fallback.
+
+## Second, quieter hole — metadata could claim Pro on its own
+
+`deriveTierFlagsFromSubscription` promoted **any** subscription whose metadata
+said `type='pro_subscription'` or `plan_tier='pro'`, with no reference to what
+Stripe actually billed. A Featured subscription carrying mislabeled metadata
+took the lookup-key branch and reached `planTier = "pro"` without touching the
+product list at all. Fixing the list alone would have left this path live.
+
+The fallback is now refused when every recognised product on the subscription is
+Featured and no Pro product or Pro lookup key is present. A genuine legacy Pro
+subscription — the `PRO_PRICE_ID` case the fallback exists for — classifies as
+`"pro"` from its product and is unaffected.
+
+## The fix — one classifier, two disjoint sets
+
+`supabase/functions/_shared/stripe-product-classification.ts` now owns all
+Stripe plan identity:
+
+```
+LEGACY_PRO_PRODUCT_IDS       prod_TbalLOPujTIoUe, prod_Tbyz1bf6iYyzYd
+LEGACY_FEATURED_PRODUCT_IDS  prod_TbalOeJZA2ZoJl, prod_TbyzJVNOQL71NN
+INTERSECTION                 ∅
+```
+
+`classifyLegacyProduct(id) → "pro" | "featured" | null` and the fail-closed
+`legacyProductPlanTier(id) → "pro" | null` are the only expressions permitted to
+derive Pro from a product. An unknown product is never assumed to be Pro. The
+lookup-key derivation and `resolveSubscriptionPlan` — the exact decision
+`customer.subscription.created` makes — moved into the same module, so no event
+branch reimplements product identity.
+
+The module is pure and dependency-free by design. That is what lets the Vitest
+suite import it directly, so the classification the tests drive is the same code
+the Edge function runs rather than a re-implementation that can drift from it.
+
+## Legacy Featured with missing metadata — fail closed, never silent
+
+`planTier` is null by classification, so the Pro branch is unreachable for these
+regardless of what follows. What remains is not losing the purchase:
+
+- `metadata.facility_id` present → routed through the **existing**
+  `activateFeaturedAddon` helper, with its existing storage contract. No new
+  persistence model is introduced; the canonical Featured-only row model is B3
+  and remains not started.
+- no resolvable facility → **no association is manufactured**. A
+  `legacy_featured_subscription_unresolved` admin notification is written for
+  reconciliation, and the event stops there.
+- a duplicate against a live Featured sub is **surfaced, not auto-refunded** —
+  the modern path can auto-refund because it produced the subscription and knows
+  its shape; a legacy sub of unknown provenance gets a human, not a Stripe write.
+
+Scoped to non-Pro subscriptions, so a single subscription legitimately carrying
+both Pro and Featured items keeps its existing behaviour.
+
+## Audit label truth
+
+A Featured-only lookup-key subscription (`tier === null`,
+`has_featured === true`) was labeled **"Pro + Featured (…)"** in
+`subscription_events` and in the admin notification. `plan_tier` stayed null, so
+no entitlement was granted — but every human reading the audit trail was told a
+Featured-only purchase included Pro. `planNameFromTierFlags` now names exactly
+what the flags assert: `Featured (monthly|annual)`, `Pro (…)`,
+`Pro + Featured (…)` only when Pro was actually bought. Concierge continues to
+supersede the Featured label. No new purchasable combination is invented; no
+Stripe price, product or lookup key changed.
+
+## Event-branch audit
+
+| Branch | Product-id consumer | After |
+| --- | --- | --- |
+| `checkout.session.completed` | none — gated on `metadata.type='pro_subscription'` | unchanged |
+| `customer.subscription.created` | **yes** — the entitlement decision | classifier; Featured → never Pro |
+| `customer.subscription.updated` | none — keys on `stripe_subscription_id` | unchanged |
+| `customer.subscription.deleted` | none — `metadata.type` + DB row | unchanged |
+| `invoice.payment_succeeded` | **yes** — `plan_tier` + "your Pro benefits" copy | classifier |
+| `invoice.payment_failed` | none | unchanged |
+| `charge.refunded` / cancellation / refund math | none — tier read from DB | unchanged |
+| duplicate-subscription detection | none — `tier='pro'` DB predicate | unchanged |
+
+## Tests
+
+`src/lib/stripeWebhookClassification.test.ts` — 95 tests. Hotfix #1's
+"a Stripe Featured product does not become Pro" asserted against the downstream
+projection while handing it `is_pro: false`; that proves the projection respects
+its input and cannot fail while the webhook produces the wrong input. These
+drive the real classifier with Stripe-subscription-shaped fixtures and run its
+output through the webhook's actual gate
+(`planTier === "pro" && subscriptionEntitled`).
+
+Both Featured products are exercised across **eleven** metadata states — the
+modern marker, no metadata, no `type` key, empty object, unknown type, empty and
+whitespace types, and four that explicitly claim Pro — each asserted to reach no
+Pro tier and no reachable `activateProBenefits` in any subscription status.
+Legacy Pro products, the new Pro and Featured lookup keys, the genuine
+Pro + Featured combination, and the past_due grace window are asserted unchanged.
+
+Verified against three injected regressions: Featured ids returned to the Pro
+set (72 tests fail), the metadata guard removed (26 fail), the "Pro + Featured"
+label lie restored (4 fail).
+
+## Guards
+
+`check:stripe-webhook-inline` extracts both id sets from the **generated** bytes
+and fails on `INTERSECTION ≠ ∅`, on any Featured id inside a Pro set (including
+one still named `PRO_PRODUCT_IDS`), on a missing known product, on any
+`*_IDS.includes(...) → planTier="pro"` mapping outside the classifier, on the
+loss of the `planTier === "pro"` gate or the legacy-Featured branch, and on the
+classifier acquiring imports (which would break direct test import).
+`check:directory-trust-ranking` gains a product-classification layer applying
+the same rules to the canonical module, the entrypoint and the artifact. No word
+bans. Both fail on the injected regression.
+
+## Stale webhook comments corrected
+
+Four comments in the canonical entrypoint still described retired behaviour:
+`activateProBenefits` guarding on `featured=true`, idempotency via `featured`,
+avoiding a second +50 ranking boost, and deactivation tied to `featured=false`.
+`activate/deactivateProBenefits` now mirror only the provider plan compatibility
+state and mutate no `facilities.featured`, verification or
+`calculated_ranking_score`. Corrected in the entrypoint; `index.ts` regenerated,
+never hand-edited.
+
+## Validation
+
+| Check | Result |
+| --- | --- |
+| `npx tsc --noEmit` | 0 errors |
+| `npm test -- --run` | **1042 passed, 60 files** (was 947 / 59) |
+| `npm run lint` | 217 / 181 / 36 — **identical to baseline, +0** |
+| `npm run build:vercel` | exit 0, both guards pass in position |
+| Generator `--write` ×2 | byte-identical (`55898dcc…8154f`) |
+| Stage-1 / Stage-2 / Stage-3 guards | all pass |
+
+No migration added. `has_active_pro` untouched. B1/B2 migration files unchanged.
+
+## Production — read-only, unchanged
+
+Migration head **`20260831000000`**. 3,797 approved raw · 3,794 public · 5 raw
+verified · 0 public verified · 0 subscriptions · 0 placements · 2 raw
+`featured=true` · 0 `is_pro`. `ranking_weights` still stores `pro_boost: 50`.
+`has_active_pro` unchanged (`tier='pro'` AND (active/non-expired OR past_due)).
+`get_public_facility_data` absent. Anon raw `facilities` SELECT false, 0 column
+grants. Edge versions unchanged — `stripe-webhook` v27,
+`get-featured-facilities` v12, `calculate-ranking-scores` v12,
+`get-public-facilities` v14, `get-featured-rotation` v13,
+`submit-qualified-lead` v22.
+
+**Stripe read-only inventory was not possible** — no Stripe CLI and no API key
+in this environment, so the two Featured products' live subscriptions could not
+be enumerated. The fix deliberately does not depend on that inventory being
+zero: the code contract is safe for any number of legacy Featured subscriptions
+in any metadata state.
+
+**B3 not started. Stage 4 not started. No broad Bucket-A cleanup.**
