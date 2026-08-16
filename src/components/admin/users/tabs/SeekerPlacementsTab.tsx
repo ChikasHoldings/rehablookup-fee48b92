@@ -126,29 +126,39 @@ export function SeekerPlacementsTab({ userId }: SeekerPlacementsTabProps) {
     return (
       <div className="p-5 text-center py-16">
         <Handshake className="h-10 w-10 mx-auto mb-2 text-muted-foreground/30" />
-        <p className="text-muted-foreground font-medium">No placement cases</p>
-        <p className="text-xs text-muted-foreground mt-1">This client has not submitted any placement requests.</p>
+        <p className="text-muted-foreground font-medium">No historical placement cases</p>
+        <p className="text-xs text-muted-foreground mt-1">
+          The placement product is retired — this client has no archived cases from
+          when it ran.
+        </p>
       </div>
     );
   }
 
-  // Summary KPIs
+  // Summary of the ARCHIVE. There is no "active" count any more: the placement
+  // product is retired, so every case here is history regardless of the status
+  // value it was frozen at.
   const totalCases = placements.length;
-  const activeCases = placements.filter((p) => !["closed", "cancelled"].includes(p.status)).length;
   const admittedCases = placements.filter((p) => p.placement_confirmed || p.admission_status === "admitted").length;
   const totalIntros = placements.reduce((acc: number, p) => acc + (p.introductions?.length || 0), 0);
 
   return (
     <div className="p-5 space-y-4">
+      {/* Read-only framing — this tab shows retired-product history, not a
+          workflow anyone can act on. */}
+      <div className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900">
+        <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+        <span>
+          Historical records from the retired placement product. Read-only — these
+          cases cannot be advanced, reassigned, or reopened.
+        </span>
+      </div>
+
       {/* Summary Strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         <div className="p-3 rounded-xl border bg-card text-center">
           <p className="text-xl font-bold tabular-nums">{totalCases}</p>
-          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Total Cases</p>
-        </div>
-        <div className="p-3 rounded-xl border bg-card text-center">
-          <p className="text-xl font-bold tabular-nums text-warning">{activeCases}</p>
-          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Active</p>
+          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Archived Cases</p>
         </div>
         <div className="p-3 rounded-xl border bg-card text-center">
           <p className="text-xl font-bold tabular-nums text-success">{admittedCases}</p>
@@ -167,7 +177,7 @@ export function SeekerPlacementsTab({ userId }: SeekerPlacementsTabProps) {
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h4 className="font-semibold">{slugToLabel(placement.primary_concern) || "Placement Request"}</h4>
+                  <h4 className="font-semibold">{slugToLabel(placement.primary_concern) || "Archived Case"}</h4>
                   <Badge variant="outline" className={cn("text-xs", statusColors[placement.status] || "")}>
                     {slugToLabel(placement.status)}
                   </Badge>

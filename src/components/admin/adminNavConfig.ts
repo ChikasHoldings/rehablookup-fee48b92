@@ -9,7 +9,6 @@ import {
   ShieldCheck,
   BarChart3,
   ShieldAlert,
-  UserPlus,
   MessageSquare,
   Headphones,
   Megaphone,
@@ -65,14 +64,10 @@ const superAdminNav: NavSection[] = [
     entries: [
       { to: "/admin/leads", icon: Users, label: "Inquiries", permission: "leads", countKey: "leads" },
       { to: "/admin/insurance-verifications", icon: FileCheck2, label: "Insurance VOB", permission: "leads", countKey: "insuranceVerifications" },
+      { to: "/admin/claims", icon: FileCheck2, label: "Claims", permission: "providers" },
       { to: "/admin/re-verification", icon: ShieldAlert, label: "Re-verification", permission: "providers", countKey: "reVerificationPending" },
       { to: "/admin/providers", icon: Building2, label: "Providers", permission: "providers", countKey: "pendingProviders" },
       { to: "/admin/seekers", icon: UserSearch, label: "Clients", permission: "seekers" },
-      // Placements is a single unified workspace at /admin/concierge with
-      // four tabs (Cases / Network / Directory / Inbox). The previous
-      // sub-group (Command Center / Advisor Inbox / Provider Directory)
-      // is collapsed to one entry so the nav reflects the page count.
-      { to: "/admin/concierge", icon: UserPlus, label: "Placements", permission: "placements", countKey: "placements" },
       { to: "/admin/subscriptions", icon: CreditCard, label: "Subscriptions", permission: "subscriptions" },
     ],
   },
@@ -133,14 +128,10 @@ const managerNav: NavSection[] = [
     entries: [
       { to: "/admin/leads", icon: Users, label: "Inquiries", permission: "leads", countKey: "leads" },
       { to: "/admin/insurance-verifications", icon: FileCheck2, label: "Insurance VOB", permission: "leads", countKey: "insuranceVerifications" },
+      { to: "/admin/claims", icon: FileCheck2, label: "Claims", permission: "providers" },
       { to: "/admin/re-verification", icon: ShieldAlert, label: "Re-verification", permission: "providers", countKey: "reVerificationPending" },
       { to: "/admin/providers", icon: Building2, label: "Providers", permission: "providers", countKey: "pendingProviders" },
       { to: "/admin/seekers", icon: UserSearch, label: "Clients", permission: "seekers" },
-      // Placements is a single unified workspace at /admin/concierge with
-      // four tabs (Cases / Network / Directory / Inbox). The previous
-      // sub-group (Command Center / Advisor Inbox / Provider Directory)
-      // is collapsed to one entry so the nav reflects the page count.
-      { to: "/admin/concierge", icon: UserPlus, label: "Placements", permission: "placements", countKey: "placements" },
       { to: "/admin/subscriptions", icon: CreditCard, label: "Subscriptions", permission: "subscriptions" },
     ],
   },
@@ -161,7 +152,15 @@ const managerNav: NavSection[] = [
 ];
 
 // ──────────────────────────────────────────────
-// Placement Advisor — placement-focused workspace
+// Advisor — directory-support workspace.
+//
+// The placement/Concierge product this role was built around was retired in
+// the Stage-3 directory cutover, so the role no longer has a placement
+// workspace to navigate to. The role itself (and its DB enum) is Stage-4
+// debt; until then the nav shows only the directory surfaces the role can
+// actually reach. Visibility must keep matching the route gate in
+// useAdminAuth.canAccessRoute — an entry a role lacks permission for
+// dead-ends on <AccessDenied/>.
 // ──────────────────────────────────────────────
 const advisorNav: NavSection[] = [
   {
@@ -173,11 +172,6 @@ const advisorNav: NavSection[] = [
   {
     sectionLabel: "My Workspace",
     entries: [
-      // The advisor's entire workspace is now the unified Placements
-      // page. The Cases / Directory / Inbox sub-functions are tabs on
-      // that page (Network tab is admin-only). Analytics lives in
-      // the global /admin/analytics surface.
-      { to: "/admin/concierge", icon: UserPlus, label: "Placements", permission: "placements", countKey: "placements" },
       // Visibility must match the route gate (/admin/analytics requires the
       // `analytics` permission). Advisors are `analytics:false` by default, so
       // this item is hidden for them and only appears once granted — no

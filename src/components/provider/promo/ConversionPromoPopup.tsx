@@ -22,8 +22,23 @@ function targetRoute(target: PromoTarget, promoId: string): string {
   switch (target) {
     case "pro": return `/provider/billing?upgrade=pro&${p}`;
     case "featured": return `/provider/marketing/featured?${p}`;
-    case "concierge": return `/provider/marketing/concierge?${p}`;
+    // A concierge-targeted campaign has no destination: the product is
+    // retired. isSellableTarget() below suppresses the popup entirely, so
+    // this branch is unreachable — it exists only because `target_product`
+    // is a DB column whose enum still carries the value (Stage-4 debt).
+    // Land on the marketing hub rather than the retired surface.
+    case "concierge": return `/provider/marketing?${p}`;
   }
+}
+
+/**
+ * A promotion is only shown if it sells something RehabLookup still sells.
+ * Monetization is $0 listing / $99 Pro / Featured add-on — nothing else. A
+ * campaign row still targeting the retired Concierge product must not be
+ * advertised to a provider.
+ */
+function isSellableTarget(target: PromoTarget): boolean {
+  return target === "pro" || target === "featured";
 }
 
 /**
@@ -46,6 +61,7 @@ export function ConversionPromoPopup() {
 
   useEffect(() => {
     if (shownRef.current || !promo) return;
+    if (!isSellableTarget(promo.target_product)) return;
     if (location.pathname.includes("/onboarding")) return;
     if (location.search.includes("checkout=success")) return;
 
@@ -89,6 +105,7 @@ export function ConversionPromoPopup() {
   }, [promo, location.pathname, location.search]);
 
   if (!promo) return null;
+  if (!isSellableTarget(promo.target_product)) return null;
 
   const tierKey = promo.target_product as TierKey;
   const monthly = TIER_PRICING[tierKey]?.monthlyCents ?? 0;

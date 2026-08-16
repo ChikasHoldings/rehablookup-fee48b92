@@ -40,7 +40,6 @@ import { DashboardPerformanceCard } from "@/components/provider/DashboardPerform
 import { DashboardRecentActivity } from "@/components/provider/DashboardRecentActivity";
 import { DashboardListingHealthCard } from "@/components/provider/DashboardListingHealthCard";
 import { FeaturedAnalyticsWidget } from "@/components/provider/FeaturedAnalyticsWidget";
-import { ConciergeAnalyticsWidget } from "@/components/provider/marketing/ConciergeAnalyticsWidget";
 import { FreeTierValueTeaser } from "@/components/provider/FreeTierValueTeaser";
 import { PlanGraceBanner } from "@/components/provider/PlanGraceBanner";
 import { getCachedSession } from "@/lib/sessionCache";
@@ -245,10 +244,10 @@ export default function ProviderDashboardPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.onboarding_completed_at]);
 
-  // Fetch recent leads from the PII-safe view. Pro providers see full
-  // contact details; Free providers never see leads here (those inquiries
-  // route to concierge upstream — see submit-qualified-lead). Polled
-  // every 30s while the tab is visible (React Query pauses
+  // Fetch recent inquiries from the PII-safe view. Every tier sees the
+  // inquiries sent to its own facilities — leads_provider_view is
+  // security_invoker over own-facility RLS, which carries no Pro predicate on
+  // SELECT. Polled every 30s while the tab is visible (React Query pauses
   // refetchInterval automatically when the tab is hidden).
   const { data: recentLeads = [] } = useQuery({
     queryKey: ["recent-leads", facilityId],
@@ -520,7 +519,6 @@ export default function ProviderDashboardPage() {
     : 0;
   const profilePct = completeness?.completeness ?? clientProfilePct;
   const hasFeatured = subscription?.has_featured === true;
-  const hasConcierge = subscription?.has_concierge_partner === true;
   const isVerified = (facility as { verified?: boolean } | undefined)?.verified === true;
 
   return (
@@ -672,26 +670,27 @@ export default function ProviderDashboardPage() {
                 iconColor="text-[#1B365D]"
                 action={{ label: "Manage listings", href: "/provider/listings" }}
               />
+              {/* Inquiries are NOT a paid feature. Every eligible approved
+                  facility — Free included — receives inquiries pinned to the
+                  facility the seeker selected. The previous "Pro" / "Upgrade
+                  to receive" state contradicted the live inquiry contract and
+                  is removed; the count is now shown for every tier, matching
+                  what leads_provider_view actually returns (own-facility RLS,
+                  no Pro predicate on SELECT). */}
               <MetricCard
                 title="Inquiries"
-                value={proStatus.isPro ? (totalLeadsErr ? "—" : totalLeadsCount) : "Pro"}
+                value={totalLeadsErr ? "—" : totalLeadsCount}
                 subtitle={
-                  proStatus.isPro
-                    ? totalLeadsErr || urgentLeadsErr
-                      ? "Couldn't load right now"
-                      : urgentLeadsCount > 0
-                        ? `${urgentLeadsCount} need follow-up`
-                        : "All caught up"
-                    : "Upgrade to receive"
+                  totalLeadsErr || urgentLeadsErr
+                    ? "Couldn't load right now"
+                    : urgentLeadsCount > 0
+                      ? `${urgentLeadsCount} need follow-up`
+                      : "All caught up"
                 }
                 icon={Users}
                 iconBg="bg-emerald-100"
                 iconColor="text-emerald-700"
-                action={
-                  proStatus.isPro
-                    ? { label: "View inquiries", href: "/provider/inquiries" }
-                    : { label: "Upgrade to Pro", href: "/provider/billing?upgrade=pro" }
-                }
+                action={{ label: "View inquiries", href: "/provider/inquiries" }}
               />
               <MetricCard
                 title="Profile"
@@ -779,8 +778,8 @@ export default function ProviderDashboardPage() {
                   </CardContent>
                 </Card>
 
-                {/* Recent inquiries (Pro) OR profile checklist (incomplete) */}
-                {proStatus.isPro && recentLeads.length > 0 ? (
+                {/* Recent inquiries (any tier) OR profile checklist (incomplete) */}
+                {recentLeads.length > 0 ? (
                   <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b py-3.5">
                       <CardTitle className="text-sm font-semibold">Recent inquiries</CardTitle>
@@ -851,10 +850,10 @@ export default function ProviderDashboardPage() {
                   </Card>
                 ) : null}
 
-                {/* Featured / placement add-on performance (self-gated to the
-                    relevant add-on; renders nothing without it) */}
+                {/* Featured add-on performance (self-gated to the add-on;
+                    renders nothing without it). The Concierge widget was
+                    removed in the Stage-3 directory cutover. */}
                 {facilityId && hasFeatured && <FeaturedAnalyticsWidget facilityId={facilityId} />}
-                {facilityId && hasConcierge && <ConciergeAnalyticsWidget facilityId={facilityId} />}
 
                 {facilityId && <VerificationStateCard facilityId={facilityId} />}
 
@@ -882,7 +881,11 @@ export default function ProviderDashboardPage() {
                       <p className="mt-2 text-xs text-slate-600">$99/month — cancel anytime.</p>
                       <ul className="mt-3 space-y-1.5 text-xs text-slate-700">
                         {[
-                          "Inquiries delivered to your inbox",
+                          // Inquiries are NOT listed here: every eligible
+                          // facility receives inquiries regardless of tier.
+                          // Pro buys visibility and features, never inquiry
+                          // eligibility and never trust.
+                          "Your phone number shown on your public profile",
                           "Analytics + market reports",
                           "Facility video & 10 photos",
                           "Priority placement",
@@ -919,7 +922,6 @@ export default function ProviderDashboardPage() {
                 <CardContent className="grid gap-1 p-2 sm:grid-cols-2">
                   {[
                     { icon: Megaphone, label: "Featured placements", href: "/provider/marketing/featured", active: hasFeatured, locked: !proStatus.isPro },
-                    { icon: Users, label: "Concierge Partner", href: "/provider/marketing/concierge", active: hasConcierge, locked: !proStatus.isPro },
                     { icon: Code2, label: "Embed widgets", href: "/provider/embed-badge", active: false, locked: !proStatus.isPro || !isVerified },
                     { icon: ShieldCheck, label: "Credential kit", href: "/provider/credential-kit", active: false, locked: !proStatus.isPro || !isVerified },
                   ].map((row) => {

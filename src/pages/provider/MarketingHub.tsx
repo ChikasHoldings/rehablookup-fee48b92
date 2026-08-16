@@ -23,7 +23,6 @@ import {
   Sparkles,
   Lock,
   Rotate3D,
-  UserCheck,
   Check,
   X,
   AlertCircle,
@@ -45,7 +44,7 @@ import {
  * /provider/subscription.
  *
  * Three tabs:
- *   1. Get Found      — Featured Placements + Concierge Partner (paid add-ons)
+ *   1. Get Found      — Featured Placements (the one paid visibility add-on)
  *   2. Brand assets   — Credential Kit + Embed Widgets (free with Pro)
  *   3. Reviews        — Review-request funnel
  *
@@ -166,8 +165,8 @@ export default function MarketingHub() {
 
           <TabsContent value="visibility" className="space-y-3">
             <p className="text-xs sm:text-sm text-muted-foreground">
-              Paid placement add-ons that put your facility in front of
-              actively-searching clients. Each is independent of the Pro
+              The Featured add-on puts your facility in front of
+              actively-searching clients. It is independent of the Pro
               subscription and can be added or removed anytime.
             </p>
             {selectedFacility?.state && (
@@ -180,9 +179,8 @@ export default function MarketingHub() {
             {isPro && subscription ? (
               <MarketingHubCards subscription={subscription} />
             ) : (
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4">
                 <FeaturedCardLocked />
-                <ConciergeCardLocked />
               </div>
             )}
           </TabsContent>
@@ -243,7 +241,7 @@ function UpgradeBanner() {
               Pro includes the verified badge, embed widgets, credential kit,
               review-request funnel, and priority placement. Billed monthly or
               save 15% on annual ({proAnnualEquiv}/mo equivalent). Add Featured
-              + Concierge any time after upgrading.
+              any time after upgrading.
             </p>
           </div>
           <div className="flex flex-col gap-1.5 shrink-0">
@@ -275,7 +273,7 @@ function UpgradeBanner() {
 function PlanComparisonBlock() {
   const features: Array<{ label: string; free: boolean | string; pro: boolean | string; }> = [
     { label: "Public listing on directory", free: true, pro: true },
-    { label: "Receive inquiry leads", free: true, pro: true },
+    { label: "Receive inquiries from your listing", free: true, pro: true },
     { label: "Photo gallery", free: "5 photos", pro: "10 photos" },
     { label: "Priority search placement (+50 boost)", free: false, pro: true },
     { label: "Verified badge", free: false, pro: true },
@@ -286,7 +284,6 @@ function PlanComparisonBlock() {
     { label: "Performance analytics dashboard", free: "headline only", pro: "full" },
     { label: "Multiple facility locations", free: "1 location", pro: "up to 5" },
     { label: "Featured placements add-on", free: false, pro: "available" },
-    { label: "Concierge Partner add-on", free: false, pro: "available" },
   ];
 
   return (
@@ -371,7 +368,7 @@ function FeatureCell({ value, highlight }: { value: boolean | string; highlight?
 }
 
 /* ────────────────────────────────────────────────────────────────────
-   Visibility add-on cards (Featured + Concierge) — locked variants
+   Visibility add-on card (Featured) — locked variant
    These mirror the live Pro cards in MarketingHubCards.tsx but with
    pricing + "Pro required" framing instead of usage counters.
    ──────────────────────────────────────────────────────────────────── */
@@ -403,52 +400,6 @@ function FeaturedCardLocked() {
           <li>• {fmtMoneyWhole(TIER_PRICING.featured.monthlyCents)}/mo per location</li>
           <li>• Or {fmtMoney(TIER_PRICING.featured.annualCents)}/yr (15% off)</li>
           <li>• Slot caps per geo keep your rotation share meaningful</li>
-          <li>• For national + homepage exposure, upgrade to Concierge</li>
-        </ul>
-        <Button
-          asChild
-          size="sm"
-          className="w-full gap-1.5 bg-amber-500 hover:bg-amber-600 text-white"
-        >
-          <Link to="/provider/subscription">
-            <Sparkles className="h-3.5 w-3.5" aria-hidden />
-            Upgrade to access
-          </Link>
-        </Button>
-      </CardContent>
-    </Card>
-  );
-}
-
-function ConciergeCardLocked() {
-  return (
-    <Card className="border-violet-200/60 bg-gradient-to-br from-white to-violet-50/30">
-      <CardContent className="p-5 space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="h-9 w-9 rounded-lg bg-violet-100 flex items-center justify-center">
-              <UserCheck className="h-5 w-5 text-violet-700" aria-hidden />
-            </div>
-            <div>
-              <h3 className="font-semibold text-foreground">Concierge Partner</h3>
-              <Badge variant="outline" className="text-[10px] mt-0.5 gap-1">
-                <Lock className="h-2.5 w-2.5" aria-hidden />
-                Pro required
-              </Badge>
-            </div>
-          </div>
-        </div>
-        <p className="text-sm text-muted-foreground">
-          The upgrade to Featured: national homepage + international exposure
-          and any extra geographies you pick, plus prominent surfacing when our
-          human advisors match clients. Capped 3-5 per major city; non-partner
-          alternatives always presented; calls go direct to your line.
-        </p>
-        <ul className="text-xs text-muted-foreground space-y-0.5 ml-1">
-          <li>• {fmtMoneyWhole(TIER_PRICING.concierge.monthlyCents)}/mo per location</li>
-          <li>• Or {fmtMoney(TIER_PRICING.concierge.annualCents)}/yr (15% off)</li>
-          <li>• Includes all Featured exposure — replaces Featured (no double charge)</li>
-          <li>• Geography-capped — no bidding wars</li>
         </ul>
         <Button
           asChild

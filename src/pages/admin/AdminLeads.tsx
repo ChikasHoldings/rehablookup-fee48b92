@@ -1,12 +1,12 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Users, Search, Mail, Phone, Zap, Download, X, Trash2,
-  CheckSquare, Square, Loader2, UserCheck,
+  CheckSquare, Square, Loader2,
   MessageSquare, Building2, CalendarIcon, Clock, Timer,
-  ArrowRightLeft, ArrowUpDown, RefreshCw, Link2,
+  ArrowUpDown, RefreshCw, Link2,
 } from "lucide-react";
 import { format, subDays, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,7 +34,6 @@ import { cn } from "@/lib/utils";
 import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import { exportLeadsToCSV } from "@/lib/csvExport";
 import { InquiryDetailModal } from "@/components/admin/inquiries/InquiryDetailModal";
-import { BulkReassignDialog } from "@/components/admin/inquiries/BulkReassignDialog";
 import { BulkStatusUpdateDialog } from "@/components/admin/inquiries/BulkStatusUpdateDialog";
 import { PaginationFooter } from "@/components/common/PaginationFooter";
 import { usePagination } from "@/hooks/usePagination";
@@ -160,7 +159,6 @@ export default function AdminLeads() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
-  const [bulkReassignOpen, setBulkReassignOpen] = useState(false);
   const [bulkStatusOpen, setBulkStatusOpen] = useState(false);
 
   const searchQuery = useDebounce(searchInput, 350);
@@ -294,36 +292,6 @@ export default function AdminLeads() {
     },
   });
 
-  // Free-tier inquiries land in concierge_inquiries (not leads).
-  // Surfacing the count here lets the admin see the *full* inquiry
-  // universe at a glance — the leads table here is Pro-only, while
-  // concierge_inquiries holds Free/Unclaimed redirects + paid
-  // seeker-initiated concierge intakes. Distinct surfaces by
-  // routing decision; one navigation prompt prevents the admin
-  // from forgetting the other side exists.
-  const { data: conciergeBacklog } = useQuery({
-    queryKey: ["admin-leads-concierge-banner"],
-    queryFn: async () => {
-      const [redirectRes, allOpenRes] = await Promise.all([
-        supabase
-          .from("concierge_inquiries")
-          .select("id", { count: "exact", head: true })
-          .eq("routing_mode", "free_tier_redirect")
-          .not("status", "in", "(closed,completed)"),
-        supabase
-          .from("concierge_inquiries")
-          .select("id", { count: "exact", head: true })
-          .not("status", "in", "(closed,completed)"),
-      ]);
-      return {
-        freeTierRedirects: redirectRes.count || 0,
-        allOpen: allOpenRes.count || 0,
-      };
-    },
-    refetchInterval: 60_000,
-    // Keep the larger of the two previously-duplicated staleTimes; the 60s refetchInterval handles freshness, this just avoids needless refetches on remount.
-    staleTime: 1000 * 60 * 2,
-  });
 
   // Filtered count
   const { data: totalCount } = useQuery({
@@ -481,7 +449,7 @@ export default function AdminLeads() {
         icon={Users}
         iconGradient="bg-gradient-to-br from-chart-3 to-chart-5"
         title="Inquiries"
-        subtitle="Direct facility inquiries — click any row for full details and actions"
+        subtitle="Every inquiry, pinned to the facility the seeker selected — click any row for full details"
         actions={
           <div className="flex flex-wrap items-center gap-2">
             {selectedIds.size > 0 && (
@@ -491,21 +459,10 @@ export default function AdminLeads() {
                   size="sm"
                   className="gap-1.5"
                   onClick={() => setBulkStatusOpen(true)}
-                  aria-label={`Update status for ${selectedIds.size} selected lead${selectedIds.size === 1 ? "" : "s"}`}
+                  aria-label={`Update status for ${selectedIds.size} selected inquir${selectedIds.size === 1 ? "y" : "ies"}`}
                 >
                   <RefreshCw className="h-3.5 w-3.5" />
                   <span className="hidden sm:inline">Status</span>
-                  <span>({selectedIds.size})</span>
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5 border-primary/40 text-primary hover:bg-primary/5"
-                  onClick={() => setBulkReassignOpen(true)}
-                  aria-label={`Reassign ${selectedIds.size} selected lead${selectedIds.size === 1 ? "" : "s"}`}
-                >
-                  <ArrowRightLeft className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Reassign</span>
                   <span>({selectedIds.size})</span>
                 </Button>
                 <Button
@@ -513,7 +470,7 @@ export default function AdminLeads() {
                   size="sm"
                   className="gap-1.5"
                   onClick={() => setBulkDeleteOpen(true)}
-                  aria-label={`Delete ${selectedIds.size} selected lead${selectedIds.size === 1 ? "" : "s"}`}
+                  aria-label={`Delete ${selectedIds.size} selected inquir${selectedIds.size === 1 ? "y" : "ies"}`}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                   <span className="hidden sm:inline">Delete</span>
@@ -550,34 +507,12 @@ export default function AdminLeads() {
         }
       />
 
-      {/* Concierge-queue awareness banner — Pro-tier inquiries live in
-          the `leads` table (this page); Free / Unclaimed-tier inquiries
-          land in `concierge_inquiries` via the routing_mode='free_tier_redirect'
-          branch in submit-qualified-lead. Surface a thin reminder + count
-          so the admin doesn't lose sight of the parallel queue. */}
-      {conciergeBacklog && conciergeBacklog.allOpen > 0 && (
-        <div className="flex items-start gap-3 rounded-lg border border-violet-200 bg-violet-50/60 px-4 py-3 text-sm">
-          <UserCheck className="h-4 w-4 text-violet-700 mt-0.5 shrink-0" aria-hidden />
-          <div className="flex-1 min-w-0">
-            <p className="text-slate-900">
-              <span className="font-semibold">{conciergeBacklog.allOpen}</span>{" "}
-              open concierge {conciergeBacklog.allOpen === 1 ? "inquiry" : "inquiries"} also need attention
-              {conciergeBacklog.freeTierRedirects > 0 && (
-                <>
-                  {" "}—{" "}
-                  <span className="font-semibold">{conciergeBacklog.freeTierRedirects}</span>{" "}
-                  from Free / Unclaimed facility inquiries
-                </>
-              )}
-              . They live on the concierge surface, not in this Pro-only table.
-            </p>
-          </div>
-          <Button asChild size="sm" variant="outline" className="border-violet-300 text-violet-900 hover:bg-violet-100 shrink-0">
-            <Link to="/admin/concierge">Open concierge queue</Link>
-          </Button>
-        </div>
-      )}
-
+      {/* The Concierge-queue awareness banner was removed in the Stage-3
+          cutover. It told admins this table was "Pro-only" and that Free /
+          unclaimed inquiries lived on a parallel concierge surface — both
+          untrue since submit-qualified-lead 3.1.0 retired the free-tier
+          redirect. Every inquiry, on every tier, lands in this one table,
+          pinned to the facility the seeker chose. */}
       {/* KPI Summary */}
       <Card className="overflow-hidden">
         <CardContent className="p-0">
@@ -917,7 +852,7 @@ export default function AdminLeads() {
               <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
                 {hasActiveFilters
                   ? "Try adjusting your filters or clearing the date range. New inquiries appear in real time."
-                  : "Inquiries from facility-profile contact forms land here. Concierge intakes have their own dashboard."}
+                  : "Every inquiry a seeker sends to a facility lands here, attached to the facility they selected."}
               </p>
               <div className="mt-4 flex items-center justify-center gap-2 flex-wrap">
                 {hasActiveFilters && (
@@ -926,9 +861,6 @@ export default function AdminLeads() {
                     Clear all filters
                   </Button>
                 )}
-                <Button variant="link" size="sm" asChild>
-                  <Link to="/admin/concierge">View concierge queue →</Link>
-                </Button>
               </div>
             </div>
           )}
@@ -956,18 +888,6 @@ export default function AdminLeads() {
         facilityMap={facilitiesMap}
         facilities={facilities || []}
         onLeadUpdated={invalidateAll}
-      />
-
-      {/* Bulk Reassign */}
-      <BulkReassignDialog
-        open={bulkReassignOpen}
-        onOpenChange={setBulkReassignOpen}
-        selectedIds={selectedIds}
-        facilities={facilities || []}
-        onSuccess={() => {
-          invalidateAll();
-          setSelectedIds(new Set());
-        }}
       />
 
       {/* Bulk Status Update */}

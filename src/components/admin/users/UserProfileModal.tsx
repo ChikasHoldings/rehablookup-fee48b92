@@ -248,7 +248,7 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
   const tabs = [
     { value: "overview", label: "Overview", icon: User },
     { value: "inquiries", label: "Inquiries", icon: MessageSquare, badge: totalInquiries },
-    { value: "placements", label: "Placements", icon: Handshake },
+    { value: "placements", label: "Placement History", icon: Handshake },
     { value: "reviews", label: "Reviews", icon: Star, badge: userActivity?.reviews?.length || 0 },
     { value: "activity", label: "Activity", icon: Clock },
     { value: "communications", label: "Comms", icon: Send },

@@ -26,17 +26,12 @@ import {
   ChevronRight,
   Target,
   Activity,
-  UserPlus,
   AlertTriangle,
   Headphones,
   UserCheck,
   Clock,
+  FileCheck2,
 } from "lucide-react";
-import {
-  ACTIVE_STATUSES,
-  PLACED_STATUSES,
-  MATCHING_STATUSES,
-} from "@/components/admin/concierge/conciergeStatusConstants";
 
 interface RevenueStats {
   monthlyRevenue: number;
@@ -59,7 +54,7 @@ export function ManagerDashboard() {
     queryClient.invalidateQueries({ queryKey: ["manager-subscription-stats"] });
     queryClient.invalidateQueries({ queryKey: ["manager-team-stats"] });
     queryClient.invalidateQueries({ queryKey: ["manager-escalation-stats"] });
-    queryClient.invalidateQueries({ queryKey: ["manager-placement-stats"] });
+    queryClient.invalidateQueries({ queryKey: ["manager-claim-stats"] });
     queryClient.invalidateQueries({ queryKey: ["manager-revenue-stats"] });
   }, [queryClient]);
 
@@ -108,6 +103,26 @@ export function ManagerDashboard() {
     staleTime: 60 * 1000,
   });
 
+  // Claim-review workload. Facility ownership verification is the
+  // directory-operations queue that replaced the retired placement pipeline
+  // on this dashboard in the Stage-3 cutover.
+  const { data: claimStats, isLoading: loadingClaims } = useQuery({
+    queryKey: ["manager-claim-stats"],
+    queryFn: async () => {
+      const [pending, approved, rejected] = await Promise.all([
+        supabase.from("facility_claim_requests").select("id", { count: "exact", head: true }).eq("status", "pending"),
+        supabase.from("facility_claim_requests").select("id", { count: "exact", head: true }).eq("status", "approved"),
+        supabase.from("facility_claim_requests").select("id", { count: "exact", head: true }).eq("status", "rejected"),
+      ]);
+      return {
+        pending: pending.count || 0,
+        approved: approved.count || 0,
+        rejected: rejected.count || 0,
+      };
+    },
+    staleTime: 60 * 1000,
+  });
+
   // Escalation stats
   const { data: escalationStats, isLoading: loadingEscalations } = useQuery({
     queryKey: ["manager-escalation-stats"],
@@ -124,26 +139,6 @@ export function ManagerDashboard() {
       };
     },
     staleTime: 30 * 1000,
-  });
-
-  // Placement pipeline stats
-  const { data: placementStats, isLoading: loadingPlacements } = useQuery({
-    queryKey: ["manager-placement-stats"],
-    queryFn: async () => {
-      const [active, matching, placed, thisMonth] = await Promise.all([
-        supabase.from("concierge_inquiries").select("id", { count: "exact", head: true }).in("status", ACTIVE_STATUSES as unknown as string[]),
-        supabase.from("concierge_inquiries").select("id", { count: "exact", head: true }).in("status", MATCHING_STATUSES as unknown as string[]),
-        supabase.from("concierge_inquiries").select("id", { count: "exact", head: true }).in("status", PLACED_STATUSES as unknown as string[]),
-        supabase.from("concierge_inquiries").select("id", { count: "exact", head: true }).in("status", PLACED_STATUSES as unknown as string[]).gte("created_at", new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()),
-      ]);
-      return {
-        activeCases: active.count || 0,
-        matching: matching.count || 0,
-        totalPlaced: placed.count || 0,
-        placedThisMonth: thisMonth.count || 0,
-      };
-    },
-    staleTime: 60 * 1000,
   });
 
   // Revenue stats
@@ -194,18 +189,15 @@ export function ManagerDashboard() {
       startOfMonth.setDate(1);
       startOfMonth.setHours(0, 0, 0, 0);
 
-      const [totalMonth, totalAll, verified, newLeads] = await Promise.all([
+      const [totalMonth, totalAll, newLeads] = await Promise.all([
         supabase.from("leads").select("id", { count: "exact", head: true }).gte("created_at", startOfMonth.toISOString()),
         supabase.from("leads").select("id", { count: "exact", head: true }),
-        supabase.from("leads").select("id", { count: "exact", head: true }).eq("email_verified", true).gte("created_at", startOfMonth.toISOString()),
         supabase.from("leads").select("id", { count: "exact", head: true }).eq("status", "new"),
       ]);
 
       return {
         totalMonth: totalMonth.count || 0,
         totalAll: totalAll.count || 0,
-        verified: verified.count || 0,
-        verificationRate: totalMonth.count ? Math.round(((verified.count || 0) / totalMonth.count) * 100) : 0,
         newLeads: newLeads.count || 0,
       };
     },
@@ -241,7 +233,7 @@ export function ManagerDashboard() {
         </div>
         <div className="min-w-0">
           <h1 className="text-lg sm:text-2xl font-semibold tracking-tight text-foreground truncate">Operations Dashboard</h1>
-          <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">Team oversight, placements, escalations & platform metrics</p>
+          <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">Team oversight, directory operations, escalations &amp; platform metrics</p>
         </div>
       </div>
 
@@ -265,19 +257,19 @@ export function ManagerDashboard() {
           </CardContent>
         </Card>
 
-        {/* Active Placements */}
+        {/* Pending claims — directory ownership verification workload */}
         <Card className="border shadow-sm overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 space-y-0 p-3 sm:p-6">
-            <CardTitle className="text-[10px] sm:text-sm font-medium text-muted-foreground truncate pr-1">Active Cases</CardTitle>
-            <UserPlus className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
+            <CardTitle className="text-[10px] sm:text-sm font-medium text-muted-foreground truncate pr-1">Pending Claims</CardTitle>
+            <FileCheck2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
           </CardHeader>
           <CardContent className="min-h-[40px] sm:min-h-[60px] p-3 pt-0 sm:p-6 sm:pt-0">
-            {loadingPlacements ? (
+            {loadingClaims ? (
               <Skeleton className="h-6 sm:h-8 w-16" />
             ) : (
               <>
-                <div className="text-lg sm:text-2xl font-bold tabular-nums">{placementStats?.activeCases}</div>
-                <p className="text-[9px] sm:text-xs text-muted-foreground mt-0.5">{placementStats?.placedThisMonth} placed this month</p>
+                <div className="text-lg sm:text-2xl font-bold tabular-nums">{claimStats?.pending ?? 0}</div>
+                <p className="text-[9px] sm:text-xs text-muted-foreground mt-0.5">awaiting verification</p>
               </>
             )}
           </CardContent>
@@ -344,7 +336,7 @@ export function ManagerDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="text-base font-medium">Team Overview</CardTitle>
-                <CardDescription>Advisors & Customer Reps under your oversight</CardDescription>
+                <CardDescription>Support staff under your oversight</CardDescription>
               </div>
               {hasPermission("users") && (
                 <Button variant="ghost" size="sm" asChild>
@@ -369,7 +361,7 @@ export function ManagerDashboard() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Placement Advisors</span>
+                      <span className="text-sm font-medium">Advisors</span>
                       <span className="text-lg font-bold tabular-nums">{teamStats?.totalAdvisors}</span>
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
@@ -413,7 +405,7 @@ export function ManagerDashboard() {
                     <Badge variant="destructive" className="text-[10px] px-1.5">{escalationStats.critical} critical</Badge>
                   ) : null}
                 </CardTitle>
-                <CardDescription>Issues from Advisors & Customer Reps needing resolution</CardDescription>
+                <CardDescription>Issues from support staff needing resolution</CardDescription>
               </div>
               {hasPermission("escalations") && (
                 <Button variant="ghost" size="sm" asChild>
@@ -458,17 +450,18 @@ export function ManagerDashboard() {
 
       {/* Placement Pipeline + Provider Status */}
       <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
-        {/* Placement Pipeline */}
+        {/* Claims queue — the directory-ops workload that replaced the
+            retired placement pipeline in the Stage-3 cutover. */}
         <Card className="border shadow-sm">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-base font-medium">Placement Pipeline</CardTitle>
-                <CardDescription>Current case distribution & outcomes</CardDescription>
+                <CardTitle className="text-base font-medium">Claims Queue</CardTitle>
+                <CardDescription>Facility ownership verification workload</CardDescription>
               </div>
-              {hasPermission("placements") && (
+              {hasPermission("providers") && (
                 <Button variant="ghost" size="sm" asChild>
-                  <Link to="/admin/concierge" className="text-xs">
+                  <Link to="/admin/claims" className="text-xs">
                     View all <ChevronRight className="h-3 w-3 ml-1" />
                   </Link>
                 </Button>
@@ -476,31 +469,22 @@ export function ManagerDashboard() {
             </div>
           </CardHeader>
           <CardContent>
-            {loadingPlacements ? (
+            {loadingClaims ? (
               <Skeleton className="h-24 w-full" />
             ) : (
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-3">
-                   <div className="text-center p-3 rounded-lg bg-primary/10 border border-primary/20">
-                     <Clock className="h-4 w-4 text-primary mx-auto mb-1" />
-                    <div className="text-lg font-bold tabular-nums">{placementStats?.activeCases}</div>
-                    <div className="text-[10px] text-muted-foreground">Active Cases</div>
-                  </div>
-                   <div className="text-center p-3 rounded-lg bg-warning/10 border border-warning/20">
-                     <Target className="h-4 w-4 text-warning mx-auto mb-1" />
-                    <div className="text-lg font-bold tabular-nums">{placementStats?.matching}</div>
-                    <div className="text-[10px] text-muted-foreground">Matching</div>
-                  </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="text-center p-3 rounded-lg bg-warning/10 border border-warning/20">
+                  <Clock className="h-4 w-4 text-warning mx-auto mb-1" />
+                  <div className="text-lg font-bold tabular-nums">{claimStats?.pending ?? 0}</div>
+                  <div className="text-[10px] text-muted-foreground">Pending</div>
                 </div>
-                <div className="flex items-center justify-between p-3 rounded-lg bg-success/10 border border-success/20">
-                  <div className="flex items-center gap-2">
-                    <UserPlus className="h-4 w-4 text-success" />
-                    <span className="text-sm font-medium">Total Placed</span>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-lg font-bold tabular-nums text-success">{placementStats?.totalPlaced}</span>
-                    <span className="text-xs text-muted-foreground ml-2">({placementStats?.placedThisMonth} this mo.)</span>
-                  </div>
+                <div className="text-center p-3 rounded-lg bg-success/10 border border-success/20">
+                  <div className="text-lg font-bold tabular-nums text-success">{claimStats?.approved ?? 0}</div>
+                  <div className="text-[10px] text-muted-foreground">Approved</div>
+                </div>
+                <div className="text-center p-3 rounded-lg bg-muted/50 border">
+                  <div className="text-lg font-bold tabular-nums">{claimStats?.rejected ?? 0}</div>
+                  <div className="text-[10px] text-muted-foreground">Rejected</div>
                 </div>
               </div>
             )}
@@ -563,8 +547,8 @@ export function ManagerDashboard() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-base font-medium">Lead Pipeline</CardTitle>
-                <CardDescription>Monthly lead volume & verification</CardDescription>
+                <CardTitle className="text-base font-medium">Inquiries</CardTitle>
+                <CardDescription>Monthly inquiry volume</CardDescription>
               </div>
               {hasPermission("leads") && (
                 <Button variant="ghost" size="sm" asChild>
@@ -585,8 +569,8 @@ export function ManagerDashboard() {
                   <div className="text-[10px] text-muted-foreground">This Month</div>
                 </div>
                 <div className="text-center p-2 rounded-lg bg-success/10 border border-success/20">
-                  <div className="text-lg font-bold text-success tabular-nums">{leadStats?.verificationRate}%</div>
-                  <div className="text-[10px] text-muted-foreground">Verified</div>
+                  <div className="text-lg font-bold text-success tabular-nums">{leadStats?.totalAll}</div>
+                  <div className="text-[10px] text-muted-foreground">All Time</div>
                 </div>
                 <div className="text-center p-2 rounded-lg bg-info/10 border border-info/20">
                   <div className="text-lg font-bold text-info tabular-nums">{leadStats?.newLeads}</div>
@@ -657,13 +641,13 @@ export function ManagerDashboard() {
               </Link>
             </Button>
           )}
-          {hasPermission("placements") && (
+          {hasPermission("providers") && (
             <Button variant="ghost" className="justify-start h-auto py-2.5 px-3 hover:bg-primary/10" asChild>
-              <Link to="/admin/concierge">
-                <UserPlus className="h-5 w-5 text-primary mr-3 shrink-0" />
+              <Link to="/admin/claims">
+                <FileCheck2 className="h-5 w-5 text-primary mr-3 shrink-0" />
                 <div className="flex flex-col items-start min-w-0">
-                  <span className="text-sm font-medium">Placement Center</span>
-                  <span className="text-xs text-muted-foreground">{placementStats?.activeCases} active cases</span>
+                  <span className="text-sm font-medium">Review Claims</span>
+                  <span className="text-xs text-muted-foreground">{claimStats?.pending ?? 0} pending</span>
                 </div>
               </Link>
             </Button>

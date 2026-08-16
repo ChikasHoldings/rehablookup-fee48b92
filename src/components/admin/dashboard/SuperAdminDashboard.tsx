@@ -15,14 +15,8 @@ import {
   CriticalAlertsBanner,
   AddonAdoptionCard,
 } from "@/components/admin/dashboard";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Shield, Sparkles, ChevronRight, AlertTriangle } from "lucide-react";
-import {
-  CANONICAL_STATUSES,
-  ACTIVE_STATUSES,
-  PLACED_STATUSES,
-} from "@/components/admin/concierge/conciergeStatusConstants";
+import { Shield, Sparkles, AlertTriangle } from "lucide-react";
 
 const PLAN_COLORS = {
   free: "hsl(215, 16%, 47%)",
@@ -155,17 +149,19 @@ export function SuperAdminDashboard() {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Fetch providers stats with Pro/Placement breakdown
+  // Directory account stats. The retired "placement" breakdown (confirmed
+  // placements from concierge_inquiries) was removed in the Stage-3 cutover
+  // and replaced with the Featured add-on count, which is a live product.
   const { data: providerStats, isLoading: loadingProviders } = useQuery({
     queryKey: ["admin-provider-stats"],
     queryFn: async () => {
-      const [total, approved, pending, suspended, proSubs, placementFacilities] = await Promise.all([
+      const [total, approved, pending, suspended, proSubs, featuredSubs] = await Promise.all([
         supabase.from("facilities").select("id", { count: "exact", head: true }),
         supabase.from("facilities").select("id", { count: "exact", head: true }).eq("status", "approved"),
         supabase.from("facilities").select("id", { count: "exact", head: true }).eq("status", "pending"),
         supabase.from("facilities").select("id", { count: "exact", head: true }).eq("suspended", true),
         supabase.from("facility_subscriptions").select("id", { count: "exact", head: true }).eq("status", "active"),
-        supabase.from("concierge_inquiries").select("placed_facility_id", { count: "exact", head: true }).not("placed_facility_id", "is", null).eq("placement_confirmed", true),
+        supabase.from("facility_subscriptions").select("id", { count: "exact", head: true }).eq("status", "active").eq("has_featured", true),
       ]);
       return {
         total: total.count || 0,
@@ -173,18 +169,16 @@ export function SuperAdminDashboard() {
         pending: pending.count || 0,
         suspended: suspended.count || 0,
         pro: proSubs.count || 0,
-        placement: placementFacilities.count || 0,
-        featured: proSubs.count || 0,
+        featured: featuredSubs.count || 0,
         verified: approved.count || 0,
       };
     },
     staleTime: 2 * 60 * 1000,
   });
 
-  // Fetch lead-volume stats (inquiries received platform-wide).
-  // Pro subscribers receive every qualified inquiry with full PII by
-  // default — there is no per-unlock metric to count under the current
-  // flat-fee model.
+  // Inquiry-volume stats. Every inquiry is pinned to the facility the seeker
+  // selected, so there is nothing to count for matching, assignment, or
+  // redistribution — only how many arrived and how many are still untriaged.
   const { data: leadStats, isLoading: loadingLeads } = useQuery({
     queryKey: ["admin-lead-stats"],
     queryFn: async () => {
@@ -192,20 +186,16 @@ export function SuperAdminDashboard() {
       startOfMonth.setDate(1);
       startOfMonth.setHours(0, 0, 0, 0);
 
-      const [totalMonth, totalAll, verified, newLeads] = await Promise.all([
+      const [totalMonth, totalAll, newLeads] = await Promise.all([
         supabase.from("leads").select("id", { count: "exact", head: true }).gte("created_at", startOfMonth.toISOString()),
         supabase.from("leads").select("id", { count: "exact", head: true }),
-        supabase.from("leads").select("id", { count: "exact", head: true }).eq("email_verified", true).gte("created_at", startOfMonth.toISOString()),
         supabase.from("leads").select("id", { count: "exact", head: true }).eq("status", "new"),
       ]);
 
       return {
         totalMonth: totalMonth.count || 0,
         totalAll: totalAll.count || 0,
-        verified: verified.count || 0,
-        verificationRate: totalMonth.count ? Math.round(((verified.count || 0) / totalMonth.count) * 100) : 0,
         newLeads: newLeads.count || 0,
-        assigned: 0,
       };
     },
     staleTime: 2 * 60 * 1000,
@@ -252,22 +242,6 @@ export function SuperAdminDashboard() {
     },
     staleTime: 60 * 1000,
   });
-  const { data: placementStats } = useQuery<Record<string, number>>({
-    queryKey: ["admin-placement-pipeline"],
-    queryFn: async () => {
-      const stages = CANONICAL_STATUSES;
-      const results = await Promise.all(
-        stages.map(s => supabase.from("concierge_inquiries").select("id", { count: "exact", head: true }).eq("status", s))
-      );
-      const counts: Record<string, number> = {};
-      stages.forEach((s, i) => { counts[s] = results[i].count || 0; });
-      counts.active = ACTIVE_STATUSES.reduce((sum, s) => sum + (counts[s] || 0), 0);
-      counts.placed = PLACED_STATUSES.reduce((sum, s) => sum + (counts[s] || 0), 0);
-      return counts;
-    },
-    staleTime: 5 * 60 * 1000,
-  });
-
   // Fetch critical escalations for alert banner
   const { data: criticalEscalations } = useQuery({
     queryKey: ["admin-critical-escalations"],
@@ -347,43 +321,6 @@ export function SuperAdminDashboard() {
         />
       </AdminWidgetBoundary>
 
-      {/* Placement Pipeline Overview */}
-      {placementStats && (placementStats.active > 0 || (placementStats.placed || 0) > 0) && (
-        <Card className="border shadow-sm">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-base font-medium">Placement Pipeline</CardTitle>
-                <CardDescription>{placementStats.active} active · {placementStats.placed} placed</CardDescription>
-              </div>
-              <Button variant="ghost" size="sm" asChild>
-                <Link to="/admin/concierge" className="text-xs">
-                  View all <ChevronRight className="h-3 w-3 ml-1" />
-                </Link>
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-4 sm:grid-cols-7 gap-1.5">
-              {[
-                { key: "intake_submitted", label: "New", color: "bg-info/10 text-info border-info/20" },
-                { key: "intake_reviewed", label: "Review", color: "bg-warning/10 text-warning border-warning/20" },
-                { key: "matching_providers", label: "Matching", color: "bg-warning/10 text-warning border-warning/20" },
-                { key: "presented_to_seeker", label: "Presented", color: "bg-accent/10 text-accent-foreground border-accent/20" },
-                { key: "admitted", label: "Admitted", color: "bg-success/10 text-success border-success/20" },
-                { key: "completed", label: "Done", color: "bg-success/10 text-success border-success/20" },
-                { key: "closed", label: "Closed", color: "bg-muted text-muted-foreground border-border" },
-              ].map(stage => (
-                <div key={stage.key} className={`text-center p-2 rounded-lg border ${stage.color}`}>
-                  <div className="text-base sm:text-lg font-bold tabular-nums">{placementStats[stage.key] || 0}</div>
-                  <div className="text-[9px] sm:text-[10px]">{stage.label}</div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Charts Row */}
       <AdminWidgetBoundary name="Charts">
         <DashboardChartsSection
@@ -416,8 +353,7 @@ export function SuperAdminDashboard() {
         </AdminWidgetBoundary>
       </div>
 
-      {/* Subscription activity + add-on adoption (Pro / Featured / Concierge).
-          Replaces the retired credit-monitor slot from the legacy unlock model. */}
+      {/* Subscription activity + add-on adoption (Pro / Featured). */}
       <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
         <AdminWidgetBoundary name="Subscriptions">
           <SubscriptionActivityWidget />

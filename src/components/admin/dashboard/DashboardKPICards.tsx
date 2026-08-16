@@ -70,7 +70,6 @@ interface ProviderStats {
   pending: number;
   suspended: number;
   pro: number;
-  placement: number;
   featured?: number;
   verified?: number;
 }
@@ -78,10 +77,7 @@ interface ProviderStats {
 interface LeadStats {
   totalMonth: number;
   totalAll: number;
-  verified: number;
-  verificationRate: number;
   newLeads: number;
-  assigned?: number;
 }
 
 interface WeeklyTrends {
@@ -157,7 +153,7 @@ export const DashboardKPICards = forwardRef<HTMLDivElement, DashboardKPICardsPro
         </CardContent>
       </Card>
 
-      {/* Providers - Show Pro/Placement breakdown */}
+      {/* Providers — directory accounts, with the paid-tier breakdown */}
       <Card className="border shadow-sm overflow-hidden">
         <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 space-y-0 p-3 sm:p-6">
           <CardTitle className="text-[10px] sm:text-sm font-medium text-muted-foreground truncate pr-1">Providers</CardTitle>
@@ -172,7 +168,7 @@ export const DashboardKPICards = forwardRef<HTMLDivElement, DashboardKPICardsPro
               <div className="flex gap-1 sm:gap-2 text-[8px] sm:text-[10px] text-muted-foreground mt-0.5">
                 <span className="text-success">{providerStats?.pro || 0} Pro</span>
                 <span className="hidden sm:inline">•</span>
-                <span className="text-info hidden sm:inline">{providerStats?.placement || 0} Placement</span>
+                <span className="text-info hidden sm:inline">{providerStats?.featured || 0} Featured</span>
               </div>
             </>
           )}
@@ -184,10 +180,10 @@ export const DashboardKPICards = forwardRef<HTMLDivElement, DashboardKPICardsPro
         )}
       </Card>
 
-      {/* Leads — total inquiries received platform-wide + this month */}
+      {/* Inquiries — total received platform-wide + this month */}
       <Card className="border shadow-sm overflow-hidden">
         <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 space-y-0 p-3 sm:p-6">
-          <CardTitle className="text-[10px] sm:text-sm font-medium text-muted-foreground truncate pr-1">Leads</CardTitle>
+          <CardTitle className="text-[10px] sm:text-sm font-medium text-muted-foreground truncate pr-1">Inquiries</CardTitle>
           <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
         </CardHeader>
         <CardContent className="pb-0 min-h-[30px] sm:min-h-[40px] p-3 pt-0 sm:p-6 sm:pt-0">
@@ -196,10 +192,12 @@ export const DashboardKPICards = forwardRef<HTMLDivElement, DashboardKPICardsPro
           ) : (
             <>
               <div className="text-lg sm:text-2xl font-bold tabular-nums">{leadStats?.totalAll?.toLocaleString()}</div>
+              {/* No "verified" sub-metric: leads.email_verified records that a
+                  seeker confirmed their email address, which does not make the
+                  inquiry itself "verified". Labelling it that way overstated
+                  what the platform knows. */}
               <div className="flex gap-1 sm:gap-2 text-[8px] sm:text-[10px] text-muted-foreground mt-0.5">
                 <span>{leadStats?.totalMonth?.toLocaleString()} this mo</span>
-                <span className="hidden sm:inline">•</span>
-                <span className="text-success hidden sm:inline">{leadStats?.verified || 0} verified</span>
               </div>
             </>
           )}

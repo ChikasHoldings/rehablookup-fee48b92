@@ -1,32 +1,28 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useTransition } from "react";
-import { 
-  Home, 
-  Users, 
-  Network,
+import {
+  Home,
+  Users,
+  BarChart3,
   Building2,
   MoreHorizontal
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { usePendingInquiriesCount } from "@/hooks/usePendingInquiriesCount";
-import { usePendingConciergeCount } from "@/hooks/usePendingConciergeCount";
-// usePendingInternationalCount retired 2026-05-20 — paid international placement product wound down.
 
 interface MobileBottomNavProps {
   onMoreClick: () => void;
 }
 
+// Directory-model primary tabs. The Concierge tab (which pointed at the
+// retired /provider/marketing/concierge placement surface) was removed in the
+// Stage-3 cutover and replaced with Analytics — the directory-performance
+// surface providers actually act on. See
+// docs/directory-cutover-stage-03-provider-admin.md.
 const navItems = [
   { href: "/provider/dashboard", label: "Home", icon: Home },
-  { href: "/provider/inquiries", label: "Leads", icon: Users },
-  // The legacy /provider/placement-network route was retired in the
-  // monetization rebuild — App.tsx still redirects it to /marketing
-  // for backlinks but mobile users tapping the tab were silently
-  // hitting that redirect. Point straight at the concierge management
-  // surface (which is where pendingDomesticCount tells them to act)
-  // so the tap lands them on a real page.
-  { href: "/provider/marketing/concierge", label: "Concierge", icon: Network },
+  { href: "/provider/inquiries", label: "Inquiries", icon: Users },
+  { href: "/provider/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/provider/listings", label: "Listings", icon: Building2 },
 ];
 
@@ -34,15 +30,9 @@ export function MobileBottomNav({ onMoreClick }: MobileBottomNavProps) {
   const location = useLocation();
   const navNavigate = useNavigate();
   const [, startTransition] = useTransition();
-  const { selectedFacility } = useSelectedFacility();
 
-  // Use the same hooks as the sidebar for consistency
+  // Use the same hook as the sidebar for consistency
   const { count: pendingInquiriesCount } = usePendingInquiriesCount();
-  const { count: pendingDomesticCount } = usePendingConciergeCount(selectedFacility?.id);
-
-  // International placement product retired 2026-05-20 — only domestic
-  // concierge cases contribute to the placement badge now.
-  const totalPlacementCount = pendingDomesticCount;
 
   // "More" is active on any provider route that isn't one of the four primary
   // tabs (previously an incomplete allow-list left billing/marketing/credential-
@@ -64,10 +54,9 @@ export function MobileBottomNav({ onMoreClick }: MobileBottomNavProps) {
         {navItems.map((item) => {
           const isActive = location.pathname === item.href;
           const Icon = item.icon;
-          const isLeadsItem = item.href === "/provider/inquiries";
-          const isPlacementItem = item.href === "/provider/marketing/concierge";
-          const showBadge = (isLeadsItem && pendingInquiriesCount > 0) || (isPlacementItem && totalPlacementCount > 0);
-          const badgeCount = isLeadsItem ? pendingInquiriesCount : totalPlacementCount;
+          const isInquiriesItem = item.href === "/provider/inquiries";
+          const showBadge = isInquiriesItem && pendingInquiriesCount > 0;
+          const badgeCount = pendingInquiriesCount;
 
           return (
             <a

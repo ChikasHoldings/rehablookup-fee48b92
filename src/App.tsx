@@ -359,11 +359,8 @@ const ProviderImageGuidelines = lazy(() => import("./pages/provider/ImageGuideli
 const ProviderAddLocation = lazy(() => import("./pages/provider/AddLocation"));
 const ProviderBillingPage = lazy(() => import("./pages/provider/Billing"));
 const ProviderBillingCancelPage = lazy(() => import("./pages/provider/BillingCancel"));
-const ProviderBillingPlacementsPage = lazy(() => import("./pages/provider/BillingPlacements"));
-const ProviderBillingConciergePage = lazy(() => import("./pages/provider/BillingConcierge"));
 const ProviderMarketingHub = lazy(() => import("./pages/provider/MarketingHub"));
 const ProviderMarketingFeatured = lazy(() => import("./pages/provider/MarketingFeatured"));
-const ProviderMarketingConcierge = lazy(() => import("./pages/provider/MarketingConcierge"));
 // Pro upgrade page + Placement network removed in monetization rebuild.
 // /provider/pro-upgrade and /provider/placement-network now Navigate
 // to /for-providers so any stale bookmark / external link still lands
@@ -389,18 +386,15 @@ const AdminProfile = lazy(() => import("./pages/admin/AdminProfile"));
 const AdminAnalytics = lazy(() => import("./pages/admin/AdminAnalytics"));
 const AdminSecurityLogs = lazy(() => import("./pages/admin/AdminSecurityLogs"));
 const AdminReviews = lazy(() => import("./pages/admin/AdminReviews"));
-const AdminConcierge = lazy(() => import("./pages/admin/AdminConcierge"));
-const AdminConciergeAuditReview = lazy(() => import("./pages/admin/AdminConciergeAuditReview"));
-const AdminConciergeMetrics = lazy(() => import("./pages/admin/AdminConciergeMetrics"));
+const AdminConciergeHistorical = lazy(() => import("./pages/admin/AdminConciergeHistorical"));
 // PlacementRevenueDashboard removed in monetization rebuild — admin
 // /admin/placement-revenue Navigate'd to /admin/dashboard below.
 const AdminSupport = lazy(() => import("./pages/admin/AdminSupport"));
 const AdminMarketing = lazy(() => import("./pages/admin/AdminMarketing"));
 const AdminBlog = lazy(() => import("./pages/admin/AdminBlog"));
-// AdvisorInbox + AdvisorProviderDirectory are now embedded as tabs inside
-// AdminConcierge (the unified Placements workspace), so they no longer
-// need a top-level lazy boundary in App.tsx — the standalone routes
-// redirect via <Navigate>.
+// AdvisorInbox + AdvisorProviderDirectory belonged to the retired placement
+// workspace. Their routes redirect via <Navigate>; the components stay in the
+// repo, unmounted, for Stage-4 deletion.
 const AdminEscalations = lazy(() => import("./pages/admin/AdminEscalations"));
 const AdminBackOffice = lazy(() => import("./pages/admin/AdminBackOffice"));
 const AdminEmailLogs = lazy(() => import("./pages/admin/AdminEmailLogs"));
@@ -1857,11 +1851,18 @@ const AppInner = () => {
               <Route path="billing" element={<ProviderBillingPage />} />
               <Route path="subscription" element={<ProviderBillingPage />} />
               <Route path="billing/cancel" element={<ProviderBillingCancelPage />} />
-              <Route path="billing/placements" element={<ProviderBillingPlacementsPage />} />
-              <Route path="billing/concierge" element={<ProviderBillingConciergePage />} />
+              {/* Stage 3 directory cutover — the Concierge Partner add-on and
+                  the pay-per-placement billing surfaces were retired. Both
+                  billing sub-routes now land on the canonical billing page,
+                  which shows the live plan state (Free / $99 Pro / Featured).
+                  Backend retirement is Stage 4. */}
+              <Route path="billing/placements" element={<Navigate to="/provider/billing" replace />} />
+              <Route path="billing/concierge" element={<Navigate to="/provider/billing" replace />} />
               <Route path="marketing" element={<ProviderMarketingHub />} />
               <Route path="marketing/featured" element={<ProviderMarketingFeatured />} />
-              <Route path="marketing/concierge" element={<ProviderMarketingConcierge />} />
+              {/* Concierge management surface retired — Featured is the only
+                  visibility add-on. Land on the marketing hub. */}
+              <Route path="marketing/concierge" element={<Navigate to="/provider/marketing" replace />} />
               <Route path="settings" element={<ProviderSettingsPage />} />
               <Route path="embed-badge" element={<ProviderEmbedBadgePage />} />
               {/* Credential Kit — Pro + verified gate enforced server-side
@@ -1874,12 +1875,14 @@ const AppInner = () => {
               <Route path="help" element={<ProviderHelpPage />} />
               <Route path="knowledge-base" element={<ProviderKnowledgeBasePage />} />
               <Route path="image-guidelines" element={<ProviderImageGuidelines />} />
-              {/* placement-network + placements removed — the pay-per-admission
-                  network model retired. Both navigate to the new for-providers
-                  sales surface so stale bookmarks land somewhere useful. */}
+              {/* Retired placement workflow routes. None of these represent a
+                  live product: RehabLookup is a directory, not a placement
+                  service. They stay as compatibility redirects to the retained
+                  directory surfaces so stale bookmarks land on a real page —
+                  never on another retired workflow. */}
               <Route path="placement-network" element={<Navigate to="/provider/marketing" replace />} />
               <Route path="placements" element={<Navigate to="/provider/marketing/featured" replace />} />
-              <Route path="placement" element={<Navigate to="/provider/marketing/concierge" replace />} />
+              <Route path="placement" element={<Navigate to="/provider/dashboard" replace />} />
             </Route>
 
             {/* Admin Routes */}
@@ -1906,24 +1909,31 @@ const AppInner = () => {
               <Route path="analytics" element={<AdminAnalytics />} />
               <Route path="security-logs" element={<AdminSecurityLogs />} />
               <Route path="reviews" element={<AdminReviews />} />
-              <Route path="concierge" element={<AdminConcierge />} />
-              <Route path="concierge/audit-review" element={<AdminConciergeAuditReview />} />
-              <Route path="concierge/metrics" element={<AdminConciergeMetrics />} />
-              {/* International placements appear in the concierge workspace, tagged international. */}
+              {/* Concierge / placement / advisor product retired in the Stage-3
+                  directory cutover. Production still holds historical records,
+                  so /admin/concierge now serves a READ-ONLY archive of them —
+                  no claim, assign, match, introduce, tour, admit, or reassign
+                  action. The interactive workspace components remain in the
+                  repo, unmounted, for Stage-4 deletion. These routes are absent
+                  from every admin navigation surface. */}
+              <Route path="concierge" element={<AdminConciergeHistorical />} />
+              <Route path="concierge/audit-review" element={<Navigate to="/admin/concierge" replace />} />
+              <Route path="concierge/metrics" element={<Navigate to="/admin/concierge" replace />} />
               <Route path="international" element={<Navigate to="/admin/concierge" replace />} />
               <Route path="international/agreement" element={<Navigate to="/admin/concierge" replace />} />
-              <Route path="placement-revenue" element={<Navigate to="/admin" replace />} />
+              <Route path="placement-revenue" element={<Navigate to="/admin/dashboard" replace />} />
               <Route path="support" element={<AdminSupport />} />
               <Route path="marketing" element={<AdminMarketing />} />
               <Route path="blog" element={<AdminBlog />} />
-              {/* Advisor inbox + Provider directory unified into the
-                  /admin/concierge Placements workspace tabs (2026-05-20).
-                  Redirects keep old bookmarks landing on the correct
-                  tab inside the unified page. */}
-              <Route path="inbox" element={<Navigate to="/admin/concierge?tab=inbox" replace />} />
+              {/* Advisor inbox — the advisor workflow is retired; the archive is
+                  the only remaining destination for these bookmarks. */}
+              <Route path="inbox" element={<Navigate to="/admin/concierge" replace />} />
               <Route path="escalations" element={<AdminEscalations />} />
               <Route path="back-office" element={<AdminBackOffice />} />
-              <Route path="provider-directory" element={<Navigate to="/admin/concierge?tab=directory" replace />} />
+              {/* The advisor "provider directory" tab was a placement-matching
+                  tool. The real provider directory admins need is
+                  /admin/providers. */}
+              <Route path="provider-directory" element={<Navigate to="/admin/providers" replace />} />
               <Route path="email-logs" element={<AdminEmailLogs />} />
               <Route path="not-found-events" element={<AdminNotFoundEvents />} />
             </Route>

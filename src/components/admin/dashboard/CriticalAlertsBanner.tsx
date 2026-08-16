@@ -12,18 +12,18 @@ import { Button } from "@/components/ui/button";
  *
  * Categories surfaced:
  *   • crisis_flag (any unread admin_notification.metadata.crisis_flag=true)
- *     — concierge intakes that self-reported active risk
- *   • concierge_intake_crisis — separate elevated row written by
- *     submit-concierge-intake for the same intake
- *   • concierge_no_matches — auto-matcher returned zero facilities
- *   • free_tier_redirect_notify_failure — notify-free-tier-inquiry-redirect
- *     fan-out failed; courtesy outreach silently lost
- *   • retired_product_webhook — Stripe webhook fired for a retired
- *     product (international placement), needs manual reconciliation
+ *     — a seeker who self-reported active risk. Safety-critical, so this stays
+ *     regardless of which product wrote the row.
+ *   • lead_notification_event_failure — submit-qualified-lead could not record
+ *     the notification audit event for a delivered inquiry
+ *   • retired_product_webhook — Stripe webhook fired for a retired product,
+ *     needs manual reconciliation
  *
- * Reads admin_notifications.read=false; clicking through routes to
- * the relevant admin surface (concierge dashboard for the crisis /
- * no-match cases, settings page for retired-product webhooks).
+ * Historical alert types from the retired Concierge product are still matched
+ * so an unread safety row from that era cannot silently disappear, but the
+ * call-to-action no longer opens a placement queue — there isn't one. Every
+ * alert routes to /admin/notifications, the canonical surface. The alert types
+ * themselves are Stage-4 debt.
  */
 
 type CriticalNotification = {
@@ -36,10 +36,12 @@ type CriticalNotification = {
 };
 
 const PRIORITY_TYPES = [
+  "lead_notification_event_failure",
+  "retired_product_webhook",
+  // Historical — no longer emitted, matched so unread rows stay visible.
   "concierge_intake_crisis",
   "concierge_no_matches",
   "free_tier_redirect_notify_failure",
-  "retired_product_webhook",
 ];
 
 export function CriticalAlertsBanner() {
@@ -106,12 +108,12 @@ export function CriticalAlertsBanner() {
 
           <div className="mt-3 flex flex-wrap gap-2">
             <Button asChild size="sm" variant="default" className="bg-red-700 hover:bg-red-800 text-white">
-              <Link to="/admin/concierge?filter=crisis" className="gap-1.5">
-                Open concierge queue <ArrowRight className="h-3.5 w-3.5" />
+              <Link to="/admin/notifications" className="gap-1.5">
+                Review alerts <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </Button>
             <Button asChild size="sm" variant="outline" className="border-red-300 text-red-900 hover:bg-red-100">
-              <Link to="/admin/notifications">All notifications</Link>
+              <Link to="/admin/leads">Go to inquiries</Link>
             </Button>
           </div>
         </div>
@@ -126,10 +128,12 @@ function labelFor(bucket: string): string {
       return "Crisis intake (active risk reported)";
     case "concierge_intake_crisis":
       return "Crisis intake (active risk reported)";
+    case "lead_notification_event_failure":
+      return "Inquiry notification audit event failed";
     case "concierge_no_matches":
-      return "Concierge intake — no facilities matched";
+      return "Historical intake — no facilities matched";
     case "free_tier_redirect_notify_failure":
-      return "Free-tier facility notification failed";
+      return "Historical free-tier notification failed";
     case "retired_product_webhook":
       return "Stripe webhook for retired product";
     default:

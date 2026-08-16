@@ -289,7 +289,7 @@ export default function ProviderInquiriesPage() {
       {/* Header */}
       <div className="flex-shrink-0">
         <ProviderPageHeader
-          title={isMobile && mobileView === 'detail' ? 'Lead details' : 'Leads'}
+          title={isMobile && mobileView === 'detail' ? 'Inquiry details' : 'Inquiries'}
           description="Manage and respond to inquiries from families looking for care."
           icon={<Users className="h-4 w-4" />}
           actions={
@@ -413,7 +413,7 @@ export default function ProviderInquiriesPage() {
                     </div>
                   ))}
                   <p className="text-center text-xs text-muted-foreground pt-2">
-                    Loading your leads…
+                    Loading your inquiries…
                   </p>
                 </div>
               ) : inquiriesError ? (
@@ -450,13 +450,13 @@ export default function ProviderInquiriesPage() {
                       ? "No matching inquiries"
                       : facilityIds.length === 0
                         ? "No facility yet"
-                        : "No leads yet"}
+                        : "No inquiries yet"}
                   </h3>
                   <p className="text-sm text-muted-foreground max-w-sm mb-5">
                     {hasFilters
                       ? "Try adjusting your search or filters to see more results."
                       : facilityIds.length === 0
-                        ? "You don't have any facilities yet. Add a listing to start receiving leads."
+                        ? "You don't have any facilities yet. Add a listing to start receiving inquiries."
                         : "When a family submits an inquiry to one of your listings, it will appear here with full contact details so you can respond right away."}
                   </p>
 
@@ -472,7 +472,7 @@ export default function ProviderInquiriesPage() {
                   ) : (
                     <div className="w-full max-w-sm rounded-lg border bg-muted/30 p-4 text-left space-y-3">
                       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        How leads work
+                        How inquiries work
                       </p>
                       <div className="flex items-start gap-3">
                         <div className="h-7 w-7 rounded-full bg-background border flex items-center justify-center flex-shrink-0">
@@ -508,7 +508,7 @@ export default function ProviderInquiriesPage() {
                         totalItems={filteredInquiries.length}
                         onPageChange={setPage}
                         onPageSizeChange={setPageSize}
-                        itemLabel="lead"
+                        itemLabel="inquiry"
                       />
                     </div>
                   )}

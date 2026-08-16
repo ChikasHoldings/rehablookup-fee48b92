@@ -113,7 +113,7 @@ export function ManagerTeamPerformance() {
         {advisors.length > 0 && (
           <div>
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
-              <UserCheck className="h-3 w-3" /> Placement Advisors
+              <UserCheck className="h-3 w-3" /> Advisors
             </p>
             <div className="space-y-2">
               {advisors.map(a => {

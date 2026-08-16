@@ -17,8 +17,10 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { useProStatus } from "@/hooks/useProStatus";
-import { usePendingConciergeCount } from "@/hooks/usePendingConciergeCount";
-// usePendingInternationalCount retired 2026-05-20 — paid international placement product wound down.
+// Stage 3 (directory-model cutover): the pending-concierge badge was removed
+// with the rest of the retired placement/Concierge provider UX. Only the
+// selected-facility inquiry badge remains — see
+// docs/directory-cutover-stage-03-provider-admin.md.
 import { usePendingInquiriesCount } from "@/hooks/usePendingInquiriesCount";
 import { prefetchRoute } from "@/lib/routePrefetch";
 
@@ -26,14 +28,16 @@ interface ProviderSidebarProps {
   onNavigate?: () => void;
 }
 
-// Subscription and Marketing are surfaced as distinct nav entries so
-// providers don't conflate the foundational plan (Free/Pro) with the
-// growth tools (Featured/Concierge). Wallet/Network/legacy entries
-// removed; the canonical surfaces are /provider/subscription and
-// /provider/marketing.
+// Directory-model provider navigation. Every entry answers one of the
+// questions the provider panel exists to answer: is my listing accurate,
+// am I receiving inquiries, how is my listing performing, are my reviews
+// current, do I want Pro / Featured, do I need support.
+//
+// Subscription and Marketing stay distinct so providers don't conflate the
+// foundational plan (Free/Pro) with the Featured visibility add-on.
 const navItems = [
   { href: "/provider/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/provider/inquiries", label: "Leads", icon: Users },
+  { href: "/provider/inquiries", label: "Inquiries", icon: Users },
   { href: "/provider/listings", label: "My Listing", icon: Building2 },
   { href: "/provider/claims", label: "Claims", icon: ShieldCheck },
   { href: "/provider/analytics", label: "Analytics", icon: BarChart3 },
@@ -52,12 +56,7 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
   // Scope the Pro badge to the SELECTED facility so a mixed-plan provider sees
   // Free/Pro consistently with the header + dashboard (was account-wide).
   const { data: proStatus } = useProStatus(selectedFacility?.id);
-  const { count: pendingDomesticCount } = usePendingConciergeCount(selectedFacility?.id);
   const { count: pendingInquiriesCount } = usePendingInquiriesCount();
-
-  // International placement product retired 2026-05-20 — only domestic
-  // concierge cases contribute to the placement badge now.
-  const totalPlacementCount = pendingDomesticCount;
 
   // Prefetch route on hover for instant navigation
   const handleMouseEnter = useCallback((path: string) => {
@@ -90,16 +89,8 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
               location.pathname.startsWith(item.href + "/");
             const Icon = item.icon;
             const isInquiriesItem = item.href === "/provider/inquiries";
-            // After the /provider/placement-network retirement, the
-            // pending-concierge badge lives on the Marketing item
-            // since /provider/marketing → /marketing/concierge is the
-            // canonical surface where the provider acts on pending
-            // cases. Old isPlacementItem name kept for clarity.
-            const isPlacementItem = item.href === "/provider/marketing";
-            const showInquiriesBadge = isInquiriesItem && pendingInquiriesCount > 0;
-            const showPlacementBadge = isPlacementItem && totalPlacementCount > 0;
-            const showBadge = showInquiriesBadge || showPlacementBadge;
-            const badgeCount = isInquiriesItem ? pendingInquiriesCount : totalPlacementCount;
+            const showBadge = isInquiriesItem && pendingInquiriesCount > 0;
+            const badgeCount = pendingInquiriesCount;
 
             return (
               <li key={item.href}>

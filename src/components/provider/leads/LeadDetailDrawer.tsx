@@ -266,7 +266,7 @@ export function LeadDetailDrawer({ lead, open, onOpenChange }: LeadDetailDrawerP
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-center gap-2">
                 <DialogTitle className="text-xl">
-                  {displayInfo?.name || "Unknown Lead"}
+                  {displayInfo?.name || "Unknown"}
                 </DialogTitle>
               </div>
               <DialogDescription className="flex items-center gap-2 mt-1">
@@ -684,7 +684,7 @@ export function LeadDetailDrawer({ lead, open, onOpenChange }: LeadDetailDrawerP
                 {/* Add Note */}
                 <div className="flex gap-2">
                   <Textarea
-                    placeholder="Add a note about this lead..."
+                    placeholder="Add a note about this inquiry..."
                     value={newNote}
                     onChange={(e) => setNewNote(e.target.value)}
                     className="min-h-[80px] resize-none"

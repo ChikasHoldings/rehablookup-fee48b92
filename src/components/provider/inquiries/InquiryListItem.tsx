@@ -1,5 +1,5 @@
 import { formatDistanceToNow, differenceInHours } from "date-fns";
-import { MapPin, Phone, MessageSquare, ShieldCheck, Users, MessageCircle } from "lucide-react";
+import { MapPin, Phone, MessageSquare, MessageCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { InquiryTypeBadge, type InquiryType } from "@/components/provider/InquiryTypeBadge";
@@ -26,9 +26,7 @@ interface InquiryListItemProps {
 }
 
 export function InquiryListItem({ inquiry, isSelected, onClick, unreadCount = 0 }: InquiryListItemProps) {
-  const isRedistributed = inquiry.source === "redistributed" || inquiry.source === "rerouted";
   const hoursOld = differenceInHours(new Date(), new Date(inquiry.created_at));
-  const isExclusive = !isRedistributed && hoursOld < 24;
 
   const getStatusIndicator = () => {
     switch (inquiry.provider_response_status) {
@@ -71,17 +69,10 @@ export function InquiryListItem({ inquiry, isSelected, onClick, unreadCount = 0 
         {/* Header row */}
         <div className="flex items-center gap-2 flex-wrap">
           <InquiryTypeBadge type={inquiry.inquiry_type} size="sm" />
-          {isExclusive ? (
-            <Badge variant="outline" className="text-xs px-1.5 py-0 border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400 gap-1">
-              <ShieldCheck className="h-3 w-3" />
-              Exclusive
-            </Badge>
-          ) : isRedistributed ? (
-            <Badge variant="outline" className="text-xs px-1.5 py-0 border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-400 gap-1">
-              <Users className="h-3 w-3" />
-              Shared
-            </Badge>
-          ) : null}
+          {/* "Exclusive" / "Shared" badges removed in the Stage-3 cutover.
+              They were lead-marketplace semantics: an inquiry now goes to
+              exactly one facility — the one the seeker selected — so there is
+              no exclusivity window to win and nothing is ever shared. */}
           {inquiry.urgency && (
             <Badge
               variant="outline"

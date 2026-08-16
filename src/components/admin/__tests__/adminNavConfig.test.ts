@@ -20,7 +20,12 @@ const KNOWN_ADMIN_ROUTES = new Set<string>([
   "/admin/insurance-verifications",
   "/admin/re-verification",
   "/admin/providers",
+  "/admin/claims",
   "/admin/seekers",
+  // /admin/concierge is mounted as a READ-ONLY historical archive after the
+  // Stage-3 directory cutover. It is deliberately absent from every nav tree
+  // (asserted in provider-admin-directory-model.test.tsx) but remains a real
+  // route, so a bookmark resolves instead of 404ing.
   "/admin/concierge",
   "/admin/subscriptions",
   "/admin/support",
