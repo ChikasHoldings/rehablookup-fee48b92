@@ -34,7 +34,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useFavorites } from "@/hooks/useFavorites";
 import { FacilityCard, FacilityCardData, FacilityCardSkeleton } from "@/components/seeker/FacilityCard";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
-import { getPlanPriority } from "@/lib/facilityPlanSort";
 import { useGeoLocation } from "@/hooks/useGeoLocation";
 import { getStateAbbr, getNearbyStates } from "@/lib/proximitySearch";
 import { useQuery } from "@tanstack/react-query";
@@ -306,21 +305,17 @@ export default function SeekerHome() {
       return matchesType && matchesState;
     });
 
+    // ORGANIC ORDER IS NEUTRAL — no payment signal is consulted. This sort
+    // previously ran getPlanPriority (Pro/Featured before free) ahead of the
+    // user's chosen option, so every sort here was really "Pro first, then
+    // whatever you picked". A provider cannot buy directory position.
     result = [...result].sort((a, b) => {
-      // Pro facilities always first within each proximity tier
-      const proA = getPlanPriority(a);
-      const proB = getPlanPriority(b);
-
       if (sortBy === "proximity") {
         const proxA = getProximityScore(a);
         const proxB = getProximityScore(b);
         if (proxA !== proxB) return proxA - proxB;
-        if (proA !== proB) return proA - proB;
         return a.name.localeCompare(b.name);
       }
-
-      // For non-proximity sorts, still put Pro first
-      if (proA !== proB) return proA - proB;
 
       switch (sortBy) {
         case "name-asc": return a.name.localeCompare(b.name);

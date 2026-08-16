@@ -245,7 +245,11 @@ const pages = [
       { q: "Is it free to list my facility?", a: "Yes, listing your facility is completely free. You only pay when you choose to unlock an inquiry to connect with a family. There are no monthly fees or hidden costs. An optional Pro upgrade is available for enhanced visibility and discounts on unlocks." },
       { q: "How does the unlock system work?", a: "When you see an inquiry that matches your facility, you can choose to unlock it to view full contact details. You only pay for inquiries you decide to pursue. Pro members receive 20% off all unlocks." },
       { q: "What information is included in an inquiry?", a: "Before unlocking, you see treatment needs, insurance type, location preference, and urgency level. After unlocking, you get full contact details including name, phone, email, and any additional message from the family." },
-      { q: "What is Pro Visibility?", a: "Pro Visibility is an optional upgrade that gives you featured placement on homepage, state, and city pages plus 20% off every inquiry unlock. It's designed for facilities that want maximum exposure and savings." },
+      // Pro does NOT buy Featured placement, organic ranking, or verification
+      // (Stage-3 entitlement amendment B1+B2). Featured is a separate, clearly
+      // labeled purchase. The remaining unlock-model copy in this FAQ block is
+      // pre-existing Stage-2 debt tracked under the Bucket A copy cleanup.
+      { q: "What is Pro?", a: "Pro is an optional $99/month upgrade that publishes your facility's phone number with a one-tap Call button on your public profile, unlocks enhanced profile media, and adds listing analytics. It does not affect your position in search results, and it does not affect your verification status — those are earned, never purchased. Featured placement is a separate, clearly labeled option." },
       { q: "How long does the verification process take?", a: "Verification typically takes 2-3 business days. We verify your state licensing, accreditations, and facility credentials. You'll receive an email notification once your listing is approved and live on the platform." },
       { q: "How can I contact provider support?", a: "You can reach our provider support team via email at providers@rehablookup.com, through live chat in your dashboard, or by visiting our support page. Business hours are Monday-Friday, 9am-6pm EST." },
     ],

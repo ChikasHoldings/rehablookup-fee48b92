@@ -106,7 +106,6 @@ export async function fetchAllFacilities() {
     "phone",
     "website",
     "verified",
-    "featured",
     "calculated_ranking_score",
     "data_source",
     "is_claimed",
@@ -196,12 +195,21 @@ export function renderFacilityList(facilities, locationLabel, limit = FACILITIES
   const top = facilities.slice(0, limit);
   const items = top
     .map((f) => {
+      // Verified badge: a plan-independent FACT, read straight off the
+      // canonical public projection. Once 20260901000000 is deployed the view
+      // publishes the real verification state instead of masking it to false
+      // for every non-Pro listing, and these pages pick that up on the next
+      // generation with no change here.
       const verifiedBadge = f.verified
         ? ` <span style="display:inline-block;padding:1px 6px;font-size:.75rem;background:#dcfce7;color:#166534;border-radius:.25rem;margin-left:.25rem;">Verified</span>`
         : "";
-      const featuredBadge = f.featured
-        ? ` <span style="display:inline-block;padding:1px 6px;font-size:.75rem;background:#fef3c7;color:#92400e;border-radius:.25rem;margin-left:.25rem;">Featured</span>`
-        : "";
+      // NO FEATURED BADGE. These are organic, SEO-indexed directory listings
+      // ordered by neutral relevance; a paid-placement badge does not belong
+      // on one. The badge previously rendered from `f.featured`, the raw
+      // catalog boolean that the retired Pro activation also wrote — so it
+      // marked Pro subscribers as Featured and marked unproven legacy rows as
+      // Featured, neither of which reflects a Featured purchase. Paid Featured
+      // inventory is served by get-featured-rotation into its own labeled rail.
       const phone = f.phone
         ? ` &middot; <a href="tel:${escapeAttr(f.phone)}">${escapeHtml(f.phone)}</a>`
         : "";
@@ -209,7 +217,7 @@ export function renderFacilityList(facilities, locationLabel, limit = FACILITIES
         ? ` &middot; <a href="${escapeAttr(f.website)}" rel="nofollow noopener">Website</a>`
         : "";
       return `<li style="margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid #e5e7eb;">
-        <a href="/center/${escapeAttr(f.slug)}" style="font-weight:600;font-size:1.05rem;color:#1B365D;text-decoration:none;">${escapeHtml(f.name)}</a>${verifiedBadge}${featuredBadge}
+        <a href="/center/${escapeAttr(f.slug)}" style="font-weight:600;font-size:1.05rem;color:#1B365D;text-decoration:none;">${escapeHtml(f.name)}</a>${verifiedBadge}
         <div style="color:#475569;font-size:.9rem;margin-top:2px;">${escapeHtml(f.facility_type ?? "Treatment Facility")} &middot; ${escapeHtml(f.city)}, ${escapeHtml(f.state)}${phone}${website}</div>
       </li>`;
     })
@@ -217,7 +225,7 @@ export function renderFacilityList(facilities, locationLabel, limit = FACILITIES
   const more = facilities.length > limit
     ? `<p style="margin-top:8px;color:#666;font-size:.9rem;"><a href="/rehab-centers/${stateSlug(facilities[0].state)}">View all ${facilities.length} facilities in ${escapeHtml(locationLabel)} &rarr;</a></p>`
     : "";
-  return `<h2>Featured Facilities in ${escapeHtml(locationLabel)}</h2>
+  return `<h2>Treatment Facilities in ${escapeHtml(locationLabel)}</h2>
     <ul style="list-style:none;padding:0;">${items}</ul>${more}`;
 }
 

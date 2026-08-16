@@ -1,7 +1,7 @@
 import { forwardRef } from "react";
 import { SearchResultCard } from "@/components/cards/SearchResultCard";
 import { SearchResultCardSkeleton } from "@/components/skeletons/SearchResultSkeleton";
-import type { PlanTier } from "@/lib/facilityPlanSort";
+import type { PlanTier } from "@/lib/facilityPlanTier";
 import type { TreatmentCenter } from "@/data/treatmentCenters";
 
 /**

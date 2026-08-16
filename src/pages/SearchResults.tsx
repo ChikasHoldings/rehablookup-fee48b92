@@ -42,7 +42,6 @@ import { useZipcodeLookup } from "@/hooks/useZipcodeLookup";
 import { useGeoLocation } from "@/hooks/useGeoLocation";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { getPlanRank } from "@/lib/facilityPlanSort";
 import { analytics } from "@/lib/analytics";
 import {
   TREATMENT_FILTERS,
@@ -72,16 +71,29 @@ function getStoredUserId(): string | null {
 
 const ITEMS_PER_PAGE = 12;
 
-type SortOption = "proximity" | "featured" | "rating-high" | "rating-low" | "name-asc" | "name-desc";
+type SortOption = "proximity" | "relevance" | "rating-high" | "rating-low" | "name-asc" | "name-desc";
 
+/**
+ * `featured` was renamed to `relevance`. As a sort option it never meant
+ * "most relevant" — it ordered by paid tier (Featured, then Pro, then free),
+ * which is not a legitimate organic ordering for a directory. It is now a
+ * neutral best-match sort: proximity when a location is in play, then the
+ * directory-quality score. `?sort=featured` still resolves to it so existing
+ * links, bookmarks and indexed URLs keep working — see LEGACY_SORT_ALIASES.
+ */
 const sortOptions: { value: SortOption; label: string }[] = [
   { value: "proximity", label: "Nearest First" },
-  { value: "featured", label: "Featured First" },
+  { value: "relevance", label: "Best Match" },
   { value: "rating-high", label: "Highest Rated" },
   { value: "rating-low", label: "Lowest Rated" },
   { value: "name-asc", label: "Name (A-Z)" },
   { value: "name-desc", label: "Name (Z-A)" },
 ];
+
+/** Retired sort params → their neutral replacement. */
+const LEGACY_SORT_ALIASES: Record<string, SortOption> = {
+  featured: "relevance",
+};
 
 // Treatment + insurance filter options live in `src/lib/searchFilters.ts`
 // (shared with `RehabCenters.tsx`) so a change to a `matches` array only has
@@ -126,8 +138,11 @@ const SearchResults = () => {
   // the default, so the Select doesn't render blank and the switch doesn't hit
   // a no-op.
   const rawSort = searchParams.get("sort");
-  const sortParam: SortOption = sortOptions.some((o) => o.value === rawSort)
-    ? (rawSort as SortOption)
+  const aliasedSort = rawSort && rawSort in LEGACY_SORT_ALIASES
+    ? LEGACY_SORT_ALIASES[rawSort]
+    : rawSort;
+  const sortParam: SortOption = sortOptions.some((o) => o.value === aliasedSort)
+    ? (aliasedSort as SortOption)
     : "proximity";
   
   // Resolve the Featured rail's placement bucket from the active
@@ -149,7 +164,6 @@ const SearchResults = () => {
   const insuranceTypesParam = searchParams.get("insuranceTypes") || "";
   const distanceParam = searchParams.get("distance") || "";
   const verifiedOnly = searchParams.get("verified") === "true";
-  const featuredOnly = searchParams.get("featuredOnly") === "true";
 
   // Parse comma-separated filter values — wrapped in useMemo so array references are stable across renders
   const selectedTreatmentTypes = useMemo(() => treatmentTypesParam ? treatmentTypesParam.split(",") : [], [treatmentTypesParam]);
@@ -449,10 +463,18 @@ const SearchResults = () => {
       results = results.filter((center) => center.verified === true);
     }
 
-    // Featured only filter
-    if (featuredOnly) {
-      results = results.filter((center) => center.featured === true);
-    }
+    // NO "Featured only" FILTER.
+    //
+    // It filtered on `center.featured`, which the data hooks built as
+    // `facility.featured || isPro` — so "Featured only" quietly meant "paid
+    // listings only", and buying Pro put a facility into it. Removing the
+    // `|| isPro` conflation leaves the raw `facilities.featured` catalog
+    // boolean, whose provenance is unproven (see the amendment doc), so the
+    // filter would have promised a paid-placement facet backed by nothing.
+    //
+    // Paid Featured inventory is exposed through the separately labeled
+    // FeaturedRail below, sourced from featured_placements. B3 establishes the
+    // canonical Featured representation; a facet returns then, if it should.
 
     // Distance filter. Without lat/long on every facility we can't compute
     // true mile-distance, so we map the user's mile radius onto the
@@ -519,44 +541,41 @@ const SearchResults = () => {
       return PROXIMITY_TIER_ORDER[tier];
     };
 
-    // Sort results with stable tiebreakers
+    // Sort results with stable tiebreakers.
+    //
+    // ORGANIC ORDER IS NEUTRAL. No branch below consults isPro, planTier,
+    // subscription status, paid Featured, or any other payment signal. The
+    // retired `getPlanRank` (Featured → Pro → free-claimed → unclaimed) used
+    // to run BEFORE the user's chosen sort on every non-proximity option, so
+    // "Name A–Z" was really "paid tiers first, then alphabetical". A sort
+    // control now means exactly what it says. Paid visibility appears only in
+    // the separately labeled FeaturedRail above these results.
+    //
+    // Every branch ends on `a.id.localeCompare(b.id)` so ordering stays
+    // deterministic across renders once the chosen signal ties.
     results.sort((a, b) => {
       if (sortParam === "proximity") {
         const proxA = getProximityScore(a);
         const proxB = getProximityScore(b);
         if (proxA !== proxB) return proxA - proxB;
-        // Secondary: 4-tier organic rank (Featured → Pro → free-claimed → unclaimed)
-        const rankA = getPlanRank(a);
-        const rankB = getPlanRank(b);
-        if (rankA !== rankB) return rankA - rankB;
-        // Tertiary: ranking score
+        // Secondary: neutral directory-quality score.
         const rA = a.calculatedRankingScore || 0;
         const rB = b.calculatedRankingScore || 0;
         if (rA !== rB) return rB - rA;
-        // Final: stable by ID
         return a.id.localeCompare(b.id);
       }
 
-      if (sortParam === "featured") {
+      if (sortParam === "relevance") {
         if (locationForSort) {
           const proxA = getProximityScore(a);
           const proxB = getProximityScore(b);
           if (proxA !== proxB) return proxA - proxB;
         }
-        const rankA = getPlanRank(a);
-        const rankB = getPlanRank(b);
-        if (rankA !== rankB) return rankA - rankB;
-        // Tie-break on ranking score before ID for consistency with proximity.
         const rA = a.calculatedRankingScore || 0;
         const rB = b.calculatedRankingScore || 0;
         if (rA !== rB) return rB - rA;
         return a.id.localeCompare(b.id);
       }
-
-      // For other sorts, 4-tier organic rank first then the chosen secondary
-      const rankA = getPlanRank(a);
-      const rankB = getPlanRank(b);
-      if (rankA !== rankB) return rankA - rankB;
 
       switch (sortParam) {
         case "rating-high": {
@@ -567,9 +586,15 @@ const SearchResults = () => {
           const diff = (a.calculatedRankingScore || 0) - (b.calculatedRankingScore || 0);
           return diff !== 0 ? diff : a.id.localeCompare(b.id);
         }
-        case "name-asc": return a.name.localeCompare(b.name);
-        case "name-desc": return b.name.localeCompare(a.name);
-        default: return 0;
+        case "name-asc": {
+          const diff = a.name.localeCompare(b.name);
+          return diff !== 0 ? diff : a.id.localeCompare(b.id);
+        }
+        case "name-desc": {
+          const diff = b.name.localeCompare(a.name);
+          return diff !== 0 ? diff : a.id.localeCompare(b.id);
+        }
+        default: return a.id.localeCompare(b.id);
       }
     });
 
@@ -589,13 +614,13 @@ const SearchResults = () => {
     }
 
     return { filteredCenters: results, isExpandedSearch: expanded, facetPool: preMultiPool };
-  }, [allCenters, location, effectiveLocation, treatment, insurance, type, stateParam, queryParam, sortParam, selectedTreatmentTypes, selectedAmenities, selectedInsuranceTypes, selectedDistance, verifiedOnly, featuredOnly, resolvedZipData, typeFilterMap]);
+  }, [allCenters, location, effectiveLocation, treatment, insurance, type, stateParam, queryParam, sortParam, selectedTreatmentTypes, selectedAmenities, selectedInsuranceTypes, selectedDistance, verifiedOnly, resolvedZipData, typeFilterMap]);
 
-  const hasFilters = location || treatment || insurance || type || stateParam || queryParam || selectedTreatmentTypes.length > 0 || selectedAmenities.length > 0 || selectedInsuranceTypes.length > 0 || selectedDistance || verifiedOnly || featuredOnly;
+  const hasFilters = location || treatment || insurance || type || stateParam || queryParam || selectedTreatmentTypes.length > 0 || selectedAmenities.length > 0 || selectedInsuranceTypes.length > 0 || selectedDistance || verifiedOnly;
   const activeTypeFilter = type ? typeDisplayNames[type] : null;
 
   // Count active filters
-  const activeFiltersCount = selectedTreatmentTypes.length + selectedAmenities.length + selectedInsuranceTypes.length + (selectedDistance ? 1 : 0) + (verifiedOnly ? 1 : 0) + (featuredOnly ? 1 : 0);
+  const activeFiltersCount = selectedTreatmentTypes.length + selectedAmenities.length + selectedInsuranceTypes.length + (selectedDistance ? 1 : 0) + (verifiedOnly ? 1 : 0);
 
   const totalPages = Math.max(1, Math.ceil(filteredCenters.length / ITEMS_PER_PAGE));
   // F11 clamp: ?page=99 against a 6-page result set previously rendered an
@@ -657,12 +682,11 @@ const SearchResults = () => {
     if (selectedInsuranceTypes.length) c.insuranceTypes = selectedInsuranceTypes;
     if (selectedDistance) c.distance = selectedDistance;
     if (verifiedOnly) c.verified = true;
-    if (featuredOnly) c.featuredOnly = true;
     return c;
   }, [
     location, treatment, insurance, type, stateParam, queryParam,
     selectedTreatmentTypes, selectedAmenities, selectedInsuranceTypes,
-    selectedDistance, verifiedOnly, featuredOnly,
+    selectedDistance, verifiedOnly,
   ]);
 
   const savedSearchSuggestedName = useMemo<string>(() => {
@@ -1032,7 +1056,7 @@ const SearchResults = () => {
       </FilterSection>
 
       {/* Quick Filters */}
-      <FilterSection id="quick" icon={<Sparkles className="h-3.5 w-3.5" />} label="Quick Filters" count={(verifiedOnly ? 1 : 0) + (featuredOnly ? 1 : 0)}>
+      <FilterSection id="quick" icon={<Sparkles className="h-3.5 w-3.5" />} label="Quick Filters" count={verifiedOnly ? 1 : 0}>
         <div className="space-y-1.5">
           <button
             onClick={() => toggleBooleanFilter("verified", verifiedOnly)}
@@ -1044,17 +1068,6 @@ const SearchResults = () => {
           >
             <Shield className="h-4 w-4 shrink-0" />
             <span>Verified Only</span>
-          </button>
-          <button
-            onClick={() => toggleBooleanFilter("featuredOnly", featuredOnly)}
-            className={`w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-all ${
-              featuredOnly
-                ? "bg-amber-50 text-amber-700 font-medium border border-amber-200"
-                : "text-foreground hover:bg-secondary/60 border border-transparent"
-            }`}
-          >
-            <Sparkles className="h-4 w-4 shrink-0" />
-            <span>Featured Only</span>
           </button>
         </div>
       </FilterSection>
@@ -1430,17 +1443,6 @@ const SearchResults = () => {
                                 <X className="h-3 w-3" />
                               </button>
                             )}
-                            {featuredOnly && (
-                              <button
-                                type="button"
-                                onClick={() => toggleBooleanFilter("featuredOnly", true)}
-                                className="shrink-0 inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/20 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/15 transition-colors"
-                                aria-label="Remove featured-only filter"
-                              >
-                                <span>Featured</span>
-                                <X className="h-3 w-3" />
-                              </button>
-                            )}
                             <button
                               type="button"
                               onClick={clearAllFilters}
@@ -1693,7 +1695,7 @@ const SearchResults = () => {
                   </p>
 
                   {/* Suggested filter changes — one-tap removal of each active filter */}
-                  {(selectedTreatmentTypes.length > 0 || selectedInsuranceTypes.length > 0 || selectedDistance || verifiedOnly || featuredOnly) && (
+                  {(selectedTreatmentTypes.length > 0 || selectedInsuranceTypes.length > 0 || selectedDistance || verifiedOnly) && (
                     <div className="w-full max-w-md mb-6 rounded-xl border border-border bg-card p-4">
                       <p className="text-xs font-semibold text-foreground mb-3 uppercase tracking-wide">
                         Try removing a filter
@@ -1741,15 +1743,6 @@ const SearchResults = () => {
                           >
                             <X className="h-3 w-3" />
                             Verified only
-                          </button>
-                        )}
-                        {featuredOnly && (
-                          <button
-                            onClick={() => toggleBooleanFilter("featuredOnly", true)}
-                            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-xs hover:border-primary hover:text-primary transition-colors"
-                          >
-                            <X className="h-3 w-3" />
-                            Featured only
                           </button>
                         )}
                       </div>

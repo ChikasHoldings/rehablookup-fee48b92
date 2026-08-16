@@ -27,11 +27,6 @@ export interface PublicFacility extends TreatmentCenter {
   gallery_urls: string[] | null;
   isPro?: boolean;
   isClaimed?: boolean;
-  /** Raw paid/editorial Featured signal (facilities.featured), kept SEPARATE
-   *  from the `featured` display field (which is `featured || isPro` for badge
-   *  purposes). Used by the search-results 4-tier sort to rank true Featured
-   *  above plain Pro. */
-  isFeaturedPaid?: boolean;
   verified?: boolean | null;
   year_established?: number | null;
   facilityType?: string | null;
@@ -175,18 +170,25 @@ export const useStaticFacilities = () => {
       insuranceAccepted: facility.insuranceAccepted ?? [],
       description: facility.description || "Treatment center offering quality care and support.",
       programOverview: facility.description || "Comprehensive treatment programs tailored to individual needs.",
-      // Prefer the snapshot's `featured` flag (sourced from the catalog) and
-      // also surface a paid-featured signal via `isPro`. Pre-2026-05-21 we
-      // overwrote `featured` with isPro, which silently broke the
-      // legacy-Featured badge for the handful of catalog rows manually
-      // pinned via `facilities.featured=true`.
-      featured: facility.featured || isPro,
+      // PRO IS NOT FEATURED, AND THE CATALOG BOOLEAN IS NOT AN ENTITLEMENT.
+      //
+      // This was `facility.featured || isPro`. The `|| isPro` half made every
+      // $99 Pro subscriber display a Featured badge and count as Featured
+      // inventory. The remaining half is the raw `facilities.featured` catalog
+      // column — which is the very flag the retired pro-benefits Pro
+      // activation wrote, so it cannot be read back as proof of a Featured
+      // purchase. Production's two surviving rows have no facility_subscription,
+      // no featured_placement and no audit trail covering when they were set.
+      //
+      // Paid Featured is featured_placements + facility_subscriptions.
+      // has_featured, served by get-featured-rotation into the separately
+      // labeled Featured rail, which sets its own badge. Organic cards from
+      // this hook claim no paid placement. B3 defines the canonical
+      // representation and decides whether a per-card signal returns.
+      featured: false,
       featuredPinned: facility.featuredPinned,
       isPro,
       isClaimed: facility.isClaimed,
-      // Raw Featured signal (NOT collapsed with isPro) so the search-results
-      // sort can rank true paid/editorial Featured above plain Pro-claimed.
-      isFeaturedPaid: facility.featured === true,
       isHomepageFeatured,
       planTier,
       verified: facility.verified,

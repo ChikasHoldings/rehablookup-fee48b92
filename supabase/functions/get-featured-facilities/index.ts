@@ -3,7 +3,39 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target
 import { Resend } from "https://esm.sh/resend@2.0.0?target=denonext";
 import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
 
-const VERSION = "2.0.0";
+// ─────────────────────────────────────────────────────────────────────────────
+// LEGACY homepage-Featured selector.
+//
+// ENTITLEMENT CONTRACT (Stage-3 amendment, B2.8)
+//   PRO IS NOT FEATURED. An active $99/mo Pro subscription buys product
+//   features — public phone + Call CTA, enhanced-profile media, analytics. It
+//   does NOT buy visibility inventory. A Pro subscriber must therefore never
+//   enter the homepage Featured rotation, carry a Featured badge, or be
+//   counted as paid Featured inventory merely for being Pro.
+//
+//   Until v2.1.0 this function did exactly that: every active subscription
+//   row was pushed into `eligibleFacilities` with plan_type='pro', so buying
+//   Pro bought homepage placement. `proFacilityIds` is still computed and
+//   still returned, because callers legitimately need to know who is Pro —
+//   but it is now strictly an ENTITLEMENT signal and is kept structurally
+//   separate from Featured eligibility.
+//
+//   It also accepted `facilities.featured = true` as "legacy Featured".
+//   That raw boolean is of unproven provenance: production carries exactly
+//   two such rows, both plan=free with zero facility_subscriptions, zero
+//   featured_placements, zero subscription_events and zero admin_audit_log
+//   entries covering the period they were set (the audit table only begins
+//   2026-06-20; both facilities predate it by four months). It was also the
+//   flag the retired pro-benefits Pro activation used to set. An unproven
+//   boolean cannot authorize paid placement, so it no longer confers
+//   eligibility here. The rows are NOT mutated — see the amendment doc.
+//
+//   The canonical paid-Featured engine is get-featured-rotation over
+//   featured_placements + facility_subscriptions.has_featured. This function
+//   remains only for the legacy homepage surface and the Stripe
+//   Featured-product path below.
+// ─────────────────────────────────────────────────────────────────────────────
+const VERSION = "2.1.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -70,7 +102,9 @@ interface EligibleFacility {
   provider_email?: string;
   provider_name?: string;
   facility_name?: string;
-  plan_type?: 'featured' | 'professional' | 'pro';
+  /** Only 'featured' remains eligible. 'pro' was removed in v2.1.0 — Pro is
+   *  an entitlement, not Featured inventory. */
+  plan_type?: 'featured';
 }
 
 // In-memory cache (persists across warm invocations, ~5 min TTL)
@@ -213,25 +247,17 @@ Deno.serve(async (req) => {
     const professionalFacilityIds: string[] = [];
     const proFacilityIds: string[] = [];
 
-    // Add Pro subscription facilities
+    // Identify Pro facilities — ENTITLEMENT ONLY, never Featured eligibility.
+    //
+    // These ids are returned so callers can resolve Pro product features. They
+    // are deliberately NOT pushed into `eligibleFacilities`: Pro does not buy
+    // homepage placement, a Featured badge, or a slot in the rotation. If a
+    // Pro subscriber is also to be Featured, they must hold Featured
+    // separately (Stripe Featured product below, or featured_placements /
+    // facility_subscriptions.has_featured via get-featured-rotation).
     for (const proSub of proSubs) {
       if (proSub.facility_id) {
         proFacilityIds.push(proSub.facility_id);
-        const facility = facilities.find(f => f.id === proSub.facility_id);
-        if (facility) {
-          const profile = profilesMap.get(facility.user_id);
-          eligibleFacilities.push({
-            id: facility.id,
-            user_id: facility.user_id,
-            featured_pinned: facility.featured_pinned || false,
-            last_featured_shown_at: facility.last_featured_shown_at,
-            featured_display_order: facility.featured_display_order,
-            provider_email: profile?.email,
-            provider_name: profile?.first_name || "",
-            facility_name: facility.name || "",
-            plan_type: 'pro',
-          });
-        }
       }
     }
 
@@ -317,25 +343,31 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Legacy featured facilities
-    const legacyFeatured = facilities.filter(f =>
-      f.featured === true && !eligibleFacilities.some(ef => ef.id === f.id)
+    // NO LEGACY `facilities.featured = true` PATH.
+    //
+    // The raw boolean used to grant Featured eligibility here. It cannot: it
+    // is the same column the retired pro-benefits Pro activation wrote, so
+    // "featured=true" is not evidence of a Featured purchase, and the two rows
+    // that currently carry it have no subscription, placement, or audit record
+    // behind them. Granting paid placement on it would be fabricating an
+    // entitlement. Provenance is logged for operator visibility and the rows
+    // are left untouched; B3 establishes the canonical Featured representation
+    // and decides their disposition.
+    const unprovenLegacyFeatured = facilities.filter(
+      (f) => f.featured === true && !eligibleFacilities.some((ef) => ef.id === f.id),
     );
-    for (const facility of legacyFeatured) {
-      const profile = profilesMap.get(facility.user_id);
-      eligibleFacilities.push({
-        id: facility.id,
-        user_id: facility.user_id,
-        featured_pinned: facility.featured_pinned || false,
-        last_featured_shown_at: facility.last_featured_shown_at,
-        featured_display_order: facility.featured_display_order,
-        provider_email: profile?.email,
-        provider_name: profile?.first_name || "",
-        facility_name: facility.name || "",
+    if (unprovenLegacyFeatured.length > 0) {
+      logStep("Ignoring unproven legacy facilities.featured rows (no paid Featured entitlement)", {
+        count: unprovenLegacyFeatured.length,
+        ids: unprovenLegacyFeatured.map((f) => f.id),
       });
     }
 
-    logStep("Total eligible", { count: eligibleFacilities.length, professional: professionalFacilityIds.length });
+    logStep("Total eligible", {
+      count: eligibleFacilities.length,
+      professional: professionalFacilityIds.length,
+      proEntitledButNotFeatured: proFacilityIds.length,
+    });
 
     const allEligibleIds = eligibleFacilities.map(f => f.id);
 

@@ -263,8 +263,21 @@ export const useApprovedFacilities = () => {
         insuranceAccepted: facility.facility_insurance.map((i) => i.insurance_name),
         description: facility.description || "Treatment center offering quality care and support.",
         programOverview: facility.description || "Comprehensive treatment programs tailored to individual needs.",
-        // Featured if they have Pro subscription
-        featured: isPro,
+        // PRO IS NOT FEATURED. This was `featured: isPro`, which turned a $99
+        // product subscription into a public Featured badge and into paid
+        // placement in every consumer that reads this flag.
+        //
+        // It is not replaced with the raw `public_facilities.featured` column
+        // either. That catalog boolean is the same one the retired
+        // pro-benefits Pro activation used to set, so it is not evidence of a
+        // Featured purchase, and the rows still carrying it have no
+        // subscription, placement or audit record behind them. Publishing a
+        // Featured claim from it would be fabricating an entitlement.
+        //
+        // Paid Featured inventory is served by get-featured-rotation from
+        // featured_placements into the separately labeled Featured rail, which
+        // sets its own badge. Organic cards assert nothing.
+        featured: false,
         isPro,
         isHomepageFeatured,
         planTier,

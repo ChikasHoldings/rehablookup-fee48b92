@@ -1624,13 +1624,46 @@ async function refundAndCancelDuplicateAddon(
 // of which event arrives first. subscription.deleted + the cancel-subscription
 // shared module call deactivateProBenefits() to revert.
 //
-// Idempotency: benefit flips guard on `facilities.featured`. The +50 ranking
-// boost is applied only when featured transitions false → true.
+// ── WHAT PRO BUYS, AND WHAT IT DOES NOT (Stage-3 entitlement amendment) ─────
+//
+// Pro is a $99/mo PRODUCT tier. Paying for it buys product features:
+// public facility phone + Call CTA, enhanced-profile media (video / virtual
+// tour), the raised photo cap, and provider analytics.
+//
+// Paying for it does NOT buy trust, position, or visibility inventory:
+//
+//   • NOT verification. `facilities.verified` is a factual directory state
+//     owned by the verification pipeline. This module must never write it.
+//   • NOT organic ranking. `facilities.calculated_ranking_score` is derived
+//     from neutral evidence signals by calculate-ranking-scores. This module
+//     previously added a flat +50 to it on activation and subtracted 50 on
+//     cancellation, which made organic position directly purchasable. That
+//     is retired.
+//   • NOT Featured. `facilities.featured` is a visibility flag; Pro is not
+//     Featured and must not set it. Paid Featured inventory is represented
+//     by featured_placements + facility_subscriptions.has_featured and is
+//     served by get-featured-rotation into a separately labeled rail.
+//
+// So this module now writes exactly ONE thing: `profiles.plan`. That is not
+// a no-op — the plan mirror drives the storage photo-cap trigger, and every
+// other Pro entitlement (phone, media, is_pro) is derived live from
+// facility_subscriptions via has_active_pro(), which the webhook maintains
+// separately. Pro still activates; it just no longer reaches into trust,
+// ranking or Featured state.
+//
+// Idempotency: the plan mirror is a plain idempotent UPDATE, so retries and
+// duplicate webhook deliveries are safe by construction. The previous
+// featured=false→true transition guard existed only to stop the +50 from
+// double-applying and is no longer needed.
 // ============================================================================
 
-const RANKING_BOOST = 50;
-
 export interface ActivateResult {
+  /**
+   * Retained for interface compatibility with existing webhook call sites,
+   * which log its length. Always empty: activation no longer mutates any
+   * facility row. Facility-level Pro entitlement is derived from
+   * facility_subscriptions by has_active_pro(), not stamped onto facilities.
+   */
   facilitiesUpdated: string[];
   alreadyActive: string[];
   failed: { id: string; error: string }[];
@@ -1639,11 +1672,12 @@ export interface ActivateResult {
 }
 
 /**
- * Activate Pro benefits for every facility owned by the provider:
- *  - `facilities.featured = true`
- *  - `facilities.calculated_ranking_score += 50` (only when transitioning
- *    from `featured=false`, so retries are no-ops)
- * Also mirrors `profiles.plan = 'pro'` (drives the photo-cap trigger).
+ * Activate Pro benefits for the provider by mirroring `profiles.plan = 'pro'`
+ * (drives the photo-cap trigger).
+ *
+ * Deliberately does NOT write `facilities.featured`,
+ * `facilities.calculated_ranking_score`, or `facilities.verified` — payment
+ * does not buy Featured placement, organic ranking, or trust.
  *
  * @param userId  The provider's auth user id.
  */
@@ -1658,8 +1692,6 @@ export async function activateProBenefits(
     profilePlanMirrored: false,
   };
 
-  // Mirror profile plan first so the photo-cap trigger sees the upgrade
-  // even if a downstream facility update is in flight.
   const { error: planErr } = await supabase
     .from("profiles")
     .update({ plan: "pro" })
@@ -1670,42 +1702,15 @@ export async function activateProBenefits(
     result.profilePlanMirrored = true;
   }
 
-  const { data: facilities, error: facListErr } = await supabase
-    .from("facilities")
-    .select("id, featured, calculated_ranking_score")
-    .eq("user_id", userId);
-  if (facListErr) {
-    result.failed.push({ id: "*list*", error: facListErr.message });
-    return result;
-  }
-
-  for (const f of facilities ?? []) {
-    const facilityId = (f as { id: string }).id;
-    const alreadyBoosted = (f as { featured?: boolean | null }).featured === true;
-    if (alreadyBoosted) {
-      result.alreadyActive.push(facilityId);
-      continue;
-    }
-    const currentScore = (f as { calculated_ranking_score?: number | null }).calculated_ranking_score ?? 0;
-    const { error: updErr } = await supabase
-      .from("facilities")
-      .update({
-        featured: true,
-        calculated_ranking_score: currentScore + RANKING_BOOST,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", facilityId);
-    if (updErr) {
-      result.failed.push({ id: facilityId, error: updErr.message });
-    } else {
-      result.facilitiesUpdated.push(facilityId);
-    }
-  }
-
   return result;
 }
 
 export interface DeactivateResult {
+  /**
+   * Retained for interface compatibility with existing webhook call sites,
+   * which log its length. Always empty: deactivation no longer mutates any
+   * facility row.
+   */
   facilitiesReverted: string[];
   failed: { id: string; error: string }[];
   profilePlanReverted: boolean;
@@ -1713,11 +1718,22 @@ export interface DeactivateResult {
 }
 
 /**
- * Revert Pro benefits for every facility owned by the provider:
- *  - `facilities.featured = false`
- *  - `facilities.calculated_ranking_score -= 50` (only when currently
- *    featured, so retries are no-ops; clamps to 0)
- * Also mirrors `profiles.plan = 'free'`.
+ * Revert Pro benefits for the provider by mirroring `profiles.plan = 'free'`.
+ *
+ * Deliberately does NOT clear `facilities.featured` or subtract from
+ * `facilities.calculated_ranking_score`.
+ *
+ * Cancelling Pro must not strip a facility of an independent Featured
+ * entitlement it may legitimately hold — after Stage 3, Featured is a
+ * separate purchase tracked in featured_placements /
+ * facility_subscriptions.has_featured, and a provider who buys Featured
+ * without Pro (or keeps Featured after dropping Pro) must keep it. The old
+ * `featured = false` write here was the mirror image of the activation
+ * write: it treated one boolean as though it belonged to Pro.
+ *
+ * Losing Pro still correctly removes the Pro product features, because those
+ * are derived live from facility_subscriptions via has_active_pro() rather
+ * than stamped onto the facility row.
  */
 export async function deactivateProBenefits(
   supabase: SupabaseClient,
@@ -1737,36 +1753,6 @@ export async function deactivateProBenefits(
     result.profileMirrorError = planErr.message;
   } else {
     result.profilePlanReverted = true;
-  }
-
-  const { data: facilities, error: facListErr } = await supabase
-    .from("facilities")
-    .select("id, featured, calculated_ranking_score")
-    .eq("user_id", userId);
-  if (facListErr) {
-    result.failed.push({ id: "*list*", error: facListErr.message });
-    return result;
-  }
-
-  for (const f of facilities ?? []) {
-    const facilityId = (f as { id: string }).id;
-    const wasBoosted = (f as { featured?: boolean | null }).featured === true;
-    if (!wasBoosted) continue;
-    const currentScore = (f as { calculated_ranking_score?: number | null }).calculated_ranking_score ?? 0;
-    const newScore = Math.max(0, currentScore - RANKING_BOOST);
-    const { error: updErr } = await supabase
-      .from("facilities")
-      .update({
-        featured: false,
-        calculated_ranking_score: newScore,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", facilityId);
-    if (updErr) {
-      result.failed.push({ id: facilityId, error: updErr.message });
-    } else {
-      result.facilitiesReverted.push(facilityId);
-    }
   }
 
   return result;
@@ -2686,7 +2672,7 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
               facility_id: facilityId,
               type: "subscription_active",
               title: "Pro Subscription Activated!",
-              message: "Featured placement, priority search ranking, and up to 5 facility listings are now active.",
+              message: "Your public phone number and Call button are now live on your listing, along with enhanced profile media and up to 5 facility listings.",
               metadata: { subscription_id: subscriptionId },
             });
           }
@@ -2812,9 +2798,10 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
           .eq("stripe_subscription_id", subscription.id)
           .maybeSingle();
 
-        // BUGFIX: Restore Pro benefits when a past_due subscription is paid and returns to active.
-        // Previously, benefits were only applied at checkout.session.completed and never re-applied
-        // on recovery from past_due, leaving providers without featured/ranking boost after recovery.
+        // Re-assert the Pro plan mirror when a past_due subscription is paid
+        // and returns to active. Benefits were only applied at
+        // checkout.session.completed and never re-applied on recovery, so the
+        // profiles.plan mirror (and with it the photo cap) could stay stale.
         const previousStatus = (event.data.previous_attributes as Record<string, unknown>)?.status as string | undefined;
 
         // First-time activation for a subscription that was recorded as
@@ -2841,39 +2828,42 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
             facility_id: proSub.facility_id,
             type: "subscription_active",
             title: "Pro Subscription Activated!",
-            message: "Your payment was confirmed — featured placement, priority search ranking, and up to 5 facility listings are now active.",
+            message: "Your payment was confirmed — your public phone number and Call button are live, along with enhanced profile media and up to 5 facility listings.",
             metadata: { subscription_id: subscription.id },
           });
         }
 
         if (mappedStatus === "active" && previousStatus === "past_due" && proSub) {
           logStep("Subscription recovered from past_due — restoring Pro benefits", { facilityId: proSub.facility_id });
-          const { data: allFacilities } = await supabaseAdmin
-            .from("facilities")
-            .select("id, calculated_ranking_score, featured")
-            .eq("user_id", proSub.provider_id);
-          if (allFacilities) {
-            for (const f of allFacilities) {
-              // Only add the +50 boost if it wasn't already applied (featured=true means boost is active)
-              const alreadyBoosted = f.featured === true;
-              const currentScore = f.calculated_ranking_score ?? 0;
-              await supabaseAdmin
-                .from("facilities")
-                .update({
-                  featured: true,
-                  calculated_ranking_score: alreadyBoosted ? currentScore : currentScore + 50,
-                  updated_at: new Date().toISOString(),
-                })
-                .eq("id", f.id);
-            }
-            logStep("Pro benefits restored on all provider facilities", { count: allFacilities.length });
-          }
+          // This path used to re-apply the retired Pro side effects inline —
+          // facilities.featured = true and calculated_ranking_score += 50 —
+          // rather than going through the shared pro-benefits module. It was a
+          // second, independent way to buy Featured placement and organic
+          // rank, and it would have survived the shared-module fix untouched.
+          //
+          // Recovery from past_due needs no facility write at all: the Pro
+          // product features are derived live from facility_subscriptions by
+          // has_active_pro(), which already treats past_due as entitled and
+          // resolves cleanly the moment the row returns to active. The plan
+          // mirror is re-asserted through the shared module so the photo-cap
+          // trigger stays correct.
+          const recoveryResult = await activateProBenefits(supabaseAdmin, proSub.provider_id);
+          logStep("Pro plan mirror re-asserted on recovery", {
+            profileMirrored: recoveryResult.profilePlanMirrored,
+            failed: recoveryResult.failed.length,
+          });
+          await notifyProBenefitsPartialFailure(supabaseAdmin, {
+            userId: proSub.provider_id,
+            eventType: "customer.subscription.updated:past_due_recovery",
+            result: recoveryResult,
+            stripeEventId: event.id,
+          });
           await supabaseAdmin.from("provider_notifications").insert({
             user_id: proSub.provider_id,
             facility_id: proSub.facility_id,
             type: "subscription_recovered",
             title: "Pro Subscription Restored",
-            message: "Your payment was received and your Pro benefits have been fully restored — featured placement and ranking boost are active again.",
+            message: "Your payment was received and your Pro features are fully restored — your public phone number and Call button are active again.",
             metadata: { subscription_id: subscription.id },
           });
           logStep("Recovery notification sent to provider");
@@ -4288,7 +4278,7 @@ Deno.serve(withSentry("stripe-webhook", async (req) => {
               facility_id: facilities[0].id,
               type: "subscription_cancelled",
               title: "Pro Subscription Cancelled",
-              message: "Your Pro benefits have been removed. Upgrade again to restore featured placement.",
+              message: "Your Pro features have been removed — your public phone number and Call button are no longer shown. Your listing, its directory position and its verification status are unchanged. Upgrade again to restore them.",
               metadata: { subscription_id: subscription.id },
             });
 
