@@ -623,7 +623,7 @@ export default function SeekerSignup() {
                   </div>
                   <div>
                     <p className="font-medium">Compare Facilities</p>
-                    <p className="text-sm text-white/70">Get personalized placement assistance</p>
+                    <p className="text-sm text-white/70">Put saved centers side by side</p>
                   </div>
                 </div>
               </div>

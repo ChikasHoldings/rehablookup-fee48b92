@@ -13,7 +13,7 @@
 //   - seoStyles()   → the <style> block (inline; SEO pages stay self-
 //     contained, no external stylesheet)
 //   - seoHeader()   → branded <header> with logo, primary nav, helpline CTA
-//   - seoCtaStrip() → mid-page "Talk to a recovery advocate" CTA
+//   - seoCtaStrip() → mid-page "Search treatment centers" CTA
 //   - seoFooter()   → 4-column footer with SAMHSA/988 disclaimer + legal nav
 //
 // Callers usually do:

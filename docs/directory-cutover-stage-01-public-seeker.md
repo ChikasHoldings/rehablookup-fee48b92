@@ -595,3 +595,167 @@ preserve its original intent** under the new architecture, never deleted or loos
   Pro verification badges untouched.
 - **No organic ranking behaviour changed.**
 - **No test or validation script disabled or weakened.**
+
+---
+
+# Independent Verification Hotfix
+
+Added after this branch's Vercel Preview was reviewed independently. The review found a
+**public shell the original stage-1 audit never inspected**, so the deployed Preview was
+still marketing the retired Concierge/placement product on the homepage.
+
+## What was missed
+
+Root **`index.html`** — the Vite SPA shell, and therefore the `<noscript>` document served to
+every crawler and JS-less visitor for the homepage. The stage-1 commit rewrote ~47k prerendered
+pages and left this file **byte-identical to pre-cutover `main`**.
+
+Stale claims it was still shipping:
+
+| Class | Verbatim text in the deployed Preview |
+| --- | --- |
+| Concierge product | `24/7 Concierge Support` — "Confidential help available around the clock via our **free concierge placement service** staffed by **trained recovery advocates**" |
+| Matching service | "Our **directory and matching services** are completely free…" |
+| Placement assistance | `Connect:` "Contact facilities directly or use our free concierge service for **personalized placement assistance**" |
+| Advocate staffing | "**Our recovery advocates are standing by 24/7.** Take the first step…" |
+| Retired CTA | `<a href="/concierge" class="ns-cta">Find Treatment Now →</a>` |
+| Retired prefetch | `<link rel="prefetch" href="/concierge" as="document" />` |
+| Over-strong verification | "Every treatment center is verified for licensing, accreditation, and **quality of care by our dedicated verification team**" |
+| Over-strong insurance | "**we verify your benefits with your carrier** at no cost" |
+
+## Why the stage-1 validation did not catch it
+
+Two independent gaps, both structural rather than accidental:
+
+1. **The audit's search scope was `public/**/*.html`.** That is where the prerendered corpus
+   lives, so it looked exhaustive. Root `index.html` sits outside that glob — it is a Vite
+   *source* file, not generated output — and was never searched.
+2. **`check:prerendered-shell` is a DRIFT check, not a CONTENT check.** It asks "does this
+   committed page still match what the current generator would emit?" Root `index.html` is
+   hand-authored and no generator owns it, so there is nothing for a drift check to compare
+   against. It passed while the artifact was wrong.
+
+The build was green, all 505 tests passed, and the bad HTML shipped to the Preview anyway.
+That is precisely the failure mode the new guard exists to close.
+
+## What was changed
+
+**`index.html`** — public/noscript shell rewritten to describe a directory. The non-JS journey
+is now **Search → Compare → Review → Contact**:
+
+- `24/7 Concierge Support` bullet → **`Save & Compare`** (save facilities, compare side by side,
+  resume your search) — a capability the product actually has.
+- `Free Service` ("directory and matching services") → **`Free to Search`**.
+- `Connect` step → **`Contact:` "Call the facility, visit its website, get directions, or
+  request information where available."** RehabLookup no longer promises placement assistance.
+- `Compare` split into **`Compare`** (side-by-side) and **`Review`** (facility profile detail).
+- Closing CTA "Our recovery advocates are standing by 24/7" → **"Search verified treatment
+  centers by location, level of care, and insurance accepted. Free to browse, no account
+  required."**
+- `href="/concierge"` CTA → **`href="/search-results"` "Search Treatment Centers →"**.
+- `prefetch /concierge` → **`prefetch /search-results`** (swap, not an addition — the existing
+  `/rehab-centers` prefetch is unchanged, so the prefetch count is the same as before).
+- The 24/7 helpline phone links were **kept**, consistent with `seoHeader()` in the stage-1
+  public HTML shell, which also still renders `Call 24/7 · (214) 639-6420`.
+
+**Verification copy** — reworded to the *conservative wording already established in the React
+product*, not to a new trust model. `src/data/pageFaqs.ts` states facilities "go through a
+verification process that checks licensing, accreditation, and operational status". The shell
+now matches that and drops both `quality of care` and `our dedicated verification team`. No
+clinical verification, quality-of-care certification, or medical endorsement claim was
+introduced. **The full verification/Pro/ranking redesign remains a later stage.**
+
+**Insurance copy** — the Insurance Verification *feature* is untouched and still listed. Only
+the promise was weakened to match the live React homepage ("Most insurance plans cover
+addiction treatment. Check your benefits in minutes.") and `pageFaqs.ts` (facilities' admissions
+teams verify benefits). "We verify your benefits with your carrier at no cost" is gone.
+
+**Two additional stage-1 public/seeker copy misses** found by the same audit and fixed here:
+
+- `src/pages/CountyPage.tsx` — empty-county fallback offered "get personalized placement help"
+  → "search the full directory".
+- `src/pages/SeekerSignup.tsx` — the "Compare Facilities" benefit was subtitled "Get
+  personalized placement assistance" → "Put saved centers side by side".
+
+**`scripts/_seo-page-shell.mjs`** — one stale header comment still described `seoCtaStrip()` as
+the "Talk to a recovery advocate" CTA. Comment only; the emitted markup was already corrected in
+stage 1.
+
+## Regression guard added
+
+**`scripts/check-directory-public-shell.mjs`** — `npm run check:directory-public-shell`.
+
+A **content** check that complements the existing **drift** check. It validates *public
+artifacts*, deliberately not the repository:
+
+| # | Inspected | Why |
+| --- | --- | --- |
+| 1 | `index.html` | the exact file stage 1 missed; **hard-fails if absent** so it cannot silently no-op |
+| 2 | `dist/**/*.html` (incl. `dist/index.html`) | the real build output — what Vercel actually serves |
+| 3 | `public/**/*.html` | the committed prerendered corpus |
+| 4 | `scripts/_seo-page-shell.mjs`, `scripts/_unique-content.mjs` | shared fragments injected into 2 and 3; guarded at source so a reintroduction fails immediately rather than one full regeneration later |
+
+It fails on retired-route links **and** prefetches (`href="/concierge"`, `/request-help`,
+`/placement-help` — one rule, since a prefetch is also an `href`), plus the verbatim marketing
+phrases: `free concierge placement service`, `24/7 Concierge Support`, `personalized placement
+assistance`, `trained recovery advocates`, `recovery advocates are standing by`, `talk to a
+recovery advocate`, RehabLookup-operated matching/placement/advocate-staffing claims,
+`placement guidance from licensed coordinators`, and `we verify your benefits`.
+
+**Deliberate non-triggers** — a naive repo-wide grep would be useless here, because the legacy
+URLs must keep resolving:
+
+- `vercel.json` redirects, the React Router `Navigate` routes, and the tests documenting both —
+  **not scanned**; they must keep naming the retired paths.
+- Provider/admin/backend code, edge functions, migrations, docs — **not scanned**; later stages.
+- The bare word "concierge" is **not banned**. Luxury-rehab pages legitimately describe a
+  *facility's* "24/7 concierge services" as an amenity, and those must keep working.
+- **Legal notices** (`notice-of-privacy-practices.html`, `privacy-policy.html`,
+  `terms-of-service.html`) are exempt from the two *shape-matching* rules only. The HIPAA notice
+  accurately discloses that inquiries can reach "our concierge advocates" — that is **still true
+  until stage 2**, and rewriting it now would make the notice false. Retired-route links and the
+  verbatim marketing phrases still fail on legal pages. **Stage 2 must revisit these files.**
+
+Wired into both shipping build paths **after `vite build`**, so it inspects a freshly built
+`dist` rather than a stale one:
+
+- `build` → `… && vite build && … && npm run check:directory-public-shell`
+- `build:vercel` → `… && vite build && npm run check:directory-public-shell && npm run validate:blocking`
+
+No existing validation was weakened, disabled, or reordered.
+
+**Verified both directions.** Against the stale pre-hotfix `dist/index.html` the guard flagged
+all 6 rule classes and exited 1. After the fix and rebuild it exits 0 across 93,352 artifacts.
+The regression was then deliberately reintroduced into root `index.html` and the guard failed
+again with exit 1 — confirming it catches this exact bug at the source file, not only in `dist`.
+
+## Confirmations for this hotfix
+
+- **Backend coordinator routing is STILL intentionally deferred to stage 2.** Free-tier "Request
+  Information" submissions can still be redirected into RehabLookup's coordinator workflow. That
+  contradiction is real and unfixed. The shell copy was therefore written around the facility's
+  own phone/website/directions and the existing search/compare/save functions — it does **not**
+  claim that every on-platform inquiry goes directly to the facility.
+- **Legacy redirects remain**, verified at both layers. All nine paths (`/concierge`,
+  `/concierge/{intake,thank-you,create-password}`, `/request-help`,
+  `/request-help/{intake,thank-you,create-password}`, `/placement-help`) still 301 to
+  `/search-results` in `vercel.json` and still resolve through `ConciergeToSearchRedirect` in
+  `src/App.tsx`. `check:redirect-targets` reports 0 dead and 0 chained.
+- **No provider, admin, or backend surface was changed.** The diff is 5 files plus 1 new script.
+- **No Supabase change. No DB migration. No Edge Function change. No Stripe change. No Pro
+  change. No Featured change.**
+- **Nothing promoted to production.**
+
+## Noted for a later dedicated review
+
+1. `scripts/generate-missing-html.mjs` still carries `/placement-help` and `/request-help` page
+   definitions whose descriptions market "placement specialists" and "personalized help". They
+   are **inert today** — the generator refuses to emit any path that `vercel.json` redirects, and
+   it deletes stale conflicting files. Left in place to keep this diff narrow. If that
+   redirect-conflict guard ever regresses, the emitted files land in `public/` and `dist/`, where
+   rules 2–3 of the new guard catch them.
+2. The **HIPAA Notice of Privacy Practices** describes the concierge intake and "our concierge
+   advocates" under Communications and Service delivery. Accurate today; must be revised in
+   stage 2 alongside the backend, with legal review.
+3. `src/pages/us-rehab/{LuxuryRehabAmerica,CelebrityRehabUSA}.tsx` mention "24/7 concierge
+   services" as a **facility amenity**. Correct as written and intentionally left alone.

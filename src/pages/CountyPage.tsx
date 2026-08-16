@@ -322,7 +322,7 @@ export default function CountyPage() {
               <Building2 className="h-12 w-12 text-muted-foreground/40 mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">Limited Listings Available</h3>
               <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                We're expanding our directory in {countyData.name} County. Browse facilities across {stateData.name} or get personalized placement help.
+                We're expanding our directory in {countyData.name} County. Browse facilities across {stateData.name} or search the full directory.
               </p>
               <div className="flex flex-wrap gap-3 justify-center">
                 <Button asChild>
