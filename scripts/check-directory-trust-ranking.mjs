@@ -1020,36 +1020,114 @@ function checkProductClassification() {
 // all use them correctly. So this rule reads only the two Pro-lifecycle copy
 // regions, located by their own anchors, and only after comments are removed.
 //
-// A truthful disclaimer is not a claim: a sentence that says the directory
-// position or verification status is *unchanged* / *independent* / *not
-// affected* is the wording we want, so neutralized lines are skipped and the
-// ban applies to what is left — the assertions.
+// NEGATION IS CLAIM-LOCAL, NOT LINE-LOCAL.
+// ────────────────────────────────────────
+// The first version of this rule skipped an entire LINE as soon as the line
+// contained any neutralizing word:
+//
+//     if (NEUTRALIZED.test(line)) continue;   // ← the defect
+//
+// That closed the cross-line hole (a disclaimer in one paragraph excusing a
+// false claim in another) and left the same-line hole wide open. One truthful
+// phrase anywhere on a line exempted every claim beside it, so all of these
+// passed a guard whose whole purpose was to catch them:
+//
+//     Verification is unchanged. Pro includes priority ranking.
+//     Featured remains independent, but Pro includes priority placement.
+//     Your verification is not affected; Pro gives higher search placement.
+//     Featured is separate. Pro gives a verified badge.
+//     Your directory position is unchanged, and Pro boosts you higher in search.
+//     Pro includes Featured placement, although verification is independent.
+//
+// A disclaimer only ever holds harmless the clause it actually governs. So the
+// region is now broken into CLAUSE-SIZED units and each prohibited claim is
+// judged inside its own unit, by two independent tests:
+//
+//   1. CLAUSE SPLITTING — sentence terminators, semicolons, bullets, markup
+//      boundaries, contrastive conjunctions (but / although / though / yet /
+//      whereas / however) and `, and`-style coordination all start a new unit.
+//      A disclaimer therefore cannot reach across the punctuation into the
+//      next assertion.
+//
+//   2. ASSERTION OVERRIDE — within a single unit, a neutralizing word excuses
+//      a claim only when the unit makes no grant/removal assertion. "Featured
+//      remains independent" is a disclaimer; "Featured remains independent,
+//      but Pro includes priority placement" asserts (`includes`), so the
+//      disclaimer no longer excuses it even if the splitter had missed the
+//      comma.
+//
+// The two are deliberately redundant: either alone catches every case above,
+// so a gap in one is covered by the other.
 //
 // Anchors fail closed: if a region cannot be found the rule reports that
 // rather than passing, so renaming the block never silently disables it.
+//
+// The matcher proves itself against the exact bypasses above on every run
+// (see PRO_COPY_MATCHER_FIXTURES) before it is trusted to judge the repo.
 // ═══════════════════════════════════════════════════════════════════════════
 
 /** HTML comments live inside template literals, so stripJs cannot see them. */
 const stripHtmlComments = (src) => src.replace(/<!--[\s\S]*?-->/g, "");
 
 /**
- * Sentences that explicitly hold a signal harmless. These are the wording the
- * contract wants, so they must not be mistaken for the claim they disclaim.
+ * Words that explicitly hold a signal harmless. These are the wording the
+ * contract wants, so they must not be mistaken for the claim they disclaim —
+ * but only for a claim in the SAME clause, and only when that clause is not
+ * simultaneously asserting something (see PRO_COPY_ASSERTION).
  */
-const NEUTRALIZED =
-  /\b(?:unchanged|unaffected|not affected|independent|independently|separately|does not|do not|no effect|never)\b/i;
+const PRO_COPY_NEUTRALIZER =
+  /\b(?:unchanged|unaffected|not\s+affected|isn't\s+affected|independent|independently|separate|separately|unrelated|regardless|never|no\s+effect|no\s+impact|no\s+bearing|not\s+influenced|not\s+determined|not\s+tied|does\s+not|do\s+not|doesn't|don't|cannot|can't|will\s+not|won't)\b/i;
 
-/** Assertions that Pro itself grants or withdraws trust, position or inventory. */
+/**
+ * Verbs that assert Pro grants or withdraws something. Their presence means the
+ * clause is making a claim, so a neutralizing word in the same clause is
+ * describing a DIFFERENT signal and cannot excuse it.
+ *
+ * Deliberately excludes `restore`, `resubscribe`, `feature(s)`, `determined`
+ * and `affect` — all appear in the current truthful copy.
+ */
+const PRO_COPY_ASSERTION =
+  /\b(?:includes?|including|included|gives?|giving|gave|grants?|granted|provides?|provided|unlocks?|unlocked|adds?|added|boosts?|boosted|boosting|improves?|improved|increases?|increased|raises?|raised|elevates?|elevated|promotes?|promoted|upgrades?|upgraded|earns?|earned|receives?|received|gains?|gained|comes?\s+with|no\s+longer|loses?|losing|lost|removes?|removed|revokes?|revoked|withdrawn|withdraws?|paused?|expires?|expired|forfeits?|forfeited|downgrades?|downgraded)\b/i;
+
+/** Words that describe a position in the directory's organic order. */
+const ORGANIC_POSITION =
+  /\b(?:ranking|rankings|rank|ranks|ranked|placement|placements|position|positions|visibility|exposure|prominence|search|results)\b/i;
+
+/** Words that describe that position being better than it otherwise would be. */
+const POSITION_IMPROVEMENT =
+  /\b(?:higher|highest|top|better|best|improved?|improves|boost|boosts|boosted|boosting|increased?|increases|premium|priority|prioritized?|elevated?|promoted?|above|ahead|preferential|prominent|greater)\b/i;
+
+/**
+ * Assertions that Pro itself grants or withdraws trust, position or inventory.
+ *
+ * `test(unit)` receives one clause-sized unit. Bare "position"/"visibility" is
+ * NOT a claim on its own — the current truthful copy says "your listing's
+ * directory position … is not affected", and "Organic directory position is
+ * unchanged by Pro" must pass. It becomes a claim only when the same clause
+ * also says that position is better.
+ */
 const PRO_COPY_CLAIMS = [
-  { re: /featured/i, claim: "Featured placement (Featured is independent paid inventory, not a Pro benefit)" },
-  { re: /priority\s+(?:ranking|placement|position|listing)/i, claim: "priority ranking / priority placement" },
   {
-    re: /(?:higher|top|better|improved|boosted?|increased?|premium)\s+(?:ranking|rank|placement|position|visibility|search)/i,
+    test: (u) => /\bfeatured\b/i.test(u),
+    claim: "Featured placement (Featured is independent paid inventory, not a Pro benefit)",
+  },
+  {
+    test: (u) => /\bpriority\s+(?:ranking|rank|placement|position|listing|visibility|search|slot|spot)\b/i.test(u),
+    claim: "priority ranking / priority placement",
+  },
+  {
+    test: (u) => POSITION_IMPROVEMENT.test(u) && ORGANIC_POSITION.test(u),
     claim: "an improved organic position",
   },
-  { re: /\brank(?:ing|ed|s)?\b/i, claim: "organic ranking" },
-  { re: /verif(?:y|ied|ication)/i, claim: "verification / trust status" },
-  { re: /\btrusted\b|\bvetted\b|\baccredited\b/i, claim: "a trust designation" },
+  { test: (u) => /\brank(?:ing|ings|ed|s)?\b/i.test(u), claim: "organic ranking" },
+  {
+    test: (u) => /\bverif(?:y|ies|ied|ication)\b/i.test(u),
+    claim: "verification / trust status",
+  },
+  {
+    test: (u) => /\btrusted\b|\bvetted\b|\baccredited\b|\bendorsed\b/i.test(u),
+    claim: "a trust designation",
+  },
 ];
 
 /**
@@ -1068,6 +1146,124 @@ const PRO_COPY_REGIONS = [
     re: /subject:\s*[`"']Your Pro Subscription Has Been Cancelled[`"'][\s\S]{0,4000}?emailType:\s*"stripe_cancel_provider"/,
   },
 ];
+
+/** The handful of entities that actually occur in these templates. */
+const decodeEntities = (s) =>
+  s
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&quot;/gi, '"')
+    .replace(/&(?:apos|#0?39);/gi, "'")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&amp;/gi, "&");
+
+/** Attributes whose value is rendered to the reader, so they carry copy. */
+const VISIBLE_ATTRS = /\b(?:alt|title|aria-label)\s*=\s*"([^"]*)"/gi;
+
+/**
+ * Split a copy region into clause-sized units.
+ *
+ * Markup becomes a boundary rather than text: a `style` declaration is not copy
+ * (and `position: absolute; top: 0` would otherwise read as an organic-position
+ * claim), while `<p>A</p><p>B</p>` must not merge into one unit. The values of
+ * attributes that ARE rendered are re-appended as their own units so a claim
+ * cannot hide in an `alt` or `title`.
+ */
+function proCopyUnits(region) {
+  const attrText = [...region.matchAll(VISIBLE_ATTRS)].map((m) => decodeEntities(m[1]));
+
+  let text = decodeEntities(region.replace(/<[^>]*>/g, "\n"));
+  // `, and` / `, but` style coordination starts a new clause.
+  text = text.replace(
+    /,\s*(?=(?:but|although|though|yet|while|whereas|however|and|or|so|plus|still|meanwhile)\b)/gi,
+    "\n",
+  );
+  // A contrastive conjunction starts a new clause with or without the comma.
+  text = text.replace(/\s+(?=(?:but|although|though|whereas|however|yet)\b)/gi, "\n");
+
+  return [text, ...attrText]
+    .join("\n")
+    .split(/\n|(?<=[.!?])\s+|[;•·✓✔×|—–]/)
+    .map((u) => u.trim())
+    .filter(Boolean);
+}
+
+/**
+ * Every prohibited claim asserted in `region`, with the clause that asserts it.
+ * A claim survives only if its own clause disclaims it and asserts nothing.
+ */
+function findProCopyViolations(region) {
+  const found = [];
+  for (const unit of proCopyUnits(region)) {
+    const disclaimed = PRO_COPY_NEUTRALIZER.test(unit) && !PRO_COPY_ASSERTION.test(unit);
+    if (disclaimed) continue;
+    for (const { test, claim } of PRO_COPY_CLAIMS) {
+      if (test(unit)) found.push({ claim, unit });
+    }
+  }
+  return found;
+}
+
+/**
+ * The matcher's own regression suite, run on every invocation. `expect: true`
+ * means at least one violation; `expect: false` means none.
+ *
+ * The `false` cases are the current shipped copy and the independence wordings
+ * the contract explicitly wants — a false positive here is as much a bug as a
+ * missed claim, because it would push authors toward vaguer disclaimers.
+ */
+const PRO_COPY_MATCHER_FIXTURES = [
+  // ── must FAIL: the same-line disclaimer escapes ──────────────────────────
+  ["same-line period bypass", "<p>Verification is unchanged. Pro includes priority ranking.</p>", true],
+  ["same-line contrast bypass", "<p>Featured remains independent, but Pro includes priority placement.</p>", true],
+  ["semicolon bypass", "<p>Your verification is not affected; Pro gives higher search placement.</p>", true],
+  ["trust claim after disclaimer", "<p>Featured is separate. Pro gives a verified badge.</p>", true],
+  ["coordinated boost bypass", "<p>Your directory position is unchanged, and Pro boosts you higher in search.</p>", true],
+  ["reversed order", "<p>Pro includes Featured placement, although verification is independent.</p>", true],
+  ["original regression", "<p>✓ Featured placement &amp; priority ranking</p>", true],
+  ["claim hidden in a visible attribute", '<img alt="Pro includes priority ranking">', true],
+  // ── must PASS: the shipped copy and the wordings the contract wants ──────
+  [
+    "shipped payment-success disclaimer",
+    "<p>Pro is a set of listing features. Your listing's directory position and its " +
+      "verification status are determined independently and are not affected by your subscription.</p>",
+    false,
+  ],
+  [
+    "shipped cancellation disclaimer",
+    "<p>Your listing, its directory position and its verification status are unchanged. " +
+      "Your data is safe — nothing has been deleted. You can resubscribe anytime to restore your Pro features.</p>",
+    false,
+  ],
+  ["explicit trust independence", "<p>Pro does not affect verification.</p>", false],
+  ["explicit Featured independence", "<p>Featured is independent of Pro.</p>", false],
+  ["explicit position independence", "<p>Organic directory position is unchanged by Pro.</p>", false],
+  ["truthful Pro benefits", "<p>✓ Public phone number and Call button on your listing</p>", false],
+  ["truthful listing cap", "<p>✓ Up to 5 facility listings</p>", false],
+  ["cancellation effects", "<p>• Your public phone number and Call button are no longer shown</p>", false],
+];
+
+function checkProCopyMatcher() {
+  for (const [name, sample, shouldFail] of PRO_COPY_MATCHER_FIXTURES) {
+    const hits = findProCopyViolations(sample);
+    if (shouldFail && hits.length === 0) {
+      fail(
+        "pro-lifecycle-copy",
+        `the Pro copy matcher no longer catches its own regression case "${name}" — ` +
+          "a disclaimer can excuse a false claim beside it again",
+        sample.trim().slice(0, 160),
+      );
+    }
+    if (!shouldFail && hits.length > 0) {
+      fail(
+        "pro-lifecycle-copy",
+        `the Pro copy matcher rejects the truthful control "${name}" (as ` +
+          `${hits[0].claim}) — an explicit independence statement must be allowed`,
+        `${sample.trim().slice(0, 120)} → "${hits[0].unit.slice(0, 80)}"`,
+      );
+    }
+  }
+}
 
 function checkProLifecycleCopy() {
   // BOTH the human-maintained source and the deployable artifact: the artifact
@@ -1096,24 +1292,16 @@ function checkProLifecycleCopy() {
         continue;
       }
 
-      // Line-at-a-time so one truthful disclaimer cannot excuse a false claim
-      // sitting beside it in the same block.
-      for (const line of match[0].split("\n")) {
-        if (NEUTRALIZED.test(line)) continue;
-        for (const { re, claim } of PRO_COPY_CLAIMS) {
-          if (re.test(line)) {
-            fail(
-              "pro-lifecycle-copy",
-              `the ${region.label} tells the provider that Pro grants or removes ${claim}`,
-              `${rel}: ${line.trim().slice(0, 160)}`,
-            );
-          }
-        }
+      for (const { claim, unit } of findProCopyViolations(match[0])) {
+        fail(
+          "pro-lifecycle-copy",
+          `the ${region.label} tells the provider that Pro grants or removes ${claim}`,
+          `${rel}: ${unit.slice(0, 160)}`,
+        );
       }
     }
   }
 }
-
 checkDatabase();
 checkRanking();
 checkFrontend();
@@ -1121,6 +1309,7 @@ checkSearchTrust();
 checkCanonicalPro();
 checkWebhookGeneration();
 checkProductClassification();
+checkProCopyMatcher();
 checkProLifecycleCopy();
 
 if (violations.length > 0) {
@@ -1152,3 +1341,4 @@ console.log("  • Pro identity is canonical is_pro everywhere; no list can elev
 console.log("  • the deployable stripe-webhook is generated from a pristine entrypoint");
 console.log("  • Pro and Featured Stripe products are disjoint; Featured is never a Pro tier");
 console.log("  • Pro lifecycle emails promise no Featured, ranking or verification benefit");
+console.log("  • a disclaimer excuses only its own clause, never a claim beside it");

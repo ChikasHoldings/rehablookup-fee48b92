@@ -1063,3 +1063,92 @@ stores `pro_boost: 50`. 3,797 approved raw · 3,794 public · 5 raw verified ·
 No Edge deploy, no migration, no database write, no ranking recomputation, no
 cron mutation, no Stripe write. **B3 not started. Stage 4 not started. No broad
 Bucket-A cleanup.**
+
+---
+
+# Phase 1A.1 verification hotfix #1 — the copy guard was not fail-closed
+
+Independent verification of Phase 1A.1 accepted the copy and rejected the guard
+that protects it. The product copy in `entrypoint.ts` / `index.ts` is unchanged
+by this hotfix; the webhook source and generated artifact are byte-identical to
+`bd4912ac`.
+
+## The defect
+
+The Pro-lifecycle rule skipped an entire **line** as soon as that line contained
+any neutralizing word:
+
+```js
+const NEUTRALIZED = /\b(?:unchanged|unaffected|not affected|independent|…)\b/i;
+…
+for (const line of match[0].split("\n")) {
+  if (NEUTRALIZED.test(line)) continue;   // ← one truthful phrase exempts the line
+  for (const { re, claim } of PRO_COPY_CLAIMS) { … }
+}
+```
+
+That closed the **cross-line** hole and left the **same-line** hole open, which
+contradicted the rule's own comment ("one truthful disclaimer cannot excuse a
+false claim sitting beside it"). Replaying the old logic against the reported
+bypasses, five of six passed a guard whose entire purpose was to catch them:
+
+| Sentence | Old logic |
+| --- | --- |
+| `Verification is unchanged. Pro includes priority ranking.` | **bypassed** |
+| `Featured remains independent, but Pro includes priority placement.` | **bypassed** |
+| `Your verification is not affected; Pro gives higher search placement.` | **bypassed** |
+| `Your directory position is unchanged, and Pro boosts you higher in search.` | **bypassed** |
+| `Pro includes Featured placement, although verification is independent.` | **bypassed** |
+| `Featured is separate. Pro gives a verified badge.` | caught — by accident |
+
+The last one was caught only because the neutralizer list contained
+`separately` but not `separate`. A one-word edit to the copy would have opened
+it too, which is the clearest evidence the rule was passing for the wrong
+reason rather than working.
+
+## The repair — negation is claim-local, not line-local
+
+A disclaimer only ever holds harmless the clause it actually governs. The region
+is now decomposed into **clause-sized units** and each prohibited claim is judged
+inside its own unit, by two deliberately redundant tests:
+
+1. **Clause splitting.** Sentence terminators, semicolons, bullets, markup
+   boundaries, contrastive conjunctions (`but` / `although` / `though` / `yet` /
+   `whereas` / `however`) and `, and`-style coordination each start a new unit,
+   so a disclaimer cannot reach across the punctuation into the next assertion.
+
+2. **Assertion override.** Within one unit, a neutralizing word excuses a claim
+   only when the unit makes no grant/removal assertion. `Featured remains
+   independent` is a disclaimer; `Featured remains independent, but Pro includes
+   priority placement` asserts (`includes`), so the disclaimer no longer excuses
+   it even if the splitter had missed the comma.
+
+Either test alone catches all six cases, so a gap in one is covered by the other.
+
+Markup becomes a clause **boundary** rather than text — a `style` declaration is
+not copy, and `position: absolute; top: 0` would otherwise read as an
+organic-position claim — while the values of attributes that *are* rendered
+(`alt`, `title`, `aria-label`) are re-appended as their own units so a claim
+cannot hide in one. HTML entities are decoded, so `&amp;` cannot split a phrase.
+
+Bare `position` / `visibility` is deliberately **not** a claim on its own: it
+becomes one only when the same clause also asserts the position is better
+(`higher`, `priority`, `boosts`, …). That is what lets the shipped disclaimer
+"your listing's directory position … is not affected" pass without weakening the
+rule. It is still not a word ban, and it is still scoped to the two Pro-lifecycle
+regions, which still **fail closed** when an anchor cannot be found.
+
+## The matcher proves itself on every run
+
+`checkProCopyMatcher()` runs 16 fixtures — the 8 bypasses above plus the shipped
+copy and the independence wordings the contract wants — before the guard is
+trusted to judge the repo. A false positive against an explicit independence
+statement fails the build just as a missed claim does, because pushing authors
+toward vaguer disclaimers is itself a regression.
+
+Verified additionally by injection into the live regions: all 8 adversarial
+cases fail the guard (including one injected into the **generated artifact
+only**, correctly attributed to `index.ts` with `entrypoint.ts` untouched, and
+independently flagged as drift by the generator's own `--check`), anchor removal
+fails closed, and four truthful independence statements injected into the real
+`proBenefits` block leave the guard passing.
