@@ -201,10 +201,19 @@ Deno.serve(async (req) => {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     
-    // lead_unlocks dropped in monetization rebuild — engagement signal
-    // for ranking now comes from facility_subscriptions tier + Pro
-    // response rate. Until the new signal lands in a follow-up PR,
-    // engagement contribution from unlocks is treated as zero.
+    // lead_unlocks dropped in the monetization rebuild, so the unlock-based
+    // engagement contribution is zero.
+    //
+    // This used to say the replacement signal "comes from
+    // facility_subscriptions tier + Pro response rate". It must not: a
+    // subscription tier is a PAYMENT signal, and organic ranking has no
+    // payment input (Stage-3 B2). Leaving that sentence here described the
+    // retired pro_boost as a planned feature and would have read as a
+    // specification to whoever implemented the follow-up.
+    //
+    // Response rate below is computed from leads.provider_responded_at —
+    // actual provider behaviour, available to Free and Pro facilities alike —
+    // and is a legitimate organic signal.
     const leadUnlocks: Array<{ facility_id: string; created_at: string }> = [];
 
     const { data: respondedLeads } = await supabaseClient

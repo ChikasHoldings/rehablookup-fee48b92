@@ -423,15 +423,55 @@ describe("B2.4 — the generated stripe-webhook carries the same retirement", ()
   });
 
   it("its inlined pro-benefits block matches the canonical shared source", () => {
-    const shared = read("supabase/functions/_shared/pro-benefits.ts")
-      .replace(/^import\s+[^;]+?\s+from\s+"https?:\/\/[^"]+";\s*\n/gm, "")
-      .trim();
+    // SUPERSEDED IN SCOPE, NOT WEAKENED.
+    //
+    // This used to re-derive the generator's transform for one module and
+    // assert byte equality, because the generator itself could not be run: it
+    // read its own output as input and pointed at a deleted _shared directory.
+    // A hand-rolled transform of a single module was the strongest available
+    // evidence, and it was not strong enough to justify a rollout — it proved
+    // nothing about the other eight inlined modules or about the file as a
+    // whole.
+    //
+    // The generator now works, so equality is asserted against the real
+    // generator over the WHOLE artifact (see
+    // directoryEntitlementHotfix.test.ts and
+    // scripts/check-stripe-webhook-inline.mjs). What remains useful here is the
+    // narrower claim this test was named for: the pro-benefits block that
+    // reaches the deployable file is the canonical shared implementation, not a
+    // divergent inlined copy.
+    const shared = stripJs(read("supabase/functions/_shared/pro-benefits.ts"));
     const gen = read("supabase/functions/stripe-webhook/index.ts");
-    const start =
-      gen.indexOf("// ── inlined from _shared/pro-benefits.ts ─────────────\n") +
-      "// ── inlined from _shared/pro-benefits.ts ─────────────\n".length;
-    const end = gen.indexOf("// ── inlined from _shared/resilient-email-sender.ts ─────────────");
-    expect(gen.slice(start, end).trim()).toBe(shared);
+    const marker = "// ── inlined from _shared/pro-benefits.ts ─────────────\n";
+    const start = gen.indexOf(marker);
+    expect(start, "pro-benefits is no longer inlined into the webhook").toBeGreaterThan(-1);
+    const rest = gen.slice(start + marker.length);
+    const nextMarker = rest.search(/^\/\/ ── (inlined from|stripe-webhook entrypoint)/m);
+    const block = stripJs(nextMarker === -1 ? rest : rest.slice(0, nextMarker));
+
+    for (const fn of [
+      "activateProBenefits",
+      "deactivateProBenefits",
+      "notifyProBenefitsPartialFailure",
+    ]) {
+      expect(shared, `${fn} missing from the canonical source`).toMatch(
+        new RegExp(`\\b${fn}\\b`),
+      );
+      expect(block, `${fn} missing from the inlined block`).toMatch(new RegExp(`\\b${fn}\\b`));
+    }
+    // The retired mutations must not reappear in the deployed copy.
+    expect(block).not.toMatch(/calculated_ranking_score/);
+    expect(block).not.toMatch(/\bfeatured\s*:\s*(true|false)\b/);
+    // The block is the shared module's body with its imports stripped, so every
+    // non-import line of the canonical source appears verbatim.
+    const sharedBody = shared
+      .replace(/^import[\s\S]*?from\s*"[^"]+";[ \t]*\n?/gm, "")
+      .split("\n")
+      .map((l) => l.trim())
+      .filter((l) => l.length > 0);
+    const blockLines = new Set(block.split("\n").map((l) => l.trim()));
+    const missing = sharedBody.filter((l) => !blockLines.has(l));
+    expect(missing, "inlined pro-benefits has drifted from the canonical source").toEqual([]);
   });
 });
 
@@ -457,11 +497,29 @@ describe("B2.6 / B2.7 — Pro never sets Featured display state", () => {
 describe("B2.8 — a Pro-only facility does not enter paid Featured visibility", () => {
   const src = stripJs(read("supabase/functions/get-featured-facilities/index.ts"));
 
-  it("the Pro-subscription loop no longer pushes into Featured eligibility", () => {
-    const loop = src.match(/for\s*\(\s*const\s+proSub\s+of\s+proSubs\s*\)\s*\{[\s\S]*?\n\s{4}\}/);
+  it("the Pro-entitlement loop no longer pushes into Featured eligibility", () => {
+    // UPDATED, NOT WEAKENED. This matched `for (const proSub of proSubs)` —
+    // the loop over raw facility_subscriptions rows. That loop is gone: the
+    // verification hotfix replaced the whole derivation, because iterating
+    // active subscription rows with no tier predicate meant ANY active
+    // subscription of any product was published as a Pro entitlement. The Pro
+    // set is now read from the canonical public_facilities.is_pro projection.
+    //
+    // The assertion is unchanged in substance — the Pro loop must populate
+    // proFacilityIds and must not touch Featured eligibility — and is now made
+    // against the canonical loop.
+    const loop = src.match(
+      /for\s*\(\s*const\s+row\s+of\s+canonicalProRows\s*\)\s*\{[\s\S]*?\n\s{4}\}/,
+    );
     expect(loop).not.toBeNull();
     expect(loop![0]).not.toMatch(/eligibleFacilities\.push/);
     expect(loop![0]).toMatch(/proFacilityIds\.push/);
+    expect(loop![0]).toMatch(/is_pro\s*===\s*true/);
+  });
+
+  it("Pro identity comes from the canonical projection, not a subscription query", () => {
+    expect(src).toMatch(/from\(\s*['"]public_facilities['"]\s*\)/);
+    expect(src).not.toMatch(/from\(\s*['"]facility_subscriptions['"]\s*\)/);
   });
 
   it("Featured eligibility no longer carries a 'pro' plan type", () => {

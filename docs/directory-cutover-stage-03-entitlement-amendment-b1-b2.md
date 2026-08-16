@@ -523,3 +523,227 @@ bundle contains no payment-ranked organic ordering.
 - **Stage 4 not started.**
 - No production migration, Edge deploy, Stripe write, production data write,
   ranking recomputation, or cron invocation.
+
+---
+
+# Verification hotfix #1 — three gaps closed
+
+Independent verification of the READY Preview and of the exact B1+B2 source
+found three defects. None required redesigning the amendment; all three were
+places where the amendment's own contract was not actually enforced.
+
+## Blocker 1 — SearchResults made a false blanket verification claim
+
+`src/pages/SearchResults.tsx` emitted, as its SEO/meta description:
+
+```
+Browse ${filteredCenters.length} verified addiction treatment centers…
+```
+
+`filteredCenters` is the **entire current result set**. It is narrowed to
+`center.verified === true` only when the visitor turns on the Verified Only
+quick filter — i.e. never on the indexable variants a crawler is invited to
+read. Production measures the gap exactly: **5** verified facilities against
+**3,794** public listings.
+
+So the page asserted a trust status for thousands of listings that do not hold
+it — the same failure class B1 exists to close, one layer up from the database.
+
+The description now comes from `src/lib/searchResultsSeo.ts`
+(`buildSearchResultsDescription`), which is unconditionally neutral:
+
+```
+Browse ${count} addiction treatment center listings…
+```
+
+Neutral in **every** branch rather than conditional on `verifiedOnly`. The
+filtered variants are noindexed, so a conditional claim buys no crawler-visible
+accuracy while leaving a live code path for a later refactor to reattach a trust
+adjective to the wrong count.
+
+### The verified explanation was narrowed to what the write path proves
+
+A read-only audit of every writer to `facilities.verified` (four writers, two DB
+gates) found the previous copy overstated the mechanism on both halves:
+
+- **"claimed and ownership-verified by its operator"** — the claim-approval
+  trigger (`20260829004600`) requires `verification_status = 'verified'` only
+  when that column is **non-NULL**; an admin may set it as a documented manual
+  override (`AdminClaimsReviewPanel.tsx`); and `finalize_claim_decision` can
+  auto-approve on a score threshold with no human at all. Approval does not
+  entail a completed ownership proof on every path.
+- **"admin-approved after a provider sign-up"** — only the single-row admin UI
+  (`AdminProviders.tsx:591`) stamps `verified` on approval. There is **no DB
+  trigger**; bulk status approval does not verify, and the admin toggle and
+  bulk-flag paths set it with no sign-up review at all.
+
+What **is** mechanically guaranteed, and is all the copy now claims: verification
+is a listing-level status; the actor gate (`20260829003800`) admits only
+admin/service-role, so a provider cannot self-verify (PR #67); the importer
+writes `verified: false` and the row-state gate rejects `verified = true` on
+unclaimed `samhsa_import` rows; and **no Stripe or subscription code path writes
+the column**. The copy adds that verification is independent of Pro and Featured,
+that payment cannot create or improve it, and that it is not a clinical
+accreditation or endorsement.
+
+## Blocker 2 — `proFacilityIds` was not Pro
+
+`get-featured-facilities` built the Pro set from:
+
+```ts
+facility_subscriptions.select(…).eq("status","active").gt("current_period_end", now)
+```
+
+There is **no `tier='pro'` predicate**. Any active subscription row, of any
+product, was published as a Pro entitlement — and Pro unlocks the public phone.
+
+It is also a B3 landmine. B3 needs a Featured-only subscription that stays
+`status='active'`, because `get-featured-rotation` INNER JOINs on it. Under the
+old expression that row would silently have become Pro the moment B3 landed.
+
+Pro is now read from the canonical projection `public_facilities.is_pro`
+(= `has_active_pro(id)`), fail-closed on `is_pro === true`. Pro is defined in one
+place and not reimplemented. Deriving from the projection also inherits the
+past_due grace window (`20260829000100`) rather than keeping a second
+entitlement clock that could drift.
+
+Three frontend consumers were corrected:
+
+| Surface | Before | After |
+| --- | --- | --- |
+| `useStaticFacilities` | `facility.isPro \|\| proIds.includes(id)` | `facility.isPro === true` |
+| `useApprovedFacilities` | `proIds.includes(facility.id)` | selects `is_pro`; `facility.is_pro === true` |
+| `CenterProfile` | `proFacilityIds` → crowned **"Featured"** badge | removed |
+
+The union in `useStaticFacilities` was documented as a "redundant safety net". It
+was not redundant: a union can only **add** Pro, so a secondary list with no tier
+predicate could elevate a facility the canonical projection says is not Pro.
+
+`CenterProfile` was a defect the amendment missed. A query named
+`hasFeaturedSubscription` tested **Pro** membership and rendered a gold crowned
+**Featured** badge from it, so every $99/mo Pro subscriber was publicly labeled
+Featured on their own profile — the same `featured = isPro` fault removed from
+both hooks, surviving behind a differently-named query. The canonical `Pro` badge
+elsewhere on that page (from `claimFlags.is_pro`, labeled "Pro") is untouched:
+naming a real product honestly is not a placement claim.
+
+`proFacilityIds` is still returned. It is now genuinely canonical, so retaining
+it as a compatibility field is safe.
+
+## Blocker 3 — the webhook generator was inoperable
+
+`scripts/inline-stripe-webhook-shared.py` had three defects:
+
+1. It read and wrote the **same file** (`index.ts`), feeding its own output back
+   in — 405,745 bytes vs 200,319, duplicate declarations, did not compile.
+2. `SHARED_DIR` pointed at `stripe-webhook/_shared`, **deleted in `c9c8fbc436`**.
+3. It inlined every file in that directory rather than the transitive closure,
+   and its generated header named a `.sh` script that has never existed here.
+
+Because it could not be run, changes were hand-applied to the generated
+artifact — which is exactly how `index.ts` came to carry **three unresolved
+relative imports** (`stripe-subscription-period`, `pro-checkout-facility`,
+`sentry`), silently breaking the zero-local-import guarantee the inlining exists
+to provide. That is a live deploy hazard, not a hygiene issue: `--use-api`
+uploads only the entrypoint.
+
+Source and artifact are now separate files:
+
+```
+supabase/functions/stripe-webhook/entrypoint.ts   ← human-maintained SOURCE
+supabase/functions/_shared/*.ts                   ← human-maintained SOURCE
+supabase/functions/stripe-webhook/index.ts        ← GENERATED artifact
+```
+
+The generator resolves relative imports as real paths, **refuses** anything that
+lands outside `supabase/functions/_shared`, walks the transitive closure,
+emits dependency-first, and **merges** URL imports per URL so a name imported by
+several modules is declared once (a dedupe-by-line would emit both
+`import { createClient, SupabaseClient }` and `import type { SupabaseClient }`
+from supabase-js — a duplicate binding). Nine modules are now inlined; the
+entrypoint body is byte-identical to the previously committed one except for the
+removed `sentry` import line.
+
+`--write` twice produces byte-identical output
+(`99178b0a5a3a65ac1d8b393534d57e913900dec43533d86c1e90734bc8fa57a0`); `--check`
+compares in memory and writes nothing.
+
+## Guards
+
+`scripts/check-stripe-webhook-inline.mjs` (new, `check:stripe-webhook-inline`,
+wired into `build:vercel` before `validate:blocking`) delegates byte-equality to
+the generator itself, so there is exactly **one** implementation of the
+transform. **It fails, never skips, when `python3` is absent** — a check that
+passes silently when its engine is missing is worse than no check.
+
+`scripts/check-directory-trust-ranking.mjs` gains three mechanism-shaped rule
+groups: search trust (source **and** the built `SearchResults-*.js` chunk),
+canonical Pro, and webhook generation shape. No word bans — "verified" stays
+legitimate for individual facilities, the Verified Only filter, and the copy that
+explains it.
+
+**Verified against 10 injected regressions**, each caught and reverted:
+
+| # | Injected regression | Caught by |
+| --- | --- | --- |
+| 1 | helper reapplies "verified" to the count | trust |
+| 2 | `useStaticFacilities` unions with the legacy list | trust |
+| 3 | `useApprovedFacilities` back to `proFacilityIds` | trust |
+| 4 | `get-featured-facilities` queries `facility_subscriptions` | trust |
+| 5 | hand-edit of the generated artifact (drift) | inline |
+| 6 | generator reads its own output | both |
+| 7 | generator points at `stripe-webhook/_shared` | both |
+| 8 | generated header references the `.sh` command | both |
+| 9 | Pro activation writes `facilities.featured` | both |
+| 10 | `CenterProfile` Pro→Featured badge returns | trust |
+
+The built-bundle rule was **not** written to a hypothetical: on first run it
+caught the literal string `verified addiction treatment centers` still present in
+the stale `dist/` chunk from before the fix.
+
+## Stale comments corrected in already-touched files
+
+- **`pro-benefits.ts`** claimed the `profiles.plan` mirror "drives the storage
+  photo-cap trigger". It does not. There are two caps:
+  `enforce_facility_plan_photo_cap()` (the **gallery-array** trigger,
+  `20260526000000`) does read `profiles.plan` (10 vs 5); the **storage-object**
+  cap `facility_images_upload_within_cap()` (`20260829004100`) resolves Pro from
+  `facility_subscriptions` directly (150 vs 20). Now described as a
+  legacy/provider-plan compatibility mirror with one confirmed DB consumer.
+- **`calculate-ranking-scores`** still said the replacement engagement signal
+  "comes from `facility_subscriptions` tier + Pro response rate" — a payment
+  signal described as a planned ranking input, which would have read as a
+  specification to whoever implemented the follow-up.
+
+## Validation
+
+| Check | Result |
+| --- | --- |
+| `npx tsc --noEmit` | 0 errors (baseline 0) |
+| `npm test -- --run` | **947 passed, 59 files** (was 917 / 58) |
+| `npm run lint` | 217 / 181 / 36 — **+1 error vs baseline**, explained below |
+| `npm run build:vercel` | exit 0, both guards pass in position |
+| Generator `--write` ×2 | byte-identical |
+| Stage-1 / Stage-2 / Stage-3 guards | all pass |
+
+The **+1 lint error** is `type Sentry = any` in `_shared/sentry.ts`, now counted
+a second time because `sentry.ts` is correctly inlined into the generated
+artifact — it was previously an unresolved import that would have failed at
+deploy. The error is pre-existing, already reported against the canonical module,
+and carries a `deno-lint-ignore` pragma eslint does not honour. It is reported
+rather than suppressed: adding an ignore would hide a real duplicate.
+
+## Production — read-only, unchanged
+
+Migration head **`20260831000000`** (B1/B2 migrations still unapplied).
+3,797 approved raw · 3,794 public · 5 raw verified · **0 public verified** ·
+0 subscriptions · 0 placements · 2 raw `featured=true` · 0 `is_pro`.
+`ranking_weights` still stores `pro_boost: 50` (pre-rollout).
+`has_active_pro` unchanged. `get_public_facility_data` absent. Anon cannot read
+raw `facilities`; RLS on. Edge versions unchanged — `stripe-webhook` v27,
+`get-featured-facilities` v12, `calculate-ranking-scores` v12.
+
+**Preview still cannot prove B1 live.** The migration remains unapplied, so
+production still Pro-masks `verified` with zero Pro subscribers and the Preview
+shows `verified = false` everywhere. That is expected and is not evidence about
+B1 in either direction.

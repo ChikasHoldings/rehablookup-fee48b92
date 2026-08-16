@@ -27,12 +27,30 @@
 //     by featured_placements + facility_subscriptions.has_featured and is
 //     served by get-featured-rotation into a separately labeled rail.
 //
-// So this module now writes exactly ONE thing: `profiles.plan`. That is not
-// a no-op — the plan mirror drives the storage photo-cap trigger, and every
-// other Pro entitlement (phone, media, is_pro) is derived live from
-// facility_subscriptions via has_active_pro(), which the webhook maintains
-// separately. Pro still activates; it just no longer reaches into trust,
-// ranking or Featured state.
+// So this module now writes exactly ONE thing: `profiles.plan`, a
+// legacy/provider-plan COMPATIBILITY MIRROR.
+//
+// Be precise about what that mirror does and does not drive, because the
+// previous note here was wrong in a way that invites someone to "restore" a
+// dependency that does not exist. There are two distinct photo caps:
+//
+//   • enforce_facility_plan_photo_cap() — the GALLERY-array trigger
+//     (20260526000000) — DOES read profiles.plan (10 photos vs 5). This is the
+//     one live consumer this mirror is known to have.
+//   • facility_images_upload_within_cap() — the STORAGE-object cap
+//     (20260829004100) — does NOT read profiles.plan. It resolves Pro from
+//     facility_subscriptions directly (tier='pro' AND (active OR past_due),
+//     150 objects vs 20). The earlier comment claimed the mirror drove this
+//     trigger; it does not, and never has.
+//
+// Every other Pro entitlement — public phone, enhanced media, is_pro — is
+// derived live from facility_subscriptions via has_active_pro(), which the
+// webhook maintains separately. Do not infer a broader purpose for
+// profiles.plan than a reader can confirm in the current code: it is a mirror
+// with one confirmed DB consumer, not the source of truth for Pro.
+//
+// So Pro still activates; it just no longer reaches into trust, ranking or
+// Featured state.
 //
 // Idempotency: the plan mirror is a plain idempotent UPDATE, so retries and
 // duplicate webhook deliveries are safe by construction. The previous
@@ -58,7 +76,10 @@ export interface ActivateResult {
 
 /**
  * Activate Pro benefits for the provider by mirroring `profiles.plan = 'pro'`
- * (drives the photo-cap trigger).
+ * — the legacy/provider-plan compatibility mirror. Its one confirmed DB
+ * consumer is the gallery-array photo-cap trigger
+ * (enforce_facility_plan_photo_cap); the storage-object cap resolves Pro from
+ * facility_subscriptions instead.
  *
  * Deliberately does NOT write `facilities.featured`,
  * `facilities.calculated_ranking_score`, or `facilities.verified` — payment

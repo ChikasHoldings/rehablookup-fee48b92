@@ -5,6 +5,7 @@ import { SEO, generateSearchResultsSchema } from "@/components/SEO";
 import { SearchResultCard } from "@/components/cards/SearchResultCard";
 import { FeaturedRail } from "@/components/featured/FeaturedRail";
 import { resolveSearchBucket } from "@/lib/featuredBucket";
+import { buildSearchResultsDescription } from "@/lib/searchResultsSeo";
 import { DataPagination } from "@/components/common/DataPagination";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
@@ -830,9 +831,30 @@ const SearchResults = () => {
   const seoCanonical = !shouldNoindex && currentPage > 1
     ? `/search-results?page=${currentPage}`
     : "/search-results";
-  const seoDescription = `Browse ${filteredCenters.length} verified addiction treatment centers${
-    location ? ` near ${location}` : queryParam ? ` matching "${queryParam}"` : ""
-  }${currentPage > 1 ? ` (page ${currentPage} of ${totalPages})` : ""}. Compare rehab programs, check insurance, and start recovery.`;
+  // TRUST COPY: the count describes the RESULT SET, so it may only carry a
+  // predicate the result set actually enforces.
+  //
+  // This read `Browse ${filteredCenters.length} verified addiction treatment
+  // centers`. `filteredCenters` is the whole current result set; it is only
+  // constrained to `center.verified === true` when the visitor has switched on
+  // the Verified Only filter (see the `verifiedOnly` branch in the filter
+  // pipeline). Unfiltered, the overwhelming majority of rows are unverified
+  // SAMHSA-sourced listings — production carries 5 verified facilities out of
+  // ~3.8k — so the string asserted a trust status for thousands of listings
+  // that do not hold it.
+  //
+  // Neutral directory wording is used unconditionally rather than branching on
+  // `verifiedOnly`: the filtered variants are noindexed anyway, and a
+  // conditional trust claim is a standing invitation for a later refactor to
+  // reconnect the two halves incorrectly. `buildSearchResultsDescription` is
+  // exported and unit-tested so the guard has a single mechanism to police.
+  const seoDescription = buildSearchResultsDescription({
+    count: filteredCenters.length,
+    location,
+    query: queryParam,
+    currentPage,
+    totalPages,
+  });
 
   // rel="prev"/"next" — only emit on indexable paginated views so crawlers
   // can stitch the sequence together without us advertising filtered/noindex
@@ -1618,11 +1640,42 @@ const SearchResults = () => {
                           <Check className="h-4 w-4 text-emerald-600" />
                           What does &ldquo;verified&rdquo; mean?
                         </dt>
+                        {/* Narrowed to what the write path actually proves.
+                            The previous copy said a verified facility was
+                            "claimed and ownership-verified by its operator, or
+                            admin-approved after a provider sign-up". Both
+                            halves overstated the mechanism:
+
+                             • The claim-approval trigger requires
+                               `verification_status = 'verified'` only when that
+                               column is non-NULL, an admin can set it as a
+                               documented manual override, and
+                               `finalize_claim_decision` can auto-approve on a
+                               score threshold. So approval does not entail a
+                               completed ownership proof in every path.
+                             • Only the single-row admin UI stamps `verified` on
+                               provider-signup approval; bulk status approval
+                               does not, and the admin toggle / bulk-flag paths
+                               set it with no sign-up review at all.
+
+                            What IS mechanically guaranteed, and is all this
+                            says: the actor gate admits only admin/service-role
+                            (so a provider cannot self-verify — PR #67), the
+                            importer writes verified=false and the row-state
+                            gate rejects verified=true on unclaimed
+                            samhsa_import rows, and no Stripe or subscription
+                            code path writes the column. */}
                         <dd className="text-sm text-muted-foreground leading-relaxed pl-6">
-                          A verified facility is one that has either been claimed and
-                          ownership-verified by its operator, or admin-approved after a
-                          provider sign-up. Unclaimed SAMHSA-sourced records are listed
-                          but not marked as verified.
+                          Verified is a listing-level status, applied through our
+                          claim-review process when a facility&rsquo;s operator claims
+                          their listing, or by direct RehabLookup admin review.
+                          Providers cannot verify themselves, and unclaimed
+                          SAMHSA-sourced records are listed but never marked verified.
+                          It is independent of Pro and Featured &mdash; payment cannot
+                          create or improve it. Verified is not a clinical accreditation
+                          or an endorsement: confirm a facility&rsquo;s current licensing
+                          and accreditation with your state authority or the relevant
+                          accrediting body.
                         </dd>
                       </div>
                       <div>

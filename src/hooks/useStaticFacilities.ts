@@ -68,7 +68,9 @@ export interface PublicFacility extends TreatmentCenter {
 export const useStaticFacilities = () => {
   const queryClient = useQueryClient();
   const { data: featuredData, isLoading: isFeaturedLoading } = useFeaturedFacilityIds();
-  const proIds = featuredData?.proFacilityIds || [];
+  // `proFacilityIds` is deliberately NOT read here. Pro comes from the
+  // snapshot's canonical `isPro` (public_facilities.is_pro). Only the
+  // homepage rotation ids are a legitimate consumer of this endpoint.
   const homepageFeaturedIds = featuredData?.homepageFeaturedIds || [];
 
   const query = useQuery({
@@ -141,13 +143,21 @@ export const useStaticFacilities = () => {
 
   // Transform static facilities to PublicFacility format with Pro data
   const publicFacilities: PublicFacility[] = (query.data || []).map((facility) => {
-    // Pro / Featured status: prefer the snapshot's `isPro` (live from the
-    // `public_facilities` view) and union with the legacy `proFacilityIds`
-    // map for back-compat with callers that read from that list. The
-    // snapshot is authoritative; the proIds list is now a redundant safety
-    // net that catches any short-window drift between the view and the
-    // featured-facilities edge function.
-    const isPro = facility.isPro || proIds.includes(facility.id);
+    // CANONICAL PRO, FAIL CLOSED.
+    //
+    // The snapshot's `isPro` comes from `public_facilities.is_pro`, i.e.
+    // has_active_pro(id) — the single definition of Pro. This was
+    // `facility.isPro || proIds.includes(facility.id)`, described as a
+    // "redundant safety net". It was not redundant: a union can only ever
+    // ADD Pro, so a secondary list could elevate a facility the canonical
+    // projection says is NOT Pro, and Pro unlocks the public phone. The
+    // legacy list carried no tier predicate at all, so the "safety net"
+    // was a path for any active subscription to buy Pro product features.
+    //
+    // `=== true` rather than a truthiness test so a null/undefined column
+    // (an older cached snapshot shape) reads as not-Pro instead of being
+    // coerced by a later refactor.
+    const isPro = facility.isPro === true;
     const isHomepageFeatured = homepageFeaturedIds.includes(facility.id);
     const planTier: "pro" | "free" = isPro ? "pro" : "free";
 

@@ -20,6 +20,13 @@ import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
 //   but it is now strictly an ENTITLEMENT signal and is kept structurally
 //   separate from Featured eligibility.
 //
+//   v2.2.0 fixes what `proFacilityIds` MEANS. It was assembled from generic
+//   `facility_subscriptions` rows with status='active' — no tier predicate,
+//   so any active subscription of any product was reported as Pro. It is now
+//   read from the canonical projection `public_facilities.is_pro`
+//   (= has_active_pro(id)). Pro is defined in exactly one place; this
+//   function does not reimplement it.
+//
 //   It also accepted `facilities.featured = true` as "legacy Featured".
 //   That raw boolean is of unproven provenance: production carries exactly
 //   two such rows, both plan=free with zero facility_subscriptions, zero
@@ -35,7 +42,7 @@ import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
 //   remains only for the legacy homepage surface and the Stripe
 //   Featured-product path below.
 // ─────────────────────────────────────────────────────────────────────────────
-const VERSION = "2.1.0";
+const VERSION = "2.2.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -212,11 +219,14 @@ Deno.serve(async (req) => {
     const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
     // BATCH: Fetch all data in parallel instead of sequential queries
-    const [settingsResult, platformResult, facilitiesResult, proSubsResult, allProfilesResult] = await Promise.all([
+    const [settingsResult, platformResult, facilitiesResult, canonicalProResult, allProfilesResult] = await Promise.all([
       supabaseClient.from("platform_settings").select("setting_value").eq("setting_key", "featured_notification_settings").maybeSingle(),
       supabaseClient.from("platform_settings").select("setting_value").eq("setting_key", "featured_platform_settings").maybeSingle(),
       supabaseClient.from("facilities").select("id, user_id, featured, featured_pinned, last_featured_shown_at, suspended, name, featured_display_order").eq("status", "approved").or("suspended.is.null,suspended.eq.false"),
-      supabaseClient.from("facility_subscriptions").select("facility_id, provider_id").eq("status", "active").gt("current_period_end", new Date().toISOString()),
+      // CANONICAL PRO IDENTITY — public_facilities.is_pro, which is exactly
+      // has_active_pro(id). See the proFacilityIds block below for why this is
+      // NOT a facility_subscriptions query.
+      supabaseClient.from("public_facilities").select("id, is_pro"),
       supabaseClient.from("profiles").select("user_id, email, first_name, last_name"),
     ]);
 
@@ -234,8 +244,8 @@ Deno.serve(async (req) => {
     }
 
     const facilities = facilitiesResult.data || [];
-    const proSubs = proSubsResult.data || [];
-    logStep("Fetched all data in parallel", { facilities: facilities.length, proSubs: proSubs.length });
+    const canonicalProRows = canonicalProResult.data || [];
+    logStep("Fetched all data in parallel", { facilities: facilities.length, publicRows: canonicalProRows.length });
 
     // Build profiles lookup map (eliminates N+1 profile queries)
     const profilesMap = new Map<string, { email: string; first_name: string | null; last_name: string | null }>();
@@ -249,15 +259,33 @@ Deno.serve(async (req) => {
 
     // Identify Pro facilities — ENTITLEMENT ONLY, never Featured eligibility.
     //
+    // CANONICAL SOURCE: public_facilities.is_pro, which the view defines as
+    // has_active_pro(id). Pro is NOT reimplemented here.
+    //
+    // Until this hotfix the set was built from every facility_subscriptions row
+    // with status='active' and a future current_period_end. That is not Pro. It
+    // carries no tier predicate at all, so ANY active subscription row — of any
+    // product — was published as a Pro entitlement. B3 will need to represent a
+    // Featured-only subscription that stays status='active' (get-featured-
+    // rotation INNER JOINs on it), and under the old expression that row would
+    // have silently become Pro. Reading the canonical projection makes that
+    // impossible by construction rather than by a tier filter that a later
+    // schema change could outgrow.
+    //
+    // Deriving from has_active_pro also inherits its lifecycle semantics for
+    // free — notably that past_due remains Pro through the grace window — so
+    // there is no second, drifting copy of the entitlement clock here.
+    //
     // These ids are returned so callers can resolve Pro product features. They
     // are deliberately NOT pushed into `eligibleFacilities`: Pro does not buy
     // homepage placement, a Featured badge, or a slot in the rotation. If a
     // Pro subscriber is also to be Featured, they must hold Featured
     // separately (Stripe Featured product below, or featured_placements /
     // facility_subscriptions.has_featured via get-featured-rotation).
-    for (const proSub of proSubs) {
-      if (proSub.facility_id) {
-        proFacilityIds.push(proSub.facility_id);
+    for (const row of canonicalProRows) {
+      // Fail closed: only an explicit boolean true is Pro.
+      if (row.id && row.is_pro === true) {
+        proFacilityIds.push(row.id);
       }
     }
 

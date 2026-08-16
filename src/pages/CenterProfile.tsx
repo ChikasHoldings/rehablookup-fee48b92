@@ -489,18 +489,25 @@ const CenterProfile = () => {
     },
   });
 
-  const { data: hasFeaturedSubscription } = useQuery({
-    queryKey: ["featured-subscription-check", facility?.id],
-    queryFn: async (): Promise<boolean> => {
-      if (!facility?.id) return false;
-      const { data } = await supabase.functions.invoke("get-featured-facilities");
-      // Check Pro subscription status
-      const proIds: string[] = data?.proFacilityIds || [];
-      return proIds.includes(facility.id);
-    },
-    enabled: !!facility?.id,
-    staleTime: 1000 * 60 * 5,
-  });
+  // PRO IS NOT FEATURED — the public profile no longer badges Pro as Featured.
+  //
+  // This was a `hasFeaturedSubscription` query that invoked
+  // get-featured-facilities and returned `proFacilityIds.includes(facility.id)`
+  // — a Pro membership test, despite the name — and the profile header rendered
+  // a gold crowned "Featured" badge from it. Every $99/mo Pro subscriber was
+  // therefore publicly labeled Featured on their own profile page.
+  //
+  // That is the same defect the amendment removed from useStaticFacilities
+  // (`featured: facility.featured || isPro`) and useApprovedFacilities
+  // (`featured: isPro`); this third instance sat behind a differently-named
+  // query and survived. Pro buys product features — public phone + Call CTA,
+  // enhanced-profile media, analytics — not visibility inventory or a paid
+  // placement claim. Paid Featured is featured_placements +
+  // facility_subscriptions.has_featured, served by get-featured-rotation into
+  // the separately labeled Featured rail, which renders its own badge.
+  //
+  // The Verified badge below is unaffected: it reads facility.verified, a
+  // listing-level trust status that B1 made plan-independent.
 
   // Pro entitlement is intentionally NOT derived here any more. The contact
   // modal resolves `public_facilities.is_pro` (= the canonical grace-aware
@@ -920,12 +927,6 @@ const CenterProfile = () => {
                     <span className="font-bold text-[11px] text-foreground tabular-nums">{ratingData.averageRating.toFixed(1)}</span>
                     <span className="text-[11px] text-muted-foreground">({ratingData.reviewCount})</span>
                   </div>
-                )}
-                {hasFeaturedSubscription && (
-                  <Badge className="bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 gap-1 px-2 py-0.5 shadow-md text-[11px] font-bold uppercase tracking-wider">
-                    <Crown className="h-3 w-3" />
-                    Featured
-                  </Badge>
                 )}
                 {facility.verified && (
                   <Badge className="bg-emerald-500/90 text-white border-0 gap-1 px-2 py-0.5 shadow-md text-[11px] font-bold uppercase tracking-wider">
