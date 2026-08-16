@@ -759,3 +759,161 @@ again with exit 1 — confirming it catches this exact bug at the source file, n
    stage 2 alongside the backend, with legal review.
 3. `src/pages/us-rehab/{LuxuryRehabAmerica,CelebrityRehabUSA}.tsx` mention "24/7 concierge
    services" as a **facility amenity**. Correct as written and intentionally left alone.
+
+---
+
+# Independent Verification Hotfix #2 — live resource content
+
+Added after the **actual Vercel Preview** for `2cc21e17` ("fix: remove retired concierge copy
+from the public SPA shell") was inspected. Where hotfix #1 was found by reading the deployed
+HTML, this one was found by reading the deployment *state*: the Preview never became `READY`.
+
+| | |
+| --- | --- |
+| Deployment | `dpl_HTmaBGNENkdentN8A3boRHkUQoDA` |
+| State | **ERROR** |
+| Failing step | `npm run build:vercel` exited 1 |
+| Failing check | `check:directory-public-shell` |
+
+The guard flagged `dist/resources/rehablookup-april-2026-analytics-milestone.html` and
+`public/resources/rehablookup-april-2026-analytics-milestone.html` for `href="/concierge…"`.
+
+**The guard was right and is not being weakened.** It caught a real regression that the
+committed repository did not contain.
+
+## The two misses, in order
+
+1. **Hotfix #1 — root `index.html`.** The stage-1 audit globbed `public/**/*.html`; the
+   hand-authored Vite SPA shell sits outside that glob and shipped unchanged. Content-checked
+   now by `check:directory-public-shell`.
+2. **Hotfix #2 — live database content.** Both prior passes only ever inspected *committed*
+   files. Two `public.blog_articles` rows still describe the retired product, and those rows are
+   injected into the public site **during the build**, not from the repository.
+
+## Why the local build passed and the real Vercel build failed
+
+`build:vercel` runs `generate:resources-html` **before** `check:directory-public-shell`:
+
+```
+… generate:resources-html … → vite build → check:directory-public-shell → validate:blocking
+```
+
+`scripts/generate-resources-html.mjs` fetches every published row from `public.blog_articles`
+over the Supabase REST API and **overwrites** `public/resources/<slug>.html` for each one.
+
+- **Locally**, Supabase is unreachable (this sandbox's egress policy answers `403 Host not in
+  allowlist` for `mldbxpntzcjalgjmwnqa.supabase.co`). The generator catches the fetch failure and
+  — by design, so a transient REST blip cannot break a deploy — logs *"Skipping resources
+  prerender for this build"* and returns 0. The committed mirrors were therefore never
+  regenerated, the guard scanned the clean committed copies, and the local build went green.
+- **On Vercel**, the fetch succeeds. Both pages were rebuilt from live production content,
+  reintroducing the retired copy including a Markdown CTA to `/concierge/intake`, and the guard
+  correctly failed the deploy.
+
+This is the important structural lesson: **a green local `build:vercel` is not evidence about
+any build step that reads live data.** The two are not the same build.
+
+Compounding it, the committed `public/resources/*.html` files are generic stubs emitted by
+`generate-missing-html.mjs` — **none of the 194 contains a real article body**. Grepping them
+for retired copy could never have surfaced this; the article HTML only exists at deploy time.
+
+## The two affected Platform News slugs
+
+Both are RehabLookup-authored articles about RehabLookup itself, so the copy is
+*self-description of the operating model* — not editorial writing about third parties.
+
+**`rehablookup-april-2026-analytics-milestone`** — users "connect with advisors"; "The Concierge
+Placement Network — free domestic placement support for clients"; "expanding our international
+placement network"; thanks addressed to advisors; "our advisors are available 24/7"; and a
+Markdown link to `/concierge/intake`.
+
+**`ceo-chiedu-kabakwu-scaling-rehablookup`** — "our 24/7 placement advisors"; "human advisors
+when you need them"; "The Concierge Placement Network — a free domestic, refundable
+international placement service"; "24/7 advisor coverage"; "real advisors"; "Deepening the
+placement network"; thanks addressed to advisors; and a `meta_description` advertising "the
+placement network, and a 24/7 advisor team". It also asserted **"We are not building a
+directory."** — flatly contradictory now that the product is explicitly becoming one.
+
+## The shared compatibility override
+
+**`src/lib/directoryArticleOverride.ts`** — one dependency-free module, one pure function:
+
+```
+applyDirectoryArticleOverride(article) → article
+```
+
+- **Exact-slug allowlist.** Any other slug is returned by *identity* (same object reference).
+- **Not a keyword sanitizer.** "placement", "advisor" and "concierge" stay legal English:
+  interventionists arrange placement, states run placement programs, EAPs assign advisors, and
+  luxury facilities advertise their own concierge amenities. A generic replace would corrupt all
+  of it. A control fixture asserts exactly those four usages survive untouched.
+- **Whole-field replacement, not find-and-replace.** A targeted patch would silently stop
+  covering an article the moment someone edited the row in the CMS.
+- **Historically honest.** It removes *present-tense* claims that RehabLookup still operates a
+  placement/advisor service and removes CTAs to retired routes. Verifiable history — the April
+  2026 analytics, the growth figures, the mission, the engineering work — is preserved verbatim.
+  Retired CTAs become `/search-results`; the CEO pull quote becomes the directory-first framing.
+
+## Both rendering paths are protected
+
+Fixing only the generator would have left a JS-enabled visitor navigating inside the SPA seeing
+the old narrative straight from the database.
+
+| Path | File | Where the override is applied |
+| --- | --- | --- |
+| **A — static / crawler** | `scripts/generate-resources-html.mjs` | first statement of `renderArticleHtml()`, **before** meta title/description, JSON-LD, body rendering and Markdown link rendering |
+| **B — React / human** | `src/pages/ArticleDetail.tsx` | in the `useQuery` `queryFn`, at the data boundary — so SEO tags, structured data, word count, internal-link extraction, the article body and the share bar all consume the same object |
+
+Both call the same function, so the prerender and the hydrated page cannot contradict each
+other. A test asserts `renderArticleHtml(rawRow) === renderArticleHtml(override(rawRow))`.
+
+`generate:resources-html` now runs as `node --experimental-strip-types` so the `.mjs` generator
+can import the shared `.ts` module (`.nvmrc` pins Node 22; the flag is already used by
+`generate:county-pages`). `renderArticleHtml` is exported and `main()` only auto-runs when the
+script is invoked directly, so tests can drive the real renderer offline.
+
+## Regression coverage that does not need the network
+
+The previous pass's tests could not reproduce Vercel because Supabase was unavailable. Now:
+
+- **`src/lib/__fixtures__/legacyPlatformArticles.ts`** — verbatim snapshots of both live rows
+  (captured with a **read-only** production query), plus a control editorial article seeded with
+  the third-party placement/advisor/concierge vocabulary a naive sanitizer would destroy.
+- **`src/lib/__tests__/directoryArticleOverride.test.ts`** — 29 tests, no network. They assert
+  the fixtures *still contain* the retired copy (so the suite cannot go vacuously green), then
+  that both slugs are rewritten, an unrelated article is returned untouched, `/concierge/intake`
+  is replaced, the Concierge Placement Network and placement-advisor claims are gone, the
+  metadata is directory-compatible and within the 160-char budget, and the static renderer emits
+  the same clean output the React path receives.
+- **`check:directory-public-shell` strengthened**, not weakened: 12 new phrase-specific rules
+  (`the concierge placement network`, `24/7 placement advisor(s)`, `24/7 advisor coverage`,
+  `24/7 advisor team`, `free domestic placement support`, `free domestic … placement service`,
+  RehabLookup-owned placement network, `our advisors are available 24/7`, `connect with
+  advisors`, `reach out to our advisors`, `we are not building a directory`). **Every rule was
+  first probed against all 46,675 committed HTML artifacts and returned zero matches**, so none
+  can false-positive on existing editorial content. Bare `placement` / `advisor` / `concierge`
+  remain legal. The two slugs are **not exempted** — they are named in the guard's output so CI
+  states explicitly that they were in scope.
+
+## Production database is deliberately untouched
+
+**No `UPDATE`/`INSERT`/`DELETE` was run. No migration was created.** The two `blog_articles`
+rows remain stale on purpose: the public site had to become correct **without** requiring a
+production data write, because the Vercel build was already failing.
+
+**Dependency for a later stage:** normalize these two rows in the backend/data cleanup stage.
+
+| Row | `id` |
+| --- | --- |
+| `rehablookup-april-2026-analytics-milestone` | `df1cb689-3926-4888-a77a-f35513661d69` |
+| `ceo-chiedu-kabakwu-scaling-rehablookup` | `ab2cb34a-2e7b-4178-809e-e781cb9b50db` |
+
+Once rewritten upstream, `src/lib/directoryArticleOverride.ts`, its fixtures and the
+`LEGACY_ARTICLE_MIRRORS` list can all be deleted. Until then the override is the source of
+truth for what the public actually sees, and the CMS cannot regress these two pages.
+
+## Scope
+
+**No Stage 2 inquiry-routing work has started.** Backend coordinator routing, the
+`submit-*`/`match-concierge-intake`/`placement-*` edge functions, Stripe, Pro, Featured,
+`facility_subscriptions`, and all provider/admin surfaces are untouched by this hotfix.

@@ -117,6 +117,75 @@ const FORBIDDEN = [
     // teams do. "we verify your benefits" oversells it.
     re: /\bwe (?:verify|confirm) your benefits\b|\bour team confirms your benefits\b/i,
   },
+
+  // ── Legacy Platform News rules (live-content hotfix) ────────────────────
+  //
+  // The rules above were written against hand-authored shells. They did not
+  // fire on `public/resources/*.html`, because those mirrors are REGENERATED
+  // from live Supabase during `build:vercel` — the committed copies were
+  // clean, and the retired copy only reappeared inside Vercel's build, where
+  // `generate:resources-html` can actually reach production Postgres.
+  //
+  // These rules name RehabLookup's retired operating model in its own words.
+  // Every one is a multi-word phrase, and every one was verified to have zero
+  // matches across the full 46k-artifact corpus before being added — bare
+  // "placement" / "advisor" / "concierge" stay legal, because editorial pages
+  // legitimately discuss interventionists, state placement programs, EAP
+  // advisors and facility concierge amenities.
+  {
+    name: '"The Concierge Placement Network" (retired product name)',
+    re: /\bthe concierge placement network\b/i,
+  },
+  { name: '"24/7 placement advisor(s)"', re: /24\/7\s+placement advisors?\b/i },
+  { name: '"24/7 advisor coverage"', re: /24\/7\s+advisor coverage\b/i },
+  { name: '"24/7 advisor team"', re: /24\/7\s+advisor team\b/i },
+  { name: '"free domestic placement support"', re: /free domestic placement support/i },
+  {
+    name: '"free domestic … placement service"',
+    // Matches "a free domestic, refundable international placement service".
+    re: /free domestic[^.<]{0,60}placement service/i,
+  },
+  {
+    name: "RehabLookup-operated placement network",
+    // Scoped to first-person ownership — an article about a state or EAP
+    // placement network is fine.
+    re: /\b(?:our|rehablookup'?s)\s+(?:international\s+)?placement network\b/i,
+  },
+  {
+    name: "operating a placement network (first-person verb)",
+    re: /\b(?:deepening|expanding|growing|scaling|launching)\s+(?:our|the)\s+placement network\b/i,
+  },
+  {
+    name: '"our advisors are available 24/7"',
+    re: /\b(?:our|rehablookup'?s)\s+advisors?\s+(?:are|is)\s+(?:available|standing by|online)\s*(?:24\/7|around the clock)/i,
+  },
+  {
+    name: '"connect with advisors" (RehabLookup as the subject)',
+    re: /\bconnect with (?:our |rehablookup'?s )?advisors?\b/i,
+  },
+  {
+    name: '"reach out to our advisors"',
+    re: /\b(?:reach out to|talk to|speak (?:to|with)|call)\s+our\s+advisors?\b/i,
+  },
+  {
+    name: '"we are not building a directory" (contradicts the cutover)',
+    re: /\bwe(?:'re| are)\s+not\s+building\s+a\s+directory\b/i,
+  },
+];
+
+// Legacy RehabLookup-authored "Platform News" articles whose live
+// `blog_articles` rows still describe the retired placement product. Their
+// public mirrors are rewritten at render time by the shared override in
+// src/lib/directoryArticleOverride.ts. Listed here so CI output states
+// explicitly that these two artifacts were in scope for this run — a silent
+// "scanned 46675 files" is exactly how the first two misses slipped through.
+//
+// Not an exemption list: these paths are scanned by every rule above, like
+// any other artifact. When the DB rows are normalized in the later data
+// cleanup stage, the override and this list can both be removed.
+const LEGACY_ARTICLE_MIRRORS = [
+  "resources/rehablookup-april-2026-analytics-milestone.html",
+  "resources/ceo-chiedu-kabakwu-scaling-rehablookup.html",
 ];
 
 // ── Targets ─────────────────────────────────────────────────────────────────
@@ -193,6 +262,20 @@ for (const target of SHELL_SOURCES) {
 console.log(`[directory-public-shell] scanned ${scanned} public artifact(s)`);
 console.log(`  root index.html : ${sawRootShell ? "checked" : "MISSING"}`);
 console.log(`  dist/           : ${sawDist ? "checked" : "not built (skipped)"}`);
+
+// Name the two live-content regressions explicitly. These mirrors are only
+// present after `generate:resources-html` has run against Supabase, so a
+// "not generated" line here is informational (the local build cannot reach
+// production Postgres) rather than a failure.
+for (const mirror of LEGACY_ARTICLE_MIRRORS) {
+  const seen = ["public", "dist"].filter((base) =>
+    existsSync(join(ROOT, base, mirror)),
+  );
+  console.log(
+    `  ${mirror.replace("resources/", "")} : ` +
+      (seen.length ? `checked in ${seen.join(", ")}/` : "not generated (skipped)"),
+  );
+}
 
 // The root shell is the exact artifact this guard exists for. If it is gone the
 // check must not quietly pass.

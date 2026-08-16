@@ -33,6 +33,7 @@ import {
 } from "@/components/seo/ArticleInterlinks";
 import { useRelatedArticles, useCrossCategoryArticles } from "@/hooks/useRelatedArticles";
 import { EnhancedRelatedArticles, YouMayAlsoLike } from "@/components/articles/EnhancedRelatedArticles";
+import { applyDirectoryArticleOverride } from "@/lib/directoryArticleOverride";
 
 // Content block types from JSON structure
 interface ContentBlock {
@@ -276,11 +277,18 @@ const ArticleDetail = () => {
 
       if (error) throw error;
 
-      // Cast content from Json to ContentBlock[]
-      return {
+      // Directory-cutover compatibility layer — applied here, at the data
+      // boundary, so EVERY downstream consumer (SEO tags, article JSON-LD,
+      // word count, internal-link extraction, the rendered body and the share
+      // bar) sees the same directory-safe copy the static crawler mirror in
+      // scripts/generate-resources-html.mjs emits. Both call the same shared
+      // function, so the hydrated page can never contradict the prerender.
+      // No-op for every slug except the two legacy Platform News articles.
+      return applyDirectoryArticleOverride({
         ...data,
+        // Cast content from Json to ContentBlock[]
         content: data.content as unknown as ContentBlock[],
-      } as DBArticle;
+      } as DBArticle) as DBArticle;
     },
     enabled: !!normalizedSlug && !needsRedirect,
   });

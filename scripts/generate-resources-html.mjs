@@ -24,9 +24,13 @@
  */
 import { writeFile, mkdir, readdir, unlink } from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { gtagSnippet } from "./_ga.mjs";
 import { seoStyles, seoHeader, seoCtaStrip, seoFooter } from "./_seo-page-shell.mjs";
+// Shared with src/pages/ArticleDetail.tsx so the static mirror and the
+// hydrated React page cannot drift. Loaded via Node's TypeScript type
+// stripping — the module is dependency-free and erasable-syntax only.
+import { applyDirectoryArticleOverride } from "../src/lib/directoryArticleOverride.ts";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -274,7 +278,14 @@ function buildFaqSchemaFromBody(html) {
 // ---------------------------------------------------------------------------
 // HTML renderer
 // ---------------------------------------------------------------------------
-function renderArticleHtml(article) {
+export function renderArticleHtml(rawArticle) {
+  // Directory-cutover compatibility layer. Applied FIRST — before meta
+  // title/description, JSON-LD, body rendering and Markdown link rendering —
+  // so a legacy Platform News row that still advertises the retired
+  // Concierge/placement product in live Supabase can never reach the
+  // generated page. Every other slug is returned untouched.
+  const article = applyDirectoryArticleOverride(rawArticle);
+
   const slug = article.slug;
   const canonicalUrl = `${BASE_URL}/resources/${slug}`;
 
@@ -529,7 +540,15 @@ async function main() {
   );
 }
 
-main().catch((err) => {
-  console.error("[resources-prerender] Fatal:", err);
-  process.exit(1);
-});
+// Only run the network-dependent generator when invoked as a CLI. Tests import
+// `renderArticleHtml` directly and drive it from committed fixtures, which is
+// what makes the live-Supabase failure mode reproducible offline.
+const invokedDirectly =
+  process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+
+if (invokedDirectly) {
+  main().catch((err) => {
+    console.error("[resources-prerender] Fatal:", err);
+    process.exit(1);
+  });
+}
