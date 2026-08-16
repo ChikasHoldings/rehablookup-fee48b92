@@ -29,12 +29,6 @@ function matchMediaSync(query: string): boolean {
   return true;
 }
 
-Object.defineProperty(window, "matchMedia", {
-  writable: true,
-  configurable: true,
-  value: (query: string) => makeMediaQuery(query),
-});
-
 // Stub IntersectionObserver (used by sticky CTA bar, lazy images)
 class IntersectionObserverStub {
   observe() {}
@@ -45,8 +39,6 @@ class IntersectionObserverStub {
   rootMargin = "";
   thresholds: number[] = [];
 }
-(global as { IntersectionObserver?: typeof IntersectionObserverStub }).IntersectionObserver = IntersectionObserverStub;
-(window as { IntersectionObserver?: typeof IntersectionObserverStub }).IntersectionObserver = IntersectionObserverStub;
 
 // Stub ResizeObserver (used by Radix UI primitives)
 class ResizeObserverStub {
@@ -54,14 +46,30 @@ class ResizeObserverStub {
   unobserve() {}
   disconnect() {}
 }
-(global as { ResizeObserver?: typeof ResizeObserverStub }).ResizeObserver = ResizeObserverStub;
-(window as { ResizeObserver?: typeof ResizeObserverStub }).ResizeObserver = ResizeObserverStub;
 
-// Stub scrollTo (jsdom warns)
-window.scrollTo = (() => {}) as typeof window.scrollTo;
+// Everything below patches the DOM. A few suites opt out of jsdom with
+// `@vitest-environment node` (e.g. the edge-function harness, which
+// transpiles Deno sources with esbuild and needs real Node typed arrays), so
+// this setup must be a no-op rather than a crash when there is no `window`.
+if (typeof window !== "undefined") {
+  Object.defineProperty(window, "matchMedia", {
+    writable: true,
+    configurable: true,
+    value: (query: string) => makeMediaQuery(query),
+  });
 
-// Stub scrollIntoView — jsdom does not implement it, but the lead-intake
-// flow calls it on every step transition.
-if (!Element.prototype.scrollIntoView) {
-  Element.prototype.scrollIntoView = function () {};
+  (global as { IntersectionObserver?: typeof IntersectionObserverStub }).IntersectionObserver = IntersectionObserverStub;
+  (window as { IntersectionObserver?: typeof IntersectionObserverStub }).IntersectionObserver = IntersectionObserverStub;
+
+  (global as { ResizeObserver?: typeof ResizeObserverStub }).ResizeObserver = ResizeObserverStub;
+  (window as { ResizeObserver?: typeof ResizeObserverStub }).ResizeObserver = ResizeObserverStub;
+
+  // Stub scrollTo (jsdom warns)
+  window.scrollTo = (() => {}) as typeof window.scrollTo;
+
+  // Stub scrollIntoView — jsdom does not implement it, but the lead-intake
+  // flow calls it on every step transition.
+  if (!Element.prototype.scrollIntoView) {
+    Element.prototype.scrollIntoView = function () {};
+  }
 }

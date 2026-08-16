@@ -501,15 +501,12 @@ const CenterProfile = () => {
     staleTime: 1000 * 60 * 5,
   });
 
-  // Pro plan is derived directly from the public_facilities view's `is_pro`
-  // flag (= has_active_pro), which is loaded with the facility above and is
-  // visible to ANONYMOUS visitors. The previous get-facility-plan edge call
-  // required verify_jwt, so anonymous seekers — the majority of public-profile
-  // traffic — always resolved to "free", silently defeating the Pro lead-modal
-  // benefits (competitor hiding, uncapped leads, Pro badge). Deriving from
-  // is_pro fixes it for everyone, removes a JWT-gated round-trip on a public
-  // page, and honours the past_due grace period that get-facility-plan missed.
-  const facilityPlan = facility?.is_pro ? "pro" : "free";
+  // Pro entitlement is intentionally NOT derived here any more. The contact
+  // modal resolves `public_facilities.is_pro` (= the canonical grace-aware
+  // has_active_pro) itself and `submit-qualified-lead` re-checks it
+  // server-side, so this page has no plan state that could unlock a seeker
+  // PII form. Featured badges and ranking are unaffected — they were never
+  // driven by this value.
 
   // Fetch facility rating for badge display
   const ratingData = useFacilityRating(facility?.id);
@@ -570,14 +567,10 @@ const CenterProfile = () => {
   }, [facility?.id, facility?.slug, facility?.state, trackClickToCall, trackWebsiteClick]);
 
   const handleRequestInfoOpen = useCallback((cta_location: string) => {
-    // Always open the Message Center modal in-place. Previously the
-    // handler redirected unclaimed facilities to /concierge to route
-    // through the concierge intake, but that broke the user
-    // expectation that "Message Center" is a modal-opening button.
-    // The modal itself handles the unclaimed case internally by
-    // routing the inquiry through the concierge match flow on submit,
-    // so the seeker still ends up in the right pipeline without the
-    // jarring page change.
+    // Open the contact modal in-place for every claim state. The modal
+    // resolves the facility's canonical Pro entitlement itself and shows
+    // either the Pro Request Info form or the facility's own direct
+    // contact actions — the caller never decides which.
     setRequestModalOpen(true);
     void cta_location;
   }, []);
@@ -721,9 +714,7 @@ const CenterProfile = () => {
   const isPending = facility.status === "pending";
   // PII gate removed 2026-05-21 — every approved facility surfaces its
   // public business contact info (phone, email, website) to every
-  // visitor. The plan tier no longer determines content visibility;
-  // facilityPlan is kept for sort priority + Featured-badge eligibility
-  // upstream but does not gate display here.
+  // visitor. The plan tier no longer determines content visibility.
   const showContactDetails = true;
   const yearsInBusiness = getYearsInBusiness(facility.year_established);
 
@@ -1011,9 +1002,8 @@ const CenterProfile = () => {
                     </div>
                     {/* "Unclaimed listing" badge intentionally hidden on
                         the public profile. The claimFlags state is still
-                        fetched + used downstream — unclaimed inquiries
-                        route through the concierge match flow, the
-                        provider "Claim This Listing" CTA still appears
+                        fetched + used downstream — the provider
+                        "Claim This Listing" CTA still appears
                         for facility operators, and the admin panel
                         continues to surface claim status. The badge
                         itself was creating reader confusion ("is this
@@ -1104,10 +1094,10 @@ const CenterProfile = () => {
                 size="lg"
                 className="flex-1 min-w-0 gap-2 h-11 text-sm font-semibold"
                 onClick={() => handleRequestInfoOpen("hero_request_info")}
-                aria-label={`Open Message Center for ${facility.name}`}
+                aria-label={`Contact ${facility.name}`}
               >
                 <MessageSquare className="h-4 w-4 shrink-0" />
-                <span className="truncate">Message Center</span>
+                <span className="truncate">Contact Facility</span>
               </Button>
               {/* Save / favorite — guest favorites persist to localStorage and
                   migrate to user_favorites on signin; authed seekers update the
@@ -1531,10 +1521,10 @@ const CenterProfile = () => {
                       size="lg"
                       className="w-full gap-2 h-11 text-sm font-semibold"
                       onClick={() => handleRequestInfoOpen("sidebar_request_info")}
-                      aria-label={`Open Message Center for ${facility.name}`}
+                      aria-label={`Contact ${facility.name}`}
                     >
                       <Sparkles className="h-4 w-4" />
-                      Message Center
+                      Contact Facility
                     </Button>
 
                     {showContactDetails && facility.phone && (
@@ -1557,7 +1547,7 @@ const CenterProfile = () => {
                   <div className="mt-4 pt-3 border-t border-border/40 flex flex-col gap-2">
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <Clock className="h-3 w-3 text-emerald-600 shrink-0" />
-                      <span>Quick Response — Within 24 hours</span>
+                      <span>You contact this center directly</span>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <Shield className="h-3 w-3 text-primary shrink-0" />
@@ -1582,7 +1572,7 @@ const CenterProfile = () => {
             {/* Mobile CTA */}
             <div className="rounded-2xl bg-card border border-border/40 p-5">
               <h3 className="font-display text-base font-bold text-foreground mb-1">
-                Message Center
+                Contact This Center
               </h3>
               <p className="text-xs text-muted-foreground mb-4">
                 Take the first step towards recovery.
@@ -1594,7 +1584,7 @@ const CenterProfile = () => {
                   onClick={() => handleRequestInfoOpen("sidebar_get_started")}
                 >
                   <Sparkles className="h-4 w-4" />
-                  Get Started
+                  Contact Facility
                 </Button>
                 {showContactDetails && facility.phone && (
                   // Same asChild fix as the sidebar Call CTA above —
@@ -1656,23 +1646,16 @@ const CenterProfile = () => {
         subtitle="Other verified centers near here, sponsored by their providers."
       />
 
-      {/* Request Info / Message Center Modal.
+      {/* Facility contact modal.
           ────────────────────────────────────────────────────────────
-          2026-05-23 bugfix: previously gated to claimed listings only,
-          which meant clicking "Message Center" / "Get matched" on an
-          unclaimed facility set requestModalOpen=true but the modal
-          was never mounted — the button looked broken. The
-          submit-qualified-lead edge function already handles the
-          unclaimed case server-side: it sees no active Pro
-          subscription, creates a concierge_inquiries row with
-          routing_mode='free_tier_redirect' and originating_facility_id
-          pinned to this facility, then returns a redirect to
-          /concierge/thank-you so the seeker lands on the canonical
-          post-submit page. The seeker is then matched with verified
-          providers signed up for the concierge network — which is the
-          intended workflow for unclaimed listings.
-          Mount the modal unconditionally so the Message Center button
-          is functional regardless of claim state. */}
+          Mounted for every claim state. The modal resolves the
+          canonical, grace-aware Pro entitlement itself
+          (public_facilities.is_pro = has_active_pro) rather than
+          trusting anything this page computed: an ACTIVE PRO listing
+          gets the on-platform Request Info form, and every other
+          listing gets the facility's own Call / Website / Directions
+          actions with no PII intake. `facilityPlan` is deliberately NOT
+          passed — client-side plan state must never unlock the form. */}
       <RequestInfoModal
         open={requestModalOpen}
         onOpenChange={setRequestModalOpen}
@@ -1687,7 +1670,6 @@ const CenterProfile = () => {
           phone: facility.phone ?? null,
           verified: facility.verified ?? null,
         }}
-        facilityPlan={facilityPlan === "pro" ? "pro" : "free"}
         prefillData={prefillDataFromNav}
       />
 
@@ -1697,26 +1679,37 @@ const CenterProfile = () => {
           already visible. */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-card border-t border-border shadow-[0_-8px_24px_-12px_rgba(0,0,0,0.15)]">
         <div className="grid grid-cols-3 gap-2 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-          {/* Phone — Pro listings dial direct; non-Pro dial the helpline. */}
-          <a
-            href={showContactDetails && facility.phone
-              ? `tel:${facility.phone}`
-              : `tel:${(import.meta.env.VITE_CONCIERGE_HELPLINE as string | undefined) || "+18006624357"}`}
-            onClick={() => trackInteraction("call")}
-            className="flex flex-col items-center justify-center gap-0.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 px-2 py-2 transition-colors"
-            aria-label={showContactDetails ? "Call this facility" : "Call our helpline"}
-          >
-            <Phone className="h-5 w-5 text-emerald-600" />
-            <span className="text-[11px] font-semibold text-emerald-700">Call</span>
-          </a>
-          {/* Request information from this facility. */}
+          {/* Phone — the facility's own number, or nothing. The directory
+              never substitutes a RehabLookup support line as a treatment-
+              navigation path, so this slot is inert when the listing has no
+              published phone number. */}
+          {facility.phone ? (
+            <a
+              href={`tel:${facility.phone}`}
+              onClick={() => trackInteraction("call")}
+              className="flex flex-col items-center justify-center gap-0.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 px-2 py-2 transition-colors"
+              aria-label={`Call ${facility.name}`}
+            >
+              <Phone className="h-5 w-5 text-emerald-600" />
+              <span className="text-[11px] font-semibold text-emerald-700">Call</span>
+            </a>
+          ) : (
+            <div
+              className="flex flex-col items-center justify-center gap-0.5 rounded-lg bg-muted/50 px-2 py-2 opacity-50"
+              aria-hidden="true"
+            >
+              <Phone className="h-5 w-5 text-muted-foreground" />
+              <span className="text-[11px] font-semibold text-muted-foreground">No phone</span>
+            </div>
+          )}
+          {/* Contact this facility. */}
           <button
             type="button"
             onClick={() => handleRequestInfoOpen("sticky_mobile_request")}
             className="flex flex-col items-center justify-center gap-0.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 px-2 py-2 transition-colors"
           >
             <MessageSquare className="h-5 w-5" />
-            <span className="text-[11px] font-semibold">Request info</span>
+            <span className="text-[11px] font-semibold">Contact</span>
           </button>
           {/* Save. RehabLookup-coordinated tour scheduling was retired in
               the directory cutover — saving the listing is the directory

@@ -24,16 +24,31 @@ interface LeadIntakeFormProps {
       bestTimeToCall: string;
     };
   }) => React.ReactNode;
-  /** Custom submit handler - when provided, replaces the default submission logic */
+  /**
+   * Custom submit handler - when provided, replaces the default submission
+   * logic. Used by the standalone marketing landing funnels, which are not
+   * selected-facility inquiries. The facility-contact surfaces
+   * (RequestInfoModal) must NOT use this to smuggle a generic lead form in
+   * front of a non-Pro facility — see docs/directory-cutover-stage-02.
+   */
   onCustomSubmit?: (formData: LeadIntakeFormData) => Promise<void>;
+  /**
+   * Called when `submit-qualified-lead` answers with
+   * `action: "DIRECT_CONTACT_REQUIRED"` — i.e. the server resolved the
+   * selected facility as non-Pro (or could not confirm its entitlement)
+   * after this form had already rendered. The facility did NOT receive the
+   * inquiry, so the caller must show a direct-contact state, never success.
+   */
+  onDirectContactRequired?: () => void;
 }
 
-export function LeadIntakeForm({ 
-  className, 
+export function LeadIntakeForm({
+  className,
   facilityId: propFacilityId,
   facilityName: propFacilityName,
-  renderSuccess, 
-  onCustomSubmit 
+  renderSuccess,
+  onCustomSubmit,
+  onDirectContactRequired,
 }: LeadIntakeFormProps) {
   const formSectionRef = useRef<HTMLDivElement>(null);
   const [customSubmitting, setCustomSubmitting] = useState(false);
@@ -61,9 +76,10 @@ export function LeadIntakeForm({
     verifyCode,
     resetEmailVerification,
     checkAndAutoVerifyEmail,
-  } = useLeadIntakeForm({ 
+  } = useLeadIntakeForm({
     facilityIdOverride: propFacilityId,
     facilityNameOverride: propFacilityName,
+    onDirectContactRequired,
   });
 
   // Use prop values if provided, otherwise use URL params

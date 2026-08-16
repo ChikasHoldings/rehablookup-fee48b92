@@ -8,9 +8,11 @@
 //
 // What this script verifies, end-to-end:
 //   1. Public facility discovery via get-public-facilities edge fn (anon)
-//   2. submit-qualified-lead requires verified email (403 email_not_verified)
+//   2. submit-qualified-lead never accepts an unverified seeker email
+//      (Pro facility -> 403 email_not_verified; any other facility ->
+//       200 DIRECT_CONTACT_REQUIRED, i.e. the PII was never processed)
 //   3. submit-qualified-lead validates required fields (400 + code)
-//   4. submit-qualified-lead validates phone format
+//   4. submit-qualified-lead validates the seeker name on the Pro path
 //   5. Anon cannot SELECT from leads table (RLS)
 //   6. Anon cannot SELECT from leads_provider_view (RLS)
 //   7. unlock-lead requires bearer token / provider session
@@ -56,7 +58,15 @@ step("get-public-facilities (anon)", true, {
   facilityId: facility.id,
 });
 
-// ─── 2. submit-qualified-lead requires verified email ───────────────────────
+// ─── 2. submit-qualified-lead never accepts unverified seeker PII ───────────
+// Directory cutover stage 2 split this into two acceptable outcomes, because
+// the entitlement gate now runs BEFORE any PII-dependent processing:
+//   • ACTIVE PRO facility -> reaches the verification gate -> 403
+//     email_not_verified.
+//   • Anything else -> 200 DIRECT_CONTACT_REQUIRED, returned before the email
+//     was looked at at all.
+// Both prove the same property: an unverified seeker email never produces a
+// lead. Which one you see depends on whether facilities[0] happens to be Pro.
 {
   const tag = `e2e-${crypto.randomUUID()}`;
   const res = await fetch(`${SUPABASE_URL}/functions/v1/submit-qualified-lead`, {
@@ -74,10 +84,21 @@ step("get-public-facilities (anon)", true, {
     }),
   });
   const body = await res.json().catch(() => ({}));
-  step("submit-qualified-lead enforces email verification", res.status === 403 && body?.code === "email_not_verified", {
+  const directContact = res.status === 200 && body?.action === "DIRECT_CONTACT_REQUIRED";
+  const proVerificationGate = res.status === 403 && body?.code === "email_not_verified";
+  step("submit-qualified-lead never accepts unverified seeker PII", directContact || proVerificationGate, {
     status: res.status,
-    code: body?.code,
+    code: body?.code ?? body?.action,
+    note: directContact
+      ? "non-Pro facility — direct contact required before PII processing"
+      : "active Pro facility — email verification enforced",
   });
+  if (directContact) {
+    // The direct-contact envelope must never look like a submission.
+    step("DIRECT_CONTACT_REQUIRED carries no lead/inquiry/confirmation id",
+      !body?.leadId && !body?.inquiry_id && !body?.confirmation_path && !body?.routing_mode,
+      { status: res.status });
+  }
 }
 
 // ─── 3. submit-qualified-lead missing facilityId ────────────────────────────
@@ -94,12 +115,11 @@ step("get-public-facilities (anon)", true, {
   });
 }
 
-// ─── 4. submit-qualified-lead bad phone (use a real, verifiable email so we
-//        get past the email-verified gate would still 403; instead we just
-//        confirm name+email gate trips first when name is empty — that path
-//        IS reachable from anon). The phone-length code-path is unit-tested
-//        in the function's own contract; reproducing it from here would
-//        require seeding email_verification_codes in prod, which we refuse.
+// ─── 4. submit-qualified-lead validates the seeker name on the Pro path.
+//        Reproducing the phone-length branch from here would require seeding
+//        email_verification_codes in prod, which we refuse. As with step 2, a
+//        non-Pro facility short-circuits to DIRECT_CONTACT_REQUIRED before
+//        name validation is even reached — also a pass.
 {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/submit-qualified-lead`, {
     method: "POST",
@@ -107,9 +127,11 @@ step("get-public-facilities (anon)", true, {
     body: JSON.stringify({ facilityId: facility.id, email: "x@x.com", phone: "5555555555" }),
   });
   const body = await res.json().catch(() => ({}));
-  step("submit-qualified-lead validates name", res.status === 400 && body?.code === "name_required", {
+  const shortCircuited = res.status === 200 && body?.action === "DIRECT_CONTACT_REQUIRED";
+  step("submit-qualified-lead validates name (or short-circuits to direct contact)",
+    shortCircuited || (res.status === 400 && body?.code === "name_required"), {
     status: res.status,
-    code: body?.code,
+    code: body?.code ?? body?.action,
   });
 }
 

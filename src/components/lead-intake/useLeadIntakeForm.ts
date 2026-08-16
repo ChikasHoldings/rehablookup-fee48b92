@@ -61,9 +61,24 @@ interface UseLeadIntakeFormOptions {
   facilityIdOverride?: string;
   /** Override facility name from URL params */
   facilityNameOverride?: string;
+  /**
+   * Server-authoritative direct-contact handoff (directory cutover stage 2).
+   *
+   * `submit-qualified-lead` re-resolves `has_active_pro()` on every
+   * submission. If it answers `action: "DIRECT_CONTACT_REQUIRED"` the
+   * facility is not an active Pro listing (or its entitlement could not be
+   * confirmed) and NOTHING was persisted — no lead, no inquiry, no record
+   * of the seeker at all. The form must therefore not enter its submitted
+   * state; the surface switches to the facility's own contact details
+   * instead.
+   */
+  onDirectContactRequired?: (info: { facilityId?: string | null; facilityName?: string | null }) => void;
 }
 
 export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
+  // Bound here because `handleSubmit` takes its own `options` parameter,
+  // which shadows the hook's options object inside that function body.
+  const onDirectContactRequired = options.onDirectContactRequired;
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const { user, isAuthenticated } = useAuthReady();
@@ -498,23 +513,34 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
       if (error) throw new Error(extractErrorMessage(error, "Submission failed. Please try again."));
       if (data?.error) throw new Error(extractErrorMessage(data, "Submission failed. Please try again."));
 
+      // ── Server-authoritative direct-contact downgrade ──────────────────
+      // The server re-resolved entitlement and the selected facility is not
+      // an active Pro listing. Nothing was persisted and nothing was sent,
+      // so we must NOT show a success state. Hand off to the caller's
+      // direct-contact experience instead.
+      //
+      // This replaces the retired `routing_mode === "free_tier_redirect"`
+      // branch, which navigated to /inquiry/confirmation/:id — a concierge
+      // confirmation page promising a care coordinator. No new submission
+      // may reach that route.
+      if (data?.action === "DIRECT_CONTACT_REQUIRED" || data?.direct_contact_required === true) {
+        // Keep the idempotency key cleared so a later retry against a
+        // genuinely Pro facility is not collapsed into this attempt.
+        idempotencyKeyRef.current = null;
+        analytics.formSubmit("lead_intake", false);
+        onDirectContactRequired?.({
+          facilityId: typeof data?.facility_id === "string" ? data.facility_id : facilityId,
+          facilityName: typeof data?.facility_name === "string" ? data.facility_name : facilityName,
+        });
+        return;
+      }
+
       // Clear saved form data and idempotency key
       localStorage.removeItem(STORAGE_KEY);
       idempotencyKeyRef.current = null;
 
       analytics.leadFormComplete(source);
       analytics.formSubmit("lead_intake", true);
-
-      // Free-tier facilities route through the concierge — the response
-      // carries routing_mode and a confirmation_path the user should
-      // land on instead of the standard "submitted" success view.
-      if (
-        data?.routing_mode === "free_tier_redirect" &&
-        typeof data?.confirmation_path === "string"
-      ) {
-        window.location.assign(data.confirmation_path);
-        return;
-      }
 
       setIsSubmitted(true);
 

@@ -383,7 +383,16 @@ export function describeEmailInput(field: string, value: unknown): EmailInputDia
 }
 
 // ── submit-qualified-lead entrypoint body ─────────────────────────
-const VERSION = "2.1.0";
+// Directory cutover stage 2 (inquiry-routing cutover): this function now
+// serves EXACTLY ONE product — an on-platform inquiry to an ACTIVE PRO
+// facility, delivered to that one facility. Every other facility state
+// (Free, unclaimed, Featured-only, suspended-subscription, or an
+// entitlement check we could not confirm) returns DIRECT_CONTACT_REQUIRED
+// and RehabLookup collects nothing. The retired free-tier concierge
+// redirect (concierge_inquiries + advisor assignment + coordinator email +
+// notify-free-tier-inquiry-redirect) is gone from this path — see
+// docs/directory-cutover-stage-02-inquiry-routing.md.
+const VERSION = "3.0.0";
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
@@ -409,6 +418,38 @@ function errorResponse(
       ...(field ? { details: { field } } : {}),
     }),
     { status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+  );
+}
+
+// ============ DIRECT-CONTACT ENVELOPE (stage 2) ============
+// Returned whenever the selected facility is NOT a confirmed active Pro
+// listing. It is deliberately NOT a successful submission:
+//   • no lead id, no inquiry id, no confirmation_path
+//   • no `routing_mode` — RehabLookup is not routing anything
+//   • no seeker PII echoed back
+// It carries only the public facility identity the client already had, so
+// the UI can switch to the facility's own Call / Website / Directions
+// actions. `reason` is a non-sensitive diagnostic:
+//   "facility_not_pro"        — has_active_pro() resolved false
+//   "entitlement_unconfirmed" — the RPC errored; we fail SAFE to direct contact
+const DIRECT_CONTACT_ACTION = "DIRECT_CONTACT_REQUIRED";
+
+function directContactResponse(
+  facilityId: string,
+  facilityName: string | null,
+  reason: "facility_not_pro" | "entitlement_unconfirmed",
+) {
+  return new Response(
+    JSON.stringify({
+      ok: true,
+      action: DIRECT_CONTACT_ACTION,
+      direct_contact_required: true,
+      facility_id: facilityId,
+      facility_name: facilityName,
+      reason,
+      _version: VERSION,
+    }),
+    { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
   );
 }
 
@@ -638,56 +679,10 @@ function escapeHtml(s: string): string {
     .replace(/'/g, "&#39;");
 }
 
-// ---------- free-tier seeker confirmation email ----------
-// Sent when a seeker submits an inquiry on a Free-tier facility. The
-// in-app redirect page (`/inquiry/confirmation/:id`) is the primary
-// confirmation; this email is the durable backup so the seeker has a
-// receipt even if they close the tab before the coordinator calls.
-function getFreeTierSeekerConfirmationEmail(args: {
-  seekerName: string;
-  originatingFacilityName: string | null;
-  inquiryId: string;
-  levelOfCare: string | null;
-  urgency: string | null;
-}): string {
-  const { seekerName, originatingFacilityName, inquiryId, levelOfCare, urgency } = args;
-  const facilityLine = originatingFacilityName
-    ? `<strong>${originatingFacilityName}</strong>`
-    : "the facility you contacted";
-  const detailsRows: string[] = [];
-  if (levelOfCare) detailsRows.push(`<tr><td style="padding:4px 0;color:#64748b;">Level of care</td><td style="padding:4px 0;color:#0f172a;font-weight:600;">${levelOfCare}</td></tr>`);
-  if (urgency) detailsRows.push(`<tr><td style="padding:4px 0;color:#64748b;">Timeline</td><td style="padding:4px 0;color:#0f172a;font-weight:600;">${urgency}</td></tr>`);
-  return `<!DOCTYPE html>
-<html><body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f8fafc;margin:0;padding:32px 16px;">
-  <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;padding:32px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-    <h1 style="font-size:24px;color:#0f172a;margin:0 0 16px 0;">You're connected.</h1>
-    <p style="font-size:15px;color:#334155;line-height:1.6;margin:0 0 16px 0;">
-      Hi ${seekerName}, we received your inquiry. A RehabLookup care coordinator
-      will reach out within <strong>1 business hour</strong> to introduce you to
-      ${facilityLine} along with <strong>1&ndash;2 additional matched facilities</strong>
-      so you can compare options.
-    </p>
-    ${detailsRows.length > 0 ? `
-    <div style="background:#f1f5f9;border-radius:8px;padding:16px;margin:24px 0;">
-      <p style="font-size:13px;color:#475569;margin:0 0 8px 0;text-transform:uppercase;letter-spacing:0.05em;font-weight:600;">Your inquiry</p>
-      <table style="width:100%;font-size:14px;border-collapse:collapse;">${detailsRows.join("")}</table>
-    </div>` : ""}
-    <p style="font-size:14px;color:#334155;line-height:1.6;margin:0 0 12px 0;">
-      <strong>What to expect:</strong> a coordinator will call or email you (whichever
-      you indicated), share contact info for the matched facilities, and let you
-      decide who to reach first. Calls go directly to the facility &mdash; we never
-      route or intermediate.
-    </p>
-    <p style="font-size:14px;color:#334155;line-height:1.6;margin:0 0 12px 0;">
-      In the meantime, you can reach us at <a href="tel:+12146396420" style="color:#1B365D;font-weight:600;">(214) 639-6420</a>.
-    </p>
-    <p style="font-size:12px;color:#94a3b8;margin:24px 0 0 0;border-top:1px solid #e2e8f0;padding-top:16px;">
-      Reference: ${inquiryId.slice(0, 8)} &middot; This is a transactional email about your
-      RehabLookup inquiry.
-    </p>
-  </div>
-</body></html>`;
-}
+// (The free-tier "a care coordinator will call you within 1 business hour"
+// seeker confirmation email was removed in directory cutover stage 2. No
+// non-Pro inquiry reaches this function's PII processing any more, so there
+// is no seeker to send it to and no coordinator to promise.)
 
 // ---------- seeker (client) confirmation email ----------
 function getSeekerConfirmationEmail(
@@ -1002,10 +997,89 @@ Deno.serve(async (req) => {
     } catch {
       return errorResponse(400, "invalid_body", "Invalid request body");
     }
-    
+
+    // ═════════════════════════════════════════════════════════════════
+    // STAGE-2 ENTITLEMENT GATE — runs BEFORE any PII-dependent work.
+    // ═════════════════════════════════════════════════════════════════
+    // Everything below this gate (sanitising the seeker's name/email/phone,
+    // the blocked-identifier lookup, the email-verification lookup, the
+    // idempotency probe, the duplicate query, the PII/IP rate-limit
+    // queries, the lead insert) only ever runs for a CONFIRMED active Pro
+    // facility. A non-Pro request therefore never causes RehabLookup to
+    // read, write, or log seeker PII — the caller is told to contact the
+    // facility directly instead. Only the facility identifier is parsed
+    // here; do not move PII handling above this point.
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const requestedFacilityId =
+      typeof rawData?.facilityId === "string" ? rawData.facilityId.trim() : "";
+
+    if (!requestedFacilityId) {
+      return errorResponse(400, "facility_required", "facility_id is required for all inquiries", "facilityId");
+    }
+    if (!uuidRegex.test(requestedFacilityId)) {
+      return errorResponse(400, "invalid_facility_id", "Invalid facility ID", "facilityId");
+    }
+
+    log(requestId, "INFO", "Inquiry received", {
+      facilityId: requestedFacilityId,
+      hasIdempotencyKey: !!rawData?.idempotencyKey,
+    });
+
+    // ===== FACILITY VERIFICATION (identity + eligibility) =====
+    const { data: facility, error: facilityError } = await supabase
+      .from("facilities")
+      .select("id, name, email, user_id, status, suspended, reply_email, reply_email_verified")
+      .eq("id", requestedFacilityId)
+      .maybeSingle();
+
+    if (facilityError || !facility) {
+      log(requestId, "ERROR", "Facility not found", { facilityId: requestedFacilityId });
+      return errorResponse(404, "facility_not_found", "Facility not found", "facilityId");
+    }
+
+    if (facility.status !== "approved" || facility.suspended) {
+      log(requestId, "ERROR", "Facility not accepting inquiries", { facilityId: requestedFacilityId, status: facility.status });
+      return errorResponse(400, "facility_not_accepting", "This facility is not currently accepting inquiries", "facilityId");
+    }
+
+    // ===== PRO ENTITLEMENT =====
+    // has_active_pro() is the single canonical, grace-aware entitlement rule
+    // (tier='pro' AND (active within current_period_end OR past_due grace)).
+    // It is NOT re-implemented here, and Pro is NEVER inferred from the
+    // client's `facilityPlan`, from Featured status, from a badge, from
+    // ownership, from claim state, or from a Stripe customer id.
+    //
+    // Fail-safe: anything other than a confirmed `true` — false, null, or an
+    // RPC error — returns DIRECT_CONTACT_REQUIRED. We never hand seeker PII
+    // to a facility whose entitlement we could not confirm, and an
+    // entitlement failure is NEVER routed into concierge.
+    const { data: isProTier, error: tierErr } = await supabase.rpc("has_active_pro", {
+      p_facility_id: requestedFacilityId,
+    });
+
+    if (tierErr) {
+      log(requestId, "WARN", "has_active_pro check failed — direct contact required (fail-safe)", {
+        facilityId: requestedFacilityId,
+        err: tierErr.message,
+      });
+      return directContactResponse(requestedFacilityId, facility.name ?? null, "entitlement_unconfirmed");
+    }
+
+    if (isProTier !== true) {
+      log(requestId, "INFO", "Non-Pro facility — direct contact required", {
+        facilityId: requestedFacilityId,
+      });
+      return directContactResponse(requestedFacilityId, facility.name ?? null, "facility_not_pro");
+    }
+
+    // ═════════════════════════════════════════════════════════════════
+    // ACTIVE PRO ONLY BELOW THIS LINE — PII processing begins here.
+    // ═════════════════════════════════════════════════════════════════
+
     // ===== INPUT SANITIZATION =====
     const data = {
       ...rawData,
+      facilityId: requestedFacilityId,
       name: sanitizeName(rawData.name || ""),
       email: sanitizeEmail(rawData.email || ""),
       phone: sanitizePhone(rawData.phone || ""),
@@ -1032,21 +1106,8 @@ Deno.serve(async (req) => {
       relationshipToPatient: sanitizeGenericField(rawData.relationshipToPatient, 30),
     };
     
-    log(requestId, "INFO", "Inquiry data received", { 
-      facilityId: data.facilityId,
-      hasIdempotencyKey: !!data.idempotencyKey,
-    });
-
     // ===== VALIDATION: Required fields =====
-    if (!data.facilityId) {
-      return errorResponse(400, "facility_required", "facility_id is required for all inquiries", "facilityId");
-    }
-
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(data.facilityId)) {
-      return errorResponse(400, "invalid_facility_id", "Invalid facility ID", "facilityId");
-    }
-
+    // (facility identity was validated by the entitlement gate above)
     if (!data.name || data.name.length < 2) {
       return errorResponse(400, "name_required", "Name is required (minimum 2 characters)", "name");
     }
@@ -1131,23 +1192,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // ===== FACILITY VERIFICATION =====
-    const { data: facility, error: facilityError } = await supabase
-      .from("facilities")
-      .select("id, name, email, user_id, status, suspended, reply_email, reply_email_verified")
-      .eq("id", data.facilityId)
-      .maybeSingle();
-
-    if (facilityError || !facility) {
-      log(requestId, "ERROR", "Facility not found", { facilityId: data.facilityId });
-      return errorResponse(404, "facility_not_found", "Facility not found", "facilityId");
-    }
-
-    if (facility.status !== "approved" || facility.suspended) {
-      log(requestId, "ERROR", "Facility not accepting inquiries", { facilityId: data.facilityId, status: facility.status });
-      return errorResponse(400, "facility_not_accepting", "This facility is not currently accepting inquiries", "facilityId");
-    }
-
     // ===== DUPLICATE CHECK =====
     const duplicateCheck = await checkForDuplicate(supabase, data.email, data.phone, data.facilityId, requestId);
     if (duplicateCheck.isDuplicate) {
@@ -1202,267 +1246,22 @@ Deno.serve(async (req) => {
       (data as Record<string, unknown>).ipHash = ipHashHex;
     }
 
-    // ===== FREE-TIER ROUTING CHECK =====
-    // Look up the facility's subscription tier server-side (never trust
-    // the client). Free-tier listings route through the concierge:
-    //   • Create a concierge_inquiries row with routing_mode =
-    //     'free_tier_redirect' and originating_facility_id pinned.
-    //   • Notify the Free facility with the upsell email.
-    //   • Return early with the redirect response shape so the client
-    //     can route to the seeker-confirmation page.
-    // Pro flow continues below unchanged.
-    // Grace-aware Pro gate — MUST match the canonical has_active_pro() that the
-    // provider UI, dashboard, and admin all honor: tier='pro' AND (active within
-    // current_period_end OR past_due grace). This previously excluded past_due,
-    // so a dunning (past_due) provider kept their Pro tools yet their NEW leads
-    // were silently routed to concierge — contradicting every other surface.
-    // Calling the RPC keeps this predicate from ever drifting from the DB rule.
-    // Fail-safe: on RPC error treat as non-Pro (concierge route) so we never
-    // deliver a raw lead to a facility we can't confirm is entitled.
-    const { data: isProTier, error: tierErr } = await supabase.rpc("has_active_pro", {
-      p_facility_id: data.facilityId,
-    });
-    if (tierErr) {
-      log(requestId, "WARN", "has_active_pro check failed — routing to concierge (fail-safe)", {
-        facilityId: data.facilityId,
-        err: tierErr.message,
-      });
-    }
-
-    if (!isProTier) {
-      log(requestId, "INFO", "Free-tier inquiry — routing through concierge", {
-        facilityId: data.facilityId,
-      });
-
-      // Pull the facility name + admissions email for the upsell
-      // notification. claim_email is the canonical inbox; fall back to
-      // public email if claim_email isn't set yet.
-      const { data: facilityForNotify } = await supabase
-        .from("facilities")
-        .select("id, name, claim_email, email, slug, user_id")
-        .eq("id", data.facilityId)
-        .single();
-
-      // Build the intake_data payload — same shape as the standard
-      // concierge intake plus the routing metadata.
-      const conciergeIntake = {
-        name: data.name,
-        email: data.email,
-        phone: data.phone,
-        preferred_contact: validatedPreferredContact,
-        message: data.message,
-        urgency: validatedUrgency,
-        level_of_care: data.levelOfCare ?? null,
-        insurance_type: data.insuranceType ?? null,
-        insurance_provider: data.insuranceProvider ?? null,
-        location_zip: data.locationZip ?? null,
-        location_city_state: data.locationCityState ?? null,
-        primary_substance: Array.isArray(data.primarySubstance) ? data.primarySubstance : [],
-        dual_diagnosis: data.dualDiagnosis ?? null,
-        readiness_level: data.readinessLevel ?? null,
-        originating_facility_id: data.facilityId,
-        originating_facility_name: facilityForNotify?.name ?? null,
-        routing_mode: "free_tier_redirect",
-        submitted_at: now.toISOString(),
-      };
-
-      const { data: inquiryRow, error: inquiryErr } = await supabase
-        .from("concierge_inquiries")
-        .insert({
-          user_id: null,
-          user_name: data.name,
-          user_email: data.email,
-          user_phone: data.phone,
-          status: "pending_intake",
-          intake_data: conciergeIntake,
-          routing_mode: "free_tier_redirect",
-          originating_facility_id: data.facilityId,
-        })
-        .select("id, created_at")
-        .single();
-
-      if (inquiryErr || !inquiryRow) {
-        log(requestId, "ERROR", "Concierge inquiry insert failed", { error: inquiryErr });
-        return errorResponse(500, "concierge_insert_failed", "Failed to route inquiry.");
-      }
-
-      // Surface the new pending intake to ops via admin_notifications so
-      // the case doesn't sit invisibly until a coordinator manually opens
-      // the concierge dashboard. Mirrors the pattern submit-concierge-
-      // intake uses for paid intakes — same audit/timeline guarantees
-      // for free-tier-redirected inquiries.
-      try {
-        await supabase.from("admin_notifications").insert({
-          type: "concierge_intake",
-          title: "Free-tier inquiry — concierge follow-up needed",
-          message: `Inquiry from ${data.name} redirected from ${facilityForNotify?.name ?? "Free facility"} — ${data.levelOfCare ?? "level of care TBD"} | ${data.locationCityState ?? data.locationZip ?? "no location"} | ${validatedUrgency ?? "no urgency"}`,
-          metadata: {
-            inquiry_id: inquiryRow.id,
-            routing_mode: "free_tier_redirect",
-            originating_facility_id: data.facilityId,
-            originating_facility_name: facilityForNotify?.name ?? null,
-            seeker_name: data.name,
-            level_of_care: data.levelOfCare ?? null,
-            urgency: validatedUrgency ?? null,
-            location: data.locationCityState ?? data.locationZip ?? null,
-            request_id: requestId,
-          } as Record<string, unknown>,
-        });
-      } catch (adminNotifErr) {
-        log(requestId, "WARN", "Failed to create admin notification (non-blocking)", {
-          error: String(adminNotifErr),
-        });
-      }
-
-      // Log a case_created timeline event so the AdminConcierge "Timeline"
-      // tab shows the inquiry's full history from the moment it was
-      // routed in.
-      try {
-        await supabase.from("concierge_case_events").insert({
-          inquiry_id: inquiryRow.id,
-          event_type: "case_created",
-          event_data: {
-            source: "free_tier_redirect",
-            originating_facility_id: data.facilityId,
-            originating_facility_name: facilityForNotify?.name ?? null,
-          },
-          actor_type: "system",
-          actor_id: null,
-        });
-      } catch (eventErr) {
-        log(requestId, "WARN", "Failed to log case_created event (non-blocking)", {
-          error: String(eventErr),
-        });
-      }
-
-      // Round-robin auto-assign to the advisor with the fewest active
-      // cases. Mirrors submit-concierge-intake. If no advisors exist the
-      // case stays unassigned and surfaces as 'pending_intake' in the
-      // admin dashboard until an admin assigns manually.
-      try {
-        const { data: advisors } = await supabase
-          .from("admin_user_profiles")
-          .select("user_id")
-          .eq("admin_role", "advisor")
-          .eq("status", "active");
-        if (advisors && advisors.length > 0) {
-          const { data: caseLoads } = await supabase
-            .from("concierge_inquiries")
-            .select("assigned_advisor_id")
-            .not("status", "in", '("closed","completed")')
-            .not("assigned_advisor_id", "is", null);
-          const loadMap = new Map<string, number>();
-          for (const a of advisors) loadMap.set(a.user_id, 0);
-          for (const c of (caseLoads || [])) {
-            if (c.assigned_advisor_id && loadMap.has(c.assigned_advisor_id)) {
-              loadMap.set(c.assigned_advisor_id, (loadMap.get(c.assigned_advisor_id) || 0) + 1);
-            }
-          }
-          const sorted = [...loadMap.entries()].sort((a, b) => a[1] - b[1]);
-          const pickedAdvisor = sorted[0]?.[0];
-          if (pickedAdvisor) {
-            await supabase
-              .from("concierge_inquiries")
-              .update({ assigned_advisor_id: pickedAdvisor })
-              .eq("id", inquiryRow.id)
-              .is("assigned_advisor_id", null);
-            log(requestId, "INFO", "Auto-assigned advisor to free-tier inquiry", {
-              advisorId: pickedAdvisor,
-              caseLoad: sorted[0]?.[1] ?? 0,
-            });
-          }
-        }
-      } catch (advisorErr) {
-        log(requestId, "WARN", "Failed to auto-assign advisor (non-blocking)", {
-          error: String(advisorErr),
-        });
-      }
-
-      // Send the seeker a confirmation email — the in-app redirect page
-      // works as long as the tab stays open, but the email is the
-      // durable receipt the seeker can refer back to.
-      try {
-        await sendEmailWithRetry(
-          supabase,
-          resend,
-          {
-            from: "RehabLookup Concierge <concierge@rehablookup.com>",
-            to: data.email,
-            subject: "We received your inquiry — a coordinator will be in touch within 1 business hour",
-            html: getFreeTierSeekerConfirmationEmail({
-              seekerName: data.name,
-              originatingFacilityName: facilityForNotify?.name ?? null,
-              inquiryId: inquiryRow.id,
-              levelOfCare: data.levelOfCare ?? null,
-              urgency: validatedUrgency ?? null,
-            }),
-          },
-          {
-            emailType: "free_tier_seeker_confirmation",
-            idempotencyKey: `free-tier-seeker-${inquiryRow.id}`,
-            maxRetries: 2,
-          },
-        );
-      } catch (e) {
-        log(requestId, "WARN", "Failed to send seeker confirmation email (non-blocking)", {
-          error: String(e),
-        });
-      }
-
-      // Notify the Free facility of the redirect. Awaited (was fire-and-forget
-      // `void`) so the edge runtime can't tear down after the response and drop
-      // the notification — it was previously possible to lose it silently. The
-      // IIFE swallows its own errors (logs + admin_notifications on failure), so
-      // awaiting never fails the seeker response; the concierge_inquiries row is
-      // already the committed source of truth regardless.
-      await (async () => {
-        try {
-          const { error } = await supabase.functions.invoke(
-            "notify-free-tier-inquiry-redirect",
-            {
-              body: {
-                facility_id: data.facilityId,
-                inquiry_id: inquiryRow.id,
-                level_of_care: data.levelOfCare ?? null,
-                insurance: data.insuranceProvider ?? data.insuranceType ?? null,
-                urgency: validatedUrgency,
-                location: data.locationCityState ?? data.locationZip ?? null,
-              },
-            },
-          );
-          if (error) {
-            log(requestId, "WARN", "Notify edge function returned error", { err: String(error) });
-            await supabase.from("admin_notifications").insert({
-              type: "free_tier_redirect_notify_failure",
-              title: "Free-tier redirect notification failed",
-              message: `Could not notify Free facility ${data.facilityId} of redirected inquiry ${inquiryRow.id}.`,
-              metadata: {
-                facility_id: data.facilityId,
-                inquiry_id: inquiryRow.id,
-                request_id: requestId,
-                last_error: String(error),
-              } as Record<string, unknown>,
-            });
-          }
-        } catch (err) {
-          log(requestId, "WARN", "Notify edge function threw (non-blocking)", { err: String(err) });
-        }
-      })();
-
-      return new Response(
-        JSON.stringify({
-          ok: true,
-          routing_mode: "free_tier_redirect",
-          inquiry_id: inquiryRow.id,
-          confirmation_path: `/inquiry/confirmation/${inquiryRow.id}`,
-          originating_facility_name: facilityForNotify?.name ?? null,
-        }),
-        {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
-      );
-    }
+    // ===== RETIRED: FREE-TIER CONCIERGE REDIRECT =====
+    // Until directory cutover stage 2 a non-Pro facility reached this
+    // point and RehabLookup took the inquiry over: it inserted a
+    // `concierge_inquiries` row with routing_mode='free_tier_redirect',
+    // raised a Concierge admin_notifications event, logged a
+    // `concierge_case_events` case_created event, round-robin assigned an
+    // `advisor`, emailed the seeker a "care coordinator will call within 1
+    // business hour" confirmation, invoked notify-free-tier-inquiry-redirect,
+    // and returned /inquiry/confirmation/:id.
+    //
+    // RehabLookup is a directory, not a placement service. That entire
+    // branch is gone: non-Pro facilities are now short-circuited by the
+    // entitlement gate at the top of this handler, which returns
+    // DIRECT_CONTACT_REQUIRED before any seeker PII is touched. Nothing
+    // below this comment may reintroduce a concierge/advisor/matching
+    // write — see docs/directory-cutover-stage-02-inquiry-routing.md.
 
     // ===== LEAD INSERTION (Pro-tier flow) =====
     // The exclusive_until / extended_until / redistribution_status fields

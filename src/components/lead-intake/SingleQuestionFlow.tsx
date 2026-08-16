@@ -10,7 +10,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { PhoneInput } from "@/components/ui/phone-input";
-import { FreeTierRoutingDisclosure } from "@/components/lead-intake/FreeTierRoutingDisclosure";
 import { EmailInput } from "@/components/ui/email-input";
 import { isValidPhoneNumber, validatePhoneNumber } from "@/lib/phoneUtils";
 import { isValidEmail, getEmailValidationError } from "@/lib/emailUtils";
@@ -779,11 +778,13 @@ export function SingleQuestionFlow({
               )}
             </div>
 
-            {/* Free-tier routing disclosure — renders nothing for Pro listings.
-                Server re-checks tier on submit; this is purely cosmetic
-                so the seeker isn't surprised when they land on the
-                concierge-confirmation page after submitting. */}
-            <FreeTierRoutingDisclosure facilityName={facilityName} facilityId={facilityId} />
+            {/* The Free-tier routing disclosure ("you'll connect with a
+                RehabLookup care coordinator who will introduce you to this
+                facility along with 1–2 additional matched options") was
+                removed in directory cutover stage 2. This form is now only
+                ever rendered for an ACTIVE PRO facility, and the inquiry
+                goes to that one facility — there is no coordinator, no
+                matching, and no additional options to disclose. */}
 
             <Button
               onClick={handleVerifyCode}

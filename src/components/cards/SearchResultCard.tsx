@@ -465,7 +465,7 @@ export const SearchResultCard = memo(forwardRef<HTMLElement, SearchResultCardPro
                 });
                 setInquiryOpen(true);
               }}
-              aria-label={`Open Message Center for ${center.name}`}
+              aria-label={`Contact ${center.name}`}
               className={cn(
                 "flex-1 h-10 text-sm font-semibold gap-2 rounded-lg group/btn",
                 showFeaturedBadge
@@ -473,7 +473,7 @@ export const SearchResultCard = memo(forwardRef<HTMLElement, SearchResultCardPro
                   : "shadow-md hover:shadow-lg"
               )}
             >
-              <span>Message Center</span>
+              <span>Contact Facility</span>
               <ArrowRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-0.5" aria-hidden="true" />
             </Button>
             <Link 
@@ -520,9 +520,14 @@ export const SearchResultCard = memo(forwardRef<HTMLElement, SearchResultCardPro
           </Link>
         </div>
       </div>
-      {/* Inquiry modal — opens in-place from the Message Center
-          button so the seeker stays on /search-results instead of
-          being redirected to the facility detail page. */}
+      {/* Contact modal — opens in-place from the card's contact button so
+          the seeker stays on /search-results instead of being redirected to
+          the facility detail page. The modal resolves the facility's
+          canonical Pro entitlement itself: ACTIVE PRO listings get the
+          on-platform Request Info form, every other listing gets the
+          facility's own Call / Website / Directions actions with no PII
+          intake. No plan hint is passed from this card — a search-result
+          row has no authoritative entitlement state. */}
       <RequestInfoModal
         open={inquiryOpen}
         onOpenChange={setInquiryOpen}
