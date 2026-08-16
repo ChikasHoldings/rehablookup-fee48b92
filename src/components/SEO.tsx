@@ -173,7 +173,7 @@ export function SEO({
       height: 512,
     },
     image: `${SITE_URL}/og-image.jpg`,
-    description: "RehabLookup helps individuals and families find verified drug and alcohol treatment centers across the United States.",
+    description: "RehabLookup helps individuals and families search and compare drug and alcohol treatment center listings across the United States.",
     foundingDate: "2024",
     foundingLocation: {
       "@type": "Place",
@@ -275,7 +275,7 @@ export function SEO({
     "@id": `${SITE_URL}/#website`,
     name: SITE_NAME,
     url: SITE_URL,
-    description: "Find verified addiction treatment centers near you",
+    description: "Find addiction treatment centers near you",
     publisher: { "@id": `${SITE_URL}/#organization` },
     potentialAction: [
       {
@@ -899,7 +899,7 @@ export function generateNearMeSchema(params: {
     "@type": "Service",
     name: `${params.serviceType} Near Me - ${locationString}`,
     serviceType: params.serviceType,
-    description: `Find ${params.serviceType.toLowerCase()} near you in ${locationString}. Compare ${params.facilityCount}+ verified treatment centers.`,
+    description: `Find ${params.serviceType.toLowerCase()} near you in ${locationString}. Compare ${params.facilityCount}+ treatment center listings.`,
     provider: {
       "@type": "Organization",
       name: "RehabLookup",
@@ -964,7 +964,7 @@ export function generateTreatmentNearMeSchema(params: {
       "@context": "https://schema.org",
       "@type": "MedicalWebPage",
       name: `${params.treatmentType} ${locationSuffix}`,
-      description: `Find ${params.treatmentType.toLowerCase()} ${locationSuffix.toLowerCase()}. Compare ${params.facilityCount}+ verified treatment centers offering ${params.treatmentType.toLowerCase()}.`,
+      description: `Find ${params.treatmentType.toLowerCase()} ${locationSuffix.toLowerCase()}. Compare ${params.facilityCount}+ treatment center listings offering ${params.treatmentType.toLowerCase()}.`,
       specialty: "Addiction Medicine",
       about: {
         "@type": "MedicalTherapy",
@@ -1074,7 +1074,7 @@ export function generateSearchResultsSchema(params: {
   const nextAbs = toAbs(params.nextUrl);
 
   const pageName = params.pageName ?? `Addiction Treatment Centers${locationText}${queryText}${pageSuffix}`;
-  const description = `Browse ${params.resultCount} verified addiction treatment centers${locationText}${queryText}${
+  const description = `Browse ${params.resultCount} addiction treatment center listings${locationText}${queryText}${
     params.currentPage && params.currentPage > 1 && params.totalPages
       ? ` (page ${params.currentPage} of ${params.totalPages})`
       : ""

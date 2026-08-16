@@ -193,7 +193,14 @@ describe("root meta copy", () => {
     expect(desc.length).toBeLessThanOrEqual(160);
     for (const term of [
       "Search",
-      "verified addiction treatment centers",
+      // POST-ROLLOUT HOTFIX #1: this used to pin "verified addiction treatment
+      // centers". Production carries 3,794 listings and only 5 raw
+      // `facilities.verified=true` rows, with `public_facilities.verified`
+      // itself Pro-gated (active Pro = 0) — so the whole-inventory phrasing was
+      // an unsupported claim, and this test was holding it in place. The search
+      // intent it was really protecting (what the directory is, and the terms
+      // seekers type) is preserved by the remaining assertions.
+      "addiction treatment center listings",
       "Compare",
       "drug rehab",
       "alcohol treatment",
@@ -203,6 +210,16 @@ describe("root meta copy", () => {
     ]) {
       expect(desc).toContain(term);
     }
+  });
+
+  it("makes no directory-wide verification claim in the root shell", () => {
+    // Facility-specific verified state stays legal — see
+    // scripts/check-public-directory-truth.mjs, which guards the same rule
+    // across index.html, dist/index.html and the homepage React surface.
+    expect(ROOT_SHELL).not.toMatch(/\d[\d,]{2,}\s*\+?\s+verified\b/i);
+    expect(ROOT_SHELL).not.toMatch(/verified\s+(?:\w+[\s-]+){0,4}(?:facilities|centers|centres)\b/i);
+    expect(ROOT_SHELL).not.toMatch(/go through a verification process/i);
+    expect(ROOT_SHELL).not.toMatch(/before they appear in the directory/i);
   });
 
   it("does not weaken canonical / OG / Twitter / indexing setup", () => {

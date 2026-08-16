@@ -168,7 +168,7 @@ const Index = () => {
             "@type": "WebPage",
             "@id": "https://rehablookup.com/#webpage",
             name: "Find Addiction Treatment Centers Near You",
-            description: "Search 3,800+ verified drug and alcohol rehab centers. Compare treatment options and find the right recovery program.",
+            description: "Search 3,800+ drug and alcohol rehab center listings. Compare treatment options and find the right recovery program.",
             isPartOf: { "@id": "https://rehablookup.com/#website" },
             primaryImageOfPage: {
               "@type": "ImageObject",
@@ -203,7 +203,7 @@ const Index = () => {
               "@type": "Country",
               name: "United States",
             },
-            description: "Free directory for searching and comparing verified addiction treatment centers",
+            description: "Free directory for searching and comparing addiction treatment center listings",
             offers: {
               "@type": "Offer",
               price: "0",
@@ -248,7 +248,7 @@ const Index = () => {
 
             {/* Subheadline */}
             <p className="speakable-summary mb-4 md:mb-5 text-[15px] md:text-base text-white/90 animate-fade-in max-w-xl mx-auto leading-relaxed" style={{ animationDelay: "50ms" }}>
-              Compare verified treatment centers and check your insurance coverage.
+              Compare treatment centers and check your insurance coverage.
             </p>
 
             {/* Search Form - Directory Style */}
@@ -275,6 +275,15 @@ const Index = () => {
           signals (geographic reach, HIPAA compliance) into this dark bar
           and dropped the duplicate. Same vertical padding as before —
           height is unchanged, only the content is denser. */}
+      {/* DIRECTORY-TRUTH (post-rollout hotfix #1): the first badge below used
+          to read "<count>+ Verified Facilities", where <count> is the whole
+          directory from get_directory_stats() — 3,794 on production. Only 5
+          raw `facilities` rows carry verified=true, and `public_facilities.
+          verified` is Pro-gated (active Pro = 0), so labelling the full
+          inventory "Verified" was the same unsupported claim TrustStrip
+          already retired. The count is real; the label now describes what it
+          actually counts. Per-facility verification stays a per-facility
+          badge. Guarded by scripts/check-public-directory-truth.mjs. */}
       <section className="relative bg-primary border-y border-primary-foreground/10">
         <div className="container py-2 md:py-2.5 px-4 md:px-6 lg:px-8">
           <div className="grid grid-cols-2 gap-x-4 gap-y-2.5 md:flex md:items-center md:justify-center md:gap-x-8 md:gap-y-0 lg:gap-x-14">
@@ -294,7 +303,7 @@ const Index = () => {
                     <span className="inline-block h-[1em] w-[3em] align-middle rounded bg-white/20" aria-hidden />
                   )}
                 </strong>{" "}
-                Verified Facilities
+                Treatment Centers Listed
               </span>
             </div>
             <div ref={statesCount.ref as React.RefObject<HTMLDivElement>} className="flex items-center gap-2">

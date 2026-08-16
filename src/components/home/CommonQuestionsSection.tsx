@@ -47,7 +47,7 @@ const QUESTIONS: QuestionCard[] = [
     iconColor: "text-emerald-700",
     question: "How fast can someone get in?",
     answer:
-      "Many verified facilities offer same-day or next-day admission for crisis cases. Listings publish admissions phone numbers — a short call to the facility confirms insurance and bed availability.",
+      "Many listed facilities offer same-day or next-day admission for crisis cases. Listings publish admissions phone numbers — a short call to the facility confirms insurance and bed availability.",
     cta: "Same-day admission",
     href: "/resources/how-to-get-into-rehab-today",
   },

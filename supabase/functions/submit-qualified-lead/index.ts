@@ -1463,11 +1463,22 @@ Deno.serve(async (req) => {
     // (re-used as the in-app toggle until a dedicated `inapp_lead_alerts`
     // column exists). Default-on for any pref that is null/undefined so an
     // unmigrated row keeps existing behaviour.
-    const { data: notifPrefs } = await supabase
-      .from("notification_preferences")
-      .select("notify_new_leads, email_lead_alerts, sms_lead_alerts, browser_notifications")
-      .eq("user_id", facility.user_id)
-      .maybeSingle();
+    //
+    // CLAIM-GATED READ (post-rollout hotfix #1). An unclaimed listing has no
+    // provider account at all — `facility.user_id` is NULL — so there are no
+    // preferences to read. This used to run unconditionally as
+    // `.eq("user_id", null)`: a guaranteed-empty query issued on behalf of a
+    // provider that does not exist. It is skipped now, and every channel
+    // below stays closed through `masterEnabled`.
+    const notifPrefs = facilityIsClaimed
+      ? (
+          await supabase
+            .from("notification_preferences")
+            .select("notify_new_leads, email_lead_alerts, sms_lead_alerts, browser_notifications")
+            .eq("user_id", facility.user_id)
+            .maybeSingle()
+        ).data
+      : null;
 
     // An unclaimed listing has no provider account, so every channel is off:
     // `notify_new_leads` defaults to true for a missing preferences row, which
@@ -1480,12 +1491,18 @@ Deno.serve(async (req) => {
 
     log(requestId, "INFO", "Channel fan-out plan", { masterEnabled, emailEnabled, smsEnabled, inAppEnabled });
 
-    // Send facility notification email — idempotency keyed to lead ID
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("email")
-      .eq("user_id", facility.user_id)
-      .maybeSingle();
+    // Send facility notification email — idempotency keyed to lead ID.
+    // Claim-gated for the same reason as the preference read above: there is
+    // no provider profile to resolve for an unclaimed listing.
+    const profile = facilityIsClaimed
+      ? (
+          await supabase
+            .from("profiles")
+            .select("email")
+            .eq("user_id", facility.user_id)
+            .maybeSingle()
+        ).data
+      : null;
 
     // Recipient resolution, most-trusted first. The `facility.email` fallback
     // is permitted ONLY for a claimed listing, where a real provider account
@@ -1498,9 +1515,24 @@ Deno.serve(async (req) => {
           : (profile?.email || facility.email))
       : null;
 
+    // ── Provider-email outcome, as reported by the sender itself ──────────
+    //
+    // `sendEmailWithRetry` is the ONLY definition of success this function
+    // uses. Its contract (see the inlined resilient-email-sender above):
+    //   success:true  → Resend accepted the message, OR the idempotency key
+    //                   already had a "sent" tracking event (deduplicated —
+    //                   the mail genuinely went out on an earlier attempt).
+    //   success:false → recipient suppressed, permanent Resend rejection, or
+    //                   the retry budget was exhausted.
+    // A thrown error is folded into the same shape below. `null` means the
+    // send was never attempted: channel disabled, no recipient resolved, or
+    // the listing is unclaimed. The instant-email audit row keys off exactly
+    // this value — it is never re-derived from "we reached the send call".
+    let providerEmailResult: SendResult | null = null;
+
     if (emailEnabled && notificationEmail) {
       try {
-        await sendEmailWithRetry(supabase, resend, {
+        providerEmailResult = await sendEmailWithRetry(supabase, resend, {
           from: "RehabLookup <no-reply@rehablookup.com>",
           to: [notificationEmail],
           subject: `New Inquiry from ${firstName} - ${facility.name}`,
@@ -1518,12 +1550,31 @@ Deno.serve(async (req) => {
           emailType: "facility_new_lead",
           idempotencyKey: `facility-lead-${lead.id}`,
         });
-        log(requestId, "INFO", "Facility email sent");
+        if (providerEmailResult.success) {
+          log(requestId, "INFO", "Facility email sent", {
+            deduplicated: providerEmailResult.deduplicated ?? false,
+            attempts: providerEmailResult.attempts,
+          });
+        } else {
+          // NOT a "sent" log line, and deliberately not an admin alert: a
+          // suppressed or bouncing provider address is a mailbox problem, and
+          // the inquiry is already durably in `leads` + the provider inbox.
+          log(requestId, "WARN", "Facility email not sent", {
+            suppressed: providerEmailResult.suppressed ?? false,
+            deadLettered: providerEmailResult.deadLettered ?? false,
+            error: providerEmailResult.error ?? null,
+          });
+        }
       } catch (e) {
+        providerEmailResult = { success: false, error: String(e), attempts: 0 };
         log(requestId, "WARN", "Failed to send facility email", { error: String(e) });
       }
+    } else if (!facilityIsClaimed) {
+      log(requestId, "INFO", "Unclaimed listing; no provider email recipient exists, skipping");
     } else if (!emailEnabled) {
       log(requestId, "INFO", "Email channel disabled by preference; skipping");
+    } else {
+      log(requestId, "INFO", "No provider notification email resolved; skipping");
     }
 
     // SMS notification (non-blocking) — gated by smsEnabled (master + sms_lead_alerts)
@@ -1678,40 +1729,72 @@ Deno.serve(async (req) => {
     }
 
 
-    // Track instant notification event. Round-30 audit: catch was
-    // console-log-only; billing + analytics depend on this table to
-    // prove a lead was notified. Insert failure → admin alert.
-    try {
-      const { error: trackErr } = await supabase.from("notification_events").insert({
-        lead_id: lead.id,
-        facility_id: facility.id,
-        user_id: facility.user_id,
-        notification_stage: "instant",
-        channel: "email",
-        event_type: "sent",
-        notification_type: isHighIntent ? "high_intent" : "new_lead",
-        metadata: { urgency: data.urgency },
+    // ── Instant EMAIL notification audit ────────────────────────────────
+    //
+    // Round-30 audit: the catch was console-log-only; billing + analytics
+    // depend on this table to prove a lead was notified, so an insert failure
+    // raises an admin alert.
+    //
+    // POST-ROLLOUT HOTFIX #1 — the row is now CONDITIONAL, for two reasons.
+    //
+    // 1. It used to be written unconditionally with `user_id: facility.user_id`.
+    //    For an unclaimed listing that column is NULL and production's
+    //    `notification_events.user_id` is NOT NULL, so EVERY inquiry to an
+    //    unclaimed facility hit a guaranteed constraint violation, and the
+    //    catch below then raised "Lead notification audit trail missing" — a
+    //    false operational failure for a provider notification that was
+    //    correctly never supposed to happen. An unclaimed listing is an
+    //    expected state, not an incident.
+    //
+    // 2. It also hardcoded `channel:"email", event_type:"sent"` regardless of
+    //    whether an email was disabled, unaddressed, suppressed or rejected.
+    //    An audit table has to record what actually happened.
+    //
+    // Scope is deliberately unchanged: this table has always been the instant
+    // EMAIL audit, so the fix makes that one record truthful rather than
+    // introducing per-channel SMS/in-app event rows. `providerEmailResult`
+    // carries the sender's own verdict, so there is exactly one definition of
+    // "sent" in this function.
+    if (!providerEmailResult?.success) {
+      log(requestId, "INFO", "No provider email was sent; no instant email audit row written", {
+        facilityIsClaimed,
+        emailEnabled,
+        emailAttempted: providerEmailResult !== null,
+        suppressed: providerEmailResult?.suppressed ?? false,
       });
-      if (trackErr) throw trackErr;
-    } catch (trackError) {
-      log(requestId, "WARN", "Failed to track notification event", { error: String(trackError) });
+    } else {
       try {
-        await supabase.from("admin_notifications").insert({
-          type: "lead_notification_event_failure",
-          title: "Lead notification audit trail missing",
-          message: `notification_events insert failed for lead ${lead.id} → facility ${facility.id}. Lead was notified but billing/analytics audit row is missing.`,
-          metadata: {
-            lead_id: lead.id,
-            facility_id: facility.id,
-            user_id: facility.user_id,
-            request_id: requestId,
-            error: trackError instanceof Error ? trackError.message : String(trackError),
-          } as Record<string, unknown>,
+        const { error: trackErr } = await supabase.from("notification_events").insert({
+          lead_id: lead.id,
+          facility_id: facility.id,
+          user_id: facility.user_id,
+          notification_stage: "instant",
+          channel: "email",
+          event_type: "sent",
+          notification_type: isHighIntent ? "high_intent" : "new_lead",
+          metadata: { urgency: data.urgency },
         });
-      } catch (adminErr) {
-        log(requestId, "WARN", "admin_notifications insert failed (notif event)", {
-          error: adminErr instanceof Error ? adminErr.message : String(adminErr),
-        });
+        if (trackErr) throw trackErr;
+      } catch (trackError) {
+        log(requestId, "WARN", "Failed to track notification event", { error: String(trackError) });
+        try {
+          await supabase.from("admin_notifications").insert({
+            type: "lead_notification_event_failure",
+            title: "Lead notification audit trail missing",
+            message: `notification_events insert failed for lead ${lead.id} → facility ${facility.id}. Lead was notified but billing/analytics audit row is missing.`,
+            metadata: {
+              lead_id: lead.id,
+              facility_id: facility.id,
+              user_id: facility.user_id,
+              request_id: requestId,
+              error: trackError instanceof Error ? trackError.message : String(trackError),
+            } as Record<string, unknown>,
+          });
+        } catch (adminErr) {
+          log(requestId, "WARN", "admin_notifications insert failed (notif event)", {
+            error: adminErr instanceof Error ? adminErr.message : String(adminErr),
+          });
+        }
       }
     }
 

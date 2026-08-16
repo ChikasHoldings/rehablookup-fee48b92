@@ -94,7 +94,7 @@ export function ProvidersCTA() {
               </div>
               <div className="leading-tight">
                 <p className="font-display text-base font-bold text-[#1B365D]">3,800+</p>
-                <p className="text-[11px] uppercase tracking-wide text-slate-500">Verified centers</p>
+                <p className="text-[11px] uppercase tracking-wide text-slate-500">Centers listed</p>
               </div>
             </div>
           </div>

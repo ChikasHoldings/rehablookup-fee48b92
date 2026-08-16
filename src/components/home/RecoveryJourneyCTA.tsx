@@ -30,8 +30,8 @@ export function RecoveryJourneyCTA({ nearbyLocation = "" }: RecoveryJourneyCTAPr
   // three surfaces never disagree on the count.
   const { stats } = useDirectoryStats();
   const facilitiesLabel = stats
-    ? `${stats.facilityCount.toLocaleString()}+ verified facilities`
-    : "Verified facilities";
+    ? `${stats.facilityCount.toLocaleString()}+ facilities listed`
+    : "Facilities listed";
   const statesLabel =
     stats && stats.stateCount < 50
       ? `${stats.stateCount} states covered`
@@ -70,7 +70,7 @@ export function RecoveryJourneyCTA({ nearbyLocation = "" }: RecoveryJourneyCTAPr
             </h2>
 
             <p className="mt-3 md:mt-4 text-base md:text-lg text-slate-600 leading-relaxed max-w-xl">
-              RehabLookup is an independent directory of verified addiction-treatment
+              RehabLookup is an independent directory of addiction-treatment
               facilities across the U.S. Search by location, insurance, and level of
               care, compare programs side by side, then contact them directly.
             </p>

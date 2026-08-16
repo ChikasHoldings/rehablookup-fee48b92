@@ -159,7 +159,7 @@ export function FindByStateSection() {
               Find Treatment Center by State
             </h2>
             <p className="mt-1.5 text-sm md:text-base text-white/75">
-              Browse verified addiction treatment centers in all 50 states and Washington, D.C.
+              Browse listed addiction treatment centers in all 50 states and Washington, D.C.
             </p>
           </div>
           <Link
@@ -256,7 +256,7 @@ export function FindByStateSection() {
                     {/* Glassy facility-count chip, top-right. */}
                     <div className="absolute top-3 right-3">
                       <span className="inline-flex items-center rounded-full bg-white/15 backdrop-blur-md px-2.5 py-1 text-[11px] font-semibold text-white ring-1 ring-white/25 tabular-nums shadow-sm">
-                        {s.count > 0 ? `${s.count.toLocaleString()} facilities` : "Verified"}
+                        {s.count > 0 ? `${s.count.toLocaleString()} facilities` : "Browse"}
                       </span>
                     </div>
 

@@ -179,13 +179,28 @@ export function createSupabaseStub(options: SupabaseStubOptions = {}): SupabaseS
   };
 }
 
+export interface ResendStubOptions {
+  /**
+   * Outcome resolver for a single `resend.emails.send(...)` call. Return
+   * `{ error: { message } }` to model a Resend rejection, or throw to model a
+   * transport-level failure. Omit (or return nothing) for the default accept.
+   * Every attempt is still recorded in `sent`, so retry counts stay visible.
+   */
+  onSend?: (
+    payload: Record<string, unknown>,
+    attempt: number,
+  ) => { data?: unknown; error?: unknown } | void;
+}
+
 /** Recording stub for the Resend SDK. */
-export function createResendStub() {
+export function createResendStub(options: ResendStubOptions = {}) {
   const sent: Array<Record<string, unknown>> = [];
   class ResendStub {
     emails = {
       send: async (payload: Record<string, unknown>) => {
         sent.push(payload);
+        const outcome = options.onSend?.(payload, sent.length);
+        if (outcome) return { data: outcome.data ?? null, error: outcome.error ?? null };
         return { data: { id: `email_${sent.length}` }, error: null };
       },
     };
@@ -217,6 +232,7 @@ export interface LoadEdgeHandlerResult {
 export async function loadEdgeHandler(
   relPath: string,
   supabaseOptions: SupabaseStubOptions = {},
+  resendOptions: ResendStubOptions = {},
 ): Promise<LoadEdgeHandlerResult> {
   const raw = readFileSync(resolve(REPO_ROOT, relPath), "utf8");
   const stripped = stripRemoteImports(raw);
@@ -229,7 +245,7 @@ export async function loadEdgeHandler(
   });
 
   const supabase = createSupabaseStub(supabaseOptions);
-  const { ResendStub, sent } = createResendStub();
+  const { ResendStub, sent } = createResendStub(resendOptions);
 
   let captured: EdgeHandler | null = null;
   const denoStub = {

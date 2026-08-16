@@ -551,3 +551,343 @@ describe("submit-qualified-lead — universal selected-facility inquiries", () =
     });
   });
 });
+
+// ── CASE O — PROVIDER NOTIFICATION FAN-OUT + INSTANT-EMAIL AUDIT ──────────
+//
+// POST-ROLLOUT STAGE 2 HOTFIX #1.
+//
+// Two defects were found in production verification, both in the block that
+// runs AFTER the lead row is safely persisted:
+//
+//   1. The `notification_events` insert ran unconditionally with
+//      `user_id: facility.user_id`. For an unclaimed listing that is NULL and
+//      production's column is NOT NULL, so every unclaimed inquiry hit a
+//      guaranteed constraint failure whose catch then raised the admin alert
+//      "Lead notification audit trail missing" — a FALSE operational failure
+//      for a provider notification that was correctly never sent.
+//
+//   2. Even for a claimed listing the row hardcoded `channel:"email",
+//      event_type:"sent"` regardless of whether the email was disabled,
+//      unaddressed, suppressed, rejected or thrown.
+//
+// These tests execute the real handler, so they prove behaviour — the
+// recorded inserts, reads and email attempts — not the presence of comments.
+describe("submit-qualified-lead — provider notification fan-out and instant-email audit", () => {
+  const CLAIMED_FACILITY_ID = FREE_FACILITY_ID;
+  const PROVIDER_USER_ID = "owner-1";
+  const PROVIDER_EMAIL = "owner@example.org";
+  const SEEKER_EMAIL = "jordan.rivera@example.com";
+
+  interface NotifScenario {
+    facility: FacilityShape;
+    /** notification_preferences row; `null` = no row (defaults apply). */
+    prefs?: Record<string, boolean> | null;
+    /** profiles.email for the provider; `null` = no profile email resolved. */
+    profileEmail?: string | null;
+    /** Addresses `suppressed_emails` should report as suppressed. */
+    suppressed?: string[];
+  }
+
+  const claimedFacility = () =>
+    facilityRow({
+      id: CLAIMED_FACILITY_ID,
+      name: "Cascadia Recovery Center",
+      email: "admissions@example.org",
+      user_id: PROVIDER_USER_ID,
+    });
+
+  const unclaimedFacility = () =>
+    facilityRow({
+      id: UNCLAIMED_FACILITY_ID,
+      name: "Tony Rice Center, INC",
+      // A populated but UNVERIFIED address from a SAMHSA import.
+      email: "scraped-contact@unverified.example",
+      user_id: null,
+    });
+
+  function notifStub(scenario: NotifScenario): SupabaseStubOptions {
+    return {
+      onRpc: (name) => {
+        if (name === "has_active_pro") return { data: false, error: null };
+        if (name === "is_identifier_blocked") return { data: false, error: null };
+        if (name === "is_email_verified") return { data: true, error: null };
+        return { data: null, error: null };
+      },
+      onSelect: (table, filters) => {
+        if (table === "facilities") return { data: scenario.facility, error: null };
+        if (table === "leads") return { data: null, error: null, count: 0 };
+        if (table === "notification_preferences") return { data: scenario.prefs ?? null, error: null };
+        if (table === "profiles") {
+          const email = scenario.profileEmail === undefined ? PROVIDER_EMAIL : scenario.profileEmail;
+          return { data: email === null ? null : { email }, error: null };
+        }
+        if (table === "suppressed_emails") {
+          const target = String(
+            filters.find((f) => f.method === "eq" && f.args[0] === "email")?.args[1] ?? "",
+          );
+          return (scenario.suppressed ?? []).includes(target)
+            ? { data: { email: target }, error: null }
+            : { data: null, error: null };
+        }
+        return { data: null, error: null, count: 0 };
+      },
+      onInsert: (table, payload) => {
+        if (table === "leads") return { data: { id: "lead-123" }, error: null };
+        // Mirrors the LIVE production schema: notification_events.user_id is
+        // NOT NULL. Any row written on behalf of an unclaimed listing is
+        // rejected by the database, which is exactly what used to manufacture
+        // the false "audit trail missing" admin alert.
+        if (table === "notification_events") {
+          const row = payload as Record<string, unknown>;
+          if (row.user_id === null || row.user_id === undefined) {
+            return {
+              data: null,
+              error: {
+                code: "23502",
+                message: 'null value in column "user_id" violates not-null constraint',
+              },
+            };
+          }
+        }
+        return { data: { id: `${table}-row` }, error: null };
+      },
+    };
+  }
+
+  const insertsInto = (
+    supabase: { calls: Array<{ kind: string; target: string; payload?: unknown }> },
+    table: string,
+  ) => supabase.calls.filter((c) => c.kind === "insert" && c.target === table);
+
+  const recipientsOf = (emails: Array<Record<string, unknown>>) =>
+    emails.flatMap((e) => (Array.isArray(e.to) ? e.to : [e.to])).map(String);
+
+  // ── A. UNCLAIMED LISTING — an expected state, never an incident ────────
+  describe("unclaimed listing", () => {
+    it("still stores exactly one lead pinned to the selected facility", async () => {
+      const { handler, supabase } = await loadEdgeHandler(FN, notifStub({ facility: unclaimedFacility() }));
+      const { status, json } = await postJson(handler, seekerPayload(UNCLAIMED_FACILITY_ID));
+
+      expect(status).toBe(200);
+      expect(json.success).toBe(true);
+      const leadInserts = insertsInto(supabase, "leads");
+      expect(leadInserts).toHaveLength(1);
+      expect((leadInserts[0].payload as Record<string, unknown>).facility_id).toBe(UNCLAIMED_FACILITY_ID);
+      expect(json.deliveryState).toBe("stored_pending_claim");
+    });
+
+    it("opens no provider-notification branch at all", async () => {
+      const { handler, supabase } = await loadEdgeHandler(FN, notifStub({ facility: unclaimedFacility() }));
+      await postJson(handler, seekerPayload(UNCLAIMED_FACILITY_ID));
+
+      // No preference read and no provider-profile read for a provider that
+      // does not exist — these used to run as `.eq("user_id", null)`.
+      expect(supabase.selectedTables()).not.toContain("notification_preferences");
+      expect(supabase.selectedTables()).not.toContain("profiles");
+      // No provider email, no in-app alert.
+      expect(supabase.insertedTables()).not.toContain("provider_notifications");
+      // And nothing was handed to the SMS function either.
+      expect(supabase.invokedFunctions()).not.toContain("send-sms-notification");
+    });
+
+    it("never resolves a provider notification email or leaks seeker PII to the import address", async () => {
+      const { handler, emails } = await loadEdgeHandler(FN, notifStub({ facility: unclaimedFacility() }));
+      await postJson(handler, seekerPayload(UNCLAIMED_FACILITY_ID));
+
+      const recipients = recipientsOf(emails);
+      // The seeker's own confirmation is the ONLY mail this request sends.
+      expect(recipients).toEqual([SEEKER_EMAIL]);
+      expect(recipients).not.toContain("scraped-contact@unverified.example");
+    });
+
+    it("writes no instant-email audit row claiming a provider notification was sent", async () => {
+      const { handler, supabase } = await loadEdgeHandler(FN, notifStub({ facility: unclaimedFacility() }));
+      await postJson(handler, seekerPayload(UNCLAIMED_FACILITY_ID));
+
+      expect(supabase.insertedTables()).not.toContain("notification_events");
+    });
+
+    it("raises NO admin failure alert merely because the listing is unclaimed", async () => {
+      const { handler, supabase, logs } = await loadEdgeHandler(
+        FN,
+        notifStub({ facility: unclaimedFacility() }),
+      );
+      await postJson(handler, seekerPayload(UNCLAIMED_FACILITY_ID));
+
+      expect(supabase.insertedTables()).not.toContain("admin_notifications");
+      const joined = logs.join("\n");
+      expect(joined).not.toMatch(/audit trail missing/i);
+      expect(joined).not.toMatch(/Failed to track notification event/i);
+      expect(joined).not.toMatch(/Facility email sent/);
+    });
+
+    it("routes nowhere else — no concierge, advisor, matching or redistribution", async () => {
+      const { handler, supabase } = await loadEdgeHandler(FN, notifStub({ facility: unclaimedFacility() }));
+      await postJson(handler, seekerPayload(UNCLAIMED_FACILITY_ID));
+      expectNoLegacyRouting(supabase);
+    });
+  });
+
+  // ── B. CLAIMED LISTING — the audit row must be earned ──────────────────
+  describe("claimed listing — instant-email audit row", () => {
+    it("is written, as a truthful email/sent record, when the provider email actually sends", async () => {
+      const { handler, supabase, emails } = await loadEdgeHandler(
+        FN,
+        notifStub({ facility: claimedFacility() }),
+      );
+      const { json } = await postJson(handler, seekerPayload(CLAIMED_FACILITY_ID));
+
+      expect(json.deliveryState).toBe("delivered_to_provider");
+      expect(recipientsOf(emails)).toContain(PROVIDER_EMAIL);
+
+      const events = insertsInto(supabase, "notification_events");
+      expect(events).toHaveLength(1);
+      const row = events[0].payload as Record<string, unknown>;
+      expect(row).toMatchObject({
+        lead_id: "lead-123",
+        facility_id: CLAIMED_FACILITY_ID,
+        user_id: PROVIDER_USER_ID,
+        notification_stage: "instant",
+        channel: "email",
+        event_type: "sent",
+      });
+      expect(supabase.insertedTables()).not.toContain("admin_notifications");
+    });
+
+    it("is NOT written when the email channel is switched off by preference", async () => {
+      const { handler, supabase, emails, logs } = await loadEdgeHandler(
+        FN,
+        notifStub({
+          facility: claimedFacility(),
+          prefs: { notify_new_leads: true, email_lead_alerts: false },
+        }),
+      );
+      const { json } = await postJson(handler, seekerPayload(CLAIMED_FACILITY_ID));
+
+      expect(recipientsOf(emails)).not.toContain(PROVIDER_EMAIL);
+      expect(supabase.insertedTables()).not.toContain("notification_events");
+      expect(logs.join("\n")).not.toMatch(/Facility email sent/);
+      // Delivery semantics are unchanged: the inquiry is in the provider inbox
+      // whether or not they asked to be emailed about it.
+      expect(json.deliveryState).toBe("delivered_to_provider");
+      expect(supabase.insertedTables()).toContain("provider_notifications");
+    });
+
+    it("is NOT written when no provider notification email can be resolved", async () => {
+      const { handler, supabase, emails } = await loadEdgeHandler(
+        FN,
+        notifStub({
+          facility: facilityRow({
+            id: CLAIMED_FACILITY_ID,
+            name: "Cascadia Recovery Center",
+            email: null,
+            user_id: PROVIDER_USER_ID,
+          }),
+          profileEmail: null,
+        }),
+      );
+      const { json } = await postJson(handler, seekerPayload(CLAIMED_FACILITY_ID));
+
+      expect(recipientsOf(emails)).toEqual([SEEKER_EMAIL]);
+      expect(supabase.insertedTables()).not.toContain("notification_events");
+      expect(json.deliveryState).toBe("delivered_to_provider");
+    });
+
+    it("is NOT written when the provider address is suppressed", async () => {
+      const { handler, supabase, logs } = await loadEdgeHandler(
+        FN,
+        notifStub({ facility: claimedFacility(), suppressed: [PROVIDER_EMAIL] }),
+      );
+      await postJson(handler, seekerPayload(CLAIMED_FACILITY_ID));
+
+      expect(supabase.insertedTables()).not.toContain("notification_events");
+      const joined = logs.join("\n");
+      expect(joined).toMatch(/Facility email not sent/);
+      expect(joined).not.toMatch(/Facility email sent/);
+    });
+
+    it("is NOT written when Resend permanently rejects the provider email", async () => {
+      const { handler, supabase, logs } = await loadEdgeHandler(
+        FN,
+        notifStub({ facility: claimedFacility() }),
+        {
+          onSend: (payload) =>
+            JSON.stringify(payload.to).includes(PROVIDER_EMAIL)
+              ? { error: { message: "validation_error: recipient rejected" } }
+              : undefined,
+        },
+      );
+      await postJson(handler, seekerPayload(CLAIMED_FACILITY_ID));
+
+      expect(supabase.insertedTables()).not.toContain("notification_events");
+      expect(logs.join("\n")).not.toMatch(/Facility email sent/);
+    });
+
+    it("is NOT written when the provider email send throws", async () => {
+      const { handler, supabase, logs } = await loadEdgeHandler(
+        FN,
+        notifStub({ facility: claimedFacility() }),
+        {
+          onSend: (payload) => {
+            if (JSON.stringify(payload.to).includes(PROVIDER_EMAIL)) {
+              throw new Error("resend transport exploded");
+            }
+            return undefined;
+          },
+        },
+      );
+      const { json } = await postJson(handler, seekerPayload(CLAIMED_FACILITY_ID));
+
+      expect(json.success).toBe(true);
+      expect(supabase.insertedTables()).not.toContain("notification_events");
+      expect(logs.join("\n")).not.toMatch(/Facility email sent/);
+    });
+  });
+
+  // ── C. INVARIANTS THE HOTFIX MUST NOT HAVE MOVED ──────────────────────
+  describe("inquiry-destination invariants are untouched by the notification fix", () => {
+    it.each([
+      ["claimed", CLAIMED_FACILITY_ID, PROVIDER_USER_ID, "delivered_to_provider"],
+      ["unclaimed", UNCLAIMED_FACILITY_ID, null, "stored_pending_claim"],
+    ])(
+      "pins a %s inquiry to the selected facility and reports %s",
+      async (_label, facilityId, userId, expectedState) => {
+        const { handler, supabase } = await loadEdgeHandler(
+          FN,
+          notifStub({
+            facility: facilityRow({
+              id: facilityId as string,
+              name: "Any Facility",
+              user_id: userId as string | null,
+            }),
+          }),
+        );
+        const { json } = await postJson(handler, seekerPayload(facilityId as string));
+
+        expect(json.deliveryState).toBe(expectedState);
+        expect(json.facilityId).toBe(facilityId);
+        const leadInserts = insertsInto(supabase, "leads");
+        expect(leadInserts).toHaveLength(1);
+        expect((leadInserts[0].payload as Record<string, unknown>).facility_id).toBe(facilityId);
+        expectNoLegacyRouting(supabase);
+      },
+    );
+
+    it("never lets Pro or Featured state decide inquiry eligibility or notification", async () => {
+      for (const isPro of [false, true]) {
+        const base = notifStub({ facility: claimedFacility() });
+        const { handler, supabase } = await loadEdgeHandler(FN, {
+          ...base,
+          onRpc: (name, args) =>
+            name === "has_active_pro" ? { data: isPro, error: null } : base.onRpc!(name, args),
+        });
+        const { status, json } = await postJson(handler, seekerPayload(CLAIMED_FACILITY_ID));
+
+        expect(status).toBe(200);
+        expect(json.deliveryState).toBe("delivered_to_provider");
+        // Identical audit outcome regardless of entitlement.
+        expect(insertsInto(supabase, "notification_events")).toHaveLength(1);
+      }
+    });
+  });
+});

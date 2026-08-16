@@ -94,7 +94,20 @@ export const DESCRIPTIONS = {
   // terms (search, compare, drug rehab, alcohol treatment, detox, insurance,
   // levels of care, nationwide coverage) as directory ACTIONS the visitor
   // performs, rather than services RehabLookup performs for them.
+  //
+  // POST-ROLLOUT HOTFIX #1 — "3,800+ VERIFIED" became "3,800+ … LISTINGS".
+  // This constant is the real source of the served homepage description: the
+  // `syncHomepageTitle` plugin in vite.config.ts substitutes it into
+  // index.html at build time, and <SEO /> uses it on hydration. Editing
+  // index.html alone left the built page still claiming a verified inventory.
+  // The count is honest (3,794 rows in `public_facilities`); the adjective was
+  // not — only 5 raw `facilities` rows carry verified=true, and
+  // `public_facilities.verified` is Pro-gated with active Pro at 0. Same
+  // reasoning as src/components/home/TrustStrip.tsx. Facility-specific
+  // verified state is untouched. Guarded by
+  // scripts/check-public-directory-truth.mjs.
+  //
   // Budget: <=160 chars, so Google renders it without truncation.
   home:
-    "Search 3,800+ verified addiction treatment centers. Compare drug rehab, alcohol treatment and detox programs by location, level of care and insurance.",
+    "Search 3,800+ addiction treatment center listings. Compare drug rehab, alcohol treatment and detox programs by location, level of care and insurance.",
 } as const;
