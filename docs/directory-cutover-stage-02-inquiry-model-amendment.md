@@ -103,7 +103,7 @@ CASE WHEN has_active_pro(id) THEN phone ELSE NULL::text END AS phone
 
 | Role | Before | After |
 | --- | --- | --- |
-| `anon` | approved rows, **all columns incl. phone** | approved rows, **every column except `phone`** (column privilege revoked) |
+| `anon` | approved rows, **all columns incl. phone** | **no access at all** — no SELECT policy, no table privilege, no column privileges |
 | authenticated seeker | approved rows, all columns | **no SELECT policy at all** on `facilities` |
 | facility owner | own rows, all columns | **unchanged** |
 | facility team | `user_can_access_facility` rows | **unchanged** |
@@ -112,8 +112,18 @@ CASE WHEN has_active_pro(id) THEN phone ELSE NULL::text END AS phone
 
 Two different mechanisms, chosen deliberately:
 
-- **anon → column privilege.** Table-level `SELECT` implies every column, so it is revoked wholesale and re-granted per column from the live column list minus `phone`. This is a hard privilege boundary that RLS cannot be tricked past, and it is **fail-closed**: a column added to `facilities` later is not granted to anon until someone does so on purpose.
-- **authenticated → row policy.** Column grants are role-wide, and providers/admins are *also* `authenticated`, so a column revoke there would break provider editing. Instead the blanket `TO public` policy is replaced with an `anon`-scoped one, leaving ordinary seekers matching no policy while `facilities_select_authenticated` (admin OR owner) and `facilities_team_select` are untouched.
+- **anon → removed from the table entirely.** The row policy goes *and* the privilege goes, so the boundary is closed twice over independently. Anonymous directory reads run through `public_facilities` and the other public projections/RPCs.
+- **authenticated → row policy only.** Table privileges are role-wide and providers/admins are *also* `authenticated`, so revoking there would break provider editing and admin moderation. The blanket `TO public` policy is simply dropped with nothing replacing it, leaving ordinary seekers matching no policy while `facilities_select_authenticated` (admin OR owner) and `facilities_team_select` are untouched. Authorization between users of that shared role is expressed in RLS, which is exactly what those two policies are for.
+
+#### Why not "every column except `phone`"
+
+The first cut of this migration kept anon on the base table and subtracted a single column, re-granting the live column list minus `phone` from a `DO` block. That was a **release-blocking defect**, caught in independent review before rollout, and it is worth recording why rather than just fixing.
+
+`public.facilities` is not a directory table with an awkward phone column on it. It is the internal provider record — **77 columns** on production. Besides `phone` it carries `admin_notes`, `user_id`, `email`, `reply_email`/`reply_email_verified*`, `verified_phone`/`verified_phone_set_at`, `has_facility_verified_contact`, `claim_owner_id`, `claim_status`, `rejection_reason`, `claimed_at`, `profile_reminder_*`, `last_activity_at`, `leads_reset_at`, `suspended`, `last_featured_shown_at`, and the whole Concierge-era block (`concierge_notes`, `concierge_admissions_email`, `concierge_admissions_phone`, `concierge_license_number`, `concierge_terms_accepted_by`, `concierge_eligibility_revoked_reason`, …). A deny-list of one over that surface publishes the other **76 columns** to anonymous PostgREST callers.
+
+The mistake was framing the question as *which columns of the internal record may an anonymous caller read*. The answer is none: an anonymous caller has no business addressing the internal record. Allow-lists live in the public projections, where they are explicit and reviewable, and the deny-list disappears. The "fail-closed on new columns" property the column grant was reaching for comes free — a column added next quarter is public only if someone adds it to a public projection.
+
+The forward migration therefore ends with a **fail-closed post-condition**: it asserts via `has_table_privilege` / `has_column_privilege` that anon retains no SELECT on `facilities`, and raises rather than shipping a boundary that only *reads* as closed. That assertion exists because the original defect was invisible to a green CI run — see §4.5.
 
 ### 4.3 Collateral the boundary required
 
@@ -125,13 +135,48 @@ Removing public raw-row access breaks anything that quietly depended on it. Each
 | `facility_name_aliases_select_public` | RLS policy with an inline `EXISTS (SELECT 1 FROM facilities …)`; an RLS subquery runs with the caller's own RLS, so it would have silently gone dark for anon and broken slug-alias/legacy-URL resolution | Rewritten to use `is_approved_facility()` (SECURITY DEFINER, anon-executable) |
 | `seeker/InquiryDetailModal`, `SeekerHeader`, `SeekerRequests`, `SeekerReviews` | Read `facilities` directly as authenticated seekers | Repointed to `public_facilities`. `InquiryDetailModal` also selected `phone` — now masked, which is the correct outcome |
 
-**Known cosmetic residual:** `TrustStrip` counts `facilities where verified = true` (currently 3 rows) directly. anon keeps row access so it is unaffected; for a *logged-in* visitor the count now returns 0 and the component falls back to its "Verified" label. It is explicitly fail-silent and non-critical. It was left alone on purpose: `public_facilities.verified` is Pro-masked, so repointing it would report ~0, and `get_directory_stats()` counts *approved* (3,794), which would inflate a "Vetted treatment centers" claim.
+| `TrustStrip` | Counted `facilities where verified = true` from the **anonymous homepage** — the last public raw-table consumer, and the reason this migration first tried to keep an anon "count-only safety net" grant | Repointed to `useDirectoryStats` → `get_directory_stats()`, the same RPC the hero badge and `TrustRibbon` already use. It counts `public_facilities`, so it needs no raw access |
+
+**On the TrustStrip metric.** An earlier revision of this document called TrustStrip a "known cosmetic residual" and left it alone, reasoning that `public_facilities.verified` is Pro-masked (so repointing would report ~0) while `get_directory_stats()` counts approved (3,794), which "would inflate a Vetted treatment centers claim". The first half was right and the second half had the fix backwards: the answer to *the honest number doesn't support this label* is to change the label, not to keep an unsafe query.
+
+The old query was not cosmetic either. It counted `facilities.verified = true` across **every status** — 5 rows on production, 3 of them approved and unsuspended — so the strip rendered **"3+ Vetted treatment centers"** over a 3,794-facility directory. It now shows directory size and states covered, which the data does support, and "verified" stays what it actually is: a Pro-gated per-facility badge, not a claim about the directory. The retired "~60 min average match time" tile was removed at the same time rather than left in a component being repointed to live data — Stage 1 retired matching, and a dormant matching promise is a landmine, not a residual.
+
+`TrustStrip` is currently not rendered (Stage 1 removed it from the homepage), which is *why* the raw query survived review this long: a fail-silent query in an unmounted component produces no symptom. That is the argument for the build-time consumer scan in §4.5, not an argument for leaving it.
 
 ### 4.4 What the migration deliberately does not do
 
 - Does **not** null, move or delete `facilities.phone`. The raw number stays stored and remains authorized data for owner / team / admin / service-role, including claim SMS and voice verification.
 - Does **not** gate name, address, website, directions data, or any other directory metadata. **Phone is the only newly gated field.**
 - Does **not** touch pricing, Stripe, Featured, or claim state.
+
+### 4.5 The acceptance criteria encoded the bug
+
+The most uncomfortable part of the "every column except `phone`" defect is that **CI was green for it**, and green for the right-looking reasons. `scripts/check-pro-phone-visibility.mjs` required, as a *PASS* condition:
+
+```
+if (!/column_name\s*<>\s*'phone'/i.test(bypassMig.sql)) {
+  fail("database", "anon is not re-granted every column EXCEPT phone");
+}
+```
+
+and `public-phone-entitlement.test.ts` asserted the same shape positively. So the guard written to prevent a phone leak was actively requiring the design that exposed 76 other columns. A test suite cannot catch a defect in the specification it was written from; the only fix is to correct the criterion.
+
+Both now assert the opposite, over the **final** migration state (historical migrations legitimately contain the grants being retired):
+
+| Rule | Fails on |
+| --- | --- |
+| No anon/public raw SELECT policy | `CREATE POLICY … ON public.facilities … TO anon\|public` — matched over *every* policy statement, so a rename does not slip through |
+| No table regrant | `GRANT SELECT ON public.facilities TO … anon` |
+| No column regrant | `GRANT SELECT (…) ON public.facilities TO … anon`, including the `format()`/`EXECUTE` form that evaded a literal-text scan |
+| No deny-list shape | `column_name <> 'phone'` |
+| Authorized access preserved | any `REVOKE … FROM authenticated\|service_role`, any `DROP POLICY` on `facilities_select_authenticated` / `facilities_team_select`, any new `status = 'approved'` policy handing seekers blanket access |
+
+Verified by running the corrected guard against the pre-hotfix migration: **4 violations**, one per facet of the defect.
+
+Two further additions close the gap that let this reach review:
+
+- **Internal-column regression test.** Pins that the design does not depend on enumerating facilities columns, and that representative internal fields (`admin_notes`, `reply_email`, `verified_phone`, `claim_owner_id`, `claim_status`, `concierge_admissions_email`, `concierge_admissions_phone`, `concierge_notes`) are not projected publicly. No per-field masks were invented — the correct answer is that anon cannot select the table.
+- **Public raw-consumer scan** (`check:pro-phone-visibility`, so it runs in `build:vercel`). Allow-lists the legitimate raw readers — admin and provider consoles, plus owner-scoped reads that filter on the session user (`useProviderSearch`, `useProviderFacilities`, `useProviderData`, `Login`, `ProviderSignup`, and `CenterProfile`'s owner existence check) — and fails on any other `.from("facilities")` under `src/`. A new public consumer now fails CI instead of going dark in production, which is exactly how TrustStrip survived.
 
 ---
 
@@ -277,7 +322,7 @@ data-phone-visibility="pro" | "hidden" # is_pro === true, nothing else
 
 | Suite | Covers |
 | --- | --- |
-| `src/test/public-phone-entitlement.test.ts` (34) | View mask; **base-table bypass closure**; anon column revoke; owner/admin/team preserved; dependent views repointed; alias policy; no data destruction; both Edge masks; shared frontend rule; CenterProfile; capability hook; modal accepts no caller phone; prerender gating |
+| `src/test/public-phone-entitlement.test.ts` (40) | View mask; **total removal of anon raw-table access** (no replacement policy under any name, no table or column regrant, fail-closed post-condition asserted); internal-column regression; owner/admin/team preserved and no blanket seeker policy added; dependent views repointed; alias policy; no data destruction; TrustStrip off the raw table; both Edge masks; shared frontend rule; CenterProfile; capability hook; modal accepts no caller phone; prerender gating |
 | `src/__tests__/submit-qualified-lead-routing.test.ts` (27) | Cases A–N in-process against the real handler: claimed Free, Pro, Featured-only, **unclaimed PII safety**, suspended, unapproved, unknown, malformed, idempotency, rate limits, blocked identifiers, email verification, PII logging, redistribution |
 | `src/__tests__/facility-prerender-contact-routing.test.ts` (42) | The five prerender fixtures, generator + guard agreeing |
 | `src/components/profile/RequestInfoModal.routing.test.tsx` (29) | Free / Featured-only / Pro modal matrix, `is_pro` shape table, success copy, transitional `DIRECT_CONTACT_REQUIRED` defence |
@@ -305,7 +350,7 @@ Recommended order, each step independently reversible:
 
 | # | Step | Rollback |
 | --- | --- | --- |
-| 1 | **Apply the migration.** Closes the live phone leak — the only step fixing a real production exposure. Independent of the app: masks a column and tightens a policy | Restore view bodies from `20260830000000`; re-point the five projections at `facilities`; recreate `facilities_select_public`; `GRANT SELECT ON facilities TO anon` |
+| 1 | **Apply the migration.** Closes the live phone leak *and* removes the internal provider record from the anonymous Data API — the only step fixing a real production exposure. Independent of the app: masks a column, drops a policy, revokes a privilege | **Emergency only, and only as a whole** — restore view bodies from `20260830000000`; re-point the five projections at `facilities`; recreate `facilities_select_public`; `GRANT SELECT ON facilities TO anon`. No part of this belongs in a forward path: the grant re-opens both the phone leak and the 76-column exposure |
 | 2 | **Deploy `get-public-facilities` + `get-featured-rotation`.** Defence in depth; also fixes the Featured/fallback leak, which the migration does **not** cover (service-role reads bypass RLS) | Redeploy previous versions |
 | 3 | **Deploy `submit-qualified-lead` 3.1.0.** Backend accepts universal inquiries *before* the UI offers them | Redeploy 3.0.0 |
 | 4 | **Promote the Vercel build.** UI + static artifacts last, against a backend that already honours the new contract | Promote previous deployment |

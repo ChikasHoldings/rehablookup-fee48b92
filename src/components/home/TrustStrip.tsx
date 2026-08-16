@@ -1,38 +1,38 @@
-import { useEffect, useState } from "react";
-import { ShieldCheck, Scale, Users, Clock } from "lucide-react";
+import { ShieldCheck, Scale, Users, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { useDirectoryStats } from "@/hooks/useDirectoryStats";
 
 /**
  * Phase 5: homepage trust strip.
  *
- * Reads the live count of approved (verified+published) facilities so the
- * social-proof number can never be a lie. Falls back gracefully if the
- * count query fails — hides the row rather than showing "—".
+ * COUNT SOURCE — public-safe by construction.
+ * ──────────────────────────────────────────
+ * This used to count `facilities` directly from the browser:
+ *
+ *   supabase.from("facilities").select("id", {count:"exact", head:true})
+ *           .eq("verified", true)
+ *
+ * That was the last public anonymous consumer of the RAW base table, and it
+ * was the reason the Pro-phone migration originally tried to keep an anon
+ * "count-only safety net" grant on an internal provider record. It reads
+ * through `useDirectoryStats` now — the same `public.get_directory_stats()`
+ * RPC the hero badge and TrustRibbon already use, which counts
+ * `public_facilities` and therefore needs no raw-table access at all.
+ *
+ * WHY THE METRIC CHANGED TOO.
+ * The old query was also making a claim the data does not support. It counted
+ * `facilities.verified = true` across every status, which is 5 rows on
+ * production (3 of them approved and unsuspended) — so the strip rendered
+ * "3+ Vetted treatment centers" against a 3,794-facility directory. And
+ * `public_facilities.verified` is itself Pro-gated, so pointing the identical
+ * `.eq("verified", true)` filter at the view would have silently turned a
+ * directory count into an active-Pro count — currently zero. The honest,
+ * already-canonical metric is directory size, which is what this now shows.
+ * "Verified" as a listing badge stays what it is: a Pro-gated per-facility
+ * signal, not a claim about the whole directory.
  */
 export function TrustStrip() {
-  const [facilityCount, setFacilityCount] = useState<number | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        // Count only — no row payload, no PII.
-        const { count, error } = await supabase
-          .from("facilities")
-          .select("id", { count: "exact", head: true })
-          .eq("verified", true);
-        if (!cancelled && !error && typeof count === "number") {
-          setFacilityCount(count);
-        }
-      } catch {
-        /* fail silent — trust strip is non-critical */
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const { stats } = useDirectoryStats();
 
   // Numbers we can stand behind even before inventory grows.
   const items: {
@@ -44,13 +44,14 @@ export function TrustStrip() {
   }[] = [
     {
       icon: ShieldCheck,
-      value:
-        facilityCount !== null && facilityCount > 0
-          ? `${facilityCount.toLocaleString()}+`
-          : "Verified",
-      label: "Vetted treatment centers",
+      value: stats ? `${stats.facilityCount.toLocaleString()}+` : "Nationwide",
+      label: "Treatment centers listed",
     },
-    { icon: Clock, value: "~60 min", label: "Average match time" },
+    {
+      icon: MapPin,
+      value: stats && stats.stateCount < 50 ? `${stats.stateCount}` : "All 50 + D.C.",
+      label: "States covered",
+    },
     { icon: Users, value: "Free", label: "Free to search" },
     {
       icon: Scale,
@@ -75,7 +76,7 @@ export function TrustStrip() {
             id="trust-strip-heading"
             className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground"
           >
-            Trusted guidance, verified facilities
+            A free, transparent treatment directory
           </h2>
         </header>
         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6 max-w-5xl mx-auto">

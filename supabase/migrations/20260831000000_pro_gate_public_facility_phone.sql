@@ -34,6 +34,32 @@
 --      (3b11bad0-6d79-431c-9e39-605064080a56, is_pro=false) — it returned the
 --      raw number. Gating only the view would therefore have fixed nothing.
 --
+-- WHY THE RAW TABLE LEAVES THE ANONYMOUS DATA API ENTIRELY
+--   An earlier revision of this migration kept anon on the base table and
+--   merely subtracted one column, by re-granting "every current column except
+--   phone". That was wrong, and it was wrong in a way that would have grown
+--   worse over time: public.facilities is not a directory table with an
+--   awkward phone column on it. It is the internal provider record. It
+--   currently carries admin_notes, user_id, email, reply_email,
+--   reply_email_verified*, verified_phone, verified_phone_set_at,
+--   has_facility_verified_contact, claim_owner_id, claim_status,
+--   rejection_reason, claimed_at, profile_reminder_*, last_activity_at,
+--   leads_reset_at, suspended, last_featured_shown_at, and the whole
+--   Concierge-era block (concierge_notes, concierge_admissions_email,
+--   concierge_admissions_phone, concierge_license_number,
+--   concierge_terms_accepted_by, concierge_eligibility_revoked_reason, …).
+--   Enumerating a deny-list of one against that surface publishes all of it.
+--
+--   The correct boundary is not "which columns of the internal record may an
+--   anonymous caller read" — it is that an anonymous caller has no business
+--   addressing the internal record at all. Anonymous directory reads go
+--   through public.public_facilities (and the other public projections /
+--   RPCs), which are explicit, reviewable allow-lists of directory fields.
+--   So this migration removes anon from public.facilities completely: no row
+--   policy, no table privilege, no column privileges. There is nothing left
+--   to enumerate, and a column added to facilities next quarter is public
+--   only if someone deliberately adds it to a public projection.
+--
 -- WHY THE VIEW CAN STILL READ THE RAW COLUMN
 --   public.public_facilities has reloptions = NULL (verified on production),
 --   i.e. it is SECURITY DEFINER and executes as its owner `postgres`. It is
@@ -56,12 +82,16 @@
 --                           seekers now match no SELECT policy on facilities.
 --                           Owner / team / admin policies are UNTOUCHED, so
 --                           providers and admins keep full raw access,
---                           including `phone`.
---        • anon           → keeps approved-row visibility (a safety net for
---                           any count-only consumer) but loses the `phone`
---                           column outright at the GRANT level, which is a
---                           hard privilege boundary RLS cannot be tricked
---                           past.
+--                           including `phone`. The `authenticated` TABLE
+--                           privilege is deliberately left alone: owner, team
+--                           and admin all share that one Postgres role, and
+--                           authorization between them is expressed in RLS.
+--        • anon           → loses raw facilities access outright. No SELECT
+--                           policy, no table privilege, no column privilege.
+--                           Anonymous reads use the public projections.
+--        • service_role   → untouched (it bypasses RLS by design and backs
+--                           the public Edge functions, claim SMS/voice
+--                           verification, and the prerender pipeline).
 --
 -- WHAT THIS MIGRATION DELIBERATELY DOES NOT DO
 --   • It does not null, move, or delete facilities.phone. The raw number
@@ -72,11 +102,17 @@
 --     ordinary directory metadata. PHONE is the only newly gated field.
 --   • It does not touch pricing, Stripe, Featured, or claim state.
 --
--- ROLLBACK
---   Restore the view bodies from
---     20260830000000_public_facilities_visible_to_own_claimant.sql   (public_facilities)
---   re-point the five projections back to `facilities`, restore
---     facility_name_aliases_select_public from its prior definition, then:
+-- ROLLBACK — EMERGENCY ONLY, AND ONLY AS A WHOLE
+--   The steps below restore the PRE-MIGRATION PRODUCTION STATE. They are not
+--   a partial escape hatch and no part of them belongs in the forward path:
+--   re-granting anon on the base table re-opens both the phone leak and the
+--   internal-column exposure described above. Run them only if this entire
+--   migration is being reverted.
+--
+--     -- restore the view bodies from
+--     --   20260830000000_public_facilities_visible_to_own_claimant.sql
+--     -- re-point the five projections back to `facilities`, and restore
+--     -- facility_name_aliases_select_public from its prior definition, then:
 --     CREATE POLICY "facilities_select_public" ON public.facilities
 --       AS PERMISSIVE FOR SELECT
 --       USING (status = 'approved' AND COALESCE(suspended,false) = false);
@@ -266,50 +302,67 @@ CREATE POLICY "facility_name_aliases_select_public"
   USING (public.is_approved_facility(facility_id));
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- 4. Close the raw base-table pathway.
+-- 4. Remove the raw base table from the anonymous Data API.
 --
 --    facilities_select_public was TO public, i.e. anon AND authenticated. It
---    is the bypass. Replacing it with an anon-only policy means an ordinary
---    authenticated seeker matches NO select policy on facilities and can read
---    nothing raw — while facilities_select_authenticated (admin OR owner) and
---    facilities_team_select (user_can_access_facility) are left exactly as
---    they are, so providers, facility teams and admins are unaffected.
+--    is the bypass, and it goes. Nothing anon-scoped replaces it:
+--
+--      • ordinary authenticated seeker — matches no SELECT policy on
+--        facilities, so RLS returns zero rows. They keep the `authenticated`
+--        table privilege only because owner / team / admin share that same
+--        Postgres role; the privilege alone grants no rows.
+--      • anon — loses the policy AND the privilege. Even with RLS satisfied
+--        there is no grant, and even with a grant there is no policy. Two
+--        independent boundaries, both closed.
+--      • facilities_select_authenticated (admin OR owner) and
+--        facilities_team_select (user_can_access_facility) are untouched, so
+--        providers, facility teams and admins keep full raw access including
+--        `phone`.
+--
+--    Steps 2 and 3 above are what make this safe: every public projection now
+--    sources approved-facility identity from public_facilities (SECURITY
+--    DEFINER) or from is_approved_facility() (SECURITY DEFINER), so no
+--    anonymous read path depends on the caller holding raw-table access.
 -- ─────────────────────────────────────────────────────────────────────────────
 DROP POLICY IF EXISTS "facilities_select_public" ON public.facilities;
 
-CREATE POLICY "facilities_select_public_anon"
-  ON public.facilities
-  AS PERMISSIVE FOR SELECT
-  TO anon
-  USING ((status = 'approved'::text) AND (COALESCE(suspended, false) = false));
+-- Defensive: an earlier revision of this migration created an anon-scoped
+-- replacement policy. It must not survive, including on any environment that
+-- ran that revision.
+DROP POLICY IF EXISTS "facilities_select_public_anon" ON public.facilities;
 
-COMMENT ON POLICY "facilities_select_public_anon" ON public.facilities IS
-  'Anon may see approved, non-suspended rows, but NOT the phone column — that is revoked at the GRANT level below. Authenticated seekers intentionally have no public row policy at all; the public app reads facilities through public_facilities. Owner/team/admin SELECT is handled by facilities_select_authenticated and facilities_team_select.';
+-- Table-level REVOKE also drops every column-level SELECT on the same table,
+-- which is what retires the earlier "every column except phone" grant.
+REVOKE SELECT ON public.facilities FROM anon;
 
--- Column-level privilege boundary for anon. Table-level SELECT implies every
--- column, so it must be revoked wholesale and re-granted per column. The grant
--- is built dynamically from the live column list minus `phone`, which also
--- makes the boundary fail-closed: any column added to facilities in future is
--- NOT granted to anon until someone deliberately grants it.
+-- Fail-closed post-condition. If any table or column SELECT survives for anon
+-- — a stray historical column grant, a re-grant from another migration — the
+-- migration aborts rather than shipping a boundary that only reads as closed.
 DO $$
 DECLARE
-  v_cols text;
+  v_leaked text;
 BEGIN
-  SELECT string_agg(quote_ident(column_name), ', ' ORDER BY ordinal_position)
-    INTO v_cols
-  FROM information_schema.columns
-  WHERE table_schema = 'public'
-    AND table_name  = 'facilities'
-    AND column_name <> 'phone';
-
-  IF v_cols IS NULL THEN
-    RAISE EXCEPTION 'public.facilities has no columns — refusing to regrant';
+  IF has_table_privilege('anon', 'public.facilities', 'SELECT') THEN
+    RAISE EXCEPTION 'anon still holds table-level SELECT on public.facilities';
   END IF;
 
-  EXECUTE 'REVOKE SELECT ON public.facilities FROM anon';
-  EXECUTE format('GRANT SELECT (%s) ON public.facilities TO anon', v_cols);
+  SELECT string_agg(a.attname, ', ' ORDER BY a.attnum)
+    INTO v_leaked
+  FROM pg_attribute a
+  WHERE a.attrelid = 'public.facilities'::regclass
+    AND a.attnum > 0
+    AND NOT a.attisdropped
+    AND has_column_privilege('anon', a.attrelid, a.attnum, 'SELECT');
+
+  IF v_leaked IS NOT NULL THEN
+    RAISE EXCEPTION
+      'anon still holds column-level SELECT on public.facilities: %', v_leaked;
+  END IF;
 END
 $$;
 
+COMMENT ON TABLE public.facilities IS
+  'INTERNAL provider record — NOT a public directory table. It carries operational and contact data that is not part of the public listing (admin_notes, user_id, email, reply_email*, verified_phone*, claim_owner_id, claim_status, rejection_reason, profile_reminder_*, leads_reset_at, suspended, and the concierge_* block). Anonymous callers have NO access to it: no SELECT policy, no table privilege, no column privileges. Public/anonymous directory reads go through public.public_facilities and the other public projections/RPCs, which are explicit allow-lists of directory fields. Raw access is authorized only for the facility owner (facilities_select_authenticated), the facility team (facilities_team_select), admins, and service_role.';
+
 COMMENT ON COLUMN public.facilities.phone IS
-  'Raw facility phone. INTERNAL/AUTHORIZED DATA: readable by the facility owner, the facility team, admins and service-role functions (claim SMS/voice verification, provider editing, admin moderation). It is NOT public: anon has no column privilege on it, ordinary authenticated seekers have no row policy on this table, and the public projection public_facilities.phone is masked to NULL unless has_active_pro(id).';
+  'Raw facility phone. INTERNAL/AUTHORIZED DATA: readable by the facility owner, the facility team, admins and service-role functions (claim SMS/voice verification, provider editing, admin moderation). It is NOT public: anon cannot select this table at all, ordinary authenticated seekers have no row policy on it, and the public projection public_facilities.phone is masked to NULL unless has_active_pro(id).';

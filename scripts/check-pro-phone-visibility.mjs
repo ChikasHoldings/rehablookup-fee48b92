@@ -55,6 +55,20 @@ const fail = (layer, rule, detail = "") => violations.push({ layer, rule, detail
 // ── 1. DATABASE ─────────────────────────────────────────────────────────────
 // The public projection must mask phone, AND the raw base-table path that
 // makes view-level masking meaningless must be closed. Either alone is a leak.
+//
+// "Closed" means anon cannot address public.facilities AT ALL — no SELECT
+// policy, no table grant, no column grant. An earlier revision of this guard
+// asserted the opposite: it *required* that anon be re-granted "every column
+// except phone", and passed green while the migration published admin_notes,
+// reply_email, verified_phone, claim_owner_id, claim_status and the whole
+// concierge_* block to anonymous PostgREST callers. A deny-list of one over an
+// internal record is not a public boundary, and encoding it as the acceptance
+// criterion made CI complicit. The rule below is the allow-list version: the
+// public directory is public_facilities; facilities is internal.
+//
+// Only the FINAL migration state is judged, exactly as the view check judges
+// the newest public_facilities definition. Historical migrations legitimately
+// contain the grants this contract retires.
 function checkDatabase() {
   const dir = join(ROOT, "supabase", "migrations");
   if (!existsSync(dir)) return fail("database", "supabase/migrations not found");
@@ -87,29 +101,92 @@ function checkDatabase() {
         "anon and any authenticated seeker can bypass the view with `select phone from facilities`",
     );
   } else {
-    if (!/REVOKE SELECT ON public\.facilities FROM anon/i.test(bypassMig.sql)) {
+    const sql = bypassMig.sql;
+
+    if (!/REVOKE SELECT ON public\.facilities FROM anon/i.test(sql)) {
       fail("database", "anon's table-level SELECT on facilities is not revoked", bypassMig.name);
     }
-    if (!/column_name\s*<>\s*'phone'/i.test(bypassMig.sql)) {
-      fail("database", "anon is not re-granted every column EXCEPT phone", bypassMig.name);
+
+    // No anon/public SELECT policy may be re-created on the raw table under
+    // ANY name — `facilities_select_public_anon` was the specific regression,
+    // but a rename would be the same hole.
+    for (const m of sql.matchAll(
+      /CREATE POLICY\s+"?([\w-]+)"?\s+ON\s+public\.facilities\b([\s\S]*?);/gi,
+    )) {
+      const [stmt, policyName] = m;
+      const grantedTo = stmt.match(/\bTO\s+(anon|public)\b/i);
+      const isSelect = /\bFOR\s+SELECT\b/i.test(stmt) || !/\bFOR\s+(INSERT|UPDATE|DELETE|ALL)\b/i.test(stmt);
+      if (grantedTo && isSelect) {
+        fail(
+          "database",
+          `policy ${policyName} re-opens raw facilities SELECT to \`${grantedTo[1]}\` — ` +
+            "anonymous directory reads must go through public_facilities",
+          bypassMig.name,
+        );
+      }
     }
-    const replacement = bypassMig.sql.match(
-      /CREATE POLICY "facilities_select_public_anon"[\s\S]*?;/,
-    );
-    if (replacement && /TO (public|authenticated)\b/.test(replacement[0])) {
+
+    // No table-level or column-level SELECT may be granted back to anon. The
+    // column form is the one that shipped: GRANT SELECT (<every column except
+    // phone>) ON public.facilities TO anon, built dynamically in a DO block.
+    if (/GRANT\s+SELECT\s+ON\s+public\.facilities\s+TO\s+[^;]*\banon\b/i.test(sql)) {
       fail(
         "database",
-        "the replacement facilities policy is not anon-scoped — the bypass was re-created",
+        "table-level SELECT on facilities is granted back to anon",
         bypassMig.name,
       );
     }
-    // The raw number must remain readable by its owner.
-    if (/REVOKE[^;]*FROM authenticated/i.test(bypassMig.sql)) {
+    if (/GRANT\s+SELECT\s*\([^)]*\)\s*ON\s+public\.facilities\s+TO\s+[^;]*\banon\b/i.test(sql)) {
+      fail(
+        "database",
+        "column-level SELECT on facilities is granted back to anon",
+        bypassMig.name,
+      );
+    }
+    // Same statement assembled through format()/EXECUTE, which is how the
+    // "every column except phone" regrant evaded a literal-text scan.
+    if (/GRANT\s+SELECT\s*\(%s\)\s*ON\s+public\.facilities\s+TO\s+anon/i.test(sql)) {
+      fail(
+        "database",
+        "a dynamic GRANT SELECT (...) ON public.facilities TO anon is still assembled — " +
+          "the raw internal record must not be an anonymous API at all",
+        bypassMig.name,
+      );
+    }
+    // The deny-list shape itself. `facilities` carries admin_notes,
+    // reply_email, verified_phone, claim_* and concierge_* columns; excluding
+    // `phone` from a wholesale regrant publishes every one of them.
+    if (/column_name\s*<>\s*'phone'/i.test(sql)) {
+      fail(
+        "database",
+        "the migration still enumerates 'every facilities column except phone' — " +
+          "a one-column deny-list over an internal record is not a public boundary",
+        bypassMig.name,
+      );
+    }
+
+    // The raw number must remain readable by its owner: owner, team and admin
+    // all authenticate as the shared `authenticated` role and are separated by
+    // RLS, so revoking that role's privilege would break providers and admins.
+    if (/REVOKE[^;]*FROM[^;]*\bauthenticated\b/i.test(sql)) {
       fail(
         "database",
         "revoking from `authenticated` would break provider/admin raw phone access",
         bypassMig.name,
       );
+    }
+    if (/REVOKE[^;]*FROM[^;]*\bservice_role\b/i.test(sql)) {
+      fail(
+        "database",
+        "revoking from `service_role` would break the public Edge functions and claim verification",
+        bypassMig.name,
+      );
+    }
+    // Owner / team / admin row policies must survive intact.
+    for (const policy of ["facilities_select_authenticated", "facilities_team_select"]) {
+      if (new RegExp(`DROP POLICY[^;]*${policy}`, "i").test(sql)) {
+        fail("database", `${policy} is dropped — authorized raw access would break`, bypassMig.name);
+      }
     }
   }
 }
@@ -229,6 +306,56 @@ function checkFrontend() {
   }
 }
 
+// ── 4. PUBLIC RAW-TABLE CONSUMERS ───────────────────────────────────────────
+// Once anon loses SELECT on public.facilities, any browser component that
+// still queries the raw table from an anonymous surface goes dark — silently,
+// because most of these reads fail soft. TrustStrip was exactly that: a
+// homepage count query against `facilities`, which is why the migration
+// originally tried to preserve an anon "count-only safety net" over an
+// internal record.
+//
+// So the raw table gets an explicit allow-list. Everything on it reads
+// facilities only for a signed-in user's OWN rows (or is an admin/provider
+// surface); everything else must use public_facilities, get_directory_stats(),
+// or another public projection. A NEW public component reading `facilities`
+// fails here rather than in production.
+const RAW_FACILITY_READ_ALLOWED = [
+  // Admin + provider consoles: authorized raw access via
+  // facilities_select_authenticated / facilities_team_select.
+  "src/components/admin/",
+  "src/components/provider/",
+  "src/pages/admin/",
+  "src/pages/provider/",
+  // Owner-scoped reads — every one filters on the session user's id.
+  "src/hooks/useProviderSearch.ts",
+  "src/hooks/useProviderFacilities.ts",
+  "src/hooks/useProviderData.ts",
+  "src/pages/Login.tsx",
+  "src/pages/ProviderSignup.tsx",
+  // Public page, but the single raw read is an owner existence check that
+  // short-circuits to false for anonymous viewers.
+  "src/pages/CenterProfile.tsx",
+];
+
+function checkPublicRawTableConsumers() {
+  const RAW_READ = /\.from\(\s*["'`]facilities["'`]\s*\)/;
+
+  for (const file of walk(join(ROOT, "src"))) {
+    const rel = relative(ROOT, file).replace(/\\/g, "/");
+    if (!/\.tsx?$/.test(rel)) continue;
+    if (rel.includes("__tests__") || /\.test\.tsx?$/.test(rel)) continue;
+    if (RAW_FACILITY_READ_ALLOWED.some((p) => rel === p || rel.startsWith(p))) continue;
+
+    if (RAW_READ.test(stripJs(readFileSync(file, "utf8")))) {
+      fail(
+        "public-consumer",
+        `${rel} queries the raw \`facilities\` table from a public surface — ` +
+          "anon has no SELECT on it; use public_facilities or a public RPC",
+      );
+    }
+  }
+}
+
 function* walk(dir) {
   if (!existsSync(dir)) return;
   for (const entry of readdirSync(dir)) {
@@ -245,8 +372,11 @@ function main() {
   checkDatabase();
   checkEdge();
   checkFrontend();
+  checkPublicRawTableConsumers();
 
-  console.log("[pro-phone-visibility] checked database, public edge functions, frontend surfaces");
+  console.log(
+    "[pro-phone-visibility] checked database, public edge functions, frontend surfaces, public raw-table consumers",
+  );
 
   if (violations.length === 0) {
     console.log(
@@ -275,4 +405,10 @@ const invokedDirectly =
 
 if (invokedDirectly) main();
 
-export { checkDatabase, checkEdge, checkFrontend, violations };
+export {
+  checkDatabase,
+  checkEdge,
+  checkFrontend,
+  checkPublicRawTableConsumers,
+  violations,
+};

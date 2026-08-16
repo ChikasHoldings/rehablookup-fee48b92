@@ -104,7 +104,7 @@ describe("DATABASE — public_facilities gates phone by has_active_pro", () => {
 });
 
 // ───────────────────────────────────────────────────────────────────────────
-describe("DATABASE — the raw base-table bypass is closed", () => {
+describe("DATABASE — anon loses raw facilities access entirely", () => {
   const mig = latestMigrationMatching(/DROP POLICY IF EXISTS "facilities_select_public"/);
   const body = stripSqlComments(mig.sql);
 
@@ -112,25 +112,86 @@ describe("DATABASE — the raw base-table bypass is closed", () => {
     expect(body).toMatch(/DROP POLICY IF EXISTS "facilities_select_public" ON public\.facilities/);
   });
 
-  it("leaves ordinary authenticated seekers with no raw-row policy at all", () => {
-    // The replacement policy must be scoped TO anon. If it were TO public (or
-    // TO authenticated) the bypass would simply be re-created under a new name.
-    const replacement = body.match(
-      /CREATE POLICY "facilities_select_public_anon"[\s\S]*?USING \([^;]*\);/,
-    );
-    expect(replacement, "expected an anon-scoped replacement policy").toBeTruthy();
-    expect(replacement![0]).toMatch(/TO anon\b/);
-    expect(replacement![0]).not.toMatch(/TO public\b/);
-    expect(replacement![0]).not.toMatch(/TO authenticated\b/);
+  it("creates no replacement anon/public SELECT policy under any name", () => {
+    // The first cut of this migration replaced the TO public policy with
+    // `facilities_select_public_anon` TO anon and called that a safety net. It
+    // was not a safety net; it kept the internal provider record on the
+    // anonymous Data API. Nothing anon-scoped may take its place, and a rename
+    // must not slip through, so the assertion is over every CREATE POLICY on
+    // the table rather than over one policy name.
+    expect(body).toMatch(/DROP POLICY IF EXISTS "facilities_select_public_anon"/);
+
+    const created = [
+      ...body.matchAll(/CREATE POLICY\s+"?([\w-]+)"?\s+ON\s+public\.facilities\b([\s\S]*?);/gi),
+    ];
+    for (const stmt of created) {
+      expect(
+        stmt[0],
+        `policy ${stmt[1]} re-opens raw facilities to anonymous callers`,
+      ).not.toMatch(/\bTO\s+(anon|public)\b/i);
+    }
   });
 
-  it("revokes anon's column privilege on phone specifically", () => {
-    // Table-level SELECT implies every column, so it must be revoked wholesale
-    // and re-granted per column. This is a privilege boundary, which RLS
-    // cannot be tricked past.
+  it("revokes anon's SELECT and grants nothing back", () => {
     expect(body).toMatch(/REVOKE SELECT ON public\.facilities FROM anon/i);
-    expect(body).toMatch(/GRANT SELECT \(%s\) ON public\.facilities TO anon/i);
-    expect(body).toMatch(/column_name\s*<>\s*'phone'/i);
+
+    // Neither form may return: table-level, column-level, or a column list
+    // assembled dynamically through format()/EXECUTE.
+    expect(body).not.toMatch(/GRANT\s+SELECT\s+ON\s+public\.facilities\s+TO\s+[^;]*\banon\b/i);
+    expect(body).not.toMatch(
+      /GRANT\s+SELECT\s*\([^)]*\)\s*ON\s+public\.facilities\s+TO\s+[^;]*\banon\b/i,
+    );
+    expect(body).not.toMatch(/GRANT\s+SELECT\s*\(%s\)\s*ON\s+public\.facilities\s+TO\s+anon/i);
+  });
+
+  it("asserts the closed boundary at migration time instead of trusting the DDL", () => {
+    // Fail-closed post-condition: a stray historical column grant, or a
+    // re-grant from a migration applied out of order, aborts the migration
+    // rather than shipping a boundary that only reads as closed.
+    expect(body).toMatch(/has_table_privilege\('anon',\s*'public\.facilities',\s*'SELECT'\)/i);
+    expect(body).toMatch(/has_column_privilege\('anon'/i);
+    expect(body).toMatch(/RAISE EXCEPTION/i);
+  });
+
+  it("does not gate the public directory on a per-column deny-list", () => {
+    // THE REGRESSION THIS FILE EXISTS FOR.
+    //
+    // public.facilities is the internal provider record, not a directory
+    // table. Beyond `phone` it carries the columns below, all of which a
+    // "grant every column except phone" regrant would have published to
+    // anonymous PostgREST callers. The fix is not to extend the deny-list —
+    // it is that anon cannot select the table at all, so no enumeration of
+    // internal columns is load-bearing and a column added next quarter is
+    // public only if someone adds it to a public projection.
+    const INTERNAL_COLUMNS = [
+      "admin_notes",
+      "reply_email",
+      "verified_phone",
+      "claim_owner_id",
+      "claim_status",
+      "concierge_admissions_email",
+      "concierge_admissions_phone",
+      "concierge_notes",
+    ];
+
+    expect(body).not.toMatch(/column_name\s*<>\s*'phone'/i);
+    expect(body).not.toMatch(/information_schema\.columns[\s\S]{0,400}TO anon/i);
+
+    // None of these may be reachable anonymously — neither by an explicit
+    // anon grant in the migration, nor by appearing in the public projection.
+    const viewMig = latestMigrationMatching(
+      /CREATE OR REPLACE VIEW public\.public_facilities/i,
+    );
+    const viewBody = stripSqlComments(viewMig.sql);
+    const publicView = viewBody.slice(
+      viewBody.search(/CREATE OR REPLACE VIEW public\.public_facilities/i),
+      viewBody.search(/COMMENT ON VIEW public\.public_facilities/i),
+    );
+    for (const col of INTERNAL_COLUMNS) {
+      expect(publicView, `${col} must not be projected publicly`).not.toMatch(
+        new RegExp(`\\b${col}\\b`, "i"),
+      );
+    }
   });
 
   it("keeps owner, facility-team and admin raw access untouched", () => {
@@ -139,8 +200,23 @@ describe("DATABASE — the raw base-table bypass is closed", () => {
     // moderation, and the claim verification flows.
     expect(body).not.toMatch(/DROP POLICY[^;]*facilities_select_authenticated/i);
     expect(body).not.toMatch(/DROP POLICY[^;]*facilities_team_select/i);
-    expect(body).not.toMatch(/REVOKE[^;]*FROM authenticated/i);
-    expect(body).not.toMatch(/REVOKE[^;]*FROM service_role/i);
+    expect(body).not.toMatch(/REVOKE[^;]*FROM[^;]*\bauthenticated\b/i);
+    expect(body).not.toMatch(/REVOKE[^;]*FROM[^;]*\bservice_role\b/i);
+  });
+
+  it("adds no broad authenticated directory policy in their place", () => {
+    // Ordinary authenticated seekers must fail RLS because they satisfy
+    // neither the owner/admin nor the team predicate. Handing `authenticated`
+    // an approved-row policy to "keep the app working" would recreate the
+    // bypass for every signed-in user.
+    const created = [
+      ...body.matchAll(/CREATE POLICY\s+"?([\w-]+)"?\s+ON\s+public\.facilities\b([\s\S]*?);/gi),
+    ];
+    for (const stmt of created) {
+      expect(stmt[0], `policy ${stmt[1]} grants blanket authenticated access`).not.toMatch(
+        /status\s*=\s*'approved'/i,
+      );
+    }
   });
 
   it("repoints dependent public projections off the base table", () => {
@@ -171,6 +247,34 @@ describe("DATABASE — the raw base-table bypass is closed", () => {
     expect(body).not.toMatch(/drop\s+column/i);
     expect(body).not.toMatch(/delete\s+from/i);
     expect(body).not.toMatch(/update\s+public\.facilities\s+set\s+phone/i);
+  });
+});
+
+// ───────────────────────────────────────────────────────────────────────────
+describe("PUBLIC BROWSER — no anonymous surface reads the raw table", () => {
+  it("TrustStrip counts through the public directory RPC, not `facilities`", () => {
+    // TrustStrip was the last anonymous consumer of the raw base table, and
+    // the reason the migration first tried to keep a "count-only" anon grant.
+    const code = stripJsComments(read("src/components/home/TrustStrip.tsx"));
+    expect(code).not.toMatch(/\.from\(\s*["'`]facilities["'`]\s*\)/);
+    expect(code).toMatch(/useDirectoryStats/);
+  });
+
+  it("does not restate the directory-wide 'verified' claim the data disproves", () => {
+    // `facilities.verified` is true for 5 rows out of 3,794 on production, and
+    // `public_facilities.verified` is itself Pro-gated (currently 0). Neither
+    // supports "verified/vetted treatment centers" as a directory-size label.
+    const code = read("src/components/home/TrustStrip.tsx");
+    const jsx = code.slice(code.indexOf("const items"));
+    expect(jsx).not.toMatch(/Vetted treatment centers/i);
+    expect(jsx).not.toMatch(/\.eq\(\s*["'`]verified["'`]/);
+  });
+
+  it("does not reintroduce the retired matching / advisor promises", () => {
+    const code = read("src/components/home/TrustStrip.tsx");
+    const jsx = code.slice(code.indexOf("const items"));
+    expect(jsx).not.toMatch(/match time/i);
+    expect(jsx).not.toMatch(/advisor/i);
   });
 });
 
