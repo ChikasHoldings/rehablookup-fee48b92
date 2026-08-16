@@ -3,7 +3,7 @@ import headerLogo from "@/assets/logo-header.webp";
 import { Link, useLocation } from "react-router-dom";
 import { PrefetchLink } from "@/components/PrefetchLink";
 import { Button } from "@/components/ui/button";
-import { Menu, X, ChevronRight, MapPin, BookOpen, Building2, User, ChevronDown, Search, Globe, ArrowRight } from "lucide-react";
+import { Menu, X, ChevronRight, MapPin, BookOpen, Building2, User, ChevronDown, Search, Shield, Scale, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -27,10 +27,6 @@ const ResourcesMegaMenu = lazy(() =>
   import("@/components/mega-menus/ResourcesMegaMenu").then((m) => ({ default: m.ResourcesMegaMenu })));
 const ResourcesMegaMenuMobile = lazy(() =>
   import("@/components/mega-menus/ResourcesMegaMenu").then((m) => ({ default: m.ResourcesMegaMenuMobile })));
-const InternationalMegaMenu = lazy(() =>
-  import("@/components/mega-menus/InternationalMegaMenu").then((m) => ({ default: m.InternationalMegaMenu })));
-const InternationalMegaMenuMobile = lazy(() =>
-  import("@/components/mega-menus/InternationalMegaMenu").then((m) => ({ default: m.InternationalMegaMenuMobile })));
 const ProviderMegaMenu = lazy(() =>
   import("@/components/provider-guides/ProviderMegaMenu").then((m) => ({ default: m.ProviderMegaMenu })));
 const ProviderMegaMenuMobile = lazy(() =>
@@ -48,48 +44,78 @@ export interface HeaderProps {
   variant?: "default" | "provider";
 }
 
-// Nav items with mega-menus
-type MegaMenuItem = {
+// ─── PRIMARY PUBLIC NAVIGATION ────────────────────────────────────────────────
+//
+// One ordered list drives desktop, the tablet "More" dropdown, and the mobile
+// panel, so the three viewports can never drift into different information
+// architectures. Each entry is either a mega-menu ("menu") or a direct link to
+// a canonical destination ("link").
+//
+// Directory-model rules for anything added here:
+//   • link to the CANONICAL route, never a redirect source
+//     (e.g. /search-results, not /rehab-centers)
+//   • no placement / matching / concierge / lead-broker destinations or copy
+// Both are enforced by src/__tests__/public-navigation-contract.test.tsx.
+type PrimaryNavItem = {
   id: string;
   label: string;
   isActive: (path: string) => boolean;
-};
+} & ({ kind: "menu" } | { kind: "link"; href: string });
 
-const megaMenuItems: MegaMenuItem[] = [
+const primaryNav: PrimaryNavItem[] = [
   {
+    kind: "menu",
     id: "find-treatment",
-    label: "Find Rehab",
-    isActive: (p) => p === "/search-results" || p.startsWith("/rehab-centers") || p.startsWith("/treatment-types") || p.includes("-near-me"),
+    // Single consumer-facing entry point for the directory. The old header
+    // carried BOTH a "Find Rehab" mega-menu and a standalone "Search Centers"
+    // link for the same job; the mega-menu already contains search, treatment
+    // types, states and Near Me pages, so the duplicate top-level item is gone.
+    label: "Find Treatment",
+    isActive: (p) => p === "/search-results" || p.startsWith("/rehab-centers") || p.startsWith("/treatment-types") || p === "/locations" || p.includes("-near-me"),
   },
   {
+    kind: "link",
+    id: "insurance",
+    href: "/insurance",
+    label: "Insurance",
+    isActive: (p) => p === "/insurance" || p.startsWith("/insurance/"),
+  },
+  {
+    kind: "menu",
     id: "resources",
     label: "Resources",
-    isActive: (p) => p.startsWith("/resources") || p === "/insurance" || p === "/cost-estimator" || p === "/how-it-works" || p === "/faq",
+    isActive: (p) => p.startsWith("/resources") || p === "/cost-estimator" || p === "/faq",
   },
   {
-    id: "international",
-    label: "US Treatment",
-    isActive: (p) => p.startsWith("/international") || p.startsWith("/us-rehab"),
+    kind: "link",
+    id: "compare",
+    href: "/compare",
+    label: "Compare",
+    isActive: (p) => p === "/compare",
   },
   {
+    kind: "menu",
     id: "for-providers",
     label: "For Providers",
-    isActive: (p) => p.startsWith("/for-providers") || p.startsWith("/provider-guides") || p.startsWith("/providers/resources"),
+    isActive: (p) => p.startsWith("/for-providers") || p === "/provider-resources" || p === "/provider-faq" || p === "/provider-support" || p.startsWith("/provider-guides"),
   },
 ];
 
-// Standalone nav links (no mega-menu)
-const standaloneLinks: NavLink[] = [
-  { href: "/search-results", label: "Search Centers" },
-];
+// Destination for a "menu" item when it has to be rendered as a plain link
+// (tablet "More" dropdown). Canonical hub page for each mega-menu.
+const megaMenuHubHref: Record<string, string> = {
+  "find-treatment": "/search-results",
+  "resources": "/resources",
+  "for-providers": "/for-providers",
+};
 
 // Icon mapping for mobile nav
 const navIcons: Record<string, React.ElementType> = {
   "find-treatment": MapPin,
+  "insurance": Shield,
   "resources": BookOpen,
-  "international": Globe,
+  "compare": Scale,
   "for-providers": Building2,
-  "/search-results": Search,
 };
 
 // Which mega-menu component to render
@@ -97,7 +123,6 @@ function MegaMenuContent({ id, onNavigate }: { id: string; onNavigate: () => voi
   switch (id) {
     case "find-treatment": return <FindTreatmentMegaMenu onNavigate={onNavigate} />;
     case "resources": return <ResourcesMegaMenu onNavigate={onNavigate} />;
-    case "international": return <InternationalMegaMenu onNavigate={onNavigate} />;
     case "for-providers": return <ProviderMegaMenu onNavigate={onNavigate} />;
     default: return null;
   }
@@ -107,7 +132,6 @@ function MegaMenuMobileContent({ id, onNavigate }: { id: string; onNavigate: () 
   switch (id) {
     case "find-treatment": return <FindTreatmentMegaMenuMobile onNavigate={onNavigate} />;
     case "resources": return <ResourcesMegaMenuMobile onNavigate={onNavigate} />;
-    case "international": return <InternationalMegaMenuMobile onNavigate={onNavigate} />;
     case "for-providers": return <ProviderMegaMenuMobile onNavigate={onNavigate} />;
     default: return null;
   }
@@ -167,18 +191,16 @@ export function Header({
     setOpenMegaMenu(null);
   }, [location.pathname]);
 
-  // Items visible on lg+
-  const visibleOnLg = megaMenuItems;
-  // Items in "More" dropdown on md (tablet)
-  const tabletHiddenItems = megaMenuItems.slice(1); // hide Resources, International, For Providers on tablet
+  // Find Treatment stays visible from md up; everything after it collapses into
+  // the tablet "More" dropdown until lg. Same items, same order, either way.
+  const [primaryLead, ...tabletHiddenItems] = primaryNav;
 
   const getDesktopMegaMenuStyle = (menuId: string): CSSProperties => {
     const gutter = 16;
     const menuWidths: Record<string, number> = {
       "find-treatment": 740,
       "resources": 680,
-      "international": 700,
-      "for-providers": 720,
+      "for-providers": 560,
     };
 
     if (typeof window === "undefined") {
@@ -255,7 +277,7 @@ export function Header({
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-0.5 lg:gap-0">
-            {/* Find Rehab mega-menu - always visible on md+ */}
+            {/* Find Treatment mega-menu - always visible on md+ */}
             <div
               className="relative"
               data-nav-menu="find-treatment"
@@ -273,12 +295,12 @@ export function Header({
                   "flex items-center h-[68px] gap-1 px-2.5 lg:px-3 text-[14px] lg:text-[15px] font-semibold transition-colors whitespace-nowrap border-b-2",
                   openMegaMenu === "find-treatment"
                     ? "text-foreground border-accent"
-                    : megaMenuItems[0].isActive(location.pathname)
+                    : primaryLead.isActive(location.pathname)
                       ? "text-foreground border-transparent"
                       : "text-muted-foreground hover:text-foreground border-transparent"
                 )}
               >
-                Find Rehab
+                {primaryLead.label}
                 <ChevronDown className={cn("h-3.5 w-3.5 transition-transform duration-200", openMegaMenu === "find-treatment" && "rotate-180")} />
               </button>
               {openMegaMenu === "find-treatment" && (
@@ -302,59 +324,60 @@ export function Header({
               )}
             </div>
 
-            {/* Search Centers - standalone directory link */}
-            {standaloneLinks.map((link) => (
-              <PrefetchLink
-                key={link.href}
-                to={link.href}
-                className={cn(
-                  "flex items-center h-[68px] px-2.5 lg:px-3 text-[14px] lg:text-[15px] font-semibold transition-colors whitespace-nowrap border-b-2 border-transparent",
-                  location.pathname === link.href ? "text-foreground border-accent" : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {link.label}
-              </PrefetchLink>
-            ))}
-
-            {/* Resources, International, For Providers - visible on lg+ */}
-            {megaMenuItems.slice(1).map((item) => (
-              <div
-                key={item.id}
-                className="hidden lg:block relative"
-                data-nav-menu={item.id}
-                onMouseEnter={() => {
-                  if (megaMenuTimeoutRef.current) clearTimeout(megaMenuTimeoutRef.current);
-                  setOpenMegaMenu(item.id);
-                }}
-                onMouseLeave={() => {
-                  megaMenuTimeoutRef.current = setTimeout(() => setOpenMegaMenu(null), 150);
-                }}
-              >
-                <button
-                  onClick={() => setOpenMegaMenu(openMegaMenu === item.id ? null : item.id)}
+            {/* Insurance, Resources, Compare, For Providers — visible on lg+,
+                collapsed into "More" on tablet. Rendered from the shared
+                primaryNav order so all three viewports agree. */}
+            {tabletHiddenItems.map((item) => (
+              item.kind === "link" ? (
+                <PrefetchLink
+                  key={item.id}
+                  to={item.href}
                   className={cn(
-                    "flex items-center h-[68px] gap-1 px-3 text-[15px] font-semibold transition-colors whitespace-nowrap border-b-2",
-                    openMegaMenu === item.id
-                      ? "text-foreground border-accent"
-                      : item.isActive(location.pathname)
-                        ? "text-foreground border-transparent"
-                        : "text-muted-foreground hover:text-foreground border-transparent"
+                    "hidden lg:flex items-center h-[68px] px-3 text-[15px] font-semibold transition-colors whitespace-nowrap border-b-2 border-transparent",
+                    item.isActive(location.pathname) ? "text-foreground border-accent" : "text-muted-foreground hover:text-foreground"
                   )}
                 >
                   {item.label}
-                  <ChevronDown className={cn("h-3.5 w-3.5 transition-transform duration-200", openMegaMenu === item.id && "rotate-180")} />
-                </button>
-                {openMegaMenu === item.id && (
-                  <div
-                    className="fixed mt-0 z-50 bg-popover border border-border rounded-xl shadow-xl shadow-foreground/[0.06] animate-in fade-in-0 slide-in-from-top-1 duration-150"
-                    style={getDesktopMegaMenuStyle(item.id)}
+                </PrefetchLink>
+              ) : (
+                <div
+                  key={item.id}
+                  className="hidden lg:block relative"
+                  data-nav-menu={item.id}
+                  onMouseEnter={() => {
+                    if (megaMenuTimeoutRef.current) clearTimeout(megaMenuTimeoutRef.current);
+                    setOpenMegaMenu(item.id);
+                  }}
+                  onMouseLeave={() => {
+                    megaMenuTimeoutRef.current = setTimeout(() => setOpenMegaMenu(null), 150);
+                  }}
+                >
+                  <button
+                    onClick={() => setOpenMegaMenu(openMegaMenu === item.id ? null : item.id)}
+                    className={cn(
+                      "flex items-center h-[68px] gap-1 px-3 text-[15px] font-semibold transition-colors whitespace-nowrap border-b-2",
+                      openMegaMenu === item.id
+                        ? "text-foreground border-accent"
+                        : item.isActive(location.pathname)
+                          ? "text-foreground border-transparent"
+                          : "text-muted-foreground hover:text-foreground border-transparent"
+                    )}
                   >
-                    <Suspense fallback={<div className="p-6 text-xs text-muted-foreground">Loading…</div>}>
-                      <MegaMenuContent id={item.id} onNavigate={() => setOpenMegaMenu(null)} />
-                    </Suspense>
-                  </div>
-                )}
-              </div>
+                    {item.label}
+                    <ChevronDown className={cn("h-3.5 w-3.5 transition-transform duration-200", openMegaMenu === item.id && "rotate-180")} />
+                  </button>
+                  {openMegaMenu === item.id && (
+                    <div
+                      className="fixed mt-0 z-50 bg-popover border border-border rounded-xl shadow-xl shadow-foreground/[0.06] animate-in fade-in-0 slide-in-from-top-1 duration-150"
+                      style={getDesktopMegaMenuStyle(item.id)}
+                    >
+                      <Suspense fallback={<div className="p-6 text-xs text-muted-foreground">Loading…</div>}>
+                        <MegaMenuContent id={item.id} onNavigate={() => setOpenMegaMenu(null)} />
+                      </Suspense>
+                    </div>
+                  )}
+                </div>
+              )
             ))}
 
             {/* "More" dropdown on tablet */}
@@ -366,29 +389,19 @@ export function Header({
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48 bg-popover border border-border shadow-lg z-50">
-                {tabletHiddenItems.map((item) => {
-                  const linkMap: Record<string, string> = {
-                    "resources": "/resources",
-                    "international": "/international",
-                    "for-providers": "/for-providers",
-                  };
-                  return (
-                    <DropdownMenuItem key={item.id} asChild>
-                      <PrefetchLink
-                        to={linkMap[item.id] || "/"}
-                        className="w-full cursor-pointer"
-                        onClick={() => setMoreDropdownOpen(false)}
-                      >
-                        {item.label}
-                      </PrefetchLink>
-                    </DropdownMenuItem>
-                  );
-                })}
-                <DropdownMenuItem asChild>
-                  <PrefetchLink to="/search-results" className="w-full cursor-pointer" onClick={() => setMoreDropdownOpen(false)}>
-                    Search Centers
-                  </PrefetchLink>
-                </DropdownMenuItem>
+                {/* Same items, same order as lg+ — a mega-menu degrades to its
+                    canonical hub page rather than disappearing at this width. */}
+                {tabletHiddenItems.map((item) => (
+                  <DropdownMenuItem key={item.id} asChild>
+                    <PrefetchLink
+                      to={item.kind === "link" ? item.href : megaMenuHubHref[item.id]}
+                      className="w-full cursor-pointer"
+                      onClick={() => setMoreDropdownOpen(false)}
+                    >
+                      {item.label}
+                    </PrefetchLink>
+                  </DropdownMenuItem>
+                ))}
               </DropdownMenuContent>
             </DropdownMenu>
           </nav>
@@ -523,11 +536,36 @@ export function Header({
           <div className="flex-1 overflow-y-auto overscroll-contain">
             <div className="px-4 py-3">
 
-              {/* Navigation Items */}
+              {/* Navigation Items — same primaryNav order as desktop/tablet.
+                  Mega-menus render as accordions, direct links as rows. */}
               <div className="space-y-1">
-                {megaMenuItems.map((item) => {
+                {primaryNav.map((item) => {
                   const Icon = navIcons[item.id] || ChevronRight;
                   const isExpanded = mobileExpandedMenu === item.id;
+                  const isActive = item.isActive(location.pathname);
+
+                  if (item.kind === "link") {
+                    return (
+                      <PrefetchLink
+                        key={item.id}
+                        to={item.href}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={cn(
+                          "flex items-center gap-3 rounded-xl px-3 py-3 text-[15px] font-semibold transition-all duration-200 active:scale-[0.98]",
+                          isActive ? "bg-accent/10 text-accent" : "text-foreground hover:bg-muted/40"
+                        )}
+                      >
+                        <div className={cn(
+                          "h-9 w-9 rounded-lg flex items-center justify-center shrink-0",
+                          isActive ? "bg-accent/15" : "bg-muted"
+                        )}>
+                          <Icon className={cn("h-[18px] w-[18px]", isActive ? "text-accent" : "text-muted-foreground")} />
+                        </div>
+                        <span className="flex-1 text-left">{item.label}</span>
+                        <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                      </PrefetchLink>
+                    );
+                  }
 
                   return (
                     <div key={item.id}>
@@ -537,7 +575,7 @@ export function Header({
                           "w-full flex items-center justify-between gap-3 rounded-xl px-3 py-3 text-[15px] font-semibold transition-all duration-200 active:scale-[0.98]",
                           isExpanded
                             ? "bg-muted/60 text-foreground"
-                            : item.isActive(location.pathname)
+                            : isActive
                               ? "text-accent"
                               : "text-foreground hover:bg-muted/40"
                         )}
@@ -545,11 +583,11 @@ export function Header({
                         <div className="flex items-center gap-3">
                           <div className={cn(
                             "h-9 w-9 rounded-lg flex items-center justify-center shrink-0 transition-colors",
-                            isExpanded ? "bg-accent/15" : item.isActive(location.pathname) ? "bg-accent/10" : "bg-muted"
+                            isExpanded ? "bg-accent/15" : isActive ? "bg-accent/10" : "bg-muted"
                           )}>
                             <Icon className={cn(
                               "h-[18px] w-[18px]",
-                              isExpanded || item.isActive(location.pathname) ? "text-accent" : "text-muted-foreground"
+                              isExpanded || isActive ? "text-accent" : "text-muted-foreground"
                             )} />
                           </div>
                           <span>{item.label}</span>
@@ -572,36 +610,6 @@ export function Header({
                         </div>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-
-              {/* Divider */}
-              <div className="my-3 mx-1 border-t border-border/40" />
-
-              {/* Standalone Links */}
-              <div className="space-y-1">
-                {standaloneLinks.map((link) => {
-                  const Icon = navIcons[link.href] || ChevronRight;
-                  return (
-                    <PrefetchLink
-                      key={link.href}
-                      to={link.href}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={cn(
-                        "flex items-center gap-3 rounded-xl px-3 py-3 text-[15px] font-semibold transition-all duration-200 active:scale-[0.98]",
-                        location.pathname === link.href ? "bg-accent/10 text-accent" : "text-foreground hover:bg-muted/40"
-                      )}
-                    >
-                      <div className={cn(
-                        "h-9 w-9 rounded-lg flex items-center justify-center shrink-0",
-                        location.pathname === link.href ? "bg-accent/15" : "bg-muted"
-                      )}>
-                        <Icon className={cn("h-[18px] w-[18px]", location.pathname === link.href ? "text-accent" : "text-muted-foreground")} />
-                      </div>
-                      <span className="flex-1">{link.label}</span>
-                      <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
-                    </PrefetchLink>
                   );
                 })}
               </div>

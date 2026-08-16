@@ -68,6 +68,24 @@ if (!currentResourcesCol) {
   process.exit(2);
 }
 
+// Whole-block header nav and footer grid. The pre-merge public navigation
+// cutover restructured both around the directory model, and every change is a
+// destination change rather than a copy tweak, so replacing the blocks
+// wholesale is both simpler and safer than a per-anchor list.
+const currentPrimaryNav = currentHeader.match(/<nav class="rl-nav"[\s\S]*?<\/nav>/)?.[0];
+if (!currentPrimaryNav) {
+  console.error("[sync-prerendered-shell] could not locate the primary nav in seoHeader()");
+  process.exit(2);
+}
+
+const currentFooterGrid = currentFooter.match(
+  /<div class="rl-footer-grid">[\s\S]*?<\/ul><\/div>\n      <\/div>/,
+)?.[0];
+if (!currentFooterGrid) {
+  console.error("[sync-prerendered-shell] could not locate the footer grid in seoFooter()");
+  process.exit(2);
+}
+
 const REPLACEMENTS = [
   {
     // RehabLookup's own number was labelled "Call our 24/7 helpline" /
@@ -95,6 +113,63 @@ const REPLACEMENTS = [
     name: "footer Resources column (retired Free Concierge link)",
     from: `          <li><a href="/concierge">Free Concierge</a></li>`,
     to: currentResourcesCol.match(/          <li><a href="\/compare">Compare Facilities<\/a><\/li>/)?.[0],
+  },
+  {
+    // Pre-merge public navigation cutover. The crawler header pointed
+    // "Find Treatment" at /rehab-centers — a 301 source, redirected to
+    // /search-results — and used a single treatment-type / single-carrier page
+    // as the "Treatment Types" / "Insurance" hub. Now: canonical hubs only,
+    // plus Compare, matching the SPA's primary nav.
+    name: "static header primary nav (redirect source + non-hub destinations)",
+    from: `<nav class="rl-nav" aria-label="Primary">
+        <a href="/rehab-centers">Find Treatment</a>
+        <a href="/treatment-types/drug-addiction-treatment">Treatment Types</a>
+        <a href="/insurance/aetna-rehab">Insurance</a>
+        <a href="/resources">Resources</a>
+        <a href="/for-providers">For Providers</a>
+      </nav>`,
+    to: currentPrimaryNav,
+  },
+  {
+    // Same cutover, footer half. Fixes three bad destinations at once:
+    // /rehab-centers (301 → /search-results), /resources/signs-of-addiction
+    // (301 → /resources/youth-addiction-warning-signs) and
+    // /resources/insurance-coverage-guide (301 →
+    // /resources/insurance-appeal-rehab-denial). Run AFTER the Resources-column
+    // replacement above so a page still carrying the /concierge <li> is
+    // normalized to the current column shape first and can match here.
+    name: "static footer grid (redirect-source destinations)",
+    from: `<div class="rl-footer-grid">
+        <div class="rl-footer-col"><h3>Find Treatment</h3><ul>
+          <li><a href="/rehab-centers">Browse Centers</a></li>
+          <li><a href="/drug-rehab-near-me">Drug Rehab Near Me</a></li>
+          <li><a href="/alcohol-rehab-near-me">Alcohol Rehab Near Me</a></li>
+          <li><a href="/detox-near-me">Detox Centers</a></li>
+          <li><a href="/luxury-rehab-near-me">Luxury Rehab</a></li>
+        </ul></div>
+        <div class="rl-footer-col"><h3>Insurance</h3><ul>
+          <li><a href="/insurance/aetna-rehab">Aetna</a></li>
+          <li><a href="/insurance/bcbs-treatment">Blue Cross Blue Shield</a></li>
+          <li><a href="/insurance/cigna-rehab">Cigna</a></li>
+          <li><a href="/insurance/united-healthcare-rehab">United Healthcare</a></li>
+          <li><a href="/insurance/medicaid-rehab">Medicaid</a></li>
+        </ul></div>
+        <div class="rl-footer-col"><h3>Resources</h3><ul>
+          <li><a href="/resources">All Articles</a></li>
+          <li><a href="/resources/signs-of-addiction">Signs of Addiction</a></li>
+          <li><a href="/resources/insurance-coverage-guide">Insurance Guide</a></li>
+          <li><a href="/resources/intervention-guide-how-to-plan">Intervention Guide</a></li>
+          <li><a href="/compare">Compare Facilities</a></li>
+        </ul></div>
+        <div class="rl-footer-col"><h3>Company</h3><ul>
+          <li><a href="/about">About Us</a></li>
+          <li><a href="/contact">Contact</a></li>
+          <li><a href="/for-providers">For Providers</a></li>
+          <li><a href="/editorial-policy">Editorial Policy</a></li>
+          <li><a href="/medical-disclaimer">Medical Disclaimer</a></li>
+        </ul></div>
+      </div>`,
+    to: currentFooterGrid,
   },
 ];
 

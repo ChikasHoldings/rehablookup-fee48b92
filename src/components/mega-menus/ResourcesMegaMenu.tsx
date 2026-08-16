@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   BookOpen, ArrowRight, Shield, DollarSign, HelpCircle, FileText,
-  Sparkles, Calculator, Heart, Info, ChevronRight, Layers,
+  Sparkles, Calculator, Heart, ChevronRight, Layers,
 } from "lucide-react";
 import { ALL_BLOG_CATEGORIES } from "@/data/blogCategories";
 
@@ -32,12 +32,24 @@ const guides = [
   { href: "/resources/how-to-find-good-rehab", label: "Choosing a Program", desc: "15 questions to ask first", icon: BookOpen },
 ];
 
+// Directory-model rules for this list:
+//
+//   • No RehabLookup-operated service offers. "Verify Insurance (Free) — Free
+//     VOB by our care team" (/insurance-verification) was removed here: the
+//     directory does not run benefits verification, facilities' admissions
+//     teams do. The legacy page itself is untouched and still routed; it is
+//     simply no longer marketed from global navigation.
+//   • No matching/placement framing. "How It Works — Our matching process"
+//     (/how-it-works) was removed for the same reason. That page still carries
+//     specialist/24-7 operational copy of its own, so it is deliberately
+//     unlinked from global nav until it gets a scoped content pass (tracked in
+//     docs/directory-cutover-premerge-public-navigation.md).
+//   • Insurance is now a top-level nav item; the hub stays here because the
+//     carrier index is genuinely a resource, not a duplicate of the nav entry.
 const tools = [
-  { href: "/insurance-verification", label: "Verify Insurance (Free)", desc: "Free VOB by our care team", icon: Shield },
   { href: "/cost-estimator", label: "Cost Estimator", desc: "Get instant estimates", icon: Calculator },
   { href: "/insurance", label: "Insurance Hub", desc: "Coverage by carrier", icon: Shield },
   { href: "/faq", label: "FAQ", desc: "Common questions", icon: HelpCircle },
-  { href: "/how-it-works", label: "How It Works", desc: "Our matching process", icon: Info },
 ];
 
 export function ResourcesMegaMenu({ onNavigate }: MegaMenuProps) {
@@ -99,8 +111,8 @@ export function ResourcesMegaMenu({ onNavigate }: MegaMenuProps) {
         <div className="w-[220px] px-4 py-4">
           <p className="text-[10px] font-bold text-accent uppercase tracking-[0.18em] px-1 mb-2.5 flex items-center gap-1.5">
             <Calculator className="h-3 w-3 text-accent" />
-            Interactive Tools
-            <span className="ml-auto text-[10px] font-semibold text-foreground/40">5 tools</span>
+            Tools & Answers
+            <span className="ml-auto text-[10px] font-semibold text-foreground/40">{tools.length} tools</span>
           </p>
           <div className="space-y-0">
             {tools.map((tool) => (
@@ -183,11 +195,11 @@ export function ResourcesMegaMenuMobile({ onNavigate }: MegaMenuProps) {
         </div>
       </div>
 
-      {/* Interactive Tools */}
+      {/* Tools & Answers */}
       <div className="border-t border-border/30 pt-2 mx-2">
         <p className="text-xs font-bold text-muted-foreground/70 uppercase tracking-[0.15em] px-1 mb-1.5 flex items-center gap-1.5">
           <Calculator className="h-3.5 w-3.5 text-accent" />
-          Tools
+          Tools & Answers
         </p>
         {tools.map((tool) => (
           <PrefetchLink key={tool.href} to={tool.href} onClick={onNavigate}

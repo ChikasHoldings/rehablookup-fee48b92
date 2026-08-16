@@ -1,7 +1,7 @@
 import { forwardRef, memo, SVGProps, useState, useCallback } from "react";
 import logoDarkBg from "@/assets/logo-dark-bg.webp";
 import { Link } from "react-router-dom";
-import { Mail, ChevronDown, ArrowRight, Globe, Heart, Phone, Shield, Star } from "lucide-react";
+import { Mail, ChevronDown, ArrowRight, Heart, MapPin, Scale } from "lucide-react";
 
 // ─── TYPES ─────────────────────────────────────────────────────────────────────
 
@@ -19,64 +19,51 @@ interface FooterSection {
 
 // ─── LINK DATA ─────────────────────────────────────────────────────────────────
 
-const locationLinks: FooterLink[] = [
-  { name: "California", path: "/rehab-centers/california", badge: "Popular" },
-  { name: "Florida", path: "/rehab-centers/florida", badge: "Popular" },
+// ─── FOOTER IA ─────────────────────────────────────────────────────────────────
+//
+// Five sections, mirroring the header's directory jobs. Rules for anything
+// added here (enforced by src/__tests__/public-navigation-contract.test.tsx):
+//
+//   • canonical destinations only — never a redirect source
+//     (/search-results, not /rehab-centers; /provider-resources, not
+//     /providers/resources)
+//   • no retired placement / matching / concierge / VOB destinations or copy
+//   • public site map only — authenticated seeker features (Saved Searches)
+//     belong in the account experience, not here
+//
+// Deliberately removed in the pre-merge navigation cutover:
+//   "Featured Programs" and "International Rehab" as standalone sections (the
+//   underlying /us-rehab/* and /international SEO pages remain live and
+//   indexable, they are simply no longer global-nav categories);
+//   "Verify My Insurance" → /insurance-verification; "Saved Searches";
+//   "How It Works" (page still carries retired operational copy — see
+//   docs/directory-cutover-premerge-public-navigation.md).
+
+const findTreatmentLinks: FooterLink[] = [
+  { name: "Search Treatment Centers", path: "/search-results" },
+  { name: "Compare Facilities", path: "/compare" },
+  { name: "Drug Rehab Near Me", path: "/drug-rehab-near-me" },
+  { name: "Alcohol Rehab Near Me", path: "/alcohol-rehab-near-me" },
+  { name: "Detox Near Me", path: "/detox-near-me" },
+  { name: "California", path: "/rehab-centers/california" },
+  { name: "Florida", path: "/rehab-centers/florida" },
   { name: "Texas", path: "/rehab-centers/texas" },
   { name: "New York", path: "/rehab-centers/new-york" },
-  { name: "Arizona", path: "/rehab-centers/arizona" },
-  { name: "Colorado", path: "/rehab-centers/colorado" },
-  { name: "Ohio", path: "/rehab-centers/ohio" },
-  { name: "Pennsylvania", path: "/rehab-centers/pennsylvania" },
-  { name: "View All States →", path: "/locations", highlight: true },
+  { name: "Browse All States", path: "/locations", highlight: true },
 ];
 
-const treatmentLinks: FooterLink[] = [
+const treatmentInsuranceLinks: FooterLink[] = [
   { name: "Detox Programs", path: "/treatment-types/detox-programs" },
   { name: "Inpatient Rehab", path: "/treatment-types/residential-inpatient" },
   { name: "Outpatient Programs", path: "/treatment-types/outpatient-programs" },
-  { name: "Alcohol Rehabilitation", path: "/treatment-types/alcohol-rehabilitation" },
-  { name: "Drug Addiction Treatment", path: "/treatment-types/drug-addiction-treatment" },
   { name: "Dual Diagnosis", path: "/treatment-types/dual-diagnosis-treatment" },
-  { name: "Holistic Therapy", path: "/treatment-types/holistic-therapy" },
-  { name: "Luxury Rehab", path: "/treatment-types/luxury-rehab" },
   { name: "All Treatment Types", path: "/treatment-types", highlight: true },
-];
-
-const insuranceLinks: FooterLink[] = [
-  { name: "Verify My Insurance", path: "/insurance-verification", badge: "Free" },
   { name: "Aetna Coverage", path: "/insurance/aetna-rehab" },
   { name: "Blue Cross Blue Shield", path: "/insurance/bcbs-treatment" },
   { name: "Cigna Rehab Coverage", path: "/insurance/cigna-rehab" },
   { name: "UnitedHealthcare", path: "/insurance/united-healthcare-rehab" },
-  { name: "Humana", path: "/insurance/humana-rehab" },
-  { name: "Medicare", path: "/insurance/medicare-rehab" },
   { name: "Medicaid", path: "/insurance/medicaid-rehab" },
-  { name: "Anthem", path: "/insurance/anthem-rehab" },
-  { name: "All Insurance Plans", path: "/insurance", highlight: true },
-];
-
-const programLinks: FooterLink[] = [
-  { name: "Best Rehab in USA", path: "/us-rehab/best-rehab-usa", badge: "Top" },
-  { name: "Luxury Rehab America", path: "/us-rehab/luxury-rehab-america" },
-  { name: "Private Rehab USA", path: "/us-rehab/private-rehab-america" },
-  { name: "Executive Rehab", path: "/us-rehab/executive-rehab" },
-  { name: "Affordable Rehab", path: "/affordable-rehab-in-usa" },
-  { name: "Fast Admission", path: "/fast-admission-rehab-usa" },
-  { name: "Same-Day Detox", path: "/same-day-detox-usa" },
-  { name: "Top Detox Centers", path: "/top-detox-centers-usa" },
-];
-
-const internationalLinks: FooterLink[] = [
-  { name: "International Patients", path: "/international", badge: "Hub" },
-  { name: "UK & Ireland Patients", path: "/us-rehab/uk-patients" },
-  { name: "Canadian Patients", path: "/us-rehab/canadian-patients" },
-  { name: "European Patients", path: "/us-rehab/european-patients" },
-  { name: "UAE & Middle East", path: "/us-rehab/uae-middle-east" },
-  { name: "Australian Patients", path: "/us-rehab/australian-patients" },
-  { name: "Travel to USA for Rehab", path: "/travel-to-usa-for-rehab" },
-  { name: "International Costs", path: "/cost-of-rehab-in-usa-for-international-patients" },
-  { name: "International Admissions", path: "/can-foreigners-go-to-rehab-in-usa" },
+  { name: "Insurance Hub", path: "/insurance", highlight: true },
 ];
 
 const resourceLinks: FooterLink[] = [
@@ -91,27 +78,27 @@ const resourceLinks: FooterLink[] = [
   { name: "Paying for Rehab", path: "/resources/how-much-does-rehab-cost-per-day" },
   { name: "Detox Timeline", path: "/resources/detox-timeline" },
   { name: "Cost Estimator", path: "/cost-estimator" },
-  { name: "Compare Facilities", path: "/compare", badge: "New" },
-  { name: "Saved Searches", path: "/account/saved-searches", badge: "New" },
   { name: "General FAQ", path: "/faq" },
+  // Secondary informational link only. /international is a directory-oriented
+  // overview page (its placement/application funnel was retired in stage 1);
+  // it is NOT an admissions or application CTA, and the retired
+  // /international/apply|intake|thank-you routes are not linked anywhere.
+  { name: "International Patients", path: "/international" },
 ];
 
 const providerLinks: FooterLink[] = [
   { name: "Why List With Us", path: "/for-providers" },
-  { name: "Provider Resources", path: "/providers/resources" },
-  { name: "Growth Guides", path: "/provider-guides/get-more-rehab-patients" },
-  { name: "Marketing Strategies", path: "/provider-guides/rehab-marketing-strategies" },
-  { name: "Lead Generation", path: "/provider-guides/addiction-treatment-lead-generation" },
+  { name: "Provider Resources", path: "/provider-resources" },
   { name: "Provider FAQ", path: "/provider-faq" },
+  { name: "Provider Support", path: "/provider-support" },
   { name: "List Your Facility", path: "/provider/onboarding", highlight: true },
 ];
 
 const companyLinks: FooterLink[] = [
   { name: "About Us", path: "/about" },
-  { name: "How It Works", path: "/how-it-works" },
   { name: "How We Make Money", path: "/how-we-make-money" },
   { name: "Contact Us", path: "/contact" },
-  { name: "Editorial Team", path: "/authors", badge: "New" },
+  { name: "Editorial Team", path: "/authors" },
   { name: "Editorial Policy", path: "/editorial-policy" },
   { name: "Medical Disclaimer", path: "/medical-disclaimer" },
 ];
@@ -143,12 +130,9 @@ const popularCities: { name: string; state: string; href: string }[] = [
 ];
 
 const allSections: FooterSection[] = [
-  { title: "Find by State", links: locationLinks },
-  { title: "Treatment Types", links: treatmentLinks },
-  { title: "Insurance Coverage", links: insuranceLinks },
-  { title: "Featured Programs", links: programLinks },
-  { title: "International Rehab", links: internationalLinks },
-  { title: "Resources & Guides", links: resourceLinks },
+  { title: "Find Treatment", links: findTreatmentLinks },
+  { title: "Treatment & Insurance", links: treatmentInsuranceLinks },
+  { title: "Resources", links: resourceLinks },
   { title: "For Providers", links: providerLinks },
   { title: "Company", links: companyLinks },
 ];
@@ -264,14 +248,23 @@ const MobileAccordion = memo(function MobileAccordion({ title, links }: FooterSe
   );
 });
 
-// ─── TRUST BADGES ──────────────────────────────────────────────────────────────
-
-const trustBadges = [
-  { icon: Shield, label: "HIPAA Compliant" },
-  { icon: Star, label: "Verified Facilities" },
-  { icon: Globe, label: "International Support" },
-  { icon: Phone, label: "24/7 Support" },
-];
+// ─── BRAND STRIP ───────────────────────────────────────────────────────────────
+//
+// The trust-badge row that used to sit here ("HIPAA Compliant", "Verified
+// Facilities", "International Support", "24/7 Support") was removed wholesale
+// rather than trimmed.
+//
+//   • "International Support" and "24/7 Support" described a global
+//     treatment-navigation service RehabLookup no longer operates.
+//   • "Verified Facilities" and "HIPAA Compliant" read as blanket guarantees
+//     about every listing and every interaction on the site. The data contract
+//     does not support either as a GLOBAL claim, and a footer badge is exactly
+//     where a visitor reads it as one.
+//
+// Nothing was invented to fill the space: what replaces it is a plain
+// description of what the product does.
+const DIRECTORY_BLURB =
+  "Search and compare addiction treatment centers across the United States, then contact the facilities you choose directly.";
 
 // ─── MAIN FOOTER ───────────────────────────────────────────────────────────────
 
@@ -305,10 +298,10 @@ export const Footer = memo(function Footer() {
                 Search Treatment Centers <ArrowRight className="h-3.5 w-3.5" />
               </Link>
               <Link
-                to="/international"
+                to="/compare"
                 className="inline-flex items-center justify-center gap-2 rounded-lg border border-primary-foreground/15 px-5 py-2.5 text-sm font-medium text-primary-foreground/80 hover:bg-primary-foreground/5 hover:text-primary-foreground transition-all duration-150"
               >
-                <Globe className="h-3.5 w-3.5" /> International Patients
+                <Scale className="h-3.5 w-3.5" /> Compare Facilities
               </Link>
             </div>
           </div>
@@ -324,7 +317,7 @@ export const Footer = memo(function Footer() {
         <div className="container px-5 md:px-6 lg:px-8">
           <div className="py-5 flex flex-col md:flex-row md:items-center gap-x-4 gap-y-2">
             <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-accent shrink-0">
-              <Globe className="h-3 w-3" /> Popular Cities
+              <MapPin className="h-3 w-3" /> Popular Cities
             </span>
             <ul className="flex flex-wrap items-center gap-x-3 gap-y-1.5 min-w-0">
               {popularCities.map((c, i) => (
@@ -356,16 +349,12 @@ export const Footer = memo(function Footer() {
       {/* ── Desktop Grid ───────────────────────────────────────────── */}
       <div className="container px-5 md:px-6 lg:px-8">
         <div className="hidden md:block py-12">
-          {/* 4 columns on md, 4 on lg with 2-row layout = 8 sections */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-10">
-            <FooterColumn title="Find by State" links={locationLinks} />
-            <FooterColumn title="Treatment Types" links={treatmentLinks} />
-            <FooterColumn title="Insurance Coverage" links={insuranceLinks} />
-            <FooterColumn title="Featured Programs" links={programLinks} />
-            <FooterColumn title="International Rehab" links={internationalLinks} />
-            <FooterColumn title="Resources & Guides" links={resourceLinks} />
-            <FooterColumn title="For Providers" links={providerLinks} />
-            <FooterColumn title="Company" links={companyLinks} />
+          {/* 3 columns on md (2 rows), all 5 sections in one row on lg.
+              Single source of truth with the mobile accordions below. */}
+          <div className="grid grid-cols-3 lg:grid-cols-5 gap-x-8 gap-y-10">
+            {allSections.map((section) => (
+              <FooterColumn key={section.title} {...section} />
+            ))}
           </div>
         </div>
 
@@ -386,7 +375,7 @@ export const Footer = memo(function Footer() {
               <Link to="/" className="inline-block shrink-0">
                 <img
                   src={logoDarkBg}
-                  alt="RehabLookup — Find Trusted Addiction Treatment Centers"
+                  alt="RehabLookup — Addiction Treatment Directory"
                   className="h-7 w-auto"
                   width={400}
                   height={67}
@@ -394,20 +383,17 @@ export const Footer = memo(function Footer() {
                 />
               </Link>
               <div className="h-5 w-px bg-primary-foreground/10 hidden lg:block" />
-              <p className="text-sm text-primary-foreground/70 leading-snug max-w-xs">
-                Find trusted, accredited addiction treatment centers across the United States.
+              <p className="text-sm text-primary-foreground/70 leading-snug max-w-md">
+                {DIRECTORY_BLURB}
               </p>
             </div>
 
-            {/* Trust Badges */}
-            <div className="flex flex-wrap items-center justify-center lg:justify-end gap-4">
-              {trustBadges.map(({ icon: Icon, label }) => (
-                <div key={label} className="flex items-center gap-1.5 text-primary-foreground/70">
-                  <Icon className="h-3.5 w-3.5" />
-                  <span className="text-xs font-medium tracking-wide">{label}</span>
-                </div>
-              ))}
-            </div>
+            <Link
+              to="/how-we-make-money"
+              className="text-xs font-medium text-primary-foreground/60 hover:text-primary-foreground/90 transition-colors whitespace-nowrap"
+            >
+              How we make money
+            </Link>
           </div>
         </div>
       </div>
