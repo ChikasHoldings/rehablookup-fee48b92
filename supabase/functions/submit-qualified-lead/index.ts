@@ -685,6 +685,14 @@ function escapeHtml(s: string): string {
 // is no seeker to send it to and no coordinator to promise.)
 
 // ---------- seeker (client) confirmation email ----------
+//
+// Sent only on the ACTIVE PRO path, and only ever about the ONE facility the
+// seeker selected. RehabLookup provides the directory; it does not operate a
+// placement desk, so this template must not promise that staff will connect,
+// match, find or arrange an alternative provider. Stage-2 verification hotfix
+// #1 replaced the "contact us … and we'll help connect you with another
+// provider" fallback with self-service directory navigation
+// (/search-results) — the seeker chooses who to contact next.
 function getSeekerConfirmationEmail(
   name: string,
   facilityName: string,
@@ -774,7 +782,7 @@ function getSeekerConfirmationEmail(
               </table>
 
               <p style="margin: 0 0 16px 0; color: #374151; font-size: 14px; line-height: 1.6;">
-                <strong>Haven't heard back?</strong> If 48 hours pass without a response, reply to this email or contact us at <a href="mailto:help@rehablookup.com" style="color: #0f766e; text-decoration: none;">help@rehablookup.com</a> and we'll help connect you with another provider.
+                <strong>Haven't heard back?</strong> You can return to RehabLookup to <a href="https://rehablookup.com/search-results" style="color: #0f766e; text-decoration: none;">continue searching</a> and contact another treatment center directly — you choose where to reach out next.
               </p>
               <p style="margin: 0; color: #6b7280; font-size: 13px; line-height: 1.6;">
                 Your information is kept confidential and is only shared with the treatment center you contacted.

@@ -139,6 +139,43 @@ describe("submit-qualified-lead — stage 2 inquiry routing", () => {
       expect(supabase.selectedTables()).toContain("notification_preferences");
       expect(emails.length).toBeGreaterThan(0);
     });
+
+    // ── Stage-2 verification hotfix #1 ──────────────────────────────────
+    // The seeker confirmation email is about the ONE facility the seeker
+    // selected. RehabLookup provides the directory; it does not run a
+    // placement desk, so the email must not promise that staff will connect,
+    // match, find or arrange an alternative provider. The seeker's own next
+    // step is self-service directory search.
+    it("sends a seeker confirmation that promises no alternate-provider coordination", async () => {
+      const { handler, emails } = await loadEdgeHandler(
+        FN,
+        buildStubOptions({ isPro: true }),
+      );
+
+      await postJson(handler, proPayload(PRO_FACILITY_ID));
+
+      const seekerEmail = emails.find((e) =>
+        String(e.to ?? "").includes("jordan.rivera@example.com") ||
+        (Array.isArray(e.to) && e.to.some((t) => String(t).includes("jordan.rivera@example.com"))),
+      );
+      expect(seekerEmail, "no seeker confirmation email was sent").toBeTruthy();
+      const html = String(seekerEmail!.html ?? "");
+      expect(html).toContain("Cascadia Recovery Center");
+
+      // The retired promise, and every close variant of it.
+      expect(html).not.toMatch(/connect you with another provider/i);
+      expect(html).not.toMatch(/\bconnect you (?:with|to)\b[^.<]{0,40}\b(?:another|other|a different)\b/i);
+      expect(html).not.toMatch(/\bwe(?:'ll| will)\s+(?:help|find|match)\b[^.<]{0,60}\bprovider\b/i);
+      expect(html).not.toMatch(/\b(?:our|rehablookup'?s)\s+(?:advisors?|coordinators?|care team)\b/i);
+      expect(html).not.toMatch(/matched (?:provider|facility)/i);
+
+      // Replaced by the self-service directory destination.
+      expect(html).toContain("https://rehablookup.com/search-results");
+      expect(html).toMatch(/continue searching/i);
+
+      // Still scoped to the single selected facility — no fan-out language.
+      expect(html).not.toMatch(/\bsent (?:to )?(?:multiple|several|other)\s+(?:facilities|centers|providers)\b/i);
+    });
   });
 
   // ── CASE B ────────────────────────────────────────────────────────────

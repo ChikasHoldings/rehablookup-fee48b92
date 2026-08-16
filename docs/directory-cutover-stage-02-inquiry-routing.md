@@ -424,3 +424,263 @@ New regression coverage:
   no-regression guards.
 - `src/__tests__/helpers/edgeFunctionHarness.ts` — reusable in-process Deno
   edge-function harness (no network, no Supabase project).
+
+---
+
+## 17. Verification hotfix #1 — prerender contact parity + Pro email copy
+
+Independent verification of the stage-2 Preview found **two** contradictions
+the original stage-2 report missed. Both are corrected in a single follow-up
+commit on this same branch. Neither changes the DB, Stripe, Pro pricing,
+Featured behaviour, or any provider/admin surface, and neither deploys the
+edge function.
+
+### 17.1 Blocker 1 — the static/crawler facility mirror ignored entitlement
+
+**What was wrong.** Stage 2 routed the *React* facility-contact path by
+entitlement, and `submit-qualified-lead` refuses a non-Pro inquiry with
+`DIRECT_CONTACT_REQUIRED`. But `scripts/generate-facility-profiles-html.mjs`
+— the crawler-facing static mirror at `/center/<slug>.html` — rendered its
+contact CTA and its contact/insurance FAQ answers **unconditionally**.
+
+On the real stage-2 Preview, the generated page for a genuinely Free facility
+(`Tony Rice Center, INC`, slug
+`tony-rice-center-inc-shelbyville-tn-cfa6cfec`, `is_pro = false` at
+verification time) still shipped:
+
+- `<h2>Request Information from Tony Rice Center, INC</h2>`
+- `/center/tony-rice-center-inc-shelbyville-tn-cfa6cfec?action=request-info`
+- a `Request Information` button as the primary contact mechanism
+- FAQ/JSON-LD copy: *use the "Request Information" form on the RehabLookup
+  profile*
+- insurance FAQ copy: *request a benefits verification through the profile*
+
+So the crawler-served document advertised an on-platform inquiry form for a
+facility whose inquiries the server would reject.
+
+**Root cause.** Not missing entitlement data — the generator already selects
+`public_facilities.is_pro`, and already uses it to gate the Pro-only *rich*
+sections (`renderProRichSections` returns `""` when `is_pro` is falsy). The
+CTA block and `buildFaqItems()` simply never consulted it. `is_pro` gated
+*content richness* but not *contact routing*.
+
+**Why the existing guards missed it.** `check:directory-public-shell` hunts
+retired **Concierge/placement marketing**. "Request Information" is not
+retired marketing — it is a live, legitimate affordance that is merely
+entitlement-scoped, so no rule fired. `check:prerendered-shell` is a *drift*
+check ("does this committed page still match what the generator would
+emit?"), and the committed page matched the generator perfectly — the
+generator itself was wrong.
+
+### 17.2 Blocker 2 — the Pro seeker email promised alternate-provider coordination
+
+`supabase/functions/submit-qualified-lead/index.ts` correctly kept a Pro
+inquiry attached to exactly one selected facility, but its seeker
+confirmation template still read:
+
+> **Haven't heard back?** If 48 hours pass without a response, reply to this
+> email or contact us at help@rehablookup.com and we'll help connect you with
+> another provider.
+
+RehabLookup may provide the directory. It must not promise that staff will
+connect, match, find or arrange another provider.
+
+### 17.3 Entitlement source (unchanged and non-duplicated)
+
+The generator still reads **`public_facilities.is_pro`** and nothing else.
+That column is the build-time projection of the canonical `has_active_pro(id)`
+predicate — tier, status, `past_due` grace and `current_period_end` are all
+resolved in Postgres. The fix explicitly does **not**:
+
+- query `facility_subscriptions`,
+- re-implement `tier = 'pro'` / status / grace / period-end rules in JS, or
+- derive routing from `featured`.
+
+`isActivePro(f)` returns `f?.is_pro === true` and **fails safe**: `false`,
+`null`, `undefined`, a missing column, a string `"true"`, or any unexpected
+shape all route to direct contact. Over-showing an inquiry form on a Free
+listing is the exact failure this stage exists to prevent, so ambiguity always
+resolves to `direct`.
+
+### 17.4 The contact-routing marker
+
+Every generated facility page now carries `<body data-page="facility-profile">`
+and **exactly one** routing classification on the CTA wrapper:
+
+| Marker | Emitted when | Static page may offer |
+|---|---|---|
+| `data-contact-routing="pro"` | `facility.is_pro === true` | Request Information for **that one** facility, plus direct phone / website / directions where real data exists |
+| `data-contact-routing="direct"` | everything else | direct facility contact only — no `?action=request-info`, no RehabLookup inquiry-form promise |
+
+The marker is never derived from Featured.
+
+### 17.5 Free / non-Pro static profile
+
+The unconditional CTA was replaced by **Contact `<FACILITY NAME>` Directly**,
+with actions emitted only where the facility's own data supports them:
+
+- **Call `<phone>`** — only when `phone` exists
+- **Visit Facility Website** — only when `website` is an absolute `http(s)` URL
+  (`safeExternalUrl()`; blank / relative / `javascript:` values yield no action)
+- **Get Directions** — Google Maps link built from the row's real
+  name + address + city + state
+- **View Full Profile** and **Search Other Treatment Centers** (`/search-results`)
+
+No phone, website or address is ever manufactured, and RehabLookup's own
+support number is never substituted for a missing facility number. A listing
+with neither phone nor website says so plainly ("has not published a direct
+phone number or website on RehabLookup") and still offers profile/search
+recovery — a map link is treated as a *location* affordance, not as a way to
+reach admissions, so it cannot make an unreachable listing read as contactable.
+
+### 17.6 Active Pro static profile
+
+Retains `Request Information` → `/center/<slug>?action=request-info`, pinned to
+that one slug, because the React profile renders the on-platform inquiry form
+and the server accepts an inquiry for it. Direct phone / website / directions
+remain alongside. The copy promises no matching, no routing to alternatives, no
+advisor or coordinator, and no multi-facility distribution ("Your details go to
+this facility only — no obligation").
+
+### 17.7 FAQ / structured data
+
+`buildFaqItems()` is now entitlement-aware. Because the same items render as
+visible HTML **and** as `FAQPage` JSON-LD, one fix keeps both aligned.
+
+| FAQ | Pro | Free / non-Pro |
+|---|---|---|
+| *How do I contact …?* | may reference calling the facility and the "Request Information" form on its profile | facility's real channels only — call directly / visit the website; "contact admissions directly to confirm insurance benefits, availability, costs, and program details". If neither exists, says so and falls back to the profile + directory search |
+| *Does … accept insurance?* | confirm with the facility's admissions team; may mention a confidential inquiry through the profile | **"Contact the facility directly to confirm benefits and out-of-pocket costs."** |
+
+The unsupported per-facility response-time claim (*"typically responds the same
+business day"*) was removed from **both** modes — there is no source-backed
+metric behind it, and neutral wording is preferred.
+
+### 17.8 New build guard — `check:inquiry-routing-prerender`
+
+`scripts/check-inquiry-routing-prerender.mjs`, wired into `build:vercel`
+**after** `vite build` so it sees both `public/center/**` and the built
+`dist/center/**`. `check:directory-public-shell` is unchanged and both guards
+now run.
+
+Rules, scoped to generated `/center/*.html` only:
+
+0. any center page — `?action=request-info` requires a `pro` marker
+1. facility-profile pages — exactly one marker, value `pro` or `direct`
+2. `direct` — no `?action=request-info`, no *"Request Information" form on
+   the …* promise, no *request a benefits verification through the profile*,
+   no *send a confidential inquiry through the profile*, and no
+   `<h2>Request Information from …` as the primary contact mechanism
+3. `pro` — the inquiry CTA is allowed but must target the page's **own** slug
+
+Coordination promises (connect you with another provider, we'll find/match a
+provider, our advisors/coordinators, sent to multiple facilities) are forbidden
+in **both** modes. The words "request information" are **not** banned globally —
+editorial prose, provider/admin surfaces, historical migrations and docs are
+out of scope. This is a generated-facility-profile contract.
+
+### 17.9 Pro seeker email correction
+
+The alternate-provider paragraph now reads:
+
+> **Haven't heard back?** You can return to RehabLookup to
+> [continue searching](https://rehablookup.com/search-results) and contact
+> another treatment center directly — you choose where to reach out next.
+
+No support-escalation workflow, no fallback matching, no another-provider
+handoff, no Concierge or referral case was created. The email remains about
+the one facility the inquiry was actually sent to.
+
+### 17.10 Active-Pro copy audit
+
+Audited the seeker confirmation email, `RequestInfoModal` success view,
+`LeadIntakeForm` / `LeadIntakeSuccess` / `useLeadIntakeForm`,
+`FacilityDirectContact`, `useFacilityContactRouting` and `SingleQuestionFlow`
+for *we'll connect / another provider / we'll find / matched provider /
+advisor / coordinator*.
+
+- The React success surfaces were already clean — they name the facility as the
+  responder and the keep-searching CTA is plain directory navigation.
+- One borderline string was tightened: `SingleQuestionFlow` step subtitle
+  *"We'll find treatment centers near you"* → *"Used to show treatment centers
+  near you"* (directory-first phrasing).
+- Historical `InquiryConfirmation`, the stage-4 legacy functions, old
+  migrations and history docs were deliberately **not** touched.
+
+### 17.11 Server boundary preserved
+
+`submit-qualified-lead` ordering is unchanged — facility identity → facility
+eligibility → `has_active_pro()` → `DIRECT_CONTACT_REQUIRED` when Pro is not
+confirmed → PII processing **only** for active Pro. `VERSION` stays `3.0.0`
+(no convention required a bump). The `directContactResponse` contract, absence
+of concierge writes / advisor lookup / `notify-free-tier-inquiry-redirect`,
+Pro lead insertion, the Pro notification pipeline, the single selected
+`facility_id`, email verification, rate limits and idempotency are all intact.
+Only the email template string and an explanatory comment changed.
+
+### 17.12 Regression coverage added
+
+`src/__tests__/facility-prerender-contact-routing.test.ts` (26 tests) imports
+the **real** generator and the **real** guard and renders real HTML from
+fixtures — no network, no Supabase. `main()` in the generator is now guarded
+behind an invoked-directly check (the same pattern
+`check-directory-public-shell.mjs` uses) so importing it neither fetches nor
+writes.
+
+- **Fixture 1 — Free, full data** (`is_pro: false`, phone + website + address):
+  `direct` marker; call / website / directions actions present; no
+  `?action=request-info`; no inquiry-form promise; no benefits-verification-
+  through-the-profile; insurance and contact FAQ direct the seeker to the
+  facility, asserted in **both** visible HTML and `FAQPage` JSON-LD.
+- **Fixture 1b — Free, no phone and no website**: `direct` marker; no
+  manufactured contact action; RehabLookup's support number not substituted;
+  profile + `/search-results` recovery still present.
+- **Fixture 2 — Active Pro** (`is_pro: true`): `pro` marker; Request
+  Information CTA present and pinned to its own slug; direct contact retained;
+  no matching / advisor / coordinator promise.
+- Entitlement fail-safe: `false`, `null`, `undefined`, `"true"`, `1`, `{}` and
+  a missing column all yield `direct`; `featured: true` on a Free row still
+  yields `direct`.
+- The guard itself is proven to **fail** on the pre-hotfix regression (a direct
+  page carrying the old Request Information CTA) and on a missing marker.
+
+`src/__tests__/submit-qualified-lead-routing.test.ts` gains a test that runs
+the real edge handler on the Pro path and asserts the sent seeker email
+contains no alternate-provider coordination promise and **does** contain
+`https://rehablookup.com/search-results`.
+
+### 17.13 Verification results (hotfix #1)
+
+| Check | Result |
+|---|---|
+| `npm run typecheck` | pass |
+| `npm run lint` | 216 problems (180 errors, 36 warnings) — **unchanged baseline**; no new issue in any touched file |
+| `npm run test` | **662 passed / 662** |
+| `npm run check:directory-public-shell` | pass (46,679 artifacts) |
+| `npm run check:inquiry-routing-prerender` | pass (new) |
+| `npm run check:prerendered-shell` | pass |
+| `npm run check:internal-links` | pass (0 unmatched) |
+| `npm run check:redirect-targets` | pass (0 dead) |
+| `npm run check:no-internal-404` | pass (46,687 paths) |
+| `npm run check:sitemap-coverage` | pass |
+| `npm run check:facility-sitemap-sync` | pass |
+| `npm run validate:sitemap-robots` | pass |
+| `npm run check:structured-data` | pass |
+| `npm run check:seo-meta` | pass (0 errors) |
+| `npm run build:vercel` | pass |
+
+The local sandbox cannot reach the Supabase host (egress allowlist), so
+`generate:facility-profiles-html` skips there and the local guard run sees 0
+facility profiles. **The Vercel Preview build is therefore the authoritative
+check for the generated mirror** — it builds from live Supabase, and the new
+guard runs inside it.
+
+### 17.14 Rollout status after this hotfix
+
+- Production `submit-qualified-lead` is **still the old deployed function**.
+  Nothing was deployed in this hotfix.
+- No production Supabase write, no migration, no Stripe change. Pro remains
+  $99/month; Featured is untouched.
+- Provider/admin Stage-3 work has not started.
+- The Preview was not promoted and `main` was not merged.
+- The controlled rollout described in §13 remains **pending**.

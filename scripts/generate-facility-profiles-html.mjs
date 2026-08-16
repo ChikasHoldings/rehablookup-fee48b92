@@ -25,7 +25,7 @@
 
 import { writeFile, mkdir, readdir, unlink } from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { GA_MEASUREMENT_ID } from "./_ga.mjs";
 import { seoHeader, seoFooter, seoStyles } from "./_seo-page-shell.mjs";
 
@@ -145,6 +145,47 @@ function joinList(arr) {
   if (arr.length === 1) return arr[0];
   if (arr.length === 2) return `${arr[0]} and ${arr[1]}`;
   return `${arr.slice(0, -1).join(", ")}, and ${arr[arr.length - 1]}`;
+}
+
+// ---------------------------------------------------------------------------
+// Entitlement — the single source of truth for static contact routing
+// ---------------------------------------------------------------------------
+
+/**
+ * Is this facility an ACTIVE Pro listing for the purposes of the static
+ * mirror's contact routing?
+ *
+ * `public_facilities.is_pro` is the build-time projection of the canonical
+ * `has_active_pro(id)` predicate — tier, status, past-due grace and
+ * `current_period_end` are all resolved in Postgres. This script must never
+ * reconstruct those rules in JavaScript, and must never read
+ * `facility_subscriptions` to infer Pro.
+ *
+ * Fails SAFE: anything that is not literally `true` (false, null, undefined,
+ * a string, a missing column because the projection changed) routes to
+ * direct facility contact. Over-showing a RehabLookup inquiry form on a Free
+ * listing is the failure mode stage 2 exists to prevent, so ambiguity always
+ * resolves to "direct".
+ */
+function isActivePro(facility) {
+  return facility?.is_pro === true;
+}
+
+/** Contact-routing marker value emitted onto every generated facility page. */
+function contactRoutingMode(facility) {
+  return isActivePro(facility) ? "pro" : "direct";
+}
+
+/**
+ * Only real, absolute http(s) URLs become a "Visit Website" action. A blank,
+ * relative or `javascript:` value yields no action at all — we never
+ * manufacture a facility contact channel that does not exist.
+ */
+function safeExternalUrl(value) {
+  if (!value) return null;
+  const raw = String(value).trim();
+  if (!/^https?:\/\/\S+$/i.test(raw)) return null;
+  return raw;
 }
 
 function normalizeGender(value) {
@@ -283,12 +324,21 @@ async function fetchFacilities() {
  * the facility row or its child tables is omitted — we never hedge with
  * generic copy. The two anchor questions (location, contact) always render
  * because their answers are computable from the row.
+ *
+ * Entitlement-aware: these same items render as visible HTML AND as FAQPage
+ * JSON-LD, so building them once keeps both representations in lock-step.
+ * A Free/non-Pro facility has no on-platform inquiry form, so its answers
+ * must never tell a seeker to "use the Request Information form" or to
+ * "request a benefits verification through the profile" — those affordances
+ * do not exist for that facility, in the SPA or on the server.
  */
 function buildFaqItems(facility, facSvc, facIns, facAge, facAcc) {
   const items = [];
   const name = facility.name;
   const city = facility.city;
   const state = facility.state;
+  const isPro = isActivePro(facility);
+  const website = safeExternalUrl(facility.website);
 
   // Anchor — location is always known.
   const locationLine = facility.address
@@ -327,9 +377,15 @@ function buildFaqItems(facility, facSvc, facIns, facAge, facAcc) {
     const slidingSentence = sliding
       ? " Sliding-scale fees and financial assistance may also be available — verify with the center before admission."
       : "";
+    // Benefits are confirmed by the facility's admissions team, never by
+    // RehabLookup. A Free listing has no on-platform inquiry channel at all,
+    // so it points straight at the facility.
+    const verifySentence = isPro
+      ? ` Coverage details vary by plan and individual benefits — confirm them with ${name}'s admissions team, or send a confidential inquiry through this facility's RehabLookup profile.`
+      : ` Coverage details vary by plan and individual benefits. Contact the facility directly to confirm benefits and out-of-pocket costs.`;
     items.push({
       q: `Does ${name} accept insurance?`,
-      a: `${planSentence}${slidingSentence} Coverage details vary by plan and individual benefits — request a benefits verification through the profile.`,
+      a: `${planSentence}${slidingSentence}${verifySentence}`,
     });
   }
 
@@ -372,15 +428,148 @@ function buildFaqItems(facility, facSvc, facIns, facAge, facAcc) {
     });
   }
 
-  // Anchor — contact closer.
+  // Anchor — contact closer. Response-time claims are deliberately absent:
+  // there is no source-backed per-facility metric behind them.
   items.push({
     q: `How do I contact ${name} or request more information?`,
-    a: facility.phone
-      ? `You can call ${name} at ${facility.phone} or use the "Request Information" form on the RehabLookup profile to send a confidential inquiry. A facility representative typically responds the same business day.`
-      : `Use the "Request Information" form on the ${name} profile to send a confidential inquiry. A facility representative typically responds the same business day.`,
+    a: buildContactFaqAnswer(facility, { isPro, website }),
   });
 
   return items;
+}
+
+/**
+ * The contact FAQ answer, entitlement-aware and grounded only in contact
+ * channels this facility actually published.
+ *
+ *   ACTIVE PRO   may reference the on-platform Request Information form,
+ *                because the React profile renders that form for this
+ *                facility and the server accepts an inquiry for it.
+ *   OTHERWISE    direct facility contact only. No RehabLookup form, no
+ *                confidential-inquiry promise, no benefits verification.
+ *
+ * If a Free facility published neither a phone nor a website we say exactly
+ * that and fall back to the profile/directory — we never substitute
+ * RehabLookup's own support number for a missing facility number.
+ */
+function buildContactFaqAnswer(facility, { isPro, website }) {
+  const name = facility.name;
+  const phone = facility.phone;
+
+  if (isPro) {
+    return phone
+      ? `You can call ${name} at ${phone}, or use the "Request Information" form on the ${name} profile to send a confidential inquiry to this facility.`
+      : `Use the "Request Information" form on the ${name} profile to send a confidential inquiry to this facility.`;
+  }
+
+  const channels = [];
+  if (phone) channels.push(`call ${name} directly at ${phone}`);
+  if (website) channels.push(`visit the facility's website at ${website}`);
+
+  if (channels.length === 0) {
+    return `${name} has not published a direct phone number or website on RehabLookup. See the address and location details on the facility profile, or search other treatment centers in ${facility.city}, ${facility.state}.`;
+  }
+
+  return `To reach ${name}, ${joinList(channels)}. Contact admissions directly to confirm insurance benefits, availability, costs, and program details — those questions are handled by the facility, not by RehabLookup.`;
+}
+
+// ---------------------------------------------------------------------------
+// Contact CTA — the block the whole stage-2 hotfix turns on
+// ---------------------------------------------------------------------------
+
+/**
+ * Render the contact call-to-action for the static mirror.
+ *
+ * The static page has exactly two modes, and the wrapper carries a stable
+ * `data-contact-routing` marker so `check:inquiry-routing-prerender` can
+ * assert the contract on the built artifacts:
+ *
+ *   data-contact-routing="pro"     ACTIVE Pro only. May offer Request
+ *                                  Information for THIS facility, because
+ *                                  the React profile renders that form and
+ *                                  submit-qualified-lead accepts it.
+ *
+ *   data-contact-routing="direct"  Everything else. Direct facility contact
+ *                                  only — no ?action=request-info, no
+ *                                  RehabLookup inquiry form promise.
+ *
+ * The marker is derived from `is_pro` alone. Featured is NOT an entitlement
+ * and must never produce "pro".
+ *
+ * Every action below is emitted only when the underlying facility data
+ * actually exists. Nothing here manufactures a phone number, a website or a
+ * street address, and RehabLookup's own support number is never substituted
+ * for a facility's.
+ */
+function renderContactCta(f, slug, mapsUrl) {
+  const isPro = isActivePro(f);
+  const website = safeExternalUrl(f.website);
+  const name = escapeHtml(f.name);
+
+  // Reachable contact channels the facility actually published. Directions
+  // are tracked separately: a map link is a location affordance, not a way to
+  // reach admissions, so it must not make a listing with no phone and no
+  // website read as contactable.
+  const contactChannels = [];
+  if (f.phone) {
+    contactChannels.push(
+      `<a class="btn btn-secondary" href="tel:${escapeAttr(f.phone)}">Call ${escapeHtml(f.phone)}</a>`,
+    );
+  }
+  if (website) {
+    contactChannels.push(
+      `<a class="btn btn-secondary" href="${escapeAttr(website)}" rel="nofollow noopener" target="_blank">Visit Facility Website</a>`,
+    );
+  }
+  // `mapsUrl` is built from name + address + city + state; city and state are
+  // required for a row to render at all, so directions are always grounded in
+  // real location data.
+  const locationActions = mapsUrl
+    ? [
+        `<a class="btn btn-secondary" href="${escapeAttr(mapsUrl)}" rel="nofollow noopener" target="_blank">Get Directions</a>`,
+      ]
+    : [];
+  const directActions = [...contactChannels, ...locationActions];
+
+  if (isPro) {
+    return `<div class="cta" data-contact-routing="pro">
+<h2>Request Information from ${name}</h2>
+<p>Send a confidential inquiry to ${name}. Your details go to this facility only — no obligation.</p>
+<div class="cta-actions">
+<a class="btn btn-primary" href="/center/${escapeAttr(slug)}?action=request-info">Request Information</a>
+<a class="btn btn-secondary" href="/center/${escapeAttr(slug)}">View Full Profile</a>
+${directActions.join("\n")}
+</div>
+</div>`;
+  }
+
+  // Direct-contact mode. The lead paragraph adapts to whether this facility
+  // published any reachable channel, so a listing with neither phone nor
+  // website does not imply contact details exist "below".
+  const hasChannel = contactChannels.length > 0;
+  const lead = hasChannel
+    ? `Admissions, availability, insurance, and cost questions are handled by the facility. Use its published contact information below.`
+    : `Admissions, availability, insurance, and cost questions are handled by the facility. ${name} has not published a direct phone number or website on RehabLookup — use the location details on the full profile, or keep searching the directory.`;
+
+  // Promote the first real facility action to the primary button so the
+  // direct-contact page still leads with a contact channel rather than
+  // rendering an all-secondary row.
+  const directPrimary = hasChannel
+    ? [
+        directActions[0].replace('class="btn btn-secondary"', 'class="btn btn-primary"'),
+        ...directActions.slice(1),
+      ]
+    : directActions;
+
+  return `<div class="cta" data-contact-routing="direct">
+<h2>Contact ${name} Directly</h2>
+<p>${lead}</p>
+<div class="cta-actions">
+${directPrimary.join("\n")}
+<a class="btn btn-secondary" href="/center/${escapeAttr(slug)}">View Full Profile</a>
+<a class="btn btn-secondary" href="/search-results">Search Other Treatment Centers</a>
+</div>
+</div>`;
 }
 
 // ---------------------------------------------------------------------------
@@ -796,6 +985,10 @@ function renderFacilityHtml(f, kids) {
       acceptedAnswer: { "@type": "Answer", text: q.a },
     })),
   };
+  // Contact routing — derived from `public_facilities.is_pro` only (see
+  // isActivePro). Emitted once per page, on the CTA wrapper.
+  const contactCta = renderContactCta(f, slug, hasMap);
+
   const faqHtml =
     `<section class="faq" aria-labelledby="faq-heading">
 <h2 id="faq-heading">Frequently Asked Questions</h2>
@@ -873,7 +1066,7 @@ footer{margin-top:40px;padding-top:20px;border-top:1px solid #e5e7eb;font-size:.
 <script async src="https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}"></script>
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_MEASUREMENT_ID}');</script>
 </head>
-<body>
+<body data-page="facility-profile">
 ${seoHeader()}
 <main class="rl-main">
 <nav class="breadcrumbs" aria-label="Breadcrumb"><ul>
@@ -894,15 +1087,7 @@ ${websiteLine}
 ${descBlock}
 ${richSections}
 ${proRichSections}
-<div class="cta">
-<h2>Request Information from ${escapeHtml(f.name)}</h2>
-<p>Get verified program details, insurance verification, and admissions information directly from this facility. Confidential — no obligation.</p>
-<div class="cta-actions">
-<a class="btn btn-primary" href="/center/${escapeAttr(slug)}?action=request-info">Request Information</a>
-<a class="btn btn-secondary" href="/center/${escapeAttr(slug)}">View Full Profile</a>
-${f.phone ? `<a class="btn btn-secondary" href="tel:${escapeAttr(f.phone)}">Call ${escapeHtml(f.phone)}</a>` : ""}
-</div>
-</div>
+${contactCta}
 <section class="related">
 <h2>Search Other Rehab Centers</h2>
 <ul>
@@ -1092,7 +1277,25 @@ async function main() {
   );
 }
 
-main().catch((err) => {
-  console.error("[facility-prerender] Fatal:", err);
-  process.exit(1);
-});
+// Exported for deterministic, network-free regression tests
+// (src/__tests__/facility-prerender-contact-routing.test.ts). Importing this
+// module must never fetch Supabase or write files, so `main()` runs only when
+// the script is executed directly — same pattern as
+// scripts/check-directory-public-shell.mjs.
+export {
+  renderFacilityHtml,
+  renderContactCta,
+  buildFaqItems,
+  isActivePro,
+  contactRoutingMode,
+};
+
+const invokedDirectly =
+  process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+
+if (invokedDirectly) {
+  main().catch((err) => {
+    console.error("[facility-prerender] Fatal:", err);
+    process.exit(1);
+  });
+}

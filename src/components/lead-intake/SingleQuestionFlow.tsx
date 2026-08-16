@@ -141,7 +141,9 @@ const QUESTIONS: Question[] = [
     id: "location",
     type: "location",
     title: "Where are you located?",
-    subtitle: "We'll find treatment centers near you",
+    // Directory-first phrasing: the search shows nearby listings, it does not
+    // promise that RehabLookup staff will go find a provider for the seeker.
+    subtitle: "Used to show treatment centers near you",
     icon: <MapPin className="h-6 w-6" />,
     field: "locationZip",
     required: true,
