@@ -1,45 +1,37 @@
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
-import { 
+import {
   InternationalHero,
   CountriesServed,
   InternationalFAQ,
   WhyUSATreatment,
   StateDestinations,
   TreatmentCategories,
-  DirectorySearchCTA
+  DirectorySearchCTA,
 } from "./components";
 
 const USRehabHub = () => {
   const schemaData = {
     "@context": "https://schema.org",
-    "@type": "Service",
-    "name": "US Addiction Treatment for International Patients",
-    "description": "Directory of licensed addiction-treatment centers across the United States, including programs that accept international patients.",
-    "provider": {
-      "@type": "Organization",
-      "name": "RehabLookup",
-      "url": "https://rehablookup.com"
+    "@type": "WebPage",
+    name: "US Addiction Treatment Directory for International Research",
+    description: "Research addiction-treatment facilities in the United States, including programs that may accept international admissions.",
+    url: "https://rehablookup.com/us-rehab",
+    isPartOf: {
+      "@type": "WebSite",
+      name: "RehabLookup",
+      url: "https://rehablookup.com",
     },
-    "areaServed": {
-      "@type": "Country",
-      "name": "United States"
-    },
-    "serviceType": "Addiction Treatment Placement",
-    "audience": {
-      "@type": "Audience",
-      "audienceType": "International patients seeking addiction treatment in the USA"
-    }
   };
 
   return (
     <Layout>
       <SEO
-        title="US Rehab for International Patients | Best Addiction Treatment in America"
-        description="Find world-class addiction treatment in the United States. Luxury rehab centers, executive programs, and confidential care for international patients. 1,000+ vetted facilities."
+        title="US Addiction Treatment Directory for International Patients"
+        description="Research addiction treatment facilities in the United States. Compare locations, treatment programs, insurance information, and facility details, then contact providers directly to confirm international admissions."
         canonical="/us-rehab"
-        keywords={["rehab in USA", "American rehab for foreigners", "luxury rehab California", "best rehab USA", "US addiction treatment international", "private rehab America", "treatment centers USA"]}
+        keywords={["rehab in USA", "US addiction treatment", "American rehab for foreigners", "US treatment centers", "international addiction treatment USA"]}
         structuredData={schemaData}
         breadcrumbs={[
           { name: "Home", url: "/" },
@@ -52,10 +44,10 @@ const USRehabHub = () => {
       </div>
 
       <InternationalHero
-        title="Find Addiction Treatment in the United States"
-        subtitle="World-Class Care for International Patients"
-        description="Access America's leading rehabilitation centers with dedicated support for international clients. From luxury Malibu retreats to executive New York programs, we connect you with the perfect treatment facility."
-        keywords={["best rehab USA", "luxury rehab America", "US treatment for foreigners", "American addiction centers"]}
+        title="Research Addiction Treatment in the United States"
+        subtitle="US treatment information for people researching care from abroad"
+        description="Search RehabLookup's treatment directory, compare facility information, and contact providers directly to confirm program fit, international admission requirements, pricing, travel considerations, and availability."
+        keywords={["US treatment directory", "international treatment research", "addiction treatment USA"]}
       />
 
       <WhyUSATreatment />
