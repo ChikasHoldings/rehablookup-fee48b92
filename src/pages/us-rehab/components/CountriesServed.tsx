@@ -22,65 +22,38 @@ const countries = [
 
 export const CountriesServed = () => {
   return (
-    <section className="py-16 md:py-20 bg-muted/20">
+    <section className="bg-muted/20 py-16 md:py-20">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 text-primary mb-3">
+        <div className="mb-10 text-center">
+          <div className="mb-3 inline-flex items-center gap-2 text-primary">
             <Globe2 className="h-5 w-5" />
-            <span className="text-sm font-semibold uppercase tracking-wide">Global Reach</span>
+            <span className="text-sm font-semibold uppercase tracking-wide">International research</span>
           </div>
-          <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
-            Serving Clients Worldwide
-          </h2>
-          <p className="text-base text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            We've helped thousands of international clients access world-class addiction treatment
-            in the United States.
+          <h2 className="mb-3 text-2xl font-bold text-foreground md:text-3xl">Researching US treatment from abroad?</h2>
+          <p className="mx-auto max-w-2xl text-base leading-relaxed text-muted-foreground">
+            RehabLookup can help people outside the United States research US treatment facilities and identify programs that may accept international admissions. Availability, travel support, pricing, and admission requirements must be confirmed directly with each facility.
           </p>
         </div>
 
-        {/* Countries Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-8 gap-3">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
           {countries.map((country) => {
             const inner = (
-              <div className="flex flex-col items-center gap-2 p-4 bg-background rounded-xl border border-border/50 hover:border-primary/20 hover:shadow-sm transition-all h-full">
-                <span className="text-4xl">{country.flag}</span>
-                <span className="text-xs text-center text-muted-foreground font-medium leading-tight">
-                  {country.name}
-                </span>
+              <div className="flex h-full flex-col items-center gap-2 rounded-xl border border-border/50 bg-background p-4 transition-colors hover:border-primary/20">
+                <span className="text-4xl" aria-hidden>{country.flag}</span>
+                <span className="text-center text-xs font-medium leading-tight text-muted-foreground">{country.name}</span>
               </div>
             );
 
             if (country.slug) {
-              return (
-                <Link key={country.name} to={`/us-rehab/${country.slug}`} className="group">
-                  {inner}
-                </Link>
-              );
+              return <Link key={country.name} to={`/us-rehab/${country.slug}`}>{inner}</Link>;
             }
-
             return <div key={country.name}>{inner}</div>;
           })}
         </div>
 
-        {/* Stats */}
-        <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[
-            { value: "50+", label: "Countries Served" },
-            { value: "2,500+", label: "International Enquiries" },
-            { value: "24hr", label: "Response Time" },
-            { value: "50+", label: "Countries Reached" },
-          ].map((stat) => (
-            <div key={stat.label} className="text-center p-5 bg-background rounded-xl border border-border/50">
-              <div className="text-2xl md:text-3xl font-bold text-primary mb-1">{stat.value}</div>
-              <div className="text-xs text-muted-foreground">{stat.label}</div>
-            </div>
-          ))}
+        <div className="mx-auto mt-10 max-w-3xl rounded-xl border bg-background p-5 text-sm leading-6 text-muted-foreground">
+          RehabLookup does not arrange travel, visas, admissions, or treatment placement. Contact facilities directly to confirm international admission policies and consult the appropriate government or legal resource for immigration requirements.
         </div>
-
-        <p className="text-center text-sm text-muted-foreground mt-10 max-w-2xl mx-auto leading-relaxed">
-          Whether you're seeking treatment from Europe, the Middle East, Asia, or elsewhere,
-          listings show which programs handle international admissions so you can contact them directly.
-        </p>
       </div>
     </section>
   );
