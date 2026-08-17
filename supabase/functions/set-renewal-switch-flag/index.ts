@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
 
   const { data: sub } = await admin
     .from("facility_subscriptions")
-    .select("provider_id, billing_period")
+    .select("provider_id, billing_period, tier")
     .eq("id", parsed.data.subscription_id)
     .maybeSingle();
   if (!sub) {
@@ -94,6 +94,30 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
+  // PRO-ONLY OPERATION — stated, not inferred.
+  //
+  // `switch_to_monthly_at_renewal` controls how the PRO subscription renews.
+  // Since 20260902000000 a row can be a Featured-only row (tier='free'), and
+  // this function previously read only provider_id + billing_period — it never
+  // established that a Pro subscription existed at all.
+  //
+  // Today a Featured-only row is refused only as a side effect: the Featured
+  // insert omits billing_period, so it takes the column DEFAULT 'monthly' and
+  // trips the not_annual check below. That is not a decision, it is a default
+  // value doing safety work. A Featured ANNUAL purchase that recorded
+  // billing_period='annual' on the same row — a reasonable future change —
+  // would pass every existing guard and write Pro renewal state onto a
+  // facility that has no Pro subscription. Require Pro explicitly.
+  if (sub.tier !== "pro") {
+    return new Response(
+      JSON.stringify({
+        error: "This is not a Pro subscription. Featured advertising renews on its own schedule.",
+        code: "not_pro_subscription",
+      }),
+      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
+  }
+
   if (sub.billing_period !== "annual") {
     return new Response(
       JSON.stringify({
