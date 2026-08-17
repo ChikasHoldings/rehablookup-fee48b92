@@ -6,24 +6,31 @@ import { getCachedSession } from "@/lib/sessionCache";
 
 export interface SearchResult {
   id: string;
-  type: "lead" | "page" | "placement" | "listing";
+  type: "lead" | "page" | "listing";
   title: string;
   subtitle?: string;
   url: string;
   metadata?: Record<string, unknown>;
 }
 
+// Command-palette destinations. Titles mirror the sidebar's job-shaped labels
+// so searching for what you see in the nav actually finds it. The Pro entry
+// describes what Pro publishes — it used to promise "featured placement", which
+// Pro has never included.
 const NAVIGATION_PAGES: SearchResult[] = [
   { id: "dashboard", type: "page", title: "Dashboard", subtitle: "Overview & statistics", url: "/provider/dashboard" },
-  { id: "listing", type: "page", title: "My Listings", subtitle: "Edit facility information", url: "/provider/listings" },
+  { id: "listing", type: "page", title: "Listings", subtitle: "Edit facility information", url: "/provider/listings" },
+  { id: "enhanced-profile", type: "page", title: "Enhanced Profile", subtitle: "Programs, amenities, staff, media", url: "/provider/listings/profile" },
   { id: "inquiries", type: "page", title: "Inquiries", subtitle: "View all inquiries", url: "/provider/inquiries" },
-  { id: "pro-upgrade", type: "page", title: "Upgrade to Pro", subtitle: "$99/mo — featured placement, unlimited listings, Marketing Hub", url: "/provider/billing" },
-  { id: "analytics", type: "page", title: "Analytics", subtitle: "Performance metrics", url: "/provider/analytics" },
+  { id: "reviews", type: "page", title: "Reviews", subtitle: "Manage facility reviews", url: "/provider/reviews" },
+  { id: "claims", type: "page", title: "Listing Claims", subtitle: "Claim status & history", url: "/provider/claims" },
+  { id: "analytics", type: "page", title: "Performance", subtitle: "Search appearances, views, inquiries", url: "/provider/analytics" },
+  { id: "marketing", type: "page", title: "Featured", subtitle: "Sponsored advertising, billed separately", url: "/provider/marketing" },
+  { id: "billing", type: "page", title: "Plan & Billing", subtitle: "Plan, payments & invoices", url: "/provider/billing" },
+  { id: "pro-upgrade", type: "page", title: "Upgrade to Pro", subtitle: "$99/mo — public phone, enhanced profile, rich media, up to 5 listings", url: "/provider/billing" },
   { id: "settings", type: "page", title: "Settings", subtitle: "Account preferences", url: "/provider/settings" },
   { id: "notifications", type: "page", title: "Notifications", subtitle: "View all notifications", url: "/provider/notifications" },
-  { id: "reviews", type: "page", title: "Reviews", subtitle: "Manage facility reviews", url: "/provider/reviews" },
-  { id: "marketing", type: "page", title: "Marketing Hub", subtitle: "Featured + Concierge add-ons", url: "/provider/marketing" },
-  { id: "billing", type: "page", title: "Billing", subtitle: "Subscription, payments & invoices", url: "/provider/billing" },
+  { id: "help", type: "page", title: "Help & Support", subtitle: "FAQ, knowledge base, tickets", url: "/provider/help" },
 ];
 
 export function useProviderSearch(query: string, facilityId?: string) {
@@ -48,34 +55,6 @@ export function useProviderSearch(query: string, facilityId?: string) {
         .limit(100);
       if (error) throw error;
       return data || [];
-    },
-    enabled: !!facilityId,
-    staleTime: 60 * 1000,
-  });
-
-  // Fetch placements (concierge introductions) for search
-  const { data: placements = [], isLoading: placementsLoading, isError: placementsError } = useQuery({
-    queryKey: ["provider-search-placements", facilityId],
-    queryFn: async () => {
-      if (!facilityId) return [];
-      // Provider RLS no longer permits row-level reads of concierge_inquiries.
-      // Fetch introductions and enrich with safe inquiry fields via RPC.
-      const [introsRes, safeRes] = await Promise.all([
-        supabase
-          .from("concierge_introductions")
-          .select("id, inquiry_id, provider_response, created_at")
-          .eq("facility_id", facilityId)
-          .order("created_at", { ascending: false })
-          .limit(50),
-        supabase.rpc("get_provider_safe_inquiries", { p_facility_id: facilityId }),
-      ]);
-      if (introsRes.error) throw introsRes.error;
-      if (safeRes.error) throw safeRes.error;
-      const inquiryMap = new Map((safeRes.data || []).map((i: { id: string; [k: string]: unknown }) => [i.id, i]));
-      return (introsRes.data || []).map((intro: { inquiry_id: string; [k: string]: unknown }) => ({
-        ...intro,
-        concierge_inquiries: inquiryMap.get(intro.inquiry_id) || null,
-      }));
     },
     enabled: !!facilityId,
     staleTime: 60 * 1000,
@@ -139,7 +118,7 @@ export function useProviderSearch(query: string, facilityId?: string) {
   const results = useMemo(() => {
     const rawTerm = debouncedQuery.trim();
     if (!rawTerm) {
-      return { leads: [], pages: [], placements: [], listings: [], total: 0 };
+      return { leads: [], pages: [], listings: [], total: 0 };
     }
 
     // Tokenize: split on whitespace, lowercase + strip diacritics on
@@ -174,37 +153,6 @@ export function useProviderSearch(query: string, facilityId?: string) {
         metadata: { status: lead.status, email: lead.email, phone: lead.phone, location: lead.location_city_state },
       }));
 
-    // Search placements
-    const matchedPlacements: SearchResult[] = placements
-      .filter((p) => {
-        const inquiry = p.concierge_inquiries as Record<string, unknown> | null;
-        const name = (inquiry?.user_name as string) || "";
-        const status = (inquiry?.status as string) || "";
-        const care = (inquiry?.level_of_care as string) || "";
-        return tokensMatchAll(tokens, [name, status, care]);
-      })
-      .slice(0, 5)
-      .map((p) => {
-        const inquiry = p.concierge_inquiries as Record<string, unknown> | null;
-        const name = (inquiry?.user_name as string) || "Unknown";
-        const status = (inquiry?.status as string) || "new";
-        const care = (inquiry?.level_of_care as string) || "";
-        return {
-          id: p.id,
-          type: "placement" as const,
-          title: name,
-          subtitle: [care, status, p.provider_response].filter(Boolean).join(" • "),
-          // The retired /provider/placement-network route redirected
-          // to /provider/marketing (hub) which then required another
-          // click to drill into the concierge management UI. Route
-          // straight to the management surface so the click lands the
-          // user on the screen where they can actually act on this
-          // placement.
-          url: "/provider/marketing/concierge",
-          metadata: { status, response: p.provider_response },
-        };
-      });
-
     // Search listings
     const matchedListings: SearchResult[] = listings
       .filter((l) =>
@@ -228,19 +176,18 @@ export function useProviderSearch(query: string, facilityId?: string) {
     return {
       leads: matchedLeads,
       pages: matchedPages,
-      placements: matchedPlacements,
       listings: matchedListings,
-      total: matchedLeads.length + matchedPages.length + matchedPlacements.length + matchedListings.length,
+      total: matchedLeads.length + matchedPages.length + matchedListings.length,
     };
-  }, [debouncedQuery, leads, placements, listings, tokensMatchAll, stripDiacritics]);
+  }, [debouncedQuery, leads, listings, tokensMatchAll, stripDiacritics]);
 
   return {
     results,
-    isLoading: (leadsLoading || placementsLoading || listingsLoading) && !!debouncedQuery,
+    isLoading: (leadsLoading || listingsLoading) && !!debouncedQuery,
     // Surface prefetch failures so the UI can show an error state
     // instead of rendering "No results for X" — which is misleading
     // when the cache is empty because the network call failed.
-    isError: leadsError || placementsError || listingsError,
+    isError: leadsError || listingsError,
     query: debouncedQuery,
   };
 }

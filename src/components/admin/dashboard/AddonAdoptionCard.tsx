@@ -9,7 +9,7 @@ import { TIER_PRICING } from "@/lib/billingPricing";
 
 /**
  * Admin dashboard widget — adoption + MRR contribution of the two
- * Pro add-ons (Featured $599/mo, Concierge $1,000/mo). Pro itself is
+ * the Featured add-on ($599/mo). Pro itself is
  * already surfaced in the main revenue KPI card; this card breaks
  * out the add-on layer because it's where most of the monetization
  * upside (and ops complexity) lives.
@@ -23,7 +23,7 @@ export function AddonAdoptionCard() {
   const { data, isLoading } = useQuery({
     queryKey: ["admin-addon-adoption"],
     queryFn: async () => {
-      const [proRes, featuredRes, conciergeRes] = await Promise.all([
+      const [proRes, featuredRes] = await Promise.all([
         supabase
           .from("facility_subscriptions")
           .select("id", { count: "exact", head: true })
@@ -34,16 +34,10 @@ export function AddonAdoptionCard() {
           .select("id", { count: "exact", head: true })
           .eq("status", "active")
           .eq("has_featured", true),
-        supabase
-          .from("facility_subscriptions")
-          .select("id", { count: "exact", head: true })
-          .eq("status", "active")
-          .eq("has_concierge_partner", true),
       ]);
       return {
         proCount: proRes.count ?? 0,
         featuredCount: featuredRes.count ?? 0,
-        conciergeCount: conciergeRes.count ?? 0,
       };
     },
     staleTime: 1000 * 60 * 5,
@@ -52,12 +46,10 @@ export function AddonAdoptionCard() {
 
   const proCount = data?.proCount ?? 0;
   const featuredCount = data?.featuredCount ?? 0;
-  const conciergeCount = data?.conciergeCount ?? 0;
 
   const proMrr = proCount * (TIER_PRICING.pro.monthlyCents / 100);
   const featuredMrr = featuredCount * (TIER_PRICING.featured.monthlyCents / 100);
-  const conciergeMrr = conciergeCount * (TIER_PRICING.concierge.monthlyCents / 100);
-  const totalMrr = proMrr + featuredMrr + conciergeMrr;
+  const totalMrr = proMrr + featuredMrr;
 
   return (
     <Card className="border shadow-sm">
@@ -66,7 +58,7 @@ export function AddonAdoptionCard() {
           <div className="min-w-0">
             <CardTitle className="text-base font-medium">Subscription & Add-Ons</CardTitle>
             <CardDescription className="text-xs">
-              Pro · Featured · Concierge — active counts and indicative MRR
+              Pro · Featured — active counts and indicative MRR
             </CardDescription>
           </div>
           <Button variant="ghost" size="sm" asChild>
@@ -102,20 +94,12 @@ export function AddonAdoptionCard() {
                 icon={<Sparkles className="h-4 w-4" />}
                 color="amber"
               />
-              <TierTile
-                label="Concierge"
-                price="$1,000/mo"
-                count={conciergeCount}
-                mrr={conciergeMrr}
-                icon={<ShieldCheck className="h-4 w-4" />}
-                color="violet"
-              />
             </div>
             <div className="mt-4 pt-3 border-t border-slate-200 flex items-baseline justify-between">
               <span className="text-xs text-muted-foreground">
                 Indicative MRR
                 <span className="ml-1.5 text-[10px] opacity-70">
-                  (sum of {proCount + featuredCount + conciergeCount} active subscriptions × list price; ignores annual prepay discounts)
+                  (sum of {proCount + featuredCount} active subscriptions × list price; ignores annual prepay discounts)
                 </span>
               </span>
               <span className="text-base font-semibold tabular-nums">

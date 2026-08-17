@@ -16,6 +16,8 @@ interface FacilityWithRelations {
   description: string | null;
   featured: boolean;
   verified: boolean | null;
+  /** Canonical Pro entitlement from `public_facilities.is_pro` = has_active_pro(id). */
+  is_pro: boolean | null;
   year_established: number | null;
   facility_type: string | null;
   logo_url: string | null;
@@ -119,8 +121,10 @@ const getCachedFacilities = (): ApprovedFacility[] | undefined => {
 export const useApprovedFacilities = () => {
   const queryClient = useQueryClient();
   const { data: featuredData, isLoading: isFeaturedLoading } = useFeaturedFacilityIds();
+  // `proFacilityIds` is deliberately NOT read here. Pro is sourced from
+  // `public_facilities.is_pro` in the facilities query below. This endpoint is
+  // consumed only for the homepage rotation ids.
   // Wrap in useMemo so the array reference is stable when featuredData hasn't changed
-  const proIds = useMemo(() => featuredData?.proFacilityIds || [], [featuredData?.proFacilityIds]);
   const homepageFeaturedIds = useMemo(() => featuredData?.homepageFeaturedIds || [], [featuredData?.homepageFeaturedIds]);
 
   // Real-time subscription for approved facilities updates
@@ -196,6 +200,7 @@ export const useApprovedFacilities = () => {
           description,
           featured,
           verified,
+          is_pro,
           facility_type,
           logo_url,
           gallery_urls,
@@ -244,7 +249,12 @@ export const useApprovedFacilities = () => {
     const baseFacilities = facilitiesQuery.data || [];
     
     return (baseFacilities as (FacilityWithRelations & { reviewsConfig: { rating: number | null; count: number | null } | null })[]).map((facility) => {
-      const isPro = proIds.includes(facility.id);
+      // CANONICAL PRO, FAIL CLOSED. This was `proIds.includes(facility.id)`,
+      // sourced from get-featured-facilities' `proFacilityIds` — a list that
+      // carried no tier predicate, so any active subscription row read as Pro.
+      // `public_facilities.is_pro` IS has_active_pro(id), the single
+      // definition. `=== true` so a null column never coerces to Pro.
+      const isPro = facility.is_pro === true;
       const isHomepageFeatured = homepageFeaturedIds.includes(facility.id);
       
       // Determine plan tier for sorting: Pro or Free
@@ -263,8 +273,21 @@ export const useApprovedFacilities = () => {
         insuranceAccepted: facility.facility_insurance.map((i) => i.insurance_name),
         description: facility.description || "Treatment center offering quality care and support.",
         programOverview: facility.description || "Comprehensive treatment programs tailored to individual needs.",
-        // Featured if they have Pro subscription
-        featured: isPro,
+        // PRO IS NOT FEATURED. This was `featured: isPro`, which turned a $99
+        // product subscription into a public Featured badge and into paid
+        // placement in every consumer that reads this flag.
+        //
+        // It is not replaced with the raw `public_facilities.featured` column
+        // either. That catalog boolean is the same one the retired
+        // pro-benefits Pro activation used to set, so it is not evidence of a
+        // Featured purchase, and the rows still carrying it have no
+        // subscription, placement or audit record behind them. Publishing a
+        // Featured claim from it would be fabricating an entitlement.
+        //
+        // Paid Featured inventory is served by get-featured-rotation from
+        // featured_placements into the separately labeled Featured rail, which
+        // sets its own badge. Organic cards assert nothing.
+        featured: false,
         isPro,
         isHomepageFeatured,
         planTier,
@@ -281,7 +304,7 @@ export const useApprovedFacilities = () => {
         calculatedRankingScore: (facility as { calculated_ranking_score?: number }).calculated_ranking_score ?? 0,
       };
     });
-  }, [facilitiesQuery.data, homepageFeaturedIds, proIds]);
+  }, [facilitiesQuery.data, homepageFeaturedIds]);
 
   // Cache facilities for instant future loads
   useEffect(() => {

@@ -45,7 +45,9 @@ const routePrefetchMap: Record<string, () => Promise<unknown>> = {
   "/admin/users": () => import("@/pages/admin/AdminStaff"),
   "/admin/analytics": () => import("@/pages/admin/AdminAnalytics"),
   "/admin/seekers": () => import("@/pages/admin/AdminSeekers"),
-  "/admin/concierge": () => import("@/pages/admin/AdminConcierge"),
+  "/admin/claims": () => import("@/pages/admin/AdminClaimsReviewPanel"),
+  // Read-only historical archive, not the retired placement workspace.
+  "/admin/concierge": () => import("@/pages/admin/AdminConciergeHistorical"),
   "/admin/support": () => import("@/pages/admin/AdminSupport"),
   "/admin/reviews": () => import("@/pages/admin/AdminReviews"),
   "/admin/settings": () => import("@/pages/admin/AdminSettings"),

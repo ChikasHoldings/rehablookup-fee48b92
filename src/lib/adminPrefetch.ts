@@ -14,7 +14,11 @@ const prefetchMap: Record<string, () => Promise<unknown>> = {
   "/admin/notifications": () => import("@/pages/admin/AdminNotifications"),
   "/admin/profile": () => import("@/pages/admin/AdminProfile"),
   "/admin/reviews": () => import("@/pages/admin/AdminReviews"),
-  "/admin/concierge": () => import("@/pages/admin/AdminConcierge"),
+  "/admin/claims": () => import("@/pages/admin/AdminClaimsReviewPanel"),
+  "/admin/re-verification": () => import("@/pages/admin/AdminReVerificationQueue"),
+  // /admin/concierge serves the read-only historical archive after the Stage-3
+  // directory cutover — never the retired placement workspace.
+  "/admin/concierge": () => import("@/pages/admin/AdminConciergeHistorical"),
   // /admin/placement-revenue dashboard removed in monetization rebuild.
   "/admin/support": () => import("@/pages/admin/AdminSupport"),
   "/admin/marketing": () => import("@/pages/admin/AdminMarketing"),
@@ -37,9 +41,8 @@ const adjacentPagesMap: Record<string, string[]> = {
   "/admin/notifications": ["/admin", "/admin/settings"],
   "/admin/profile": ["/admin/settings", "/admin"],
   "/admin/reviews": ["/admin/providers"],
-  "/admin/concierge": ["/admin", "/admin/placement-revenue", "/admin/providers"],
-  "/admin/placement-revenue": ["/admin/concierge", "/admin/subscriptions"],
-  "/admin/support": ["/admin", "/admin/leads", "/admin/concierge"],
+  "/admin/concierge": ["/admin", "/admin/providers"],
+  "/admin/support": ["/admin", "/admin/leads", "/admin/reviews"],
   "/admin/marketing": ["/admin/leads", "/admin", "/admin/analytics"],
   "/admin/blog": ["/admin", "/admin/marketing", "/admin/providers"],
 };

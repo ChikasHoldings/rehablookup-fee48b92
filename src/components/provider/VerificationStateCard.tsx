@@ -191,8 +191,43 @@ export function VerificationStateCard({
 
   if (!facilityId || loading) return null;
   // No state row means the facility isn't yet in the engine's population
-  // (probably never verified). Don't render — there's nothing to action.
-  if (!state) return null;
+  // (probably never verified). Previously this rendered nothing, which left
+  // "is my listing verified?" unanswered on the dashboard and — worse — left a
+  // gap the Pro upsell used to fill with a "Verified badge" promise. Render the
+  // honest not-yet state instead, and say plainly that verification is earned
+  // rather than purchased.
+  if (!state) {
+    return (
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b py-3.5">
+          <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+            <ShieldCheck className="h-4 w-4 text-slate-400" aria-hidden />
+            Verification
+          </CardTitle>
+          <Badge variant="secondary" className="text-[11px] font-medium">
+            Not verified yet
+          </Badge>
+        </CardHeader>
+        <CardContent className="space-y-2.5 p-4 sm:p-5">
+          <p className="text-xs leading-relaxed text-slate-600">
+            RehabLookup verifies facilities against authoritative sources — licensing,
+            accreditation, and SAMHSA records. Keeping your credentials current on your
+            listing is what puts you in the review queue.
+          </p>
+          <p className="text-[11px] leading-relaxed text-slate-500">
+            Verification is earned through our review process. It is never sold, bundled
+            with Pro, or affected by what you spend.
+          </p>
+          <Button asChild variant="outline" size="sm" className="h-8 gap-1.5 text-xs">
+            <Link to="/provider/listings">
+              <Upload className="h-3.5 w-3.5" aria-hidden />
+              Add credentials
+            </Link>
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const remediationDays = daysFromNow(state.remediation_deadline);
   const healthy = state.state === "verified" && state.badge_visible;

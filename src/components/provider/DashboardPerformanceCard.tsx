@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Eye, Megaphone, Phone, Globe, ArrowUpRight, ArrowDownRight, Lock, BarChart3 } from "lucide-react";
+import { Eye, Megaphone, Phone, Globe, Users, ArrowUpRight, ArrowDownRight, Lock, BarChart3 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -87,7 +87,7 @@ export function DashboardPerformanceCard({ facilityId }: { facilityId: string | 
         </CardTitle>
         <Button asChild variant="ghost" size="sm" className="h-7 gap-1 text-xs text-[#1B365D]">
           <Link to="/provider/analytics">
-            Full analytics <ArrowUpRight className="h-3.5 w-3.5" />
+            Full performance <ArrowUpRight className="h-3.5 w-3.5" />
           </Link>
         </Button>
       </CardHeader>
@@ -107,9 +107,13 @@ export function DashboardPerformanceCard({ facilityId }: { facilityId: string | 
           </p>
         ) : (
           <>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {/* Search appearances → profile views → contact actions →
+                inquiries: the funnel a provider actually reads, left to right.
+                Inquiries are shown for EVERY tier — they are not a paid
+                entitlement, so they belong in the Free snapshot too. */}
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
               <Tile
-                label="Impressions"
+                label="Search appearances"
                 icon={Megaphone}
                 value={cur?.impressions ?? 0}
                 delta={deltaPct(cur?.impressions ?? 0, prev?.impressions)}
@@ -134,16 +138,21 @@ export function DashboardPerformanceCard({ facilityId }: { facilityId: string | 
                 delta={deltaPct(cur?.website_clicks ?? 0, prev?.website_clicks)}
                 locked={!isPro}
               />
+              <Tile
+                label="Inquiries"
+                icon={Users}
+                value={cur?.inquiries ?? 0}
+                delta={deltaPct(cur?.inquiries ?? 0, prev?.inquiries)}
+              />
             </div>
+            {/* Informational, not a second upsell: the dashboard carries exactly
+                one Pro CTA (the Plan section). This states what the greyed tiles
+                contain so the lock isn't a mystery. */}
             {!isPro && (
-              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-200 bg-amber-50/60 px-3 py-2">
-                <p className="text-xs text-amber-900">
-                  Upgrade to Pro for click-to-call, website clicks, 30-day trends, traffic sources, and market position.
-                </p>
-                <Button asChild size="sm" className="h-7 gap-1 bg-[#1B365D] text-xs hover:bg-[#142a4a]">
-                  <Link to="/provider/billing?upgrade=pro">Upgrade</Link>
-                </Button>
-              </div>
+              <p className="mt-3 text-xs leading-relaxed text-slate-500">
+                Click-to-call and website clicks, 30-day trends, traffic sources, and
+                market position are part of Pro performance reporting.
+              </p>
             )}
           </>
         )}

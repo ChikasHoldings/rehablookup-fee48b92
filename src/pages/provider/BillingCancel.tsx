@@ -38,6 +38,9 @@ export default function BillingCancel() {
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [scope, setScope] = useState<CancellationScope>("all");
+  // Featured is independent of Pro: a tier='free' row with has_featured=true is
+  // a Featured-only facility and has no Pro piece to cancel.
+  const isProRow = subscription?.tier === "pro";
   const [reason, setReason] = useState("");
   const [annualConfirms, setAnnualConfirms] = useState({ forfeit: false, immediate: false });
   const [monthlyConfirm, setMonthlyConfirm] = useState(false);
@@ -203,6 +206,11 @@ export default function BillingCancel() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-3" role="radiogroup" aria-label="What to cancel">
+              {/* Featured is independent of Pro, so a facility can hold Featured
+                  with no Pro subscription (tier='free'). For such a row there is
+                  nothing "everything" could mean beyond Featured — the server
+                  routes scope='all' to the Featured path for a non-Pro row — so
+                  say so rather than offering to cancel a Pro that isn't there. */}
               <label className="flex items-start gap-3 rounded-md border border-slate-200 p-3 cursor-pointer hover:border-[#1B365D]/40">
                 <input
                   type="radio"
@@ -210,12 +218,20 @@ export default function BillingCancel() {
                   value="all"
                   checked={scope === "all"}
                   onChange={() => setScope("all")}
-                  aria-label="Cancel everything — Pro and all add-ons"
+                  aria-label={
+                    isProRow
+                      ? "Cancel everything — your plan and all add-ons"
+                      : "Cancel all paid products on this facility"
+                  }
                   className="mt-1"
                 />
                 <div>
                   <p className="font-medium">Cancel everything</p>
-                  <p className="text-xs text-slate-500">Pro + all add-ons. Full subscription ends.</p>
+                  <p className="text-xs text-slate-500">
+                    {isProRow
+                      ? "Pro + all add-ons. Full subscription ends."
+                      : "Ends every paid product on this facility. Your free directory listing stays live."}
+                  </p>
                 </div>
               </label>
 
@@ -227,12 +243,16 @@ export default function BillingCancel() {
                     value="addon-featured"
                     checked={scope === "addon-featured"}
                     onChange={() => setScope("addon-featured")}
-                    aria-label="Cancel Featured add-on only, keep Pro"
+                    aria-label="Cancel Featured advertising only, keep your listing plan"
                     className="mt-1"
                   />
                   <div>
                     <p className="font-medium">Cancel Featured only</p>
-                    <p className="text-xs text-slate-500">Keep Pro and any other add-ons.</p>
+                    <p className="text-xs text-slate-500">
+                      {isProRow
+                        ? "Keep Pro and any other add-ons."
+                        : "Keeps your free directory listing exactly as it is."}
+                    </p>
                   </div>
                 </label>
               )}
@@ -245,11 +265,11 @@ export default function BillingCancel() {
                     value="addon-concierge"
                     checked={scope === "addon-concierge"}
                     onChange={() => setScope("addon-concierge")}
-                    aria-label="Cancel Concierge Partner add-on only, keep Pro"
+                    aria-label="Cancel the legacy add-on only, keep Pro"
                     className="mt-1"
                   />
                   <div>
-                    <p className="font-medium">Cancel Concierge Partner only</p>
+                    <p className="font-medium">Cancel legacy add-on only</p>
                     <p className="text-xs text-slate-500">Keep Pro and any other add-ons.</p>
                   </div>
                 </label>

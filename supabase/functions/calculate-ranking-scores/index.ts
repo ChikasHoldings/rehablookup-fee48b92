@@ -11,14 +11,38 @@ const logStep = (step: string, details?: unknown) => {
   console.log(`[CALCULATE-RANKING-SCORES] ${step}${detailsStr}`);
 };
 
-// Default weights
+// Default weights.
+//
+// ORGANIC RANKING IS NEUTRAL. Payment is not an input. There is deliberately
+// no pro_boost here and no subscription lookup anywhere in this function:
+// a provider cannot buy a higher organic position, only Pro product features
+// (public phone, enhanced-profile media, analytics) and clearly labeled
+// Featured visibility, which lives in its own rail and never touches these
+// scores.
 const DEFAULT_WEIGHTS = {
-  pro_boost: 50,
   listing_completeness: 20,
   response_rate: 15,
   recency: 10,
   location_relevance: 5,
 };
+
+// The ONLY keys an operator may override through
+// platform_settings.ranking_weights. This is an allow-list, not a merge, and
+// that is load-bearing: production still stores a stale `pro_boost: 50` in
+// that row, and the previous
+//   weights = { ...DEFAULT_WEIGHTS, ...settingsData.setting_value }
+// would have put the paid boost straight back the moment it was dropped from
+// DEFAULT_WEIGHTS. Any key not listed here — pro_boost, or a future
+// featured_boost, subscription_tier_boost, anything else purchasable — is
+// structurally ignored no matter what the stored JSON says.
+const NEUTRAL_WEIGHT_KEYS = [
+  "listing_completeness",
+  "response_rate",
+  "recency",
+  "location_relevance",
+] as const;
+
+type WeightKey = typeof NEUTRAL_WEIGHT_KEYS[number];
 
 // Calculate listing completeness score (0-100)
 function calculateCompleteness(
@@ -95,18 +119,32 @@ Deno.serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    // Fetch ranking weights from platform_settings
-    let weights = DEFAULT_WEIGHTS;
+    // Fetch ranking weights from platform_settings.
+    //
+    // Copy ONLY the neutral keys, and only when they are finite numbers.
+    // Unknown keys in the stored JSON are dropped on the floor — see
+    // NEUTRAL_WEIGHT_KEYS. A stale `pro_boost` cannot re-enter the model
+    // through this path even while it is still stored on the row.
+    const weights: Record<WeightKey, number> = { ...DEFAULT_WEIGHTS };
     try {
       const { data: settingsData } = await supabaseClient
         .from("platform_settings")
         .select("setting_value")
         .eq("setting_key", "ranking_weights")
         .maybeSingle();
-      
+
       if (settingsData?.setting_value) {
-        weights = { ...DEFAULT_WEIGHTS, ...settingsData.setting_value };
-        logStep("Loaded ranking weights", weights);
+        const stored = settingsData.setting_value as Record<string, unknown>;
+        const ignored = Object.keys(stored).filter(
+          (k) => !(NEUTRAL_WEIGHT_KEYS as readonly string[]).includes(k),
+        );
+        for (const key of NEUTRAL_WEIGHT_KEYS) {
+          const value = stored[key];
+          if (typeof value === "number" && Number.isFinite(value)) {
+            weights[key] = value;
+          }
+        }
+        logStep("Loaded ranking weights", { weights, ignoredKeys: ignored });
       }
     } catch (err) {
       logStep("Using default weights", { error: String(err) });
@@ -124,15 +162,10 @@ Deno.serve(async (req) => {
 
     logStep("Fetched facilities", { count: facilities?.length || 0 });
 
-    // Fetch Pro subscriptions
-    const { data: proSubs } = await supabaseClient
-      .from("facility_subscriptions")
-      .select("facility_id")
-      .eq("status", "active")
-      .gt("current_period_end", new Date().toISOString());
-
-    const proFacilityIds = new Set((proSubs || []).map(s => s.facility_id));
-    logStep("Pro facilities", { count: proFacilityIds.size });
+    // NO SUBSCRIPTION LOOKUP. facility_subscriptions is deliberately not
+    // queried here: this function computes ORGANIC rank, and organic rank has
+    // no payment input. The Pro subscription set was previously loaded solely
+    // to add weights.pro_boost, which is retired.
 
     // Fetch services count per facility
     const { data: servicesData } = await supabaseClient
@@ -168,10 +201,19 @@ Deno.serve(async (req) => {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     
-    // lead_unlocks dropped in monetization rebuild — engagement signal
-    // for ranking now comes from facility_subscriptions tier + Pro
-    // response rate. Until the new signal lands in a follow-up PR,
-    // engagement contribution from unlocks is treated as zero.
+    // lead_unlocks dropped in the monetization rebuild, so the unlock-based
+    // engagement contribution is zero.
+    //
+    // This used to say the replacement signal "comes from
+    // facility_subscriptions tier + Pro response rate". It must not: a
+    // subscription tier is a PAYMENT signal, and organic ranking has no
+    // payment input (Stage-3 B2). Leaving that sentence here described the
+    // retired pro_boost as a planned feature and would have read as a
+    // specification to whoever implemented the follow-up.
+    //
+    // Response rate below is computed from leads.provider_responded_at —
+    // actual provider behaviour, available to Free and Pro facilities alike —
+    // and is a legitimate organic signal.
     const leadUnlocks: Array<{ facility_id: string; created_at: string }> = [];
 
     const { data: respondedLeads } = await supabaseClient
@@ -196,8 +238,6 @@ Deno.serve(async (req) => {
     // Calculate and update scores for each facility
     let updatedCount = 0;
     for (const facility of facilities || []) {
-      const isPro = proFacilityIds.has(facility.id);
-      
       // Calculate component scores
       const completenessRaw = calculateCompleteness(
         facility,
@@ -212,14 +252,10 @@ Deno.serve(async (req) => {
       const responses = responsesPerFacility[facility.id] || 0;
       const responseRateRaw = unlocks > 0 ? (responses / unlocks) * 100 : 50; // Default to 50% if no data
       
-      // Calculate weighted final score
+      // Calculate weighted final score. Every term below is an evidence
+      // signal about the listing itself; none of them is purchasable.
       let finalScore = 0;
-      
-      // Pro boost (if Pro subscriber)
-      if (isPro) {
-        finalScore += weights.pro_boost;
-      }
-      
+
       // Listing completeness (scaled to weight)
       finalScore += Math.round(completenessRaw * (weights.listing_completeness / 100));
       

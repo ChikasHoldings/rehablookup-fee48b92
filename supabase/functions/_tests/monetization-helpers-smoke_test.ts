@@ -7,8 +7,8 @@
 // metadata routing tokens.
 //
 // What this guards against:
-//   - Someone deleting the idempotency guard in activateProBenefits +
-//     re-introducing the double-+50-ranking bug.
+//   - Someone re-introducing the retired Pro side effects in
+//     activateProBenefits (facilities.featured, the +50 ranking boost).
 //   - create-checkout-session quietly losing the Pro-required gate.
 //   - The webhook routing branches (metadata.type === 'featured_addon'
 //     etc.) drifting and silently breaking activation.
@@ -36,17 +36,27 @@ Deno.test("pro-benefits: activateProBenefits + deactivateProBenefits + notifier 
   assertStringIncludes(src, "export async function notifyProBenefitsPartialFailure");
 });
 
-Deno.test("pro-benefits: activate guards against double +50 ranking", async () => {
+// Stage-3 entitlement amendment (B2.3): Pro buys PRODUCT FEATURES, not trust,
+// organic rank, or Featured placement. These two tests previously asserted the
+// mechanics of the +50 ranking boost — the double-apply guard and the clamp at
+// zero. Both are retired along with the boost itself, so they now assert the
+// absence of the mutation rather than the correctness of its arithmetic.
+Deno.test("pro-benefits: activation writes no ranking or Featured state", async () => {
   const src = await readSrc("../_shared/pro-benefits.ts");
-  // The bug previously was reading currentScore and adding 50 unconditionally.
-  // The guard is the alreadyBoosted short-circuit.
-  assertStringIncludes(src, "alreadyBoosted");
-  assertStringIncludes(src, "featured?: boolean | null");
+  const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/[^\n]*/g, "$1");
+  assert(!/calculated_ranking_score/.test(code), "Pro must not buy organic ranking");
+  assert(!/\bfeatured\s*:/.test(code), "Pro must not set facilities.featured");
+  assert(!/\bverified\s*:/.test(code), "Pro must not set facilities.verified");
+  assert(!/RANKING_BOOST/.test(code), "the ranking boost constant must be gone");
 });
 
-Deno.test("pro-benefits: deactivate clamps ranking score at 0", async () => {
+Deno.test("pro-benefits: activation and deactivation still mirror profiles.plan", async () => {
+  // The plan mirror is the legitimate remaining effect — it drives the storage
+  // photo-cap trigger. Removing it would make Pro activation an actual no-op.
   const src = await readSrc("../_shared/pro-benefits.ts");
-  assertStringIncludes(src, "Math.max(0, currentScore - RANKING_BOOST)");
+  assertStringIncludes(src, 'plan: "pro"');
+  assertStringIncludes(src, 'plan: "free"');
+  assertStringIncludes(src, 'from("profiles")');
 });
 
 Deno.test("pro-benefits: notifier writes admin_notifications.type='pro_benefits_partial_failure'", async () => {

@@ -53,7 +53,6 @@ import {
   facilityMatchesLocation,
   PROXIMITY_TIER_ORDER,
 } from "@/lib/proximitySearch";
-import { getPlanPriority } from "@/lib/facilityPlanSort";
 import { cn } from "@/lib/utils";
 import { getLocationSuggestions, formatLocationSuggestion, type LocationSuggestion } from "@/data/locationSuggestions";
 import {
@@ -355,10 +354,9 @@ export default function SeekerSearch() {
           if (proxA !== proxB) return proxA - proxB;
         }
       }
-      // Within the same prox/sort bucket, Pro first then rating
-      const proA = getPlanPriority(a as Parameters<typeof getPlanPriority>[0]);
-      const proB = getPlanPriority(b as Parameters<typeof getPlanPriority>[0]);
-      if (proA !== proB) return proA - proB;
+      // Within the same prox/sort bucket, fall back to rating then id.
+      // No payment tie-break: getPlanPriority (Pro/Featured before free) used
+      // to run here, which let a Pro listing jump a better-rated free one.
       const rA = (a as unknown as { googleRating?: number }).googleRating || 0;
       const rB = (b as unknown as { googleRating?: number }).googleRating || 0;
       if (rA !== rB) return rB - rA;

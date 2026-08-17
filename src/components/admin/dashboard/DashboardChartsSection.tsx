@@ -35,7 +35,6 @@ interface ProviderStats {
   pending: number;
   suspended: number;
   pro: number;
-  placement: number;
   featured?: number;
   verified?: number;
 }
@@ -43,10 +42,7 @@ interface ProviderStats {
 interface LeadStats {
   totalMonth: number;
   totalAll: number;
-  verified: number;
-  verificationRate: number;
   newLeads: number;
-  assigned?: number;
 }
 
 interface DashboardChartsSectionProps {
@@ -72,14 +68,16 @@ export const DashboardChartsSection = forwardRef<HTMLDivElement, DashboardCharts
     { name: "Approved", value: providerStats?.approved || 0, fill: CHART_COLORS.success },
     { name: "Pending", value: providerStats?.pending || 0, fill: CHART_COLORS.warning },
     { name: "Pro", value: providerStats?.pro || 0, fill: CHART_COLORS.accent },
-    { name: "Placement", value: providerStats?.placement || 0, fill: CHART_COLORS.info },
+    { name: "Featured", value: providerStats?.featured || 0, fill: CHART_COLORS.info },
   ];
 
-  // Lead funnel — flat-fee Pro model: all Pro leads are delivered with full
-  // PII immediately, so the funnel reduces to total → verified.
-  const leadFunnelData = [
-    { name: "Leads", value: leadStats?.totalMonth || 0, fill: CHART_COLORS.muted },
-    { name: "Verified", value: leadStats?.verified || 0, fill: CHART_COLORS.info },
+  // Inquiry volume. There is no funnel to chart — an inquiry is pinned to the
+  // one facility the seeker chose, and nothing downstream converts, matches,
+  // or redistributes it. These are the two facts the platform actually holds:
+  // how many arrived this month, and how many are still untouched.
+  const inquiryVolumeData = [
+    { name: "This month", value: leadStats?.totalMonth || 0, fill: CHART_COLORS.muted },
+    { name: "Awaiting triage", value: leadStats?.newLeads || 0, fill: CHART_COLORS.info },
   ];
 
   return (
@@ -122,11 +120,11 @@ export const DashboardChartsSection = forwardRef<HTMLDivElement, DashboardCharts
         </CardContent>
       </Card>
 
-      {/* Lead Funnel */}
+      {/* Inquiry volume */}
       <Card className="border shadow-sm">
         <CardHeader className="pb-2">
-          <CardTitle className="text-base font-medium">Lead Funnel</CardTitle>
-          <CardDescription className="text-xs">This month's conversion</CardDescription>
+          <CardTitle className="text-base font-medium">Inquiries</CardTitle>
+          <CardDescription className="text-xs">Received this month</CardDescription>
         </CardHeader>
         <CardContent>
           {loadingLeads ? (
@@ -136,16 +134,16 @@ export const DashboardChartsSection = forwardRef<HTMLDivElement, DashboardCharts
           ) : (
             <div className="h-[180px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={leadFunnelData} layout="vertical" margin={{ left: 0, right: 20 }}>
+                <BarChart data={inquiryVolumeData} layout="vertical" margin={{ left: 0, right: 20 }}>
                   <XAxis type="number" hide />
-                  <YAxis type="category" dataKey="name" width={60} tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
+                  <YAxis type="category" dataKey="name" width={90} tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
                   <RechartsTooltip
                     content={({ active, payload }) => {
                       if (active && payload && payload.length) {
                         return (
                           <div className="bg-card border rounded-lg shadow-lg px-3 py-2">
                             <p className="text-sm font-medium">{payload[0].payload.name}</p>
-                            <p className="text-xs text-muted-foreground">{payload[0].value} leads</p>
+                            <p className="text-xs text-muted-foreground">{payload[0].value} inquiries</p>
                           </div>
                         );
                       }
@@ -158,7 +156,7 @@ export const DashboardChartsSection = forwardRef<HTMLDivElement, DashboardCharts
             </div>
           )}
           <div className="mt-2 pt-2 border-t flex justify-between text-xs text-muted-foreground">
-            <span>Verification: {leadStats?.verificationRate || 0}%</span>
+            <span>{(leadStats?.totalAll || 0).toLocaleString()} all time</span>
           </div>
         </CardContent>
       </Card>

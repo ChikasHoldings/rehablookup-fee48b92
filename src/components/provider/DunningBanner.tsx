@@ -92,7 +92,10 @@ export function DunningBanner() {
       const parts: string[] = [];
       if (s.tier === "pro") parts.push("Pro");
       if (s.has_featured) parts.push("Featured");
-      if (s.has_concierge_partner) parts.push("Concierge");
+      // has_concierge_partner is deliberately NOT named here: the Concierge
+      // product is retired, so a past-due banner must not advertise it back to
+      // the provider. Such a row still falls back to "Subscription", and the
+      // amount owed is unaffected. The column is Stage-4 debt.
       return parts.length > 0 ? parts.join(" + ") : "Subscription";
     })
     .join(", ");

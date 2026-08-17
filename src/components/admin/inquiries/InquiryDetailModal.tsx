@@ -9,15 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
+
 import {
   User, Mail, Phone, Building2,
-  MessageSquare, Shield, FileText, CheckCircle,
-  Share2, Clock, Zap, Star, Loader2,
-  Save, StickyNote, Handshake, Activity, Eye, ArrowRightLeft, AlertTriangle,
-  Send, Flag,
+  MessageSquare, Shield, FileText, CheckCircle, Clock, Zap, Star, Loader2,
+  Save, StickyNote, Activity, Eye, ArrowRightLeft, AlertTriangle, Flag,
 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -74,26 +70,6 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
   const queryClient = useQueryClient();
 
   // Fetch distribution details
-  const { data: distributions } = useQuery({
-    queryKey: ["inquiry-distributions", lead?.id],
-    queryFn: async () => {
-      if (!lead?.id) return [];
-      const { data } = await supabase
-        .from("lead_distributions")
-        .select("id, facility_id, is_original, distributed_at, unlocked_at, notification_sent, notification_sent_at")
-        .eq("lead_id", lead.id)
-        .order("distributed_at", { ascending: true });
-      return data || [];
-    },
-    enabled: !!lead?.id && open,
-  });
-
-  // Fetch routing-decision audit trail. This populates the "Routing"
-  // section of the timeline so an admin can see why a lead landed at
-  // a specific facility (was it Pro-tier match, was it a fallback
-  // assignment, what eligibility checks ran). Empty for legacy leads
-  // created before routing-log was instrumented; the UI handles
-  // empty gracefully.
   const { data: routingLogs } = useQuery({
     queryKey: ["inquiry-routing-logs", lead?.id],
     queryFn: async () => {
@@ -145,103 +121,8 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
   });
 
   // Related placement
-  const { data: relatedPlacement } = useQuery({
-    queryKey: ["inquiry-placement-link", lead?.email],
-    queryFn: async () => {
-      if (!lead?.email) return null;
-      const { data } = await supabase
-        .from("concierge_inquiries")
-        .select("id, status, created_at, primary_concern, assigned_advisor_id, placed_facility_id, placement_confirmed")
-        .eq("user_email", lead.email)
-        .order("created_at", { ascending: false })
-        .limit(1);
-      return data?.[0] || null;
-    },
-    enabled: !!lead?.email && open,
-  });
-
   // === MUTATIONS ===
 
-  // Move a lead to a different facility. Preserves attribution via
-  // original_facility_id (first move only) so the original owner stays
-  // discoverable in audit. The redistribution_status="redistributed"
-  // write was removed 2026-05-21 — that tag was a holdover from the
-  // per-lead-sale era. Today the move is just an operational
-  // reassignment, captured by assignment_status + the admin_audit_log
-  // row written immediately after.
-  const reassignMutation = useMutation({
-    mutationFn: async (facilityId: string) => {
-      if (!lead?.id) throw new Error("No lead selected");
-      if (!facilityId) throw new Error("No facility selected");
-      if (facilityId === lead.facility_id) {
-        throw new Error("Lead is already assigned to this facility");
-      }
-
-      const previousFacilityId = lead.facility_id ?? null;
-      const updates: Record<string, unknown> = {
-        facility_id: facilityId,
-        assignment_status: "reassigned",
-        assigned_at: new Date().toISOString(),
-      };
-      // Only stamp original_facility_id the first time the lead moves,
-      // so we don't lose the true origin if it's reassigned again later.
-      if (!lead.original_facility_id && previousFacilityId) {
-        updates.original_facility_id = previousFacilityId;
-      }
-
-      const { error } = await supabase.from("leads").update(updates as never).eq("id", lead.id);
-      if (error) throw error;
-
-      // Audit log so admins can trace cross-facility moves.
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user?.id) {
-        await supabase.from("admin_audit_log").insert({
-          admin_user_id: user.id,
-          action_type: "lead_reassigned",
-          target_type: "lead",
-          target_id: lead.id,
-          details: {
-            from_facility_id: previousFacilityId,
-            to_facility_id: facilityId,
-            preserved_original: !lead.original_facility_id && !!previousFacilityId,
-          },
-        });
-      }
-
-      // Notify the RECEIVING facility's owner. Without this the reassigned lead
-      // lands silently in their inquiries queue (visible via RLS) with no signal
-      // — and the UI promised "the provider will be notified". Best-effort: the
-      // reassignment is already committed; a notification failure must not undo it.
-      try {
-        const { data: destFacility } = await supabase
-          .from("facilities")
-          .select("user_id, name")
-          .eq("id", facilityId)
-          .maybeSingle();
-        if (destFacility?.user_id) {
-          await supabase.rpc("create_provider_notification", {
-            p_user_id: destFacility.user_id,
-            p_facility_id: facilityId,
-            p_type: "lead_redistributed",
-            p_title: "New lead assigned to you",
-            p_message: `A lead was assigned to ${destFacility.name ?? "your facility"}. Open your inquiries to respond.`,
-            p_metadata: { link: "/provider/inquiries", lead_id: lead.id, reassigned: true },
-          });
-        }
-      } catch (notifyErr) {
-        console.warn("[InquiryDetailModal] reassign notification failed", notifyErr);
-      }
-    },
-    onSuccess: () => {
-      onLeadUpdated();
-      queryClient.invalidateQueries({ queryKey: ["inquiry-provider", lead?.facility_id] });
-      queryClient.invalidateQueries({ queryKey: ["admin-leads"] });
-      toast.success("Lead reassigned successfully");
-    },
-    onError: (err: Error) => toast.error(err.message || "Failed to reassign lead"),
-  });
-
-  // Mark as contacted
   const markContactedMutation = useMutation({
     mutationFn: async () => {
       const previousStatus = lead.provider_response_status ?? null;
@@ -357,7 +238,6 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
 
   const assignedFacility = lead?.facility_id ? facilityMap.get(lead.facility_id) : providerInfo?.facility;
   const originalFacility = lead?.original_facility_id ? facilityMap.get(lead.original_facility_id) : null;
-  const isRedistributed = lead?.redistribution_status === "extended" || lead?.redistribution_status === "redistributed";
   const getInitials = () => lead?.name?.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) || "?";
 
   // Build activity timeline
@@ -366,31 +246,20 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
     const events: Array<{ date: string; label: string; detail?: string; icon: React.ElementType; color: string }> = [];
 
     events.push({ date: lead.created_at, label: "Inquiry Submitted", detail: `${lead.inquiry_type || "Request Info"} via ${formatSourceLabel(lead.source)}`, icon: MessageSquare, color: "bg-primary/10 text-primary" });
-    if (lead.assigned_at) events.push({ date: lead.assigned_at, label: "Lead Created & Assigned", detail: assignedFacility?.name || "Facility", icon: Building2, color: "bg-chart-3/10 text-chart-3" });
+    if (lead.assigned_at) events.push({ date: lead.assigned_at, label: "Inquiry Received", detail: assignedFacility?.name || "Facility", icon: Building2, color: "bg-chart-3/10 text-chart-3" });
 
-    distributions?.forEach((d) => {
-      // Round-30 audit: facilityMap.get() returns undefined when the
-      // referenced facility was deleted but the distribution row
-      // survived. Was rendering literal "undefined" in the UI; now
-      // surfaces "(deleted facility)" so admins can spot the broken
-      // reference and reconcile.
-      const facName = facilityMap.get(d.facility_id)?.name ?? "(deleted facility)";
-      if (!d.is_original) events.push({ date: d.distributed_at, label: "Redistributed", detail: facName, icon: Share2, color: "bg-info/10 text-info" });
-      if (d.notification_sent_at) events.push({ date: d.notification_sent_at, label: "Provider Notified", detail: facName, icon: Send, color: "bg-muted text-muted-foreground" });
-    });
 
     if (lead.provider_responded_at) events.push({ date: lead.provider_responded_at, label: "Provider Responded", detail: lead.provider_response_status, icon: CheckCircle, color: "bg-success/10 text-success" });
-    if (lead.lead_expired_at) events.push({ date: lead.lead_expired_at, label: "Lead Expired", detail: "Exclusive window ended", icon: Clock, color: "bg-muted text-muted-foreground" });
-    if (relatedPlacement) events.push({ date: relatedPlacement.created_at, label: "Converted to Placement", detail: relatedPlacement.primary_concern || "Case created", icon: Handshake, color: "bg-purple-500/10 text-purple-600" });
+    if (lead.lead_expired_at) events.push({ date: lead.lead_expired_at, label: "Inquiry Expired", detail: "Exclusive window ended", icon: Clock, color: "bg-muted text-muted-foreground" });
 
     return events.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [lead, distributions, relatedPlacement, assignedFacility, facilityMap]);
+  }, [lead, assignedFacility]);
 
   if (!lead) return null;
 
   const tabs = [
     { value: "overview", label: "Overview", icon: Eye },
-    { value: "lead", label: "Lead Details", icon: Shield },
+    { value: "lead", label: "Inquiry Details", icon: Shield },
     { value: "actions", label: "Actions", icon: Zap },
     { value: "timeline", label: "Timeline", icon: Activity, badge: timeline.length },
     { value: "notes", label: "Notes", icon: StickyNote, badge: leadNotes?.length || 0 },
@@ -428,12 +297,6 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
                 <Badge variant="secondary" className="h-5 text-xs gap-1">
                   <MessageSquare className="h-3 w-3" />{lead.inquiry_type === "request_callback" ? "Callback" : lead.inquiry_type === "tour_request" ? "Tour" : "Info"}
                 </Badge>
-                {isRedistributed && (
-                  <Badge variant="outline" className="bg-info/10 text-info border-info/30 gap-1 h-5 text-xs"><Share2 className="h-3 w-3" />Redistributed</Badge>
-                )}
-                {relatedPlacement && (
-                  <Badge variant="outline" className="bg-purple-500/10 text-purple-600 border-purple-500/30 gap-1 h-5 text-xs"><Handshake className="h-3 w-3" />Placement</Badge>
-                )}
                 {lead.quality_flag && (
                   <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30 gap-1 h-5 text-xs"><Flag className="h-3 w-3" />{lead.quality_flag}</Badge>
                 )}
@@ -463,7 +326,6 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
                 <div className="grid grid-cols-2 gap-3">
                   {[
                     { label: "Urgency", value: lead.urgency ?? "—", icon: Star, color: "text-warning" },
-                    { label: "Distributions", value: distributions?.length || 0, icon: Share2, color: "text-info" },
                   ].map((kpi) => (
                     <div key={kpi.label} className="p-3 rounded-xl border bg-card text-center">
                       <kpi.icon className={cn("h-4 w-4 mx-auto mb-1", kpi.color)} />
@@ -504,7 +366,7 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
                   {/* Lead Lifecycle */}
                   <div className="p-4 rounded-xl border bg-card">
                     <h4 className="font-semibold mb-3 flex items-center gap-2 text-sm">
-                      <Shield className="h-4 w-4 text-primary" />Lead Lifecycle
+                      <Shield className="h-4 w-4 text-primary" />Inquiry Lifecycle
                     </h4>
                     <div className="space-y-2.5 text-sm">
                       <div className="flex justify-between items-center">
@@ -514,13 +376,6 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
                           lead.status === "contacted" && "bg-chart-3/10 text-chart-3 border-chart-3/30",
                           lead.status === "converted" && "bg-success/10 text-success border-success/30",
                         )}>{lead.status}</Badge>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground">Distribution</span>
-                        <Badge variant="outline" className={cn("text-xs",
-                          lead.redistribution_status === "exclusive" && "bg-warning/10 text-warning border-warning/30",
-                          lead.redistribution_status === "extended" && "bg-info/10 text-info border-info/30",
-                        )}>{lead.redistribution_status || "—"}</Badge>
                       </div>
                       {lead.exclusive_until && (
                         <div className="flex justify-between"><span className="text-muted-foreground">Exclusive Until</span><span className="font-medium">{format(new Date(lead.exclusive_until), "MMM d, h:mm a")}</span></div>
@@ -539,60 +394,16 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
                   </div>
                 )}
 
-                {/* Placement Conversion */}
-                {relatedPlacement && (
-                  <div className="p-4 rounded-xl border-2 border-purple-500/30 bg-purple-500/5">
-                    <h4 className="font-semibold mb-2 flex items-center gap-2 text-sm"><Handshake className="h-4 w-4 text-purple-600" />Converted to Placement</h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
-                      <div><span className="text-muted-foreground block text-xs">Case ID</span><span className="font-mono text-xs">{relatedPlacement.id.slice(0, 8)}</span></div>
-                      <div><span className="text-muted-foreground block text-xs">Status</span><Badge variant="outline" className="text-xs mt-0.5">{slugToLabel(relatedPlacement.status)}</Badge></div>
-                      <div><span className="text-muted-foreground block text-xs">Concern</span><span className="text-xs">{slugToLabel(relatedPlacement.primary_concern) || "—"}</span></div>
-                    </div>
-                  </div>
-                )}
               </div>
             </TabsContent>
 
-            {/* ===== LEAD DETAILS TAB ===== */}
+            {/* ===== INQUIRY DETAILS TAB ===== */}
             <TabsContent value="lead" className="m-0 data-[state=inactive]:hidden">
               <div className="p-5 space-y-5">
-                {/* (Unlock History retired — the lead_unlocks table was dropped
-                    in the EKRA-compliant flat-fee refactor. Pro providers
-                    receive every lead with full PII on the spot.) */}
-
-                {/* Distribution History */}
-                <div className="p-4 rounded-xl border bg-card">
-                  <h4 className="font-semibold mb-3 flex items-center gap-2 text-sm">
-                    <Share2 className="h-4 w-4 text-info" />Distribution History
-                    <Badge variant="secondary" className="h-4 text-[10px] px-1">{distributions?.length || 0}</Badge>
-                  </h4>
-                  {(distributions?.length || 0) > 0 ? (
-                    <div className="space-y-2">
-                      {distributions!.map((d) => {
-                        const dFac = facilityMap.get(d.facility_id);
-                        return (
-                          <div key={d.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
-                            <div className="flex items-center gap-3 min-w-0">
-                              <div className={cn("h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0", d.is_original ? "bg-warning/10" : "bg-info/10")}>
-                                {d.is_original ? <Star className="h-4 w-4 text-warning" /> : <Share2 className="h-4 w-4 text-info" />}
-                              </div>
-                              <div className="min-w-0">
-                                <p className="text-sm font-medium truncate">{dFac?.name || "Unknown"}</p>
-                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                  <span>{d.is_original ? "Original" : "Redistributed"}</span>
-                                  {d.notification_sent && <Badge variant="outline" className="text-[10px] h-4">Notified</Badge>}
-                                </div>
-                              </div>
-                            </div>
-                            <span className="text-xs text-muted-foreground whitespace-nowrap">{format(new Date(d.distributed_at), "MMM d, h:mm a")}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground text-center py-6">No distributions recorded</p>
-                  )}
-                </div>
+                {/* Unlock History and Distribution History were removed with
+                    the retired lead-marketplace model. An inquiry is delivered
+                    once, to the one facility the seeker selected — there is no
+                    unlock step and nothing to distribute. */}
 
                 {/* Routing decision history — shows WHY the lead landed
                     at a specific facility. Reads lead_routing_logs which
@@ -695,34 +506,13 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
             {/* ===== ACTIONS TAB ===== */}
             <TabsContent value="actions" className="m-0 data-[state=inactive]:hidden">
               <div className="p-5 space-y-5">
-                {/* Reassign Lead */}
-                <div className="p-4 rounded-xl border bg-card">
-                  <h4 className="font-semibold mb-3 flex items-center gap-2 text-sm">
-                    <ArrowRightLeft className="h-4 w-4 text-primary" />Reassign Lead
-                  </h4>
-                  <p className="text-xs text-muted-foreground mb-3">Move this lead to a different facility. The provider will be notified.</p>
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1">
-                      <Select onValueChange={(val) => reassignMutation.mutate(val)} disabled={reassignMutation.isPending}>
-                        <SelectTrigger><SelectValue placeholder="Select facility..." /></SelectTrigger>
-                        <SelectContent className="max-h-60">
-                          {/* All facilities — no silent cap. The list is
-                              already filtered to status='approved' upstream
-                              and held in memory for the table; rendering
-                              them all here gives admins access to every
-                              live facility for reassignment. */}
-                          {facilities.map((f) => (
-                            <SelectItem key={f.id} value={f.id} disabled={f.id === lead.facility_id}>
-                              {f.name}{f.id === lead.facility_id ? " (Current)" : ""} — {f.city}, {f.state}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    {reassignMutation.isPending && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
-                  </div>
-                </div>
-
+                {/* Reassignment removed in the Stage-3 directory cutover.
+                    An inquiry is pinned to the one facility the seeker chose;
+                    moving it to a different facility would silently redirect a
+                    person's request for care to a business they did not pick.
+                    The mutation and its audit trail are gone from the UI; the
+                    historical `original_facility_id` / `assignment_status`
+                    columns stay readable for audit and are Stage-4 debt. */}
                 {/* Resend Facility Notification */}
                 <div className="p-4 rounded-xl border bg-card">
                   <h4 className="font-semibold mb-3 flex items-center gap-2 text-sm">
@@ -738,7 +528,7 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
                     onClick={() => resendNotificationMutation.mutate()}
                     disabled={resendNotificationMutation.isPending || !lead.facility_id}
                     className="gap-1.5"
-                    title={!lead.facility_id ? "Lead has no facility assigned" : undefined}
+                    title={!lead.facility_id ? "Inquiry has no facility attached" : undefined}
                   >
                     {resendNotificationMutation.isPending ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />

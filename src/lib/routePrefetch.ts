@@ -60,6 +60,8 @@ const providerPageMap: Record<string, () => Promise<unknown>> = {
   "/provider/notifications": () => import("@/pages/provider/Notifications"),
   "/provider/help": () => import("@/pages/provider/Help"),
   "/provider/billing": () => import("@/pages/provider/Billing"),
+  "/provider/claims": () => import("@/pages/provider/Claims"),
+  "/provider/marketing": () => import("@/pages/provider/MarketingHub"),
   // /provider/placement-network removed in monetization rebuild.
 };
 
@@ -78,7 +80,13 @@ const adminPageMap: Record<string, () => Promise<unknown>> = {
   "/admin/notifications": () => import("@/pages/admin/AdminNotifications"),
   "/admin/profile": () => import("@/pages/admin/AdminProfile"),
   "/admin/reviews": () => import("@/pages/admin/AdminReviews"),
-  "/admin/concierge": () => import("@/pages/admin/AdminConcierge"),
+  "/admin/claims": () => import("@/pages/admin/AdminClaimsReviewPanel"),
+  "/admin/re-verification": () => import("@/pages/admin/AdminReVerificationQueue"),
+  // /admin/concierge serves the read-only historical archive after the Stage-3
+  // directory cutover. Prefetching the retired AdminConcierge workspace here
+  // would keep it in the active bundle graph for a route that no longer
+  // renders it.
+  "/admin/concierge": () => import("@/pages/admin/AdminConciergeHistorical"),
   // /admin/placement-revenue dashboard removed in monetization rebuild.
   "/admin/support": () => import("@/pages/admin/AdminSupport"),
   "/admin/marketing": () => import("@/pages/admin/AdminMarketing"),
@@ -214,7 +222,10 @@ export function preloadAdminPages(): void {
     () => import("@/pages/admin/AdminSettings"),
     () => import("@/pages/admin/AdminNotifications"),
     () => import("@/pages/admin/AdminReviews"),
-    () => import("@/pages/admin/AdminConcierge"),
+    () => import("@/pages/admin/AdminClaimsReviewPanel"),
+    // AdminConcierge (the retired placement workspace) is no longer eagerly
+    // preloaded: /admin/concierge renders the historical archive, which is a
+    // rarely-visited audit surface not worth a shell-mount import.
     () => import("@/pages/admin/AdminSupport"),
     () => import("@/pages/admin/AdminMarketing"),
   ];

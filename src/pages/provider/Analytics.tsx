@@ -232,9 +232,9 @@ export default function ProviderAnalyticsPage() {
 
   const tabs: { key: TabKey; label: string }[] = [
     { key: "overview", label: "Overview" },
-    { key: "subscription", label: "Subscription" },
+    { key: "subscription", label: "Plan" },
     { key: "engagement", label: "Engagement" },
-    { key: "leads", label: "Leads" },
+    { key: "leads", label: "Inquiries" },
     { key: "performance", label: "Performance" },
     { key: "market", label: "Market Report" },
     { key: "roi", label: "ROI Calculator" },
@@ -286,8 +286,8 @@ export default function ProviderAnalyticsPage() {
     return (
       <div className="min-h-full bg-slate-50">
         <ProviderPageHeader
-          title="Analytics"
-          description="Track views, leads, and conversion across your listings."
+          title="Performance"
+          description="Search appearances, views, contact actions, and inquiries across your listings."
           icon={<BarChart3 className="h-4 w-4" />}
         />
         <div className="mx-auto max-w-5xl space-y-4 px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
@@ -317,7 +317,7 @@ export default function ProviderAnalyticsPage() {
               <BarChart3 className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h1 className="text-xl md:text-2xl font-bold text-foreground">Analytics</h1>
+              <h1 className="text-xl md:text-2xl font-bold text-foreground">Performance</h1>
               <p className="text-sm text-muted-foreground">Track performance across your listings</p>
             </div>
           </div>
@@ -327,7 +327,7 @@ export default function ProviderAnalyticsPage() {
             </div>
             <h2 className="text-base font-semibold text-foreground mb-2">No Approved Listings Yet</h2>
             <p className="text-sm text-muted-foreground max-w-sm mb-6">
-              Analytics will appear here once your listing is approved and starts receiving views.
+              Performance data appears here once your listing is approved and starts receiving views.
             </p>
             <Button asChild size="sm">
               <a href="/provider/listings">Manage Listings</a>
@@ -341,8 +341,8 @@ export default function ProviderAnalyticsPage() {
   return (
     <div className="min-h-full bg-slate-50">
       <ProviderPageHeader
-        title="Analytics"
-        description="Track views, leads, and conversion across your listings."
+        title="Performance"
+        description="Search appearances, views, contact actions, and inquiries across your listings."
         icon={<BarChart3 className="h-4 w-4" />}
       />
       <div className="mx-auto max-w-5xl space-y-4 px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
@@ -535,7 +535,7 @@ export default function ProviderAnalyticsPage() {
         {/* ── Tab Navigation ── */}
         <div
           role="tablist"
-          aria-label="Analytics sections"
+          aria-label="Performance sections"
           className="flex gap-1 border-b overflow-x-auto scrollbar-none -mx-3 px-3 sm:mx-0 sm:px-0"
           onKeyDown={(e) => {
             const idx = tabs.findIndex(t => t.key === activeTab);

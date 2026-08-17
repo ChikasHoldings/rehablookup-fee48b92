@@ -7,15 +7,66 @@
 // of which event arrives first. subscription.deleted + the cancel-subscription
 // shared module call deactivateProBenefits() to revert.
 //
-// Idempotency: benefit flips guard on `facilities.featured`. The +50 ranking
-// boost is applied only when featured transitions false → true.
+// ── WHAT PRO BUYS, AND WHAT IT DOES NOT (Stage-3 entitlement amendment) ─────
+//
+// Pro is a $99/mo PRODUCT tier. Paying for it buys product features:
+// public facility phone + Call CTA, enhanced-profile media (video / virtual
+// tour), the raised photo cap, and provider analytics.
+//
+// Paying for it does NOT buy trust, position, or visibility inventory:
+//
+//   • NOT verification. `facilities.verified` is a factual directory state
+//     owned by the verification pipeline. This module must never write it.
+//   • NOT organic ranking. `facilities.calculated_ranking_score` is derived
+//     from neutral evidence signals by calculate-ranking-scores. This module
+//     previously added a flat +50 to it on activation and subtracted 50 on
+//     cancellation, which made organic position directly purchasable. That
+//     is retired.
+//   • NOT Featured. `facilities.featured` is a visibility flag; Pro is not
+//     Featured and must not set it. Paid Featured inventory is represented
+//     by featured_placements + facility_subscriptions.has_featured and is
+//     served by get-featured-rotation into a separately labeled rail.
+//
+// So this module now writes exactly ONE thing: `profiles.plan`, a
+// legacy/provider-plan COMPATIBILITY MIRROR.
+//
+// Be precise about what that mirror does and does not drive, because the
+// previous note here was wrong in a way that invites someone to "restore" a
+// dependency that does not exist. There are two distinct photo caps:
+//
+//   • enforce_facility_plan_photo_cap() — the GALLERY-array trigger
+//     (20260526000000) — DOES read profiles.plan (10 photos vs 5). This is the
+//     one live consumer this mirror is known to have.
+//   • facility_images_upload_within_cap() — the STORAGE-object cap
+//     (20260829004100) — does NOT read profiles.plan. It resolves Pro from
+//     facility_subscriptions directly (tier='pro' AND (active OR past_due),
+//     150 objects vs 20). The earlier comment claimed the mirror drove this
+//     trigger; it does not, and never has.
+//
+// Every other Pro entitlement — public phone, enhanced media, is_pro — is
+// derived live from facility_subscriptions via has_active_pro(), which the
+// webhook maintains separately. Do not infer a broader purpose for
+// profiles.plan than a reader can confirm in the current code: it is a mirror
+// with one confirmed DB consumer, not the source of truth for Pro.
+//
+// So Pro still activates; it just no longer reaches into trust, ranking or
+// Featured state.
+//
+// Idempotency: the plan mirror is a plain idempotent UPDATE, so retries and
+// duplicate webhook deliveries are safe by construction. The previous
+// featured=false→true transition guard existed only to stop the +50 from
+// double-applying and is no longer needed.
 // ============================================================================
 
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 
-const RANKING_BOOST = 50;
-
 export interface ActivateResult {
+  /**
+   * Retained for interface compatibility with existing webhook call sites,
+   * which log its length. Always empty: activation no longer mutates any
+   * facility row. Facility-level Pro entitlement is derived from
+   * facility_subscriptions by has_active_pro(), not stamped onto facilities.
+   */
   facilitiesUpdated: string[];
   alreadyActive: string[];
   failed: { id: string; error: string }[];
@@ -24,11 +75,15 @@ export interface ActivateResult {
 }
 
 /**
- * Activate Pro benefits for every facility owned by the provider:
- *  - `facilities.featured = true`
- *  - `facilities.calculated_ranking_score += 50` (only when transitioning
- *    from `featured=false`, so retries are no-ops)
- * Also mirrors `profiles.plan = 'pro'` (drives the photo-cap trigger).
+ * Activate Pro benefits for the provider by mirroring `profiles.plan = 'pro'`
+ * — the legacy/provider-plan compatibility mirror. Its one confirmed DB
+ * consumer is the gallery-array photo-cap trigger
+ * (enforce_facility_plan_photo_cap); the storage-object cap resolves Pro from
+ * facility_subscriptions instead.
+ *
+ * Deliberately does NOT write `facilities.featured`,
+ * `facilities.calculated_ranking_score`, or `facilities.verified` — payment
+ * does not buy Featured placement, organic ranking, or trust.
  *
  * @param userId  The provider's auth user id.
  */
@@ -43,8 +98,6 @@ export async function activateProBenefits(
     profilePlanMirrored: false,
   };
 
-  // Mirror profile plan first so the photo-cap trigger sees the upgrade
-  // even if a downstream facility update is in flight.
   const { error: planErr } = await supabase
     .from("profiles")
     .update({ plan: "pro" })
@@ -55,42 +108,15 @@ export async function activateProBenefits(
     result.profilePlanMirrored = true;
   }
 
-  const { data: facilities, error: facListErr } = await supabase
-    .from("facilities")
-    .select("id, featured, calculated_ranking_score")
-    .eq("user_id", userId);
-  if (facListErr) {
-    result.failed.push({ id: "*list*", error: facListErr.message });
-    return result;
-  }
-
-  for (const f of facilities ?? []) {
-    const facilityId = (f as { id: string }).id;
-    const alreadyBoosted = (f as { featured?: boolean | null }).featured === true;
-    if (alreadyBoosted) {
-      result.alreadyActive.push(facilityId);
-      continue;
-    }
-    const currentScore = (f as { calculated_ranking_score?: number | null }).calculated_ranking_score ?? 0;
-    const { error: updErr } = await supabase
-      .from("facilities")
-      .update({
-        featured: true,
-        calculated_ranking_score: currentScore + RANKING_BOOST,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", facilityId);
-    if (updErr) {
-      result.failed.push({ id: facilityId, error: updErr.message });
-    } else {
-      result.facilitiesUpdated.push(facilityId);
-    }
-  }
-
   return result;
 }
 
 export interface DeactivateResult {
+  /**
+   * Retained for interface compatibility with existing webhook call sites,
+   * which log its length. Always empty: deactivation no longer mutates any
+   * facility row.
+   */
   facilitiesReverted: string[];
   failed: { id: string; error: string }[];
   profilePlanReverted: boolean;
@@ -98,11 +124,22 @@ export interface DeactivateResult {
 }
 
 /**
- * Revert Pro benefits for every facility owned by the provider:
- *  - `facilities.featured = false`
- *  - `facilities.calculated_ranking_score -= 50` (only when currently
- *    featured, so retries are no-ops; clamps to 0)
- * Also mirrors `profiles.plan = 'free'`.
+ * Revert Pro benefits for the provider by mirroring `profiles.plan = 'free'`.
+ *
+ * Deliberately does NOT clear `facilities.featured` or subtract from
+ * `facilities.calculated_ranking_score`.
+ *
+ * Cancelling Pro must not strip a facility of an independent Featured
+ * entitlement it may legitimately hold — after Stage 3, Featured is a
+ * separate purchase tracked in featured_placements /
+ * facility_subscriptions.has_featured, and a provider who buys Featured
+ * without Pro (or keeps Featured after dropping Pro) must keep it. The old
+ * `featured = false` write here was the mirror image of the activation
+ * write: it treated one boolean as though it belonged to Pro.
+ *
+ * Losing Pro still correctly removes the Pro product features, because those
+ * are derived live from facility_subscriptions via has_active_pro() rather
+ * than stamped onto the facility row.
  */
 export async function deactivateProBenefits(
   supabase: SupabaseClient,
@@ -122,36 +159,6 @@ export async function deactivateProBenefits(
     result.profileMirrorError = planErr.message;
   } else {
     result.profilePlanReverted = true;
-  }
-
-  const { data: facilities, error: facListErr } = await supabase
-    .from("facilities")
-    .select("id, featured, calculated_ranking_score")
-    .eq("user_id", userId);
-  if (facListErr) {
-    result.failed.push({ id: "*list*", error: facListErr.message });
-    return result;
-  }
-
-  for (const f of facilities ?? []) {
-    const facilityId = (f as { id: string }).id;
-    const wasBoosted = (f as { featured?: boolean | null }).featured === true;
-    if (!wasBoosted) continue;
-    const currentScore = (f as { calculated_ranking_score?: number | null }).calculated_ranking_score ?? 0;
-    const newScore = Math.max(0, currentScore - RANKING_BOOST);
-    const { error: updErr } = await supabase
-      .from("facilities")
-      .update({
-        featured: false,
-        calculated_ranking_score: newScore,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", facilityId);
-    if (updErr) {
-      result.failed.push({ id: facilityId, error: updErr.message });
-    } else {
-      result.facilitiesReverted.push(facilityId);
-    }
   }
 
   return result;

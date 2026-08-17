@@ -80,11 +80,22 @@ describe("public_facilities — visible to the facility's own claimant", () => {
     expect(sql).toContain("coalesce(suspended, false) = false");
   });
 
-  it("still masks Pro-only fields behind has_active_pro", () => {
+  it("still masks Pro PRODUCT fields behind has_active_pro", () => {
     // The visibility fix recreates the whole view, so a copy/paste slip here
     // would silently un-gate Pro content for anonymous visitors.
     expect(sql).toContain("has_active_pro(id)");
-    expect(sql).toMatch(/case when has_active_pro\(id\) then verified else false end/);
+    expect(sql).toMatch(/case when has_active_pro\(id\) then phone else null/);
+  });
+
+  it("does NOT mask verified behind has_active_pro", () => {
+    // Stage-3 entitlement amendment (B1): this assertion used to require
+    //   case when has_active_pro(id) then verified else false end
+    // i.e. it encoded "buying Pro is what makes a facility publicly verified"
+    // as the contract. Verification is a factual directory state owned by the
+    // verification pipeline, not a product, so the mask is retired and its
+    // absence is now the thing under test.
+    expect(sql).not.toMatch(/then verified else false/);
+    expect(sql).not.toMatch(/case when has_active_pro\([^)]*\) then verified/);
   });
 });
 

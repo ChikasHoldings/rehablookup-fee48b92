@@ -6,9 +6,12 @@
 //      the provider Billing page (monthly or annual). NEW in v1.1.0;
 //      Billing.tsx calls this path. (The wizard's separate Pro flow
 //      uses create-signup-checkout.)
-//   2. intent="add_addon" + product="featured"|"concierge" —
-//      add-ons purchased from the MarketingHub. Requires the caller's
-//      facility to be on active Pro.
+//   2. intent="add_addon" + product="featured" — Featured ADVERTISING,
+//      purchased from the Featured hub. Independent of Pro: a Free facility
+//      may buy it directly (no Pro precondition, no pre-existing
+//      facility_subscriptions row required).
+//      product="concierge" is the retired bundle and keeps its Pro
+//      precondition; it is not sold to new subscribers.
 //
 // Body:
 //   {
@@ -25,13 +28,16 @@
 //   403 not facility owner
 //   404 facility / price not found
 //   409 already-has-this-addon (or already on Pro, for initial_subscription)
+//
+// Featured must NOT require Pro. See
+// supabase/migrations/20260902000000_featured_independent_of_pro.sql.
 // ============================================================================
 import Stripe from "https://esm.sh/stripe@18.5.0?target=denonext";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 import { classifyStripeError } from "../_shared/stripe-errors.ts";
 import { withTimeout } from "../_shared/with-timeout.ts";
 
-const VERSION = "1.3.0";
+const VERSION = "1.4.0";
 const STRIPE_TIMEOUT_MS = 12_000;
 const SUPABASE_TIMEOUT_MS = 8_000;
 
@@ -215,36 +221,56 @@ Deno.serve(async (req) => {
       }
     } else {
       // add_addon
-      if (!facSub) {
-        return json(409, {
-          error: "This facility has no active subscription. Upgrade to Pro first.",
-          code: "NO_SUBSCRIPTION",
-        });
+      //
+      // FEATURED IS INDEPENDENT OF PRO.
+      // ───────────────────────────────
+      // Featured is advertising, priced and billed per location on its own
+      // Stripe subscription. It is not a Pro entitlement and never was one, so
+      // it carries NO Pro precondition: a Free facility buys it directly.
+      //
+      // This used to return 409 NO_SUBSCRIPTION (no facility_subscriptions row
+      // at all) and 409 PRO_REQUIRED (row exists but not active Pro). Both were
+      // artifacts of the data model rather than of the product — the row could
+      // not exist without tier='pro' — and migration
+      // 20260902000000_featured_independent_of_pro.sql removed that limitation.
+      // activateFeaturedAddon() now creates a tier='free' row on demand.
+      //
+      // The retired Concierge product KEEPS its Pro precondition. It is not
+      // sold to new subscribers and this branch is only reachable by a
+      // hand-crafted request; loosening it would widen a retired surface.
+      if (product === "concierge") {
+        if (!facSub) {
+          return json(409, {
+            error: "This facility has no active subscription.",
+            code: "NO_SUBSCRIPTION",
+          });
+        }
+        if (!activePro) {
+          return json(409, {
+            error: "This add-on requires an active Pro subscription.",
+            code: "PRO_REQUIRED",
+          });
+        }
       }
-      if (!activePro) {
-        return json(409, {
-          error: `${product[0].toUpperCase()}${product.slice(1)} requires an active Pro subscription.`,
-          code: "PRO_REQUIRED",
-        });
-      }
-      if (product === "featured" && (facSub as { has_featured: boolean }).has_featured === true) {
+      // Already-active guards still apply, and are the ONLY thing standing
+      // between a provider and a second concurrent subscription for the same
+      // product. They tolerate a missing row (a Free facility buying Featured
+      // for the first time has none).
+      if (product === "featured" && (facSub as { has_featured?: boolean } | null)?.has_featured === true) {
         return json(409, { error: "Featured is already active on this facility.", code: "ALREADY_ACTIVE" });
       }
-      // Mutual exclusivity: Concierge Partner is the upgrade that already
-      // INCLUDES Featured exposure, so a facility can't hold both. Block
-      // buying Featured while Concierge is active.
-      if (product === "featured" && (facSub as { has_concierge_partner: boolean }).has_concierge_partner === true) {
+      // Mutual exclusivity with the retired bundle: a legacy holder's plan
+      // already includes placement exposure, so buying Featured on top would
+      // double-charge for the same inventory.
+      if (product === "featured" && (facSub as { has_concierge_partner?: boolean } | null)?.has_concierge_partner === true) {
         return json(409, {
-          error: "Concierge Partner already includes Featured exposure. Downgrade Concierge first if you only want Featured.",
+          error: "This facility's legacy add-on already includes placement exposure. Contact support before adding Featured.",
           code: "CONCIERGE_ACTIVE",
         });
       }
       if (product === "concierge" && (facSub as { has_concierge_partner: boolean }).has_concierge_partner === true) {
-        return json(409, { error: "Concierge is already active on this facility.", code: "ALREADY_ACTIVE" });
+        return json(409, { error: "This add-on is already active on this facility.", code: "ALREADY_ACTIVE" });
       }
-      // Concierge while Featured is allowed — it's an upgrade. The webhook
-      // supersedes (cancels + refunds) the Featured add-on on activation; we
-      // flag it on the subscription metadata so the webhook knows to do so.
     }
     const supersedeFeatured =
       intent === "add_addon" &&

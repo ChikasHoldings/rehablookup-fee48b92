@@ -64,6 +64,9 @@ interface FacilitySubscriptionRow {
   stripe_customer_id: string | null;
   billing_period: "monthly" | "annual";
   status: string;
+  /** LISTING plan: 'pro' | 'free'. Advertising is not a tier — a 'free' row
+   *  carrying Featured is not a Pro subscription. */
+  tier: string;
 }
 
 Deno.serve(async (req) => {
@@ -136,7 +139,7 @@ Deno.serve(async (req) => {
   // Load the facility_subscription row and confirm ownership.
   const { data: subRow, error: subErr } = await admin
     .from("facility_subscriptions")
-    .select("id, facility_id, provider_id, stripe_subscription_id, stripe_customer_id, billing_period, status")
+    .select("id, facility_id, provider_id, stripe_subscription_id, stripe_customer_id, billing_period, status, tier")
     .eq("id", parsed.data.subscription_id)
     .maybeSingle();
   if (subErr || !subRow) {
@@ -152,6 +155,30 @@ Deno.serve(async (req) => {
       status: 403,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
+  }
+
+  // PRO-ONLY OPERATION — stated, not inferred.
+  //
+  // Switching the monthly Pro subscription to annual is meaningful only for a
+  // Pro row. Since 20260902000000 a facility_subscriptions row can be a
+  // Featured-only row (tier='free', stripe_subscription_id NULL), so "a row
+  // exists" no longer implies "Pro exists".
+  //
+  // This previously fell through to the `missing_stripe_link` check below and
+  // failed closed only because a Featured-only row happens to carry a NULL
+  // stripe_subscription_id. That is an accident of column population, not a
+  // decision: anything that later backfilled a Stripe id, or reordered these
+  // guards, would have turned it into a real Pro billing mutation on a non-Pro
+  // row. Requiring tier='pro' explicitly makes the refusal intentional and
+  // gives the caller an accurate reason.
+  if (sub.tier !== "pro") {
+    return new Response(
+      JSON.stringify({
+        error: "This is not a Pro subscription. Featured advertising is billed separately and has no annual switch.",
+        code: "not_pro_subscription",
+      }),
+      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
   }
 
   // Don't let a provider commit to a year of billing while the facility is

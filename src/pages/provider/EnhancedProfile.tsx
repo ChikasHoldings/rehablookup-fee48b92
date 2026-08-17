@@ -44,11 +44,16 @@ const TABS: { id: Tab; label: string }[] = [
  * facility-level fields (name, address, services, insurance, staff,
  * etc.) are still edited from /provider/listings.
  *
- * Pro gating: the UI lets Free facilities author content here so they
- * don't lose work — but the public profile only renders it when Pro
- * is active. Gating is enforced server-side by the
- * public_facility_* views; this page renders contextual upgrade
- * prompts only as a UX hint.
+ * Pro gating: the UI lets Free facilities author content here so they don't
+ * lose work — but the public profile only renders these modules when Pro is
+ * active. Gating is enforced server-side by the public_facility_* views
+ * (each filters on has_active_pro); this page renders contextual hints only.
+ *
+ * Directory-model contract: Pro controls the PUBLIC PRESENTATION of enhanced
+ * modules — including how prominently verified accreditations are showcased.
+ * It does not grant accreditation and it does not grant verification. Both are
+ * factual states established elsewhere (admin ingest + the re-verification
+ * engine) and neither is purchasable.
  */
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -83,8 +88,7 @@ export default function EnhancedProfile() {
 
   if (!facilityId) {
     // No facility selected → bounce back to the listings page where the
-    // facility selector lives. This mirrors the pattern used by the
-    // other Pro provider pages (MarketingFeatured, MarketingConcierge).
+    // facility selector lives. This mirrors MarketingFeatured.
     return <Navigate to="/provider/listings" replace />;
   }
 
@@ -102,10 +106,10 @@ export default function EnhancedProfile() {
       <div className="min-h-full bg-slate-50">
         <ProviderPageHeader
           title="Enhanced profile"
-          description="Add programs, amenities, video, and accreditations. Pro facilities show all of this on the public listing."
+          description="Programs, amenities, staff, video, and accreditation highlights. Pro publishes these modules on your public listing."
           icon={<Building2 className="h-4 w-4" />}
           backTo="/provider/listings"
-          backLabel="My Listings"
+          backLabel="Listings"
           actions={
             isPro ? (
               <Badge className="bg-emerald-600 hover:bg-emerald-600">Pro · live</Badge>
@@ -147,6 +151,33 @@ export default function EnhancedProfile() {
                 </button>
               ))}
             </nav>
+          </div>
+
+          {/* One clear explanation of the Pro relationship, for both tiers.
+              Replaces the ambiguity that let "upgrade for accreditations" be
+              read as buying a credential. */}
+          <div
+            className={cn(
+              "flex items-start gap-2.5 rounded-lg border p-3",
+              isPro ? "border-emerald-200/70 bg-emerald-50/40" : "border-slate-200 bg-white",
+            )}
+          >
+            <ShieldCheck
+              className={cn("mt-0.5 h-4 w-4 shrink-0", isPro ? "text-emerald-700" : "text-slate-400")}
+              aria-hidden
+            />
+            <div className="min-w-0 text-xs leading-relaxed">
+              <p className="font-semibold text-slate-900">
+                {isPro
+                  ? "Pro is publishing these modules on your public listing."
+                  : "You can build all of this on the Free plan."}
+              </p>
+              <p className="mt-0.5 text-slate-600">
+                {isPro
+                  ? "Edits appear on your public profile. Pro controls the presentation of these modules — it does not affect your verification status or your organic directory position, which are determined independently."
+                  : "Everything you enter here is saved to your listing. Pro controls whether these modules are shown publicly — nothing you write is lost if you upgrade later. Pro does not grant accreditation or verification: those are established through our review process, independently of what you pay."}
+              </p>
+            </div>
           </div>
 
           {isViewer && (
@@ -345,9 +376,14 @@ function AccreditationHighlightPanel({
       <div>
         <h2 className="text-base font-semibold text-foreground">Accreditation showcase</h2>
         <p className="text-sm text-muted-foreground">
-          Highlight up to {HIGHLIGHT_CAP} of your verified accreditations to
-          feature them prominently on your Pro profile. The rest still
-          render in the standard accreditations list.
+          Highlight up to {HIGHLIGHT_CAP} of your verified accreditations to feature
+          them prominently on your Pro profile. The rest still render in the standard
+          accreditations list.
+        </p>
+        <p className="mt-1.5 text-xs text-muted-foreground">
+          Pro changes how prominently an accreditation is presented. It never changes
+          whether an accreditation is verified — that status comes from our review of
+          the issuing authority's records.
         </p>
       </div>
 
@@ -355,8 +391,9 @@ function AccreditationHighlightPanel({
         <div className="flex items-start gap-3 rounded-lg border border-amber-200/60 bg-amber-50/60 p-3 text-sm">
           <Sparkles className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" aria-hidden />
           <p className="text-amber-900 leading-relaxed">
-            The showcase row renders on Pro profiles only. You can still
-            mark highlights here — they activate when Pro does.
+            The showcase row renders on Pro profiles only. You can still mark
+            highlights here — they activate when Pro does. Verification status is
+            unaffected either way.
           </p>
         </div>
       )}

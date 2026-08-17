@@ -27,11 +27,6 @@ export interface PublicFacility extends TreatmentCenter {
   gallery_urls: string[] | null;
   isPro?: boolean;
   isClaimed?: boolean;
-  /** Raw paid/editorial Featured signal (facilities.featured), kept SEPARATE
-   *  from the `featured` display field (which is `featured || isPro` for badge
-   *  purposes). Used by the search-results 4-tier sort to rank true Featured
-   *  above plain Pro. */
-  isFeaturedPaid?: boolean;
   verified?: boolean | null;
   year_established?: number | null;
   facilityType?: string | null;
@@ -73,7 +68,9 @@ export interface PublicFacility extends TreatmentCenter {
 export const useStaticFacilities = () => {
   const queryClient = useQueryClient();
   const { data: featuredData, isLoading: isFeaturedLoading } = useFeaturedFacilityIds();
-  const proIds = featuredData?.proFacilityIds || [];
+  // `proFacilityIds` is deliberately NOT read here. Pro comes from the
+  // snapshot's canonical `isPro` (public_facilities.is_pro). Only the
+  // homepage rotation ids are a legitimate consumer of this endpoint.
   const homepageFeaturedIds = featuredData?.homepageFeaturedIds || [];
 
   const query = useQuery({
@@ -146,13 +143,21 @@ export const useStaticFacilities = () => {
 
   // Transform static facilities to PublicFacility format with Pro data
   const publicFacilities: PublicFacility[] = (query.data || []).map((facility) => {
-    // Pro / Featured status: prefer the snapshot's `isPro` (live from the
-    // `public_facilities` view) and union with the legacy `proFacilityIds`
-    // map for back-compat with callers that read from that list. The
-    // snapshot is authoritative; the proIds list is now a redundant safety
-    // net that catches any short-window drift between the view and the
-    // featured-facilities edge function.
-    const isPro = facility.isPro || proIds.includes(facility.id);
+    // CANONICAL PRO, FAIL CLOSED.
+    //
+    // The snapshot's `isPro` comes from `public_facilities.is_pro`, i.e.
+    // has_active_pro(id) — the single definition of Pro. This was
+    // `facility.isPro || proIds.includes(facility.id)`, described as a
+    // "redundant safety net". It was not redundant: a union can only ever
+    // ADD Pro, so a secondary list could elevate a facility the canonical
+    // projection says is NOT Pro, and Pro unlocks the public phone. The
+    // legacy list carried no tier predicate at all, so the "safety net"
+    // was a path for any active subscription to buy Pro product features.
+    //
+    // `=== true` rather than a truthiness test so a null/undefined column
+    // (an older cached snapshot shape) reads as not-Pro instead of being
+    // coerced by a later refactor.
+    const isPro = facility.isPro === true;
     const isHomepageFeatured = homepageFeaturedIds.includes(facility.id);
     const planTier: "pro" | "free" = isPro ? "pro" : "free";
 
@@ -175,18 +180,25 @@ export const useStaticFacilities = () => {
       insuranceAccepted: facility.insuranceAccepted ?? [],
       description: facility.description || "Treatment center offering quality care and support.",
       programOverview: facility.description || "Comprehensive treatment programs tailored to individual needs.",
-      // Prefer the snapshot's `featured` flag (sourced from the catalog) and
-      // also surface a paid-featured signal via `isPro`. Pre-2026-05-21 we
-      // overwrote `featured` with isPro, which silently broke the
-      // legacy-Featured badge for the handful of catalog rows manually
-      // pinned via `facilities.featured=true`.
-      featured: facility.featured || isPro,
+      // PRO IS NOT FEATURED, AND THE CATALOG BOOLEAN IS NOT AN ENTITLEMENT.
+      //
+      // This was `facility.featured || isPro`. The `|| isPro` half made every
+      // $99 Pro subscriber display a Featured badge and count as Featured
+      // inventory. The remaining half is the raw `facilities.featured` catalog
+      // column — which is the very flag the retired pro-benefits Pro
+      // activation wrote, so it cannot be read back as proof of a Featured
+      // purchase. Production's two surviving rows have no facility_subscription,
+      // no featured_placement and no audit trail covering when they were set.
+      //
+      // Paid Featured is featured_placements + facility_subscriptions.
+      // has_featured, served by get-featured-rotation into the separately
+      // labeled Featured rail, which sets its own badge. Organic cards from
+      // this hook claim no paid placement. B3 defines the canonical
+      // representation and decides whether a per-card signal returns.
+      featured: false,
       featuredPinned: facility.featuredPinned,
       isPro,
       isClaimed: facility.isClaimed,
-      // Raw Featured signal (NOT collapsed with isPro) so the search-results
-      // sort can rank true paid/editorial Featured above plain Pro-claimed.
-      isFeaturedPaid: facility.featured === true,
       isHomepageFeatured,
       planTier,
       verified: facility.verified,

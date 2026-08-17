@@ -95,7 +95,7 @@ export function InquiryDetailPanel({ inquiry }: InquiryDetailPanelProps) {
     mutationFn: async ({ status, notes }: { status: ResponseStatus; notes?: string }) => {
       // Defence-in-depth: non-Pro facilities are view-only. The UI hides
       // the controls, but guard here too so a stale render can't fire.
-      if (!canRespond) throw new Error("Upgrade to Pro to respond to leads");
+      if (!canRespond) throw new Error("Upgrade to Pro to respond to inquiries");
       // BUGFIX: Scope update to both lead id AND facility_id for defence-in-depth.
       // RLS enforces this at the DB level, but explicit client-side scoping prevents
       // accidental cross-facility mutations if RLS policies are ever misconfigured.
@@ -115,7 +115,7 @@ export function InquiryDetailPanel({ inquiry }: InquiryDetailPanelProps) {
         .maybeSingle();
       if (error) throw error;
       if (!updatedRow) {
-        throw new Error("Couldn't update this lead — it may no longer be assigned to your facility. Refresh and try again.");
+        throw new Error("Couldn't update this inquiry — it may no longer be attached to your facility. Refresh and try again.");
       }
     },
     onSuccess: (_, { status }) => {

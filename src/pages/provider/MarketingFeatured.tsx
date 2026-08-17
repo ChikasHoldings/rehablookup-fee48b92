@@ -17,16 +17,19 @@ import { LockedFeaturePreview } from "@/components/provider/LockedFeaturePreview
 import { FeaturedManagementSample } from "@/components/provider/featured/FeaturedManagementSample";
 
 /**
- * /provider/marketing/featured — the unified Featured add-on surface.
+ * /provider/marketing/featured — Featured placement management.
  *
- *   • Free / non-Pro callers → render the page WITH a locked preview
- *     of the management UI so they can see what they'd be unlocking,
- *     plus an Upgrade CTA. The preview is inert (pointer-events: none)
- *     and clearly marked. Server-side gating (RLS + create-checkout-
- *     session intent='add_addon' Pro check) is the source of truth.
- *   • Pro WITHOUT Featured  → marketing pitch + purchase CTAs.
- *   • Pro WITH Featured     → management UI + analytics (tagline, slot
- *     picker, active placements, performance).
+ *   • Legacy retired-bundle holder → point at the hub's retired-product state.
+ *     (Concierge is retired; this page must not sell it as "the upgrade".)
+ *   • No Featured, not Pro   → preview of the management UI, plus a factual
+ *     note about the current checkout prerequisite. Server-side gating (RLS +
+ *     create-checkout-session intent='add_addon') remains the source of truth.
+ *   • No Featured, Pro       → purchase flow.
+ *   • Featured active        → management UI + performance (tagline, slot
+ *     picker, active placements).
+ *
+ * Featured is ADVERTISING, billed per location, separate from Pro. Nothing here
+ * may present it as a Pro benefit or as an organic-ranking change.
  */
 export default function MarketingFeatured() {
   const { selectedFacility } = useSelectedFacility();
@@ -73,7 +76,7 @@ export default function MarketingFeatured() {
             <div>
               <p className="font-medium text-foreground">Couldn't load your subscription.</p>
               <p className="text-muted-foreground mt-0.5">
-                We weren't able to check your Pro / Featured status. Try refreshing.
+                We weren't able to check your Featured status. Try refreshing.
               </p>
             </div>
           </div>
@@ -106,10 +109,11 @@ export default function MarketingFeatured() {
 
   const isPro = isActiveProRow(subscription);
   const hasFeatured = subscription?.has_featured === true;
-  // Concierge Partner is the mutually-exclusive upgrade that already INCLUDES
-  // Featured exposure (and is managed on the Concierge page), so a Concierge
-  // holder must not be shown the Featured purchase pitch — its CTA would 409.
-  const hasConcierge = subscription?.has_concierge_partner === true;
+  // A legacy retired add-on is mutually exclusive with Featured server-side, so
+  // a holder must not be shown the Featured purchase pitch — its CTA would 409.
+  // The product itself is retired and is NOT marketed here; the Featured hub
+  // owns the retired-product state and the support path.
+  const hasRetiredBundle = subscription?.has_concierge_partner === true;
   // The Featured add-on bills independently of Pro — use its own period end,
   // falling back to the Pro period for rows activated before that column was
   // backfilled by the webhook.
@@ -125,7 +129,7 @@ export default function MarketingFeatured() {
     <>
       <Helmet>
         <title>
-          {hasFeatured ? "Manage Featured placements" : "Featured Placements"} | RehabLookup Provider
+          {hasFeatured ? "Manage Featured placements" : "Featured placements"} | RehabLookup Provider
         </title>
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
@@ -135,7 +139,7 @@ export default function MarketingFeatured() {
           <Button variant="ghost" size="sm" className="gap-1.5" asChild>
             <Link to="/provider/marketing">
               <ArrowLeft className="h-4 w-4" />
-              Marketing Hub
+              Featured
             </Link>
           </Button>
           <div className="mt-3 flex flex-col gap-1.5 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
@@ -161,50 +165,49 @@ export default function MarketingFeatured() {
           </div>
         </div>
 
-        {/* Concierge Partner supersedes Featured — surface that instead of a
-            purchase pitch (whose CTA would 409) and point to where the included
-            Featured exposure is now managed. Checked first so it wins even if
-            Pro has lapsed. */}
-        {hasConcierge ? (
-          <div className="rounded-lg border border-violet-200 bg-violet-50/50 p-6 space-y-3">
+        {/* A retired legacy add-on is mutually exclusive with Featured, so the
+            purchase pitch would 409. Send the holder to the hub, which owns the
+            retired-product state — we do not market the retired product. */}
+        {hasRetiredBundle ? (
+          <div className="rounded-lg border border-slate-300 bg-slate-50 p-6 space-y-3">
             <h2 className="text-lg font-semibold text-slate-900">
-              Featured is included in your Concierge Partner plan
+              A legacy add-on is active on this facility
             </h2>
             <p className="text-sm text-slate-700 leading-relaxed">
-              Concierge Partner already features your facility on our national
-              homepage, our international pages, and across your state and city —
-              plus any extra geographies you choose. Manage all of it from your
-              Concierge Partner page.
+              This facility holds a legacy placement add-on that RehabLookup no longer
+              sells, and it can't be combined with Featured. Your existing exposure is
+              unaffected.
             </p>
-            <Button asChild className="bg-[#1B365D] hover:bg-[#142a4a] gap-1.5">
-              <Link to="/provider/marketing/concierge">Manage Concierge Partner</Link>
+            <Button asChild variant="outline" className="gap-1.5">
+              <Link to="/provider/marketing">Back to Featured</Link>
             </Button>
           </div>
         ) : !isPro && !hasFeatured ? (
           <LockedFeaturePreview
-            title="Featured Placements"
-            subtitle="Phone-rotation on the local pages for your area"
+            title="Featured placements"
+            subtitle="Sponsored rotation on the local directory pages for your area"
             tier="featured"
             valueStatement={
               <>
-                Featured rotates your facility through a fair pool on the
-                state, city, and near-me pages for your area, plus the
-                treatment-type and insurance pages you match. <strong>Flat-fee
-                ad inventory</strong> — no bidding wars, no per-click charges,
-                calls go directly to your admissions line. For national +
-                homepage exposure, upgrade to Concierge Partner.{" "}
-                <strong>Featured is a paid add-on</strong> (billed per location)
-                that requires an active Pro plan — Pro is the first step.
+                Featured rotates your facility through a fair pool of sponsored slots
+                on the state, city, and near-me pages for your area, plus the
+                treatment-type and insurance pages you match. <strong>Flat-fee ad
+                inventory</strong> — no bidding wars, no per-click charges, and calls
+                go directly to your admissions line. Placements are clearly labeled
+                sponsored and <strong>do not change your organic directory
+                position</strong>.
               </>
             }
             bullets={[
+              "Billed per location, separately from your listing plan",
               "Slot caps per geo (30/state, 15/major metro, 8/smaller city) keep rotation share meaningful",
               "Pick which placements you want from a live availability list",
               "Waitlist when a geo fills — never a price hike for existing subscribers",
             ]}
-            ctaLabel="Upgrade to Pro to get started"
-            ctaTo="/provider/billing?upgrade=pro"
-            secondaryAction={{ label: "See full pricing", to: "/for-providers" }}
+            ctaLabel="See Featured pricing"
+            ctaTo="/provider/marketing"
+            secondaryAction={{ label: "Plan & Billing", to: "/provider/billing" }}
+            footnote="Featured bills separately from your listing plan — available on Free or Pro."
           >
             <FeaturedManagementSample />
           </LockedFeaturePreview>

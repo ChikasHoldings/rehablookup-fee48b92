@@ -65,9 +65,18 @@ describe("DATABASE — public_facilities gates phone by has_active_pro", () => {
   const view = latestMigrationMatching(/CREATE OR REPLACE VIEW public\.public_facilities/i);
   const body = stripSqlComments(view.sql);
 
-  it("is the amendment's migration, sorting after every prior migration", () => {
+  it("is the newest definition of the view, so it is the live contract", () => {
+    // Asserts that nothing later redefines public_facilities behind this
+    // migration's back. It deliberately does NOT require the view migration to
+    // be the last file in the directory — unrelated forward migrations
+    // legitimately sort after it (e.g. the B2 ranking-weights cleanup).
     const all = readdirSync(MIGRATIONS_DIR).filter((f) => f.endsWith(".sql")).sort();
-    expect(all[all.length - 1]).toBe(view.name);
+    const definers = all.filter((name) =>
+      /CREATE OR REPLACE VIEW public\.public_facilities/i.test(
+        readFileSync(join(MIGRATIONS_DIR, name), "utf8"),
+      ),
+    );
+    expect(definers[definers.length - 1]).toBe(view.name);
   });
 
   it("masks phone with the canonical entitlement predicate", () => {

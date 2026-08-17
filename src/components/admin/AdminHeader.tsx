@@ -1,7 +1,7 @@
 import { memo, useState, useEffect, useCallback, useRef } from "react";
 import logoDarkBg from "@/assets/logo-dark-bg.webp";
 import { Link } from "react-router-dom";
-import { LogOut, Settings, Shield, Search, Bell, Building2, Users, AlertCircle, CheckCircle, CreditCard, User, CheckCheck, ShieldAlert, Mail, MapPin, Loader2, BarChart3, UserSearch, UserPlus, MessageSquare, ClipboardList, Headphones } from "lucide-react";
+import { LogOut, Settings, Shield, Search, Bell, Building2, Users, AlertCircle, CheckCircle, CreditCard, User, CheckCheck, ShieldAlert, Mail, MapPin, Loader2, BarChart3, UserSearch, MessageSquare, ClipboardList, Headphones } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -53,7 +53,7 @@ const ROLE_DISPLAY: Record<string, { label: string; color: string }> = {
   super_admin: { label: "Super Admin", color: "bg-warning/10 text-warning" },
   manager: { label: "Manager", color: "bg-primary/10 text-primary" },
   customer_rep: { label: "Customer Rep", color: "bg-success/10 text-success" },
-  advisor: { label: "Placement Advisor", color: "bg-accent/50 text-accent-foreground" },
+  advisor: { label: "Advisor", color: "bg-accent/50 text-accent-foreground" },
 };
 
 function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperAdmin = false, hasPermission = () => false }: AdminHeaderProps) {
@@ -74,7 +74,6 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
   const canViewLeads = isSuperAdmin || hasPermission("leads");
   const canViewAnalytics = isSuperAdmin || hasPermission("analytics");
   const canViewSeekers = isSuperAdmin || hasPermission("seekers");
-  const canViewPlacements = isSuperAdmin || hasPermission("placements");
   const canViewSubscriptions = isSuperAdmin || hasPermission("subscriptions");
   const canViewReviews = isSuperAdmin || hasPermission("reviews");
   const canViewFeatured = isSuperAdmin || hasPermission("featured");
@@ -285,25 +284,8 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
     enabled: searchQuery.length >= 2 && canViewLeads,
     staleTime: 10000,
   });
-  // Search concierge cases when query changes - only if user has placement permission
-  const { data: searchedCases, isLoading: searchingCases } = useQuery({
-    queryKey: ["admin-search-cases", searchQuery, canViewPlacements],
-    queryFn: async () => {
-      if (!searchQuery || searchQuery.length < 2 || !canViewPlacements) return [];
-      const { data } = await supabase
-        .from("concierge_inquiries")
-        .select("id, user_name, user_email, status, created_at, desired_location_state")
-        .or(`user_name.ilike.%${searchQuery}%,user_email.ilike.%${searchQuery}%`)
-        .order("created_at", { ascending: false })
-        .limit(5);
-      return data || [];
-    },
-    enabled: searchQuery.length >= 2 && canViewPlacements,
-    staleTime: 10000,
-  });
-
-  const isSearching = searchingProviders || searchingLeads || searchingCases;
-  const hasSearchResults = (searchedProviders?.length || 0) > 0 || (searchedLeads?.length || 0) > 0 || (searchedCases?.length || 0) > 0;
+  const isSearching = searchingProviders || searchingLeads;
+  const hasSearchResults = (searchedProviders?.length || 0) > 0 || (searchedLeads?.length || 0) > 0;
 
   // Build notifications from real data
   const notifications: Notification[] = [];
@@ -442,7 +424,7 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
             >
               <Search className="h-4 w-4 mr-3 text-slate-300" />
               <span className="text-slate-300">
-                {isAdvisor ? "Search cases, pages..." : "Search providers, leads, pages..."}
+                "Search providers, inquiries, pages..."
               </span>
               <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 hidden h-6 select-none items-center gap-1 rounded-md border border-white/30 bg-slate-700 px-2 font-mono text-[11px] font-medium text-slate-300 sm:flex">
                 ⌘K
@@ -681,7 +663,7 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
       {/* Command Search Dialog */}
       <CommandDialog open={searchOpen} onOpenChange={(open) => { setSearchOpen(open); if (!open) setSearchQuery(""); }}>
         <CommandInput 
-          placeholder={isAdvisor ? "Search cases, pages..." : "Search providers, leads, or pages..."} 
+          placeholder="Search providers, inquiries, or pages..." 
           value={searchQuery}
           onValueChange={(val) => setSearchQuery(val.slice(0, 128))}
         />
@@ -763,46 +745,10 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
             </CommandGroup>
           )}
 
-          {/* Placement Case Search Results - only if user has permission */}
-          {canViewPlacements && searchedCases && searchedCases.length > 0 && (
-            <CommandGroup heading={`Placement Cases (${searchedCases.length})`}>
-              {searchedCases.map((c) => (
-                <CommandItem 
-                  key={c.id} 
-                  onSelect={() => { navigate("/admin/concierge"); setSearchOpen(false); setSearchQuery(""); }}
-                  className="flex items-center gap-3"
-                >
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent/10">
-                    <UserPlus className="h-4 w-4 text-accent-foreground" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{c.user_name}</p>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {c.desired_location_state || c.user_email}
-                    </p>
-                  </div>
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${
-                    ["admitted", "billed", "completed"].includes(c.status) ? "bg-success/10 text-success" :
-                    c.status === "new" ? "bg-info/10 text-info" :
-                    "bg-muted text-muted-foreground"
-                  }`}>
-                    {c.status}
-                  </span>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          )}
-
           {/* Quick Actions - show when not searching or no results, filtered by permissions */}
           {(!searchQuery || searchQuery.length < 2) && (
             <>
               <CommandGroup heading="Quick Actions">
-                {canViewPlacements && (
-                  <CommandItem onSelect={() => { navigate("/admin/concierge"); setSearchOpen(false); }}>
-                    <UserPlus className="h-4 w-4 mr-2" />
-                    View Placement Cases
-                  </CommandItem>
-                )}
                 {canViewProviders && (
                   <CommandItem onSelect={() => { navigate("/admin/providers?status=pending"); setSearchOpen(false); }}>
                     <Building2 className="h-4 w-4 mr-2" />
@@ -835,19 +781,13 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
                 {canViewLeads && (
                   <CommandItem onSelect={() => { navigate("/admin/leads"); setSearchOpen(false); }}>
                     <Users className="h-4 w-4 mr-2" />
-                    Leads
+                    Inquiries
                   </CommandItem>
                 )}
                 {canViewSeekers && (
                   <CommandItem onSelect={() => { navigate("/admin/seekers"); setSearchOpen(false); }}>
                     <UserSearch className="h-4 w-4 mr-2" />
                     Seekers
-                  </CommandItem>
-                )}
-                {canViewPlacements && (
-                  <CommandItem onSelect={() => { navigate("/admin/concierge"); setSearchOpen(false); }}>
-                    <UserPlus className="h-4 w-4 mr-2" />
-                    Concierge
                   </CommandItem>
                 )}
                 {(isSuperAdmin || hasPermission("support")) && (

@@ -27,7 +27,7 @@ interface CancellationPreviewProps {
 const TIER_LABEL: Record<CancellationPiece["tier"], string> = {
   pro: "Pro",
   featured: "Featured",
-  concierge: "Concierge Partner",
+  concierge: "Legacy add-on",
 };
 
 /**

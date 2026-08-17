@@ -424,7 +424,7 @@ export default function AddLocationPage() {
         insertPayload.accepting_admissions = false;
       }
       // accepts_international_patients is intentionally never sent from the
-      // create flow — it's a Concierge Partner capability enabled post-upgrade,
+      // create flow — it belonged to a now-retired add-on,
       // and the server trigger rejects it on INSERT for non-partners.
       if (draft.year_established) {
         const y = Number(draft.year_established);
@@ -747,7 +747,7 @@ export default function AddLocationPage() {
               <p className="text-sm text-muted-foreground">
                 {planTier === "pro"
                   ? "Pro includes up to 5 facility listings. Contact support if you manage more locations."
-                  : "The Free plan includes 1 facility listing. Upgrade to Pro to list up to 5 locations, each with 10 photos, video, and priority placement."}
+                  : "The Free plan includes 1 facility listing. Pro manages up to 5 facility listings, each with its own enhanced profile, 10 photos, and video."}
               </p>
               <div className="flex flex-wrap gap-2 pt-2">
                 {planTier !== "pro" && (
@@ -1152,11 +1152,11 @@ function Step1Identity({
           </SelectContent>
         </Select>
       </Field>
-      {/* International-patients is a Concierge Partner capability, not a
+      {/* International-patients was a capability of a now-retired add-on, not a
           self-serve flag. A brand-new listing is never an active partner, so
           the option isn't offered at create time (the server trigger also
           rejects accepts_international_patients=true on INSERT for non-partners).
-          It becomes available after a facility upgrades to Concierge Partner. */}
+          part of Pro. It is not offered to new subscribers. */}
     </div>
   );
 }
@@ -1276,7 +1276,7 @@ function Step4Credentials({
     <div className="space-y-4">
       <SectionTitle
         title="Accreditations & licensing"
-        subtitle="These build trust and unlock the verified badge later."
+        subtitle="Current credentials are what put your listing into our verification review."
       />
       <ChipMultiSelect
         label="Accreditations"

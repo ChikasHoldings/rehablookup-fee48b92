@@ -4,106 +4,123 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { useFacilitySubscription } from "@/hooks/useFacilitySubscription";
 import { isActiveProRow } from "@/lib/proAccess";
-import { MarketingHubCards } from "@/components/provider/marketing/MarketingHubCards";
 import { MarketDemandCard } from "@/components/provider/marketing/MarketDemandCard";
+import { FeaturedAnalyticsWidget } from "@/components/provider/FeaturedAnalyticsWidget";
 import { PromoCountdownBanner } from "@/components/provider/promo/PromoCountdownBanner";
 import { ProviderPageHeader } from "@/components/provider/ProviderPageHeader";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Megaphone,
   Award,
   Code2,
-  Star,
   ArrowRight,
-  ShieldCheck,
-  ImagesIcon,
-  Sparkles,
-  Lock,
-  Rotate3D,
-  UserCheck,
+  ShieldOff,
   Check,
-  X,
+  Tag,
   AlertCircle,
+  ChevronRight,
+  CreditCard,
 } from "lucide-react";
-import {
-  TIER_PRICING,
-  fmtMoneyWhole,
-  fmtMoney,
-} from "@/lib/billingPricing";
+import { TIER_PRICING, fmtMoneyWhole, fmtMoney } from "@/lib/billingPricing";
+import { FEATURED_POSITIONING } from "@/lib/proDirectoryBenefits";
 
 /**
- * /provider/marketing — central hub for every marketing surface.
+ * /provider/marketing — the FEATURED ADVERTISING HUB.
  *
- * SAME LAYOUT FOR FREE AND PRO. Free users see every feature with full
- * descriptions + pricing + "Pro required" indicators, instead of a
- * lockwall that hides what they're missing. Conversion path: an
- * upgrade banner sits at the top of the page; every locked feature
- * card swaps its primary CTA to "Upgrade to Pro" pointing at
- * /provider/subscription.
+ * This route used to be a general "Marketing" hub whose primary job was
+ * selling Pro: a gradient upgrade banner, a Free-vs-Pro comparison table that
+ * claimed "Priority search placement (+50 boost)" and "Verified badge" as Pro
+ * features, and three add-on cards stamped "Pro required". All of that was
+ * either false or belonged on Plan & Billing.
  *
- * Three tabs:
- *   1. Get Found      — Featured Placements + Concierge Partner (paid add-ons)
- *   2. Brand assets   — Credential Kit + Embed Widgets (free with Pro)
- *   3. Reviews        — Review-request funnel
+ * It is now one product: Featured. Featured is ADVERTISING —
+ *   • sold separately from Pro, billed per location
+ *   • clearly labeled sponsored wherever it renders
+ *   • has no effect on organic directory position
+ *   • has its own performance reporting while active
  *
- * The full UI for each feature lives on its own page. This hub is the
- * single visible entry point so Pro features aren't lost between
- * sidebar items, and Free users see the value before they're asked to
- * pay.
+ * The nav labels this destination "Featured". The URL stays /provider/marketing
+ * so existing bookmarks, the /provider/placement-network redirect, and the
+ * Featured detail child route keep working.
+ *
+ * Pro brand assets (Credential Kit, Embed widgets) keep a compact entry point
+ * at the bottom rather than their own tab — they are Pro capabilities, not
+ * advertising, and they each have a real page.
  */
 export default function MarketingHub() {
   const { selectedFacility } = useSelectedFacility();
   const facilityId = selectedFacility?.id;
   const { data: subscription, isLoading, isError, refetch } = useFacilitySubscription(facilityId);
 
-  // Grace-aware: a past_due provider is still a paying Pro in Stripe's
-  // dunning window and must keep access to the Marketing tools they own.
+  // Grace-aware: a past_due provider is still a paying Pro in Stripe's dunning
+  // window. Used ONLY to word the Pro brand-assets footer — never to gate
+  // Featured, which is independent of Pro.
   const isPro = isActiveProRow(subscription);
+  const hasFeatured = subscription?.has_featured === true;
+  // Legacy Concierge holders still exist in production. Concierge is retired
+  // and must not be marketed; they get a retired-product state instead of the
+  // old "upgrade to Concierge" pitch.
+  const hasRetiredBundle = subscription?.has_concierge_partner === true;
+
+  const featuredPeriodEnd =
+    subscription?.featured_current_period_end ?? subscription?.current_period_end;
+  const periodEndStr = featuredPeriodEnd
+    ? new Date(featuredPeriodEnd).toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      })
+    : null;
+
+  const header = (
+    <ProviderPageHeader
+      title="Featured"
+      description="Clearly labeled sponsored placement. Separate from your plan."
+      icon={<Megaphone className="h-4 w-4" />}
+      actions={
+        hasFeatured ? (
+          <Badge className="bg-emerald-600 hover:bg-emerald-600">Active</Badge>
+        ) : undefined
+      }
+    />
+  );
 
   if (isLoading) {
     return (
       <>
-        <ProviderPageHeader
-          title="Marketing"
-          description="Grow your facility's visibility and brand reach."
-          icon={<Megaphone className="h-4 w-4" />}
-        />
-        <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
-          <Skeleton className="h-10 w-2/3 mb-4" />
-          <Skeleton className="h-80 w-full" />
+        {header}
+        <div className="mx-auto max-w-5xl space-y-4 px-4 py-6 sm:px-6 lg:px-8">
+          <Skeleton className="h-32 w-full rounded-xl" />
+          <Skeleton className="h-64 w-full rounded-xl" />
         </div>
       </>
     );
   }
 
-  // Never fall through to the Free-plan view on a fetch error — a Pro
-  // facility whose subscription failed to load would otherwise see the
-  // upgrade wall and their paid add-ons would look gone. Show a retry.
+  // Never fall through to the "not active" view on a fetch error — a facility
+  // that HAS Featured would otherwise see its paid placement look gone.
   if (isError) {
     return (
       <>
-        <ProviderPageHeader
-          title="Marketing"
-          description="Grow your facility's visibility and brand reach."
-          icon={<Megaphone className="h-4 w-4" />}
-        />
-        <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
+        {header}
+        <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
           <Card className="border-destructive/40 bg-destructive/5">
-            <CardContent className="p-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <CardContent className="flex flex-col gap-3 p-6 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-start gap-2 text-sm">
-                <AlertCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" aria-hidden />
+                <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" aria-hidden />
                 <div>
-                  <p className="font-medium text-foreground">Couldn't load your plan.</p>
-                  <p className="text-muted-foreground mt-0.5">
-                    We weren't able to check your subscription, so your marketing
-                    tools are hidden for now. Try again.
+                  <p className="font-medium text-foreground">Couldn't load your Featured status.</p>
+                  <p className="mt-0.5 text-muted-foreground">
+                    We weren't able to reach the billing system. Any active Featured
+                    placement is unaffected — this is a display issue.
                   </p>
                 </div>
               </div>
-              <Button variant="outline" onClick={() => refetch()}>Retry</Button>
+              <Button variant="outline" onClick={() => refetch()}>
+                Retry
+              </Button>
             </CardContent>
           </Card>
         </div>
@@ -114,153 +131,112 @@ export default function MarketingHub() {
   return (
     <>
       <Helmet>
-        <title>Marketing | RehabLookup Provider</title>
+        <title>Featured | RehabLookup Provider</title>
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
 
-      <ProviderPageHeader
-        title="Marketing"
-        description={
-          isPro
-            ? "All your visibility tools, brand assets, and review funnels in one place."
-            : "See every tool included with Pro — visibility add-ons, brand assets, and reviews."
-        }
-        icon={<Megaphone className="h-4 w-4" />}
-        actions={
-          !isPro ? (
-            <Button
-              asChild
-              size="sm"
-              className="gap-1.5 bg-amber-500 hover:bg-amber-600 text-white"
-            >
-              <Link to="/provider/subscription">
-                <Sparkles className="h-3.5 w-3.5" />
-                Upgrade to Pro
-              </Link>
-            </Button>
-          ) : null
-        }
-      />
+      {header}
 
-      <div className="mx-auto max-w-6xl px-4 py-5 sm:px-6 sm:py-6 lg:px-8 space-y-5">
+      <div className="mx-auto max-w-5xl space-y-5 px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
         <PromoCountdownBanner facilityId={facilityId} />
-        {!isPro && <UpgradeBanner />}
 
-        <Tabs defaultValue="visibility" className="w-full">
-          <TabsList className="mb-4 grid w-full grid-cols-3 sm:inline-flex sm:w-auto">
-            <TabsTrigger value="visibility" className="gap-1.5">
-              <Megaphone className="h-3.5 w-3.5" aria-hidden />
-              <span className="hidden sm:inline">Get Found</span>
-              <span className="sm:hidden">Found</span>
-            </TabsTrigger>
-            <TabsTrigger value="assets" className="gap-1.5">
-              <Award className="h-3.5 w-3.5" aria-hidden />
-              <span className="hidden sm:inline">Brand Assets</span>
-              <span className="sm:hidden">Assets</span>
-            </TabsTrigger>
-            <TabsTrigger value="reviews" className="gap-1.5">
-              <Star className="h-3.5 w-3.5" aria-hidden />
-              Reviews
-            </TabsTrigger>
-          </TabsList>
+        {/* ── What Featured is ── */}
+        <WhatFeaturedIsCard />
 
-          <TabsContent value="visibility" className="space-y-3">
-            <p className="text-xs sm:text-sm text-muted-foreground">
-              Paid placement add-ons that put your facility in front of
-              actively-searching clients. Each is independent of the Pro
-              subscription and can be added or removed anytime.
-            </p>
-            {selectedFacility?.state && (
-              <MarketDemandCard
-                state={selectedFacility.state}
-                city={selectedFacility.city ?? ""}
-                isPro={isPro}
-              />
-            )}
-            {isPro && subscription ? (
-              <MarketingHubCards subscription={subscription} />
-            ) : (
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <FeaturedCardLocked />
-                <ConciergeCardLocked />
-              </div>
-            )}
-          </TabsContent>
+        {/* ── Status for the selected facility ── */}
+        {hasRetiredBundle ? (
+          <RetiredBundleCard periodEndStr={periodEndStr} />
+        ) : hasFeatured ? (
+          <>
+            <FeaturedActiveCard periodEndStr={periodEndStr} />
+            {facilityId && <FeaturedAnalyticsWidget facilityId={facilityId} />}
+          </>
+        ) : (
+          <FeaturedPurchaseCard />
+        )}
 
-          <TabsContent value="assets" className="space-y-3">
-            <p className="text-xs sm:text-sm text-muted-foreground">
-              {isPro
-                ? "Free with your Pro subscription. Use these wherever your facility's brand shows up online."
-                : "Included free with every Pro subscription. Personalised to your facility — regenerate any time."}
-            </p>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <CredentialKitCard locked={!isPro} />
-              <EmbedWidgetsCard locked={!isPro} />
-            </div>
-          </TabsContent>
+        {/* ── Live slot availability in this facility's market ── */}
+        {selectedFacility?.state && !hasRetiredBundle && (
+          <MarketDemandCard
+            state={selectedFacility.state}
+            city={selectedFacility.city ?? ""}
+          />
+        )}
 
-          <TabsContent value="reviews" className="space-y-3">
-            <p className="text-xs sm:text-sm text-muted-foreground">
-              {isPro
-                ? "Build social proof by inviting clients to leave a review. We send a moderated invitation link they can complete in under a minute."
-                : "Send moderated review invitations to past clients. Each invite is rate-limited and dedupe-protected so outreach stays clean."}
-            </p>
-            <ReviewRequestCard locked={!isPro} />
-          </TabsContent>
-        </Tabs>
-
-        {!isPro && <PlanComparisonBlock />}
+        {/* ── Pro brand assets, kept distinct from advertising ── */}
+        <ProAssetsFooter isPro={isPro} />
       </div>
     </>
   );
 }
 
 /* ────────────────────────────────────────────────────────────────────
-   Top-of-page conversion banner for Free users
+   What Featured is — the explanation every surface must agree on.
    ──────────────────────────────────────────────────────────────────── */
 
-function UpgradeBanner() {
-  const proMonthly = fmtMoneyWhole(TIER_PRICING.pro.monthlyCents);
-  const proAnnualEquiv = fmtMoneyWhole(TIER_PRICING.pro.monthlyEquivOfAnnualCents);
+/** Where a sponsored placement can render. Mirrors featured_placements types. */
+const PLACEMENT_SURFACES = [
+  "State pages",
+  "City pages",
+  "Near-me pages",
+  "Treatment-type pages",
+  "Insurance pages",
+];
 
+function WhatFeaturedIsCard() {
   return (
-    <Card className="border-2 border-amber-300/70 bg-gradient-to-br from-amber-50/80 via-white to-amber-50/40">
-      <CardContent className="p-5 sm:p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-          <div className="hidden sm:flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-white shadow-md">
-            <Sparkles className="h-6 w-6" aria-hidden />
+    <Card>
+      <CardHeader className="border-b py-3.5">
+        <CardTitle className="text-sm font-semibold">What Featured is</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4 p-4 sm:p-5">
+        <p className="text-sm leading-relaxed text-slate-700">
+          Featured buys your facility a sponsored slot in the visible Featured
+          positions on the directory pages for your area. Every paying facility in a
+          geography takes equal turns in a fair rotation — no bidding, no per-click
+          charges, and calls go straight to your admissions line.
+        </p>
+
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Where sponsored placements can appear
+          </p>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {PLACEMENT_SURFACES.map((surface) => (
+              <span
+                key={surface}
+                className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-slate-700"
+              >
+                <Tag className="h-3 w-3 text-slate-400" aria-hidden />
+                {surface}
+              </span>
+            ))}
           </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-base sm:text-lg font-bold text-slate-900">
-                Unlock every marketing tool with Pro
-              </h2>
-              <Badge className="bg-amber-500 hover:bg-amber-500 text-white">
-                {proMonthly}/mo
-              </Badge>
-            </div>
-            <p className="mt-1 text-xs sm:text-sm text-slate-700 leading-relaxed">
-              Pro includes the verified badge, embed widgets, credential kit,
-              review-request funnel, and priority placement. Billed monthly or
-              save 15% on annual ({proAnnualEquiv}/mo equivalent). Add Featured
-              + Concierge any time after upgrading.
-            </p>
-          </div>
-          <div className="flex flex-col gap-1.5 shrink-0">
-            <Button
-              asChild
-              className="gap-1.5 bg-amber-500 hover:bg-amber-600 text-white"
-            >
-              <Link to="/provider/subscription">
-                <Sparkles className="h-4 w-4" />
-                Upgrade to Pro
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
-            <Button asChild variant="ghost" size="sm" className="h-7 text-xs">
-              <Link to="/provider/subscription#comparison">Compare plans</Link>
-            </Button>
-          </div>
+          <p className="mt-2 inline-flex items-start gap-1.5 text-xs text-slate-500">
+            <Megaphone className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden />
+            <span>
+              Every placement renders with a visible sponsored label so families can
+              tell advertising from organic results.
+            </span>
+          </p>
+        </div>
+
+        <ul className="grid gap-1.5 border-t border-slate-100 pt-3 sm:grid-cols-2">
+          {FEATURED_POSITIONING.map((line) => (
+            <li key={line} className="flex items-start gap-2 text-xs text-slate-600">
+              <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600" aria-hidden />
+              <span>{line}</span>
+            </li>
+          ))}
+        </ul>
+
+        <div className="flex items-start gap-2 rounded-lg border border-slate-200 bg-slate-50/70 p-3">
+          <ShieldOff className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" aria-hidden />
+          <p className="text-xs leading-relaxed text-slate-600">
+            Featured does not change your organic directory position, and it does not
+            affect verification. Organic position is computed from listing signals
+            only; verification is earned through our review process.
+          </p>
         </div>
       </CardContent>
     </Card>
@@ -268,372 +244,190 @@ function UpgradeBanner() {
 }
 
 /* ────────────────────────────────────────────────────────────────────
-   Plan comparison block (Free vs Pro feature checklist)
-   Shown at the bottom of the page for Free users only.
+   Status cards
    ──────────────────────────────────────────────────────────────────── */
 
-function PlanComparisonBlock() {
-  const features: Array<{ label: string; free: boolean | string; pro: boolean | string; }> = [
-    { label: "Public listing on directory", free: true, pro: true },
-    { label: "Receive inquiry leads", free: true, pro: true },
-    { label: "Photo gallery", free: "5 photos", pro: "10 photos" },
-    { label: "Priority search placement (+50 boost)", free: false, pro: true },
-    { label: "Verified badge", free: false, pro: true },
-    { label: "Enhanced profile (video, programs, accreditations)", free: false, pro: true },
-    { label: "Embed widgets (badge + reviews + gallery)", free: false, pro: true },
-    { label: "Credential Kit (PDF cert + badge + social images)", free: false, pro: true },
-    { label: "Send review-request emails to clients", free: false, pro: true },
-    { label: "Performance analytics dashboard", free: "headline only", pro: "full" },
-    { label: "Multiple facility locations", free: "1 location", pro: "up to 5" },
-    { label: "Featured placements add-on", free: false, pro: "available" },
-    { label: "Concierge Partner add-on", free: false, pro: "available" },
+function FeaturedActiveCard({ periodEndStr }: { periodEndStr: string | null }) {
+  return (
+    <Card className="border-emerald-200/70">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b py-3.5">
+        <CardTitle className="text-sm font-semibold">
+          Featured is active on this facility
+        </CardTitle>
+        <Button asChild variant="ghost" size="sm" className="h-7 gap-1 text-xs text-[#1B365D]">
+          <Link to="/provider/marketing/featured">
+            Manage placements <ChevronRight className="h-3.5 w-3.5" />
+          </Link>
+        </Button>
+      </CardHeader>
+      <CardContent className="space-y-3 p-4 sm:p-5">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+          <div>
+            <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+              Billing
+            </p>
+            <p className="mt-0.5 text-slate-900">
+              {fmtMoneyWhole(TIER_PRICING.featured.monthlyCents)}/mo per location
+            </p>
+          </div>
+          {periodEndStr && (
+            <div>
+              <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                Paid through
+              </p>
+              <p className="mt-0.5 text-slate-900">{periodEndStr}</p>
+            </div>
+          )}
+        </div>
+        <p className="text-xs text-slate-500">
+          Featured bills separately from your listing plan.{" "}
+          <Link
+            to="/provider/billing"
+            className="font-medium text-[#1B365D] underline underline-offset-2"
+          >
+            Plan &amp; Billing
+          </Link>
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
+/**
+ * Inactive state. One CTA, no prerequisites.
+ *
+ * Featured is purchasable on any plan. The transitional note that used to sit
+ * here — acknowledging that create-checkout-session returned 409 PRO_REQUIRED
+ * without Pro — is gone because the gate is gone: the Pro precondition was
+ * removed from the add-on branch and activateFeaturedAddon() now creates a
+ * tier='free' subscription row for a Featured-only facility.
+ */
+function FeaturedPurchaseCard() {
+  return (
+    <Card>
+      <CardHeader className="border-b py-3.5">
+        <CardTitle className="text-sm font-semibold">Featured is not active</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4 p-4 sm:p-5">
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <p className="text-xl font-bold text-[#1B365D]">
+            {fmtMoneyWhole(TIER_PRICING.featured.monthlyCents)}
+            <span className="text-sm font-normal text-slate-500">/mo per location</span>
+          </p>
+          <p className="text-xs text-slate-500">
+            or {fmtMoney(TIER_PRICING.featured.annualCents)}/yr (save 15%)
+          </p>
+        </div>
+        <ul className="space-y-1 text-xs text-slate-600">
+          <li>• Pick the placements you want from live slot availability</li>
+          <li>• Slot caps per geography keep each rotation share meaningful</li>
+          <li>• Waitlist when a geography fills — never a price hike for existing subscribers</li>
+        </ul>
+        <Button asChild className="gap-1.5 bg-[#1B365D] hover:bg-[#142a4a]">
+          <Link to="/provider/marketing/featured">
+            Explore Featured placements <ArrowRight className="h-4 w-4" />
+          </Link>
+        </Button>
+        <p className="border-t border-slate-100 pt-3 text-xs leading-relaxed text-slate-500">
+          Featured bills separately from your listing plan. You can buy it on Free or
+          on Pro, and cancelling one never cancels the other.
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
+/**
+ * Retired-product state for the legacy Concierge Partner holders that still
+ * exist in production. It names the product only to explain that it is retired
+ * and what happens to the exposure they already paid for — the previous version
+ * of this page actively sold Concierge as "the upgrade to Featured".
+ */
+function RetiredBundleCard({ periodEndStr }: { periodEndStr: string | null }) {
+  return (
+    <Card className="border-slate-300">
+      <CardHeader className="border-b py-3.5">
+        <CardTitle className="text-sm font-semibold">
+          Your legacy add-on is retired
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3 p-4 sm:p-5">
+        <p className="text-sm leading-relaxed text-slate-700">
+          This facility holds a legacy add-on that RehabLookup no longer sells. It is
+          not available to new subscribers and it is not being marketed.
+        </p>
+        <p className="text-xs leading-relaxed text-slate-600">
+          Your existing placement exposure continues
+          {periodEndStr ? ` through ${periodEndStr}` : ""}. Featured is the current
+          advertising product. For questions about your billing or moving to Featured,
+          contact support — we won't change your subscription without asking.
+        </p>
+        <div className="flex flex-wrap gap-2 pt-1">
+          <Button asChild variant="outline" size="sm" className="gap-1.5 text-xs">
+            <Link to="/provider/billing">
+              <CreditCard className="h-3.5 w-3.5" aria-hidden />
+              Plan &amp; Billing
+            </Link>
+          </Button>
+          <Button asChild variant="ghost" size="sm" className="gap-1.5 text-xs">
+            <Link to="/provider/help">Contact support</Link>
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────────────
+   Pro brand assets — capabilities, not advertising. Compact entry points.
+   ──────────────────────────────────────────────────────────────────── */
+
+function ProAssetsFooter({ isPro }: { isPro: boolean }) {
+  const assets = [
+    {
+      icon: Award,
+      label: "Credential Kit",
+      description: "Certificate, badge SVG, email signature, social images",
+      href: "/provider/credential-kit",
+    },
+    {
+      icon: Code2,
+      label: "Embed widgets",
+      description: "Drop-in badge, reviews, and gallery blocks for your own site",
+      href: "/provider/embed-badge",
+    },
   ];
 
   return (
     <Card>
-      <CardContent className="p-4 sm:p-6">
-        <div className="flex items-center justify-between gap-3 mb-4">
-          <div>
-            <h3 className="text-base sm:text-lg font-semibold text-slate-900">
-              What's included with Pro
-            </h3>
-            <p className="text-xs text-muted-foreground">
-              Side-by-side comparison of Free and Pro tiers.
-            </p>
-          </div>
-          <Badge className="bg-amber-500 hover:bg-amber-500 text-white">
-            {fmtMoneyWhole(TIER_PRICING.pro.monthlyCents)}/mo
-          </Badge>
-        </div>
-
-        <div className="border rounded-md overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-xs uppercase tracking-wide text-muted-foreground">
-              <tr>
-                <th className="text-left px-3 py-2 font-medium">Feature</th>
-                <th className="text-center px-3 py-2 font-medium w-24">Free</th>
-                <th className="text-center px-3 py-2 font-medium w-24 bg-amber-50/50">
-                  Pro
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {features.map((f) => (
-                <tr key={f.label} className="border-t">
-                  <td className="px-3 py-2 text-slate-700">{f.label}</td>
-                  <td className="px-3 py-2 text-center">
-                    <FeatureCell value={f.free} />
-                  </td>
-                  <td className="px-3 py-2 text-center bg-amber-50/30">
-                    <FeatureCell value={f.pro} highlight />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-          <p className="text-xs text-muted-foreground">
-            Pro: <strong className="text-foreground">{fmtMoneyWhole(TIER_PRICING.pro.monthlyCents)}/mo</strong>{" "}
-            or {fmtMoney(TIER_PRICING.pro.annualCents)}/yr (save 15%).
-          </p>
-          <Button asChild className="gap-1.5 bg-amber-500 hover:bg-amber-600 text-white">
-            <Link to="/provider/subscription">
-              <Sparkles className="h-4 w-4" />
-              Upgrade to Pro
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function FeatureCell({ value, highlight }: { value: boolean | string; highlight?: boolean }) {
-  if (value === true) {
-    return (
-      <Check
-        className={`h-4 w-4 mx-auto ${highlight ? "text-emerald-600" : "text-slate-500"}`}
-        aria-label="included"
-      />
-    );
-  }
-  if (value === false) {
-    return <X className="h-4 w-4 mx-auto text-slate-300" aria-label="not included" />;
-  }
-  return (
-    <span className={`text-xs ${highlight ? "font-medium text-foreground" : "text-muted-foreground"}`}>
-      {value}
-    </span>
-  );
-}
-
-/* ────────────────────────────────────────────────────────────────────
-   Visibility add-on cards (Featured + Concierge) — locked variants
-   These mirror the live Pro cards in MarketingHubCards.tsx but with
-   pricing + "Pro required" framing instead of usage counters.
-   ──────────────────────────────────────────────────────────────────── */
-
-function FeaturedCardLocked() {
-  return (
-    <Card className="border-amber-200/60 bg-gradient-to-br from-white to-amber-50/30">
-      <CardContent className="p-5 space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="h-9 w-9 rounded-lg bg-amber-100 flex items-center justify-center">
-              <Rotate3D className="h-5 w-5 text-amber-700" aria-hidden />
-            </div>
-            <div>
-              <h3 className="font-semibold text-foreground">Featured Placements</h3>
-              <Badge variant="outline" className="text-[10px] mt-0.5 gap-1">
-                <Lock className="h-2.5 w-2.5" aria-hidden />
-                Pro required
-              </Badge>
-            </div>
-          </div>
-        </div>
-        <p className="text-sm text-muted-foreground">
-          Phone-rotation slots on the state, city, near-me, treatment-type,
-          and insurance pages for your area. Every paying facility takes equal
-          turns — fair rotation, no bidding wars.
-        </p>
-        <ul className="text-xs text-muted-foreground space-y-0.5 ml-1">
-          <li>• {fmtMoneyWhole(TIER_PRICING.featured.monthlyCents)}/mo per location</li>
-          <li>• Or {fmtMoney(TIER_PRICING.featured.annualCents)}/yr (15% off)</li>
-          <li>• Slot caps per geo keep your rotation share meaningful</li>
-          <li>• For national + homepage exposure, upgrade to Concierge</li>
-        </ul>
-        <Button
-          asChild
-          size="sm"
-          className="w-full gap-1.5 bg-amber-500 hover:bg-amber-600 text-white"
-        >
-          <Link to="/provider/subscription">
-            <Sparkles className="h-3.5 w-3.5" aria-hidden />
-            Upgrade to access
-          </Link>
-        </Button>
-      </CardContent>
-    </Card>
-  );
-}
-
-function ConciergeCardLocked() {
-  return (
-    <Card className="border-violet-200/60 bg-gradient-to-br from-white to-violet-50/30">
-      <CardContent className="p-5 space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="h-9 w-9 rounded-lg bg-violet-100 flex items-center justify-center">
-              <UserCheck className="h-5 w-5 text-violet-700" aria-hidden />
-            </div>
-            <div>
-              <h3 className="font-semibold text-foreground">Concierge Partner</h3>
-              <Badge variant="outline" className="text-[10px] mt-0.5 gap-1">
-                <Lock className="h-2.5 w-2.5" aria-hidden />
-                Pro required
-              </Badge>
-            </div>
-          </div>
-        </div>
-        <p className="text-sm text-muted-foreground">
-          The upgrade to Featured: national homepage + international exposure
-          and any extra geographies you pick, plus prominent surfacing when our
-          human advisors match clients. Capped 3-5 per major city; non-partner
-          alternatives always presented; calls go direct to your line.
-        </p>
-        <ul className="text-xs text-muted-foreground space-y-0.5 ml-1">
-          <li>• {fmtMoneyWhole(TIER_PRICING.concierge.monthlyCents)}/mo per location</li>
-          <li>• Or {fmtMoney(TIER_PRICING.concierge.annualCents)}/yr (15% off)</li>
-          <li>• Includes all Featured exposure — replaces Featured (no double charge)</li>
-          <li>• Geography-capped — no bidding wars</li>
-        </ul>
-        <Button
-          asChild
-          size="sm"
-          className="w-full gap-1.5 bg-amber-500 hover:bg-amber-600 text-white"
-        >
-          <Link to="/provider/subscription">
-            <Sparkles className="h-3.5 w-3.5" aria-hidden />
-            Upgrade to access
-          </Link>
-        </Button>
-      </CardContent>
-    </Card>
-  );
-}
-
-/* ────────────────────────────────────────────────────────────────────
-   Brand assets cards (Credential Kit + Embed Widgets)
-   Free + Pro see the same card; only the CTA differs.
-   ──────────────────────────────────────────────────────────────────── */
-
-function CredentialKitCard({ locked }: { locked: boolean }) {
-  return (
-    <Card className="border-emerald-200/60 bg-gradient-to-br from-white to-emerald-50/30">
-      <CardContent className="p-5 space-y-3">
-        <div className="flex items-center gap-2">
-          <div className="h-9 w-9 rounded-lg bg-emerald-100 flex items-center justify-center">
-            <Award className="h-5 w-5 text-emerald-700" aria-hidden />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-foreground">Credential Kit</h3>
-            <Badge
-              variant="outline"
-              className="text-[10px] mt-0.5 gap-1"
+      <CardHeader className="border-b py-3.5">
+        <CardTitle className="text-sm font-semibold">Brand assets</CardTitle>
+      </CardHeader>
+      <CardContent className="p-2">
+        {assets.map((asset) => {
+          const Icon = asset.icon;
+          return (
+            <Link
+              key={asset.href}
+              to={asset.href}
+              className="flex items-center gap-3 rounded-lg px-2.5 py-2.5 transition-colors hover:bg-slate-50"
             >
-              {locked && <Lock className="h-2.5 w-2.5" aria-hidden />}
-              Pro · verified facilities
-            </Badge>
-          </div>
-        </div>
-        <p className="text-sm text-muted-foreground">
-          One-click ZIP with your RehabLookup Verified certificate (PDF),
-          drop-in badge SVG, email-signature HTML, and four sized social
-          images. Regenerates with your latest verified date.
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100">
+                <Icon className="h-4 w-4 text-slate-600" aria-hidden />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-slate-800">{asset.label}</p>
+                <p className="truncate text-xs text-slate-500">{asset.description}</p>
+              </div>
+              <ChevronRight className="h-4 w-4 shrink-0 text-slate-300" aria-hidden />
+            </Link>
+          );
+        })}
+        <p className="px-2.5 pb-1 pt-2 text-xs leading-relaxed text-slate-500">
+          {isPro
+            ? "Included with your Pro subscription. The Credential Kit reflects your current verification status, which is determined independently of your plan."
+            : "These are Pro capabilities. Each page explains its own requirements — the Credential Kit also requires current verification, which is earned through our review process and not purchasable."}
         </p>
-        <ul className="text-xs text-muted-foreground space-y-0.5 ml-1">
-          <li>• Certificate of verification (PDF)</li>
-          <li>• Verified badge (SVG)</li>
-          <li>• Email signature block (HTML)</li>
-          <li>• Open Graph / Twitter / Instagram / LinkedIn images</li>
-        </ul>
-        {locked ? (
-          <Button
-            asChild
-            size="sm"
-            className="w-full gap-1.5 bg-amber-500 hover:bg-amber-600 text-white"
-          >
-            <Link to="/provider/subscription">
-              <Sparkles className="h-3.5 w-3.5" aria-hidden />
-              Upgrade to access
-            </Link>
-          </Button>
-        ) : (
-          <Button asChild size="sm" className="w-full">
-            <Link to="/provider/credential-kit">
-              Open Credential Kit
-              <ArrowRight className="h-3 w-3 ml-1" aria-hidden />
-            </Link>
-          </Button>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-function EmbedWidgetsCard({ locked }: { locked: boolean }) {
-  return (
-    <Card className="border-violet-200/60 bg-gradient-to-br from-white to-violet-50/30">
-      <CardContent className="p-5 space-y-3">
-        <div className="flex items-center gap-2">
-          <div className="h-9 w-9 rounded-lg bg-violet-100 flex items-center justify-center">
-            <Code2 className="h-5 w-5 text-violet-700" aria-hidden />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-foreground">Embed widgets</h3>
-            <Badge variant="outline" className="text-[10px] mt-0.5 gap-1">
-              {locked && <Lock className="h-2.5 w-2.5" aria-hidden />}
-              Pro
-            </Badge>
-          </div>
-        </div>
-        <p className="text-sm text-muted-foreground">
-          Drop-in HTML snippets for your own site. The verified badge
-          links back to your profile; the reviews widget pulls your
-          on-platform reviews live. Both render anonymously — no API key
-          or user account required by visitors.
-        </p>
-        <ul className="text-xs text-muted-foreground space-y-0.5 ml-1">
-          <li className="flex items-center gap-1.5">
-            <ShieldCheck className="h-3 w-3 text-emerald-600" aria-hidden />
-            Verified badge
-          </li>
-          <li className="flex items-center gap-1.5">
-            <Star className="h-3 w-3 text-amber-500" aria-hidden />
-            Reviews
-          </li>
-          <li className="flex items-center gap-1.5">
-            <ImagesIcon className="h-3 w-3 text-slate-500" aria-hidden />
-            Photo gallery
-          </li>
-        </ul>
-        {locked ? (
-          <Button
-            asChild
-            size="sm"
-            className="w-full gap-1.5 bg-amber-500 hover:bg-amber-600 text-white"
-          >
-            <Link to="/provider/subscription">
-              <Sparkles className="h-3.5 w-3.5" aria-hidden />
-              Upgrade to access
-            </Link>
-          </Button>
-        ) : (
-          <Button asChild size="sm" variant="outline" className="w-full">
-            <Link to="/provider/embed-badge">
-              Configure widgets
-              <ArrowRight className="h-3 w-3 ml-1" aria-hidden />
-            </Link>
-          </Button>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-/* ────────────────────────────────────────────────────────────────────
-   Reviews funnel card — single card per tab.
-   ──────────────────────────────────────────────────────────────────── */
-
-function ReviewRequestCard({ locked }: { locked: boolean }) {
-  return (
-    <Card className="border-amber-200/60 bg-gradient-to-br from-white to-amber-50/30">
-      <CardContent className="p-5 space-y-3">
-        <div className="flex items-center gap-2">
-          <div className="h-9 w-9 rounded-lg bg-amber-100 flex items-center justify-center">
-            <Star className="h-5 w-5 text-amber-700" aria-hidden />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-foreground">Review requests</h3>
-            <Badge variant="outline" className="text-[10px] mt-0.5 gap-1">
-              {locked && <Lock className="h-2.5 w-2.5" aria-hidden />}
-              Pro
-            </Badge>
-          </div>
-        </div>
-        <p className="text-sm text-muted-foreground">
-          Send a personalised invitation to a former client. We host the
-          review form, moderate the submission, and publish it to your
-          profile. Daily rate-limit + 24h dedupe keeps the outreach clean.
-        </p>
-        <ul className="text-xs text-muted-foreground space-y-0.5 ml-1">
-          <li>• Personalised email per recipient</li>
-          <li>• 30-day expiring review link</li>
-          <li>• Moderation queue before publication</li>
-          <li>• Open/click tracking via Resend webhook</li>
-        </ul>
-        {locked ? (
-          <Button
-            asChild
-            size="sm"
-            className="w-full gap-1.5 bg-amber-500 hover:bg-amber-600 text-white"
-          >
-            <Link to="/provider/subscription">
-              <Sparkles className="h-3.5 w-3.5" aria-hidden />
-              Upgrade to access
-            </Link>
-          </Button>
-        ) : (
-          <Button asChild size="sm" className="w-full">
-            <Link to="/provider/reviews">
-              Manage reviews
-              <ArrowRight className="h-3 w-3 ml-1" aria-hidden />
-            </Link>
-          </Button>
-        )}
       </CardContent>
     </Card>
   );

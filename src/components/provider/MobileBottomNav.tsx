@@ -1,73 +1,55 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useTransition } from "react";
-import { 
-  Home, 
-  Users, 
-  Network,
+import {
+  Home,
+  Users,
+  BarChart3,
   Building2,
-  MoreHorizontal
+  MoreHorizontal,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { usePendingInquiriesCount } from "@/hooks/usePendingInquiriesCount";
-import { usePendingConciergeCount } from "@/hooks/usePendingConciergeCount";
-// usePendingInternationalCount retired 2026-05-20 — paid international placement product wound down.
 
 interface MobileBottomNavProps {
   onMoreClick: () => void;
 }
 
+// The four most common provider jobs stay one tap away on mobile. Featured,
+// plan/billing, reviews, claims, settings, and help live under More.
 const navItems = [
   { href: "/provider/dashboard", label: "Home", icon: Home },
-  { href: "/provider/inquiries", label: "Leads", icon: Users },
-  // The legacy /provider/placement-network route was retired in the
-  // monetization rebuild — App.tsx still redirects it to /marketing
-  // for backlinks but mobile users tapping the tab were silently
-  // hitting that redirect. Point straight at the concierge management
-  // surface (which is where pendingDomesticCount tells them to act)
-  // so the tap lands them on a real page.
-  { href: "/provider/marketing/concierge", label: "Concierge", icon: Network },
   { href: "/provider/listings", label: "Listings", icon: Building2 },
+  { href: "/provider/inquiries", label: "Inquiries", icon: Users },
+  { href: "/provider/analytics", label: "Performance", icon: BarChart3 },
 ];
 
 export function MobileBottomNav({ onMoreClick }: MobileBottomNavProps) {
   const location = useLocation();
   const navNavigate = useNavigate();
   const [, startTransition] = useTransition();
-  const { selectedFacility } = useSelectedFacility();
-
-  // Use the same hooks as the sidebar for consistency
   const { count: pendingInquiriesCount } = usePendingInquiriesCount();
-  const { count: pendingDomesticCount } = usePendingConciergeCount(selectedFacility?.id);
 
-  // International placement product retired 2026-05-20 — only domestic
-  // concierge cases contribute to the placement badge now.
-  const totalPlacementCount = pendingDomesticCount;
-
-  // "More" is active on any provider route that isn't one of the four primary
-  // tabs (previously an incomplete allow-list left billing/marketing/credential-
-  // kit/etc. with no selected bottom-nav item).
-  const isMoreActive =
-    location.pathname.startsWith("/provider") &&
-    !navItems.some(item => item.href === location.pathname);
+  const isPrimaryRoute = navItems.some((item) => {
+    if (item.href === "/provider/listings") {
+      return location.pathname === item.href || location.pathname.startsWith("/provider/listings/");
+    }
+    return location.pathname === item.href;
+  });
+  const isMoreActive = location.pathname.startsWith("/provider") && !isPrimaryRoute;
 
   return (
     <nav
-      className="
-        lg:hidden z-40 w-full
-        bg-card/95 backdrop-blur-lg border-t border-border
-        safe-area-bottom shadow-[0_-4px_16px_-8px_hsl(var(--foreground)/0.15)]
-      "
+      className="lg:hidden z-40 w-full bg-card/95 backdrop-blur-lg border-t border-border safe-area-bottom shadow-[0_-4px_16px_-8px_hsl(var(--foreground)/0.15)]"
       aria-label="Provider primary navigation"
     >
-      <div className="flex items-stretch justify-around h-16 px-1">
+      <div className="flex h-16 items-stretch justify-around px-1">
         {navItems.map((item) => {
-          const isActive = location.pathname === item.href;
+          const isActive = item.href === "/provider/listings"
+            ? location.pathname === item.href || location.pathname.startsWith("/provider/listings/")
+            : location.pathname === item.href;
           const Icon = item.icon;
-          const isLeadsItem = item.href === "/provider/inquiries";
-          const isPlacementItem = item.href === "/provider/marketing/concierge";
-          const showBadge = (isLeadsItem && pendingInquiriesCount > 0) || (isPlacementItem && totalPlacementCount > 0);
-          const badgeCount = isLeadsItem ? pendingInquiriesCount : totalPlacementCount;
+          const isInquiriesItem = item.href === "/provider/inquiries";
+          const showBadge = isInquiriesItem && pendingInquiriesCount > 0;
 
           return (
             <a
@@ -76,32 +58,33 @@ export function MobileBottomNav({ onMoreClick }: MobileBottomNavProps) {
               onClick={(e) => {
                 if (e.metaKey || e.ctrlKey || e.shiftKey) return;
                 e.preventDefault();
-                startTransition(() => { navNavigate(item.href); });
+                startTransition(() => {
+                  navNavigate(item.href);
+                });
               }}
               aria-current={isActive ? "page" : undefined}
               aria-label={item.label}
               className={cn(
-                "flex flex-1 min-w-0 flex-col items-center justify-center gap-0.5 px-1 py-1.5",
-                "rounded-xl transition-all duration-200 active:scale-95 select-none",
-                isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                "flex min-w-0 flex-1 select-none flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-1.5 transition-all duration-200 active:scale-95",
+                isActive ? "text-primary" : "text-muted-foreground hover:text-foreground",
               )}
             >
               <div className="relative">
                 <div className={cn(
-                  "flex items-center justify-center h-7 w-7 rounded-lg transition-all",
-                  isActive && "bg-primary/15"
+                  "flex h-7 w-7 items-center justify-center rounded-lg transition-all",
+                  isActive && "bg-primary/15",
                 )}>
                   <Icon className={cn("h-5 w-5 transition-transform", isActive && "scale-110")} />
                 </div>
                 {showBadge && (
-                  <span className="absolute -top-1 -right-1.5 h-4 min-w-4 px-1 flex items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white tabular-nums leading-none ring-2 ring-card">
-                    {badgeCount > 9 ? "9+" : badgeCount}
+                  <span className="absolute -right-1.5 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold leading-none tabular-nums text-white ring-2 ring-card">
+                    {pendingInquiriesCount > 9 ? "9+" : pendingInquiriesCount}
                   </span>
                 )}
               </div>
               <span className={cn(
-                "text-[10px] sm:text-xs font-medium leading-tight truncate max-w-full",
-                isActive ? "text-primary font-semibold" : "text-muted-foreground"
+                "max-w-full truncate text-[10px] font-medium leading-tight sm:text-xs",
+                isActive ? "font-semibold text-primary" : "text-muted-foreground",
               )}>
                 {item.label}
               </span>
@@ -109,26 +92,24 @@ export function MobileBottomNav({ onMoreClick }: MobileBottomNavProps) {
           );
         })}
 
-        {/* More button */}
         <button
           onClick={onMoreClick}
           aria-label="More navigation options"
           aria-current={isMoreActive ? "page" : undefined}
           className={cn(
-            "flex flex-1 min-w-0 flex-col items-center justify-center gap-0.5 px-1 py-1.5",
-            "rounded-xl transition-all duration-200 active:scale-95 select-none",
-            isMoreActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
+            "flex min-w-0 flex-1 select-none flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-1.5 transition-all duration-200 active:scale-95",
+            isMoreActive ? "text-primary" : "text-muted-foreground hover:text-foreground",
           )}
         >
           <div className={cn(
-            "flex items-center justify-center h-7 w-7 rounded-lg transition-all",
-            isMoreActive && "bg-primary/15"
+            "flex h-7 w-7 items-center justify-center rounded-lg transition-all",
+            isMoreActive && "bg-primary/15",
           )}>
             <MoreHorizontal className={cn("h-5 w-5 transition-transform", isMoreActive && "scale-110")} />
           </div>
           <span className={cn(
-            "text-[10px] sm:text-xs font-medium leading-tight",
-            isMoreActive ? "text-primary font-semibold" : "text-muted-foreground"
+            "text-[10px] font-medium leading-tight sm:text-xs",
+            isMoreActive ? "font-semibold text-primary" : "text-muted-foreground",
           )}>
             More
           </span>
