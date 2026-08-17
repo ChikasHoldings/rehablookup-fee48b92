@@ -29,6 +29,13 @@ import { fmtMoney, TIER_PRICING } from "@/lib/billingPricing";
 import { useActivePromotion } from "@/hooks/useActivePromotion";
 import { PromoCountdownBanner } from "@/components/provider/promo/PromoCountdownBanner";
 import { PlanGraceBanner } from "@/components/provider/PlanGraceBanner";
+import {
+  FEATURED_DIRECTORY_NOTE,
+  FREE_DIRECTORY_BENEFITS,
+  PRO_ACTIVE_DESTINATIONS,
+  PRO_DIRECTORY_BENEFITS,
+  PRO_DIRECTORY_TRUST_NOTE,
+} from "@/lib/proDirectoryBenefits";
 
 /**
  * Validate a Stripe URL returned by an edge function before we hand it
@@ -47,16 +54,19 @@ function isSafeStripeUrl(rawUrl: string | null | undefined): rawUrl is string {
 }
 
 /**
- * /provider/subscription — Subscription management.
+ * /provider/billing — "Plan & Billing".
  *
- * STRUCTURAL RULE: this page is JUST about Free vs Pro. Featured and
- * Concierge are NEVER named here except in a single helper-text link
- * pointing to /provider/marketing. The Pro upgrade choices are the
- * ONLY purchase surface on this page. Add-on management lives in
- * /provider/marketing.
+ * STRUCTURAL RULE: this page is JUST about Free vs Pro. Featured is named only
+ * in a single helper-text link pointing at /provider/marketing, because it is a
+ * separate advertising product with its own hub — never a Pro line item. The
+ * Pro upgrade choices are the ONLY purchase surface on this page.
  *
- * Route remains mounted at /provider/billing for now to preserve
- * existing bookmarks.
+ * The Pro capability list comes from src/lib/proDirectoryBenefits.ts. It is not
+ * restated inline: the previous version of this page listed benefits Free
+ * facilities already had (inquiries) and benefits Pro does not buy at all.
+ *
+ * Route stays mounted at /provider/billing (and /provider/subscription) to
+ * preserve existing bookmarks; only the label changed.
  */
 export default function ProviderSubscription() {
   const navigate = useNavigate();
@@ -306,7 +316,7 @@ export default function ProviderSubscription() {
     return (
       <div className="container mx-auto px-4 py-8 max-w-3xl">
         <Helmet>
-          <title>Subscription | RehabLookup Provider</title>
+          <title>Plan &amp; Billing | RehabLookup Provider</title>
           <meta name="robots" content="noindex, nofollow" />
         </Helmet>
         <Card>
@@ -334,7 +344,7 @@ export default function ProviderSubscription() {
   return (
     <>
       <Helmet>
-        <title>Subscription | RehabLookup Provider</title>
+        <title>Plan &amp; Billing | RehabLookup Provider</title>
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
 
@@ -342,13 +352,13 @@ export default function ProviderSubscription() {
         <div className="border-b border-slate-200 bg-white">
           <div className="container mx-auto max-w-3xl px-4 py-8 md:py-10">
             <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#1B365D]/70">
-              Billing
+              Account
             </p>
             <h1 className="mt-1 font-display text-[26px] font-bold tracking-tight text-slate-900 sm:text-[30px]">
-              Subscription
+              Plan &amp; Billing
             </h1>
             <p className="mt-1.5 max-w-xl text-[15px] text-slate-600">
-              Your account plan. Free or Pro — pick what fits and switch any time.
+              Your listing plan and payment details. Free or Pro — switch any time.
             </p>
           </div>
         </div>
@@ -527,6 +537,12 @@ function IncompletePendingCard({
   );
 }
 
+/**
+ * What Free actually includes. The last bullet used to read "Inquiries route
+ * through our concierge first" — describing a retired workflow AND implying
+ * that a Free facility's inquiries were intermediated. They are not: an inquiry
+ * is pinned to the facility the seeker selected, on every tier.
+ */
 function FreeSubscriptionCard() {
   return (
     <Card>
@@ -541,23 +557,17 @@ function FreeSubscriptionCard() {
           <Badge variant="secondary">Free</Badge>
         </div>
         <ul className="space-y-1.5 text-sm text-slate-700">
-          <li className="flex items-start gap-2">
-            <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0 text-emerald-600" aria-hidden />
-            Listing visible in the directory
-          </li>
-          <li className="flex items-start gap-2">
-            <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0 text-emerald-600" aria-hidden />
-            Edit description, treatments, hours, logo, up to 5 photos
-          </li>
-          <li className="flex items-start gap-2">
-            <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0 text-emerald-600" aria-hidden />
-            SAMHSA-listed contact shown publicly
-          </li>
-          <li className="flex items-start gap-2">
-            <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0 text-emerald-600" aria-hidden />
-            Inquiries route through our concierge first
-          </li>
+          {FREE_DIRECTORY_BENEFITS.map((benefit) => (
+            <li key={benefit} className="flex items-start gap-2">
+              <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0 text-emerald-600" aria-hidden />
+              {benefit}
+            </li>
+          ))}
         </ul>
+        <p className="text-xs text-slate-500 leading-relaxed border-t border-slate-100 pt-3">
+          Verification is earned through our review process and organic directory
+          position is computed from listing signals — neither depends on your plan.
+        </p>
       </CardContent>
     </Card>
   );
@@ -650,14 +660,53 @@ function ProSubscriptionCard({
           )}
         </div>
 
-        <p className="text-xs text-slate-500 leading-relaxed pt-2 border-t border-slate-100">
-          Looking for marketing options like Featured placements or Concierge
-          Partner? Those are available under{" "}
-          <Link to="/provider/marketing" className="font-medium text-[#1B365D] underline underline-offset-2">
-            Marketing
-          </Link>{" "}
-          in your dashboard.
-        </p>
+        {/* What Pro is actually paying for, read from the shared contract so
+            this list can never drift from the upgrade page or the dashboard. */}
+        <div className="border-t border-slate-100 pt-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Included with Pro
+          </p>
+          <ul className="mt-2 grid gap-1.5 sm:grid-cols-2">
+            {PRO_DIRECTORY_BENEFITS.map((benefit) => (
+              <li key={benefit.key} className="flex items-start gap-2 text-xs text-slate-700">
+                <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600" aria-hidden />
+                <span>
+                  <span className="font-medium text-slate-900">{benefit.shortTitle}</span>
+                  <span className="block text-[11px] leading-relaxed text-slate-500">
+                    {benefit.items.join(" · ")}
+                  </span>
+                </span>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {PRO_ACTIVE_DESTINATIONS.filter((d) => d.href !== "/provider/billing").map((dest) => (
+              <Button
+                key={dest.href}
+                asChild
+                variant="outline"
+                size="sm"
+                className="h-7 gap-1 text-xs"
+              >
+                <Link to={dest.href}>{dest.label}</Link>
+              </Button>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-2 border-t border-slate-100 pt-3 text-xs leading-relaxed text-slate-500">
+          <p>{PRO_DIRECTORY_TRUST_NOTE}</p>
+          <p>
+            {FEATURED_DIRECTORY_NOTE}{" "}
+            <Link
+              to="/provider/marketing"
+              className="font-medium text-[#1B365D] underline underline-offset-2"
+            >
+              View Featured
+            </Link>
+            .
+          </p>
+        </div>
       </CardContent>
     </Card>
   );

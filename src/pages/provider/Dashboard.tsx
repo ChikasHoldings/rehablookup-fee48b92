@@ -6,18 +6,16 @@ import {
   Clock,
   AlertCircle,
   Users,
-  CreditCard,
   Building2,
   FileEdit,
-  TrendingUp,
   Sparkles,
   ChevronRight,
   ArrowRight,
   Star,
   Megaphone,
   ShieldCheck,
-  Code2,
-  Lock,
+  Search,
+  PanelsTopLeft,
   Plus,
   ExternalLink,
 } from "lucide-react";
@@ -44,6 +42,13 @@ import { FreeTierValueTeaser } from "@/components/provider/FreeTierValueTeaser";
 import { PlanGraceBanner } from "@/components/provider/PlanGraceBanner";
 import { getCachedSession } from "@/lib/sessionCache";
 import { getListingStatusMeta } from "@/lib/listingStatus";
+import {
+  FEATURED_DIRECTORY_NOTE,
+  PRO_ACTIVE_DESTINATIONS,
+  PRO_DIRECTORY_BENEFITS,
+  PRO_DIRECTORY_TRUST_NOTE,
+} from "@/lib/proDirectoryBenefits";
+import { fmtMoneyWhole, TIER_PRICING } from "@/lib/billingPricing";
 
 // Compact directory-style metric tile. Hairline border, white bg, no
 // shadow lift on hover — just a subtle border accent. Title sits as a
@@ -105,6 +110,24 @@ function MetricCard({
           </Button>
         </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * Section eyebrow. The dashboard answers five separate questions and the
+ * previous single undifferentiated card grid made it impossible to tell which
+ * question a card belonged to — the Featured add-on, a Pro upsell and the
+ * listing-health score all sat side by side. Labelled bands give the page an
+ * information hierarchy that survives Free vs Pro and add-on permutations.
+ */
+function SectionLabel({ children, hint }: { children: string; hint?: string }) {
+  return (
+    <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 pt-1">
+      <h2 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+        {children}
+      </h2>
+      {hint && <p className="text-xs text-slate-500">{hint}</p>}
     </div>
   );
 }
@@ -518,8 +541,10 @@ export default function ProviderDashboardPage() {
     ? Math.max(0, Math.round(((PROFILE_CHECKS - missingFields.length) / PROFILE_CHECKS) * 100))
     : 0;
   const profilePct = completeness?.completeness ?? clientProfilePct;
+  // Featured is INDEPENDENT paid advertising. `has_featured` is the Featured
+  // add-on flag on facility_subscriptions — it is never derived from Pro, and
+  // the Growth band below never gates Featured behind the Pro card.
   const hasFeatured = subscription?.has_featured === true;
-  const isVerified = (facility as { verified?: boolean } | undefined)?.verified === true;
 
   return (
     <div className="min-h-full bg-slate-50">
@@ -536,16 +561,17 @@ export default function ProviderDashboardPage() {
               </h1>
             </div>
             <div className="flex items-center gap-2">
+              {/* Plan STATE, not a CTA. The upgrade CTA lives once, in the Plan
+                  band at the bottom of the page — the header used to carry a
+                  second one, and the card grid a third. */}
               {proStatus.isPro ? (
-                <span className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-bold tracking-wide text-amber-800">
-                  <Sparkles className="h-3.5 w-3.5" aria-hidden /> PRO
+                <span className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-wide text-amber-800">
+                  <Sparkles className="h-3.5 w-3.5" aria-hidden /> Pro
                 </span>
               ) : (
-                <Button asChild size="sm" className="gap-1.5 bg-[#1B365D] hover:bg-[#142a4a]">
-                  <Link to="/provider/billing?upgrade=pro">
-                    <Sparkles className="h-3.5 w-3.5" aria-hidden /> Upgrade to Pro
-                  </Link>
-                </Button>
+                <span className="inline-flex items-center rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                  Free plan
+                </span>
               )}
               {facility?.slug && facility.status === "approved" && facility.suspended !== true && (
                 <Button asChild size="sm" variant="outline" className="gap-1.5">
@@ -655,28 +681,50 @@ export default function ProviderDashboardPage() {
           </Card>
         ) : (
           <>
-            {/* ---- Stat row ---- */}
+            {/* ═══ A. TOP SUMMARY — is my listing live, complete, and getting
+                   engagement, and do I owe anyone a reply? ═══ */}
             <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
               <MetricCard
-                title="Locations"
+                title="Listings"
                 value={totalFacilities}
                 subtitle={
                   pendingCount > 0
                     ? `${liveCount} live · ${pendingCount} pending`
-                    : `${liveCount} live`
+                    : totalFacilities > 0
+                      ? `${liveCount} live`
+                      : "None yet"
                 }
                 icon={Building2}
                 iconBg="bg-[#1B365D]/10"
                 iconColor="text-[#1B365D]"
                 action={{ label: "Manage listings", href: "/provider/listings" }}
               />
+              <MetricCard
+                title="Profile"
+                value={`${profilePct}%`}
+                subtitle={
+                  profilePct >= 100
+                    ? "Complete"
+                    : missingFields.length > 0
+                      ? `${missingFields.length} item${missingFields.length !== 1 ? "s" : ""} left`
+                      : "Keep it current"
+                }
+                icon={FileEdit}
+                iconBg="bg-violet-100"
+                iconColor="text-violet-700"
+                action={
+                  profilePct < 100
+                    ? { label: "Complete profile", href: "/provider/listings" }
+                    : undefined
+                }
+              />
               {/* Inquiries are NOT a paid feature. Every eligible approved
                   facility — Free included — receives inquiries pinned to the
                   facility the seeker selected. The previous "Pro" / "Upgrade
                   to receive" state contradicted the live inquiry contract and
-                  is removed; the count is now shown for every tier, matching
-                  what leads_provider_view actually returns (own-facility RLS,
-                  no Pro predicate on SELECT). */}
+                  is removed; the count is shown for every tier, matching what
+                  leads_provider_view actually returns (own-facility RLS, no Pro
+                  predicate on SELECT). */}
               <MetricCard
                 title="Inquiries"
                 value={totalLeadsErr ? "—" : totalLeadsCount}
@@ -693,302 +741,390 @@ export default function ProviderDashboardPage() {
                 action={{ label: "View inquiries", href: "/provider/inquiries" }}
               />
               <MetricCard
-                title="Profile"
-                value={`${profilePct}%`}
+                title="Search appearances"
+                value={impressionErr ? "—" : impressionCount.toLocaleString()}
                 subtitle={
-                  profilePct >= 100
-                    ? "Complete"
-                    : missingFields.length > 0
-                      ? `${missingFields.length} item${missingFields.length !== 1 ? "s" : ""} left`
-                      : "Finish to rank higher"
+                  reviewErr
+                    ? "All time"
+                    : `All time · ${reviewCount} review${reviewCount === 1 ? "" : "s"}`
                 }
-                icon={FileEdit}
-                iconBg="bg-violet-100"
-                iconColor="text-violet-700"
-                action={
-                  profilePct < 100
-                    ? { label: "Complete profile", href: "/provider/listings" }
-                    : undefined
-                }
-              />
-              <MetricCard
-                title="Reviews"
-                value={reviewErr ? "—" : reviewCount}
-                subtitle={impressionErr ? "Views unavailable" : `${impressionCount.toLocaleString()} profile impressions`}
-                icon={Star}
-                iconBg="bg-amber-100"
-                iconColor="text-amber-600"
-                action={{ label: "Manage reviews", href: "/provider/reviews" }}
+                icon={Search}
+                iconBg="bg-sky-100"
+                iconColor="text-sky-700"
+                action={{ label: "View performance", href: "/provider/analytics" }}
               />
             </div>
 
-            {/* Performance snapshot (impressions / views / calls / website) —
-                full-width hero strip above the card grid. */}
+            {/* ═══ B. PERFORMANCE SNAPSHOT ═══ */}
+            <SectionLabel hint="Search appearances → views → contact → inquiries">
+              Performance
+            </SectionLabel>
             <DashboardPerformanceCard facilityId={facilityId} />
+
+            {/* ═══ C. DIRECTORY MANAGEMENT ═══ */}
+            <SectionLabel hint="Keep your listing accurate, complete, and answered">
+              Directory
+            </SectionLabel>
 
             {/* Balanced card grid. CSS multi-column (masonry) auto-equalizes
                 the two columns' heights so neither side leaves a big empty gap,
-                regardless of which cards render (Free vs Pro, with/without the
-                Featured/Concierge add-ons). break-inside-avoid keeps each card
-                whole; mb-5 supplies the vertical rhythm that space-y can't
+                regardless of which cards render. break-inside-avoid keeps each
+                card whole; mb-5 supplies the vertical rhythm that space-y can't
                 inside a column flow. Single column below lg. */}
             <div className="gap-5 lg:columns-2 [&>*]:mb-5 [&>*]:break-inside-avoid">
+              {/* Listing health (completeness + directory-position report) */}
+              <DashboardListingHealthCard facilityId={facilityId} />
+
               {/* Your facilities */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b py-3.5">
+                  <CardTitle className="text-sm font-semibold">Your facilities</CardTitle>
+                  <Button asChild variant="ghost" size="sm" className="h-7 gap-1 text-xs text-[#1B365D]">
+                    <Link to="/provider/add-location">
+                      <Plus className="h-3.5 w-3.5" /> Add location
+                    </Link>
+                  </Button>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <ul className="divide-y divide-slate-100">
+                    {(facilities ?? []).map((f) => {
+                      const sc = getStatusConfig(f);
+                      return (
+                        <li key={f.id} className="flex items-center gap-3 px-4 py-3 sm:px-5">
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100">
+                            <Building2 className="h-4 w-4 text-slate-500" aria-hidden />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-medium text-slate-900">{f.name}</p>
+                            <p className="truncate text-xs text-slate-500">
+                              {[f.city, f.state].filter(Boolean).join(", ") || "Location not set"}
+                            </p>
+                          </div>
+                          <span
+                            className={cn(
+                              "inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium",
+                              sc.bgClass,
+                              sc.textClass,
+                            )}
+                          >
+                            <span className={cn("h-1.5 w-1.5 rounded-full", sc.dotClass)} />
+                            {sc.label}
+                          </span>
+                          <Button asChild variant="ghost" size="sm" className="h-8 shrink-0 px-2 text-xs">
+                            <Link to={`/provider/listings?edit=${f.id}`}>Manage</Link>
+                          </Button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </CardContent>
+              </Card>
+
+              {/* Missing profile fields — the concrete "what should I improve
+                  next?" answer. Free-plan work, no upsell attached. */}
+              {missingFields.length > 0 && (
+                <Card>
+                  <CardHeader className="border-b py-3.5">
+                    <CardTitle className="text-sm font-semibold">Finish your profile</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4 sm:p-5">
+                    <p className="text-xs text-slate-600">
+                      {missingFields.length} field{missingFields.length !== 1 ? "s" : ""} still
+                      missing from your listing:
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-1.5">
+                      {missingFields.map((m) => (
+                        <span
+                          key={m}
+                          className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-slate-700"
+                        >
+                          <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+                          {m}
+                        </span>
+                      ))}
+                    </div>
+                    <Button asChild size="sm" className="mt-4 gap-1.5">
+                      <Link to="/provider/listings">
+                        <FileEdit className="h-3.5 w-3.5" /> Edit listing
+                      </Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Enhanced Profile — a first-class destination, not a locked
+                  teaser. Free facilities can author here before upgrading;
+                  Pro controls whether the modules render publicly. */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b py-3.5">
+                  <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                    <PanelsTopLeft className="h-4 w-4 text-[#1B365D]" aria-hidden />
+                    Enhanced Profile
+                  </CardTitle>
+                  {proStatus.isPro ? (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
+                      <CheckCircle className="h-3 w-3" aria-hidden /> Live
+                    </span>
+                  ) : (
+                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
+                      Draft
+                    </span>
+                  )}
+                </CardHeader>
+                <CardContent className="p-4 sm:p-5">
+                  <p className="text-xs leading-relaxed text-slate-600">
+                    Programs, amenities, staff, accreditation highlights, video, and virtual
+                    tour.{" "}
+                    {proStatus.isPro
+                      ? "These modules render on your public listing now."
+                      : "You can prepare all of it on Free — Pro controls whether it appears on the public listing."}
+                  </p>
+                  <Button asChild size="sm" variant="outline" className="mt-3 gap-1.5 text-xs">
+                    <Link to="/provider/listings/profile">
+                      Open Enhanced Profile <ChevronRight className="h-3.5 w-3.5" />
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Recent inquiries (any tier) */}
+              {recentLeads.length > 0 && (
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b py-3.5">
-                    <CardTitle className="text-sm font-semibold">Your facilities</CardTitle>
+                    <CardTitle className="text-sm font-semibold">Recent inquiries</CardTitle>
                     <Button asChild variant="ghost" size="sm" className="h-7 gap-1 text-xs text-[#1B365D]">
-                      <Link to="/provider/add-location">
-                        <Plus className="h-3.5 w-3.5" /> Add location
+                      <Link to="/provider/inquiries">
+                        View all <ChevronRight className="h-3.5 w-3.5" />
                       </Link>
                     </Button>
                   </CardHeader>
                   <CardContent className="p-0">
                     <ul className="divide-y divide-slate-100">
-                      {(facilities ?? []).map((f) => {
-                        const sc = getStatusConfig(f);
-                        return (
-                          <li key={f.id} className="flex items-center gap-3 px-4 py-3 sm:px-5">
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100">
-                              <Building2 className="h-4 w-4 text-slate-500" aria-hidden />
+                      {recentLeads.slice(0, 4).map((lead) => (
+                        <li key={lead.id}>
+                          <button
+                            type="button"
+                            onClick={() => handleLeadClick(lead)}
+                            className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-slate-50 sm:px-5"
+                          >
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-semibold text-emerald-700">
+                              {(lead.name || "?").charAt(0).toUpperCase()}
                             </div>
                             <div className="min-w-0 flex-1">
-                              <p className="truncate text-sm font-medium text-slate-900">{f.name}</p>
+                              <p className="truncate text-sm font-medium text-slate-900">
+                                {maskName(lead.name || "New inquiry")}
+                              </p>
                               <p className="truncate text-xs text-slate-500">
-                                {[f.city, f.state].filter(Boolean).join(", ") || "Location not set"}
+                                {lead.level_of_care || lead.inquiry_type || "Inquiry"}
+                                {lead.location_city_state ? ` · ${lead.location_city_state}` : ""}
                               </p>
                             </div>
-                            <span
-                              className={cn(
-                                "inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium",
-                                sc.bgClass,
-                                sc.textClass,
-                              )}
-                            >
-                              <span className={cn("h-1.5 w-1.5 rounded-full", sc.dotClass)} />
-                              {sc.label}
+                            <span className="shrink-0 text-xs text-slate-400">
+                              {format(new Date(lead.created_at), "MMM d")}
                             </span>
-                            <Button asChild variant="ghost" size="sm" className="h-8 shrink-0 px-2 text-xs">
-                              <Link to={`/provider/listings?edit=${f.id}`}>Manage</Link>
-                            </Button>
-                          </li>
-                        );
-                      })}
+                            <ChevronRight className="h-4 w-4 shrink-0 text-slate-300" aria-hidden />
+                          </button>
+                        </li>
+                      ))}
                     </ul>
                   </CardContent>
                 </Card>
+              )}
 
-                {/* Recent inquiries (any tier) OR profile checklist (incomplete) */}
-                {recentLeads.length > 0 ? (
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b py-3.5">
-                      <CardTitle className="text-sm font-semibold">Recent inquiries</CardTitle>
-                      <Button asChild variant="ghost" size="sm" className="h-7 gap-1 text-xs text-[#1B365D]">
-                        <Link to="/provider/inquiries">
-                          View all <ChevronRight className="h-3.5 w-3.5" />
-                        </Link>
-                      </Button>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                      <ul className="divide-y divide-slate-100">
-                        {recentLeads.slice(0, 4).map((lead) => (
-                          <li key={lead.id}>
-                            <button
-                              type="button"
-                              onClick={() => handleLeadClick(lead)}
-                              className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-slate-50 sm:px-5"
-                            >
-                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-semibold text-emerald-700">
-                                {(lead.name || "?").charAt(0).toUpperCase()}
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <p className="truncate text-sm font-medium text-slate-900">
-                                  {maskName(lead.name || "New inquiry")}
-                                </p>
-                                <p className="truncate text-xs text-slate-500">
-                                  {lead.level_of_care || lead.inquiry_type || "Inquiry"}
-                                  {lead.location_city_state ? ` · ${lead.location_city_state}` : ""}
-                                </p>
-                              </div>
-                              <span className="shrink-0 text-xs text-slate-400">
-                                {format(new Date(lead.created_at), "MMM d")}
-                              </span>
-                              <ChevronRight className="h-4 w-4 shrink-0 text-slate-300" aria-hidden />
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    </CardContent>
-                  </Card>
-                ) : missingFields.length > 0 ? (
-                  <Card>
-                    <CardHeader className="border-b py-3.5">
-                      <CardTitle className="text-sm font-semibold">Finish your profile</CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-4 sm:p-5">
-                      <p className="text-xs text-slate-600">
-                        Complete profiles rank higher and convert more inquiries. You have{" "}
-                        {missingFields.length} item{missingFields.length !== 1 ? "s" : ""} left:
-                      </p>
-                      <div className="mt-3 flex flex-wrap gap-1.5">
-                        {missingFields.map((m) => (
-                          <span
-                            key={m}
-                            className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-slate-700"
-                          >
-                            <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
-                            {m}
-                          </span>
-                        ))}
-                      </div>
-                      <Button asChild size="sm" className="mt-4 gap-1.5">
-                        <Link to="/provider/listings">
-                          <FileEdit className="h-3.5 w-3.5" /> Complete profile
-                        </Link>
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ) : null}
-
-                {/* Featured add-on performance (self-gated to the add-on;
-                    renders nothing without it). The Concierge widget was
-                    removed in the Stage-3 directory cutover. */}
-                {facilityId && hasFeatured && <FeaturedAnalyticsWidget facilityId={facilityId} />}
-
-                {facilityId && <VerificationStateCard facilityId={facilityId} />}
-
-                {/* Listing health (completeness score + search ranking) */}
-                <DashboardListingHealthCard facilityId={facilityId} />
-
-                {/* Recent activity (notifications: reviews, inquiries, updates) */}
-                <DashboardRecentActivity />
-
-                {/* Quantified "what you're missing" teaser (Free only) */}
-                {!proStatus.isPro && facilityId && (
-                  <FreeTierValueTeaser facilityId={facilityId} />
-                )}
-
-                {/* Upgrade card (Free only) */}
-                {!proStatus.isPro && (
-                  <Card className="border-amber-200 bg-gradient-to-br from-amber-50 to-white">
-                    <CardContent className="p-5">
-                      <div className="flex items-center gap-2">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100">
-                          <Sparkles className="h-4 w-4 text-amber-600" aria-hidden />
-                        </div>
-                        <p className="text-sm font-semibold text-slate-900">Upgrade to Pro</p>
-                      </div>
-                      <p className="mt-2 text-xs text-slate-600">$99/month — cancel anytime.</p>
-                      <ul className="mt-3 space-y-1.5 text-xs text-slate-700">
-                        {[
-                          // Inquiries are NOT listed here: every eligible
-                          // facility receives inquiries regardless of tier.
-                          // Pro buys visibility and features, never inquiry
-                          // eligibility and never trust.
-                          "Your phone number shown on your public profile",
-                          "Analytics + market reports",
-                          "Facility video & 10 photos",
-                          "Priority placement",
-                          "RehabLookup Verified badge",
-                        ].map((b) => (
-                          <li key={b} className="flex items-start gap-2">
-                            <CheckCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600" aria-hidden />
-                            <span>{b}</span>
-                          </li>
-                        ))}
-                      </ul>
-                      <Button asChild className="mt-4 w-full gap-1.5 bg-[#1B365D] hover:bg-[#142a4a]">
-                        <Link to="/provider/billing?upgrade=pro">
-                          Upgrade to Pro <ArrowRight className="h-4 w-4" />
-                        </Link>
-                      </Button>
-                    </CardContent>
-                  </Card>
-                )}
-            </div>
-
-            {/* Navigational cards — full-width band below the balanced grid. */}
-            <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-              {/* Marketing & growth */}
+              {/* Reviews */}
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b py-3.5">
-                  <CardTitle className="text-sm font-semibold">Marketing &amp; growth</CardTitle>
+                  <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                    <Star className="h-4 w-4 text-amber-500" aria-hidden />
+                    Reviews
+                  </CardTitle>
                   <Button asChild variant="ghost" size="sm" className="h-7 gap-1 text-xs text-[#1B365D]">
-                    <Link to="/provider/marketing">
-                      Open <ChevronRight className="h-3.5 w-3.5" />
+                    <Link to="/provider/reviews">
+                      Manage <ChevronRight className="h-3.5 w-3.5" />
                     </Link>
                   </Button>
                 </CardHeader>
-                <CardContent className="grid gap-1 p-2 sm:grid-cols-2">
-                  {[
-                    { icon: Megaphone, label: "Featured placements", href: "/provider/marketing/featured", active: hasFeatured, locked: !proStatus.isPro },
-                    { icon: Code2, label: "Embed widgets", href: "/provider/embed-badge", active: false, locked: !proStatus.isPro || !isVerified },
-                    { icon: ShieldCheck, label: "Credential kit", href: "/provider/credential-kit", active: false, locked: !proStatus.isPro || !isVerified },
-                  ].map((row) => {
-                    const RowIcon = row.icon;
-                    return (
-                      <Link
-                        key={row.label}
-                        to={row.href}
-                        className="flex items-center gap-3 rounded-lg px-2.5 py-2.5 transition-colors hover:bg-slate-50"
-                      >
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100">
-                          <RowIcon className="h-4 w-4 text-slate-600" aria-hidden />
-                        </div>
-                        <span className="flex-1 truncate text-sm font-medium text-slate-800">
-                          {row.label}
-                        </span>
-                        {row.active ? (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
-                            <CheckCircle className="h-3 w-3" /> Active
-                          </span>
-                        ) : row.locked ? (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-400">
-                            <Lock className="h-3 w-3" /> Pro
-                          </span>
-                        ) : (
-                          <ChevronRight className="h-4 w-4 text-slate-300" aria-hidden />
-                        )}
-                      </Link>
-                    );
-                  })}
+                <CardContent className="p-4 sm:p-5">
+                  <p className="font-display text-[26px] font-bold leading-none tabular-nums text-slate-900">
+                    {reviewErr ? "—" : reviewCount}
+                  </p>
+                  <p className="mt-1.5 text-xs text-slate-500">
+                    {reviewErr
+                      ? "Couldn't load reviews right now."
+                      : reviewCount === 0
+                        ? "No published reviews yet. Invite past clients from the Reviews page."
+                        : `Published review${reviewCount === 1 ? "" : "s"} on your public listing.`}
+                  </p>
                 </CardContent>
               </Card>
 
-              {/* Quick links */}
+              {/* Verification status — a trust state, never a purchase */}
+              {facilityId && <VerificationStateCard facilityId={facilityId} />}
+
+              {/* Demand signal for Free facilities (no upsell attached) */}
+              {!proStatus.isPro && facilityId && (
+                <FreeTierValueTeaser facilityId={facilityId} />
+              )}
+
+              {/* Recent activity (notifications: reviews, inquiries, updates) */}
+              <DashboardRecentActivity />
+            </div>
+
+            {/* ═══ D. GROWTH — Featured advertising, kept separate from Pro ═══ */}
+            <SectionLabel hint="Optional paid exposure, billed separately">Growth</SectionLabel>
+            {facilityId && hasFeatured ? (
+              <div className="space-y-5">
+                <FeaturedAnalyticsWidget facilityId={facilityId} />
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4">
+                  <p className="text-xs text-slate-600">
+                    Featured is active on this facility and billed separately from your
+                    plan.
+                  </p>
+                  <Button asChild size="sm" variant="outline" className="gap-1.5 text-xs">
+                    <Link to="/provider/marketing">
+                      Manage Featured <ChevronRight className="h-3.5 w-3.5" />
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            ) : (
               <Card>
-                <CardHeader className="border-b py-3.5">
-                  <CardTitle className="text-sm font-semibold">Quick links</CardTitle>
+                <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex min-w-0 items-start gap-3">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#1B365D]/8">
+                      <Megaphone className="h-4 w-4 text-[#1B365D]" aria-hidden />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-slate-900">
+                        Featured advertising
+                      </p>
+                      <p className="mt-0.5 text-xs leading-relaxed text-slate-600">
+                        {FEATURED_DIRECTORY_NOTE}
+                      </p>
+                    </div>
+                  </div>
+                  <Button asChild size="sm" variant="outline" className="shrink-0 gap-1.5 text-xs">
+                    <Link to="/provider/marketing">
+                      Explore Featured <ChevronRight className="h-3.5 w-3.5" />
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* ═══ E. PLAN — exactly one Pro surface on this page ═══ */}
+            <SectionLabel>Plan</SectionLabel>
+            {proStatus.isPro ? (
+              <Card className="border-amber-200/70">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b py-3.5">
+                  <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                    <Sparkles className="h-4 w-4 text-amber-600" aria-hidden />
+                    Pro listing active
+                  </CardTitle>
+                  <Button asChild variant="ghost" size="sm" className="h-7 gap-1 text-xs text-[#1B365D]">
+                    <Link to="/provider/billing">
+                      Plan &amp; Billing <ChevronRight className="h-3.5 w-3.5" />
+                    </Link>
+                  </Button>
                 </CardHeader>
-                <CardContent className="p-2.5">
-                  <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
-                    {[
-                      { label: "Listings", href: "/provider/listings", icon: FileEdit },
-                      { label: "Inquiries", href: "/provider/inquiries", icon: Users },
-                      { label: "Analytics", href: "/provider/analytics", icon: TrendingUp },
-                      { label: "Reviews", href: "/provider/reviews", icon: Star },
-                      { label: "Billing", href: "/provider/billing", icon: CreditCard },
-                      { label: "Help", href: "/provider/help", icon: AlertCircle },
-                    ].map((q) => {
-                      const QIcon = q.icon;
-                      return (
-                        <Button
-                          key={q.href}
-                          asChild
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 justify-start px-2.5 text-xs"
-                        >
-                          <Link to={q.href}>
-                            <QIcon className="mr-2 h-3.5 w-3.5" aria-hidden /> {q.label}
-                          </Link>
-                        </Button>
-                      );
-                    })}
+                <CardContent className="space-y-4 p-4 sm:p-5">
+                  <ul className="grid gap-2 sm:grid-cols-2">
+                    {PRO_DIRECTORY_BENEFITS.map((benefit) => (
+                      <li
+                        key={benefit.key}
+                        className="flex items-start gap-2 rounded-lg border border-slate-100 bg-slate-50/60 p-2.5"
+                      >
+                        <CheckCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600" aria-hidden />
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold text-slate-900">
+                            {benefit.shortTitle}
+                          </p>
+                          <p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">
+                            {benefit.items.join(" · ")}
+                          </p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="grid gap-1.5 border-t border-slate-100 pt-3 sm:grid-cols-4">
+                    {PRO_ACTIVE_DESTINATIONS.map((dest) => (
+                      <Button
+                        key={dest.href}
+                        asChild
+                        variant="ghost"
+                        size="sm"
+                        className="h-auto flex-col items-start gap-0.5 px-2.5 py-2 text-left"
+                      >
+                        <Link to={dest.href}>
+                          <span className="text-xs font-semibold text-slate-900">{dest.label}</span>
+                          <span className="text-[11px] font-normal text-slate-500">
+                            {dest.description}
+                          </span>
+                        </Link>
+                      </Button>
+                    ))}
+                  </div>
+                  <div className="flex items-start gap-2 rounded-lg border border-emerald-200/70 bg-emerald-50/50 p-2.5">
+                    <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-700" aria-hidden />
+                    <p className="text-[11px] leading-relaxed text-emerald-900">
+                      {PRO_DIRECTORY_TRUST_NOTE}
+                    </p>
                   </div>
                 </CardContent>
               </Card>
-            </div>
+            ) : (
+              /* The single Pro upsell. Four outcomes, all real Pro
+                 entitlements. No Verified badge, no ranking claim, no inquiry
+                 eligibility, no Featured bundling. */
+              <Card className="border-amber-200/70">
+                <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 space-y-0 border-b py-3.5">
+                  <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                    <Sparkles className="h-4 w-4 text-amber-600" aria-hidden />
+                    Upgrade to Pro
+                  </CardTitle>
+                  <span className="text-xs font-medium text-slate-500">
+                    {fmtMoneyWhole(TIER_PRICING.pro.monthlyCents)}/mo · cancel anytime
+                  </span>
+                </CardHeader>
+                <CardContent className="space-y-4 p-4 sm:p-5">
+                  <p className="text-sm text-slate-700">
+                    Make your listing easier to evaluate and contact.
+                  </p>
+                  <ul className="grid gap-2 sm:grid-cols-2">
+                    {[
+                      { label: "Public phone + Call button", detail: "Families reach your admissions line directly" },
+                      { label: "Enhanced profile", detail: "Programs, amenities, staff, accreditation highlights" },
+                      { label: "Rich media", detail: "Up to 10 photos, video, virtual tour" },
+                      { label: "Multi-location management", detail: "Manage up to 5 facility listings" },
+                    ].map((row) => (
+                      <li
+                        key={row.label}
+                        className="flex items-start gap-2 rounded-lg border border-slate-100 bg-slate-50/60 p-2.5"
+                      >
+                        <CheckCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600" aria-hidden />
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold text-slate-900">{row.label}</p>
+                          <p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">
+                            {row.detail}
+                          </p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button asChild className="w-full gap-1.5 bg-[#1B365D] hover:bg-[#142a4a] sm:w-auto">
+                    <Link to="/provider/billing?upgrade=pro">
+                      See Pro plans <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                  <div className="flex items-start gap-2 rounded-lg border border-slate-200 bg-slate-50/70 p-2.5">
+                    <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-700" aria-hidden />
+                    <p className="text-[11px] leading-relaxed text-slate-600">
+                      {PRO_DIRECTORY_TRUST_NOTE}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </>
         )}
       </div>

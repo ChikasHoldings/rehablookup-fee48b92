@@ -1,20 +1,27 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
-import { Eye, Search, Lock, ArrowRight, TrendingUp } from "lucide-react";
+import { Eye, Search, ArrowRight, TrendingUp } from "lucide-react";
 
 interface FreeTierValueTeaserProps {
   facilityId: string;
 }
 
 /**
- * Quantified upgrade teaser for FREE providers. Profile views and search
- * impressions are tracked for every listing (tier-agnostic), so we can show a
- * free provider the demand their listing is ALREADY getting — then frame the
- * value they're leaving on the table without Pro / Featured / Concierge.
+ * "Your listing is getting attention" — 30-day profile views + search
+ * appearances for a FREE facility. Both events are tracked tier-agnostically,
+ * so this is real demand the listing already has.
+ *
+ * It used to double as a second upgrade pitch, and the pitch was wrong on three
+ * counts: it listed inquiry contact details, "priority placement" and the
+ * "Verified badge" as things Pro buys. Inquiries are not a paid entitlement,
+ * organic position is never for sale, and verification is earned. The card is
+ * now a demand signal that routes to Performance; the dashboard carries exactly
+ * one Pro CTA, in the Plan section.
+ *
  * Renders nothing until there's measurable interest (avoids an empty brag).
  */
 export function FreeTierValueTeaser({ facilityId }: FreeTierValueTeaserProps) {
@@ -52,50 +59,53 @@ export function FreeTierValueTeaser({ facilityId }: FreeTierValueTeaserProps) {
   });
 
   if (isLoading) return <Skeleton className="h-40 w-full rounded-xl" />;
-  // Nothing to brag about yet — stay quiet rather than show zeros.
+  // Nothing to show yet — stay quiet rather than render zeros.
   if (!data || (data.views === 0 && data.impressions === 0)) return null;
 
   return (
-    <Card className="border-2 border-amber-300/70 bg-gradient-to-br from-amber-50/80 via-white to-amber-50/40">
-      <CardContent className="p-5">
-        <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100">
-            <TrendingUp className="h-4 w-4 text-amber-600" aria-hidden />
-          </div>
-          <p className="text-sm font-semibold text-slate-900">Families are already finding you</p>
-        </div>
-
-        <div className="mt-3 grid grid-cols-2 gap-3">
-          <div className="rounded-lg bg-white/70 border border-amber-200/60 p-3 text-center">
-            <Eye className="h-4 w-4 text-amber-600 mx-auto mb-1" aria-hidden />
-            <p className="text-xl font-bold text-slate-900 tabular-nums">{data.views.toLocaleString()}</p>
-            <p className="text-[11px] text-slate-600">profile views · 30 days</p>
-          </div>
-          <div className="rounded-lg bg-white/70 border border-amber-200/60 p-3 text-center">
-            <Search className="h-4 w-4 text-amber-600 mx-auto mb-1" aria-hidden />
-            <p className="text-xl font-bold text-slate-900 tabular-nums">{data.impressions.toLocaleString()}</p>
-            <p className="text-[11px] text-slate-600">search appearances · 30 days</p>
-          </div>
-        </div>
-
-        <div className="mt-3 rounded-lg bg-amber-100/50 p-3">
-          <p className="text-xs font-medium text-amber-900 flex items-center gap-1.5">
-            <Lock className="h-3 w-3" aria-hidden />
-            What you're missing on the free plan
-          </p>
-          <ul className="mt-1.5 space-y-1 text-xs text-amber-800/90">
-            <li>• Every inquiry's contact details delivered to your inbox (Pro)</li>
-            <li>• See who's calling, clicking your website, and where (Pro analytics)</li>
-            <li>• Priority placement + the Verified badge (Pro)</li>
-            <li>• Featured rotation in your area, and advisor introductions to families (Featured / Concierge)</li>
-          </ul>
-        </div>
-
-        <Button asChild className="mt-3 w-full gap-1.5 bg-[#1B365D] hover:bg-[#142a4a]">
-          <Link to="/provider/billing?upgrade=pro">
-            See what Pro unlocks <ArrowRight className="h-4 w-4" />
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b py-3.5">
+        <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+          <TrendingUp className="h-4 w-4 text-[#1B365D]" aria-hidden />
+          Families are finding your listing
+        </CardTitle>
+        <Button asChild variant="ghost" size="sm" className="h-7 gap-1 text-xs text-[#1B365D]">
+          <Link to="/provider/analytics">
+            Performance <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </Button>
+      </CardHeader>
+      <CardContent className="p-4 sm:p-5">
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-lg border border-slate-200 bg-white p-3">
+            <div className="flex items-center gap-1.5 text-slate-500">
+              <Search className="h-3.5 w-3.5" aria-hidden />
+              <span className="text-[11px] font-medium uppercase tracking-wide">
+                Search appearances
+              </span>
+            </div>
+            <p className="mt-1.5 font-display text-2xl font-bold leading-none tabular-nums text-slate-900">
+              {data.impressions.toLocaleString()}
+            </p>
+            <p className="mt-1 text-[11px] text-slate-500">last 30 days</p>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-white p-3">
+            <div className="flex items-center gap-1.5 text-slate-500">
+              <Eye className="h-3.5 w-3.5" aria-hidden />
+              <span className="text-[11px] font-medium uppercase tracking-wide">
+                Profile views
+              </span>
+            </div>
+            <p className="mt-1.5 font-display text-2xl font-bold leading-none tabular-nums text-slate-900">
+              {data.views.toLocaleString()}
+            </p>
+            <p className="mt-1 text-[11px] text-slate-500">last 30 days</p>
+          </div>
+        </div>
+        <p className="mt-3 text-xs leading-relaxed text-slate-500">
+          Your listing appears in the directory on the Free plan, and eligible facilities
+          receive inquiries from it at no cost.
+        </p>
       </CardContent>
     </Card>
   );

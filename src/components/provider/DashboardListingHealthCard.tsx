@@ -11,10 +11,13 @@ import { useFacilityPerformance } from "@/hooks/useFacilityPerformance";
 /**
  * Dashboard "Listing health" card. Surfaces the canonical server-computed
  * listing_completeness_score (0–100) — never shown to providers before, who
- * only saw a locally-derived "Profile %" — plus the facility's search ranking
- * (rank / percentile within its state) from the Pro performance summary. Gives
- * providers concrete, data-backed feedback on why their listing ranks where it
- * does and what to improve. Reuses the cached useFacilityPerformance query.
+ * only saw a locally-derived "Profile %" — plus the facility's directory
+ * position (rank / percentile within its state) from the Pro performance
+ * summary. Reuses the cached useFacilityPerformance query.
+ *
+ * Directory-model note: the position REPORT is a Pro reporting capability; the
+ * position itself is organic and never purchasable. This card must not imply
+ * that completing a profile or paying for Pro moves the listing up.
  */
 function completenessLabel(pct: number): { label: string; cls: string; bar: string } {
   if (pct >= 90) return { label: "Excellent", cls: "text-emerald-700", bar: "bg-emerald-500" };
@@ -83,7 +86,8 @@ export function DashboardListingHealthCard({ facilityId }: { facilityId: string 
               </div>
               {completeness < 100 && (
                 <p className="mt-1.5 text-xs text-slate-500">
-                  Complete listings rank higher and convert more inquiries.{" "}
+                  A complete listing gives families more to evaluate — and finishing it
+                  costs nothing.{" "}
                   <Link to="/provider/listings" className="font-medium text-[#1B365D] hover:underline">
                     Finish your profile
                   </Link>
@@ -92,10 +96,13 @@ export function DashboardListingHealthCard({ facilityId }: { facilityId: string 
               )}
             </div>
 
-            {/* Search ranking (Pro) */}
+            {/* Directory position — REPORTING, not an entitlement. Pro gates the
+                report (the market block of the analytics rollup); the position
+                itself is computed by calculate-ranking-scores from neutral
+                signals and is not affected by any purchase. */}
             <div className="border-t border-slate-100 pt-3">
               <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                Search ranking
+                Directory position
               </span>
               {isPro && market ? (
                 <div className="mt-1.5 flex items-center gap-3">
@@ -115,19 +122,21 @@ export function DashboardListingHealthCard({ facilityId }: { facilityId: string 
               ) : isPro ? (
                 <p className="mt-1.5 inline-flex items-center gap-1.5 text-sm text-slate-500">
                   <CheckCircle2 className="h-4 w-4 text-slate-400" aria-hidden />
-                  Building your ranking — check back as views accrue.
+                  Position report builds as views accrue — check back shortly.
                 </p>
               ) : (
-                <div className="mt-1.5 flex items-center justify-between gap-2">
-                  <p className="inline-flex items-center gap-1.5 text-sm text-slate-500">
-                    <Lock className="h-3.5 w-3.5" aria-hidden />
-                    See your rank vs. peers in your state with Pro.
-                  </p>
-                  <Button asChild size="sm" className="h-7 gap-1 bg-[#1B365D] text-xs hover:bg-[#142a4a]">
-                    <Link to="/provider/billing?upgrade=pro">Upgrade</Link>
-                  </Button>
-                </div>
+                <p className="mt-1.5 inline-flex items-start gap-1.5 text-sm text-slate-500">
+                  <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+                  <span>
+                    Pro performance reporting shows where your listing sits among peers
+                    in your state.
+                  </span>
+                </p>
               )}
+              <p className="mt-2 text-[11px] leading-relaxed text-slate-400">
+                Directory position is computed from listing signals only. It is not
+                affected by Pro or by Featured advertising.
+              </p>
             </div>
           </>
         )}
