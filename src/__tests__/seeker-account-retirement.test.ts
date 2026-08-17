@@ -426,27 +426,128 @@ describe("seeker retirement — recurring consumer email", () => {
     return state;
   };
 
-  it("the seeker weekly digest cron is unscheduled", () => {
-    expect(lastActionFor("send_seeker_weekly_digest")).toBe("unscheduled");
+  /** Every seeker-side job the account product drove. */
+  const RETIRED_JOBS = [
+    "send_seeker_weekly_digest",
+    "process_seeker_followup_reminders",
+    "process_seeker_drip",
+    "send_saved_search_alerts",
+    "send_new_facility_alerts",
+  ];
+
+  it.each(RETIRED_JOBS)("%s is unscheduled", (job) => {
+    expect(lastActionFor(job)).toBe("unscheduled");
+  });
+
+  /**
+   * The edge functions those jobs called are deleted outright. Leaving one
+   * behind is how a schedule gets quietly restored later against code that
+   * still links /account.
+   */
+  it.each([
+    "send-seeker-weekly-digest",
+    "process-seeker-followup-reminders",
+    "process-seeker-drip",
+    "send-saved-search-alerts",
+    "send-new-facility-alerts",
+    "link-inquiry-to-user",
+    "delete-seeker-account",
+  ])("the %s edge function is removed", (fn) => {
+    expect(existsSync(resolve(root, `supabase/functions/${fn}`))).toBe(false);
+    // config.toml must not keep registering a function that no longer exists.
+    expect(read("supabase/config.toml")).not.toContain(`[functions.${fn}]`);
   });
 
   it("the provider digest cron is untouched — this retirement is consumer-only", () => {
     expect(lastActionFor("send_provider_weekly_digest")).toBe("scheduled");
   });
 
-  it("the digest edge function itself is kept (schedule removed, code retained)", () => {
-    // Historical seeker data and the functions that wrote it are deliberately
-    // preserved; only the timer is removed.
-    expect(existsSync(resolve(root, "supabase/functions/send-seeker-weekly-digest/index.ts"))).toBe(true);
+  /**
+   * send-seeker-emails is NOT retired machinery. The provider and admin
+   * inquiry panels invoke it to tell someone who contacted a facility that
+   * the facility replied — live directory product that works for anonymous
+   * inquirers. What it must no longer do is carry the account-lifecycle
+   * templates or link a retired destination.
+   */
+  describe("send-seeker-emails — kept, but account-free", () => {
+    const fn = "supabase/functions/send-seeker-emails/index.ts";
+
+    it("still exists and both live callers still reach it", () => {
+      expect(existsSync(resolve(root, fn))).toBe(true);
+      expect(read("src/components/provider/inquiries/InquiryDetailPanel.tsx")).toContain("send-seeker-emails");
+      expect(read("src/components/admin/inquiries/InquiryDetailModal.tsx")).toContain("send-seeker-emails");
+    });
+
+    it("sends exactly one type — the live inquiry response", () => {
+      const src = read(fn);
+      expect(src).toMatch(/type EmailType = "facility_contacted_you";/);
+      for (const dead of [
+        "generateWelcomeEmail",
+        "generateWelcomeFollowupEmail",
+        "generateRequestFollowupEmail",
+        "generateTipsEmail",
+        "generateWeeklyDigestEmail",
+        "generateAccountReminderEmail",
+        "generatePlacementIntroEmail",
+        "generatePasswordChangedEmail",
+        "generateSecurityAlertEmail",
+      ]) {
+        expect(src, `${dead} should be gone`).not.toContain(dead);
+      }
+    });
+
+    it("links no retired destination in any email or SMS body", () => {
+      const src = read(fn);
+      const links = [...src.matchAll(/https:\/\/rehablookup\.com(\/[^"'`\s]*)/g)].map((m) => m[1]);
+      const bad = links.filter((l) =>
+        RETIRED_NAMESPACES.some((ns) => l === ns || l.startsWith(`${ns}/`)) || l.startsWith("/concierge"),
+      );
+      expect(bad, "retired URLs in outbound email").toEqual([]);
+      // The SMS body used to point at /account/requests.
+      expect(src).not.toMatch(/rehablookup\.com\/account/);
+    });
+
+    it("no longer writes seeker_notifications rows nothing can render", () => {
+      expect(read(fn)).not.toMatch(/from\("seeker_notifications"\)\s*\.insert/);
+    });
   });
 
-  it("no migration in this change drops seeker data", () => {
-    const sql = readFileSync(
-      resolve(root, "supabase/migrations/20260901000000_unschedule_seeker_weekly_digest_cron.sql"),
-      "utf8",
-    );
+  it.each([
+    "supabase/migrations/20260901000000_unschedule_seeker_weekly_digest_cron.sql",
+    "supabase/migrations/20260901000100_retire_seeker_email_workflows.sql",
+  ])("%s drops no seeker data", (rel) => {
+    const sql = readFileSync(resolve(root, rel), "utf8");
     expect(sql).not.toMatch(/\bDROP\s+(TABLE|COLUMN|SCHEMA)\b/i);
     expect(sql).not.toMatch(/\bDELETE\s+FROM\b/i);
     expect(sql).not.toMatch(/\bTRUNCATE\b/i);
+  });
+});
+
+describe("seeker retirement — retained by design", () => {
+  /**
+   * The brief was explicit: retire the product surface, keep the historical
+   * records. Keeping data you cannot administer is worse than either option,
+   * so the admin tooling over legacy seeker records stays — that is the
+   * remaining path for a deletion or ban request now that the self-service
+   * delete-seeker-account function is gone.
+   */
+  it.each([
+    "supabase/functions/admin-delete-seeker",
+    "supabase/functions/admin-bulk-ban-seekers",
+    "src/pages/admin/AdminSeekers.tsx",
+  ])("%s is retained for administering legacy records", (rel) => {
+    expect(existsSync(resolve(root, rel))).toBe(true);
+  });
+
+  it("no migration in this change drops a seeker table", () => {
+    const dir = resolve(root, "supabase/migrations");
+    const mine = readdirSync(dir).filter((f) => f.startsWith("2026090100"));
+    expect(mine.length).toBeGreaterThan(0);
+    for (const f of mine) {
+      const sql = readFileSync(resolve(dir, f), "utf8");
+      for (const t of ["seeker_profiles", "seeker_notifications", "saved_searches", "notification_preferences"]) {
+        expect(sql, `${f} must not drop ${t}`).not.toMatch(new RegExp(`DROP\\s+TABLE[^;]*${t}`, "i"));
+      }
+    }
   });
 });
