@@ -762,9 +762,13 @@ const SearchResults = () => {
   const seoCanonical = !shouldNoindex && currentPage > 1
     ? `/search-results?page=${currentPage}`
     : "/search-results";
-  const seoDescription = `Browse ${filteredCenters.length} verified addiction treatment centers${
+  // The count describes how many LISTINGS matched the filters — never how many
+  // of them are verified. `verified` is per-facility earned state (a handful of
+  // records carry it); attaching it to a directory-wide result count is the
+  // exact misstatement check-public-directory-truth exists to stop.
+  const seoDescription = `Browse ${filteredCenters.length} addiction treatment center listings${
     location ? ` near ${location}` : queryParam ? ` matching "${queryParam}"` : ""
-  }${currentPage > 1 ? ` (page ${currentPage} of ${totalPages})` : ""}. Compare rehab programs, check insurance, and start recovery.`;
+  }${currentPage > 1 ? ` (page ${currentPage} of ${totalPages})` : ""}. Compare rehab programs, review insurance information, and contact facilities directly.`;
 
   // rel="prev"/"next" — only emit on indexable paginated views so crawlers
   // can stitch the sequence together without us advertising filtered/noindex

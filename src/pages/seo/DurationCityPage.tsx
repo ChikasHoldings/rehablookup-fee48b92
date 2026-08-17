@@ -175,7 +175,7 @@ export default function DurationCityPage() {
         },
         {
           heading: `How Facilities Are Verified`,
-          content: `Every ${cityName} program in our directory is checked for state licensing, current accreditation (Joint Commission or CARF), and active clinical credentials. We do not sell admission slots; providers can't pay for placement. Pages are editorially curated, not lead-broker auctions.`,
+          content: `Listings show state licensing, accreditation and clinical credential details when a facility reports them; confirm them with the facility or the issuing authority. Organic directory position is determined independently and is never purchased.`,
         },
       ]}
       whatToExpect={[

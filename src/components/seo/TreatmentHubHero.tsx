@@ -100,7 +100,7 @@ export function TreatmentHubHero({
         <div className="mt-5 hidden md:grid grid-cols-3 gap-2 max-w-3xl">
           <LocationStatTile
             size="sm"
-            label={facilityCount === 1 ? "Verified Program" : "Verified Programs"}
+            label={facilityCount === 1 ? "Program Listed" : "Programs Listed"}
             value={facilityCount === undefined ? "—" : facilityCount.toLocaleString()}
             icon={Building2}
           />

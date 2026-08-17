@@ -110,7 +110,7 @@ export default function CountyTreatmentPage() {
   const faqs = [
     {
       question: `What ${treatment.label.toLowerCase()} options are available in ${countyData.name} County?`,
-      answer: `${countyData.name} County, ${stateData.name} has ${density === "none" ? "limited" : density} access to ${treatment.label.toLowerCase()} facilities. ${facilities.length > 0 ? `There are currently ${facilities.length}+ verified programs serving the ${countyData.majorCities.slice(0, 3).join(", ")} area.` : `Residents can access programs in nearby areas of ${stateData.name}.`} Treatment options typically include medical detox, individual counseling, group therapy, and aftercare planning.`,
+      answer: `${countyData.name} County, ${stateData.name} has ${density === "none" ? "limited" : density} access to ${treatment.label.toLowerCase()} facilities. ${facilities.length > 0 ? `There are currently ${facilities.length}+ programs serving the ${countyData.majorCities.slice(0, 3).join(", ")} area.` : `Residents can access programs in nearby areas of ${stateData.name}.`} Treatment options typically include medical detox, individual counseling, group therapy, and aftercare planning.`,
     },
     {
       question: `Does insurance cover ${treatment.label.toLowerCase()} in ${countyData.name} County?`,
@@ -150,7 +150,7 @@ export default function CountyTreatmentPage() {
     <SEOLandingTemplate
       title={pageTitle}
       metaTitle={`${treatment.pluralLabel} in ${countyData.name} County, ${stateData.abbreviation} | RehabLookup`}
-      metaDescription={`Find ${treatment.label.toLowerCase()} in ${countyData.name} County, ${stateData.name}. Compare ${facilities.length}+ verified facilities, check insurance, get help today.`}
+      metaDescription={`Find ${treatment.label.toLowerCase()} in ${countyData.name} County, ${stateData.name}. Compare ${facilities.length}+ facilities, check insurance, get help today.`}
       canonical={`https://rehablookup.com/rehab-centers/${stateSlug}/county/${countySlug}/${treatmentSlug}`}
       noindex={!validation.shouldIndex}
       structuredData={structuredData}

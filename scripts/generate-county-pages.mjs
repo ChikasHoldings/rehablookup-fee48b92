@@ -178,7 +178,7 @@ function buildHtml({ state, county, urlPath, facilities = [] }) {
       ${facilityList}
       <h2>Frequently Asked Questions</h2>
       ${faqHtml}
-      ${seoCtaStrip({ blurb: `Filter verified treatment centers in ${escHtml(state.stateName)} by location, level of care, and insurance accepted.` })}
+      ${seoCtaStrip({ blurb: `Filter treatment center listings in ${escHtml(state.stateName)} by location, level of care, and insurance accepted.` })}
       <p style="margin-top:24px"><a href="/rehab-centers/${state.stateSlug}">All ${escHtml(state.stateName)} Rehab Centers</a> &middot; <a href="/">Home</a></p>
     </div>
   </main>

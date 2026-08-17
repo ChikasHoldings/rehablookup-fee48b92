@@ -168,7 +168,7 @@ export default function SubstanceCityPage() {
         },
         {
           heading: `Verified Facilities in ${cityName}`,
-          content: `Every ${cityName} ${substance.conditionName.toLowerCase()} program in our directory is checked for state licensing, current accreditation (Joint Commission or CARF), and active clinical staff credentials. We filter out unverified listings and do not sell admission slots — providers can't pay for placement, which keeps the directory editorially independent.`,
+          content: `Listings show state licensing, accreditation and clinical credential details when a facility reports them; confirm them with the facility or the issuing authority. Organic directory position is determined independently and is never purchased.`,
         },
       ]}
       whatToExpect={[

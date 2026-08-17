@@ -126,7 +126,7 @@ function renderPage(city, allCitiesInState, facilities = []) {
   const cityDescription = city.description ||
     `${city.cityName} offers a range of addiction treatment programs including detox, inpatient, outpatient, and medication-assisted treatment.`;
   const desc = city.metaDescription ||
-    `Verified rehab centers serving ${city.cityName}, ${city.stateAbbr}. Compare detox, inpatient, outpatient, and MAT programs by clinical level, insurance, and location.`;
+    `Rehab center listings serving ${city.cityName}, ${city.stateAbbr}. Compare detox, inpatient, outpatient, and MAT programs by clinical level, insurance, and location.`;
   const safeTitle = escHtml(metaTitle);
   const safeDesc = escHtml(desc);
 

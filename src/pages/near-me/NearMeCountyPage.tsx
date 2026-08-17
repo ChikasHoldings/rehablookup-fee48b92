@@ -40,7 +40,7 @@ function generateCountyFAQs(
   const faqs = [
     {
       question: `How many ${label.toLowerCase()} centers serve ${countyName}?`,
-      answer: `${countyName}, ${stateAbbr} has ${facilityCount || "several"} verified ${treatmentType.toLowerCase()} centers serving residents across ${majorCities.slice(0, 4).join(", ")} and surrounding communities.`,
+      answer: `${countyName}, ${stateAbbr} has ${facilityCount || "several"} listed ${treatmentType.toLowerCase()} centers serving residents across ${majorCities.slice(0, 4).join(", ")} and surrounding communities.`,
     },
     {
       question: `Which cities in ${countyName} have ${label.toLowerCase()} options?`,
@@ -215,7 +215,7 @@ export default function NearMeCountyPage() {
             </h2>
             <p className="mt-2 text-muted-foreground">
               {facilities.length > 0
-                ? `Browse ${facilities.length} verified facilities serving ${countyName}.`
+                ? `Browse ${facilities.length} facilities serving ${countyName}.`
                 : `Explore ${nearMeType.treatmentType.toLowerCase()} options in ${countyName}. Browse statewide listings.`}
             </p>
           </div>

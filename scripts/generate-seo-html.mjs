@@ -101,7 +101,7 @@ const treatmentTypes = [
 
 const treatmentHubs = [
   { slug: "alcohol-rehab-centers", title: "Alcohol Rehab Centers", metaTitle: "Alcohol Rehab Centers Near You — Find Treatment Today | RehabLookup", metaDescription: "Search accredited alcohol rehab centers with verified reviews. Compare inpatient, outpatient & detox programs. Insurance accepted.", overview: "Alcohol use disorder affects over 14 million adults in the United States. Professional alcohol rehab centers provide structured treatment programs designed to help individuals safely detox, address underlying causes of addiction, and build sustainable recovery skills." },
-  { slug: "drug-rehab-centers", title: "Drug Rehab Centers", metaTitle: "Drug Rehab Centers Near You — Evidence-Based Treatment | RehabLookup", metaDescription: "Find verified drug rehab centers offering detox, inpatient & outpatient programs. Compare facilities and start recovery today.", overview: "Drug addiction affects millions of individuals and families across the country. Professional drug rehab centers offer specialized treatment programs addressing addiction to opioids, stimulants, benzodiazepines, and other substances." },
+  { slug: "drug-rehab-centers", title: "Drug Rehab Centers", metaTitle: "Drug Rehab Centers Near You — Evidence-Based Treatment | RehabLookup", metaDescription: "Find drug rehab center listings offering detox, inpatient & outpatient programs. Compare facilities and start recovery today.", overview: "Drug addiction affects millions of individuals and families across the country. Professional drug rehab centers offer specialized treatment programs addressing addiction to opioids, stimulants, benzodiazepines, and other substances." },
   { slug: "detox-centers", title: "Detox Centers", metaTitle: "Medical Detox Centers Near You — Safe Withdrawal Management | RehabLookup", metaDescription: "Find medically supervised detox centers offering safe withdrawal management. 24/7 medical support, medication-assisted detox.", overview: "Medical detoxification is the critical first step in addiction recovery, providing safe, supervised withdrawal management. Detox centers offer 24/7 medical monitoring, medication-assisted protocols, and compassionate care." },
   { slug: "inpatient-rehab", title: "Inpatient Rehab", metaTitle: "Inpatient Rehab Programs Near You — Residential Treatment | RehabLookup", metaDescription: "Find residential inpatient rehab programs with 24/7 care. Compare accredited facilities and begin your recovery journey today.", overview: "Inpatient (residential) rehabilitation provides the highest level of addiction treatment, offering 24/7 care in a structured therapeutic environment." },
   { slug: "outpatient-rehab", title: "Outpatient Rehab", metaTitle: "Outpatient Rehab Programs — Flexible Treatment Options | RehabLookup", metaDescription: "Find flexible outpatient rehab programs including IOP & PHP. Continue working while getting treatment.", overview: "Outpatient rehabilitation provides effective addiction treatment while allowing patients to maintain their daily responsibilities." },
@@ -150,7 +150,7 @@ const seekerGuidePages = [
 ];
 
 const nearMePages = [
-  { slug: "drug-rehab-near-me", title: "Drug Rehab Near Me", metaDescription: "Find drug rehabilitation centers near your location. Compare verified facilities, check insurance, and get help today." },
+  { slug: "drug-rehab-near-me", title: "Drug Rehab Near Me", metaDescription: "Find drug rehabilitation centers near your location. compare facility listings, check insurance, and get help today." },
   { slug: "alcohol-rehab-near-me", title: "Alcohol Rehab Near Me", metaDescription: "Find alcohol rehab centers near you. Compare detox, inpatient & outpatient programs. Insurance verification available." },
   { slug: "detox-near-me", title: "Detox Centers Near Me", metaDescription: "Find medically supervised detox centers near your location. Safe withdrawal management with 24/7 medical support." },
   { slug: "dual-diagnosis-near-me", title: "Dual Diagnosis Treatment Near Me", metaDescription: "Find dual diagnosis treatment centers near you treating addiction and mental health disorders simultaneously." },
@@ -177,7 +177,7 @@ const nearMePages = [
   { slug: "php-near-me", title: "PHP Near Me", metaDescription: "Find partial hospitalization programs (PHP) near you. Structured day treatment 5-7 days per week." },
   { slug: "couples-rehab-near-me", title: "Couples Rehab Near Me", metaDescription: "Find couples rehab programs near you. Joint addiction treatment with relationship counseling and individual care." },
   { slug: "executive-rehab-near-me", title: "Executive Rehab Near Me", metaDescription: "Find confidential executive rehab programs near you. Premium treatment for professionals and executives." },
-  { slug: "rehab-near-me", title: "Rehab Near Me", metaDescription: "Find rehab centers near you. Compare verified addiction treatment facilities offering detox, inpatient, and outpatient programs." },
+  { slug: "rehab-near-me", title: "Rehab Near Me", metaDescription: "Find rehab centers near you. Compare addiction treatment facility listings offering detox, inpatient, and outpatient programs." },
   { slug: "mat-clinic-near-me", title: "MAT Clinic Near Me", metaDescription: "Find medication-assisted treatment clinics near you. Suboxone, methadone, and Vivitrol programs for opioid recovery." },
   { slug: "affordable-rehab-near-me", title: "Affordable Rehab Near Me", metaDescription: "Find affordable rehab centers near you. Sliding-scale fees, payment plans, and budget-friendly treatment options." },
 ];
@@ -349,7 +349,7 @@ async function generateTreatmentHubs() {
       h1: hub.title,
       content: `<p>${escHtml(hub.overview)}</p>
         <h2>Find ${hub.title} Near You</h2>
-        <p>Use RehabLookup to search accredited ${hub.title.toLowerCase()} by location, insurance, and specialty. Our verified directory helps you compare programs and find the right fit for your recovery needs.</p>
+        <p>Use RehabLookup to search accredited ${hub.title.toLowerCase()} by location, insurance, and specialty. Our directory helps you compare programs and find the right fit for your recovery needs.</p>
         <h2>Insurance Coverage</h2>
         <p>Most major insurance plans cover ${hub.title.toLowerCase()} under the Mental Health Parity Act, including Aetna, Blue Cross Blue Shield, Cigna, UnitedHealthcare, Humana, and Kaiser Permanente.</p>`,
       breadcrumbs: [
@@ -381,7 +381,7 @@ async function generateSubstancePages() {
       h1: s.title,
       content: `<p>${escHtml(s.intro)}</p>
         <h2>Evidence-Based Treatment for ${s.conditionName}</h2>
-        <p>Professional treatment for ${s.conditionName.toLowerCase()} combines medical care, behavioral therapy, and aftercare planning. Find accredited programs specializing in ${s.conditionName.toLowerCase()} through RehabLookup's verified directory.</p>
+        <p>Professional treatment for ${s.conditionName.toLowerCase()} combines medical care, behavioral therapy, and aftercare planning. Find accredited programs specializing in ${s.conditionName.toLowerCase()} through RehabLookup's directory.</p>
         <h2>Insurance & Cost</h2>
         <p>Most major insurance plans cover ${s.conditionName.toLowerCase()} treatment. Verify your benefits or explore free and low-cost options through our directory.</p>`,
       breadcrumbs: [
@@ -411,7 +411,7 @@ async function generateNearMePages() {
       metaTitle: `${nm.title} — Find Local Treatment | RehabLookup`,
       metaDescription: nm.metaDescription,
       h1: nm.title,
-      content: `<p>Search for ${nm.title.toLowerCase()} in your area. RehabLookup's directory includes verified, accredited facilities across all 50 states.</p>
+      content: `<p>Search for ${nm.title.toLowerCase()} in your area. RehabLookup's directory includes facility listings across all 50 states.</p>
         <h2>How to Find Treatment Near You</h2>
         <p>Enter your city, zip code, or state to find nearby facilities. Filter by insurance, treatment type, and amenities to find the right program for your needs.</p>
         <h2>Browse by City</h2>
@@ -437,9 +437,9 @@ async function generateBestInStatePages() {
       metaTitle: `Best Rehab Centers in ${bis.state} 2026 — Top-Rated | RehabLookup`,
       metaDescription: `Find the best rehab centers in ${bis.state} for 2026. Compare top-rated addiction treatment facilities. Insurance accepted. Expert-verified listings.`,
       h1: title,
-      content: `<p>Compare ${bis.state}'s top-rated addiction treatment programs. RehabLookup verifies accreditation, licensing, and quality for every listed facility.</p>
+      content: `<p>Compare ${bis.state}'s top-rated addiction treatment programs. RehabLookup lists the accreditation and licensing details each facility reports. Confirm them with the facility or the issuing authority.</p>
         <h2>Treatment Options in ${bis.state}</h2>
-        <p>${bis.state} offers diverse treatment options including inpatient rehab, outpatient programs, medical detox, dual diagnosis treatment, and specialty programs. Use our directory to compare verified facilities.</p>
+        <p>${bis.state} offers diverse treatment options including inpatient rehab, outpatient programs, medical detox, dual diagnosis treatment, and specialty programs. Use our directory to compare facility listings.</p>
         <h2>Insurance Coverage in ${bis.state}</h2>
         <p>Major insurance providers cover addiction treatment in ${bis.state}. Verify your benefits through our free insurance check tool.</p>`,
       breadcrumbs: [
@@ -475,7 +475,7 @@ async function generateCityTreatmentPages() {
         h1: title,
         content: `<p>Search accredited ${tt.label.toLowerCase()} programs in ${city.city}, ${city.state}. ${tt.description}</p>
           <h2>${tt.label} Programs in ${city.city}</h2>
-          <p>RehabLookup lists verified ${tt.label.toLowerCase()} facilities in the ${city.city} area. Each program is checked for proper licensing, accreditation, and quality of care.</p>
+          <p>RehabLookup lists verified ${tt.label.toLowerCase()} facilities in the ${city.city} area. Licensing and accreditation details are shown when a program reports them. Confirm them with the program or the issuing authority.</p>
           <h2>Insurance Coverage</h2>
           <p>Most insurance plans cover ${tt.label.toLowerCase()} in ${city.city}, ${city.stateAbbr} under the Mental Health Parity Act. Use our free insurance verification tool to check your benefits.</p>`,
         breadcrumbs: (() => {
@@ -576,7 +576,7 @@ async function generateStatePages() {
       metaTitle: `Rehab Centers in ${state} — Find Addiction Treatment | RehabLookup`,
       metaDescription: `Find accredited rehab centers in ${state}. Compare inpatient, outpatient, and detox programs. Verify insurance coverage and start recovery today.`,
       h1: title,
-      content: `<p>Browse verified addiction treatment facilities in ${state}. RehabLookup lists accredited rehab centers offering detox, inpatient, outpatient, and dual diagnosis programs across the state.</p>
+      content: `<p>Browse addiction treatment facility listings in ${state}. RehabLookup lists accredited rehab centers offering detox, inpatient, outpatient, and dual diagnosis programs across the state.</p>
         ${facilityList}
         <h2>Treatment Options in ${state}</h2>
         <p>${state} offers a range of substance abuse treatment programs including medical detox, residential inpatient, intensive outpatient (IOP), partial hospitalization (PHP), and medication-assisted treatment (MAT).</p>
@@ -676,7 +676,7 @@ async function generateCityPages() {
       metaTitle: `Rehab Centers in ${city.city}, ${city.stateAbbr} — Find Treatment | RehabLookup`,
       metaDescription: `Find accredited rehab centers in ${city.city}, ${city.stateAbbr}. Compare treatment programs, verify insurance, and start recovery today.`,
       h1: title,
-      content: `<p>Search verified addiction treatment facilities in ${city.city}, ${city.state}. Compare inpatient, outpatient, detox, and specialty programs in the ${city.city} metropolitan area.</p>
+      content: `<p>Search addiction treatment facility listings in ${city.city}, ${city.state}. Compare inpatient, outpatient, detox, and specialty programs in the ${city.city} metropolitan area.</p>
         <h2>Treatment Programs in ${city.city}</h2>
         <p>${city.city} offers diverse addiction treatment options including medical detox, residential inpatient, intensive outpatient programs (IOP), partial hospitalization (PHP), dual diagnosis treatment, and medication-assisted treatment (MAT).</p>
         <h2>Insurance & Payment</h2>
@@ -722,7 +722,7 @@ async function generateStateTreatmentPages() {
         metaTitle: `${tt.label} in ${state} — Find Programs | RehabLookup`,
         metaDescription: `Find ${tt.label.toLowerCase()} centers in ${state}. Compare accredited facilities, verify insurance, and start recovery today.`,
         h1: title,
-        content: `<p>Search accredited ${tt.label.toLowerCase()} programs in ${state}. RehabLookup provides verified facility listings with detailed program information.</p>
+        content: `<p>Search accredited ${tt.label.toLowerCase()} programs in ${state}. RehabLookup provides facility listings with program information as reported by each facility.</p>
           <h2>${tt.label} Options in ${state}</h2>
           <p>${state} offers a range of ${tt.label.toLowerCase()} programs with varying levels of care, program lengths, and specializations to meet individual needs.</p>
           <h2>Insurance Coverage</h2>

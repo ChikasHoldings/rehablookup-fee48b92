@@ -139,11 +139,11 @@ for (const state of US_STATES) {
     title: `Opioid Rehab Near Me in ${stateName} | RehabLookup`,
     metaDesc: `Find opioid addiction treatment centers near you in ${stateName}. Compare inpatient, outpatient, and MAT programs. Free insurance verification available.`,
     h1: `Opioid Rehab Near Me in ${stateName}`,
-    content: `<p>Find accredited opioid addiction treatment centers in ${stateName}. RehabLookup connects you with verified rehab facilities offering medically supervised detox, inpatient residential programs, intensive outpatient (IOP), and medication-assisted treatment (MAT) for opioid use disorder.</p>
+    content: `<p>Find accredited opioid addiction treatment centers in ${stateName}. RehabLookup lists rehab facilities offering medically supervised detox, inpatient residential programs, intensive outpatient (IOP), and medication-assisted treatment (MAT) for opioid use disorder.</p>
 <h2>Types of Opioid Treatment in ${stateName}</h2>
 <p>Treatment options for opioid addiction in ${stateName} include medical detox, inpatient residential care, partial hospitalization programs (PHP), intensive outpatient programs (IOP), and medication-assisted treatment with buprenorphine (Suboxone) or methadone.</p>
 <h2>Find Help Today</h2>
-<p>Use our free directory to search verified opioid rehab centers in ${stateName} by location, insurance, and treatment type. Many facilities offer same-day admissions and free insurance verification.</p>`,
+<p>Use our free directory to search opioid rehab center listings in ${stateName} by location, insurance, and treatment type. Many facilities offer same-day admissions and free insurance verification.</p>`,
     breadcrumbs: [
       { name: 'Home', url: '/' },
       { name: 'Opioid Rehab Near Me', url: '/opioid-rehab-near-me' },
@@ -158,7 +158,7 @@ writePage('/benzo-rehab-near-me/texas', {
   title: 'Benzo Rehab Near Me in Texas | RehabLookup',
   metaDesc: 'Find benzodiazepine addiction treatment centers near you in Texas. Compare detox, inpatient, and outpatient programs. Free insurance verification.',
   h1: 'Benzo Rehab Near Me in Texas',
-  content: `<p>Find accredited benzodiazepine (benzo) addiction treatment centers in Texas. RehabLookup connects you with verified rehab facilities offering medically supervised benzo detox and comprehensive addiction treatment programs across Texas.</p>
+  content: `<p>Find accredited benzodiazepine (benzo) addiction treatment centers in Texas. RehabLookup lists rehab facilities offering medically supervised benzo detox and comprehensive addiction treatment programs across Texas.</p>
 <h2>Benzo Detox in Texas</h2>
 <p>Benzodiazepine withdrawal can be medically dangerous. Texas treatment centers offer 24/7 medically supervised detox to safely manage withdrawal symptoms before transitioning to residential or outpatient care.</p>`,
   breadcrumbs: [
@@ -174,7 +174,7 @@ writePage('/cocaine-rehab-near-me/texas', {
   title: 'Cocaine Rehab Near Me in Texas | RehabLookup',
   metaDesc: 'Find cocaine addiction treatment centers near you in Texas. Compare inpatient, outpatient, and residential programs. Free insurance verification.',
   h1: 'Cocaine Rehab Near Me in Texas',
-  content: `<p>Find accredited cocaine addiction treatment centers in Texas. RehabLookup connects you with verified rehab facilities offering inpatient residential programs, intensive outpatient (IOP), and dual diagnosis treatment for cocaine use disorder in Texas.</p>
+  content: `<p>Find accredited cocaine addiction treatment centers in Texas. RehabLookup lists rehab facilities offering inpatient residential programs, intensive outpatient (IOP), and dual diagnosis treatment for cocaine use disorder in Texas.</p>
 <h2>Cocaine Addiction Treatment in Texas</h2>
 <p>Texas treatment centers offer evidence-based therapies for cocaine addiction including cognitive behavioral therapy (CBT), contingency management, and group counseling. Many facilities accept Medicaid, Medicare, and private insurance.</p>`,
   breadcrumbs: [
@@ -190,7 +190,7 @@ writePage('/heroin-rehab-near-me/texas', {
   title: 'Heroin Rehab Near Me in Texas | RehabLookup',
   metaDesc: 'Find heroin and opioid addiction treatment centers near you in Texas. Compare MAT, inpatient, and detox programs. Free insurance verification.',
   h1: 'Heroin Rehab Near Me in Texas',
-  content: `<p>Find accredited heroin addiction treatment centers in Texas. RehabLookup connects you with verified rehab facilities offering medically supervised heroin detox, medication-assisted treatment (MAT), and inpatient residential programs across Texas.</p>
+  content: `<p>Find accredited heroin addiction treatment centers in Texas. RehabLookup lists rehab facilities offering medically supervised heroin detox, medication-assisted treatment (MAT), and inpatient residential programs across Texas.</p>
 <h2>Heroin Treatment Options in Texas</h2>
 <p>Texas treatment centers offer comprehensive heroin addiction treatment including medical detox, MAT with buprenorphine or methadone, inpatient residential care, and long-term recovery support services.</p>`,
   breadcrumbs: [
@@ -206,7 +206,7 @@ writePage('/meth-rehab-near-me/texas', {
   title: 'Meth Rehab Near Me in Texas | RehabLookup',
   metaDesc: 'Find methamphetamine addiction treatment centers near you in Texas. Compare inpatient, residential, and outpatient programs. Free insurance verification.',
   h1: 'Meth Rehab Near Me in Texas',
-  content: `<p>Find accredited methamphetamine (meth) addiction treatment centers in Texas. RehabLookup connects you with verified rehab facilities offering inpatient residential programs, intensive outpatient (IOP), and dual diagnosis treatment for meth use disorder in Texas.</p>
+  content: `<p>Find accredited methamphetamine (meth) addiction treatment centers in Texas. RehabLookup lists rehab facilities offering inpatient residential programs, intensive outpatient (IOP), and dual diagnosis treatment for meth use disorder in Texas.</p>
 <h2>Meth Addiction Treatment in Texas</h2>
 <p>Texas treatment centers offer evidence-based therapies for meth addiction including the Matrix Model, cognitive behavioral therapy (CBT), contingency management, and 12-step facilitation programs.</p>`,
   breadcrumbs: [

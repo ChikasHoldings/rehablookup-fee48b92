@@ -61,7 +61,7 @@ const defaultCityImage = 'https://images.unsplash.com/photo-1449824913935-59a10b
 const getCityFAQs = (cityName: string, stateName: string, stateAbbrev: string, facilityCount: number) => [
   {
     question: `What is the best rehab center in ${cityName}, ${stateAbbrev}?`,
-    answer: `The best rehab center in ${cityName} depends on your specific needs, including the type of addiction, preferred treatment approach, insurance coverage, and budget. We recommend comparing ${facilityCount > 0 ? facilityCount : 'multiple'} verified facilities in ${cityName}, checking their accreditations (Joint Commission, CARF), reading reviews, and scheduling consultations to find the best fit for your recovery journey.`
+    answer: `The best rehab center in ${cityName} depends on your specific needs, including the type of addiction, preferred treatment approach, insurance coverage, and budget. We recommend comparing ${facilityCount > 0 ? facilityCount : 'multiple'} listed facilities in ${cityName}, checking their accreditations (Joint Commission, CARF), reading reviews, and scheduling consultations to find the best fit for your recovery journey.`
   },
   {
     question: `How much does rehab cost in ${cityName}?`,
@@ -280,7 +280,7 @@ const CityPage = () => {
           <div className="mt-5 hidden md:grid grid-cols-3 gap-2 max-w-3xl">
             <LocationStatTile
               size="sm"
-              label={cityCenters.length === 1 ? "Verified Facility" : "Verified Facilities"}
+              label={cityCenters.length === 1 ? "Facility Listed" : "Facilities Listed"}
               value={isLoading ? "—" : cityCenters.length.toLocaleString()}
               icon={Building2}
             />
@@ -384,7 +384,7 @@ const CityPage = () => {
               {!isLoading && (
                 <p className="mt-1 text-sm text-muted-foreground">
                   {cityCenters.length > 0
-                    ? `Showing top ${Math.min(cityCenters.length, 12)} of ${cityCenters.length} verified ${cityCenters.length === 1 ? "facility" : "facilities"} in ${fullLocation} · sorted by ranking`
+                    ? `Showing top ${Math.min(cityCenters.length, 12)} of ${cityCenters.length} listed ${cityCenters.length === 1 ? "facility" : "facilities"} in ${fullLocation} · sorted by ranking`
                     : `No facilities listed yet in ${cityData.name}.`}
                 </p>
               )}

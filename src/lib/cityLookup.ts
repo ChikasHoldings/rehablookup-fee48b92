@@ -51,7 +51,7 @@ export function resolveCity(
         slug: citySlug,
         population: providerCity.population,
         description: `${providerCity.city} offers addiction treatment programs including detox, residential, and outpatient services across the metro area.`,
-        metaDescription: `Find drug and alcohol rehab centers in ${providerCity.city}, ${state.abbreviation}. Compare verified treatment facilities near you.`,
+        metaDescription: `Find drug and alcohol rehab centers in ${providerCity.city}, ${state.abbreviation}. Compare treatment facility listings near you.`,
       },
     };
   }
@@ -66,7 +66,7 @@ export function resolveCity(
       name,
       slug: citySlug,
       description: `${name} offers addiction treatment programs including detox, residential, and outpatient services in the surrounding ${state.name} community.`,
-      metaDescription: `Find drug and alcohol rehab centers in ${name}, ${state.abbreviation}. Compare verified treatment facilities near you.`,
+      metaDescription: `Find drug and alcohol rehab centers in ${name}, ${state.abbreviation}. Compare treatment facility listings near you.`,
     },
   };
 }

@@ -47,7 +47,7 @@ export function resolveCounty(
       population: 0,
       seat: name,
       description: `${name} County is a ${state.name} treatment area, with facilities and providers serving residents across the surrounding region.`,
-      metaDescription: `Find rehab centers in ${name} County, ${state.abbreviation}. Compare verified addiction treatment facilities near you.`,
+      metaDescription: `Find rehab centers in ${name} County, ${state.abbreviation}. Compare addiction treatment facility listings near you.`,
       treatmentOverview: `${name} County offers addiction treatment including detox, residential, outpatient, and MAT programs. Facilities in and around ${name} and nearby communities provide care for substance use disorders and co-occurring conditions.`,
       demographics: `${name} County in ${state.name} has diverse treatment needs. Local and regional providers address alcohol dependency, opioid addiction, and other substance use disorders.`,
       accessNotes: `${name} County is accessible via major highways and connects to ${state.name}'s broader treatment network through nearby metro areas.`,

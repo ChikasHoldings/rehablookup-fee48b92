@@ -90,7 +90,7 @@ export default function CityInsurancePage() {
     },
     {
       question: `How many ${insurer.name}-accepting rehab centers are in ${cityName}?`,
-      answer: `${cityName}, ${stateConfig.state} has ${facilities.length > 0 ? `${facilities.length}+ verified treatment facilities` : "treatment options available through nearby providers"}. Use RehabLookup to compare programs, check reviews, and verify insurance acceptance before choosing a facility.`,
+      answer: `${cityName}, ${stateConfig.state} has ${facilities.length > 0 ? `${facilities.length}+ treatment facilities` : "treatment options available through nearby providers"}. Use RehabLookup to compare programs, check reviews, and verify insurance acceptance before choosing a facility.`,
     },
   ];
 
