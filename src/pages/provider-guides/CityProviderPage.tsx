@@ -13,31 +13,31 @@ export default function CityProviderPage() {
 
   if (!city) return <NotFound />;
 
-  const competitionText = city.competitionLevel === "high" ? "fiercely competitive" : city.competitionLevel === "medium" ? "moderately competitive" : "growing";
+  const competitionText = city.competitionLevel === "high" ? "highly competitive" : city.competitionLevel === "medium" ? "moderately competitive" : "growing";
   const stateName = slugToName(city.stateSlug);
 
   return (
     <ProviderConversionPage
-      metaTitle={`Get More Rehab Patients in ${city.city}, ${stateName} | RehabLookup`}
-      metaDescription={`Struggling to fill beds in ${city.city}? RehabLookup connects your facility with patients actively searching for addiction treatment in ${city.city}, ${stateName}.`}
+      metaTitle={`Rehab Directory Visibility in ${city.city}, ${stateName} | RehabLookup`}
+      metaDescription={`Manage your treatment facility's RehabLookup directory presence in ${city.city}, ${stateName}. Claim your facility for free, keep information accurate, and learn about optional Pro and Featured products.`}
       canonical={`/get-more-patients-in-${city.citySlug}-${city.stateSlug}`}
-      keywords={[`rehab marketing ${city.city}`, `get rehab patients ${city.city}`, `addiction treatment leads ${city.city}`, `rehab census ${stateName}`]}
+      keywords={[`rehab directory ${city.city}`, `treatment facility listing ${city.city}`, `rehab marketing ${city.city}`, `rehab visibility ${stateName}`]}
       breadcrumbs={[
         { label: "For Providers", href: "/for-providers" },
         { label: "Rehab Marketing", href: "/rehab-marketing" },
         { label: city.city },
       ]}
-      heroHeadline={`Struggling to Fill Beds in ${city.city}?`}
-      heroSubheadline={`${city.city} is ${competitionText} for rehab admissions. With ${city.rehabFacilityCount}+ treatment facilities competing for patients, you need a smarter way to stand out and attract qualified leads.`}
-      problemHeadline={`The Challenge of Getting Patients in ${city.city}`}
+      heroHeadline={`Improve Your Facility's Directory Presence in ${city.city}`}
+      heroSubheadline={`${city.city} is ${competitionText} for treatment discovery. Keep your facility information accurate, build a stronger public profile, and use optional sponsored exposure only when it fits your goals.`}
+      problemHeadline={`Standing Out in the ${city.city} Treatment Market`}
       problemPoints={[
-        `${city.city} has ${city.rehabFacilityCount}+ treatment facilities competing for the same patients — visibility is everything`,
-        `Google Ads for "${city.city} rehab" cost an average of $${city.avgCostPerClick}/click with unpredictable conversion rates`,
-        `${city.monthlySearches.toLocaleString()}+ people search for rehab in ${city.city} monthly — but most never see your facility`,
-        `Empty beds in ${city.city} cost your facility $500-$1,500+ per day in unrealized revenue`,
+        `${city.city} has ${city.rehabFacilityCount}+ treatment facilities competing for attention from people researching care`,
+        `Search advertising for "${city.city} rehab" can cost around $${city.avgCostPerClick}/click, making owned directory information an important complement to paid media`,
+        `${city.monthlySearches.toLocaleString()}+ monthly searches indicate meaningful treatment-research demand in the market`,
+        `Incomplete or outdated facility information can make it harder for people to evaluate services, insurance, and program fit`,
       ]}
       insightHeadline={`${city.city} Rehab Market Insights`}
-      insightContent={`The ${city.region} region shows strong demand for addiction treatment services. ${city.city} sees approximately ${city.monthlySearches.toLocaleString()} monthly searches for rehab-related services, yet many facilities remain below capacity because they rely on expensive paid advertising or inconsistent referral sources.`}
+      insightContent={`The ${city.region} region shows ongoing demand for addiction treatment information. RehabLookup helps facilities maintain an accurate directory presence while keeping organic ranking independent from payment.`}
       insightStats={[
         { label: "Monthly Searches", value: city.monthlySearches.toLocaleString() },
         { label: "Facilities Competing", value: city.rehabFacilityCount.toString() },
@@ -48,7 +48,7 @@ export default function CityProviderPage() {
         { href: `/for-providers-in-${city.stateSlug}`, label: `Providers in ${stateName}` },
         { href: `/rehab-centers/${city.stateSlug}/${city.citySlug}`, label: `${city.city} Treatment Centers` },
         { href: "/rehab-marketing", label: "Rehab Marketing Hub" },
-        { href: "/provider-guides/get-more-rehab-patients", label: "Get More Rehab Patients" },
+        { href: "/provider-guides/get-more-rehab-patients", label: "Provider Visibility Guide" },
         { href: "/provider-guides/rehab-center-seo", label: "Rehab SEO Guide" },
       ]}
     />
