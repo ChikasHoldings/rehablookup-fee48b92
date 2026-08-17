@@ -7,6 +7,7 @@ import {
   Phone,
   PanelsTopLeft,
   ShieldCheck,
+  BarChart3,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,7 +15,10 @@ import { Badge } from "@/components/ui/badge";
 import { useProStatus } from "@/hooks/useProStatus";
 import { useFacilityLimits } from "@/hooks/useFacilityLimits";
 import { cn } from "@/lib/utils";
-import { PRO_DIRECTORY_TRUST_NOTE } from "@/lib/proDirectoryBenefits";
+import {
+  PRO_DIRECTORY_BENEFITS,
+  PRO_DIRECTORY_TRUST_NOTE,
+} from "@/lib/proDirectoryBenefits";
 
 interface ProBenefitsWidgetProps {
   className?: string;
@@ -28,36 +32,28 @@ export function ProBenefitsWidget({ className }: ProBenefitsWidgetProps) {
     return null;
   }
 
-  const benefits = [
-    {
-      icon: Phone,
-      label: "Phone + Call button",
-      description: "Direct facility contact on the public listing",
-      color: "text-blue-600",
-      bgColor: "bg-blue-500/10",
-    },
-    {
-      icon: PanelsTopLeft,
-      label: "Enhanced profile",
-      description: "Programs, amenities, staff & accreditation highlights",
-      color: "text-violet-600",
-      bgColor: "bg-violet-500/10",
-    },
-    {
-      icon: Camera,
-      label: "Rich media",
-      description: "Up to 10 photos plus video & virtual tour",
-      color: "text-emerald-600",
-      bgColor: "bg-emerald-500/10",
-    },
-    {
-      icon: Building2,
-      label: `${usedLocations} location${usedLocations === 1 ? "" : "s"} managed`,
-      description: "Pro supports up to 5 facility listings",
-      color: "text-amber-600",
-      bgColor: "bg-amber-500/10",
-    },
-  ];
+  // Presentation only — the labels and descriptions come from the shared
+  // contract so this widget can't promise something the upgrade page doesn't.
+  const STYLE: Record<string, { icon: React.ElementType; color: string; bgColor: string }> = {
+    "direct-contact": { icon: Phone, color: "text-blue-600", bgColor: "bg-blue-500/10" },
+    "enhanced-profile": { icon: PanelsTopLeft, color: "text-violet-600", bgColor: "bg-violet-500/10" },
+    "rich-media": { icon: Camera, color: "text-emerald-600", bgColor: "bg-emerald-500/10" },
+    "multi-location": { icon: Building2, color: "text-amber-600", bgColor: "bg-amber-500/10" },
+    performance: { icon: BarChart3, color: "text-sky-600", bgColor: "bg-sky-500/10" },
+  };
+
+  const benefits = PRO_DIRECTORY_BENEFITS.map((benefit) => ({
+    ...STYLE[benefit.key],
+    // The multi-location row shows the provider's ACTUAL usage against the cap.
+    label:
+      benefit.key === "multi-location"
+        ? `${usedLocations} location${usedLocations === 1 ? "" : "s"} managed`
+        : benefit.shortTitle,
+    description:
+      benefit.key === "multi-location"
+        ? "Pro supports up to 5 facility listings"
+        : benefit.items.join(" · "),
+  }));
 
   return (
     <Card className={cn("border-amber-300/60 bg-amber-50/40", className)}>

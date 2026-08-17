@@ -28,7 +28,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 import {
@@ -107,25 +107,61 @@ function navLinks(container: HTMLElement) {
 // ═══════════════════════════════════════════════════════════════════════════
 
 describe("stage 3 — provider primary navigation", () => {
-  it("renders only directory-model workflows", () => {
+  it("renders only directory-model workflows, organized by provider job", () => {
     const { container } = renderProviderSidebar();
     const nav = container.querySelector('nav[aria-label="Provider navigation"]')!;
     const labels = Array.from(nav.querySelectorAll("a")).map((a) =>
       (a.textContent ?? "").replace(/\d+\+?$/, "").trim(),
     );
 
+    // Overview → Directory → Growth → Account. The labels are provider JOBS,
+    // not legacy product names: "Analytics" reads "Performance", "Marketing"
+    // reads "Featured" (that route is now the Featured advertising hub), and
+    // "Subscription" reads "Plan & Billing". Enhanced Profile is promoted to a
+    // first-class destination.
     expect(labels).toEqual([
       "Dashboard",
+      "Listings",
+      "Enhanced Profile",
       "Inquiries",
-      "My Listing",
-      "Claims",
-      "Analytics",
       "Reviews",
-      "Subscription",
-      "Marketing",
+      "Listing Claims",
+      "Performance",
+      "Featured",
+      "Plan & Billing",
       "Settings",
       "Help & Support",
     ]);
+  });
+
+  it("groups navigation under the four job sections", () => {
+    const { container } = renderProviderSidebar();
+    const nav = container.querySelector('nav[aria-label="Provider navigation"]')!;
+    const sections = Array.from(nav.querySelectorAll("p")).map((p) =>
+      (p.textContent ?? "").trim(),
+    );
+    expect(sections).toEqual(["Overview", "Directory", "Growth", "Account"]);
+  });
+
+  it("retires the legacy product names from navigation", () => {
+    const { container } = renderProviderSidebar();
+    const labels = navLinks(container).map((l) => l.text.replace(/\d+\+?$/, "").trim());
+    for (const legacy of ["Analytics", "Marketing", "Subscription", "Billing", "My Listing"]) {
+      expect(labels, `legacy nav label "${legacy}" is back`).not.toContain(legacy);
+    }
+  });
+
+  it("never shows two active rows for /provider/listings and its profile child", () => {
+    // Enhanced Profile is a CHILD of /provider/listings. A prefix-match active
+    // rule highlighted both rows at once.
+    const { container } = render(
+      <MemoryRouter initialEntries={["/provider/listings/profile"]}>
+        <ProviderSidebar />
+      </MemoryRouter>,
+    );
+    const active = Array.from(container.querySelectorAll('a[aria-current="page"]'));
+    expect(active).toHaveLength(1);
+    expect(active[0].getAttribute("href")).toBe("/provider/listings/profile");
   });
 
   it("has no Concierge / placement / advisor navigation", () => {
@@ -174,10 +210,21 @@ describe("stage 3 — provider mobile navigation", () => {
 
     expect(links.map((l) => l.href)).toEqual([
       "/provider/dashboard",
+      "/provider/listings",
       "/provider/inquiries",
       "/provider/analytics",
-      "/provider/listings",
     ]);
+    // Home · Listings · Inquiries · Performance · More — "More" is a button,
+    // not a link, so it is absent from `links`.
+    // The pending-inquiry badge renders BEFORE the label in the mobile tab
+    // ("3Inquiries"), so strip a leading count as well as a trailing one.
+    expect(links.map((l) => l.text.replace(/^\d+\+?/, "").replace(/\d+\+?$/, "").trim())).toEqual([
+      "Home",
+      "Listings",
+      "Inquiries",
+      "Performance",
+    ]);
+    expect(container.querySelector('button[aria-label="More navigation options"]')).toBeTruthy();
     for (const { href, text } of links) {
       for (const term of RETIRED_NAV_TERMS) {
         expect(text).not.toMatch(term);
@@ -218,21 +265,62 @@ describe("stage 3 — provider dashboard", () => {
     }
   });
 
-  it("keeps the retained directory surfaces reachable", () => {
+  it("keeps the retained directory surfaces reachable from the dashboard", () => {
+    // The dashboard links the section HUBS, not every leaf. /provider/help and
+    // /provider/claims moved to the sidebar's Account / Directory sections, and
+    // Featured is reached through its hub (/provider/marketing) rather than the
+    // child placement page — asserted separately below.
     for (const href of [
       "/provider/listings",
+      "/provider/listings/profile",
       "/provider/inquiries",
       "/provider/analytics",
       "/provider/reviews",
       "/provider/billing",
-      "/provider/claims",
       "/provider/add-location",
-      "/provider/marketing/featured",
-      "/provider/help",
+      "/provider/marketing",
     ]) {
       expect(src, `dashboard must still link ${href}`).toContain(href);
     }
     expect(src).toMatch(/upgrade=pro/);
+  });
+
+  it("carries exactly one Pro upgrade CTA", () => {
+    // Three shipped at once: the header button, a gradient upsell card in the
+    // grid, and the free-tier teaser's "See what Pro unlocks". Repeated upsells
+    // are what makes a SaaS panel feel like a casino.
+    const ctas = src.match(/upgrade=pro/g) ?? [];
+    expect(ctas).toHaveLength(1);
+  });
+
+  it("does not sell verification, ranking, or Featured as Pro", () => {
+    for (const banned of [
+      /verified badge/i,
+      /priority\s+(?:search\s+)?(?:ranking|placement)/i,
+      /\+\s*50/,
+      /rank\s+higher/i,
+      /qualified\s+leads?/i,
+    ]) {
+      expect(src, `dashboard claims ${banned}`).not.toMatch(banned);
+    }
+  });
+
+  it("does not gate Featured behind Pro", () => {
+    // The old Marketing card rendered a `locked: !proStatus.isPro` lock badge on
+    // the Featured row. Featured is independent paid advertising.
+    expect(src).not.toMatch(/locked:\s*!proStatus\.isPro/);
+    expect(src).not.toMatch(/Pro required/i);
+  });
+
+  it("shows the Featured status band separately from the Plan band", () => {
+    expect(src).toMatch(/hasFeatured/);
+    expect(src).toMatch(/FeaturedAnalyticsWidget/);
+    expect(src).toMatch(/FEATURED_DIRECTORY_NOTE/);
+  });
+
+  it("reads its Pro benefit copy from the shared contract, not a local array", () => {
+    expect(src).toMatch(/from "@\/lib\/proDirectoryBenefits"/);
+    expect(src).toMatch(/PRO_DIRECTORY_TRUST_NOTE/);
   });
 });
 
@@ -284,12 +372,43 @@ describe("stage 3 — provider inquiry experience", () => {
 
 describe("stage 3 — provider retained monetization", () => {
   const marketingHub = readCode("src/pages/provider/MarketingHub.tsx");
-  const hubCards = readCode("src/components/provider/marketing/MarketingHubCards.tsx");
 
   it("sells Featured and only Featured as the visibility add-on", () => {
-    expect(hubCards).toMatch(/Featured Placements/);
-    expect(hubCards).not.toMatch(/Concierge/i);
-    expect(marketingHub).not.toMatch(/Concierge/i);
+    expect(marketingHub).toMatch(/Featured/);
+    // MarketingHubCards.tsx was deleted with the Featured-hub restructure — its
+    // only content was a Featured card the hub now owns directly, and it framed
+    // Featured as a Pro-gated add-on.
+    expect(existsSync(resolve(root, "src/components/provider/marketing/MarketingHubCards.tsx")))
+      .toBe(false);
+  });
+
+  it("does not market the retired Concierge product on the Featured hub", () => {
+    // `has_concierge_partner` (the subscription column) may be READ so legacy
+    // holders can be shown a retired-product state. What must not appear is a
+    // pitch: a Concierge purchase CTA, a "become a partner" action, or Concierge
+    // framed as an upgrade to Featured.
+    expect(marketingHub).not.toMatch(/Concierge Partner<|>Concierge/i);
+    expect(marketingHub).not.toMatch(/become a (?:concierge )?partner/i);
+    expect(marketingHub).not.toMatch(/upgrade to Concierge/i);
+    expect(marketingHub).not.toMatch(/\/provider\/marketing\/concierge/);
+  });
+
+  it("does not gate the Featured explanation behind Pro", () => {
+    // The hub must EXPLAIN Featured to every provider. The old version rendered
+    // a "Pro required" lock card instead, and stamped the add-on with an
+    // upgrade CTA — Featured is independent paid advertising.
+    expect(marketingHub).not.toMatch(/Pro required/i);
+    expect(marketingHub).not.toMatch(/Upgrade to access/i);
+  });
+
+  it("never claims Featured changes organic position", () => {
+    expect(marketingHub).toMatch(/does not change (?:your )?organic directory position/i);
+    expect(marketingHub).not.toMatch(/priority\s+(?:search\s+)?(?:ranking|placement)/i);
+    expect(marketingHub).not.toMatch(/\+\s*50/);
+  });
+
+  it("labels sponsored placements as advertising", () => {
+    expect(marketingHub).toMatch(/sponsored/i);
   });
 
   it("keeps Pro at $99/mo and does not price a retired add-on", () => {

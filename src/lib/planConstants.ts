@@ -1,6 +1,14 @@
 /**
  * Plan constants for the unified provider onboarding wizard.
  *
+ * The Pro feature list is DERIVED from src/lib/proDirectoryBenefits.ts — the
+ * single source of truth for the monetization contract. It used to be a fourth
+ * independent hardcoded array and it claimed "Priority placement on city + state
+ * pages", which Pro has never bought: organic position is computed by
+ * calculate-ranking-scores from neutral signals with no subscription input.
+ * Onboarding is the FIRST thing a provider reads, so a false promise here sets
+ * an expectation the rest of the product then has to break.
+ *
  * Pricing here mirrors what's set in Stripe for the production
  * STRIPE_PRO_PRICE_ID (price_1Sel1C9fxdThyiakWLfgbl9K = $99/month
  * Pro subscription). The matching TIERS array in
@@ -18,6 +26,8 @@
  * against Stripe at purchase time. Revisit if Pro pricing changes
  * become frequent enough to make the deploy-cycle overhead matter.
  */
+
+import { PRO_DIRECTORY_BENEFITS } from "@/lib/proDirectoryBenefits";
 
 export interface Plan {
   id: "free" | "pro";
@@ -40,7 +50,8 @@ export const PLANS: Record<"free" | "pro", Plan> = {
     features: [
       "1 facility listing",
       "Up to 5 photos",
-      "Standard placement in the directory",
+      "Listed in the directory",
+      "Eligible facilities receive inquiries",
       "Basic support",
     ],
     note: "You can upgrade to Pro anytime from your dashboard.",
@@ -50,14 +61,12 @@ export const PLANS: Record<"free" | "pro", Plan> = {
     name: "Pro",
     priceMonthly: 99,
     badge: "Recommended",
-    headline: "Stand out and convert",
+    headline: "Make your listing easier to evaluate and contact",
+    // Derived, never restated. Adding a Pro benefit means editing the contract.
     features: [
-      "Up to 5 facility listings",
-      "Enriched profile with extra detail blocks",
-      "Up to 10 photos + 1 facility video",
-      "Priority placement on city + state pages",
-      "Lead analytics dashboard",
+      ...PRO_DIRECTORY_BENEFITS.map((benefit) => benefit.title),
       "Dedicated provider support",
     ],
+    note: "Pro enhances your listing and provider tools. Verification and organic directory position are determined independently.",
   },
-} as const;
+};

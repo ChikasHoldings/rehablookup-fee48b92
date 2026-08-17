@@ -1,7 +1,7 @@
 import { useState } from "react";
 import {
   TrendingUp, TrendingDown, Minus, Eye, Phone, Inbox, Clock,
-  Megaphone, HandHelping, ShieldCheck, AlertTriangle, Info,
+  Megaphone, Info,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -81,7 +81,6 @@ export function SubscriptionAnalyticsTab({ facilityId, viewingAsFacilityName }: 
 
   const isPro = !!data.subscription?.is_pro;
   const hasFeatured = !!data.subscription?.has_featured;
-  const hasConcierge = !!data.subscription?.has_concierge_partner;
 
   const allZero = data.summary.profile_views.current === 0
     && data.summary.phone_clicks.current === 0
@@ -102,7 +101,7 @@ export function SubscriptionAnalyticsTab({ facilityId, viewingAsFacilityName }: 
             <h3 className="text-base font-semibold text-foreground">Subscription performance</h3>
             <p className="text-xs text-muted-foreground mt-0.5">
               {data.subscription
-                ? `${data.subscription.tier === "pro" ? "Pro" : "Free"}${data.subscription.has_featured ? " + Featured" : ""}${data.subscription.has_concierge_partner ? " + Concierge" : ""} · ${data.subscription.billing_period ?? "monthly"}`
+                ? `${data.subscription.tier === "pro" ? "Pro" : "Free"}${data.subscription.has_featured ? " + Featured" : ""}${data.subscription.has_concierge_partner ? " + legacy add-on" : ""} · ${data.subscription.billing_period ?? "monthly"}`
                 : "Free tier"}
             </p>
           </div>
@@ -137,7 +136,7 @@ export function SubscriptionAnalyticsTab({ facilityId, viewingAsFacilityName }: 
           />
           <KpiCard
             icon={Inbox}
-            label={isPro ? "Direct inquiries" : "Concierge routed"}
+            label="Inquiries"
             value={data.summary.inquiries.current}
             delta={data.summary.inquiries.delta_pct}
             deltaSuffix="%"
@@ -159,13 +158,10 @@ export function SubscriptionAnalyticsTab({ facilityId, viewingAsFacilityName }: 
           />
         )}
 
-        {/* Concierge Partner section */}
-        {hasConcierge && data.concierge_breakdown && data.concierge_compliance && (
-          <ConciergeBlock
-            breakdown={data.concierge_breakdown}
-            compliance={data.concierge_compliance}
-          />
-        )}
+        {/* Legacy retired add-on. The reporting block was titled "Concierge
+            Partner performance" and framed a retired product as a live one. It
+            is removed from the provider surface; historical records remain
+            available to admins via the read-only archive. */}
 
         {/* Lead funnel — always shown */}
         <FunnelBlock funnel={data.funnel} isPro={isPro} />
@@ -311,70 +307,6 @@ function FeaturedBreakdown({ rows, totalImpressions }: { rows: FacilityAnalytics
   );
 }
 
-function ConciergeBlock({
-  breakdown, compliance,
-}: {
-  breakdown: NonNullable<FacilityAnalyticsResponse["concierge_breakdown"]>;
-  compliance: NonNullable<FacilityAnalyticsResponse["concierge_compliance"]>;
-}) {
-  const row = breakdown[0] ?? { inquiries_presented: 0, response_avg_hours: 0, chosen: 0 };
-  const chosenPct = row.inquiries_presented > 0
-    ? Math.round((row.chosen / row.inquiries_presented) * 1000) / 10
-    : 0;
-  const under24h = compliance.response_under_24h_pct >= 90;
-  const altsPctOk = compliance.non_partner_alternatives_presented_pct >= 99;
-
-  return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-sm flex items-center gap-2">
-          <HandHelping className="h-4 w-4 text-[#1B365D]" />
-          Concierge Partner performance
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="grid gap-4 md:grid-cols-3">
-        <div className="space-y-1">
-          <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Inquiries presented</p>
-          <p className="text-2xl font-bold text-foreground tabular-nums">{row.inquiries_presented}</p>
-          <p className="text-xs text-muted-foreground">Avg response {row.response_avg_hours} hrs</p>
-        </div>
-        <div className="space-y-1">
-          <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Client chose you</p>
-          <p className="text-2xl font-bold text-foreground tabular-nums">{row.chosen}</p>
-          <p className="text-xs text-muted-foreground">{chosenPct}% of presented</p>
-        </div>
-        <div className="space-y-2">
-          <p className="text-[11px] uppercase tracking-wide text-muted-foreground">EKRA compliance</p>
-          <ComplianceRow
-            ok={altsPctOk}
-            label="Non-partner alternatives presented"
-            value={`${compliance.non_partner_alternatives_presented_pct}%`}
-          />
-          <ComplianceRow
-            ok={under24h}
-            label="Responses under 24 hrs"
-            value={`${compliance.response_under_24h_pct}%`}
-          />
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function ComplianceRow({ ok, label, value }: { ok: boolean; label: string; value: string }) {
-  return (
-    <div className="flex items-start gap-2 text-xs">
-      {ok
-        ? <ShieldCheck className="h-3.5 w-3.5 text-emerald-700 shrink-0 mt-0.5" />
-        : <AlertTriangle className="h-3.5 w-3.5 text-amber-700 shrink-0 mt-0.5" />}
-      <div className="flex-1 min-w-0">
-        <p className="text-muted-foreground">{label}</p>
-        <p className={cn("font-semibold tabular-nums", ok ? "text-emerald-700" : "text-amber-800")}>{value}</p>
-      </div>
-    </div>
-  );
-}
-
 function FunnelBlock({ funnel, isPro }: { funnel: FacilityAnalyticsResponse["funnel"]; isPro: boolean }) {
   const steps = [
     { label: "Profile views", value: funnel.profile_views },
@@ -417,9 +349,11 @@ function FunnelBlock({ funnel, isPro }: { funnel: FacilityAnalyticsResponse["fun
           );
         })}
         {!isPro && (
-          <div className="mt-3 rounded-md bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-900">
-            Upgrade to Pro to receive inquiries directly without concierge intermediation.
-          </div>
+          <p className="mt-3 text-xs leading-relaxed text-slate-500">
+            Pro performance reporting adds the per-source breakdown behind these
+            totals. Inquiries themselves are not a paid feature — your facility
+            already receives them.
+          </p>
         )}
       </CardContent>
     </Card>

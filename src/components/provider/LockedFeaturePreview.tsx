@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { Lock, Sparkles, ArrowRight, ShieldCheck } from "lucide-react";
+import { Lock, Sparkles, ArrowRight, ShieldCheck, Megaphone } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -21,14 +21,26 @@ interface LockedFeaturePreviewProps {
   /** Optional secondary action — e.g. "See pricing", links to /for-providers. */
   secondaryAction?: { label: string; to: string };
   /**
+   * Optional small-print line below the pitch. Used to state a factual
+   * prerequisite or limitation without turning it into sales copy — e.g. that
+   * Featured checkout currently requires Pro because of the billing
+   * integration, not because Featured is a Pro benefit.
+   */
+  footnote?: string;
+  /**
    * The preview content (a sample / blurred version of the real feature
    * UI). Will be rendered with `pointer-events: none` so no element
    * inside it is clickable, and labeled with a sticky PREVIEW badge so
    * the provider can never mistake it for real data.
    */
   children: ReactNode;
-  /** Plan tier the feature lives on. Drives the badge copy. */
-  tier?: "pro" | "verified" | "concierge" | "featured";
+  /**
+   * Plan tier the feature lives on. Drives the badge copy.
+   *
+   * The retired "concierge" tier was removed — no provider-facing surface may
+   * badge a feature as a Concierge add-on.
+   */
+  tier?: "pro" | "verified" | "featured";
   /**
    * When true, applies a CSS blur to the preview content. Default
    * false — most preview content is realistic enough without blur.
@@ -39,10 +51,11 @@ interface LockedFeaturePreviewProps {
 }
 
 const TIER_COPY: Record<NonNullable<LockedFeaturePreviewProps["tier"]>, { label: string; icon: typeof Lock }> = {
-  pro:       { label: "Pro feature",         icon: Sparkles },
-  verified:  { label: "Verified facilities", icon: ShieldCheck },
-  concierge: { label: "Concierge add-on",    icon: Sparkles },
-  featured:  { label: "Featured add-on",     icon: Sparkles },
+  pro:      { label: "Pro feature",         icon: Sparkles },
+  verified: { label: "Verified facilities", icon: ShieldCheck },
+  // Featured is advertising sold separately from Pro — "add-on" here means a
+  // separately-billed product, never an included Pro entitlement.
+  featured: { label: "Featured advertising", icon: Megaphone },
 };
 
 /**
@@ -66,6 +79,7 @@ export function LockedFeaturePreview({
   ctaTo = "/provider/billing?upgrade=pro",
   ctaLabel = "Upgrade to Pro",
   secondaryAction,
+  footnote,
   children,
   tier = "pro",
   blur = false,
@@ -105,6 +119,11 @@ export function LockedFeaturePreview({
                   </li>
                 ))}
               </ul>
+            )}
+            {footnote && (
+              <p className="text-xs leading-relaxed text-slate-500 border-t border-amber-200/60 pt-2.5">
+                {footnote}
+              </p>
             )}
           </div>
           <div className="flex flex-col gap-2 sm:items-end shrink-0">

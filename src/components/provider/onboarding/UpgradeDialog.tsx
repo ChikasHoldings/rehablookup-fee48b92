@@ -99,9 +99,9 @@ export function UpgradeDialog({ open, onOpenChange, feature, returnTo }: Upgrade
           </div>
           <DialogTitle>{headline}</DialogTitle>
           <DialogDescription>
-            Upgrade to Pro — ${PLANS.pro.priceMonthly}/month. Includes 10 photos,
-            1 facility video, priority placement, lead analytics, and dedicated
-            support.
+            Upgrade to Pro — ${PLANS.pro.priceMonthly}/month. Publishes your phone
+            number and Call button, your enhanced profile, and richer media on your
+            public listing.
           </DialogDescription>
         </DialogHeader>
 
@@ -113,6 +113,10 @@ export function UpgradeDialog({ open, onOpenChange, feature, returnTo }: Upgrade
             </li>
           ))}
         </ul>
+
+        {PLANS.pro.note && (
+          <p className="text-xs leading-relaxed text-slate-500">{PLANS.pro.note}</p>
+        )}
 
         <DialogFooter className="gap-2 sm:gap-2">
           <Button

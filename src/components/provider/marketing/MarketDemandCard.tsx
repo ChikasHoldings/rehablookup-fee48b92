@@ -6,26 +6,26 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Gauge,
   Rotate3D,
-  UserCheck,
-  Sparkles,
   ArrowRight,
   AlertCircle,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 /**
- * MarketDemandCard — provider-facing "what's open in your market" upsell.
+ * MarketDemandCard — live FEATURED slot availability in the provider's market.
  *
- * Surfaces live Featured + Concierge slot availability for the provider's
- * OWN state/city using the public, owner-callable availability RPCs
- * (get_placement_availability / get_concierge_availability). NOT the
- * admin-only get_waitlist_demand_summary. Scarcity ("only 2 left",
- * "waitlist") drives the add-on purchase that sits directly below this
- * card on /provider/marketing.
+ * Surfaces Featured advertising availability for the provider's OWN state/city
+ * using the public, owner-callable get_placement_availability RPC. NOT the
+ * admin-only get_waitlist_demand_summary.
  *
- * EKRA-safe by construction: it only reports flat-fee placement-slot
- * availability and fair rotation — never lead volume, per-call, or
- * per-admission economics.
+ * The Concierge availability group was removed in the directory cutover:
+ * Concierge Partner is a retired product and must not be marketed to
+ * providers. get_concierge_availability still exists server-side (Stage-4
+ * debt) but nothing provider-facing calls it any more.
+ *
+ * Featured is ADVERTISING, sold separately from Pro. This card reports
+ * flat-fee slot availability and fair rotation only — never lead volume,
+ * per-call or per-admission economics, and never a ranking claim.
  */
 
 // facilities.state is stored as a full name ("Texas"); placement_caps and
@@ -70,7 +70,7 @@ interface AvailRow {
 
 interface ScopeAvail {
   key: string;
-  product: "featured" | "concierge";
+  product: "featured";
   label: string;
   cap: number;
   used: number;
@@ -86,11 +86,9 @@ function availPill(remaining: number): { label: string; cls: string } {
 export function MarketDemandCard({
   state,
   city,
-  isPro,
 }: {
   state: string;
   city: string;
-  isPro: boolean;
 }) {
   const stateCode = toStateCode(state);
   const cityName = city.trim();
@@ -105,7 +103,7 @@ export function MarketDemandCard({
       const scopes: ScopeAvail[] = [];
       const push = (
         key: string,
-        product: "featured" | "concierge",
+        product: "featured",
         label: string,
         row: AvailRow | null,
       ) => {
@@ -137,21 +135,6 @@ export function MarketDemandCard({
         push("f-city", "featured", `${cityName} city page`, (fCity.data as AvailRow[] | null)?.[0] ?? null);
       }
 
-      const cState = await supabase.rpc("get_concierge_availability", {
-        p_state: stateCode,
-      });
-      if (cState.error) throw cState.error;
-      push("c-state", "concierge", `${stateCode} statewide`, (cState.data as AvailRow[] | null)?.[0] ?? null);
-
-      if (cityName) {
-        const cCity = await supabase.rpc("get_concierge_availability", {
-          p_state: stateCode,
-          p_city: cityName,
-        });
-        if (cCity.error) throw cCity.error;
-        push("c-city", "concierge", `${cityName}, ${stateCode}`, (cCity.data as AvailRow[] | null)?.[0] ?? null);
-      }
-
       return scopes;
     },
   });
@@ -162,7 +145,6 @@ export function MarketDemandCard({
 
   const marketLabel = cityName ? `${cityName}, ${stateCode}` : stateCode;
   const featured = (data ?? []).filter((s) => s.product === "featured");
-  const concierge = (data ?? []).filter((s) => s.product === "concierge");
 
   return (
     <Card className="border-slate-200">
@@ -173,11 +155,11 @@ export function MarketDemandCard({
           </div>
           <div className="min-w-0">
             <h3 className="text-base font-semibold text-slate-900">
-              Availability in your market
+              Featured availability in your market
             </h3>
             <p className="text-xs text-muted-foreground">
-              Featured and Concierge slots are capped per area for fair rotation
-              — never auctioned. Here's what's open near {marketLabel} right now.
+              Featured advertising slots are capped per area for fair rotation —
+              never auctioned. Here's what's open near {marketLabel} right now.
             </p>
           </div>
         </div>
@@ -201,44 +183,20 @@ export function MarketDemandCard({
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <ScopeGroup
-              title="Featured placements"
-              icon={<Rotate3D className="h-3.5 w-3.5 text-amber-600" aria-hidden />}
-              scopes={featured}
-              isPro={isPro}
-              manageTo="/provider/marketing/featured"
-              claimLabel="Claim a slot"
-            />
-            <ScopeGroup
-              title="Concierge partner"
-              icon={<UserCheck className="h-3.5 w-3.5 text-violet-600" aria-hidden />}
-              scopes={concierge}
-              isPro={isPro}
-              manageTo="/provider/marketing/concierge"
-              claimLabel="Become a partner"
-            />
-          </div>
+          <ScopeGroup
+            title="Featured placements"
+            icon={<Rotate3D className="h-3.5 w-3.5 text-amber-600" aria-hidden />}
+            scopes={featured}
+            manageTo="/provider/marketing/featured"
+            claimLabel="View open slots"
+          />
         )}
 
-        {!isPro && (
-          <div className="flex items-center justify-between gap-3 rounded-md border border-amber-200 bg-amber-50/60 p-3">
-            <p className="text-xs text-amber-900">
-              Featured and Concierge are Pro add-ons. Upgrade to claim an open
-              slot before it fills.
-            </p>
-            <Button
-              asChild
-              size="sm"
-              className="shrink-0 gap-1 bg-amber-500 text-white hover:bg-amber-600"
-            >
-              <Link to="/provider/subscription">
-                <Sparkles className="h-3.5 w-3.5" aria-hidden />
-                Upgrade
-              </Link>
-            </Button>
-          </div>
-        )}
+        <p className="text-xs leading-relaxed text-muted-foreground">
+          Featured is advertising, billed separately from your plan. Slots rotate
+          fairly among paying facilities and do not change organic directory
+          position.
+        </p>
       </CardContent>
     </Card>
   );
@@ -248,14 +206,12 @@ function ScopeGroup({
   title,
   icon,
   scopes,
-  isPro,
   manageTo,
   claimLabel,
 }: {
   title: string;
   icon: React.ReactNode;
   scopes: ScopeAvail[];
-  isPro: boolean;
   manageTo: string;
   claimLabel: string;
 }) {
@@ -286,19 +242,17 @@ function ScopeGroup({
           })}
         </ul>
       )}
-      {isPro && (
-        <Button
-          asChild
-          variant="ghost"
-          size="sm"
-          className="mt-2 h-7 gap-1 px-2 text-xs text-[#1B365D] hover:text-[#142a4a]"
-        >
-          <Link to={manageTo}>
-            {claimLabel}
-            <ArrowRight className="h-3 w-3" aria-hidden />
-          </Link>
-        </Button>
-      )}
+      <Button
+        asChild
+        variant="ghost"
+        size="sm"
+        className="mt-2 h-7 gap-1 px-2 text-xs text-[#1B365D] hover:text-[#142a4a]"
+      >
+        <Link to={manageTo}>
+          {claimLabel}
+          <ArrowRight className="h-3 w-3" aria-hidden />
+        </Link>
+      </Button>
     </div>
   );
 }

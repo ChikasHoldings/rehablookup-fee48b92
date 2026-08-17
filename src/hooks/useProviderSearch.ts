@@ -13,17 +13,24 @@ export interface SearchResult {
   metadata?: Record<string, unknown>;
 }
 
+// Command-palette destinations. Titles mirror the sidebar's job-shaped labels
+// so searching for what you see in the nav actually finds it. The Pro entry
+// describes what Pro publishes — it used to promise "featured placement", which
+// Pro has never included.
 const NAVIGATION_PAGES: SearchResult[] = [
   { id: "dashboard", type: "page", title: "Dashboard", subtitle: "Overview & statistics", url: "/provider/dashboard" },
-  { id: "listing", type: "page", title: "My Listings", subtitle: "Edit facility information", url: "/provider/listings" },
+  { id: "listing", type: "page", title: "Listings", subtitle: "Edit facility information", url: "/provider/listings" },
+  { id: "enhanced-profile", type: "page", title: "Enhanced Profile", subtitle: "Programs, amenities, staff, media", url: "/provider/listings/profile" },
   { id: "inquiries", type: "page", title: "Inquiries", subtitle: "View all inquiries", url: "/provider/inquiries" },
-  { id: "pro-upgrade", type: "page", title: "Upgrade to Pro", subtitle: "$99/mo — featured placement, unlimited listings, Marketing Hub", url: "/provider/billing" },
-  { id: "analytics", type: "page", title: "Analytics", subtitle: "Performance metrics", url: "/provider/analytics" },
+  { id: "reviews", type: "page", title: "Reviews", subtitle: "Manage facility reviews", url: "/provider/reviews" },
+  { id: "claims", type: "page", title: "Listing Claims", subtitle: "Claim status & history", url: "/provider/claims" },
+  { id: "analytics", type: "page", title: "Performance", subtitle: "Search appearances, views, inquiries", url: "/provider/analytics" },
+  { id: "marketing", type: "page", title: "Featured", subtitle: "Sponsored advertising, billed separately", url: "/provider/marketing" },
+  { id: "billing", type: "page", title: "Plan & Billing", subtitle: "Plan, payments & invoices", url: "/provider/billing" },
+  { id: "pro-upgrade", type: "page", title: "Upgrade to Pro", subtitle: "$99/mo — public phone, enhanced profile, rich media, up to 5 listings", url: "/provider/billing" },
   { id: "settings", type: "page", title: "Settings", subtitle: "Account preferences", url: "/provider/settings" },
   { id: "notifications", type: "page", title: "Notifications", subtitle: "View all notifications", url: "/provider/notifications" },
-  { id: "reviews", type: "page", title: "Reviews", subtitle: "Manage facility reviews", url: "/provider/reviews" },
-  { id: "marketing", type: "page", title: "Marketing Hub", subtitle: "Featured add-on", url: "/provider/marketing" },
-  { id: "billing", type: "page", title: "Billing", subtitle: "Subscription, payments & invoices", url: "/provider/billing" },
+  { id: "help", type: "page", title: "Help & Support", subtitle: "FAQ, knowledge base, tickets", url: "/provider/help" },
 ];
 
 export function useProviderSearch(query: string, facilityId?: string) {

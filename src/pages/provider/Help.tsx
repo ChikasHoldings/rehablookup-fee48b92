@@ -8,7 +8,7 @@ import {
   Clock,
   AlertCircle,
   Shield,
-  Handshake,
+  Megaphone,
   CreditCard,
   Crown,
   Users,
@@ -32,6 +32,23 @@ import { SupportTicketThread } from "@/components/support/SupportTicketThread";
 import { NewSupportTicketForm } from "@/components/support/NewSupportTicketForm";
 import { useSupportTickets } from "@/lib/support/useSupportTickets";
 
+/**
+ * Provider FAQ.
+ *
+ * Rewritten in the directory cutover. The previous version was the single
+ * densest concentration of directory-contradicting copy in the panel:
+ *   • "Pro members get featured placement in search results and a higher
+ *     ranking score" — Pro buys neither.
+ *   • a whole "Concierge Add-On" section selling a retired product, including
+ *     "advisor-matched introductions" and a $1,000/month price.
+ *   • a Pro benefit list led by "verified badge" and "inquiries delivered
+ *     directly to your inbox" — trust is earned, and inquiries are not a paid
+ *     entitlement.
+ *   • "Leads" framing with a 24-hour exclusivity window and redistribution,
+ *     which is the lead-broker model the directory replaced.
+ *
+ * Answers here must stay consistent with src/lib/proDirectoryBenefits.ts.
+ */
 const faqSections = [
   {
     title: "Listing & Profile",
@@ -39,79 +56,105 @@ const faqSections = [
     items: [
       {
         question: "How do I update my facility listing?",
-        answer: "Navigate to 'My Listing' in the sidebar. You can edit services, insurance accepted, images, description, and contact info. Changes save automatically and go live after a brief review."
+        answer: "Open Listings in the sidebar. You can edit services, insurance accepted, images, description, and contact info. Changes save automatically and go live after a brief review."
       },
       {
-        question: "How can I improve my listing visibility?",
-        answer: "Complete all profile fields, add high-quality images (WebP recommended), ensure services and insurance are accurate, and respond quickly to leads. Pro members get featured placement in search results and a higher ranking score."
+        question: "How can I make my listing easier to choose?",
+        answer: "Complete every profile field, add high-quality images (WebP recommended), keep services and insurance accurate, and respond quickly to inquiries. A complete, accurate listing gives families more to evaluate. Organic directory position is computed from listing signals and is not affected by your plan or by advertising."
+      },
+      {
+        question: "What is the Enhanced Profile?",
+        answer: "Enhanced Profile (Listings → Enhanced Profile) holds your programs, amenities, staff, accreditation highlights, video, and virtual tour. Any plan can build this content; Pro is what publishes those modules on your public listing."
       },
       {
         question: "Can I have multiple facilities?",
-        answer: "Yes. The Free plan includes 1 facility listing; Pro includes up to 5 from a single account. Use the facility selector in the header to switch between locations."
+        answer: "Yes. The Free plan includes 1 facility listing; Pro manages up to 5 from a single account. Use the facility selector in the header to switch between locations."
       },
     ],
   },
   {
-    title: "Leads",
+    title: "Inquiries",
     icon: Users,
     items: [
       {
-        question: "How do leads work?",
-        answer: "When someone views your profile and submits a contact or tour request, it becomes a lead delivered to your inbox with full contact details immediately — no fees, no credits, no unlock step. Each lead is exclusive to your facility for a 24-hour window before being redistributed."
+        question: "How do inquiries work?",
+        answer: "When someone submits a contact or tour request from your listing, it arrives in your Inquiries inbox. An inquiry stays pinned to the one facility the person selected — it is never reassigned, resold, or shared with competitors."
       },
       {
-        question: "How do I export my lead data?",
-        answer: "In the Leads section, use the export button to download your lead data as a CSV file for use with your CRM or for record-keeping."
+        question: "Do I need Pro to receive inquiries?",
+        answer: "No. Every eligible approved facility receives inquiries from its listing, on any plan, at no cost. There are no per-inquiry fees, credits, or unlock steps on any plan."
+      },
+      {
+        question: "How do I export my inquiry data?",
+        answer: "In the Inquiries section, use the export button to download your data as a CSV file for your CRM or for record-keeping."
       },
     ],
   },
   {
-    title: "Concierge Add-On",
-    icon: Handshake,
+    title: "Verification",
+    icon: Shield,
     items: [
       {
-        question: "What is the Concierge Add-On?",
-        answer: "The Concierge Add-On ($1,000/month) makes you a verified Concierge Partner. Our human advisors prioritize your facility when matching families whose geography and level of care fit your program. EKRA-compliant by design — never per-call, per-lead, or per-admission."
+        question: "How does a facility become verified?",
+        answer: "Verification is earned through our review process. We check your listing against authoritative sources — state licensing records, accreditation bodies, and SAMHSA data — and re-check them on an ongoing basis. Keeping current credentials on your listing is what puts you into the review queue."
       },
       {
-        question: "How do I enable the Concierge Add-On?",
-        answer: "Subscribe to Pro first, then go to Marketing → Concierge and activate the add-on. You'll set your admissions contact, accepted care types, and geography. Once active, you'll start receiving advisor-matched introductions."
+        question: "Can I purchase verification or the verified badge?",
+        answer: "No. Verification is never sold, and it is not part of Pro or of Featured. It reflects what we can confirm about your facility, independently of what you spend."
       },
       {
-        question: "Are there any per-placement fees?",
-        answer: "No. The Concierge Add-On is a flat monthly subscription. There are no per-admission, per-call, or per-lead fees on any plan — RehabLookup uses flat-fee subscriptions only."
+        question: "Why is my verified badge hidden?",
+        answer: "If a licence or accreditation lapses, or an authoritative source changes, the badge is paused while we re-confirm. Your listing stays live. The Verification card on your dashboard shows what is needed and the remediation window."
       },
     ],
   },
   {
-    title: "Billing & Pro Membership",
+    title: "Plan & Billing",
     icon: CreditCard,
     items: [
       {
-        question: "What does Pro membership include?",
-        answer: "Pro ($99/month, or $1,009.80/yr — save 15%) includes: verified badge, direct contact info visible to clients, inquiries delivered directly to your inbox with full contact details, review responses, 10 photos plus 1 video, up to 5 facility listings, priority support, analytics dashboard, and an embeddable trust badge. Featured rotation placements and Concierge Partner surfacing are optional add-ons priced separately — see /for-providers for the full lineup."
+        question: "What does Pro include?",
+        answer: "Pro ($99/month, or $1,009.80/yr — save 15%) publishes your facility phone number and a Call button on your public listing, publishes your enhanced profile (programs, amenities, staff, accreditation highlights), adds rich media (up to 10 photos, video, virtual tour), manages up to 5 facility listings, and unlocks full performance reporting. Pro enhances your listing and provider tools — verification and organic directory position are determined independently and are never purchased with Pro."
       },
       {
         question: "How does billing work?",
-        answer: "Your base listing is free. Pro is a flat $99/month (or annual) subscription billed via Stripe — no per-lead fees, no credits, no per-placement charges. Featured and Concierge add-ons are billed separately as flat monthly subscriptions when activated."
+        answer: "Your base listing is free. Pro is a flat $99/month (or annual) subscription billed via Stripe — no per-inquiry fees, no credits, no per-placement charges. Featured advertising is billed separately as its own flat subscription, per location, when you activate it."
       },
       {
         question: "How do I manage my subscription?",
-        answer: "Open Billing from the sidebar to view your current plan, update payment methods, view invoices, or manage your Pro subscription."
+        answer: "Open Plan & Billing from the sidebar to view your current plan, update payment methods, view invoices, or cancel."
       },
     ],
   },
   {
-    title: "Analytics & Settings",
+    title: "Featured advertising",
+    icon: Megaphone,
+    items: [
+      {
+        question: "What is Featured?",
+        answer: "Featured is advertising. It places your facility in the sponsored slots on the state, city, near-me, treatment-type, and insurance pages for your area, rotating fairly among the paying facilities in that geography. Every placement carries a visible sponsored label."
+      },
+      {
+        question: "Does Featured improve my organic position?",
+        answer: "No. Featured is clearly labeled advertising shown alongside organic results. It does not change your organic directory position, which is computed from listing signals only."
+      },
+      {
+        question: "Is Featured part of Pro?",
+        answer: "No. Featured is a separate product with its own price, billed per location. It is not included with Pro and Pro does not include any Featured placement."
+      },
+    ],
+  },
+  {
+    title: "Performance & Settings",
     icon: BarChart3,
     items: [
       {
-        question: "What analytics are available?",
-        answer: "The Analytics page shows profile views, lead volume, response times, and placement activity. You can filter by date range including weekly, monthly, quarterly, or custom periods."
+        question: "What performance data is available?",
+        answer: "Performance shows search appearances, profile views, click-to-call, website clicks, and inquiries, with date-range filters. Pro adds traffic sources, 30-day trends, and your position among peers in your state. Featured has its own placement reporting while it is active."
       },
       {
         question: "How do I change my notification preferences?",
-        answer: "Go to Settings > Notifications to customize email alerts for new leads, placement introductions, billing events, and system updates."
+        answer: "Go to Settings → Notifications to customize email alerts for new inquiries, reviews, billing events, and system updates."
       },
     ],
   },
@@ -125,16 +168,16 @@ const helpTopics = [
     link: "/provider/knowledge-base"
   },
   {
-    icon: Handshake,
-    title: "Concierge Partner",
-    description: "How advisor-matched cases reach your facility",
-    link: "/provider/knowledge-base?category=placements"
+    icon: Crown,
+    title: "Plan & Billing",
+    description: "See Pro benefits and pricing",
+    link: "/provider/billing"
   },
   {
-    icon: Crown,
-    title: "Pro Membership",
-    description: "See Pro benefits and pricing",
-    link: "/provider/billing?upgrade=pro"
+    icon: Megaphone,
+    title: "Featured advertising",
+    description: "Sponsored placement, separate from your plan",
+    link: "/provider/marketing"
   },
 ];
 
@@ -327,7 +370,7 @@ export default function ProviderHelpPage() {
               <div className="flex items-start gap-3 p-3 rounded-lg border border-border/60 bg-background">
                 <Shield className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  For urgent matters regarding patient leads, placements, or system outages,
+                  For urgent matters regarding inquiries, billing, or system outages,
                   include <strong>Urgent</strong> in the subject line — those tickets are
                   automatically flagged and surfaced to our team first.
                 </p>

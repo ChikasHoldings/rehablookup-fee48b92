@@ -232,7 +232,7 @@ export default function CredentialKitPage() {
           description="Downloadable certificate, badge, email signature, and social images — personalised for your facility."
           icon={<Award className="h-4 w-4" />}
           backTo="/provider/marketing"
-          backLabel="Marketing"
+          backLabel="Featured"
           actions={
             gateOpen ? (
               <Badge className="bg-emerald-600 hover:bg-emerald-600">Eligible</Badge>

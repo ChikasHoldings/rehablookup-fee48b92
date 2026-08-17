@@ -245,11 +245,11 @@ export default function BillingCancel() {
                     value="addon-concierge"
                     checked={scope === "addon-concierge"}
                     onChange={() => setScope("addon-concierge")}
-                    aria-label="Cancel Concierge Partner add-on only, keep Pro"
+                    aria-label="Cancel the legacy add-on only, keep Pro"
                     className="mt-1"
                   />
                   <div>
-                    <p className="font-medium">Cancel Concierge Partner only</p>
+                    <p className="font-medium">Cancel legacy add-on only</p>
                     <p className="text-xs text-slate-500">Keep Pro and any other add-ons.</p>
                   </div>
                 </label>

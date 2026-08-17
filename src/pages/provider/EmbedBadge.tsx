@@ -163,7 +163,7 @@ export default function EmbedBadgePage() {
             description="Drop a verified badge, reviews block, or photo gallery onto your website."
             icon={<Code2 className="h-4 w-4" />}
             backTo="/provider/marketing"
-            backLabel="Marketing"
+            backLabel="Featured"
           />
           <div className="mx-auto max-w-5xl px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
             <LockedFeaturePreview
@@ -178,12 +178,13 @@ export default function EmbedBadgePage() {
                 </>
               }
               bullets={[
-                "Verified badge with enhanced Pro styling",
+                "Verified-badge widget — for facilities that are already verified",
                 "Live reviews block — aggregate rating + recent reviews",
                 "Photo carousel — up to 10 photos",
               ]}
-              ctaLabel="Upgrade to Pro to unlock"
+              ctaLabel="See Pro plans"
               ctaTo="/provider/billing?upgrade=pro"
+              footnote="Pro unlocks the embed widgets. The verified-badge widget additionally requires current verification, which is earned through our review process and is not purchasable."
             >
               <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <WidgetPickerCard
@@ -266,7 +267,7 @@ export default function EmbedBadgePage() {
           description="Drop a verified badge, reviews block, or photo gallery onto your website."
           icon={<Code2 className="h-4 w-4" />}
           backTo="/provider/marketing"
-          backLabel="Marketing"
+          backLabel="Featured"
         />
 
         <div className="mx-auto max-w-5xl px-4 py-5 sm:px-6 sm:py-6 lg:px-8 space-y-5">
