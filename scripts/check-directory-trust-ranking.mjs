@@ -749,6 +749,241 @@ function checkCanonicalPro() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// 5b. FEATURED COMPATIBILITY LOOKUP — one definition, complete enumeration
+// ═══════════════════════════════════════════════════════════════════════════
+/**
+ * get-featured-facilities used to answer "is this provider Featured?" from its
+ * own product-id lists and a triple-narrowed Stripe read:
+ *
+ *     customers.list({ email, limit: 1 })
+ *       → subscriptions.list({ customer, status:"active", limit: 1 })
+ *       → subs.data[0].items.data[0].price.product
+ *       → FEATURED_PRODUCT_IDS.includes(productId)
+ *
+ * Every one of those steps can drop a real Featured purchase, and the local
+ * lists were a second definition of the entitlement contract that could drift
+ * from the canonical classifier. These rules are MECHANISM-shaped and scoped
+ * to the two files that implement this lookup: they do not ban Stripe,
+ * "Featured", "Pro", `items.data[0]`, or `limit` anywhere else in the repo,
+ * because every one of those constructs is legitimate elsewhere.
+ *
+ * All matching runs on comment-stripped source, so the function's own record
+ * of the retired behaviour cannot trip a rule.
+ */
+function checkFeaturedCompatibilityLookup() {
+  const fn = "supabase/functions/get-featured-facilities/index.ts";
+  const helper = "supabase/functions/_shared/stripe-featured-lookup.ts";
+  const canonicalModule = "stripe-product-classification";
+
+  if (exists(fn)) {
+    const src = stripJs(read(fn));
+
+    // ── A second definition of product identity must not come back ──────────
+    for (const [re, label] of [
+      [/\b(?:const|let|var)\s+[\w$]*FEATURED_PRODUCT_IDS\b/, "FEATURED_PRODUCT_IDS"],
+      [/\b(?:const|let|var)\s+[\w$]*PRO_PRODUCT_IDS\b/, "PRO_PRODUCT_IDS"],
+    ]) {
+      if (re.test(src)) {
+        fail(
+          "featured-lookup",
+          `get-featured-facilities declares its own ${label} — Pro/Featured ` +
+            `identity is owned by _shared/${canonicalModule}.ts and must be ` +
+            `reached through the canonical lookup helper`,
+          fn,
+        );
+      }
+    }
+    if (/["']prod_[A-Za-z0-9]{6,}["']/.test(src)) {
+      fail(
+        "featured-lookup",
+        "get-featured-facilities hardcodes a Stripe product id — product " +
+          "identity belongs to the canonical classifier, not this function",
+        fn,
+      );
+    }
+    if (/\.includes\(\s*[^)]{0,40}\bproduct(?:Id)?\b/i.test(src)) {
+      fail(
+        "featured-lookup",
+        "get-featured-facilities tests a Stripe product against a local array — " +
+          "classification must flow through the canonical classifier",
+        fn,
+      );
+    }
+
+    // ── The narrowing reads that silently dropped purchases ─────────────────
+    for (const [re, label] of [
+      [/\bcustomers\.list\(/, "customers.list"],
+      [/\bsubscriptions\.list\(/, "subscriptions.list"],
+      [/\bitems\.data\[\s*0\s*\]/, "items.data[0]"],
+    ]) {
+      if (re.test(src)) {
+        fail(
+          "featured-lookup",
+          `get-featured-facilities calls ${label} directly — enumeration ` +
+            `(every customer, every active subscription, every item) belongs to ` +
+            `the canonical Featured lookup helper, which cannot be narrowed here`,
+          fn,
+        );
+      }
+    }
+
+    // ── It must actually delegate ───────────────────────────────────────────
+    if (!/\bemailHasActiveFeaturedSubscription\s*\(/.test(src)) {
+      fail(
+        "featured-lookup",
+        "get-featured-facilities does not call emailHasActiveFeaturedSubscription — " +
+          "Featured eligibility must come from the canonical lookup helper",
+        fn,
+      );
+    }
+    if (!/from\s*["'][^"']*stripe-featured-lookup(?:\.ts)?["']/.test(src)) {
+      fail(
+        "featured-lookup",
+        "get-featured-facilities does not import the canonical Featured lookup helper",
+        fn,
+      );
+    }
+
+    // ── Featured eligibility may not be granted by Pro or by the raw flag ───
+    if (/eligibleFacilities\.push\([\s\S]{0,400}?plan_type\s*:\s*["']pro["']/.test(src)) {
+      fail(
+        "featured-lookup",
+        "get-featured-facilities pushes a 'pro' plan_type into eligibleFacilities — " +
+          "Pro is an entitlement, never Featured inventory",
+        fn,
+      );
+    }
+    for (const [re, label] of [
+      [/\bproFacilityIds\b[^\n]{0,80}?eligibleFacilities\.push/, "canonical Pro membership"],
+      [/\bis_pro\b[^\n]{0,80}?eligibleFacilities\.push/, "is_pro"],
+    ]) {
+      if (re.test(src)) {
+        fail(
+          "featured-lookup",
+          `${label} can put a facility into eligibleFacilities — Pro does not buy placement`,
+          fn,
+        );
+      }
+    }
+    if (/if\s*\([^)]{0,80}\bfacility\.featured\b[^)]{0,80}\)[\s\S]{0,200}?eligibleFacilities\.push/.test(src)) {
+      fail(
+        "featured-lookup",
+        "the raw facilities.featured boolean grants Featured eligibility again — " +
+          "it is the column the retired Pro activation wrote and proves no purchase",
+        fn,
+      );
+    }
+    // Featured eligibility must be gated on an explicit true from the helper.
+    if (!/emailFeaturedMap\.get\([^)]*\)\s*!==\s*true/.test(src)) {
+      fail(
+        "featured-lookup",
+        "get-featured-facilities does not fail closed on an explicit `!== true` " +
+          "from the canonical Featured lookup before granting eligibility",
+        fn,
+      );
+    }
+
+    // ── The compatibility alias must not become a second Pro source ─────────
+    if (/\bprofessionalFacilityIds\.push\(/.test(src)) {
+      fail(
+        "featured-lookup",
+        "professionalFacilityIds is pushed into — it is a compatibility copy of " +
+          "the canonical proFacilityIds and must not derive Pro independently",
+        fn,
+      );
+    }
+    if (
+      /\bprofessionalFacilityIds\b/.test(src) &&
+      !/const\s+professionalFacilityIds[^=]*=\s*\[\s*\.\.\.\s*proFacilityIds\s*\]/.test(src)
+    ) {
+      fail(
+        "featured-lookup",
+        "professionalFacilityIds is not a copy of the canonical proFacilityIds",
+        fn,
+      );
+    }
+  }
+
+  // ── The helper owns enumeration, never meaning ────────────────────────────
+  if (exists(helper)) {
+    const src = stripJs(read(helper));
+
+    if (!new RegExp(`from\\s*["'][^"']*${canonicalModule}(?:\\.ts)?["']`).test(src)) {
+      fail(
+        "featured-lookup",
+        `the Featured lookup helper does not import _shared/${canonicalModule}.ts — ` +
+          `it must consume the canonical classifier, not reimplement it`,
+        helper,
+      );
+    }
+    for (const symbol of ["deriveTierFlagsFromSubscription", "classifySubscriptionProducts"]) {
+      if (!new RegExp(`\\b${symbol}\\s*\\(`).test(src)) {
+        fail(
+          "featured-lookup",
+          `the Featured lookup helper does not use ${symbol} — both canonical ` +
+            `Featured paths (modern lookup key, legacy product id) are required`,
+          helper,
+        );
+      }
+    }
+    // No third copy of the key/product sets.
+    for (const [re, label] of [
+      [/\b(?:const|let|var)\s+[\w$]*FEATURED_KEYS\b/, "FEATURED_KEYS"],
+      [/\b(?:const|let|var)\s+[\w$]*FEATURED_PRODUCT_IDS\b/, "FEATURED_PRODUCT_IDS"],
+      [/\b(?:const|let|var)\s+[\w$]*PRO_PRODUCT_IDS\b/, "PRO_PRODUCT_IDS"],
+    ]) {
+      if (re.test(src)) {
+        fail(
+          "featured-lookup",
+          `the Featured lookup helper declares its own ${label} — that is the ` +
+            `duplicate definition this architecture exists to remove`,
+          helper,
+        );
+      }
+    }
+    if (/["']prod_[A-Za-z0-9]{6,}["']/.test(src)) {
+      fail(
+        "featured-lookup",
+        "the Featured lookup helper hardcodes a Stripe product id",
+        helper,
+      );
+    }
+    // Enumeration must actually be complete.
+    if (/\blimit\s*:\s*1\b/.test(src)) {
+      fail(
+        "featured-lookup",
+        "the Featured lookup helper requests limit:1 — the narrowing read is " +
+          "exactly the defect it replaces",
+        helper,
+      );
+    }
+    if (!/\bstarting_after\b/.test(src)) {
+      fail(
+        "featured-lookup",
+        "the Featured lookup helper does not paginate with starting_after — a " +
+          "single page cannot prove the absence of a Featured subscription",
+        helper,
+      );
+    }
+    if (!/\bhas_more\b/.test(src)) {
+      fail(
+        "featured-lookup",
+        "the Featured lookup helper does not read has_more — pagination must " +
+          "continue until Stripe reports the list is exhausted",
+        helper,
+      );
+    }
+  } else {
+    fail(
+      "featured-lookup",
+      "the canonical Featured lookup helper is missing — get-featured-facilities " +
+        "has no non-duplicating way to classify a Featured subscription",
+      helper,
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // 6. WEBHOOK GENERATION — the deployable artifact must be reproducible
 // ═══════════════════════════════════════════════════════════════════════════
 /**
@@ -1457,6 +1692,7 @@ checkRanking();
 checkFrontend();
 checkSearchTrust();
 checkCanonicalPro();
+checkFeaturedCompatibilityLookup();
 checkWebhookGeneration();
 checkProductClassification();
 checkProCopyMatcher();
@@ -1488,6 +1724,8 @@ console.log("  • Pro writes no Featured / ranking / trust state");
 console.log("  • organic sorts and Featured display carry no payment signal");
 console.log("  • no result-set count is described as verified (source + built bundle)");
 console.log("  • Pro identity is canonical is_pro everywhere; no list can elevate it");
+console.log("  • Featured eligibility has one definition and enumerates every");
+console.log("    customer, subscription and item — no narrowing read, no local id list");
 console.log("  • the deployable stripe-webhook is generated from a pristine entrypoint");
 console.log("  • Pro and Featured Stripe products are disjoint; Featured is never a Pro tier");
 console.log("  • Pro lifecycle emails promise no Featured, ranking or verification benefit");

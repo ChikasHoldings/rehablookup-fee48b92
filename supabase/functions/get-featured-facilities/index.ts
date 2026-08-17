@@ -2,6 +2,7 @@ import Stripe from "https://esm.sh/stripe@18.5.0?target=denonext";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 import { Resend } from "https://esm.sh/resend@2.0.0?target=denonext";
 import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
+import { emailHasActiveFeaturedSubscription } from "../_shared/stripe-featured-lookup.ts";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LEGACY homepage-Featured selector.
@@ -41,8 +42,21 @@ import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
 //   featured_placements + facility_subscriptions.has_featured. This function
 //   remains only for the legacy homepage surface and the Stripe
 //   Featured-product path below.
+//
+//   v2.3.0 fixes what FEATURED MEANS on that Stripe path. This function used
+//   to declare its own FEATURED_PRODUCT_IDS / PRO_PRODUCT_IDS and decide
+//   eligibility from `customers.list({email, limit:1})` →
+//   `subscriptions.list({limit:1})` → `items.data[0]`. That is a second
+//   definition of the entitlement contract, and it silently dropped real
+//   purchases: the modern Featured SKUs bill on lookup keys against products
+//   the local list never contained, Featured need not sit on the first
+//   customer object or the first subscription, and a Pro item in position 0
+//   masked a Featured item behind it. Classification now flows entirely
+//   through the canonical stripe-product-classification module via
+//   _shared/stripe-featured-lookup.ts, which enumerates every customer, every
+//   active subscription and every item. Pro is untouched by that path.
 // ─────────────────────────────────────────────────────────────────────────────
-const VERSION = "2.2.0";
+const VERSION = "2.3.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -52,8 +66,11 @@ const corsHeaders = {
   "Cache-Control": "public, max-age=300, s-maxage=600, stale-while-revalidate=3600",
 };
 
-const FEATURED_PRODUCT_IDS = ["prod_TbalOeJZA2ZoJl", "prod_TbyzJVNOQL71NN"];
-const PRO_PRODUCT_IDS = ["prod_TbalLOPujTIoUe", "prod_Tbyz1bf6iYyzYd"];
+// NO LOCAL PRODUCT-ID LISTS. Featured/Pro identity is owned by
+// _shared/stripe-product-classification.ts and reached only through
+// emailHasActiveFeaturedSubscription. Re-declaring either set here would
+// recreate the second definition of the entitlement contract that v2.3.0
+// removed — and the build guard fails if it comes back.
 const DEFAULT_MAX_HOMEPAGE_FEATURED = 6;
 
 const logStep = (step: string, details?: unknown) => {
@@ -254,7 +271,6 @@ Deno.serve(async (req) => {
     });
 
     const eligibleFacilities: EligibleFacility[] = [];
-    const professionalFacilityIds: string[] = [];
     const proFacilityIds: string[] = [];
 
     // Identify Pro facilities — ENTITLEMENT ONLY, never Featured eligibility.
@@ -289,6 +305,17 @@ Deno.serve(async (req) => {
       }
     }
 
+    // `professionalFacilityIds` is a RESPONSE-SHAPE COMPATIBILITY ALIAS.
+    //
+    // No repository consumer reads it, but the key is retained because an
+    // external caller could. What it must never again be is a SECOND source of
+    // Pro: it used to be filled from this function's own Stripe product-id
+    // scan, so a facility absent from the canonical projection could still be
+    // published as Professional. It is now a copy of the canonical set — it can
+    // only ever contain ids that `public_facilities.is_pro === true` already
+    // put in `proFacilityIds`, so it cannot elevate anyone.
+    const professionalFacilityIds: string[] = [...proFacilityIds];
+
     // BATCH Stripe check: collect unique emails, then batch lookup
     // Instead of N individual stripe calls, get unique provider emails and batch
     const facilityEmailMap = new Map<string, typeof facilities[0]>();
@@ -307,68 +334,76 @@ Deno.serve(async (req) => {
       if (profile?.email) uniqueEmails.add(profile.email);
     }
 
-    // Build email->subscription mapping with batched Stripe calls
-    const emailSubscriptionMap = new Map<string, { productId: string }>();
-    
+    // Build email -> hasFeatured mapping with batched Stripe calls.
+    //
+    // The value is a BOOLEAN, not a product id. The old shape ("the one product
+    // this email is on") could not represent a Pro+Featured subscription, a
+    // second customer object, or a Featured item past index 0 — it structurally
+    // discarded the cases the canonical lookup exists to catch.
+    const emailFeaturedMap = new Map<string, boolean>();
+    let stripeLookupFailures = 0;
+
     // Process emails in batches of 10 for parallelism
     const emailArray = [...uniqueEmails];
     const BATCH_SIZE = 10;
-    
+
     for (let i = 0; i < emailArray.length; i += BATCH_SIZE) {
       const batch = emailArray.slice(i, i + BATCH_SIZE);
       const results = await Promise.allSettled(
         batch.map(async (email) => {
-          try {
-            const customers = await stripe.customers.list({ email, limit: 1 });
-            if (customers.data.length === 0) return null;
-            const subs = await stripe.subscriptions.list({
-              customer: customers.data[0].id,
-              status: "active",
-              limit: 1,
-            });
-            if (subs.data.length > 0) {
-              const productId = subs.data[0].items.data[0].price.product as string;
-              return { email, productId };
-            }
-            return null;
-          } catch {
-            return null;
-          }
+          // Fail-closed by contract: the helper returns false on any Stripe
+          // error rather than throwing, so one unreadable provider cannot take
+          // down the homepage — and cannot invent placement either.
+          const hasFeatured = await emailHasActiveFeaturedSubscription(stripe, email, {
+            onError: (stage, reason) => {
+              stripeLookupFailures++;
+              // Stage + reason only. Never the email, customer id, or raw error.
+              logStep("Stripe Featured lookup failed (treated as not Featured)", { stage, reason });
+            },
+          });
+          return { email, hasFeatured };
         })
       );
-      
+
       for (const result of results) {
         if (result.status === "fulfilled" && result.value) {
-          emailSubscriptionMap.set(result.value.email, { productId: result.value.productId });
+          emailFeaturedMap.set(result.value.email, result.value.hasFeatured);
+        } else if (result.status === "rejected") {
+          stripeLookupFailures++;
+          logStep("Stripe Featured lookup rejected (treated as not Featured)", {
+            reason: result.reason instanceof Error ? result.reason.message.slice(0, 120) : "unknown",
+          });
         }
       }
     }
 
-    logStep("Batched Stripe lookups complete", { uniqueEmails: uniqueEmails.size, found: emailSubscriptionMap.size });
+    logStep("Batched Stripe lookups complete", {
+      uniqueEmails: uniqueEmails.size,
+      featured: [...emailFeaturedMap.values()].filter(Boolean).length,
+      failures: stripeLookupFailures,
+    });
 
     // Now assign facilities based on Stripe results
     for (const [facilityId, facility] of facilityEmailMap) {
       const profile = profilesMap.get(facility.user_id);
       if (!profile?.email) continue;
 
-      const sub = emailSubscriptionMap.get(profile.email);
-      if (!sub) continue;
+      // Fail closed: only an explicit true from the canonical lookup is
+      // Featured. The Stripe scan decides Featured and ONLY Featured — Pro is
+      // read from public_facilities.is_pro above and is never inferred here.
+      if (emailFeaturedMap.get(profile.email) !== true) continue;
 
-      if (FEATURED_PRODUCT_IDS.includes(sub.productId)) {
-        eligibleFacilities.push({
-          id: facility.id,
-          user_id: facility.user_id,
-          featured_pinned: facility.featured_pinned || false,
-          last_featured_shown_at: facility.last_featured_shown_at,
-          featured_display_order: facility.featured_display_order,
-          provider_email: profile.email,
-          provider_name: profile.first_name || "",
-          facility_name: facility.name || "",
-          plan_type: 'featured',
-        });
-      } else if (PRO_PRODUCT_IDS.includes(sub.productId)) {
-        professionalFacilityIds.push(facility.id);
-      }
+      eligibleFacilities.push({
+        id: facility.id,
+        user_id: facility.user_id,
+        featured_pinned: facility.featured_pinned || false,
+        last_featured_shown_at: facility.last_featured_shown_at,
+        featured_display_order: facility.featured_display_order,
+        provider_email: profile.email,
+        provider_name: profile.first_name || "",
+        facility_name: facility.name || "",
+        plan_type: 'featured',
+      });
     }
 
     // NO LEGACY `facilities.featured = true` PATH.
@@ -496,7 +531,13 @@ Deno.serve(async (req) => {
       allEligibleIds,
       professionalFacilityIds,
       proFacilityIds,
-      paidFacilityIds: [...new Set([...allEligibleIds, ...professionalFacilityIds, ...proFacilityIds])],
+      // Compatibility union of the two LEGITIMATE paid states, and nothing
+      // else: Featured eligibility (canonical Stripe lookup) ∪ canonical Pro
+      // (public_facilities.is_pro). professionalFacilityIds is deliberately not
+      // a third term — it is a copy of proFacilityIds, so including it could
+      // only ever re-add ids already present, and naming it here would imply an
+      // independent entitlement source that no longer exists.
+      paidFacilityIds: [...new Set([...allEligibleIds, ...proFacilityIds])],
     };
 
     // Cache the response
