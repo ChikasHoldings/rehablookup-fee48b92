@@ -41,22 +41,25 @@ interface Tier {
   blurb: string;
 }
 
-// Two plans: Free and Pro. Featured and Concierge are MARKETING
-// ADD-ONS bolted onto an active Pro subscription — they're not
-// standalone plan tiers. See ADD_ONS below for the add-on display.
+// Two LISTING PLANS: Free and Pro. Featured is a separate ADVERTISING product
+// — not a plan tier, and NOT an add-on to Pro: it is purchasable on Free
+// (backend gate removed in migration 20260902000000; see
+// supabase/functions/create-checkout-session). The retired Concierge product was
+// removed from this page in the directory cutover — it is not sold.
 // Annual: Pro = 99 × 12 × 0.85 = 1,009.80 (15% off).
 const TIERS: Tier[] = [
   { id: "free", name: "Free", monthly: 0,  annual: 0,       monthlyEquivOfAnnual: 0,     blurb: "Basic claim" },
-  { id: "pro",  name: "Pro",  monthly: 99, annual: 1009.80, monthlyEquivOfAnnual: 84.15, blurb: "Verified profile, direct contact, lead analytics" },
+  { id: "pro",  name: "Pro",  monthly: 99, annual: 1009.80, monthlyEquivOfAnnual: 84.15, blurb: "Enhanced profile, direct contact, performance reporting" },
 ];
 
 interface AddOn {
-  id: "featured" | "concierge";
+  id: "featured";
   name: string;
   monthly: number;
   annual: number;
   blurb: string;
-  requires: "pro";
+  /** No plan prerequisite — Featured is purchasable on Free or Pro. */
+  requires: null;
 }
 
 const ADD_ONS: AddOn[] = [
@@ -65,16 +68,11 @@ const ADD_ONS: AddOn[] = [
     name: "Featured",
     monthly: 599,
     annual: 6108.60,
-    blurb: "Priority placement on the homepage and your state directory. Listings see ~4× the profile views.",
-    requires: "pro",
-  },
-  {
-    id: "concierge",
-    name: "Concierge",
-    monthly: 1000,
-    annual: 10200,
-    blurb: "Surfaced by our concierge advisors to high-intent families during placement calls.",
-    requires: "pro",
+    // No ranking claim and no traffic multiplier: Featured buys a clearly
+    // labeled sponsored slot, and it does not change organic position.
+    blurb:
+      "A clearly labeled sponsored slot on the state, city, near-me, treatment-type and insurance pages for your area. Billed per location.",
+    requires: null,
   },
 ];
 
@@ -314,16 +312,23 @@ interface Row {
 const COMPARISON_ROWS: Row[] = [
   { label: "Listing visible in directory",        values: [true, true] },
   { label: "Facility listings",                   values: ["1 listing", "Up to 5"] },
-  { label: "Verified badge",                      values: [false, true] },
+  // "Verified badge" was here as a Pro feature. Verification is earned through
+  // our review of licensing, accreditation and SAMHSA records — it is never sold,
+  // so it cannot appear in a plan comparison at all.
   { label: "Edit description, treatments, hours", values: [true, true] },
   { label: "Upload logo",                         values: [true, true] },
   { label: "Photo gallery",                       values: ["5 photos", "10 photos"] },
   { label: "Video upload",                        values: [false, "1 video"] },
+  { label: "Programs, amenities, staff on profile", values: [false, true] },
   { label: "Contact info visible publicly",       values: ["From SAMHSA", "Direct line"] },
-  { label: "Inquiries from your listing",         values: ["Routed to concierge", "Direct to your inbox"] },
+  // Inquiries are NOT gated: every eligible facility receives them on any plan,
+  // pinned to the facility the family selected. The old Free value ("Routed to
+  // concierge") described a retired workflow that never applied.
+  { label: "Inquiries from your listing",         values: [true, true] },
   { label: "Respond to reviews",                  values: [false, true] },
-  { label: "Lead analytics dashboard",            values: [false, true] },
-  { label: "Priority placement on city + state",  values: [false, true] },
+  { label: "Performance reporting",               values: ["Headline figures", "Full reporting"] },
+  // "Priority placement on city + state" was here as a Pro feature. Organic
+  // position is computed from listing signals only and is never for sale.
   { label: "Dedicated support",                   values: [false, true] },
 ];
 
@@ -455,7 +460,7 @@ function PlanComparisonSection() {
           </div>
 
           <p className="mt-4 text-sm text-slate-600 italic">
-            Featured and Concierge are marketing add-ons available on Pro — see below.
+            Featured advertising is a separate product, available on either plan — see below.
           </p>
         </div>
 
@@ -522,7 +527,7 @@ function PlanComparisonSection() {
             ))}
           </Accordion>
           <p className="mt-4 text-xs text-slate-600 italic">
-            Featured and Concierge are marketing add-ons available on Pro — see below.
+            Featured advertising is a separate product, available on either plan — see below.
           </p>
         </div>
       </div>
@@ -531,7 +536,7 @@ function PlanComparisonSection() {
 }
 
 // ──────────────────────────────────────────────────────────────────────
-// Add-ons (Featured, Concierge) — NOT plans
+// Featured advertising — a separate PRODUCT, not a plan and not a Pro add-on
 // ──────────────────────────────────────────────────────────────────────
 
 function AddOnsSection() {
@@ -540,15 +545,15 @@ function AddOnsSection() {
       <div className="container px-4 md:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl text-center">
           <span className="inline-flex items-center rounded-full bg-[#1B365D]/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#1B365D]">
-            Pro add-ons
+            Advertising
           </span>
           <h2 className="mt-4 font-display text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight text-[#1B365D]">
-            Marketing add-ons for Pro subscribers
+            Featured: clearly labeled sponsored placement
           </h2>
           <p className="mt-3 text-base md:text-lg text-slate-600">
-            Featured and Concierge aren't separate plans — they're optional
-            marketing layers you can add to an active Pro subscription. Slot
-            availability varies by state.
+            Featured isn't a plan and it isn't part of Pro — it's advertising you can
+            buy on either plan, billed per location. It does not change your organic
+            directory position. Slot availability varies by state.
           </p>
         </div>
 
@@ -578,9 +583,9 @@ function AddOnsSection() {
         </div>
 
         <p className="mt-6 text-center text-xs text-slate-500">
-          Add-ons are managed from your provider dashboard after Pro is active.
-          Featured slots are EKRA-clean rotational placements; Concierge surfacing
-          is non-weighted.
+          Featured is managed from your provider dashboard and can be cancelled
+          independently of your listing plan. Slots are EKRA-clean flat-fee
+          rotational placements — never per-call, per-lead, or per-admission.
         </p>
       </div>
     </section>
@@ -670,57 +675,12 @@ function FeaturedRotationSection() {
 }
 
 // ──────────────────────────────────────────────────────────────────────
-// Concierge Partner — EKRA-defensive
-// ──────────────────────────────────────────────────────────────────────
-
-function ConciergePartnerSection() {
-  return (
-    <section className="py-14 md:py-20 bg-slate-50/60 border-y border-slate-200/70">
-      <div className="container px-4 md:px-6 lg:px-8">
-        <div className="mx-auto max-w-3xl">
-          <h2 className="font-display text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight text-[#1B365D] text-center">
-            Prominent surfacing. Families still choose.
-          </h2>
-
-          <div className="mt-6 space-y-4 text-[15px] md:text-base leading-relaxed text-slate-700">
-            <p>
-              When a family calls our concierge, our advisors match them based on their
-              insurance, level of care, geography, and clinical needs — never based on
-              who's paid us.
-            </p>
-            <p>
-              Among facilities that match a family's criteria, Concierge Partners get a visual
-              badge in our advisors' tools so the advisor naturally mentions you:{" "}
-              <em className="text-slate-900">"X is one of our Placement Partners, meaning
-              they've been verified and have committed to 24-hour response times."</em> The
-              advisor always presents <strong>at least two non-partner options alongside any
-              partner facilities</strong>. The family always picks. The call goes directly to
-              your admissions line — never through ours.
-            </p>
-            <p>
-              This is the model we believe is the right answer post-EKRA: flat monthly
-              subscription for prominent surfacing, never per-call or per-admission. We pay
-              our advisors a salary, not a commission. We record every placement to
-              demonstrate that non-partner alternatives were always presented.
-            </p>
-            <p>
-              Concierge Partner is capped at <strong>3-5 facilities per major city</strong> to
-              maintain placement quality. When a city fills, we open a waitlist.
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// ──────────────────────────────────────────────────────────────────────
 // Cancellation policy — covers both monthly and annual cadence
 // ──────────────────────────────────────────────────────────────────────
 
 // ──────────────────────────────────────────────────────────────────────
 // Mid-page CTA strip — reinforces conversion after the value/pricing/
-// addons/concierge sections. Navy block with gold accent.
+// addons sections. Navy block with gold accent.
 // ──────────────────────────────────────────────────────────────────────
 
 function MidPageCtaStrip() {
@@ -850,31 +810,27 @@ const FAQ: Array<{ q: string; a: string }> = [
   },
   {
     q: "Is RehabLookup EKRA-compliant?",
-    a: "Yes by design. All fees are flat subscriptions for ad inventory — never per-call, per-lead, or per-admission. Concierge always presents non-partner alternatives alongside any partner facilities. Our advisors are paid a salary, not a commission. None of this is legal advice; facilities should confirm with their own counsel before subscribing.",
+    a: "Yes by design. All fees are flat subscriptions — Pro for listing features, Featured for clearly labeled ad inventory — never per-call, per-lead, or per-admission. Inquiries go directly to the facility the family selected and are never sold or brokered. None of this is legal advice; facilities should confirm with their own counsel before subscribing.",
   },
   {
     q: "Do we need LegitScript certification?",
-    a: "Recommended for paid SUD listings, not required to register at the Pro tier. Facilities holding current LegitScript certification get a verified-LegitScript badge on their listing. Featured and Concierge tiers will require LegitScript certification once we publicly launch those tiers.",
+    a: "Recommended for paid SUD listings, not required to register. Facilities holding current LegitScript certification get a verified-LegitScript badge on their listing. Featured advertising will require LegitScript certification once we publicly launch it.",
   },
   {
     q: "How do you decide who gets a Featured slot when a state is at cap?",
     a: "First to purchase. When at cap, you're added to a public waitlist. We open additional slots in 5-slot increments only when sustained demand and quality justify it. There is no bidding — every Featured subscriber pays the same flat fee.",
   },
   {
-    q: "Why is Concierge Partner so much more than Featured?",
-    a: "Concierge involves a human advisor's time, qualification work, and 24-hour response coordination. We cap at 3-5 per major city, so it's premium scarce inventory. Featured is impression-based and scales to higher slot counts per geo (up to 30 per state).",
-  },
-  {
     q: "Do you compete with us by listing competitors?",
-    a: "Yes — every licensed facility is in the directory whether they pay or not. We don't pick winners. We sell ad placement (Featured) and prominent surfacing (Concierge Partner) to amplify visibility for facilities who choose to invest in it.",
+    a: "Yes — every licensed facility is in the directory whether they pay or not. We don't pick winners, and organic position is never for sale. We sell clearly labeled ad placement (Featured) and listing features (Pro); neither changes where a facility ranks organically.",
   },
   {
     q: "What happens to inquiries on a Free listing?",
-    a: "They route to our concierge, who presents your facility plus 2 matching alternatives to the family. You get a notification: \"A family submitted on your listing — upgrade to Pro to receive these directly.\" If you're already busy without paid placements, Free is genuinely viable.",
+    a: "They come straight to you. An inquiry stays pinned to the one facility the family selected — it is never reassigned, resold, or shared with competitors — and it arrives with full contact details at no cost. Inquiries are not a paid feature on any plan. Free is genuinely viable.",
   },
   {
     q: "How do I see ROI?",
-    a: "Provider dashboard shows: profile views, phone-button clicks per placement, inquiry submissions, response times, and live rotation share. You'll know which placements earn their cost — and you can drop the ones that don't at next renewal.",
+    a: "Your provider dashboard shows search appearances, profile views, click-to-call, website clicks, and inquiries. While Featured is active you also get per-placement reporting and live rotation share, so you can drop the placements that don't earn their cost at next renewal.",
   },
   {
     q: "Who owns RehabLookup?",
@@ -929,7 +885,6 @@ export default function ForProviders() {
       <PlanComparisonSection />
       <AddOnsSection />
       <FeaturedRotationSection />
-      <ConciergePartnerSection />
       <MidPageCtaStrip />
       <CancellationSection />
       <FaqSection />

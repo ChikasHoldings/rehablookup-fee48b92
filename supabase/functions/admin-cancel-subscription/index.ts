@@ -700,7 +700,28 @@ export async function cancelSubscriptionAndRefund(
     ? TIER_PRICING.concierge.fullMonthlyRateCents
     : TIER_PRICING.concierge.discountedAnnualCents;
 
-  if (options.scope === "all") {
+  // FEATURED-ONLY ROWS HAVE NO PRO TO CANCEL.
+  // ─────────────────────────────────────────
+  // Featured is independent advertising, so a facility can hold it with
+  // tier='free' and stripe_subscription_id=NULL (migration 20260902000000). For
+  // such a row "cancel everything" means "cancel Featured" — there is no Pro
+  // piece. Without this re-route, scope='all' would either throw on
+  // stopStripeSubscription(null) in the deferred branch or run a Pro refund
+  // against a subscription that does not exist.
+  //
+  // Narrow by construction: it only fires when the row is NOT a Pro row, so a
+  // Pro or Pro+Featured cancellation is completely unaffected.
+  const isProRow = subscription.tier === "pro";
+  const effectiveScope: CancelScope =
+    options.scope === "all" && !isProRow ? "addon-featured" : options.scope;
+  if (effectiveScope !== options.scope) {
+    console.log(
+      "[cancel-subscription] non-Pro row: routing scope='all' to 'addon-featured'",
+      { subscriptionId: subscription.id, tier: subscription.tier },
+    );
+  }
+
+  if (effectiveScope === "all") {
     // Monthly self-cancel: keep the access already paid for this period and
     // stop Stripe from renewing. No refund (monthly is non-refundable by
     // policy), no immediate deactivation. The full teardown (status=canceled,
@@ -811,7 +832,7 @@ export async function cancelSubscriptionAndRefund(
         updated_at: new Date().toISOString(),
       })
       .eq("id", subscription.id);
-  } else if (options.scope === "addon-featured") {
+  } else if (effectiveScope === "addon-featured") {
     // Round-31 audit fix: previously this early-exited on
     // `!subscription.has_featured`, which made the refund + audit
     // path unreachable if a prior webhook delivery had already
@@ -862,7 +883,7 @@ export async function cancelSubscriptionAndRefund(
       .from("facility_subscriptions")
       .update({ has_featured: false, updated_at: new Date().toISOString() })
       .eq("id", subscription.id);
-  } else if (options.scope === "addon-concierge") {
+  } else if (effectiveScope === "addon-concierge") {
     // Same logic as addon-featured above — drop the early-exit,
     // surface the flag-cleared-without-audit-row anomaly, and let
     // refundOnePiece handle dedup.

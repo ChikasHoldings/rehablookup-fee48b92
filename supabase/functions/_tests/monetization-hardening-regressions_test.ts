@@ -189,14 +189,103 @@ Deno.test("pro-upgrade: create-checkout has 30-min open-session reuse + 5-min id
   );
 });
 
-Deno.test("pro-upgrade: create-checkout-session has Pro-required gate for add-ons", async () => {
+Deno.test("featured: create-checkout-session does NOT require Pro to buy Featured", async () => {
+  // CONTRACT REVERSAL. This test used to assert the opposite — that add-on
+  // checkout rejects without an active Pro subscription. That gate was an
+  // artifact of the schema (facility_subscriptions.tier was CHECK (tier IN
+  // ('pro')), so a row could not exist without Pro), not of the product.
+  // Featured is advertising: priced per location, billed on its own Stripe
+  // subscription, purchasable on Free. See
+  // supabase/migrations/20260902000000_featured_independent_of_pro.sql.
   const src = await read("supabase/functions/create-checkout-session/index.ts");
-  // Gate: add_addon intent must reject when no active Pro sub.
-  assertStringIncludes(src, "PRO_REQUIRED");
+
+  // Isolate the add_addon branch: the retired Concierge product legitimately
+  // keeps a Pro precondition, so a file-wide search would be meaningless.
+  const branchStart = src.indexOf("add_addon", src.indexOf("} else {"));
+  assert(branchStart > 0, "could not locate the add_addon branch");
+  const branchEnd = src.indexOf("supersedeFeatured", branchStart);
+  const branch = src.slice(branchStart, branchEnd === -1 ? branchStart + 4000 : branchEnd);
+
+  // Every Pro refusal must sit inside a concierge-only conditional.
+  const gate = branch.match(/if\s*\(\s*product\s*===\s*"concierge"\s*\)\s*\{([\s\S]*?)\n {6}\}/);
+  assert(gate, "the Pro precondition must be scoped to product === 'concierge'");
+  assertStringIncludes(gate![1], "PRO_REQUIRED");
+
+  const outsideConciergeGate = branch.replace(gate![1], "");
   assert(
-    /requires an active Pro subscription/.test(src),
-    "create-checkout-session must reject add-ons without active Pro",
+    !outsideConciergeGate.includes("PRO_REQUIRED"),
+    "Featured checkout must not return PRO_REQUIRED — Featured does not require Pro",
   );
+  assert(
+    !outsideConciergeGate.includes("NO_SUBSCRIPTION"),
+    "Featured checkout must not require a pre-existing subscription row",
+  );
+});
+
+Deno.test("featured: activation creates a Featured-only row instead of refusing", async () => {
+  // The dangerous half. With only the checkout gate removed, a Free provider
+  // would have been charged by Stripe and received nothing, because
+  // activateFeaturedAddon() hard-refused when no facility_subscriptions row
+  // existed.
+  for (const rel of [
+    "supabase/functions/_shared/featured-addon.ts",
+    // The deployable artifact must carry the fix too, or production keeps the
+    // old behaviour no matter how clean the shared source is.
+    "supabase/functions/stripe-webhook/index.ts",
+  ]) {
+    const src = await read(rel);
+    assert(
+      !src.includes("Pro upgrade must precede Featured"),
+      `${rel} still refuses Featured activation without Pro`,
+    );
+    assertStringIncludes(src, "featured_only_row_create");
+    // tier MUST be explicit: the column has no DEFAULT any more, and a forgotten
+    // tier would previously have minted a Pro entitlement.
+    assert(/tier:\s*"free"/.test(src), `${rel} must record a Featured-only row as tier='free'`);
+    // status='active' is required by get-featured-rotation's INNER JOIN filter.
+    assert(/status:\s*"active"/.test(src), `${rel} must mark the Featured-only row active`);
+  }
+});
+
+Deno.test("featured: a Featured-only row never satisfies the Pro predicate", async () => {
+  // has_active_pro() is the single definition of Pro. It must predicate on
+  // tier='pro' and must not read any Featured signal.
+  const dir = "supabase/migrations";
+  const files: string[] = [];
+  for await (const entry of Deno.readDir(dir)) {
+    if (entry.isFile && entry.name.endsWith(".sql")) files.push(entry.name);
+  }
+  files.sort().reverse();
+  let body: string | null = null;
+  for (const name of files) {
+    const sql = await read(`${dir}/${name}`);
+    const idx = sql.search(/CREATE OR REPLACE FUNCTION public\.has_active_pro/i);
+    if (idx !== -1) { body = sql.slice(idx); break; }
+  }
+  assert(body, "no migration defines has_active_pro");
+  assert(/tier\s*=\s*'pro'/i.test(body!), "has_active_pro must require tier='pro'");
+  assert(
+    !/has_featured/i.test(body!.split("$$")[1] ?? body!),
+    "has_active_pro must not read a Featured signal",
+  );
+});
+
+Deno.test("featured: cancelling a non-Pro row does not try to cancel Pro", async () => {
+  // cancel-subscription.ts is inlined into three deployables. A fix applied to
+  // only one copy ships half-fixed.
+  for (const rel of [
+    "supabase/functions/_shared/cancel-subscription.ts",
+    "supabase/functions/provider-self-cancel-subscription/index.ts",
+    "supabase/functions/admin-cancel-subscription/index.ts",
+    "supabase/functions/stripe-webhook/index.ts",
+  ]) {
+    const src = await read(rel);
+    assertStringIncludes(src, 'const isProRow = subscription.tier === "pro"');
+    assert(
+      /options\.scope === "all" && !isProRow \? "addon-featured" : options\.scope/.test(src),
+      `${rel} must route scope='all' on a non-Pro row to the Featured path`,
+    );
+  }
 });
 
 Deno.test("pro-upgrade: webhook event dedup returns 500 on dedup-claim failure", async () => {

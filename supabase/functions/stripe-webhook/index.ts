@@ -1030,7 +1030,28 @@ export async function cancelSubscriptionAndRefund(
     ? TIER_PRICING.concierge.fullMonthlyRateCents
     : TIER_PRICING.concierge.discountedAnnualCents;
 
-  if (options.scope === "all") {
+  // FEATURED-ONLY ROWS HAVE NO PRO TO CANCEL.
+  // ─────────────────────────────────────────
+  // Featured is independent advertising, so a facility can hold it with
+  // tier='free' and stripe_subscription_id=NULL (migration 20260902000000). For
+  // such a row "cancel everything" means "cancel Featured" — there is no Pro
+  // piece. Without this re-route, scope='all' would either throw on
+  // stopStripeSubscription(null) in the deferred branch or run a Pro refund
+  // against a subscription that does not exist.
+  //
+  // Narrow by construction: it only fires when the row is NOT a Pro row, so a
+  // Pro or Pro+Featured cancellation is completely unaffected.
+  const isProRow = subscription.tier === "pro";
+  const effectiveScope: CancelScope =
+    options.scope === "all" && !isProRow ? "addon-featured" : options.scope;
+  if (effectiveScope !== options.scope) {
+    console.log(
+      "[cancel-subscription] non-Pro row: routing scope='all' to 'addon-featured'",
+      { subscriptionId: subscription.id, tier: subscription.tier },
+    );
+  }
+
+  if (effectiveScope === "all") {
     // Monthly self-cancel: keep the access already paid for this period and
     // stop Stripe from renewing. No refund (monthly is non-refundable by
     // policy), no immediate deactivation. The full teardown (status=canceled,
@@ -1141,7 +1162,7 @@ export async function cancelSubscriptionAndRefund(
         updated_at: new Date().toISOString(),
       })
       .eq("id", subscription.id);
-  } else if (options.scope === "addon-featured") {
+  } else if (effectiveScope === "addon-featured") {
     // Round-31 audit fix: previously this early-exited on
     // `!subscription.has_featured`, which made the refund + audit
     // path unreachable if a prior webhook delivery had already
@@ -1192,7 +1213,7 @@ export async function cancelSubscriptionAndRefund(
       .from("facility_subscriptions")
       .update({ has_featured: false, updated_at: new Date().toISOString() })
       .eq("id", subscription.id);
-  } else if (options.scope === "addon-concierge") {
+  } else if (effectiveScope === "addon-concierge") {
     // Same logic as addon-featured above — drop the early-exit,
     // surface the flag-cleared-without-audit-row anomaly, and let
     // refundOnePiece handle dedup.
@@ -1459,7 +1480,9 @@ export async function notifyProBenefitsPartialFailure(
 //
 // activateFeaturedAddon:
 //   - Flip facility_subscriptions.has_featured=true, store the Featured
-//     Stripe sub id alongside the canonical (Pro) row keyed on facility_id.
+//     Stripe sub id on the row keyed on facility_id. CREATES that row as
+//     tier='free' when none exists — a Featured-only facility. Featured is
+//     independent of Pro: it is advertising, not a Pro entitlement.
 //   - Seed featured_placements rows for the facility's geography so the
 //     facility appears in homepage / state / city / search rotations on
 //     purchase. Treatment-type + insurance slots remain provider-driven
@@ -1558,15 +1581,83 @@ export async function activateFeaturedAddon(
     result.failed.push({ step: "subscription_lookup", error: subLookupErr.message });
     return result;
   }
+  // FEATURED-ONLY ACTIVATION.
+  // ─────────────────────────
+  // No row means this facility has never held Pro — which, since Featured is
+  // independent advertising, is a perfectly ordinary Featured purchase. This
+  // used to hard-refuse ("Pro upgrade must precede Featured"), so once the
+  // checkout gate came off the provider would have been CHARGED by Stripe and
+  // received nothing. Create the row instead.
+  //
+  // tier='free' is explicit and load-bearing: the column has no DEFAULT any
+  // more (migration 20260902000000), and has_active_pro() predicates on
+  // tier='pro', so this row grants Featured advertising and NOTHING else — no
+  // Pro capabilities, no verification, no ranking influence. status='active' is
+  // required because get-featured-rotation INNER JOINs this row and filters
+  // status='active' before letting a paid placement render.
+  //
+  // provider_id comes from facilities.user_id — the same owner that
+  // create-checkout-session verified before allowing the purchase — rather than
+  // from Stripe metadata, so a malformed or absent metadata field cannot strand
+  // a paid subscription.
+  let facSubId: string;
   if (!facSubRow) {
-    result.failed.push({
-      step: "subscription_lookup",
-      error: "no facility_subscriptions row exists; Pro upgrade must precede Featured",
-    });
-    return result;
+    const { data: ownerRow, error: ownerErr } = await supabase
+      .from("facilities")
+      .select("user_id")
+      .eq("id", args.facilityId)
+      .maybeSingle();
+    const ownerId = (ownerRow as { user_id: string | null } | null)?.user_id ?? null;
+    if (ownerErr || !ownerId) {
+      result.failed.push({
+        step: "featured_only_row_create",
+        error: ownerErr?.message ?? "facility has no owner; cannot record a Featured-only subscription",
+      });
+      return result;
+    }
+    const { data: createdRow, error: createErr } = await supabase
+      .from("facility_subscriptions")
+      .insert({
+        facility_id: args.facilityId,
+        provider_id: ownerId,
+        // Listing plan stays Free. Advertising is not a tier.
+        tier: "free",
+        status: "active",
+        // No Pro subscription exists, so no Pro Stripe identifiers and no Pro
+        // period. The Featured sub's own period is written just below.
+        stripe_subscription_id: null,
+        price_cents: 0,
+        paid_amount_cents: null,
+        has_featured: false,
+        has_concierge_partner: false,
+        started_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .select("id")
+      .maybeSingle();
+    // A concurrent Stripe retry may have inserted the row first (facility_id is
+    // unique). Re-read rather than fail — activation must stay idempotent.
+    if (createErr || !createdRow) {
+      const { data: raceRow } = await supabase
+        .from("facility_subscriptions")
+        .select("id")
+        .eq("facility_id", args.facilityId)
+        .maybeSingle();
+      const raceId = (raceRow as { id: string } | null)?.id ?? null;
+      if (!raceId) {
+        result.failed.push({
+          step: "featured_only_row_create",
+          error: createErr?.message ?? "insert returned no row",
+        });
+        return result;
+      }
+      facSubId = raceId;
+    } else {
+      facSubId = (createdRow as { id: string }).id;
+    }
+  } else {
+    facSubId = (facSubRow as { id: string }).id;
   }
-
-  const facSubId = (facSubRow as { id: string }).id;
 
   // H5 duplicate-purchase orphan guard: Featured is already active on a
   // DIFFERENT Stripe subscription. Overwriting featured_stripe_subscription_id
@@ -1574,10 +1665,12 @@ export async function activateFeaturedAddon(
   // the existing sub, hand the incoming duplicate back to the caller to cancel
   // + refund, and stop — the existing sub already owns the placements. A re-run
   // for the SAME sub id (Stripe retry) falls through to the idempotent path.
+  // A row we just created carries has_featured=false, so this guard is a no-op
+  // on the Featured-only path and only fires for a genuine duplicate purchase.
   const existingFeaturedSubId =
-    (facSubRow as { featured_stripe_subscription_id: string | null }).featured_stripe_subscription_id;
+    (facSubRow as { featured_stripe_subscription_id: string | null } | null)?.featured_stripe_subscription_id ?? null;
   if (
-    (facSubRow as { has_featured: boolean }).has_featured === true &&
+    (facSubRow as { has_featured?: boolean } | null)?.has_featured === true &&
     existingFeaturedSubId &&
     existingFeaturedSubId !== args.stripeSubscriptionId
   ) {

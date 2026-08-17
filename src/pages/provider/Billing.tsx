@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   CreditCard,
+  Megaphone,
   Loader2,
   Settings2,
   CheckCircle2,
@@ -25,7 +26,7 @@ import { SwitchToAnnualBanner } from "@/components/provider/billing/SwitchToAnnu
 import { SwitchToMonthlyAtRenewalBanner } from "@/components/provider/billing/SwitchToMonthlyAtRenewalBanner";
 import { ProUpgradeChoices } from "@/components/provider/subscription/ProUpgradeChoices";
 import { BillingDetailsCard } from "@/components/provider/billing/BillingDetailsCard";
-import { fmtMoney, TIER_PRICING } from "@/lib/billingPricing";
+import { fmtMoney, fmtMoneyWhole, TIER_PRICING } from "@/lib/billingPricing";
 import { useActivePromotion } from "@/hooks/useActivePromotion";
 import { PromoCountdownBanner } from "@/components/provider/promo/PromoCountdownBanner";
 import { PlanGraceBanner } from "@/components/provider/PlanGraceBanner";
@@ -56,10 +57,21 @@ function isSafeStripeUrl(rawUrl: string | null | undefined): rawUrl is string {
 /**
  * /provider/billing — "Plan & Billing".
  *
- * STRUCTURAL RULE: this page is JUST about Free vs Pro. Featured is named only
- * in a single helper-text link pointing at /provider/marketing, because it is a
- * separate advertising product with its own hub — never a Pro line item. The
- * Pro upgrade choices are the ONLY purchase surface on this page.
+ * STRUCTURAL RULE: the LISTING PLAN (Free vs Pro) is what this page sells. The
+ * Pro upgrade choices are the ONLY purchase surface here; Featured is bought on
+ * its own hub.
+ *
+ * Featured advertising still gets a STATUS card, rendered independently of the
+ * plan branch, because it is a separate product a facility can hold with or
+ * without Pro. All four states are representable and none of them is labelled as
+ * a tier above the others:
+ *
+ *   Free              → Free card + Pro upgrade choices
+ *   Pro               → Pro card
+ *   Featured only     → Free card + Featured card + Pro upgrade choices
+ *   Pro + Featured    → Pro card + Featured card
+ *
+ * There is deliberately no combined "Premium" tier.
  *
  * The Pro capability list comes from src/lib/proDirectoryBenefits.ts. It is not
  * restated inline: the previous version of this page listed benefits Free
@@ -290,6 +302,18 @@ export default function ProviderSubscription() {
   const isPaymentIssue = isProTier && (status === "past_due" || status === "unpaid");
   const isIncomplete = isProTier && status === "incomplete";
   const isCancelScheduled = isPro && subscription?.cancel_at_period_end === true;
+  // Featured advertising is orthogonal to the listing plan — never derived from
+  // tier, and never used to infer Pro.
+  const hasFeatured = subscription?.has_featured === true;
+  const featuredPeriodEndRaw =
+    subscription?.featured_current_period_end ?? subscription?.current_period_end ?? null;
+  const featuredPeriodEndStr = featuredPeriodEndRaw
+    ? new Date(featuredPeriodEndRaw).toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      })
+    : null;
   const isMonthlyPro = isPro && subscription?.billing_period === "monthly";
   const isAnnualPro = isPro && subscription?.billing_period === "annual";
 
@@ -455,6 +479,13 @@ export default function ProviderSubscription() {
           />
         )}
 
+        {/* Featured is an INDEPENDENT product, so its status renders on its own
+            regardless of the listing plan below. A Featured-only facility
+            (tier='free', has_featured=true) sees the Free listing card AND this
+            card; a Pro+Featured facility sees both products separately. There is
+            deliberately no combined "Premium" tier — these are two products. */}
+        {hasFeatured && <FeaturedBillingCard periodEndStr={featuredPeriodEndStr} />}
+
         {(isPro || isPaymentIssue) && subscription ? (
           <>
             <ProSubscriptionCard
@@ -530,6 +561,43 @@ function IncompletePendingCard({
           </Button>
           <Button variant="outline" size="sm" onClick={onManage} disabled={managing}>
             Manage payment
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+/**
+ * Featured advertising status. Rendered independently of Free/Pro because
+ * Featured is a separate product with its own Stripe subscription, its own
+ * period, and its own cancellation scope — not a tier above Pro.
+ */
+function FeaturedBillingCard({ periodEndStr }: { periodEndStr: string | null }) {
+  return (
+    <Card className="border-emerald-200/70">
+      <CardContent className="p-5 md:p-6 space-y-3">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-2">
+            <Megaphone className="h-5 w-5 text-[#1B365D]" aria-hidden />
+            <p className="font-semibold text-slate-900 text-lg">Featured advertising</p>
+          </div>
+          <Badge className="bg-emerald-600 hover:bg-emerald-600">Active</Badge>
+        </div>
+        <p className="text-sm text-slate-700">
+          {fmtMoneyWhole(TIER_PRICING.featured.monthlyCents)}/mo per location
+          {periodEndStr ? ` — paid through ${periodEndStr}` : ""}.
+        </p>
+        <p className="text-xs text-slate-500 leading-relaxed">
+          Billed separately from your listing plan. Cancelling Featured leaves your
+          listing plan untouched, and cancelling your plan leaves Featured running.
+        </p>
+        <div className="flex flex-wrap gap-2 pt-1">
+          <Button asChild variant="outline" size="sm" className="gap-1.5">
+            <Link to="/provider/marketing">Manage Featured</Link>
+          </Button>
+          <Button asChild variant="ghost" size="sm" className="gap-1.5 text-slate-600">
+            <Link to="/provider/billing/cancel">Cancel Featured</Link>
           </Button>
         </div>
       </CardContent>

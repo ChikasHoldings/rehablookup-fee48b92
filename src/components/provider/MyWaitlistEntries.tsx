@@ -116,15 +116,18 @@ export function MyWaitlistEntries({ facilityId, addonType }: Props) {
     return `${r.geo_state ?? "?"}${r.geo_city ? "/" + r.geo_city : " (statewide)"}`;
   }
 
-  // Deep-link to the add-on manager with the invited scope pre-filled so the
-  // add-placement / add-geo dialog opens ready to confirm (see the claim
-  // useEffect in AddFeaturedPlacementForm / AddConciergeGeoForm).
+  // Deep-link to the Featured manager with the invited scope pre-filled so the
+  // add-placement dialog opens ready to confirm (see the claim useEffect in
+  // AddFeaturedPlacementForm).
+  //
+  // Legacy waitlist rows for the retired add-on still exist in production. They
+  // stay VISIBLE (the provider joined that waitlist and deserves to see it) but
+  // there is no purchase flow to claim into any more, so they point at the
+  // Featured hub instead of the retired /provider/marketing/concierge path. We
+  // do not deep-link a claim for a product that is no longer sold.
   function claimHref(r: WaitlistRow): string {
     if (r.addon_type === "concierge") {
-      const p = new URLSearchParams({ claim: "concierge" });
-      if (r.geo_state) p.set("cstate", r.geo_state);
-      if (r.geo_city) p.set("ccity", r.geo_city);
-      return `/provider/marketing/concierge?${p.toString()}`;
+      return "/provider/marketing";
     }
     const p = new URLSearchParams({ claim: "featured" });
     if (r.scope_type) p.set("ctype", r.scope_type);

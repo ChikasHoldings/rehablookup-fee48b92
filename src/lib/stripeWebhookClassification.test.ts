@@ -379,19 +379,33 @@ describe("J. past_due Pro behaviour is unchanged", () => {
     expect(sql).toMatch(/tier\s*=\s*'pro'/);
   });
 
-  it("this hotfix adds no migration, and none redefines has_active_pro", () => {
-    // The two B1/B2 migrations are the newest in the tree and are explicitly
-    // out of scope here; anything newer would be a silent contract change
-    // arriving under a classification fix.
+  it("no migration at or after the B1/B2 pair redefines has_active_pro", () => {
+    // ORIGINALLY this pinned the newest migration filename to
+    // 20260901000100_ranking_weights_drop_pro_boost.sql, to prove the
+    // classification hotfix shipped no migration of its own. That pin broke on
+    // the next legitimate migration (Featured independence, 20260902000000) and
+    // would break on every future one — it asserted a fact about the calendar,
+    // not about the contract.
+    //
+    // The property that actually matters is the one the pin was standing in for:
+    // has_active_pro is the single definition of Pro entitlement, and nothing
+    // shipped after the B1/B2 amendment may quietly redefine it. That is now
+    // asserted directly, across every newer migration, which is strictly
+    // stronger than checking two filenames.
+    const B1_B2_FLOOR = "20260901000000_public_facilities_plan_independent_verified.sql";
     const migrations = readdirSync(join(ROOT, "supabase/migrations"))
       .filter((f) => f.endsWith(".sql"))
       .sort();
-    const newest = migrations[migrations.length - 1];
-    expect(newest).toBe("20260901000100_ranking_weights_drop_pro_boost.sql");
-    for (const name of ["20260901000000_public_facilities_plan_independent_verified.sql", newest]) {
-      expect(read(`supabase/migrations/${name}`)).not.toMatch(
-        /create\s+or\s+replace\s+function\s+(public\.)?has_active_pro/i,
-      );
+    const floorIdx = migrations.indexOf(B1_B2_FLOOR);
+    expect(floorIdx, `${B1_B2_FLOOR} is missing from the migration tree`).toBeGreaterThanOrEqual(0);
+
+    const atOrAfterFloor = migrations.slice(floorIdx);
+    expect(atOrAfterFloor.length).toBeGreaterThan(0);
+    for (const name of atOrAfterFloor) {
+      expect(
+        read(`supabase/migrations/${name}`),
+        `${name} redefines has_active_pro — Pro entitlement has exactly one definition`,
+      ).not.toMatch(/create\s+or\s+replace\s+function\s+(public\.)?has_active_pro/i);
     }
   });
 

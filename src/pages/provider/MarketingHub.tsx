@@ -55,8 +55,8 @@ export default function MarketingHub() {
   const { data: subscription, isLoading, isError, refetch } = useFacilitySubscription(facilityId);
 
   // Grace-aware: a past_due provider is still a paying Pro in Stripe's dunning
-  // window. Used ONLY to describe the current checkout prerequisite truthfully
-  // (see FeaturedPurchaseCard) — never to gate what this page explains.
+  // window. Used ONLY to word the Pro brand-assets footer — never to gate
+  // Featured, which is independent of Pro.
   const isPro = isActiveProRow(subscription);
   const hasFeatured = subscription?.has_featured === true;
   // Legacy Concierge holders still exist in production. Concierge is retired
@@ -152,7 +152,7 @@ export default function MarketingHub() {
             {facilityId && <FeaturedAnalyticsWidget facilityId={facilityId} />}
           </>
         ) : (
-          <FeaturedPurchaseCard isPro={isPro} />
+          <FeaturedPurchaseCard />
         )}
 
         {/* ── Live slot availability in this facility's market ── */}
@@ -294,18 +294,15 @@ function FeaturedActiveCard({ periodEndStr }: { periodEndStr: string | null }) {
 }
 
 /**
- * Inactive state. One CTA, and an honest statement of the CURRENT checkout
- * prerequisite.
+ * Inactive state. One CTA, no prerequisites.
  *
- * Product policy is that Featured is purchasable independently of Pro. The
- * create-checkout-session Edge Function does not yet implement that: an
- * `intent="add_addon"` call still returns 409 PRO_REQUIRED without an active
- * Pro subscription. Rather than either lie ("buy it now") or market a lock
- * ("Pro required" badge, upgrade CTA), this states the server's current
- * behaviour as a factual note. Removing the server-side gate is a separate,
- * reviewed backend change — see the Featured-independence follow-up.
+ * Featured is purchasable on any plan. The transitional note that used to sit
+ * here — acknowledging that create-checkout-session returned 409 PRO_REQUIRED
+ * without Pro — is gone because the gate is gone: the Pro precondition was
+ * removed from the add-on branch and activateFeaturedAddon() now creates a
+ * tier='free' subscription row for a Featured-only facility.
  */
-function FeaturedPurchaseCard({ isPro }: { isPro: boolean }) {
+function FeaturedPurchaseCard() {
   return (
     <Card>
       <CardHeader className="border-b py-3.5">
@@ -331,14 +328,10 @@ function FeaturedPurchaseCard({ isPro }: { isPro: boolean }) {
             Explore Featured placements <ArrowRight className="h-4 w-4" />
           </Link>
         </Button>
-        {!isPro && (
-          <p className="border-t border-slate-100 pt-3 text-xs leading-relaxed text-slate-500">
-            Note: Featured checkout currently requires an active Pro subscription on
-            this facility. That is a limitation of the current billing integration,
-            not a property of the Featured product — Featured is priced and billed
-            independently of Pro.
-          </p>
-        )}
+        <p className="border-t border-slate-100 pt-3 text-xs leading-relaxed text-slate-500">
+          Featured bills separately from your listing plan. You can buy it on Free or
+          on Pro, and cancelling one never cancels the other.
+        </p>
       </CardContent>
     </Card>
   );

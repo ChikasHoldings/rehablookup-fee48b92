@@ -207,7 +207,7 @@ export default function MarketingFeatured() {
             ctaLabel="See Featured pricing"
             ctaTo="/provider/marketing"
             secondaryAction={{ label: "Plan & Billing", to: "/provider/billing" }}
-            footnote="Featured checkout currently requires an active Pro subscription on this facility — a limitation of the current billing integration, not of the Featured product."
+            footnote="Featured bills separately from your listing plan — available on Free or Pro."
           >
             <FeaturedManagementSample />
           </LockedFeaturePreview>
