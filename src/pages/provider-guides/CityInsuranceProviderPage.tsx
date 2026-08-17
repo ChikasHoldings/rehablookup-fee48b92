@@ -16,12 +16,11 @@ const INSURANCE_PREFIX_MAP: Record<string, string> = {
 function parsePathname(pathname: string): { insurerSlug: string; city: ProviderCityInfo } | null {
   const path = pathname.startsWith("/") ? pathname.slice(1) : pathname;
   for (const [prefix, slug] of Object.entries(INSURANCE_PREFIX_MAP)) {
-    if (path.startsWith(prefix)) {
-      const remainder = path.slice(prefix.length);
-      for (const city of providerCities) {
-        if (remainder === `${city.citySlug}-${city.stateSlug}` || remainder === city.citySlug) {
-          return { insurerSlug: slug, city };
-        }
+    if (!path.startsWith(prefix)) continue;
+    const remainder = path.slice(prefix.length);
+    for (const city of providerCities) {
+      if (remainder === `${city.citySlug}-${city.stateSlug}` || remainder === city.citySlug) {
+        return { insurerSlug: slug, city };
       }
     }
   }
@@ -29,7 +28,7 @@ function parsePathname(pathname: string): { insurerSlug: string; city: ProviderC
 }
 
 function slugToName(slug: string): string {
-  return slug.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+  return slug.split("-").map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
 }
 
 export default function CityInsuranceProviderPage() {
@@ -38,48 +37,48 @@ export default function CityInsuranceProviderPage() {
   if (!parsed) return <NotFound />;
 
   const { insurerSlug, city } = parsed;
-  const config = insuranceProviderConfigs.find(c => c.slug === insurerSlug);
+  const config = insuranceProviderConfigs.find((item) => item.slug === insurerSlug);
   if (!config) return <NotFound />;
 
   const stateName = slugToName(city.stateSlug);
 
   return (
     <ProviderConversionPage
-      metaTitle={`Get More ${config.label} Patients in ${city.city}, ${stateName} | RehabLookup`}
-      metaDescription={`Attract ${config.label} patients in ${city.city} to your treatment center. ${config.label} covers ${config.memberCount} Americans. Make sure ${city.city} patients find your facility.`}
+      metaTitle={`${config.label} Insurance Visibility for Rehabs in ${city.city}, ${stateName} | RehabLookup`}
+      metaDescription={`Keep your ${city.city}, ${stateName} facility's ${config.label} insurance information accurate on RehabLookup. Claim your facility free and maintain coverage, services, and direct contact details.`}
       canonical={`/get-more-${config.slug}-patients-in-${city.citySlug}-${city.stateSlug}`}
-      keywords={[`${config.label} rehab ${city.city}`, `${config.label} patients ${city.city}`, `${city.city} ${config.label} treatment center`, `${config.label} addiction treatment ${city.city}`]}
+      keywords={[`${config.label} rehab ${city.city}`, `${config.label} treatment directory ${city.city}`, `${city.city} ${config.label} treatment center`, `${config.label} addiction treatment ${city.city}`]}
       breadcrumbs={[
         { label: "For Providers", href: "/for-providers" },
-        { label: "Rehab Marketing", href: "/rehab-marketing" },
+        { label: "Provider Resources", href: "/provider-resources" },
         { label: city.city, href: `/get-more-patients-in-${city.citySlug}-${city.stateSlug}` },
-        { label: `${config.label} Patients` },
+        { label: config.label },
       ]}
-      heroHeadline={`Get More ${config.label} Patients in ${city.city}`}
-      heroSubheadline={`${config.label} covers ${config.memberCount} Americans. In ${city.city}, ${config.label} patients are actively searching for treatment — make sure they find your facility.`}
-      problemHeadline={`${config.label} Patient Challenges in ${city.city}`}
+      heroHeadline={`Keep ${config.label} Information Accurate in ${city.city}`}
+      heroSubheadline={`People often use insurance participation when evaluating treatment options. Make it easier to understand your ${config.label} information by maintaining an accurate RehabLookup facility record.`}
+      problemHeadline={`${config.label} Information Challenges in ${city.city}`}
       problemPoints={[
-        `${city.city} has ${city.rehabFacilityCount}+ facilities competing for ${config.label} patients — visibility is critical`,
+        `${city.city} has ${city.rehabFacilityCount}+ treatment facilities, so clear insurance information helps people compare options`,
         ...config.painPoints.slice(0, 2),
-        `Facilities in ${city.city} that don't optimize for ${config.label} miss a significant patient population`,
+        `Outdated payer information can create confusion for people researching treatment and should be confirmed directly with the facility and insurer`,
       ]}
-      insightHeadline={`${config.label} in ${city.city}: Market Opportunity`}
-      insightContent={`${config.insightText} In ${city.city}, ${config.label} represents a major patient acquisition channel. The ${city.region} region shows strong demand, with ${city.monthlySearches.toLocaleString()}+ monthly rehab searches. Facilities that verify ${config.label} benefits quickly convert at significantly higher rates.`}
+      insightHeadline={`${config.label} in ${city.city}: Directory Context`}
+      insightContent={`${config.insightText} In ${city.city}, providers can improve treatment discovery by keeping payer participation, program details, and direct contact information current. Coverage and benefits should always be confirmed with the insurer and facility.`}
       insightStats={[
         { label: "Members Covered", value: config.memberCount.replace("over ", "") },
         { label: "City Searches", value: city.monthlySearches.toLocaleString() },
-        { label: "Facilities Competing", value: city.rehabFacilityCount.toString() },
-        { label: "Avg CPC", value: `$${city.avgCostPerClick}` },
+        { label: "Facilities Listed", value: city.rehabFacilityCount.toString() },
+        { label: "Avg Search CPC", value: `$${city.avgCostPerClick}` },
       ]}
       relatedLinks={[
-        { href: `/get-more-patients-in-${city.citySlug}-${city.stateSlug}`, label: `All Providers in ${city.city}` },
-        { href: `/provider-guides/get-more-${config.slug}-patients`, label: `${config.label} Patients (National)` },
+        { href: `/get-more-patients-in-${city.citySlug}-${city.stateSlug}`, label: `Provider visibility in ${city.city}` },
+        { href: `/provider-guides/get-more-${config.slug}-patients`, label: `${config.label} provider guide` },
         { href: `/for-providers-in-${city.stateSlug}`, label: `Providers in ${stateName}` },
-        { href: "/rehab-marketing", label: "Rehab Marketing Hub" },
+        { href: "/provider-resources", label: "Provider Resources" },
         ...insuranceProviderConfigs
-          .filter(c => c.slug !== config.slug)
+          .filter((item) => item.slug !== config.slug)
           .slice(0, 2)
-          .map(c => ({ href: `/get-more-${c.slug}-patients-in-${city.citySlug}-${city.stateSlug}`, label: `${c.label} in ${city.city}` })),
+          .map((item) => ({ href: `/get-more-${item.slug}-patients-in-${city.citySlug}-${city.stateSlug}`, label: `${item.label} in ${city.city}` })),
       ]}
     />
   );
