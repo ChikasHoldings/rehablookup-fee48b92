@@ -34,6 +34,8 @@ export interface ProviderConversionProps {
   relatedLinks?: { href: string; label: string }[];
 }
 
+const STALE_PROVIDER_PROMISE = /\b(?:qualified leads?|lead delivery|pay[- ](?:per|for)[- ]?(?:lead|call)|get more (?:rehab |detox |residential |iop |php |mat |luxury |dual diagnosis )?patients?|fill (?:your )?(?:beds?|slots?)|connects? (?:your )?facility with patients?|census improvements? within|attract patients?)\b/i;
+
 export function ProviderConversionPage({
   metaTitle,
   metaDescription,
@@ -49,6 +51,18 @@ export function ProviderConversionPage({
   insightStats,
   relatedLinks = [],
 }: ProviderConversionProps) {
+  const searchableCopy = [
+    metaTitle,
+    metaDescription,
+    heroHeadline,
+    heroSubheadline,
+    problemHeadline,
+    ...problemPoints,
+    insightHeadline,
+    insightContent,
+  ].join(" ");
+  const noindexLegacyPromise = STALE_PROVIDER_PROMISE.test(searchableCopy);
+
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "WebPage",
@@ -68,12 +82,13 @@ export function ProviderConversionPage({
         <title>{metaTitle}</title>
         <meta name="description" content={metaDescription} />
         <meta name="keywords" content={keywords.join(", ")} />
+        {noindexLegacyPromise && <meta name="robots" content="noindex, follow" />}
         <link rel="canonical" href={`https://rehablookup.com${canonical}`} />
         <meta property="og:title" content={metaTitle} />
         <meta property="og:description" content={metaDescription} />
         <meta property="og:url" content={`https://rehablookup.com${canonical}`} />
         <meta property="og:type" content="website" />
-        <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
+        {!noindexLegacyPromise && <script type="application/ld+json">{JSON.stringify(structuredData)}</script>}
       </Helmet>
 
       <Header />
