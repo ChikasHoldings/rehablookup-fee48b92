@@ -6,67 +6,65 @@ export default function RehabMarketingStrategies() {
   return (
     <ProviderSEOPageLayout
       title="Rehab Marketing Strategies"
-      metaTitle="Rehab Marketing Strategies That Actually Work in 2026 | RehabLookup"
-      metaDescription="Cut through the noise with proven rehab marketing strategies. Learn what works, what doesn't, and how to build a sustainable patient acquisition system."
+      metaTitle="Rehab Marketing Strategies for Treatment Centers in 2026 | RehabLookup"
+      metaDescription="A practical guide to ethical treatment-center marketing: local SEO, accurate directory presence, reputation, referral relationships, content, measurement, and compliant advertising."
       canonical="/provider-guides/rehab-marketing-strategies"
       keywords={["rehab marketing strategies", "treatment center marketing", "addiction treatment marketing", "rehab advertising", "behavioral health marketing strategies"]}
-      heroHeadline="Rehab Marketing Strategies That Actually Work in 2026"
-      heroSubheadline="Stop wasting budget on tactics that don't convert. Here's what the most successful treatment centers are doing differently."
+      heroHeadline="Rehab Marketing Strategies for Treatment Centers in 2026"
+      heroSubheadline="Build a durable, measurable marketing mix around accurate information, local discovery, reputation, referral relationships, and compliant advertising."
       sections={[
         {
-          heading: "The Problem With Traditional Rehab Marketing",
-          content: "The addiction treatment marketing landscape has been polluted by aggressive advertising, lead aggregators, and pay-per-call schemes that prioritize volume over quality. Many treatment centers spend $20,000-$50,000 per month on digital advertising only to receive low-quality leads that rarely convert to admissions. The result? A broken system where facilities burn cash while families struggle to find quality care.",
+          heading: "Build Trust Before You Build Volume",
+          content: "Treatment decisions are high stakes. Marketing should make it easier for people to understand a facility's services, levels of care, insurance participation, credentials, location, and contact options without exaggerating outcomes or creating false urgency.",
           bullets: [
-            "Average cost-per-click for rehab keywords exceeds $40-$80",
-            "Lead aggregator leads convert at less than 2% in most markets",
-            "Google has restricted advertising for treatment centers multiple times",
-            "Many facilities can't distinguish their marketing ROI from their clinical outcomes",
+            "Keep facility name, address, phone, website, services, and insurance information consistent across major public sources",
+            "Avoid guaranteed-outcome claims, misleading urgency, or language that implies official endorsement",
+            "Make licensing and accreditation statements specific and easy to verify",
+            "Use clear disclosure when visibility is paid or sponsored",
           ],
         },
         {
-          heading: "Organic vs. Paid: Where to Invest Your Marketing Budget",
-          content: "The most cost-effective long-term marketing strategy for treatment centers is organic visibility. While paid ads provide immediate traffic, they stop the moment you stop paying. Organic strategies — SEO, directory listings, content marketing, and referral development — compound over time and deliver increasingly qualified leads at decreasing cost.",
+          heading: "Organic and Paid Channels Should Do Different Jobs",
+          content: "Organic visibility compounds when a facility maintains useful content, accurate local information, strong technical SEO, and reputable third-party directory records. Paid search and sponsored directory inventory can add incremental reach, but they should not be confused with organic authority.",
           bullets: [
-            "Organic search delivers 5.3x more traffic than paid search for healthcare queries",
-            "Treatment directory listings provide ongoing visibility without monthly ad spend",
-            "Content marketing costs 62% less than paid advertising and generates 3x as many leads",
-            "A strong organic presence builds trust that paid ads can't replicate",
+            "Maintain a complete Google Business Profile and accurate location data",
+            "Publish useful treatment, insurance, and program information on your own website",
+            "Keep directory records current across credible treatment-discovery platforms",
+            "Use paid media with transparent attribution, geographic controls, and compliance review",
           ],
         },
         {
-          heading: "7 High-ROI Marketing Strategies for Treatment Centers",
-          content: "These strategies are prioritized by ROI based on real data from successful treatment centers across the country.",
+          heading: "A Practical Marketing Mix for Treatment Providers",
+          content: "The strongest mix usually combines several channels rather than depending on a single source of inquiries. Prioritize channels that you can measure and maintain without compromising clinical or advertising standards.",
           bullets: [
-            "List on treatment directories (RehabLookup, SAMHSA) for free, qualified visibility",
-            "Optimize your Google Business Profile with photos, reviews, and accurate service details",
-            "Build a referral network with therapists, hospitals, and intervention professionals",
-            "Create location-specific landing pages on your website for local SEO",
-            "Develop educational content (guides, videos) that demonstrates clinical expertise",
-            "Leverage alumni stories and reviews to build social proof",
-            "Partner with insurance companies for in-network referral programs",
+            "Local SEO and Google Business Profile optimization",
+            "Accurate treatment-directory presence, including RehabLookup and applicable public directories",
+            "Referral relationships with clinicians, hospitals, community organizations, and other appropriate partners",
+            "Educational content that reflects real clinical expertise and services",
+            "Reputation management and a compliant review process",
+            "Clearly disclosed paid search or sponsored directory placements where appropriate",
           ],
         },
         {
-          heading: "Measuring What Matters: Marketing KPIs for Rehab Centers",
-          content: "Many treatment centers track vanity metrics like website traffic or social media followers. What matters is the metrics that directly correlate with admissions and revenue.",
+          heading: "Measure the Full Journey",
+          content: "Traffic and impressions are useful only when they connect to real business outcomes. Build attribution that distinguishes discovery, facility-record views, calls, website visits, inquiries, and admissions while respecting privacy and applicable healthcare rules.",
           bullets: [
-            "Cost per qualified inquiry (not cost per click)",
-            "Inquiry-to-admission conversion rate (benchmark: 15-25%)",
-            "Speed-to-lead response time (target: under 5 minutes)",
-            "Revenue per marketing dollar spent (target: 5:1 or higher)",
-            "Patient lifetime value vs. acquisition cost",
+            "Track channel and campaign source consistently",
+            "Separate organic directory visibility from paid sponsored exposure",
+            "Measure calls, website clicks, inquiries, and downstream admissions with appropriate controls",
+            "Review cost and quality together instead of optimizing for raw lead volume",
           ],
         },
         {
-          heading: "How RehabLookup Fits Into Your Marketing Strategy",
-          content: "RehabLookup is designed to be the highest-ROI channel in your marketing mix. We handle the SEO, the platform, and the traffic generation. You focus on what you do best — providing quality treatment. Your free listing puts your facility in front of families searching for treatment in your area, and our lead system ensures you receive verified, actionable inquiries.",
+          heading: "How RehabLookup Fits Into the Mix",
+          content: "RehabLookup is a treatment directory. A facility can claim and maintain its basic directory presence for free. Pro enhances presentation and provider tools, while Featured is a separate, clearly labeled sponsored advertising product. Neither Pro nor Featured purchases organic ranking, and verification is determined independently from payment.",
         },
       ]}
-      ctaHeadline="Add the Highest-ROI Channel to Your Marketing Mix"
-      ctaSubheadline="It takes 5 minutes to list your facility. Zero cost to get started."
+      ctaHeadline="Keep Your RehabLookup Facility Information Accurate"
+      ctaSubheadline="Claim your facility for free, maintain core information, and choose optional Pro or Featured products separately if they fit your marketing plan."
       images={[
-        { src: pgMarketingStrategies, alt: "Digital marketing analytics dashboards for a rehab center campaign", caption: "The most cost-effective strategy is organic visibility — it compounds over time." },
-        { src: admissionsDashboard, alt: "Marketing KPI dashboard tracking cost per admission", caption: "Track cost per qualified inquiry, not vanity metrics." },
+        { src: pgMarketingStrategies, alt: "Treatment-center marketing planning and analytics", caption: "A durable marketing strategy starts with accurate information and measurable channels." },
+        { src: admissionsDashboard, alt: "Marketing measurement dashboard for a treatment provider", caption: "Track discovery and engagement by channel instead of relying on vanity metrics." },
       ]}
     />
   );
