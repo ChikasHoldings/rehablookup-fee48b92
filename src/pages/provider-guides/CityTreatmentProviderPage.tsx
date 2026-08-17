@@ -18,12 +18,11 @@ const TREATMENT_PREFIX_MAP: Record<string, string> = {
 function parsePathname(pathname: string): { treatmentSlug: string; city: ProviderCityInfo } | null {
   const path = pathname.startsWith("/") ? pathname.slice(1) : pathname;
   for (const [prefix, slug] of Object.entries(TREATMENT_PREFIX_MAP)) {
-    if (path.startsWith(prefix)) {
-      const remainder = path.slice(prefix.length);
-      for (const city of providerCities) {
-        if (remainder === `${city.citySlug}-${city.stateSlug}` || remainder === city.citySlug) {
-          return { treatmentSlug: slug, city };
-        }
+    if (!path.startsWith(prefix)) continue;
+    const remainder = path.slice(prefix.length);
+    for (const city of providerCities) {
+      if (remainder === `${city.citySlug}-${city.stateSlug}` || remainder === city.citySlug) {
+        return { treatmentSlug: slug, city };
       }
     }
   }
@@ -31,7 +30,7 @@ function parsePathname(pathname: string): { treatmentSlug: string; city: Provide
 }
 
 function slugToName(slug: string): string {
-  return slug.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+  return slug.split("-").map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
 }
 
 export default function CityTreatmentProviderPage() {
@@ -40,50 +39,49 @@ export default function CityTreatmentProviderPage() {
   if (!parsed) return <NotFound />;
 
   const { treatmentSlug, city } = parsed;
-  const config = treatmentProviderConfigs.find(c => c.slug === treatmentSlug);
+  const config = treatmentProviderConfigs.find((item) => item.slug === treatmentSlug);
   if (!config) return <NotFound />;
 
   const stateName = slugToName(city.stateSlug);
-  const competitionText = city.competitionLevel === "high" ? "fiercely competitive" : city.competitionLevel === "medium" ? "moderately competitive" : "growing";
 
   return (
     <ProviderConversionPage
-      metaTitle={`Get More ${config.label} Patients in ${city.city}, ${stateName} | RehabLookup`}
-      metaDescription={`Fill your ${config.label.toLowerCase()} program in ${city.city}. ${city.monthlySearches.toLocaleString()}+ monthly searches, ${city.rehabFacilityCount}+ competitors. RehabLookup connects you with high-intent patients.`}
+      metaTitle={`${config.label} Directory Visibility in ${city.city}, ${stateName} | RehabLookup`}
+      metaDescription={`Maintain accurate ${config.label.toLowerCase()} program information for your ${city.city}, ${stateName} facility on RehabLookup. Claim your facility free and learn about optional Pro and Featured products.`}
       canonical={`/get-more-${config.slug}-patients-in-${city.citySlug}-${city.stateSlug}`}
-      keywords={[`${config.label.toLowerCase()} patients ${city.city}`, `${config.label.toLowerCase()} marketing ${city.city}`, `${city.city} ${config.label.toLowerCase()} leads`, `fill ${config.label.toLowerCase()} beds ${city.city}`]}
+      keywords={[`${config.label.toLowerCase()} directory ${city.city}`, `${config.label.toLowerCase()} marketing ${city.city}`, `${config.label.toLowerCase()} treatment listing ${city.city}`, `rehab visibility ${city.city}`]}
       breadcrumbs={[
         { label: "For Providers", href: "/for-providers" },
-        { label: "Rehab Marketing", href: "/rehab-marketing" },
+        { label: "Provider Resources", href: "/provider-resources" },
         { label: city.city, href: `/get-more-patients-in-${city.citySlug}-${city.stateSlug}` },
-        { label: `${config.label} Patients` },
+        { label: config.label },
       ]}
-      heroHeadline={`Get More ${config.label} Patients in ${city.city}`}
-      heroSubheadline={`${city.city}'s ${config.label.toLowerCase()} market is ${competitionText}. With ${city.rehabFacilityCount}+ facilities competing, your ${config.label.toLowerCase()} program needs targeted visibility to attract qualified patients.`}
-      problemHeadline={`${config.label} Challenges in ${city.city}`}
+      heroHeadline={`${config.label} Directory Visibility in ${city.city}`}
+      heroSubheadline={`People researching ${config.label.toLowerCase()} services in ${city.city} need clear information about programs, insurance, location, credentials, and direct contact options. Keep your facility record accurate and complete.`}
+      problemHeadline={`${config.label} Discovery Challenges in ${city.city}`}
       problemPoints={[
-        `${city.city} has ${city.rehabFacilityCount}+ treatment facilities — ${config.label.toLowerCase()} programs must differentiate to survive`,
-        `Google Ads for "${config.label.toLowerCase()} ${city.city}" average $${city.avgCostPerClick}/click with low conversion rates`,
-        `${city.monthlySearches.toLocaleString()}+ people search for treatment in ${city.city} monthly — but most never find your ${config.label.toLowerCase()} program`,
-        `Every empty ${config.label.toLowerCase()} slot costs your facility hundreds per day in lost revenue`,
+        `${city.city} has ${city.rehabFacilityCount}+ treatment facilities, so accurate program information matters when people compare options`,
+        `Search advertising for treatment terms can be expensive, making durable organic and directory visibility an important complement to paid media`,
+        `${city.monthlySearches.toLocaleString()}+ monthly treatment-related searches indicate meaningful research demand in the local market`,
+        `Incomplete service, insurance, or accreditation information can make a ${config.label.toLowerCase()} program harder to evaluate`,
       ]}
-      insightHeadline={`${city.city} ${config.label} Market Data`}
-      insightContent={`${config.insightText} In the ${city.region} region, ${city.city} represents one of the largest markets for ${config.label.toLowerCase()} services. Facilities that invest in targeted ${config.label.toLowerCase()} visibility in ${city.city} see 20-40% census improvements within 6 months.`}
+      insightHeadline={`${city.city} ${config.label} Market Context`}
+      insightContent={`${config.insightText} In the ${city.region} region, providers can strengthen discovery by maintaining consistent, accurate public information and measuring how people engage with their facility presence. RehabLookup does not sell organic directory rank.`}
       insightStats={[
         { label: "Monthly Searches", value: city.monthlySearches.toLocaleString() },
-        { label: "Facilities Competing", value: city.rehabFacilityCount.toString() },
-        { label: "Avg CPC", value: `$${city.avgCostPerClick}` },
-        { label: "Competition", value: city.competitionLevel.charAt(0).toUpperCase() + city.competitionLevel.slice(1) },
+        { label: "Facilities Listed", value: city.rehabFacilityCount.toString() },
+        { label: "Avg Search CPC", value: `$${city.avgCostPerClick}` },
+        { label: "Market Competition", value: city.competitionLevel.charAt(0).toUpperCase() + city.competitionLevel.slice(1) },
       ]}
       relatedLinks={[
-        { href: `/get-more-patients-in-${city.citySlug}-${city.stateSlug}`, label: `All Providers in ${city.city}` },
-        { href: `/provider-guides/get-more-${config.slug}-patients`, label: `${config.label} Marketing (National)` },
+        { href: `/get-more-patients-in-${city.citySlug}-${city.stateSlug}`, label: `Provider visibility in ${city.city}` },
+        { href: `/provider-guides/get-more-${config.slug}-patients`, label: `${config.label} provider guide` },
         { href: `/for-providers-in-${city.stateSlug}`, label: `Providers in ${stateName}` },
-        { href: "/rehab-marketing", label: "Rehab Marketing Hub" },
+        { href: "/provider-resources", label: "Provider Resources" },
         ...treatmentProviderConfigs
-          .filter(c => c.slug !== config.slug)
+          .filter((item) => item.slug !== config.slug)
           .slice(0, 2)
-          .map(c => ({ href: `/get-more-${c.slug}-patients-in-${city.citySlug}-${city.stateSlug}`, label: `${c.label} in ${city.city}` })),
+          .map((item) => ({ href: `/get-more-${item.slug}-patients-in-${city.citySlug}-${city.stateSlug}`, label: `${item.label} in ${city.city}` })),
       ]}
     />
   );
