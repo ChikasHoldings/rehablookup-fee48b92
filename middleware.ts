@@ -1,63 +1,11 @@
 /**
  * Vercel Edge Middleware — RehabLookup
  *
- * CORE INVARIANT (May 2026 — Phase 5):
- *   A non-crawler request (every human browser, on first load OR refresh, in
- *   ANY circumstance) is ALWAYS rewritten to the SPA. Humans must NEVER be
- *   served a prerendered SEO .html shell — that shell is a stripped-down,
- *   design-divergent page meant only for crawlers, and serving it to humans
- *   caused the "the design switches on reload" bug. Only `isCrawler` branches
- *   may return prerenderRewrite()/og-share/notFound responses; every other
- *   path must fall through to the human SPA handler at the bottom.
- *
- * Seeker accounts were retired in August 2026. Legacy seeker/account routes
- * are redirected at the edge before crawler/prerender handling so they do not
- * remain indexable 200-OK application destinations.
- *
- * ROUTING FIX (May 2026 — Phase 4):
- *   Soft 404 fix for /center/* routes. Non-existent facility slugs now return
- *   HTTP 404 with a noindex HTML body to Googlebot, preventing crawl budget
- *   waste on dead facility pages.
- *
- * ROUTING FIX (May 2026 — Phase 1):
- *
- * ROOT CAUSE OF TRAFFIC COLLAPSE (4k → 9 daily users):
- *   `cleanUrls: true` in vercel.json forced Vercel to look up dist/<path>.html
- *   for every clean URL. When the middleware returned `next()` for Googlebot
- *   on a non-prerendered path, Vercel found no .html file and returned a hard
- *   404. The SPA fallback rewrite (/(.*) → /index.html) only applied to human
- *   requests that the middleware rewrote to "/". Result: 28,814 valid routes
- *   returned 404 to Googlebot — all near-me, rehab-marketing, treatment-types,
- *   search-results, etc.
- *
- * THE FIX:
- *   `cleanUrls` has been removed from vercel.json. Without it, Vercel's
- *   file-serving order is:
- *     1. Exact file match in dist/ (e.g., dist/about.html for /about)
- *     2. Middleware rewrites (this file)
- *     3. SPA fallback rewrite: /(.*) → /index.html
- *
- *   The middleware now EXPLICITLY rewrites crawlers to the .html file for
- *   prerendered paths (instead of relying on cleanUrls to auto-resolve them),
- *   and rewrites crawlers to /index.html for non-prerendered paths (so React
- *   can set the correct canonical on hydration).
- *
- * ROUTING TABLE:
- *   Request type                  Action                    Result
- *   ─────────────────────────────────────────────────────────────────────────
- *   Any → "/"                     next()                    dist/index.html
- *   Retired seeker/account       308 redirect              /search-results
- *   Crawler + prerendered path    rewrite(<path>.html)      Static HTML, correct canonical
- *   Crawler + not prerendered     rewrite(/index.html)      SPA shell, React sets canonical
- *   Social crawler + article      rewrite(og-share fn)      OG-tagged HTML for social cards
- *   Human visitor                 rewrite(/)                SPA shell, GA/Pixel fire
- *
- * CANONICAL STRATEGY:
- *   - Prerendered pages: canonical is baked into the static HTML at build time.
- *   - Non-prerendered pages: React's <SEO> component (react-helmet-async) sets
- *     the canonical from window.location.pathname on hydration.
- *   - NEVER rewrite non-prerendered crawlers to "/" — that serves the homepage
- *     canonical to Googlebot, causing mass de-indexing as duplicates.
+ * Humans always receive the SPA shell. Crawlers receive page-specific
+ * prerendered HTML when available so canonical/meta output stays deterministic.
+ * Retired seeker routes redirect before rendering, and legacy international
+ * subpages are temporarily noindexed until their placement-era copy is fully
+ * rewritten. The /us-rehab hub itself remains indexable.
  */
 
 import { rewrite, next } from "@vercel/edge";
@@ -107,6 +55,15 @@ function retiredSeekerRedirect(url: URL): Response {
       "Cache-Control": "public, max-age=3600",
     },
   });
+}
+
+function isLegacyInternationalSubpage(pathname: string): boolean {
+  return pathname.startsWith("/us-rehab/");
+}
+
+function noindexResponse(response: Response): Response {
+  response.headers.set("X-Robots-Tag", "noindex, follow");
+  return response;
 }
 
 function isCenterRoute(pathname: string): boolean {
@@ -188,6 +145,7 @@ export default function middleware(request: Request) {
 
   const isCrawler = CRAWLER_UA.test(ua);
   const isSocialCrawler = SOCIAL_CRAWLER_UA.test(ua);
+  const legacyInternational = isLegacyInternationalSubpage(pathname);
 
   if (isArticleRoute(pathname)) {
     if (isCrawler) {
@@ -216,19 +174,25 @@ export default function middleware(request: Request) {
 
   if (isCrawler) {
     if (PRERENDERED.has(pathname)) {
-      return prerenderRewrite(pathname, url);
+      const response = prerenderRewrite(pathname, url);
+      return legacyInternational ? noindexResponse(response) : response;
     }
 
     if (isDynamicSoftRoute(pathname)) {
       return notFoundResponse(pathname);
     }
 
-    return rewrite(new URL("/index.html", url));
+    const response = rewrite(new URL("/index.html", url));
+    return legacyInternational ? noindexResponse(response) : response;
   }
 
   const target = new URL("/", url);
   target.search = url.search;
   const response = rewrite(target);
+
+  if (legacyInternational) {
+    response.headers.set("X-Robots-Tag", "noindex, follow");
+  }
 
   if (!PRERENDERED.has(pathname)) {
     response.headers.set(
