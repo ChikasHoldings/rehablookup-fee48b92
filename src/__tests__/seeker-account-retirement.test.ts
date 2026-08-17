@@ -31,7 +31,7 @@
  * destinations, files and directives.
  */
 import { describe, it, expect } from "vitest";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const root = resolve(__dirname, "../..");
@@ -393,5 +393,60 @@ describe("seeker retirement — sitemap and route inventory", () => {
     ]) {
       expect(ex(resolve(root, rel)), `${rel} must not be prerendered`).toBe(false);
     }
+  });
+});
+
+describe("seeker retirement — recurring consumer email", () => {
+  /**
+   * The retirement removed the only page a recipient could use to stop the
+   * seeker weekly digest. `send-seeker-weekly-digest` linked
+   * /account/notification-preferences?unsub=weekly, and the page it pointed
+   * at (a) never handled ?unsub= and (b) no longer exists — so the link now
+   * 301s to /search-results and the `email_weekly_digest` toggle behind it is
+   * unreachable.
+   *
+   * A recurring email with no working opt-out is a CAN-SPAM problem, so the
+   * cron schedule is removed rather than left firing. This guard fails if the
+   * schedule is reinstated without also restoring a reachable opt-out.
+   */
+  const migrations = readdirSync(resolve(root, "supabase/migrations"))
+    .filter((f) => f.endsWith(".sql"))
+    .sort();
+
+  /** The last migration that mentions a job name wins — that is the live state. */
+  const lastActionFor = (jobName: string): "scheduled" | "unscheduled" | "absent" => {
+    let state: "scheduled" | "unscheduled" | "absent" = "absent";
+    for (const file of migrations) {
+      const sql = readFileSync(resolve(root, "supabase/migrations", file), "utf8");
+      // A schedule migration always unschedules first (idempotency guard), so
+      // check for the schedule call before the unschedule call.
+      if (new RegExp(`cron\\.schedule\\(\\s*'${jobName}'`).test(sql)) state = "scheduled";
+      else if (new RegExp(`cron\\.unschedule\\(\\s*'${jobName}'`).test(sql)) state = "unscheduled";
+    }
+    return state;
+  };
+
+  it("the seeker weekly digest cron is unscheduled", () => {
+    expect(lastActionFor("send_seeker_weekly_digest")).toBe("unscheduled");
+  });
+
+  it("the provider digest cron is untouched — this retirement is consumer-only", () => {
+    expect(lastActionFor("send_provider_weekly_digest")).toBe("scheduled");
+  });
+
+  it("the digest edge function itself is kept (schedule removed, code retained)", () => {
+    // Historical seeker data and the functions that wrote it are deliberately
+    // preserved; only the timer is removed.
+    expect(existsSync(resolve(root, "supabase/functions/send-seeker-weekly-digest/index.ts"))).toBe(true);
+  });
+
+  it("no migration in this change drops seeker data", () => {
+    const sql = readFileSync(
+      resolve(root, "supabase/migrations/20260901000000_unschedule_seeker_weekly_digest_cron.sql"),
+      "utf8",
+    );
+    expect(sql).not.toMatch(/\bDROP\s+(TABLE|COLUMN|SCHEMA)\b/i);
+    expect(sql).not.toMatch(/\bDELETE\s+FROM\b/i);
+    expect(sql).not.toMatch(/\bTRUNCATE\b/i);
   });
 });

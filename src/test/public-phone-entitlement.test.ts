@@ -65,9 +65,28 @@ describe("DATABASE — public_facilities gates phone by has_active_pro", () => {
   const view = latestMigrationMatching(/CREATE OR REPLACE VIEW public\.public_facilities/i);
   const body = stripSqlComments(view.sql);
 
-  it("is the amendment's migration, sorting after every prior migration", () => {
+  it("is the live definition — nothing after it touches the view", () => {
+    // The failure this guards against is real and has happened: 20260714000000
+    // redefined public_facilities and dropped the Pro CASE, and nothing caught
+    // it. So what must hold is that NO migration after the one asserted below
+    // touches the view at all.
+    //
+    // This used to assert `view.name` was the literal last file in the
+    // directory. That was a proxy for the same idea, but it failed on any
+    // unrelated later migration (a cron unschedule, an index, an RLS tweak on
+    // some other table) while catching nothing extra. Matching on the view
+    // name instead is strictly stronger: it also trips on a later ALTER VIEW,
+    // DROP VIEW, rename, or GRANT change, which the "last file" form silently
+    // allowed as long as ordering happened to hold.
     const all = readdirSync(MIGRATIONS_DIR).filter((f) => f.endsWith(".sql")).sort();
-    expect(all[all.length - 1]).toBe(view.name);
+    const after = all.slice(all.indexOf(view.name) + 1);
+    const touchers = after.filter((f) =>
+      /public_facilities/i.test(readFileSync(join(MIGRATIONS_DIR, f), "utf8")),
+    );
+    expect(
+      touchers,
+      `migrations after ${view.name} touch public_facilities — re-verify the phone gate`,
+    ).toEqual([]);
   });
 
   it("masks phone with the canonical entitlement predicate", () => {
