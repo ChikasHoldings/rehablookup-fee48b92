@@ -4,6 +4,7 @@ import "./index.css";
 import { initPerformanceOptimizations } from "./lib/performanceUtils";
 import { initSecurity } from "./lib/httpsRedirect";
 import { warmQueryCache } from "./lib/queryClient";
+import { RetiredSeekerRouteGate } from "./components/RetiredSeekerRouteGate";
 
 // Initialize security (HTTPS enforcement)
 initSecurity();
@@ -36,7 +37,11 @@ initPerformanceOptimizations();
 const skeleton = document.getElementById("ssr-skeleton");
 if (skeleton) skeleton.remove();
 
-createRoot(document.getElementById("root")!).render(<App />);
+createRoot(document.getElementById("root")!).render(
+  <RetiredSeekerRouteGate>
+    <App />
+  </RetiredSeekerRouteGate>,
+);
 
 // Warm up query cache after initial render for faster navigations
 if (document.readyState === "complete") {
