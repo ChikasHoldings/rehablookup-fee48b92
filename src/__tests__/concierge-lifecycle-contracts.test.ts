@@ -69,17 +69,21 @@ describe("concierge lifecycle contracts", () => {
   });
 
   // C8 — the seeker placement-reminder email still links to /account/concierge.
-  // That route survives as a redirect to /account/saved (App.tsx), so already
-  // sent emails resolve instead of 404ing. placement-monitor itself is
-  // deliberately NOT modified in this stage.
+  // Stage 1 kept that link alive with an in-panel redirect to /account/saved.
+  // Stage 3 retires the whole seeker panel, so the link now resolves through
+  // the /account/* retirement redirect to the public directory. The contract
+  // is unchanged — an already-delivered email must not dead-end — only the
+  // destination moved. placement-monitor itself is still not modified.
   it("placement-monitor reminder links to a route that still resolves", () => {
     const src = read("supabase/functions/placement-monitor/index.ts");
     expect(src).not.toMatch(/\/seeker\/concierge/);
     expect(src).toMatch(/\/account\/concierge/);
     const app = read("src/App.tsx");
-    // /account/concierge must remain registered (as a redirect) so the link
-    // in already-delivered emails does not dead-end.
-    expect(app).toMatch(/path="concierge"\s+element=\{<Navigate to="\/account\/saved"/);
+    // Every /account/<anything> deep link — including /account/concierge —
+    // must still be caught by a registered route rather than falling through
+    // to the 404 catch-all.
+    expect(app).toMatch(/path="\/account\/\*"\s+element=\{<RetiredSeekerRedirect \/>\}/);
+    expect(app).toMatch(/const RETIRED_SEEKER_DESTINATION = "\/search-results";/);
   });
 
   // C3 — the RedirectedInquiries feature (which surfaced full seeker PII to a

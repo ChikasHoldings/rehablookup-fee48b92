@@ -114,7 +114,16 @@ const BANNED_DESTINATIONS = [
   "/international/thank-you",
   "/providers/resources",
   "/insurance-verification",
-  "/account/saved-searches",
+  // Consumer-account retirement (stage 3). The whole seeker namespace is a
+  // 301 to /search-results, so global nav must never offer an account portal
+  // or a consumer signup — searching, comparing and contacting a facility
+  // requires no account at all. Prefix-matched, so `/account` covers
+  // `/account/saved-searches` and every other retired panel path.
+  "/account",
+  "/my-account",
+  "/seeker",
+  "/signup",
+  "/reset-password",
 ];
 
 /**

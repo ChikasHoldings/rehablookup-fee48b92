@@ -25,6 +25,8 @@ export function resolveClaimsGuard(
     return { kind: "redirect", to: "/provider/onboarding?returnTo=/provider/claims" };
   }
   if (role === "admin") return { kind: "redirect", to: "/admin/claims" };
-  if (role === "seeker") return { kind: "redirect", to: "/account" };
+  // Legacy consumer session: the seeker panel is retired, so it lands on
+  // the public directory rather than the removed /account route.
+  if (role === "seeker") return { kind: "redirect", to: "/search-results" };
   return { kind: "render" }; // provider, or the brief null-role signup window
 }

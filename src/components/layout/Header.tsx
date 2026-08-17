@@ -3,13 +3,8 @@ import headerLogo from "@/assets/logo-header.webp";
 import { Link, useLocation } from "react-router-dom";
 import { PrefetchLink } from "@/components/PrefetchLink";
 import { Button } from "@/components/ui/button";
-import { Menu, X, ChevronRight, MapPin, BookOpen, Building2, User, ChevronDown, Search, Shield, Scale, ArrowRight } from "lucide-react";
+import { Menu, X, ChevronRight, MapPin, BookOpen, Building2, ChevronDown, Search, Shield, Scale, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
-import { useUserRole } from "@/hooks/useUserRole";
-import { useFavorites } from "@/hooks/useFavorites";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useQuery } from "@tanstack/react-query";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -148,32 +143,13 @@ export function Header({
   const [moreDropdownOpen, setMoreDropdownOpen] = useState(false);
   const megaMenuTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const location = useLocation();
-  const { role, isLoading: roleLoading, isAuthenticated, userId } = useUserRole();
-  const isSeekerLoggedIn = isAuthenticated && role === "seeker";
-  const { favoritesCount } = useFavorites();
 
-  const { data: seekerProfile } = useQuery({
-    queryKey: ['seeker-nav-profile', userId],
-    queryFn: async () => {
-      if (!userId) return null;
-      const { data } = await supabase
-        .from('seeker_profiles')
-        .select('display_name, first_name, avatar_url')
-        .eq('user_id', userId)
-        .maybeSingle();
-      return data;
-    },
-    enabled: isSeekerLoggedIn && !!userId,
-    staleTime: 60000,
-  });
-
-  const seekerDisplayName = seekerProfile?.first_name || seekerProfile?.display_name;
-  const seekerInitials = seekerDisplayName
-    ?.split(" ")
-    .map((n: string) => n.charAt(0))
-    .join("")
-    .toUpperCase()
-    .slice(0, 2) || "U";
+  // Consumer accounts are retired (directory cutover stage 3). The header
+  // used to swap "Sign In" for an avatar pill linking to the /account
+  // dashboard whenever a seeker session existed. /account no longer exists,
+  // so a legacy seeker session must NOT surface an account portal here —
+  // the public header is identical for every visitor, signed in or not.
+  // Provider and admin sessions have their own shells with their own nav.
 
   useEffect(() => {
     if (mobileMenuOpen) {
@@ -428,54 +404,25 @@ export function Header({
             </button>
 
             <div className="hidden md:flex items-center gap-2 flex-shrink-0 min-w-[140px] lg:min-w-[200px] justify-end">
-              {/* Render nothing while role is still resolving — the
-                  min-w on the parent already reserves space. Prevents
-                  the Sign-In/Account flash where the un-resolved
-                  isAuthenticated=false briefly paints "Sign In" then
-                  snaps to the account pill once the session lands.
-                  Mobile-menu footer (line ~593) already uses the same
-                  guard pattern. */}
-              {roleLoading ? null : isSeekerLoggedIn ? (
-                <PrefetchLink to="/account">
-                  <Button size="sm" variant="ghost" className="h-9 text-sm gap-0 relative px-1">
-                    <div className="flex items-center gap-2 bg-primary/10 rounded-lg px-2 py-1">
-                      <Avatar className="h-6 w-6">
-                        {seekerProfile?.avatar_url ? (
-                          <AvatarImage src={seekerProfile.avatar_url} alt={seekerDisplayName || "Account"} className="object-cover" />
-                        ) : null}
-                        <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
-                          {seekerInitials}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="hidden lg:inline">{seekerDisplayName || "Account"}</span>
-                      <span className="lg:hidden">Account</span>
-                    </div>
-                    {favoritesCount > 0 && (
-                      <span className="absolute -top-1 -right-1 h-4 w-4 bg-primary text-primary-foreground text-xs font-medium rounded-full flex items-center justify-center">
-                        {favoritesCount > 9 ? '9+' : favoritesCount}
-                      </span>
-                    )}
-                  </Button>
-                </PrefetchLink>
-              ) : (
-                <>
-                  {/* Header CTAs bumped from h-8 (32px) to default size
-                      (h-11 on mobile via primitive). "List Your Facility"
-                      and "Sign In" are primary global-nav CTAs — sub-tap-
-                      target sizing was hostile on phones. The PrefetchLink
-                      wrapping pattern is preserved so route-prefetch still
-                      runs on hover. */}
-                  <PrefetchLink to="/provider/onboarding" className="hidden lg:block">
-                    <Button size="sm" variant="outline">List Your Facility</Button>
-                  </PrefetchLink>
-                  <PrefetchLink to="/login">
-                    <Button size="sm" className="gap-1.5">
-                      <User className="h-4 w-4" />
-                      Sign In
-                    </Button>
-                  </PrefetchLink>
-                </>
-              )}
+              {/* Provider-facing CTAs only. Searching, comparing and
+                  contacting facilities never requires an account, so the
+                  public header carries no consumer sign-up/sign-in prompt —
+                  "Provider Sign In" is explicitly labelled so a treatment
+                  seeker isn't invited into an account funnel that no longer
+                  exists.
+                  Header CTAs use the default primitive size (h-11 on mobile)
+                  — sub-tap-target sizing was hostile on phones. The
+                  PrefetchLink wrapping pattern is preserved so route-prefetch
+                  still runs on hover. */}
+              <PrefetchLink to="/provider/onboarding" className="hidden lg:block">
+                <Button size="sm" variant="outline">List Your Facility</Button>
+              </PrefetchLink>
+              <PrefetchLink to="/login">
+                <Button size="sm" variant="ghost" className="gap-1.5">
+                  <Building2 className="h-4 w-4" />
+                  Provider Sign In
+                </Button>
+              </PrefetchLink>
             </div>
           </div>
         </div>
@@ -616,45 +563,31 @@ export function Header({
             </div>
           </div>
 
-          {/* Fixed Footer */}
+          {/* Fixed Footer — the consumer job (search the directory) is the
+              primary action; provider entry points sit underneath it. No
+              account pill: consumer accounts are retired, so a legacy seeker
+              session sees exactly what an anonymous visitor sees. */}
           <div className="shrink-0 border-t border-border/40 p-4 bg-background">
-            {!roleLoading && isSeekerLoggedIn ? (
-              <PrefetchLink to="/account" onClick={() => setMobileMenuOpen(false)} className="block">
-                <div className="flex items-center gap-3 rounded-xl bg-gradient-to-r from-accent/[0.08] to-primary/[0.06] border border-accent/15 p-3">
-                  <Avatar className="h-10 w-10 ring-2 ring-accent/20">
-                    {seekerProfile?.avatar_url ? (
-                      <AvatarImage src={seekerProfile.avatar_url} alt={seekerDisplayName || "Account"} className="object-cover" />
-                    ) : null}
-                    <AvatarFallback className="bg-accent/15 text-accent text-xs font-bold">{seekerInitials}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-foreground truncate">{seekerDisplayName || "My Account"}</p>
-                    <p className="text-xs text-muted-foreground">View dashboard</p>
-                  </div>
-                  {favoritesCount > 0 && (
-                    <span className="h-6 min-w-[24px] px-1.5 bg-accent text-accent-foreground text-xs font-bold rounded-full flex items-center justify-center">
-                      {favoritesCount > 9 ? '9+' : favoritesCount}
-                    </span>
-                  )}
-                  <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
-                </div>
+            <div className="space-y-2">
+              <PrefetchLink to="/search-results" onClick={() => setMobileMenuOpen(false)} className="block">
+                <Button className="w-full h-12 text-sm font-semibold rounded-xl bg-gradient-to-r from-accent to-accent/90 text-accent-foreground shadow-lg shadow-accent/20 gap-2 active:scale-[0.98] transition-transform">
+                  <Search className="h-4 w-4" />
+                  Search Treatment Centers
+                </Button>
               </PrefetchLink>
-            ) : (
-              <div className="space-y-2">
-                <PrefetchLink to="/login" onClick={() => setMobileMenuOpen(false)} className="block">
-                  <Button className="w-full h-12 text-sm font-semibold rounded-xl bg-gradient-to-r from-accent to-accent/90 text-accent-foreground shadow-lg shadow-accent/20 gap-2 active:scale-[0.98] transition-transform">
-                    <User className="h-4 w-4" />
-                    Sign In
-                  </Button>
-                </PrefetchLink>
-                <PrefetchLink to="/provider/onboarding" onClick={() => setMobileMenuOpen(false)} className="block">
-                  <Button variant="outline" className="w-full h-11 text-sm font-medium rounded-xl border-border/60 gap-2">
-                    <Building2 className="h-4 w-4" />
-                    List Your Facility
-                  </Button>
-                </PrefetchLink>
-              </div>
-            )}
+              <PrefetchLink to="/provider/onboarding" onClick={() => setMobileMenuOpen(false)} className="block">
+                <Button variant="outline" className="w-full h-11 text-sm font-medium rounded-xl border-border/60 gap-2">
+                  <Building2 className="h-4 w-4" />
+                  List Your Facility
+                </Button>
+              </PrefetchLink>
+              <PrefetchLink to="/login" onClick={() => setMobileMenuOpen(false)} className="block">
+                <Button variant="ghost" className="w-full h-11 text-sm font-medium rounded-xl gap-2">
+                  <Building2 className="h-4 w-4" />
+                  Provider Sign In
+                </Button>
+              </PrefetchLink>
+            </div>
           </div>
         </div>
       </div>

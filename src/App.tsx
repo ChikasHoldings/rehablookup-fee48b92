@@ -248,25 +248,17 @@ const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const EditorialPolicy = lazy(() => import("./pages/EditorialPolicy"));
 const HowWeMakeMoney = lazy(() => import("./pages/HowWeMakeMoney"));
 const MedicalDisclaimer = lazy(() => import("./pages/MedicalDisclaimer"));
-const SeekerSignup = lazy(() => import("./pages/SeekerSignup"));
 const SignupCompletePage = lazy(() => import("./pages/signup/SignupComplete"));
-const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Login = lazy(() => import("./pages/Login"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 
-// Seeker pages - lazy load
-const SeekerHome = lazy(() => import("./pages/seeker/SeekerHome"));
-const SeekerRequests = lazy(() => import("./pages/seeker/SeekerRequests"));
-const SeekerSaved = lazy(() => import("./pages/seeker/SeekerSaved"));
-const SeekerReviews = lazy(() => import("./pages/seeker/SeekerReviews"));
-const SeekerSettings = lazy(() => import("./pages/seeker/SeekerSettings"));
-const SeekerNotifications = lazy(() => import("./pages/seeker/SeekerNotifications"));
-const SeekerNotificationPreferences = lazy(() => import("./pages/seeker/SeekerNotificationPreferences"));
-const SeekerSearch = lazy(() => import("./pages/seeker/SeekerSearch"));
-const SeekerHelp = lazy(() => import("./pages/seeker/SeekerHelp"));
-const SeekerSupport = lazy(() => import("./pages/seeker/SeekerSupport"));
-const SeekerInsuranceVerifications = lazy(() => import("./pages/seeker/SeekerInsuranceVerifications"));
-const SeekerSavedSearches = lazy(() => import("./pages/seeker/SeekerSavedSearches"));
+// ── Seeker-account retirement (directory cutover stage 3) ─────────────
+// RehabLookup no longer offers consumer accounts. The seeker signup,
+// login-to-account, dashboard, saved searches, notifications, settings,
+// support and password-reset pages are gone from the repo; every URL that
+// used to serve them is a permanent redirect to the public directory
+// (see RETIRED_SEEKER_* below and the matching 301s in vercel.json +
+// middleware.ts). Provider and admin accounts are unaffected.
 
 // Near Me SEO Pages - lazy load
 const DrugRehabNearMe = lazy(() => import("./pages/near-me/DrugRehabNearMe"));
@@ -338,7 +330,6 @@ const TopDetoxCentersUSA = lazy(() => import("./pages/us-rehab/TopDetoxCentersUS
 // Panel shells - lazy loaded to reduce initial bundle size
 const ProviderShell = lazy(() => import("./components/provider/ProviderShell").then(m => ({ default: m.ProviderShell })));
 const AdminShell = lazy(() => import("./components/admin/AdminShell").then(m => ({ default: m.AdminShell })));
-const SeekerShell = lazy(() => import("./components/seeker/SeekerShell").then(m => ({ default: m.SeekerShell })));
 
 // Provider Panel pages - lazy load (shell handles Suspense)
 const ProviderDashboardPage = lazy(() => import("./pages/provider/Dashboard"));
@@ -492,13 +483,23 @@ function NavigateDualDiagnosisRehabNearMe() {
 // ============================================================
 // Legacy slug redirects — backlink rescue
 // ============================================================
-// Preserve full sub-path on the /seeker → /account rename. Example:
-// /seeker/requests → /account/requests
-function SeekerToClientRedirect() {
-  const { "*": rest } = useParams();
+// ── Retired seeker account surface ───────────────────────────────────
+// /account/*, /my-account/*, /seeker/* (dashboard, saved searches, saved
+// facilities, reviews, notifications, settings, support, signup and
+// password reset) are retired. Every one of them collapses to the public
+// directory search in a SINGLE hop — no /seeker → /account → /search-results
+// chains — and the query string rides along so a legacy deep link keeps
+// whatever search intent it carried.
+//
+// The same one-hop mapping is mirrored as HTTP 301s in vercel.json and in
+// middleware.ts, so crawlers and direct hits never receive a 200 for these
+// URLs. This React route is the in-app safety net for client-side
+// navigations that never touch the edge.
+const RETIRED_SEEKER_DESTINATION = "/search-results";
+
+function RetiredSeekerRedirect() {
   const loc = useLocation();
-  const tail = rest ? `/${rest}` : "";
-  return <Navigate to={`/account${tail}${loc.search}`} replace />;
+  return <Navigate to={`${RETIRED_SEEKER_DESTINATION}${loc.search}`} replace />;
 }
 
 // /facility/:slug and /profile/:slug → canonical /center/:slug
@@ -1273,9 +1274,11 @@ const AppInner = () => {
             <Route path="/centers" element={<Navigate to="/search-results" replace />} />
 
             {/* Legacy slug rescue — common backlink patterns */}
-            {/* "Seeker" → "Client" terminology rename (preserves sub-path) */}
-            <Route path="/seeker" element={<Navigate to="/account" replace />} />
-            <Route path="/seeker/*" element={<SeekerToClientRedirect />} />
+            {/* Retired seeker namespace (see RetiredSeekerRedirect). Covers
+                /seeker, /seeker/signup, /seeker/reset-password and every
+                legacy /seeker/<panel> deep link in one hop. */}
+            <Route path="/seeker" element={<Navigate to="/search-results" replace />} />
+            <Route path="/seeker/*" element={<RetiredSeekerRedirect />} />
             {/* Profile/facility shorthand → canonical /center/:slug */}
             <Route path="/facility/:slug" element={<FacilityToCenterRedirect />} />
             <Route path="/profile/:slug" element={<FacilityToCenterRedirect />} />
@@ -1400,48 +1403,33 @@ const AppInner = () => {
             <Route path="/transparency" element={<Navigate to="/how-we-make-money" replace />} />
             <Route path="/our-business-model" element={<Navigate to="/how-we-make-money" replace />} />
             
-            {/* Seeker Authentication */}
+            {/* Authentication — provider + admin only.
+                /login is the provider sign-in surface (admins use
+                /admin/login) and /forgot-password is provider password
+                recovery. Consumer accounts are retired: there is no seeker
+                signup, no seeker sign-in destination, and no seeker
+                password reset. */}
             <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/seeker/signup" element={<SeekerSignup />} />
-            <Route path="/signup" element={<Navigate to="/seeker/signup" replace />} />
+            {/* Provider Stripe-checkout return page (noindex utility page). */}
             <Route path="/signup/complete" element={<SignupCompletePage />} />
             <Route path="/signup/subscription" element={<Navigate to="/provider/billing?signup=retry" replace />} />
-            <Route path="/seeker/reset-password" element={<ResetPassword />} />
-            <Route path="/reset-password" element={<Navigate to="/seeker/reset-password" replace />} />
+            {/* Retired consumer signup + password reset. Providers keep
+                /provider/onboarding, /provider/forgot-password and
+                /provider/reset-password. */}
+            <Route path="/signup" element={<Navigate to="/search-results" replace />} />
+            <Route path="/reset-password" element={<Navigate to="/search-results" replace />} />
             <Route path="/provider-reset-password" element={<Navigate to="/provider/reset-password" replace />} />
-            
-            {/* Seeker Panel - /account is canonical */}
-            <Route path="/account" element={<SeekerShell />}>
-              <Route index element={<SeekerHome />} />
-              <Route path="requests" element={<SeekerRequests />} />
-              <Route path="saved" element={<SeekerSaved />} />
-              <Route path="reviews" element={<SeekerReviews />} />
-              <Route path="settings" element={<SeekerSettings />} />
-              <Route path="notifications" element={<SeekerNotifications />} />
-              <Route path="notification-preferences" element={<SeekerNotificationPreferences />} />
-              <Route path="search" element={<SeekerSearch />} />
-              <Route path="help" element={<SeekerHelp />} />
-              <Route path="support" element={<SeekerSupport />} />
-              {/* Retired seeker placement workspace (directory cutover stage 1).
-                  RehabLookup no longer operates placement cases, advisor
-                  threads, tour or admission tracking for seekers. Legacy
-                  deep-links — including notification links already written to
-                  seeker_notifications rows — resolve to the saved-facilities
-                  view instead of 404ing. */}
-              <Route path="concierge" element={<Navigate to="/account/saved" replace />} />
-              <Route path="concierge/:inquiryId" element={<Navigate to="/account/saved" replace />} />
-              <Route path="placements" element={<Navigate to="/account/saved" replace />} />
-              <Route path="placements/:inquiryId" element={<Navigate to="/account/saved" replace />} />
-              <Route path="international" element={<Navigate to="/account/saved" replace />} />
-              <Route path="insurance-verifications" element={<SeekerInsuranceVerifications />} />
-              <Route path="saved-searches" element={<SeekerSavedSearches />} />
-              <Route path="*" element={<Navigate to="/account" replace />} />
-            </Route>
-            
-            {/* Legacy /my-account redirect */}
-            <Route path="/my-account/*" element={<Navigate to="/account" replace />} />
-            
+
+            {/* Retired seeker account panel. /account, /account/<anything>
+                and the legacy /my-account alias all resolve to the public
+                directory search in one hop — no seeker UI is reachable and
+                no account page returns a crawlable 200. */}
+            <Route path="/account" element={<Navigate to="/search-results" replace />} />
+            <Route path="/account/*" element={<RetiredSeekerRedirect />} />
+            <Route path="/my-account" element={<Navigate to="/search-results" replace />} />
+            <Route path="/my-account/*" element={<RetiredSeekerRedirect />} />
+
             {/* Provider Routes */}
             <Route path="/for-providers" element={<PublicRouteGuard><ForProviders /></PublicRouteGuard>} />
             <Route path="/provider-resources" element={<PublicRouteGuard><ProviderResources /></PublicRouteGuard>} />

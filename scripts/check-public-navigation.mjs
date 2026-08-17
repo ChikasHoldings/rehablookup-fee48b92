@@ -159,8 +159,13 @@ const prerendered = (p) => {
  * Intentional auth / onboarding actions. These are not content pages and are
  * expected to gate or redirect based on session state — that is the point of
  * them, and it is not an error.
+ *
+ * `/account` was removed from this allow-list with the consumer-account
+ * retirement. It is now a 301 source, so the redirectSources check above
+ * catches it and any reintroduced global-nav link to the retired seeker
+ * portal fails this guard instead of being waved through as an "auth action".
  */
-const AUTH_ACTIONS = new Set(["/login", "/account", "/provider/onboarding"]);
+const AUTH_ACTIONS = new Set(["/login", "/provider/onboarding"]);
 
 /**
  * Routes that resolve to a real page but are NOT the canonical surface for

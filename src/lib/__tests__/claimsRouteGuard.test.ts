@@ -19,8 +19,8 @@ describe("resolveClaimsGuard", () => {
     expect(resolveClaimsGuard("admin", true, false)).toEqual({ kind: "redirect", to: "/admin/claims" });
   });
 
-  it("routes seekers to their account home", () => {
-    expect(resolveClaimsGuard("seeker", true, false)).toEqual({ kind: "redirect", to: "/account" });
+  it("routes a legacy seeker session to the public directory (the seeker panel is retired)", () => {
+    expect(resolveClaimsGuard("seeker", true, false)).toEqual({ kind: "redirect", to: "/search-results" });
   });
 
   it("renders the list for a provider", () => {

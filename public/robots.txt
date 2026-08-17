@@ -1,6 +1,15 @@
 # =============================================================================
 # robots.txt for RehabLookup
 # https://rehablookup.com
+# Last updated: 2026-08-17 — consumer-account retirement (directory cutover
+#   stage 3). /account, /account/*, /my-account/*, /seeker/*, /signup and
+#   /reset-password are now 301s to /search-results, so their Disallow lines
+#   were REMOVED from every user-agent group: blocking a redirect source keeps
+#   Google from ever seeing the 301 and strands the old URL in the index. The
+#   live private surfaces (/login, /forgot-password, /provider/, /admin,
+#   /auth) stay Disallowed and now also carry an HTTP `X-Robots-Tag:
+#   noindex, nofollow` header from vercel.json — their previous noindex was a
+#   client-side Helmet tag only, which a non-rendering crawler never sees.
 # Last updated: 2026-05-23 — SEO audit pass: 46,670 URLs across 3 sitemaps
 #   (sitemap.xml: 46,398, sitemap-extras.xml: 269, sitemap-facilities.xml: 3).
 #   Validators all green: 0 broken internal links (46,674 prerendered HTML
@@ -56,27 +65,27 @@ Allow: /resources/
 Disallow: /admin
 Disallow: /admin/
 Disallow: /provider/
-Disallow: /account
-Disallow: /account/
-Disallow: /seeker/
 Disallow: /login
-Disallow: /signup
 Disallow: /forgot-password
-Disallow: /reset-password
 Disallow: /auth
 Disallow: /provider-login
 Disallow: /provider-signup
 Disallow: /provider-forgot-password
 Disallow: /provider-reset-password
 Disallow: /admin-login
-Disallow: /seeker/signup
+# NOTE: the retired consumer-account paths (/account, /account/*, /seeker/*,
+# /signup, /reset-password, /my-account) are deliberately NOT Disallowed.
+# Every one of them is now a 301 to /search-results. Blocking a redirect
+# source stops Google from ever seeing the 301, which strands the old URL in
+# the index and reports it as "Page with redirect" — the same trap documented
+# for /blog and /treatment/* below. Leave them crawlable so the 301s are
+# processed and the URLs drop out.
 # NOTE: /blog and legacy /treatment/* paths are 301 redirects to canonical URLs.
 # NOTE: /blog, legacy /treatment/* paths, and /request-help are 301 redirects to
 # canonical URLs. We must NOT Disallow them — blocking the source path prevents
 # Google from discovering the redirect target and produces "Page with redirect"
 # GSC errors.
 Disallow: /placement-help
-Disallow: /my-account
 Disallow: /concierge/intake
 Disallow: /concierge/thank-you
 Disallow: /concierge/create-password
@@ -126,10 +135,7 @@ Allow: /treatment-types/
 Disallow: /admin
 Disallow: /admin/
 Disallow: /provider/
-Disallow: /account
-Disallow: /seeker/
 Disallow: /login
-Disallow: /signup
 Disallow: /lp/
 Disallow: /api/
 Disallow: /functions/
@@ -141,34 +147,28 @@ User-agent: Slurp
 Allow: /
 Disallow: /admin
 Disallow: /provider/
-Disallow: /account
-Disallow: /seeker/
 Crawl-delay: 1
 
 User-agent: DuckDuckBot
 Allow: /
 Disallow: /admin
 Disallow: /provider/
-Disallow: /account
 
 User-agent: Applebot
 Allow: /
 Disallow: /admin
 Disallow: /provider/
-Disallow: /account
 
 User-agent: Yandex
 Allow: /
 Disallow: /admin
 Disallow: /provider/
-Disallow: /account
 Crawl-delay: 1
 
 User-agent: Baiduspider
 Allow: /
 Disallow: /admin
 Disallow: /provider/
-Disallow: /account
 Crawl-delay: 1
 
 # =============================================================================
@@ -213,61 +213,51 @@ User-agent: GPTBot
 Allow: /
 Disallow: /admin
 Disallow: /provider/
-Disallow: /account
 
 User-agent: ChatGPT-User
 Allow: /
 Disallow: /admin
 Disallow: /provider/
-Disallow: /account
 
 User-agent: OAI-SearchBot
 Allow: /
 Disallow: /admin
 Disallow: /provider/
-Disallow: /account
 
 User-agent: anthropic-ai
 Allow: /
 Disallow: /admin
 Disallow: /provider/
-Disallow: /account
 
 User-agent: Claude-Web
 Allow: /
 Disallow: /admin
 Disallow: /provider/
-Disallow: /account
 
 User-agent: ClaudeBot
 Allow: /
 Disallow: /admin
 Disallow: /provider/
-Disallow: /account
 
 User-agent: Google-Extended
 Allow: /
 Disallow: /admin
 Disallow: /provider/
-Disallow: /account
 
 User-agent: PerplexityBot
 Allow: /
 Disallow: /admin
 Disallow: /provider/
-Disallow: /account
 
 User-agent: cohere-ai
 Allow: /
 Disallow: /admin
 Disallow: /provider/
-Disallow: /account
 
 User-agent: Meta-ExternalAgent
 Allow: /
 Disallow: /admin
 Disallow: /provider/
-Disallow: /account
 
 User-agent: Meta-ExternalFetcher
 Allow: /
@@ -276,13 +266,11 @@ User-agent: YouBot
 Allow: /
 Disallow: /admin
 Disallow: /provider/
-Disallow: /account
 
 User-agent: Bytespider
 Allow: /
 Disallow: /admin
 Disallow: /provider/
-Disallow: /account
 Crawl-delay: 5
 
 User-agent: Amazonbot
@@ -341,23 +329,23 @@ Allow: /
 Disallow: /admin
 Disallow: /admin/
 Disallow: /provider/
-Disallow: /account
-Disallow: /account/
-Disallow: /seeker/
 Disallow: /login
-Disallow: /signup
 Disallow: /forgot-password
-Disallow: /reset-password
 Disallow: /auth
 Disallow: /provider-login
 Disallow: /provider-signup
 Disallow: /provider-forgot-password
 Disallow: /provider-reset-password
 Disallow: /admin-login
-Disallow: /seeker/signup
+# NOTE: the retired consumer-account paths (/account, /account/*, /seeker/*,
+# /signup, /reset-password, /my-account) are deliberately NOT Disallowed.
+# Every one of them is now a 301 to /search-results. Blocking a redirect
+# source stops Google from ever seeing the 301, which strands the old URL in
+# the index and reports it as "Page with redirect" — the same trap documented
+# for /blog and /treatment/* below. Leave them crawlable so the 301s are
+# processed and the URLs drop out.
 # NOTE: /blog, legacy /treatment/*, and /request-help are 301 redirects — do NOT block.
 Disallow: /placement-help
-Disallow: /my-account
 Disallow: /concierge/intake
 Disallow: /concierge/thank-you
 Disallow: /concierge/create-password

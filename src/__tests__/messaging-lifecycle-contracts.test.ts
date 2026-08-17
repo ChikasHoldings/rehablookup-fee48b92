@@ -9,7 +9,7 @@
  * PII-handling wiring that the build can enforce on every commit.
  */
 import { describe, it, expect } from "vitest";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const root = resolve(__dirname, "../..");
@@ -107,31 +107,32 @@ describe("messaging lifecycle contracts", () => {
     expect(src).toMatch(/callerId !== existing\.user_id/);
   });
 
-  // MSG-9 — every seeker-facing concierge notification type still has an
-  // EXPLICIT route entry rather than falling through to the generic inbox.
+  // MSG-9 — an emitted seeker notification must never dead-end.
   //
-  // Directory cutover stage 1 retired the /account/concierge workspace but
-  // deliberately left send-concierge-notifications (and the rows it has
-  // already written) untouched, so these types can still reach a seeker's
-  // inbox. The original intent of this guard — no emitted type dead-ends on
-  // the generic fallback — is preserved; only the destination changed.
-  it("seekerNotificationRouting gives the full concierge type set an explicit fallback route", () => {
-    const src = read("src/lib/seekerNotificationRouting.tsx");
-    for (const t of [
-      "concierge_introductions_sent",
-      "concierge_options_ready",
-      "concierge_progress_update",
-      "concierge_advisor_assigned",
-      "concierge_case_closed",
-      "concierge_tour_completed",
-      "concierge_admission_updated",
-      "concierge_move_in_scheduled",
-      "concierge_moved_in",
+  // Stage 1 satisfied this with an in-panel route table
+  // (src/lib/seekerNotificationRouting.tsx) that sent every retired
+  // concierge_* type to /account/saved. Stage 3 retires the consumer account
+  // product outright: there is no seeker inbox to route within, so the table
+  // and its consuming hook are gone and the SAME contract is now met one
+  // level up — every /account/* URL any notification row could hold resolves
+  // to the public directory via the retirement redirect.
+  //
+  // send-concierge-notifications and the rows it has already written are
+  // still deliberately untouched.
+  it("the retired seeker notification surface is gone and its deep links still resolve", () => {
+    for (const gone of [
+      "src/lib/seekerNotificationRouting.tsx",
+      "src/hooks/useSeekerNotifications.ts",
+      "src/pages/seeker/SeekerNotifications.tsx",
+      "src/pages/seeker/SeekerNotificationPreferences.tsx",
+      "src/components/seeker/SeekerHeader.tsx",
     ]) {
-      expect(src, t).toMatch(new RegExp(`${t}:\\s*"/account/saved"`));
+      expect(existsSync(resolve(root, gone)), `${gone} should be removed`).toBe(false);
     }
-    // The retired workspace must not be a routing target anymore.
-    expect(src).not.toMatch(/:\s*"\/account\/concierge"/);
+    const app = read("src/App.tsx");
+    expect(app).toMatch(/path="\/account\/\*"\s+element=\{<RetiredSeekerRedirect \/>\}/);
+    // No frontend source may route a notification into the retired panel.
+    expect(app).not.toMatch(/to="\/account\/(saved|notifications|requests|reviews)"/);
   });
 
   // The dispatchers stay verify_jwt=false (anon allow-list) — the gate is the

@@ -40,22 +40,20 @@ function getStoredSupabaseSession() {
   }
 }
 
-function inferRoleFromStoredSession(session: Session | null, routeHint: UserRole = null): UserRole {
+// Route hints are gone: the only route-derived hint we ever used was
+// "/account → seeker", and /account no longer resolves to a panel.
+function inferRoleFromStoredSession(session: Session | null): UserRole {
   const accountType = session?.user?.user_metadata?.account_type;
 
   if (accountType === "admin" || accountType === "provider" || accountType === "seeker") {
     return accountType;
   }
 
-  if (session?.user && routeHint === "seeker") {
-    return "seeker";
-  }
-
   return null;
 }
 
 // Get cached auth state for instant initial render
-function getCachedAuthState(routeHint: UserRole = null): { role: UserRole; userId: string | null; isAuth: boolean } | null {
+function getCachedAuthState(): { role: UserRole; userId: string | null; isAuth: boolean } | null {
   try {
     const timestamp = localStorage.getItem(CACHE_KEYS.timestamp);
     if (!timestamp || Date.now() - parseInt(timestamp, 10) > CACHE_TTL) {
@@ -83,7 +81,7 @@ function getCachedAuthState(routeHint: UserRole = null): { role: UserRole; userI
     }
 
     return {
-      role: cachedRole ?? inferRoleFromStoredSession(storedSession, routeHint),
+      role: cachedRole ?? inferRoleFromStoredSession(storedSession),
       userId: cachedUserId ?? storedUserId,
       isAuth: cachedIsAuth && !!storedUserId,
     };
@@ -125,26 +123,28 @@ const PORTAL_CONFIG = {
     allowedPrefixes: ["/provider"],
     loginRoute: "/login",
   },
+  // Legacy consumer accounts. The seeker product is retired: there is no
+  // /account panel to send them to, so "home" is the public directory
+  // search and every public route stays open to them.
   seeker: {
-    homeRoute: "/account",
-    // Seekers can access public website + /account routes
-    allowedPrefixes: ["/", "/account"],
+    homeRoute: "/search-results",
+    allowedPrefixes: ["/"],
     loginRoute: "/login",
   },
 } as const;
 
 // Routes that are always accessible regardless of role
+// Provider + admin auth surfaces. The retired seeker entries (/signup,
+// /seeker/signup, /seeker/reset-password, /reset-password) are gone — those
+// paths now 301 to /search-results and never render an auth screen.
 const PUBLIC_AUTH_ROUTES = [
   "/login",
   "/forgot-password",
   "/provider-signup",
   "/provider/forgot-password",
+  "/provider/reset-password",
   "/provider-reset-password",
   "/admin/login",
-  "/signup",
-  "/seeker/signup",
-  "/seeker/reset-password",
-  "/reset-password",
 ];
 
 // Routes providers can still access (provider-facing public pages)
@@ -167,19 +167,11 @@ const PROVIDER_ALLOWED_PUBLIC_ROUTES = [
  * Shows cached state immediately, then refreshes in background.
  */
 export function useUserRole(): UserRoleResult {
-  // Route-based role hint for instant perceived loading on first visit
-  const routeHint = typeof window !== "undefined"
-    ? window.location.pathname.startsWith("/provider") ? "provider" as UserRole
-    : window.location.pathname.startsWith("/admin") ? "admin" as UserRole
-    : window.location.pathname.startsWith("/account") ? "seeker" as UserRole
-    : null
-    : null;
-
   const storedSession = typeof window !== "undefined" ? getStoredSupabaseSession() : null;
   const storedUserId = storedSession?.user?.id ?? null;
-  const cached = getCachedAuthState(routeHint);
+  const cached = getCachedAuthState();
 
-  const initialRole = cached?.role ?? inferRoleFromStoredSession(storedSession, storedUserId ? routeHint : null);
+  const initialRole = cached?.role ?? inferRoleFromStoredSession(storedSession);
   const initialAuth = cached?.isAuth ?? !!storedUserId;
   
   // Only show loading if we have NO cached/stored state to display
@@ -462,21 +454,24 @@ export function useRoleBasedRedirect() {
 
     // Authenticated users — enforce strict portal boundaries only.
     // Public pages are handled by the public Layout (no redirects).
-    // This hook only guards portal routes (/admin, /provider, /account).
+    // This hook only guards the surviving portal routes (/admin,
+    // /provider). /account is retired — it 301s to /search-results before
+    // any guard runs, so it is no longer a portal boundary to police.
     if (role === "admin") {
       // Admins stay in /admin — don't redirect from public pages
-      if (currentPath.startsWith("/provider") || currentPath.startsWith("/account")) {
+      if (currentPath.startsWith("/provider")) {
         return { shouldBlock: true, redirectTo: "/admin" };
       }
     } else if (role === "provider") {
       // Providers stay in /provider — don't redirect from public pages
-      if (currentPath.startsWith("/admin") || currentPath.startsWith("/account")) {
+      if (currentPath.startsWith("/admin")) {
         return { shouldBlock: true, redirectTo: "/provider/dashboard" };
       }
     } else if (role === "seeker") {
-      // Seekers can access public website + /account routes
+      // Legacy consumer session: full public-site access, no portal of its
+      // own. Bounced out of the provider/admin portals to the directory.
       if (currentPath.startsWith("/admin") || currentPath.startsWith("/provider")) {
-        return { shouldBlock: true, redirectTo: "/account" };
+        return { shouldBlock: true, redirectTo: "/search-results" };
       }
     }
 

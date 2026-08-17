@@ -30,9 +30,7 @@ export function CookieConsentBanner() {
     pathname === "/provider" ||
     pathname.startsWith("/provider/") ||
     pathname === "/admin" ||
-    pathname.startsWith("/admin/") ||
-    pathname === "/account" ||
-    pathname.startsWith("/account/");
+    pathname.startsWith("/admin/");
 
   useEffect(() => {
     const savedConsent = localStorage.getItem(COOKIE_CONSENT_KEY);

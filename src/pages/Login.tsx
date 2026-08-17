@@ -9,8 +9,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { 
-  Lock, Mail, ArrowRight, Eye, EyeOff, AlertTriangle, Clock, 
-  ShieldCheck, RefreshCw, Building2, User, ExternalLink 
+  Lock, Mail, ArrowRight, Eye, EyeOff, AlertTriangle, Clock,
+  ShieldCheck, RefreshCw, Building2, Search, ExternalLink
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -22,6 +22,19 @@ const loginSchema = z.object({
   email: z.string().trim().email({ message: "Please enter a valid email address" }).max(255),
   password: z.string().min(1, { message: "Password is required" }),
 });
+
+/**
+ * /login — PROVIDER sign-in.
+ *
+ * Consumer ("seeker") accounts are retired: there is no seeker signup, no
+ * seeker dashboard and no seeker sign-in destination. This page therefore
+ * serves treatment providers only; admins are bounced to /admin/login as
+ * before. A legacy seeker email is recognised and told the account product
+ * is gone, with a link into the directory it no longer needs an account for
+ * — we never sign it in, because there is nowhere for it to land.
+ */
+const RETIRED_SEEKER_LOGIN_MESSAGE =
+  "RehabLookup no longer offers personal accounts. You can search, compare and contact treatment centers without signing in.";
 
 const REMEMBER_ME_KEY = "unified_remember_me";
 const LOGIN_ATTEMPTS_KEY = "unified_login_attempts";
@@ -138,7 +151,6 @@ export default function Login() {
   const returnTo = safeReturnTo(
     searchParams.get("redirect") || searchParams.get("returnTo"),
   );
-  const typeHint = searchParams.get("type") as "seeker" | "provider" | null;
   
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -274,14 +286,17 @@ export default function Login() {
             return;
           }
           
+          // A legacy seeker session can still exist in a returning
+          // browser. There is no /account to send it to any more, so it
+          // lands on the public directory instead of an account portal.
           const { data: seeker } = await supabase
             .from("seeker_profiles")
             .select("id")
             .eq("user_id", session.user.id)
             .maybeSingle();
-          
+
           if (seeker) {
-            navigate(returnTo || "/account", { replace: true });
+            navigate("/search-results", { replace: true });
             return;
           }
         }
@@ -340,16 +355,19 @@ export default function Login() {
     if (providerError) console.error("Provider check error:", providerError);
     if (isProvider) return { type: 'provider', blocked: false };
 
-    // Check seeker
+    // Legacy consumer account — the product it signed into is retired, so
+    // the sign-in is refused rather than dropping the user on a dead route.
     const { data: isSeeker, error: seekerError } = await supabase.rpc('is_email_seeker', { p_email: normalizedEmail });
     if (seekerError) console.error("Seeker check error:", seekerError);
-    if (isSeeker) return { type: 'seeker', blocked: false };
+    if (isSeeker) {
+      return { type: 'seeker', blocked: true, message: RETIRED_SEEKER_LOGIN_MESSAGE };
+    }
 
     // Unknown email - block login
-    return { 
-      type: 'unknown', 
-      blocked: true, 
-      message: "No account found with this email address. Please check your email or create a new account." 
+    return {
+      type: 'unknown',
+      blocked: true,
+      message: "No provider account found with this email address. Check the address, or list your facility to create one.",
     };
   };
 
@@ -510,53 +528,13 @@ export default function Login() {
           },
         }).catch(() => {});
 
-        // New-device security alert for seekers. Fires when a seeker
-        // signs in from a browser/os/device fingerprint they've never
-        // used before. Suppresses the very-first session (signup
-        // auto-login). Server-side idempotency key includes the
-        // day-stamp + fingerprint so multiple logins from the SAME
-        // new device within a 24-hour window dedupe to one email.
-        // Fire-and-forget; this never blocks the login redirect.
-        if (accountResult.type === "seeker") {
-          void (async () => {
-            try {
-              // Count prior sessions (excluding the one just inserted).
-              // Zero → very-first login → skip the alert (signup flow).
-              const { count: priorTotal } = await supabase
-                .from("user_sessions")
-                .select("*", { count: "exact", head: true })
-                .eq("user_id", data.session!.user.id)
-                .neq("session_token", sessionToken);
-              if (!priorTotal || priorTotal === 0) return;
+        // The seeker new-device security alert was removed with the
+        // consumer account product — a seeker email can no longer reach
+        // this point (detectAccountType blocks it before sign-in).
 
-              // Count prior sessions matching THIS device fingerprint.
-              // If any exist, this isn't a new device — no alert.
-              const { count: priorMatching } = await supabase
-                .from("user_sessions")
-                .select("*", { count: "exact", head: true })
-                .eq("user_id", data.session!.user.id)
-                .eq("browser", browser)
-                .eq("os", os)
-                .eq("device_name", device)
-                .neq("session_token", sessionToken);
-              if (priorMatching && priorMatching > 0) return;
-
-              await supabase.functions.invoke("send-seeker-emails", {
-                body: {
-                  type: "security_alert",
-                  seekerId: data.session!.user.id,
-                  email: data.session!.user.email,
-                  metadata: { browser, os, device },
-                },
-              });
-            } catch (err) {
-              console.warn("[Login] new-device security alert failed", err);
-            }
-          })();
-        }
-
-        // Redirect based on account type
-        if (accountResult.type === "provider") {
+        // Only provider accounts reach this point — admin, legacy seeker
+        // and unknown emails are all blocked above.
+        {
           // Prefetch provider data
           queryClient.prefetchQuery({
             queryKey: ["provider-facilities"],
@@ -584,12 +562,6 @@ export default function Login() {
                 : "Signed in to your provider account.",
           });
           navigate(path, { replace: true });
-        } else {
-          toast({
-            title: "Welcome back!",
-            description: "Signed in successfully.",
-          });
-          navigate(returnTo || "/account", { replace: true });
         }
       }
     } catch (err) {
@@ -611,7 +583,7 @@ export default function Login() {
   return (
     <>
       <Helmet>
-        <title>Sign In | RehabLookup</title>
+        <title>Provider Sign In | RehabLookup</title>
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
     <div className="min-h-screen flex flex-col bg-background">
@@ -622,9 +594,9 @@ export default function Login() {
             <img src={headerLogo} alt="RehabLookup" className="h-8 md:h-9 w-auto" width={197} height={36} />
           </Link>
           <div className="text-sm text-muted-foreground">
-            <span className="hidden sm:inline">Don't have an account?{" "}</span>
-            <Link to="/signup" className="text-primary font-medium hover:underline">
-              Sign up
+            <span className="hidden sm:inline">Not listed yet?{" "}</span>
+            <Link to="/provider/onboarding" className="text-primary font-medium hover:underline">
+              List your facility
             </Link>
           </div>
         </div>
@@ -641,29 +613,32 @@ export default function Login() {
           
           <div className="relative max-w-md text-white">
             <h1 className="text-3xl xl:text-4xl font-display font-bold mb-6">
-              Welcome Back
+              Provider Sign In
             </h1>
             <p className="text-lg text-white/80 mb-8">
-              Sign in to continue your journey. Whether you're a family seeking help or a treatment provider, we're here to support you.
+              Sign in to manage your treatment center's listing on the RehabLookup directory.
             </p>
-            
+
             <div className="space-y-4">
-              <div className="flex items-center gap-3 text-white/90">
-                <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center">
-                  <User className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="font-medium">Personal Accounts</p>
-                  <p className="text-sm text-white/70">Find treatment, save facilities, track requests</p>
-                </div>
-              </div>
               <div className="flex items-center gap-3 text-white/90">
                 <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center">
                   <Building2 className="h-5 w-5" />
                 </div>
                 <div>
-                  <p className="font-medium">Provider Accounts</p>
-                  <p className="text-sm text-white/70">Manage listings, respond to leads, grow your facility</p>
+                  <p className="font-medium">Manage your listings</p>
+                  <p className="text-sm text-white/70">Keep services, levels of care and contact details current</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 text-white/90">
+                <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center">
+                  <Search className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="font-medium">Looking for treatment?</p>
+                  <p className="text-sm text-white/70">
+                    No account needed —{" "}
+                    <Link to="/search-results" className="underline font-medium">search the directory</Link>
+                  </p>
                 </div>
               </div>
             </div>
@@ -677,13 +652,13 @@ export default function Login() {
             <div className="lg:bg-transparent lg:border-0 lg:shadow-none lg:p-0 bg-card border border-border rounded-xl shadow-sm p-5 sm:p-6">
               {/* Mobile Logo */}
               <div className="lg:hidden text-center mb-6">
-                <h1 className="text-xl sm:text-2xl font-display font-bold text-foreground">Sign In</h1>
-                <p className="text-sm text-muted-foreground mt-1">Welcome back to RehabLookup</p>
+                <h1 className="text-xl sm:text-2xl font-display font-bold text-foreground">Provider Sign In</h1>
+                <p className="text-sm text-muted-foreground mt-1">Manage your RehabLookup listing</p>
               </div>
 
               {/* Desktop Title */}
               <div className="hidden lg:block mb-8">
-                <h2 className="text-2xl font-display font-bold text-foreground">Sign in to your account</h2>
+                <h2 className="text-2xl font-display font-bold text-foreground">Sign in to your provider account</h2>
                 <p className="text-muted-foreground mt-1">Enter your credentials below</p>
               </div>
 
@@ -700,14 +675,17 @@ export default function Login() {
                       Go to Admin Login <ExternalLink className="h-3 w-3" />
                     </Link>
                   )}
+                  {detectedType === "seeker" && (
+                    <Link
+                      to="/search-results"
+                      className="mt-2 inline-flex items-center gap-1 text-sm font-medium hover:underline"
+                    >
+                      Search treatment centers <ArrowRight className="h-3 w-3" />
+                    </Link>
+                  )}
                   {detectedType === "unknown" && (
                     <div className="mt-3 flex flex-wrap gap-2">
-                      <Link to="/signup">
-                        <Button size="sm" variant="outline" className="text-xs">
-                          Create Personal Account
-                        </Button>
-                      </Link>
-                      <Link to="/provider-signup">
+                      <Link to="/provider/onboarding">
                         <Button size="sm" variant="outline" className="text-xs">
                           List Your Facility
                         </Button>
@@ -757,8 +735,8 @@ export default function Login() {
                 <div className="space-y-1.5 sm:space-y-2">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="password" className="text-sm">Password</Label>
-                    <Link 
-                      to="/forgot-password" 
+                    <Link
+                      to="/forgot-password"
                       className="text-xs sm:text-sm text-primary hover:underline"
                     >
                       Forgot password?
@@ -867,35 +845,32 @@ export default function Login() {
                   <div className="w-full border-t border-border" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-card lg:bg-background px-2 text-muted-foreground">New to RehabLookup?</span>
+                  <span className="bg-card lg:bg-background px-2 text-muted-foreground">Not a provider?</span>
                 </div>
               </div>
 
-              {/* Signup Options */}
+              {/* Onboarding + public-directory options. RehabLookup has no
+                  consumer accounts, so the second button is a plain link
+                  into the directory rather than a signup funnel. */}
               <div className="grid grid-cols-2 gap-2 sm:gap-3">
-                <Link to="/signup">
-                  <Button variant="outline" className="w-full h-9 sm:h-10 text-xs sm:text-sm">
-                    <User className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
-                    Find Treatment
-                  </Button>
-                </Link>
-                <Link to="/provider-signup">
+                <Link to="/provider/onboarding">
                   <Button variant="outline" className="w-full h-9 sm:h-10 text-xs sm:text-sm">
                     <Building2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
                     List Facility
                   </Button>
                 </Link>
+                <Link to="/search-results">
+                  <Button variant="outline" className="w-full h-9 sm:h-10 text-xs sm:text-sm">
+                    <Search className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
+                    Find Treatment
+                  </Button>
+                </Link>
               </div>
 
-              {/* Type Hint Message */}
-              {typeHint && (
-                <p className="text-xs text-center text-muted-foreground mt-5 sm:mt-6">
-                  {typeHint === "provider" 
-                    ? "Sign in to manage your treatment facility listings."
-                    : "Sign in to access your saved facilities and requests."
-                  }
-                </p>
-              )}
+              <p className="text-xs text-center text-muted-foreground mt-5 sm:mt-6">
+                Sign in to manage your treatment facility listings. Searching,
+                comparing and contacting facilities never requires an account.
+              </p>
             </div>
           </div>
         </div>

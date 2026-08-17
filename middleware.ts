@@ -44,6 +44,8 @@
  *   Request type                  Action                    Result
  *   ─────────────────────────────────────────────────────────────────────────
  *   Any → "/"                     next()                    dist/index.html
+ *   Any → retired /account,       301 → /search-results     Permanent redirect
+ *     /my-account, /seeker                                  (see stage-3 block)
  *   Crawler + prerendered path    rewrite(<path>.html)      Static HTML, correct canonical
  *   Crawler + not prerendered     rewrite(/index.html)      SPA shell, React sets canonical
  *   Social crawler + article      rewrite(og-share fn)      OG-tagged HTML for social cards
@@ -167,6 +169,48 @@ function centerNotFoundResponse(): Response {
   });
 }
 
+/**
+ * Retired consumer-account namespaces (directory cutover stage 3).
+ *
+ * RehabLookup no longer has seeker accounts, so /account/*, /my-account/* and
+ * /seeker/* must never resolve to a 200 — for a crawler or a human. Each of
+ * them also carries a `statusCode: 301` entry in vercel.json; this block is
+ * the belt-and-braces copy so the retirement holds regardless of whether the
+ * platform evaluates config redirects before or after middleware. Both layers
+ * name the SAME single-hop destination, so neither ordering can produce a
+ * chain or a loop.
+ *
+ * Matching is prefix-based on a segment boundary so a lookalike public slug
+ * (e.g. a hypothetical /accounting-for-rehab-costs) is untouched.
+ */
+const RETIRED_ACCOUNT_PREFIXES = ["/account", "/my-account", "/seeker"];
+const RETIRED_ACCOUNT_DESTINATION = "/search-results";
+
+function isRetiredAccountRoute(pathname: string): boolean {
+  const p = pathname.replace(/\/+$/, "") || "/";
+  return RETIRED_ACCOUNT_PREFIXES.some(
+    (prefix) => p === prefix || p.startsWith(`${prefix}/`),
+  );
+}
+
+/**
+ * Permanent redirect for a retired account URL. The query string rides along
+ * so a legacy deep link keeps whatever search intent it carried, and the
+ * response is explicitly noindex for any crawler that reads headers on a 301.
+ */
+function retiredAccountRedirect(url: URL): Response {
+  const target = new URL(RETIRED_ACCOUNT_DESTINATION, url);
+  target.search = url.search;
+  return new Response(null, {
+    status: 301,
+    headers: {
+      Location: target.toString(),
+      "X-Robots-Tag": "noindex, nofollow",
+      "Cache-Control": "public, max-age=3600",
+    },
+  });
+}
+
 function isArticleRoute(pathname: string): boolean {
   // /resources/{slug}
   if (/^\/resources\/[a-z0-9-]+\/?$/.test(pathname)) return true;
@@ -192,6 +236,14 @@ export default function middleware(request: Request) {
 
   // Apex always serves the SPA shell directly.
   if (pathname === "/") return next();
+
+  // Retired consumer-account URLs 301 out before any prerender/SPA handling,
+  // so they can never be served as an indexable 200 or a soft 404. This runs
+  // ahead of the crawler branch on purpose: humans and bots get the same
+  // single-hop redirect.
+  if (isRetiredAccountRoute(pathname)) {
+    return retiredAccountRedirect(url);
+  }
 
   const isCrawler = CRAWLER_UA.test(ua);
   const isSocialCrawler = SOCIAL_CRAWLER_UA.test(ua);
