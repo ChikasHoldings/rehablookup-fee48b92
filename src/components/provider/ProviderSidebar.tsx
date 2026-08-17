@@ -1,9 +1,9 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useCallback, useTransition } from "react";
-import { 
-  LayoutDashboard, 
-  Building2, 
-  Users, 
+import {
+  LayoutDashboard,
+  Building2,
+  Users,
   Settings,
   BarChart3,
   Sparkles,
@@ -12,15 +12,12 @@ import {
   HelpCircle,
   Megaphone,
   CreditCard,
+  PanelsTopLeft,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { useProStatus } from "@/hooks/useProStatus";
-// Stage 3 (directory-model cutover): the pending-concierge badge was removed
-// with the rest of the retired placement/Concierge provider UX. Only the
-// selected-facility inquiry badge remains — see
-// docs/directory-cutover-stage-03-provider-admin.md.
 import { usePendingInquiriesCount } from "@/hooks/usePendingInquiriesCount";
 import { prefetchRoute } from "@/lib/routePrefetch";
 
@@ -28,37 +25,70 @@ interface ProviderSidebarProps {
   onNavigate?: () => void;
 }
 
-// Directory-model provider navigation. Every entry answers one of the
-// questions the provider panel exists to answer: is my listing accurate,
-// am I receiving inquiries, how is my listing performing, are my reviews
-// current, do I want Pro / Featured, do I need support.
-//
-// Subscription and Marketing stay distinct so providers don't conflate the
-// foundational plan (Free/Pro) with the Featured visibility add-on.
-const navItems = [
-  { href: "/provider/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/provider/inquiries", label: "Inquiries", icon: Users },
-  { href: "/provider/listings", label: "My Listing", icon: Building2 },
-  { href: "/provider/claims", label: "Claims", icon: ShieldCheck },
-  { href: "/provider/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/provider/reviews", label: "Reviews", icon: Star },
-  { href: "/provider/billing", label: "Subscription", icon: CreditCard },
-  { href: "/provider/marketing", label: "Marketing", icon: Megaphone },
-  { href: "/provider/settings", label: "Settings", icon: Settings },
-  { href: "/provider/help", label: "Help & Support", icon: HelpCircle },
+type NavItem = {
+  href: string;
+  label: string;
+  icon: React.ElementType;
+};
+
+type NavSection = {
+  label: string;
+  items: NavItem[];
+};
+
+// Directory-first information architecture. The panel is organized around
+// provider jobs instead of legacy product names: keep the directory listing
+// accurate, handle direct engagement, understand performance, optionally buy
+// clearly labeled exposure, then manage the account.
+const navSections: NavSection[] = [
+  {
+    label: "Overview",
+    items: [{ href: "/provider/dashboard", label: "Dashboard", icon: LayoutDashboard }],
+  },
+  {
+    label: "Directory",
+    items: [
+      { href: "/provider/listings", label: "Listings", icon: Building2 },
+      { href: "/provider/listings/profile", label: "Enhanced Profile", icon: PanelsTopLeft },
+      { href: "/provider/inquiries", label: "Inquiries", icon: Users },
+      { href: "/provider/reviews", label: "Reviews", icon: Star },
+      { href: "/provider/claims", label: "Listing Claims", icon: ShieldCheck },
+    ],
+  },
+  {
+    label: "Growth",
+    items: [
+      { href: "/provider/analytics", label: "Performance", icon: BarChart3 },
+      { href: "/provider/marketing", label: "Featured", icon: Megaphone },
+    ],
+  },
+  {
+    label: "Account",
+    items: [
+      { href: "/provider/billing", label: "Plan & Billing", icon: CreditCard },
+      { href: "/provider/settings", label: "Settings", icon: Settings },
+      { href: "/provider/help", label: "Help & Support", icon: HelpCircle },
+    ],
+  },
 ];
+
+function isItemActive(pathname: string, href: string) {
+  // Enhanced Profile is a child of /provider/listings. Keep only the child
+  // highlighted while it is open so the sidebar never shows two active rows.
+  if (href === "/provider/listings") {
+    return pathname === href;
+  }
+  return pathname === href || pathname.startsWith(href + "/");
+}
 
 export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const [, startTransition] = useTransition();
   const { selectedFacility } = useSelectedFacility();
-  // Scope the Pro badge to the SELECTED facility so a mixed-plan provider sees
-  // Free/Pro consistently with the header + dashboard (was account-wide).
   const { data: proStatus } = useProStatus(selectedFacility?.id);
   const { count: pendingInquiriesCount } = usePendingInquiriesCount();
 
-  // Prefetch route on hover for instant navigation
   const handleMouseEnter = useCallback((path: string) => {
     prefetchRoute(path);
   }, []);
@@ -75,95 +105,92 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
   return (
     <div className="flex h-full flex-col">
       <nav aria-label="Provider navigation" className="flex-1 overflow-y-auto px-3 py-4">
-        <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-          Manage
-        </p>
-        <ul className="space-y-0.5">
-          {navItems.map((item) => {
-            // Prefix-match so secondary routes highlight their parent item:
-            // /provider/listings/profile → My Listing, /provider/marketing/*
-            // → Marketing, /provider/billing/* → Subscription. No nav href is a
-            // prefix of another, so there's no cross-highlight.
-            const isActive =
-              location.pathname === item.href ||
-              location.pathname.startsWith(item.href + "/");
-            const Icon = item.icon;
-            const isInquiriesItem = item.href === "/provider/inquiries";
-            const showBadge = isInquiriesItem && pendingInquiriesCount > 0;
-            const badgeCount = pendingInquiriesCount;
+        <div className="space-y-5">
+          {navSections.map((section) => (
+            <div key={section.label}>
+              <p className="mb-1.5 px-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                {section.label}
+              </p>
+              <ul className="space-y-0.5">
+                {section.items.map((item) => {
+                  const isActive = isItemActive(location.pathname, item.href);
+                  const Icon = item.icon;
+                  const isInquiriesItem = item.href === "/provider/inquiries";
+                  const showBadge = isInquiriesItem && pendingInquiriesCount > 0;
 
-            return (
-              <li key={item.href}>
-                <a
-                  href={item.href}
-                  onClick={(e) => handleNavClick(e, item.href)}
-                  onMouseEnter={() => handleMouseEnter(item.href)}
-                  className={cn(
-                    "group relative flex items-center gap-2.5 rounded-md px-2.5 py-2.5 text-[15px] font-medium transition-colors",
-                    isActive
-                      ? "bg-[#1B365D]/5 text-[#1B365D]"
-                      : "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
-                  )}
-                  aria-current={isActive ? "page" : undefined}
-                >
-                  {/* Left indicator bar — directory pattern: 2px navy
-                      bar on active, transparent otherwise. Cleaner than
-                      a full-row colored background. */}
-                  <span
-                    aria-hidden
-                    className={cn(
-                      "absolute inset-y-1.5 left-0 w-0.5 rounded-r",
-                      isActive ? "bg-[#1B365D]" : "bg-transparent",
-                    )}
-                  />
-                  <Icon
-                    className={cn(
-                      "h-[18px] w-[18px] shrink-0",
-                      isActive ? "text-[#1B365D]" : "text-slate-500 group-hover:text-slate-700",
-                    )}
-                    aria-hidden
-                  />
-                  <span className="flex-1 truncate">{item.label}</span>
-                  {showBadge && (
-                    <Badge
-                      variant="secondary"
-                      className={cn(
-                        "h-5 shrink-0 px-1.5 text-[10px] font-semibold",
-                        isActive
-                          ? "bg-[#1B365D] text-white"
-                          : "bg-rose-100 text-rose-700",
-                      )}
-                    >
-                      {badgeCount > 99 ? "99+" : badgeCount}
-                    </Badge>
-                  )}
-                </a>
-              </li>
-            );
-          })}
-        </ul>
+                  return (
+                    <li key={item.href}>
+                      <a
+                        href={item.href}
+                        onClick={(e) => handleNavClick(e, item.href)}
+                        onMouseEnter={() => handleMouseEnter(item.href)}
+                        className={cn(
+                          "group relative flex items-center gap-2.5 rounded-md px-2.5 py-2.5 text-[14px] font-medium transition-colors",
+                          isActive
+                            ? "bg-[#1B365D]/5 text-[#1B365D]"
+                            : "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
+                        )}
+                        aria-current={isActive ? "page" : undefined}
+                      >
+                        <span
+                          aria-hidden
+                          className={cn(
+                            "absolute inset-y-1.5 left-0 w-0.5 rounded-r",
+                            isActive ? "bg-[#1B365D]" : "bg-transparent",
+                          )}
+                        />
+                        <Icon
+                          className={cn(
+                            "h-[18px] w-[18px] shrink-0",
+                            isActive ? "text-[#1B365D]" : "text-slate-500 group-hover:text-slate-700",
+                          )}
+                          aria-hidden
+                        />
+                        <span className="flex-1 truncate">{item.label}</span>
+                        {showBadge && (
+                          <Badge
+                            variant="secondary"
+                            className={cn(
+                              "h-5 shrink-0 px-1.5 text-[10px] font-semibold",
+                              isActive ? "bg-[#1B365D] text-white" : "bg-rose-100 text-rose-700",
+                            )}
+                          >
+                            {pendingInquiriesCount > 99 ? "99+" : pendingInquiriesCount}
+                          </Badge>
+                        )}
+                      </a>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
+        </div>
       </nav>
 
-      {/* Plan status card — compact, hairline border, no gradient */}
       <div className="border-t border-slate-200 p-3">
         {proStatus?.isPro ? (
-          <div className="flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50/60 px-3 py-2">
-            <Sparkles className="h-3.5 w-3.5 text-amber-600" aria-hidden />
+          <a
+            href="/provider/listings/profile"
+            onClick={(e) => handleNavClick(e, "/provider/listings/profile")}
+            className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50/70 px-3 py-2.5 transition-colors hover:bg-amber-50"
+          >
+            <Sparkles className="h-4 w-4 shrink-0 text-amber-600" aria-hidden />
             <div className="min-w-0 flex-1">
-              <p className="text-[12px] font-semibold text-amber-900">Pro Active</p>
-              <p className="text-[11px] text-amber-700">Manage in Subscription</p>
+              <p className="text-[12px] font-semibold text-amber-900">Pro listing active</p>
+              <p className="text-[11px] text-amber-700">Manage enhanced profile</p>
             </div>
-          </div>
+          </a>
         ) : (
           <a
             href="/provider/billing"
             onClick={(e) => handleNavClick(e, "/provider/billing")}
-            className="flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 transition-colors hover:border-[#1B365D]/30 hover:bg-slate-50"
+            className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2.5 transition-colors hover:border-[#1B365D]/30 hover:bg-slate-50"
           >
-            <Sparkles className="h-3.5 w-3.5 text-[#1B365D]" aria-hidden />
+            <Sparkles className="h-4 w-4 shrink-0 text-[#1B365D]" aria-hidden />
             <div className="min-w-0 flex-1">
               <p className="text-[12px] font-semibold text-slate-900">Upgrade to Pro</p>
-              <p className="text-[11px] text-slate-500">Analytics, video, priority</p>
+              <p className="text-[11px] text-slate-500">Phone, rich profile, more media</p>
             </div>
           </a>
         )}
