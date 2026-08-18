@@ -646,6 +646,16 @@ describe("BLOCKER 4 — search SEO copy names the exact scope", () => {
     expect(title).toContain("Cook County");
   });
 
+  it("does not leak padding from an unresolved location into the meta copy", async () => {
+    // The label comes off the canonical scope's normalized `raw`, not off
+    // the raw `?location=`, so extra whitespace never reaches a crawler.
+    renderSearch("/search-results?location=%20%20Cook%20%20%20County%20%20");
+    await waitFor(() => expect(screen.queryAllByTestId("facility-card")).toHaveLength(0));
+
+    expect(seoTitle()).toContain("Rehab Center Search — Cook County");
+    expect(seoDescription()).toContain('for the search "Cook County"');
+  });
+
   it("carries the exact scope into the shared-link title too", async () => {
     // A shared link outlives the page it came from, so it may not carry a
     // proximity claim the result set cannot back.

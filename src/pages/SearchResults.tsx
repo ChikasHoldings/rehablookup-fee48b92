@@ -880,6 +880,11 @@ const SearchResults = () => {
   // the result set was filtered to. Null for county (its own qualified
   // copy below), unresolved input, and no-location searches.
   const seoScope = seoScopeWording(activeLocationScope);
+  // The trimmed, whitespace-collapsed form of a location we could not
+  // place. Taken off the scope rather than off the raw `?location=` so a
+  // padded or doubled-space query does not leak into the meta strings.
+  const unresolvedLocation =
+    activeLocationScope?.type === "unresolved" ? activeLocationScope.raw : "";
 
   // The search <title>. Nothing renders this on the page — the heading
   // above the cards is built straight from `describeScope` — so it is
@@ -905,8 +910,8 @@ const SearchResults = () => {
       ? `${countyScope.county} County Treatment Facility Search — County Data Unavailable`
       : seoScope
         ? `Rehab Centers in ${seoScope.title}`
-        : location
-          ? `Rehab Center Search — ${location}`
+        : unresolvedLocation
+          ? `Rehab Center Search — ${unresolvedLocation}`
           : "Find Treatment Centers";
 
   // Build a unique-per-variant SEO title and self-canonical for indexable
@@ -945,8 +950,8 @@ const SearchResults = () => {
           ? ` in ${seoScope.sentence}`
           : queryParam
             ? ` matching "${queryParam}"`
-            : location
-              ? ` for the search "${location}"`
+            : unresolvedLocation
+              ? ` for the search "${unresolvedLocation}"`
               : ""
       }${currentPage > 1 ? ` (page ${currentPage} of ${totalPages})` : ""}. Compare rehab programs, review insurance information, and contact facilities directly.`;
 
