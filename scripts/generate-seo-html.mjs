@@ -557,6 +557,8 @@ async function generateStatePages() {
   // Pull all facilities once and group by state. After SAMHSA import this
   // gives every state page a real list of accredited centers in the static
   // HTML — no React-hydrate dependency for Googlebot first-pass crawl.
+  let statePagesWithInventory = 0;
+  let stateFacilityLinks = 0;
   const allFacilities = await fetchAllFacilities();
   const facilitiesByState = groupByState(allFacilities);
   console.log(`[seo-html] state generator: ${allFacilities.length} facilities loaded across ${facilitiesByState.size} states`);
@@ -570,6 +572,11 @@ async function generateStatePages() {
       : "";
     const stateFacilities = facilitiesByState.get(slug) ?? [];
     const facilityList = renderFacilityList(stateFacilities, state);
+    // Part 12 reporting: how many state pages actually carry inventory.
+    if (facilityList) {
+      statePagesWithInventory++;
+      stateFacilityLinks += Math.min(stateFacilities.length, 12);
+    }
     const html = generatePage({
       urlPath: `/rehab-centers/${slug}`,
       title,
@@ -622,6 +629,10 @@ async function generateStatePages() {
     });
     await writePage(path.join(publicDir, "rehab-centers", `${slug}.html`), html);
   }
+  console.log(
+    `[seo-html] state pages with facility inventory: ${statePagesWithInventory} ` +
+      `(${stateFacilityLinks} facility links rendered)`,
+  );
 }
 
 // --- State Article Pages (/rehab-centers/{state}/articles/{slug}) ---
