@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useSeekerSession } from './useSeekerSession';
+import { useAuthReady } from './useAuthReady';
 
 export interface FacilityReview {
   id: string;
@@ -40,7 +40,7 @@ export function useFacilityReviews(facilityId: string) {
   const [averageRating, setAverageRating] = useState<number | null>(null);
   const [reviewCount, setReviewCount] = useState(0);
   const lastSubmitRef = useRef<number>(0);
-  const { user, isAuthenticated, isReady } = useSeekerSession();
+  const { user, isAuthenticated, isReady } = useAuthReady();
   const [isEmailVerified, setIsEmailVerified] = useState(false);
 
   // Check email verification status non-blockingly

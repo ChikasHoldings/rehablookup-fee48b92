@@ -572,6 +572,58 @@ describe("seeker retirement — recurring consumer email", () => {
   });
 });
 
+describe("seeker retirement — no account can be created", () => {
+  /**
+   * The last provisioning path was a trigger on auth.users
+   * (on_auth_user_created_seeker -> handle_new_seeker), which inserted a
+   * seeker_profiles row for any signup carrying
+   * raw_user_meta_data->>'account_type' = 'seeker'. The UI that set that flag
+   * is gone, but the project's anon key is public, so an armed trigger is an
+   * open create path for a retired product.
+   */
+  const migration = "supabase/migrations/20260901000300_close_seeker_account_provisioning.sql";
+
+  it("a migration makes handle_new_seeker inert", () => {
+    expect(existsSync(resolve(root, migration))).toBe(true);
+    const sql = read(migration);
+    expect(sql).toMatch(/CREATE OR REPLACE FUNCTION public\.handle_new_seeker/);
+    // The insert must be gone from the executable body. The original is kept
+    // in the comment header for reversibility, so strip comments first.
+    const body = sql.replace(/^\s*--[^\n]*$/gm, "");
+    expect(body).not.toMatch(/INSERT\s+INTO\s+public\.seeker_profiles/i);
+    expect(body).toMatch(/RETURN NEW;/);
+  });
+
+  it("it drops nothing — the records survive the retirement", () => {
+    const body = read(migration).replace(/^\s*--[^\n]*$/gm, "");
+    expect(body).not.toMatch(/\bDROP\s+(TABLE|COLUMN|TRIGGER|FUNCTION)\b/i);
+    expect(body).not.toMatch(/\bDELETE\s+FROM\b/i);
+    expect(body).not.toMatch(/\bTRUNCATE\b/i);
+  });
+
+  it("no application code provisions a seeker account", () => {
+    const offenders: string[] = [];
+    const walk = (dir: string) => {
+      const { readdirSync, statSync } = require("node:fs") as typeof import("node:fs");
+      for (const entry of readdirSync(resolve(root, dir))) {
+        const rel = `${dir}/${entry}`;
+        if (statSync(resolve(root, rel)).isDirectory()) { walk(rel); continue; }
+        if (!/\.(ts|tsx)$/.test(entry)) continue;
+        if (rel.endsWith("seeker-account-retirement.test.ts")) continue;
+        const src = readFileSync(resolve(root, rel), "utf8");
+        // account_type set to seeker in the same statement
+        if (/account_type["']?\s*[:=]\s*["']seeker["']/.test(src)) offenders.push(rel);
+      }
+    };
+    for (const d of ["src", "supabase/functions"]) walk(d);
+    expect(offenders, "code still provisions a seeker account").toEqual([]);
+  });
+
+  it("the seeker-session shim used by the deleted panel is gone", () => {
+    expect(existsSync(resolve(root, "src/hooks/useSeekerSession.ts"))).toBe(false);
+  });
+});
+
 describe("seeker retirement — retained by design", () => {
   /**
    * The brief was explicit: retire the product surface, keep the historical
