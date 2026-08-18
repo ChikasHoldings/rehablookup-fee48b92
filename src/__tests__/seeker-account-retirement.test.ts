@@ -426,14 +426,67 @@ describe("seeker retirement — recurring consumer email", () => {
     return state;
   };
 
-  /** Every seeker-side job the account product drove. */
+  /**
+   * Every seeker-side job the account product drove, plus the concierge /
+   * placement jobs that survived stage 1 and kept emailing seekers hourly.
+   * The list was built from the LIVE cron.job table, not from the migrations —
+   * four of these were scheduled outside version control, and one
+   * (purge_deleted_seekers) called an edge function that has never existed in
+   * this repo, so a migrations-only audit would have missed them.
+   */
   const RETIRED_JOBS = [
     "send_seeker_weekly_digest",
     "process_seeker_followup_reminders",
     "process_seeker_drip",
     "send_saved_search_alerts",
     "send_new_facility_alerts",
+    "send-placement-review-requests",
+    "placement_monitor",
+    "auto_decline_stale_introductions",
+    "purge_deleted_seekers",
   ];
+
+  /**
+   * Jobs that must survive — this retirement is consumer-side only.
+   *
+   * Asserted as "not unscheduled" rather than "scheduled" on purpose. Several
+   * live jobs (process_provider_drip among them) were scheduled outside
+   * version control, so the migrations legitimately say "absent" for them
+   * while they run happily in production. The invariant that matters here is
+   * that no migration of MINE retired them.
+   */
+  const MUST_NOT_BE_RETIRED = [
+    "send_provider_weekly_digest",
+    "process_provider_drip",
+    "plan_grace_enforcement",
+    "run_re_verification_sweep",
+    "send-dunning-emails",
+    "process_lead_redistribution",
+  ];
+
+  it.each(MUST_NOT_BE_RETIRED)("%s is not unscheduled by this retirement", (job) => {
+    expect(lastActionFor(job)).not.toBe("unscheduled");
+  });
+
+  it("no cron job is created outside a migration", () => {
+    // A cron.schedule() reachable from an edge function or build script could
+    // silently resurrect a retired job on the next deploy, defeating every
+    // unschedule migration above.
+    const offenders: string[] = [];
+    const walk = (dir: string) => {
+      const { readdirSync, statSync } = require("node:fs") as typeof import("node:fs");
+      for (const entry of readdirSync(resolve(root, dir))) {
+        const rel = `${dir}/${entry}`;
+        if (statSync(resolve(root, rel)).isDirectory()) { walk(rel); continue; }
+        if (!/\.(ts|tsx|mjs|js)$/.test(entry)) continue;
+        // This guard file necessarily contains the pattern it searches for.
+        if (rel.endsWith("seeker-account-retirement.test.ts")) continue;
+        if (/cron\.schedule\s*\(/.test(readFileSync(resolve(root, rel), "utf8"))) offenders.push(rel);
+      }
+    };
+    for (const d of ["supabase/functions", "scripts", "src"]) walk(d);
+    expect(offenders, "cron.schedule outside supabase/migrations").toEqual([]);
+  });
 
   it.each(RETIRED_JOBS)("%s is unscheduled", (job) => {
     expect(lastActionFor(job)).toBe("unscheduled");
@@ -456,10 +509,6 @@ describe("seeker retirement — recurring consumer email", () => {
     expect(existsSync(resolve(root, `supabase/functions/${fn}`))).toBe(false);
     // config.toml must not keep registering a function that no longer exists.
     expect(read("supabase/config.toml")).not.toContain(`[functions.${fn}]`);
-  });
-
-  it("the provider digest cron is untouched — this retirement is consumer-only", () => {
-    expect(lastActionFor("send_provider_weekly_digest")).toBe("scheduled");
   });
 
   /**
