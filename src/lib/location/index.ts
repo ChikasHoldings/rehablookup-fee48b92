@@ -3,10 +3,15 @@
  * geography, shared by public search, programmatic SEO pages, and the
  * Node build generators that emit crawler-facing inventory.
  *
- * Import from here (`@/lib/location`) in app code. Node build scripts
- * import the individual `.ts` files directly with explicit extensions,
- * which Node 22 strips on the fly — that is what lets the generators run
- * the exact same rules as the browser instead of re-implementing them.
+ * The rules themselves live in `./core.mjs` (plain JS, framework-free)
+ * with types in `./core.d.mts`. That split exists for one reason: the
+ * sitemap/static-route CI job runs Node 20, which cannot import a `.ts`
+ * file at all. Keeping the implementation in plain JS means the
+ * generators and the browser execute the SAME code rather than two
+ * copies that drift.
+ *
+ * App code imports from here (`@/lib/location`). Build scripts import
+ * `src/lib/location/core.mjs` directly.
  *
  * The contract in one line: a page or search labelled "Los Angeles"
  * contains Los Angeles facilities and nothing else. Nearby results may
@@ -20,33 +25,37 @@ export type {
   LocationScope,
   LocationSplit,
   StateAbbr,
-} from "./locationTypes.ts";
+} from "./core.mjs";
 
 export {
+  // state
   US_STATES,
   isValidState,
   normalizeState,
   stateDisplayName,
   stateSlugFor,
   statesMatch,
-} from "./normalizeState.ts";
-
-export {
+  // city
   citiesMatch,
   cityInList,
   cityMatchKey,
   cityMatchKeyFromSlug,
   normalizeCityName,
-} from "./normalizeCity.ts";
-
-export { isValidZip, normalizeZip, zipsMatch } from "./normalizeZip.ts";
-
-export { describeScope, isResolvedScope, parseLocation } from "./parseLocation.ts";
-
-export {
+  // zip
+  isValidZip,
+  normalizeZip,
+  zipsMatch,
+  // parsing
+  describeScope,
+  isResolvedScope,
+  parseLocation,
+  // matching
   countExact,
   filterExact,
   matchesExactly,
   relateToScope,
   splitByLocation,
-} from "./matchLocation.ts";
+  // association keys used by the SEO generators
+  stateCityKey,
+  stateCityKeyFromSlugs,
+} from "./core.mjs";

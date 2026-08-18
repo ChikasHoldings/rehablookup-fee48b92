@@ -21,11 +21,17 @@
 
 import { describe, expect, it } from "vitest";
 
-import { facilityMatchesLocation, parseLocationInput } from "../../proximitySearch.ts";
-import { cityMatchKey, cityMatchKeyFromSlug } from "../normalizeCity.ts";
-import { countExact, filterExact, splitByLocation } from "../matchLocation.ts";
-import { parseLocation } from "../parseLocation.ts";
-import { normalizeState, stateSlugFor } from "../normalizeState.ts";
+import { facilityMatchesLocation, parseLocationInput } from "@/lib/proximitySearch";
+import {
+  cityMatchKey,
+  cityMatchKeyFromSlug,
+  countExact,
+  filterExact,
+  normalizeState,
+  parseLocation,
+  splitByLocation,
+  stateSlugFor,
+} from "../core.mjs";
 import { EXPECTED_EXACT, FIXTURE, idsOf, type FixtureFacility } from "./locationFixture.ts";
 
 /** PATH 1 — what public search returns for a typed location. */

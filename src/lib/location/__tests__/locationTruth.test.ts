@@ -26,7 +26,7 @@ import {
   splitByLocation,
   stateDisplayName,
   statesMatch,
-} from "../index.ts";
+} from "../core.mjs";
 import { FIXTURE, idsOf } from "./locationFixture.ts";
 
 const scopeFor = (q: string) => parseLocation(q);

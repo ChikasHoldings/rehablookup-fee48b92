@@ -26,11 +26,15 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-// Canonical location layer — the SAME module the browser search uses.
-// Node 22 strips the TypeScript types on import, so the generators run
-// the real rules instead of a re-implementation that can drift.
-import { cityMatchKey, cityMatchKeyFromSlug } from "../src/lib/location/normalizeCity.ts";
-import { stateSlugFor } from "../src/lib/location/normalizeState.ts";
+// Canonical location layer — the SAME implementation the browser search
+// uses. Plain .mjs so it loads on every Node version the generators run
+// under (the sitemap/static-route CI job is pinned to Node 20, which
+// cannot import .ts at all), rather than a copy that drifts.
+import {
+  cityMatchKey,
+  cityMatchKeyFromSlug,
+  stateSlugFor,
+} from "../src/lib/location/core.mjs";
 
 // ---------------------------------------------------------------------------
 // Environment contract
