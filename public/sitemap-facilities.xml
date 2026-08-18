@@ -3,28 +3,6 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
-    <loc>https://rehablookup.com/center/clearpath-recovery-center-dallas-texas</loc>
-    <lastmod>2026-05-20</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.90</priority>
-    <image:image>
-      <image:loc>https://plckxokpyiubuekvodtc.supabase.co/storage/v1/object/public/facility-images/2767326b-31ce-48f6-9078-37c92ed36d24/790d53f1-2ce5-4279-9f52-7c2bfe43608e/logo/1766368049833.webp</image:loc>
-      <image:title>ClearPath Recovery Center Logo</image:title>
-    </image:image>
-    <image:image>
-      <image:loc>https://plckxokpyiubuekvodtc.supabase.co/storage/v1/object/public/facility-images/2767326b-31ce-48f6-9078-37c92ed36d24/790d53f1-2ce5-4279-9f52-7c2bfe43608e/gallery/1766368051263-l9ka5dsy59.webp</image:loc>
-      <image:title>ClearPath Recovery Center - Dallas, Texas</image:title>
-    </image:image>
-    <image:image>
-      <image:loc>https://plckxokpyiubuekvodtc.supabase.co/storage/v1/object/public/facility-images/2767326b-31ce-48f6-9078-37c92ed36d24/790d53f1-2ce5-4279-9f52-7c2bfe43608e/gallery/1766368052352-c73okcuv7mq.webp</image:loc>
-      <image:title>ClearPath Recovery Center - Dallas, Texas</image:title>
-    </image:image>
-    <image:image>
-      <image:loc>https://plckxokpyiubuekvodtc.supabase.co/storage/v1/object/public/facility-images/2767326b-31ce-48f6-9078-37c92ed36d24/790d53f1-2ce5-4279-9f52-7c2bfe43608e/gallery/1766368053132-7pwltdh3j2b.webp</image:loc>
-      <image:title>ClearPath Recovery Center - Dallas, Texas</image:title>
-    </image:image>
-  </url>
-  <url>
     <loc>https://rehablookup.com/center/cascadia-bountiful-life-addiction-treatment-center-bremerton-washington</loc>
     <lastmod>2026-05-20</lastmod>
     <changefreq>weekly</changefreq>

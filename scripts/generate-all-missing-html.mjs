@@ -234,6 +234,17 @@ async function loadSitemapUrls() {
         const loc = u?.loc?.[0];
         if (loc) {
           const p = loc.replace("https://rehablookup.com", "").trim();
+          // PATH-FAMILY OWNERSHIP (SEO Phase 1): /center/ belongs exclusively to
+          // generate-facility-profiles-html.mjs, which writes one profile per
+          // row in `public_facilities` and PRUNES every mirror that is no longer
+          // in that set. This generator runs after it and creates a page for any
+          // sitemap URL lacking a file — including, from a stale committed
+          // sitemap, facilities the prune had just correctly removed. That is
+          // how a profile for a facility absent from the database entirely
+          // (clearpath-recovery-center-dallas-texas) stayed live in production.
+          // A generic fallback page for a facility is also wrong on its own
+          // terms: it has no facility data in it.
+          if (p.startsWith("/center/")) continue;
           if (p && p !== "/") urls.add(p);
         }
       }

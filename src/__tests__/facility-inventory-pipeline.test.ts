@@ -298,6 +298,36 @@ describe("city inventory injection", () => {
   });
 });
 
+describe("generator path-family ownership", () => {
+  // /center/ belongs to generate-facility-profiles-html.mjs, which prunes any
+  // mirror no longer in public_facilities. A later fallback generator that
+  // recreated pruned URLs from a stale sitemap is how a profile for a facility
+  // absent from the database stayed live in production.
+  it("the sitemap-driven fallback generator refuses to create /center/ pages", () => {
+    const src = read("scripts/generate-all-missing-html.mjs");
+    expect(src).toMatch(/if \(p\.startsWith\("\/center\/"\)\) continue;/);
+  });
+
+  it("only the facility profile generator writes into public/center", () => {
+    const writers = [
+      "scripts/generate-missing-html.mjs",
+      "scripts/generate-gsc-recovery-html.mjs",
+      "scripts/generate-remaining-nearme.mjs",
+      "scripts/generate-missing-nearme-html.mjs",
+    ];
+    for (const f of writers) {
+      expect(read(f), `${f} must not target /center/`).not.toMatch(/["'`]\/center\//);
+    }
+  });
+
+  it("injection runs after the profile generator that owns /center/", () => {
+    const bv: string = JSON.parse(read("package.json")).scripts["build:vercel"];
+    expect(bv.indexOf("generate:facility-profiles-html")).toBeLessThan(
+      bv.indexOf("inject:city-inventory"),
+    );
+  });
+});
+
 describe("production build wiring", () => {
   const pkg = JSON.parse(read("package.json"));
 

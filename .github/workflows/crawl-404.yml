@@ -51,6 +51,15 @@ jobs:
     if: github.event_name == 'pull_request' || github.event_name == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      # Present → the generators run against live data and this job
+      # validates what would actually deploy. Absent → the regenerate step
+      # is skipped and the offline checks below run against the committed
+      # corpus. The generators are deliberately NOT fail-soft any more, so
+      # they must not be invoked without credentials.
+      # ALLOW_EMPTY_FACILITY_DATA must never be set here.
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -59,6 +68,7 @@ jobs:
           cache: "npm"
       - run: npm ci --no-audit --no-fund
       - name: Regenerate sitemaps & static facility profiles
+        if: env.SUPABASE_URL != ''
         run: |
           npm run generate:facility-profiles-html
           npm run generate:sitemaps
@@ -112,6 +122,15 @@ jobs:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      # Present → the generators run against live data and this job
+      # validates what would actually deploy. Absent → the regenerate step
+      # is skipped and the offline checks below run against the committed
+      # corpus. The generators are deliberately NOT fail-soft any more, so
+      # they must not be invoked without credentials.
+      # ALLOW_EMPTY_FACILITY_DATA must never be set here.
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -121,6 +140,7 @@ jobs:
       - run: npm ci --no-audit --no-fund
 
       - name: Regenerate sitemaps & static facility profiles
+        if: env.SUPABASE_URL != ''
         run: |
           npm run generate:facility-profiles-html
           npm run generate:sitemaps
