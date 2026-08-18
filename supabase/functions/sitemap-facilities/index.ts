@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 
-const VERSION = "v7.8.0";
+const VERSION = "v7.9.0";
 const DEPLOYED_AT = new Date().toISOString();
 
 // Slugify helper — must match how page routes derive slugs from facility city/state
@@ -62,6 +62,11 @@ async function fetchFacilityCitySet(
     const { data, error } = await supabase
       .from("public_facilities")
       .select("city, state")
+      // Unpaginated ORDER BY is undefined in Postgres; without a strict order
+      // these pages overlap and drop rows, silently shrinking the set of
+      // city routes considered to "have inventory". See the note in
+      // generateFacilitiesSitemap().
+      .order("id", { ascending: true })
       .range(from, from + batchSize - 1);
     if (error) {
       console.error(`[Sitemap ${VERSION}] fetchFacilityCitySet error:`, error);
@@ -1916,6 +1921,16 @@ async function generateFacilitiesSitemap(): Promise<string> {
       .not("slug", "is", null)
       .order("featured", { ascending: false })
       .order("updated_at", { ascending: false })
+      // Unique tiebreaker — REQUIRED for correctness, not cosmetic.
+      // `featured` is boolean and 2,787 of ~3,794 rows share one identical
+      // `updated_at` from the SAMHSA bulk import, so those two columns leave
+      // most of the table tied. Each .range() call is a separate query with
+      // its own plan, and Postgres gives no ordering guarantee among tied
+      // rows, so page boundaries drifted between requests: some facilities
+      // came back on two pages and others on none. That is why this sitemap
+      // published ~3,032 of 3,794 facilities. Ordering by the primary key
+      // last makes the sort a strict total order and the pages deterministic.
+      .order("id", { ascending: true })
       .range(from, from + batchSize - 1);
 
     if (error) {

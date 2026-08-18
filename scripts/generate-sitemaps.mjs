@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { discoverPrerenderedPaths } from "./lib/prerender-discovery.mjs";
+import { readFacilityManifest } from "./_facility-data.mjs";
 
 // Vercel-redirect sources must NEVER ship in the sitemap. Listing a URL
 // that 301-redirects produces a "Page with redirect" GSC error: Google
@@ -472,22 +473,28 @@ async function ensureExtrasInIndex() {
 }
 
 /**
- * Reconcile sitemap-facilities.xml with the static /center/*.html mirrors.
+ * Rebuild sitemap-facilities.xml so it matches the facility profiles this
+ * build actually published — exactly, in both directions.
  *
- * The facilities sitemap is fetched from the `sitemap-facilities` edge function
- * (rich entries: lastmod, changefreq, priority, image:image). The static HTML
- * mirrors are produced separately by generate-facility-profiles-html.mjs from
- * the `public_facilities` view. These two server-side sources can disagree on
- * exactly which facilities they include, which trips check-facility-sitemap-sync
- * — whose FATAL direction is "a /center/*.html file with no sitemap <loc>".
+ * WHY THIS IS A REBUILD AND NOT AN APPEND (SEO Phase 1).
  *
- * Rather than couple the two queries, we make the sitemap a guaranteed superset
- * of the generated HTML: append a minimal <url> entry for any /center slug that
- * has an HTML mirror but isn't already in the sitemap. This preserves the rich
- * edge-fn entries (so we keep image sitemaps / accurate lastmod for the
- * facilities it knows about) while ensuring every static page is discoverable.
- * Runs in every environment off local files, so CI (no rich fetch) and Vercel
- * (full rich fetch) both end up consistent.
+ * The facilities sitemap is fetched from the `sitemap-facilities` edge
+ * function (rich entries: lastmod, changefreq, priority, image:image). That
+ * function is deployed separately from this repo, runs its own query, and can
+ * disagree with what `generate-facility-profiles-html.mjs` just wrote. The
+ * previous step only ever APPENDED the difference, which made the sitemap a
+ * superset: entries for facilities with no static page were left in place and
+ * merely warned about. Those resolve as soft-404s to a crawler.
+ *
+ * The build manifest is now the authority. We emit exactly the manifest's
+ * slugs — reusing the edge function's rich <url> block whenever it has one, so
+ * image sitemaps and accurate lastmod survive, and synthesizing a minimal
+ * entry otherwise. Anything the edge function listed that this build did not
+ * publish is dropped.
+ *
+ * Without a manifest (a local checkout with no credentials, or an explicit
+ * ALLOW_EMPTY_FACILITY_DATA run) we fall back to the previous superset
+ * behaviour off the on-disk mirrors, so CI and offline dev still work.
  */
 async function ensureFacilityHtmlInSitemap() {
   const centerDir = path.join(publicDir, "center");
@@ -507,34 +514,84 @@ async function ensureFacilityHtmlInSitemap() {
 
   if (htmlSlugs.length === 0) return;
 
-  let xml = await readFile(sitemapPath, "utf8");
-  const existing = new Set();
-  const locRe = /<loc>\s*([^<\s]+)\s*<\/loc>/g;
-  let m;
-  while ((m = locRe.exec(xml)) !== null) {
-    const mm = m[1].match(/\/center\/([^/?#]+)\/?$/);
-    if (mm) existing.add(mm[1]);
-  }
+  const xml = await readFile(sitemapPath, "utf8");
 
-  const missing = htmlSlugs.filter((s) => !existing.has(s));
-  if (missing.length === 0) return;
+  // Index the edge function's <url> blocks by /center/ slug so we can reuse
+  // the rich ones.
+  const richBlocks = new Map();
+  const urlBlockRe = /<url>[\s\S]*?<\/url>/g;
+  let block;
+  while ((block = urlBlockRe.exec(xml)) !== null) {
+    const loc = block[0].match(/<loc>\s*([^<\s]+)\s*<\/loc>/);
+    if (!loc) continue;
+    const mm = loc[1].match(/\/center\/([^/?#]+)\/?$/);
+    if (mm) richBlocks.set(mm[1], block[0]);
+  }
 
   const today = new Date().toISOString().slice(0, 10);
-  const blocks = missing
-    .map(
-      (slug) =>
-        `  <url>\n    <loc>${CANONICAL_HOST}/center/${slug}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.80</priority>\n  </url>\n`,
-    )
-    .join("");
+  const minimalBlock = (slug) =>
+    `  <url>\n    <loc>${CANONICAL_HOST}/center/${slug}</loc>\n` +
+    `    <lastmod>${today}</lastmod>\n    <changefreq>weekly</changefreq>\n` +
+    `    <priority>0.80</priority>\n  </url>`;
 
-  if (/<\/urlset>\s*$/.test(xml)) {
-    xml = xml.replace(/<\/urlset>\s*$/, `${blocks}</urlset>\n`);
-  } else {
-    xml = `${xml}\n${blocks}`;
+  const manifest = await readFacilityManifest(path.resolve(publicDir, ".."));
+
+  if (!manifest) {
+    // Fallback: superset off the on-disk mirrors (previous behaviour).
+    const existing = new Set(richBlocks.keys());
+    const missing = htmlSlugs.filter((s) => !existing.has(s));
+    if (missing.length === 0) return;
+    let out = xml;
+    const blocks = missing.map((slug) => minimalBlock(slug) + "\n").join("");
+    out = /<\/urlset>\s*$/.test(out)
+      ? out.replace(/<\/urlset>\s*$/, `${blocks}</urlset>\n`)
+      : `${out}\n${blocks}`;
+    await writeFile(sitemapPath, out, "utf8");
+    console.log(
+      `[sitemap] reconciled sitemap-facilities.xml (no manifest): appended ${missing.length} /center URL(s) present as static HTML`,
+    );
+    return;
   }
-  await writeFile(sitemapPath, xml, "utf8");
+
+  // Manifest present: it is the authority.
+  const manifestSlugs = manifest.facilities.map((f) => f.slug);
+  const htmlSet = new Set(htmlSlugs);
+
+  const missingHtml = manifestSlugs.filter((s) => !htmlSet.has(s));
+  if (missingHtml.length) {
+    throw new Error(
+      `[sitemap] ${missingHtml.length} facilit${missingHtml.length === 1 ? "y is" : "ies are"} in the build manifest ` +
+        `but have no public/center/*.html mirror (e.g. ${missingHtml.slice(0, 3).join(", ")}). ` +
+        `Refusing to publish a sitemap that points at pages this build did not generate.`,
+    );
+  }
+
+  const header =
+    '<?xml version="1.0" encoding="UTF-8"?>\n' +
+    `<!-- Facility sitemap rebuilt from the build manifest (${manifestSlugs.length} facilities) -->\n` +
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"\n' +
+    '        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n';
+
+  let reused = 0;
+  let synthesized = 0;
+  const body = manifestSlugs
+    .map((slug) => {
+      const rich = richBlocks.get(slug);
+      if (rich) {
+        reused++;
+        return rich.startsWith("  ") ? rich : `  ${rich}`;
+      }
+      synthesized++;
+      return minimalBlock(slug);
+    })
+    .join("\n");
+
+  const dropped = [...richBlocks.keys()].filter((s) => !htmlSet.has(s)).length;
+
+  await writeFile(sitemapPath, `${header}${body}\n</urlset>\n`, "utf8");
   console.log(
-    `[sitemap] reconciled sitemap-facilities.xml: appended ${missing.length} /center URL(s) present as static HTML but missing from the edge-fn sitemap`,
+    `[sitemap] rebuilt sitemap-facilities.xml from build manifest: ` +
+      `${manifestSlugs.length} URL(s) (${reused} reused from edge fn, ${synthesized} synthesized, ${dropped} stale edge-fn entr${dropped === 1 ? "y" : "ies"} dropped)`,
   );
 }
 

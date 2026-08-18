@@ -1,0 +1,6 @@
+{
+  "count": 3794,
+  "recordedAt": "2026-08-18",
+  "source": "public_facilities where slug is not null (live production read)",
+  "note": "Last known-good production facility count. check-facility-sitemap-sync.mjs fails a build whose facility source returns more than 30% below this. Raise it deliberately when the catalogue grows; lower it only alongside the change that legitimately removes inventory."
+}

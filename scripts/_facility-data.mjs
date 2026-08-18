@@ -7,17 +7,97 @@
 //
 // Idempotent + cache-friendly: each generator invocation calls fetchAllFacilities()
 // once, then queries the in-memory groups. No per-page DB roundtrips.
+//
+// ─────────────────────────────────────────────────────────────────────────────
+// FAIL-LOUD CONTRACT (SEO Phase 1)
+//
+// This module used to be fail-soft: a network error or a non-2xx response
+// returned [] and the build carried on, overwriting rich pages with
+// inventory-free boilerplate and still exiting 0. Every generator downstream
+// treated "the directory is empty" and "we could not reach the directory" as
+// the same thing. That is the failure mode this phase exists to remove.
+//
+// Now: any fetch problem throws. A production build cannot ship a corpus that
+// silently lost its facility inventory. Local/offline development opts out
+// explicitly with ALLOW_EMPTY_FACILITY_DATA=1 (see below) — never set that on
+// Vercel or in CI.
+// ─────────────────────────────────────────────────────────────────────────────
 
-const PROJECT_URL = (
-  process.env.SUPABASE_URL ??
-  process.env.VITE_SUPABASE_URL ??
-  "https://mldbxpntzcjalgjmwnqa.supabase.co"
-).replace(/\/$/, "");
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import path from "node:path";
 
-const ANON_KEY =
-  process.env.SUPABASE_ANON_KEY ??
-  process.env.VITE_SUPABASE_PUBLISHABLE_KEY ??
-  "sb_publishable_tHLCRbeUrsu7EmMlCR0n6g_ygNXmMYP";
+// ---------------------------------------------------------------------------
+// Environment contract
+// ---------------------------------------------------------------------------
+//
+// No hardcoded project URL or key. A missing env var previously fell through
+// to a baked-in project reference, so a misconfigured Vercel environment
+// quietly built against whatever project those literals pointed at instead of
+// failing. The build now stops and says which variable to set.
+
+export const ALLOW_EMPTY_FACILITY_DATA =
+  process.env.ALLOW_EMPTY_FACILITY_DATA === "1";
+
+let warnedEscapeHatch = false;
+function warnEscapeHatch(reason) {
+  if (warnedEscapeHatch) return;
+  warnedEscapeHatch = true;
+  console.warn(
+    "\n" +
+      "!!  ============================================================\n" +
+      "!!  ALLOW_EMPTY_FACILITY_DATA=1 — FACILITY INVENTORY IS DISABLED\n" +
+      "!!  ============================================================\n" +
+      `!!  ${reason}\n` +
+      "!!  Every aggregate page in this build will be generated WITHOUT\n" +
+      "!!  facility listings, and facility profiles will not be written.\n" +
+      "!!  This output is for local development only. It must never be\n" +
+      "!!  deployed: Vercel and CI must leave this variable unset.\n" +
+      "!!  ============================================================\n",
+  );
+}
+
+/**
+ * Resolve the Supabase project URL + anon key from the environment.
+ *
+ * Throws when either is absent, unless the caller has opted into the
+ * offline escape hatch. Returns the sanitized host alongside the credentials
+ * so error messages can name the project without ever printing the key.
+ */
+export function resolveSupabaseConfig() {
+  const rawUrl = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL ?? "";
+  const key =
+    process.env.SUPABASE_ANON_KEY ?? process.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "";
+
+  const missing = [];
+  if (!rawUrl) missing.push("SUPABASE_URL (or VITE_SUPABASE_URL)");
+  if (!key) missing.push("SUPABASE_ANON_KEY (or VITE_SUPABASE_PUBLISHABLE_KEY)");
+
+  if (missing.length) {
+    const detail = `Missing required facility-data credentials: ${missing.join(", ")}.`;
+    if (ALLOW_EMPTY_FACILITY_DATA) {
+      warnEscapeHatch(detail);
+      return null;
+    }
+    throw new Error(
+      `[facility-data] ${detail}\n` +
+        `  Set them in the Vercel project's Environment Variables for this\n` +
+        `  environment, or export them locally. For offline development only,\n` +
+        `  re-run with ALLOW_EMPTY_FACILITY_DATA=1 to build without inventory.`,
+    );
+  }
+
+  const url = rawUrl.replace(/\/$/, "");
+  let host;
+  try {
+    host = new URL(url).host;
+  } catch {
+    throw new Error(
+      `[facility-data] SUPABASE_URL is not a valid URL: ${JSON.stringify(rawUrl)}`,
+    );
+  }
+  // `host` is safe to log — it is the public project reference, not a secret.
+  return { url, key, host };
+}
 
 // Render at most this many facility cards per aggregate page. SEO-tuned:
 // enough unique content to push the page past the ~300-word thin-content
@@ -27,56 +107,174 @@ export const FACILITIES_PER_PAGE = 12;
 let cachedFacilities = null;
 let cachedServices = null;
 
-// Fail-soft: when the build environment can't reach Supabase (sandbox,
-// offline dev, network blip), each generator gets back an empty list and
-// emits a text-only page. The build continues — we'd rather ship a slightly
-// thinner page than break the deploy. A single warning is logged once per
-// run so the gap is visible in Vercel build logs.
-let warnedFetchFailure = false;
-function warnFetchFailure(table, message) {
-  if (warnedFetchFailure) return;
-  warnedFetchFailure = true;
-  console.warn(
-    `[facility-data] WARNING: could not fetch ${table} from ${PROJECT_URL} (${message}). ` +
-      `Aggregate pages will be generated WITHOUT facility lists for this build. ` +
-      `Verify SUPABASE_URL + SUPABASE_ANON_KEY env vars on Vercel are set to the active project.`,
+// ---------------------------------------------------------------------------
+// Stable pagination
+// ---------------------------------------------------------------------------
+//
+// ROOT CAUSE OF THE INVENTORY COLLAPSE (SEO Phase 1).
+//
+// These fetches page through PostgREST with offset/limit. The order was
+// `calculated_ranking_score.desc.nullslast` — a column with TEN distinct
+// values across 3,794 rows. `generate-facility-profiles-html.mjs` ordered by
+// `updated_at.desc`, where 2,787 rows share one identical timestamp from the
+// SAMHSA bulk import. The child-table fetches had no ORDER BY at all.
+//
+// Each page is a separate HTTP request, so each is a separate query with its
+// own plan. Postgres gives no ordering guarantee among rows that tie on the
+// sort key, so a row on a page boundary can be returned twice, or never.
+// The generator counted write() calls, not distinct files, so a run that
+// fetched 3,794 rows containing 762 duplicates wrote only 3,032 distinct
+// profiles and reported success.
+//
+// The fix is a unique tiebreaker on every paginated order. `id` is the primary
+// key of every table read here, so appending it makes the total order strict
+// and the page boundaries deterministic. The duplicate check below is defence
+// in depth: if a fetch ever loses stability again, the build stops instead of
+// shipping a short corpus.
+
+const PAGE_SIZE = 1000;
+
+function describeFailure({ table, host, status, offset, rowsSoFar, cause }) {
+  const lines = [
+    `[facility-data] Failed to fetch "${table}" from ${host}.`,
+    `  page offset      : ${offset}`,
+    `  rows before fail : ${rowsSoFar}`,
+  ];
+  if (status != null) lines.push(`  HTTP status      : ${status}`);
+  if (cause) lines.push(`  cause            : ${cause}`);
+  lines.push(
+    `  A production build must not continue without facility inventory.`,
+    `  For offline development only: ALLOW_EMPTY_FACILITY_DATA=1`,
   );
+  return lines.join("\n");
 }
 
-async function fetchPaginated(table, cols, extraQuery = "") {
-  const PAGE = 1000;
-  let from = 0;
+/**
+ * Page through a PostgREST table/view and return every row.
+ *
+ * Strict by contract: network failure, non-2xx, or a malformed body throws.
+ * `order` is always suffixed with a unique tiebreaker so page boundaries are
+ * deterministic — see the note above.
+ *
+ * @param {string} table    table or view name
+ * @param {string} cols     comma-separated projection
+ * @param {object} [opts]
+ * @param {string} [opts.filter]    extra PostgREST filter, e.g. "slug=not.is.null"
+ * @param {string} [opts.order]     ordering WITHOUT the tiebreaker
+ * @param {string} [opts.tiebreak]  unique column appended to `order` (default "id")
+ */
+export async function fetchPaginated(table, cols, opts = {}) {
+  const { filter = "", order = "", tiebreak = "id" } = opts;
+
+  const config = resolveSupabaseConfig();
+  if (!config) return [];
+  const { url: projectUrl, key, host } = config;
+
+  const orderParam = [order, `${tiebreak}.asc`].filter(Boolean).join(",");
+
   const all = [];
+  const seenIds = new Set();
+  let from = 0;
+
   while (true) {
-    const url =
-      `${PROJECT_URL}/rest/v1/${table}` +
+    const requestUrl =
+      `${projectUrl}/rest/v1/${table}` +
       `?select=${encodeURIComponent(cols)}` +
-      `${extraQuery ? "&" + extraQuery : ""}` +
-      `&offset=${from}&limit=${PAGE}`;
+      `${filter ? "&" + filter : ""}` +
+      `&order=${encodeURIComponent(orderParam)}` +
+      `&offset=${from}&limit=${PAGE_SIZE}`;
+
     let res;
     try {
-      res = await fetch(url, {
+      res = await fetch(requestUrl, {
         headers: {
-          apikey: ANON_KEY,
-          Authorization: `Bearer ${ANON_KEY}`,
+          apikey: key,
+          Authorization: `Bearer ${key}`,
           Accept: "application/json",
           "Range-Unit": "items",
         },
       });
     } catch (err) {
-      warnFetchFailure(table, err instanceof Error ? err.message : String(err));
-      return [];
+      throw new Error(
+        describeFailure({
+          table,
+          host,
+          offset: from,
+          rowsSoFar: all.length,
+          cause: err instanceof Error ? err.message : String(err),
+        }),
+        { cause: err },
+      );
     }
+
     if (!res.ok) {
-      const body = await res.text();
-      warnFetchFailure(table, `${res.status}: ${body.slice(0, 120)}`);
-      return [];
+      // Body may carry a PostgREST error object. It never carries the key.
+      const body = await res.text().catch(() => "");
+      throw new Error(
+        describeFailure({
+          table,
+          host,
+          status: res.status,
+          offset: from,
+          rowsSoFar: all.length,
+          cause: body.slice(0, 200) || res.statusText,
+        }),
+      );
     }
-    const rows = await res.json();
-    all.push(...rows);
-    if (rows.length < PAGE) break;
-    from += PAGE;
+
+    let rows;
+    try {
+      rows = await res.json();
+    } catch (err) {
+      throw new Error(
+        describeFailure({
+          table,
+          host,
+          status: res.status,
+          offset: from,
+          rowsSoFar: all.length,
+          cause: `response was not valid JSON (${err instanceof Error ? err.message : String(err)})`,
+        }),
+      );
+    }
+
+    if (!Array.isArray(rows)) {
+      throw new Error(
+        describeFailure({
+          table,
+          host,
+          status: res.status,
+          offset: from,
+          rowsSoFar: all.length,
+          cause: `expected a JSON array, received ${typeof rows}`,
+        }),
+      );
+    }
+
+    // Defence in depth against a regression in ordering stability: a row
+    // appearing on two pages means the total order was not strict, which
+    // means other rows were skipped. Fail rather than ship a short corpus.
+    for (const row of rows) {
+      const rowId = row?.[tiebreak];
+      if (rowId != null) {
+        if (seenIds.has(rowId)) {
+          throw new Error(
+            `[facility-data] Unstable pagination detected fetching "${table}" from ${host}.\n` +
+              `  Row ${tiebreak}=${rowId} was returned on more than one page (offset ${from}).\n` +
+              `  The ORDER BY is not a strict total order, so rows are being\n` +
+              `  duplicated across page boundaries and others dropped.\n` +
+              `  Ordering used: ${orderParam}`,
+          );
+        }
+        seenIds.add(rowId);
+      }
+      all.push(row);
+    }
+
+    if (rows.length < PAGE_SIZE) break;
+    from += PAGE_SIZE;
   }
+
   return all;
 }
 
@@ -91,7 +289,9 @@ async function fetchPaginated(table, cols, extraQuery = "") {
  * (`is_claimed`, `is_pro`, `is_premium_visible`, `data_source`) that the
  * aggregate-page renderers can use without an extra fetch.
  *
- * Cached after the first call within a build run.
+ * Throws when the directory comes back empty — a real production catalogue is
+ * never zero rows, so an empty result means a broken fetch, not an empty
+ * directory. Cached after the first call within a build run.
  */
 export async function fetchAllFacilities() {
   if (cachedFacilities) return cachedFacilities;
@@ -113,11 +313,23 @@ export async function fetchAllFacilities() {
     "is_pro",
     "is_premium_visible",
   ].join(",");
-  const rows = await fetchPaginated(
-    "public_facilities",
-    cols,
-    "slug=not.is.null&order=calculated_ranking_score.desc.nullslast",
-  );
+
+  const rows = await fetchPaginated("public_facilities", cols, {
+    filter: "slug=not.is.null",
+    order: "calculated_ranking_score.desc.nullslast",
+  });
+
+  if (rows.length === 0 && !ALLOW_EMPTY_FACILITY_DATA) {
+    const { host } = resolveSupabaseConfig() ?? { host: "unknown" };
+    throw new Error(
+      `[facility-data] public_facilities returned 0 rows from ${host}.\n` +
+        `  The live directory is never empty, so this is a broken read — an\n` +
+        `  RLS/grant change, a wrong project, or a filter mismatch — not an\n` +
+        `  empty catalogue. Refusing to generate an inventory-free corpus.\n` +
+        `  For offline development only: ALLOW_EMPTY_FACILITY_DATA=1`,
+    );
+  }
+
   cachedFacilities = rows;
   return rows;
 }
@@ -128,10 +340,7 @@ export async function fetchAllFacilities() {
  */
 export async function fetchAllServices() {
   if (cachedServices) return cachedServices;
-  const rows = await fetchPaginated(
-    "facility_services",
-    "facility_id,service_name",
-  );
+  const rows = await fetchPaginated("facility_services", "id,facility_id,service_name");
   const map = new Map();
   for (const row of rows) {
     if (!map.has(row.facility_id)) map.set(row.facility_id, []);
@@ -139,6 +348,61 @@ export async function fetchAllServices() {
   }
   cachedServices = map;
   return map;
+}
+
+// ---------------------------------------------------------------------------
+// Build manifest
+// ---------------------------------------------------------------------------
+
+export const MANIFEST_PATH = ".tmp/facility-build-manifest.json";
+
+/**
+ * Record the facility set this build actually fetched, so every downstream
+ * guard validates against the same snapshot rather than re-querying and
+ * disagreeing because the data moved mid-build.
+ *
+ * Written to .tmp/ — a build artifact, not committed. Carries identity only
+ * (id / slug / city / state); no contact details, no credentials.
+ */
+export async function writeFacilityManifest(facilities, rootDir) {
+  const target = path.resolve(rootDir, MANIFEST_PATH);
+  await mkdir(path.dirname(target), { recursive: true });
+  const payload = {
+    generatedAt: new Date().toISOString(),
+    count: facilities.length,
+    facilities: facilities
+      .map((f) => ({
+        id: f.id,
+        slug: f.slug,
+        city: f.city ?? null,
+        state: f.state ?? null,
+      }))
+      .sort((a, b) => String(a.slug).localeCompare(String(b.slug))),
+  };
+  await writeFile(target, JSON.stringify(payload, null, 2), "utf8");
+  return target;
+}
+
+/**
+ * Read the manifest written by generate-facility-profiles-html.mjs.
+ *
+ * Returns null when it does not exist, which is the legitimate state for a
+ * checkout with no credentials or an ALLOW_EMPTY_FACILITY_DATA run — callers
+ * fall back to on-disk behaviour rather than failing.
+ */
+export async function readFacilityManifest(rootDir) {
+  const target = path.resolve(rootDir, MANIFEST_PATH);
+  let raw;
+  try {
+    raw = await readFile(target, "utf8");
+  } catch {
+    return null;
+  }
+  const parsed = JSON.parse(raw);
+  if (!parsed || !Array.isArray(parsed.facilities)) {
+    throw new Error(`[facility-data] Malformed facility manifest at ${target}`);
+  }
+  return parsed;
 }
 
 // ---------------------------------------------------------------------------
@@ -190,6 +454,12 @@ export function groupByStateCity(facilities) {
  *
  * Returns an empty string when no facilities — caller decides whether to
  * substitute boilerplate text.
+ *
+ * HEADING WORDING (SEO Phase 1): this block renders ordinary organic
+ * directory inventory — 2 of 3,794 live facilities carry `featured`. Calling
+ * the list "Featured Facilities" told readers the whole list was paid
+ * placement. The per-facility Featured badge below still marks the genuinely
+ * sponsored rows; the heading no longer mislabels the rest.
  */
 export function renderFacilityList(facilities, locationLabel, limit = FACILITIES_PER_PAGE) {
   if (!facilities || facilities.length === 0) return "";
@@ -200,7 +470,7 @@ export function renderFacilityList(facilities, locationLabel, limit = FACILITIES
         ? ` <span style="display:inline-block;padding:1px 6px;font-size:.75rem;background:#dcfce7;color:#166534;border-radius:.25rem;margin-left:.25rem;">Verified</span>`
         : "";
       const featuredBadge = f.featured
-        ? ` <span style="display:inline-block;padding:1px 6px;font-size:.75rem;background:#fef3c7;color:#92400e;border-radius:.25rem;margin-left:.25rem;">Featured</span>`
+        ? ` <span style="display:inline-block;padding:1px 6px;font-size:.75rem;background:#fef3c7;color:#92400e;border-radius:.25rem;margin-left:.25rem;">Sponsored</span>`
         : "";
       const phone = f.phone
         ? ` &middot; <a href="tel:${escapeAttr(f.phone)}">${escapeHtml(f.phone)}</a>`
@@ -217,7 +487,7 @@ export function renderFacilityList(facilities, locationLabel, limit = FACILITIES
   const more = facilities.length > limit
     ? `<p style="margin-top:8px;color:#666;font-size:.9rem;"><a href="/rehab-centers/${stateSlug(facilities[0].state)}">View all ${facilities.length} facilities in ${escapeHtml(locationLabel)} &rarr;</a></p>`
     : "";
-  return `<h2>Featured Facilities in ${escapeHtml(locationLabel)}</h2>
+  return `<h2>Treatment Facilities in ${escapeHtml(locationLabel)}</h2>
     <ul style="list-style:none;padding:0;">${items}</ul>${more}`;
 }
 

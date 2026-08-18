@@ -191,6 +191,8 @@ async function main() {
   console.log("[county-html] starting...");
   // One DB pull per build, grouped by state+city for fast county lookups
   // (we map a county's `majorCities` list to the facilities in those cities).
+  let countyPagesWithInventory = 0;
+  let countyFacilityLinks = 0;
   const allFacilities = await fetchAllFacilities();
   const byStateCity = new Map();
   for (const f of allFacilities) {
@@ -212,6 +214,11 @@ async function main() {
         const inCity = byStateCity.get(k);
         if (inCity) facilities.push(...inCity);
       }
+      // Part 12 reporting: how many county pages actually carry inventory.
+      if (facilities.length) {
+        countyPagesWithInventory++;
+        countyFacilityLinks += Math.min(facilities.length, 12);
+      }
       const html = buildHtml({ state, county, urlPath, facilities });
       const filePath = path.join(
         publicDir,
@@ -224,6 +231,10 @@ async function main() {
     }
   }
   console.log(`[county-html] generated ${pagesGenerated} county pages`);
+  console.log(
+    `[county-html] county pages with facility inventory: ${countyPagesWithInventory} ` +
+      `(${countyFacilityLinks} facility links rendered)`,
+  );
 }
 
 await main().catch((err) => {
