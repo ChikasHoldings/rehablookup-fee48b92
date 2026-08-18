@@ -28,6 +28,11 @@ import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { GA_MEASUREMENT_ID } from "./_ga.mjs";
 import { seoHeader, seoFooter, seoStyles } from "./_seo-page-shell.mjs";
+import {
+  fetchPaginated,
+  writeFacilityManifest,
+  ALLOW_EMPTY_FACILITY_DATA,
+} from "./_facility-data.mjs";
 
 // Branded shell CSS without the surrounding <style> tags so it can be
 // concatenated into the facility-profile <style> block below.
@@ -39,16 +44,6 @@ const publicDir = path.resolve(__dirname, "../public");
 const centerDir = path.join(publicDir, "center");
 
 const BASE_URL = "https://rehablookup.com";
-const PROJECT_URL = (
-  process.env.SUPABASE_URL ??
-  process.env.VITE_SUPABASE_URL ??
-  "https://mldbxpntzcjalgjmwnqa.supabase.co"
-).replace(/\/$/, "");
-const ANON_KEY =
-  process.env.SUPABASE_ANON_KEY ??
-  process.env.VITE_SUPABASE_PUBLISHABLE_KEY ??
-  // Project anon key — safe to commit; matches src/integrations/supabase/client.ts
-  "sb_publishable_tHLCRbeUrsu7EmMlCR0n6g_ygNXmMYP";
 
 // ---------------------------------------------------------------------------
 // Canonical taxonomies — kept in sync with the SPA's
@@ -230,43 +225,26 @@ function normalizeGender(value) {
 // ---------------------------------------------------------------------------
 
 /**
- * Generic paginated fetch from a Supabase REST endpoint (view or table).
- * Uses offset/limit since PostgREST caps each response at ~1,000 rows
- * regardless of the requested limit. Matches the pagination pattern used
- * by scripts/_facility-data.mjs.
+ * Paginated fetch from a Supabase REST endpoint (view or table).
+ *
+ * Thin adapter over the shared strict fetcher in `_facility-data.mjs` so this
+ * generator and the aggregate-page generators use one implementation: one
+ * environment contract, one fail-loud policy, and — critically — one stable
+ * pagination order. See the "Stable pagination" note in that module: this
+ * script previously ordered by `updated_at.desc`, and 2,787 of 3,794 rows
+ * share a single import timestamp, so page boundaries were non-deterministic
+ * and rows were duplicated across pages while others were never fetched.
+ *
+ * `extraQuery` keeps the original call-site shape ("filter&order=..."); it is
+ * split here so the shared fetcher can append the unique tiebreaker to the
+ * ORDER BY rather than to the filter.
  */
 async function fetchAll(viewName, cols, extraQuery = "") {
-  const PAGE = 1000;
-  const all = [];
-  let from = 0;
-  while (true) {
-    const url =
-      `${PROJECT_URL}/rest/v1/${viewName}` +
-      `?select=${encodeURIComponent(cols)}` +
-      `${extraQuery ? "&" + extraQuery : ""}` +
-      `&offset=${from}&limit=${PAGE}`;
-
-    const res = await fetch(url, {
-      headers: {
-        apikey: ANON_KEY,
-        Authorization: `Bearer ${ANON_KEY}`,
-        Accept: "application/json",
-      },
-    });
-
-    if (!res.ok) {
-      const body = await res.text();
-      throw new Error(
-        `fetchAll(${viewName}) failed (${res.status}): ${body.slice(0, 200)}`,
-      );
-    }
-
-    const batch = await res.json();
-    all.push(...batch);
-    if (batch.length < PAGE) break;
-    from += PAGE;
-  }
-  return all;
+  const parts = extraQuery ? extraQuery.split("&").filter(Boolean) : [];
+  const orderPart = parts.find((p) => p.startsWith("order="));
+  const filter = parts.filter((p) => !p.startsWith("order=")).join("&");
+  const order = orderPart ? decodeURIComponent(orderPart.slice("order=".length)) : "";
+  return fetchPaginated(viewName, cols, { filter, order });
 }
 
 /**
@@ -1141,44 +1119,61 @@ async function main() {
       highlightedAccRows,
     ] = await Promise.all([
       fetchFacilities(),
-      fetchAll("facility_services", "facility_id,service_name"),
-      fetchAll("facility_insurance", "facility_id,insurance_name"),
-      fetchAll("facility_age_groups", "facility_id,age_group"),
-      fetchAll("facility_accreditations", "facility_id,accreditation_type"),
+      fetchAll("facility_services", "id,facility_id,service_name"),
+      fetchAll("facility_insurance", "id,facility_id,insurance_name"),
+      fetchAll("facility_age_groups", "id,facility_id,age_group"),
+      fetchAll("facility_accreditations", "id,facility_id,accreditation_type"),
       fetchAll(
         "public_facility_programs",
-        "facility_id,name,description,level_of_care,length_text,display_order",
+        "id,facility_id,name,description,level_of_care,length_text,display_order",
         "order=display_order.asc,created_at.asc",
       ),
       fetchAll(
         "public_facility_amenities",
-        "facility_id,amenity_name,is_highlighted,display_order",
+        "id,facility_id,amenity_name,is_highlighted,display_order",
         "order=is_highlighted.desc,display_order.asc",
       ),
       fetchAll(
         "public_facility_staff",
-        "facility_id,name,job_title,bio,photo_url,display_order",
+        "id,facility_id,name,job_title,bio,photo_url,display_order",
         "order=display_order.asc",
       ),
       fetchAll(
         "public_facility_accreditations",
-        "facility_id,accreditation_type,issuing_authority,verification_url,is_highlighted",
+        "id,facility_id,accreditation_type,issuing_authority,verification_url,is_highlighted",
         "is_highlighted=eq.true",
       ),
     ]);
   } catch (err) {
+    // FAIL LOUD (SEO Phase 1). This used to warn and `return`, which skipped
+    // every facility profile while the build carried on and exited 0 — the
+    // exact way a deploy could silently ship a corpus with no facility pages.
+    // A fetch failure is now terminal unless a developer has explicitly opted
+    // out for offline work.
     console.error(`[facility-prerender] ${err.message}`);
-    // Don't fail the build for transient REST issues — just skip with a warning.
-    // The pre-existing static catalog (drug-rehab-centers, near-me hubs, etc.)
-    // still gets generated by the other generate-*-html.mjs scripts.
-    if (process.env.STRICT_FACILITY_PRERENDER === "1") process.exit(1);
-    console.warn("[facility-prerender] Skipping facility prerender for this build.");
-    return;
+    if (ALLOW_EMPTY_FACILITY_DATA) {
+      console.warn(
+        "[facility-prerender] ALLOW_EMPTY_FACILITY_DATA=1 — skipping facility " +
+          "prerender. This output must not be deployed.",
+      );
+      return;
+    }
+    throw err;
   }
 
   if (!Array.isArray(facilities) || facilities.length === 0) {
-    console.log("[facility-prerender] No approved facilities returned — nothing to write.");
-    return;
+    if (ALLOW_EMPTY_FACILITY_DATA) {
+      console.warn(
+        "[facility-prerender] No facilities returned and " +
+          "ALLOW_EMPTY_FACILITY_DATA=1 — nothing to write. Do not deploy.",
+      );
+      return;
+    }
+    throw new Error(
+      "[facility-prerender] public_facilities returned 0 rows. The live " +
+        "directory is never empty, so this is a broken read, not an empty " +
+        "catalogue. Refusing to prune every facility profile.",
+    );
   }
 
   console.log(
@@ -1244,17 +1239,39 @@ async function main() {
     }
   }
 
+  // `eligible` is the authoritative set this build will publish: every row we
+  // actually wrote a profile for. It becomes the build manifest, so profile
+  // generation, sitemap generation and the guards all compare against one
+  // snapshot instead of re-querying and disagreeing.
+  const eligible = [];
   let written = 0;
   for (const f of facilities) {
     if (!f.slug || !f.name || !f.city || !f.state) {
       console.warn(`[facility-prerender] Skipping incomplete row id=${f.id}`);
       continue;
     }
+    if (liveSlugs.has(f.slug)) {
+      // Two rows claiming one slug would silently overwrite each other and
+      // leave the losing facility with no profile — the shape of the bug this
+      // phase fixes. Stop rather than publish a short corpus.
+      throw new Error(
+        `[facility-prerender] Duplicate slug "${f.slug}" (id=${f.id}). Two ` +
+          `facilities cannot share one /center/ URL; refusing to overwrite.`,
+      );
+    }
     const html = renderFacilityHtml(f, kids);
     const outFile = path.join(centerDir, `${f.slug}.html`);
     await writeFile(outFile, html, "utf8");
     liveSlugs.add(f.slug);
+    eligible.push(f);
     written++;
+  }
+
+  if (written !== liveSlugs.size) {
+    throw new Error(
+      `[facility-prerender] Wrote ${written} profile(s) but only ` +
+        `${liveSlugs.size} distinct file(s) exist — writes collided.`,
+    );
   }
 
   // Prune stale mirrors so /public/center/*.html stays in lock-step with the
@@ -1274,8 +1291,25 @@ async function main() {
     console.warn(`[facility-prerender] Stale-file pruning skipped: ${err.message}`);
   }
 
+  // The manifest is the build artifact every downstream guard reads. Written
+  // after the profiles so it can never claim a facility we failed to publish.
+  const manifestPath = await writeFacilityManifest(
+    eligible,
+    path.resolve(__dirname, ".."),
+  );
+
   console.log(
     `[facility-prerender] Wrote ${written} facility profile(s); pruned ${pruned} stale mirror(s).`,
+  );
+  console.log(
+    "[facility-prerender] ──────── facility dataset ────────\n" +
+      `  public facilities fetched      : ${facilities.length}\n` +
+      `  facility profiles generated    : ${written}\n` +
+      `  services fetched               : ${svcRows.length}\n` +
+      `  insurance associations fetched : ${insRows.length}\n` +
+      `  age-group associations fetched : ${ageRows.length}\n` +
+      `  accreditation associations     : ${accRows.length}\n` +
+      `  manifest                       : ${path.relative(path.resolve(__dirname, ".."), manifestPath)}`,
   );
 }
 

@@ -42,3 +42,6 @@ crawl-404-report.md
 test-results/
 playwright-report/
 blob-report/
+
+# Build-time facility manifest (see scripts/_facility-data.mjs) — ephemeral
+.tmp/

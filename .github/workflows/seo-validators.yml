@@ -27,6 +27,15 @@ jobs:
     # checks silently skipped even when the secret was set.
     env:
       VERCEL_URL: ${{ secrets.VERCEL_URL }}
+      # Supplying these upgrades this job from the degraded two-way check to
+      # the full three-way completeness check (source == profiles == sitemap).
+      # They are the public project URL and publishable anon key, not secrets
+      # in the security sense, but they live in repo secrets so the project
+      # this job validates against is configurable per environment.
+      # NOTE: ALLOW_EMPTY_FACILITY_DATA must never be set here. CI is meant to
+      # fail when facility data is unreachable, not paper over it.
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
 
     steps:
       - name: Checkout
@@ -45,15 +54,31 @@ jobs:
 
       # Regenerate the static /center/*.html mirrors and sitemap from the live
       # database so the validator catches drift between code and what would
-      # actually deploy. Both scripts no-op gracefully when DB creds are absent.
+      # actually deploy.
+      #
+      # These steps are skipped without credentials. They are NOT fail-soft any
+      # more: with credentials present, an unreachable or empty facility source
+      # fails the job rather than silently producing an inventory-free corpus.
       - name: Generate facility profiles HTML
+        if: env.SUPABASE_URL != ''
         run: npm run generate:facility-profiles-html
 
       - name: Generate sitemaps
+        if: env.SUPABASE_URL != ''
         run: npm run generate:sitemaps
 
-      - name: Verify /center/*.html ↔ sitemap-facilities sync
+      # With a build manifest this is the full three-way completeness check;
+      # without one it degrades to the two-way file-vs-sitemap comparison and
+      # says so. The blocking three-way gate lives in build:vercel, which sets
+      # REQUIRE_FACILITY_MANIFEST=1 so a production deploy can never fall back.
+      - name: Verify facility inventory completeness
         run: npm run check:facility-sitemap-sync
+
+      - name: Core-market location inventory smoke check
+        run: npm run check:location-inventory
+
+      - name: Facility inventory regression suite
+        run: npm run test:facility-inventory
 
       - name: Validate sitemap & robots
         run: npm run validate:sitemap-robots
