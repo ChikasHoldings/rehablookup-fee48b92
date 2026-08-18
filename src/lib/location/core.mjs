@@ -298,6 +298,30 @@ const stripCountySuffix = (s) => {
 };
 
 /**
+ * Build a canonical `city` scope from a known city + state pair.
+ *
+ * The programmatic SEO templates already KNOW their geography — it comes
+ * from their route config, not from a user's free-text box — so they do
+ * not need `parseLocation`'s guessing. What they do need is the same
+ * membership rules the search page uses, which is what this constructor
+ * hands them: one predicate (`matchesExactly`), not a private
+ * `citiesMatch(...) && normalizeState(...)` pair re-derived per template.
+ *
+ * A state that does not normalize yields `unresolved`, which selects
+ * NOTHING. That matters: comparing `normalizeState(f.state)` against a
+ * null scope state would make `null === null` true and quietly match
+ * every facility whose state is unparseable.
+ */
+export function cityScope(city, state) {
+  const stateAbbr = normalizeState(state);
+  const cityName = String(city ?? "").trim().replace(/\s+/g, " ");
+  if (!stateAbbr || !normalizeCityName(cityName)) {
+    return { type: "unresolved", raw: [cityName, state].filter(Boolean).join(", ") };
+  }
+  return { type: "city", city: cityName, state: stateAbbr };
+}
+
+/**
  * Parse a raw location query into a canonical scope.
  *
  * Two hard rules:
@@ -362,13 +386,21 @@ export function parseLocation(raw) {
 /**
  * Human label for a scope — result headings use this so the copy can
  * never claim a geography the scope doesn't actually cover.
+ *
+ * `city-any-state` is the case that earns the wordiness. A bare
+ * "Springfield" resolves to every Springfield in the country, so
+ * labelling the result "facilities in Springfield" would describe a
+ * single town while listing several states' worth. The label names the
+ * span instead, and reads correctly in the sentence the UI builds
+ * around it: "12 facilities in cities named Springfield across the
+ * U.S." Callers that want a single town must pass a state.
  */
 export function describeScope(scope) {
   switch (scope.type) {
     case "city":
       return `${scope.city}, ${scope.state}`;
     case "city-any-state":
-      return scope.city;
+      return `cities named ${scope.city} across the U.S.`;
     case "state":
       return scope.state;
     case "zip":

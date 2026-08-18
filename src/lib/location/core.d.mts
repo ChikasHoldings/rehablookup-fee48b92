@@ -66,6 +66,10 @@ export declare function normalizeZip(input: string | null | undefined): string |
 export declare function zipsMatch(a: string | null | undefined, b: string | null | undefined): boolean;
 export declare function isValidZip(input: string | null | undefined): boolean;
 
+export declare function cityScope(
+  city: string | null | undefined,
+  state: string | null | undefined,
+): LocationScope;
 export declare function parseLocation(raw: string | null | undefined): LocationScope;
 export declare function describeScope(scope: LocationScope): string;
 export declare function isResolvedScope(scope: LocationScope): boolean;

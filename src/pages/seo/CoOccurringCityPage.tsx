@@ -3,8 +3,7 @@ import { Navigate, useParams, useLocation } from "react-router-dom";
 import { SEOLandingTemplate } from "@/components/seo/SEOLandingTemplate";
 import { getCityImage } from "@/data/locationImages";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
-import { citiesMatch } from "@/lib/cityNameMatch";
-import { normalizeState } from "@/lib/location";
+import { cityScope, filterExact, normalizeState } from "@/lib/location";
 import { resolveCity } from "@/lib/cityLookup";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { coOccurringPages } from "@/pages/seo/coOccurringPagesData";
@@ -32,33 +31,42 @@ export default function CoOccurringCityPage() {
     }
     const all = [...treatmentCenters, ...approvedFacilities];
     const keywords = config.filterKeys.map((k) => k.toLowerCase());
-    // Canonical state normalization (handles CA/California and DC).
+    // ONE canonical membership predicate, shared with search and the
+    // Node generators — not a private citiesMatch/normalizeState pair.
+    const scope = cityScope(cityData.name, stateData.name);
     const scopeState = normalizeState(stateData.name);
 
-    const cityMatched = all.filter((f) => {
-      const cityMatch = citiesMatch(f.city, cityData.name) && normalizeState(f.state) === scopeState;
-      const keyMatch = f.treatmentTypes?.some((t) => keywords.some((k) => t.toLowerCase().includes(k))) ||
-        keywords.some((k) => f.description?.toLowerCase().includes(k));
-      return cityMatch && keyMatch;
-    });
+    // Second dimension: this page's EXISTING keyword matcher, applied
+    // UNCHANGED. Only the geography around it moved.
+    const keyMatches = (f: typeof all[number]) =>
+      Boolean(
+        f.treatmentTypes?.some((t) => keywords.some((k) => t.toLowerCase().includes(k))) ||
+          keywords.some((k) => f.description?.toLowerCase().includes(k)),
+      );
 
+    // The rendered set: exact city membership AND the keyword filter.
+    // The old ladder dropped the keyword filter (city-all) and then the
+    // city itself (state-all) whenever fewer than three matched, so a
+    // sparse page listed facilities that were in neither the city nor
+    // the facet. A sparse page is now a short page.
+    const cityMatched = filterExact(all, scope).filter(keyMatches);
+
+    // NOT rendered and NOT counted anywhere in the copy — the
+    // pre-existing `validatePage` input, kept so correcting the LISTING
+    // does not silently re-decide the unrelated indexability policy.
     const stateAll = all.filter((f) => normalizeState(f.state) === scopeState);
-    let displayed = cityMatched;
-    if (displayed.length < 3) {
-      const cityAll = all.filter((f) => citiesMatch(f.city, cityData.name) && normalizeState(f.state) === scopeState);
-      displayed = cityAll.length >= 3 ? cityAll : stateAll;
-    }
+
     return {
-      facilities: displayed.slice(0, 12),
+      facilities: cityMatched.slice(0, 12),
       directMatchCount: cityMatched.length,
       stateFallbackCount: stateAll.length,
     };
   }, [approvedFacilities, config, stateData, cityData]);
 
-  // `directMatchCount` is the truthful count for this page's scope.
-  // It is what the hero tile renders — never `facilities.length`,
-  // which may include the wider fallback list shown below when too
-  // few exact matches exist.
+  // Indexability is deliberately UNCHANGED by this correction:
+  // `validatePage` already received `directMatchCount` before it, and
+  // `stateFallbackCount` is still the same statewide tally. Fixing the
+  // rendered list must not add or remove a single noindex URL.
   const validation = validatePage("co-occurring-city", directMatchCount, { stateFallbackCount });
 
   if (!config || !stateData || !cityData) {

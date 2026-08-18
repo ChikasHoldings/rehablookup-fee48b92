@@ -4,8 +4,7 @@ import { InlineNotFound } from "@/components/InlineNotFound";
 import { SEOLandingTemplate } from "@/components/seo/SEOLandingTemplate";
 import { getCityImage } from "@/data/locationImages";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
-import { citiesMatch } from "@/lib/cityNameMatch";
-import { normalizeState } from "@/lib/location";
+import { cityScope, filterExact, normalizeState } from "@/lib/location";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import {
   generateTreatmentCitySections,
@@ -40,7 +39,9 @@ export default function CityTreatmentPage() {
       return { facilities: [], directMatchCount: 0, stateFallbackCount: 0 };
     }
     const allFacilities = [...treatmentCenters, ...approvedFacilities];
-    // Canonical state normalization (handles CA/California and DC).
+    // ONE canonical membership predicate, shared with search and the
+    // Node generators — not a private citiesMatch/normalizeState pair.
+    const scope = cityScope(city.city, city.state);
     const scopeState = normalizeState(city.state);
     const filterLower = treatment.filterKey.toLowerCase();
 
@@ -56,39 +57,38 @@ export default function CityTreatmentPage() {
         return a.name.localeCompare(b.name);
       });
 
-    const directMatch = allFacilities.filter((f) => {
-      const cityMatch = citiesMatch(f.city, city.city) && normalizeState(f.state) === scopeState;
-      const typeMatch =
+    // Second dimension: this page's EXISTING treatment matcher, applied
+    // UNCHANGED. Only the geography around it moved.
+    const typeMatches = (f: typeof allFacilities[number]) =>
+      Boolean(
         f.treatmentTypes?.some((t) => t.toLowerCase().includes(filterLower)) ||
-        f.description?.toLowerCase().includes(filterLower);
-      return cityMatch && typeMatch;
-    });
+          f.description?.toLowerCase().includes(filterLower),
+      );
 
-    const stateTypeMatch = allFacilities.filter((f) => {
-      const stateMatch = normalizeState(f.state) === scopeState;
-      const typeMatch =
-        f.treatmentTypes?.some((t) => t.toLowerCase().includes(filterLower)) ||
-        f.description?.toLowerCase().includes(filterLower);
-      return stateMatch && typeMatch;
-    });
+    // The rendered set: exact city membership AND the treatment filter.
+    // There is deliberately no `if (fewer than N) widen` ladder here.
+    // This page previously fell back to state+treatment and then to the
+    // whole state, so a Detox-in-Fresno page with one exact match
+    // rendered twelve facilities from across California under a Fresno
+    // heading. An empty city+treatment set now renders as empty.
+    const directMatch = filterExact(allFacilities, scope).filter(typeMatches);
 
+    // NOT rendered and NOT counted anywhere in the copy. This is the
+    // pre-existing `validatePage` input, kept so correcting the LISTING
+    // does not silently re-decide the unrelated indexability policy.
     const stateAll = allFacilities.filter((f) => normalizeState(f.state) === scopeState);
 
-    let display = directMatch;
-    if (display.length < 3) display = stateTypeMatch;
-    if (display.length < 3) display = stateAll;
-
     return {
-      facilities: sortByRank(display).slice(0, 12),
+      facilities: sortByRank(directMatch).slice(0, 12),
       directMatchCount: directMatch.length,
       stateFallbackCount: stateAll.length,
     };
   }, [approvedFacilities, city, treatment]);
 
-  // `directMatchCount` is the truthful count for this page's scope.
-  // It is what the hero tile renders — never `facilities.length`,
-  // which may include the wider fallback list shown below when too
-  // few exact matches exist.
+  // Indexability is deliberately UNCHANGED by this correction:
+  // `validatePage` already received `directMatchCount` before it, and
+  // `stateFallbackCount` is still the same statewide tally. Fixing the
+  // rendered list must not add or remove a single noindex URL.
   const validation = validatePage("city-treatment", directMatchCount, { stateFallbackCount });
 
   const faqs = useMemo(() => {
@@ -180,7 +180,7 @@ export default function CityTreatmentPage() {
     <SEOLandingTemplate
       title={pageTitle}
       metaTitle={`${treatment.pluralLabel} in ${city.city}, ${city.stateAbbr} — Find Treatment | RehabLookup`}
-      metaDescription={`Find accredited ${treatment.label.toLowerCase()} in ${city.city}, ${city.stateAbbr}. Compare ${facilities.length}+ facilities, check insurance coverage, read reviews. Get help today.`}
+      metaDescription={`Find accredited ${treatment.label.toLowerCase()} in ${city.city}, ${city.stateAbbr}. Compare ${directMatchCount} facilities, check insurance coverage, read reviews. Get help today.`}
       canonical={`https://rehablookup.com/${slug}`}
       noindex={!validation.shouldIndex}
       structuredData={structuredData}

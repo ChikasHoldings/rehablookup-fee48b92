@@ -643,16 +643,21 @@ const SearchResults = () => {
     return filteredCenters.slice(start, start + ITEMS_PER_PAGE);
   }, [filteredCenters, safePage]);
 
-  // NEARBY — a separate, explicitly labelled bucket. These facilities are
-  // in the same state as the searched city but in a DIFFERENT city, so
-  // they are never counted in the exact total and never rendered under
+  // SAME-STATE — a separate, explicitly labelled bucket. These facilities
+  // are in the same state as the searched city but in a DIFFERENT city,
+  // so they are never counted in the exact total and never rendered under
   // the exact heading. Capped for page weight; the cap is stated in the
-  // copy so the section never implies it is the complete nearby set.
+  // copy so the section never implies it is the complete set.
   //
-  // We say "elsewhere in <state>" rather than a mileage claim on purpose:
-  // the facility catalogue carries no latitude/longitude, so any radius
-  // number would be fabricated. Same-state-different-city is the closest
-  // relationship the data can actually prove.
+  // The heading says "Other facilities in <state>", NOT "Nearby
+  // facilities". The catalogue carries no latitude/longitude, so we
+  // cannot prove that a Redding facility is near Los Angeles — both are
+  // in California and that is the whole of what the data supports.
+  // Same-state is a fact; nearby, at 500 miles, would be a lie. No
+  // mileage, radius, "nearest" or "close by" claim may appear here
+  // unless coordinates exist. The internal variable stays `nearby`
+  // (that is `relateToScope`'s vocabulary); only the public copy is
+  // constrained.
   const NEARBY_LIMIT = 12;
   const nearbySection = useMemo(() => {
     if (!nearbyCenters.length || !activeLocationScope) return null;
@@ -662,13 +667,14 @@ const SearchResults = () => {
     return (
       <section className="mt-12 border-t border-border pt-8" aria-labelledby="nearby-heading">
         <h2 id="nearby-heading" className="font-display text-lg font-bold text-foreground">
-          Nearby facilities
+          Other facilities in {stateLabel}
         </h2>
         <p className="text-sm text-muted-foreground mt-1 mb-5">
           {nearbyCenters.length.toLocaleString()}{" "}
           {nearbyCenters.length === 1 ? "facility" : "facilities"} elsewhere in {stateLabel}
           {nearbyCenters.length > shown.length ? ` — showing the first ${shown.length}` : ""}.
-          These are not in {activeLocationScope.city}.
+          These are not in {activeLocationScope.city}, and we do not hold
+          the coordinates needed to say how far away they are.
         </p>
         <div className="space-y-4">
           {shown.map((center) => (

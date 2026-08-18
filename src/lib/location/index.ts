@@ -45,7 +45,8 @@ export {
   isValidZip,
   normalizeZip,
   zipsMatch,
-  // parsing
+  // parsing / scope construction
+  cityScope,
   describeScope,
   isResolvedScope,
   parseLocation,

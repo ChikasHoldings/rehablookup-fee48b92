@@ -362,6 +362,62 @@ describe("query parsing", () => {
     expect(describeScope(parseLocation("California"))).toBe("CA");
   });
 
+  // BLOCKER D — a bare city name that exists in more than one state.
+  //
+  // "Saint Charles" is a real city in BOTH Illinois and Missouri, and
+  // the fixture holds facilities in each. `city-any-state` deliberately
+  // returns all of them rather than guessing a state, which is the right
+  // search behaviour — but it makes the label load-bearing. If the
+  // heading reads "5 facilities in Saint Charles", the page has claimed
+  // one town while listing two, in two different states.
+  it("reveals the multi-state span of a bare, ambiguous city name", () => {
+    const scope = parseLocation("Saint Charles");
+    expect(scope).toEqual({ type: "city-any-state", city: "Saint Charles" });
+
+    const matched = filterExact(FIXTURE, scope);
+    const statesSpanned = new Set(matched.map((f) => normalizeState(f.state)));
+
+    // Precondition: the scope really does span states, so the label has
+    // something to be honest about.
+    expect(statesSpanned).toEqual(new Set(["IL", "MO"]));
+    expect(idsOf(matched)).toEqual([
+      "stc-il-001",
+      "stc-il-002",
+      "stc-il-003",
+      "stc-mo-001",
+      "stc-mo-002",
+    ]);
+
+    const label = describeScope(scope);
+
+    // The label must not read as a single town...
+    expect(label).not.toBe("Saint Charles");
+    // ...and must say the scope crosses states. The UI renders this as
+    // "N facilities in <label>", so it has to read correctly there too.
+    expect(label).toBe("cities named Saint Charles across the U.S.");
+    expect(`${matched.length} facilities in ${label}`).toBe(
+      "5 facilities in cities named Saint Charles across the U.S.",
+    );
+
+    // And it must never silently pick one of the two states.
+    expect(label).not.toContain("IL");
+    expect(label).not.toContain("MO");
+    expect(label).not.toContain("Illinois");
+    expect(label).not.toContain("Missouri");
+  });
+
+  // The state-qualified form still resolves to exactly one town, so the
+  // ambiguity fix must not have blurred the precise case.
+  it("keeps the state-qualified form of an ambiguous city unambiguous", () => {
+    expect(describeScope(parseLocation("Saint Charles, IL"))).toBe("Saint Charles, IL");
+    expect(idsOf(exact("Saint Charles, IL"))).toEqual([
+      "stc-il-001",
+      "stc-il-002",
+      "stc-il-003",
+    ]);
+    expect(idsOf(exact("Saint Charles, MO"))).toEqual(["stc-mo-001", "stc-mo-002"]);
+  });
+
   it("tolerates messy but valid input", () => {
     expect(parseLocation("  los angeles ,  ca ")).toEqual({
       type: "city",
