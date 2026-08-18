@@ -112,7 +112,7 @@ export default function CountyInsurancePage() {
     <SEOLandingTemplate
       title={pageTitle}
       metaTitle={`${insurer.name} Rehab Centers in ${countyData.name} County, ${stateData.abbreviation} | RehabLookup`}
-      metaDescription={`Find ${insurer.name}-accepting rehab centers in ${countyData.name} County, ${stateData.name}. Compare ${facilities.length}+ verified facilities, check coverage, get help today.`}
+      metaDescription={`Find ${insurer.name}-accepting rehab centers in ${countyData.name} County, ${stateData.name}. Compare ${facilities.length}+ facilities, check coverage, get help today.`}
       canonical={`https://rehablookup.com/insurance/${slug}/${stateSlug}/county/${countySlug}`}
       noindex={!validation.shouldIndex}
       structuredData={structuredData}

@@ -987,7 +987,7 @@ export const treatmentHubPages: {
     slug: "drug-rehab-centers",
     title: "Drug Rehab Centers",
     metaTitle: "Drug Rehab Centers Near You — Evidence-Based Treatment",
-    metaDescription: "Find verified drug rehab centers offering detox, inpatient & outpatient programs. Compare facilities, check insurance coverage, and start recovery today.",
+    metaDescription: "Find drug rehab center listings offering detox, inpatient & outpatient programs. Compare facilities, check insurance coverage, and start recovery today.",
     heroSubtitle: "Connect with evidence-based drug rehabilitation facilities providing comprehensive treatment for all substance use disorders.",
     filterKey: "drug",
     overview: "Drug addiction affects millions of individuals and families across the country. Professional drug rehab centers offer specialized treatment programs addressing addiction to opioids, stimulants, benzodiazepines, and other substances. With medically supervised detox, behavioral therapy, and aftercare planning, these facilities provide the structured support needed for lasting recovery.",

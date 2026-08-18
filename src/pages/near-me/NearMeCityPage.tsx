@@ -37,7 +37,7 @@ function generateCityFAQs(
   const base = [
     {
       question: `How many ${label.toLowerCase()} centers are in ${cityName}, ${stateAbbr}?`,
-      answer: `There are currently ${facilityCount || "several"} verified ${treatmentType.toLowerCase()} providers in ${cityName}, ${stateAbbr} listed on RehabLookup. New facilities are added regularly as they complete our verification process.`,
+      answer: `There are currently ${facilityCount || "several"} listed ${treatmentType.toLowerCase()} providers in ${cityName}, ${stateAbbr} listed on RehabLookup. New facilities are added regularly as they complete our verification process.`,
     },
   ];
 
@@ -211,7 +211,7 @@ export default function NearMeCityPage() {
             </h2>
             <p className="mt-2 text-muted-foreground">
               {facilities.length > 0
-                ? `Browse ${facilities.length} verified facilities in ${cityData.name}.`
+                ? `Browse ${facilities.length} facilities in ${cityData.name}.`
                 : `Explore ${nearMeType.treatmentType.toLowerCase()} options near ${cityData.name}. Browse statewide listings.`}
             </p>
           </div>

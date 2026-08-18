@@ -81,7 +81,7 @@ function stateOverviewVariantC(name: string, s: StateAddictionStats, count: numb
   return [
     `${s.signatureNote}`,
     `Set against a state population of about ${s.populationMillions.toFixed(s.populationMillions < 5 ? 2 : 1)} million, ${name}'s overdose-mortality rate (roughly ${s.overdoseDeathRate.toFixed(1)} per 100,000, with opioids in ~${s.opioidShare}% of cases) frames how facilities here triage detox vs longer-term residential admissions.`,
-    `SAMHSA lists approximately ${s.samhsaFacilities.toLocaleString()} licensed treatment facilities across the state. ${count > 0 ? `RehabLookup's verified directory currently surfaces ${count.toLocaleString()} of them across ${listAnd([s.primaryMetro, ...s.secondaryMetros])} and beyond.` : `Care is anchored in ${listAnd([s.primaryMetro, ...s.secondaryMetros])}.`} ${s.medicaidExpanded ? "ACA Medicaid expansion is in effect, broadening adult coverage." : "Medicaid was not expanded under the ACA, so coverage gaps remain wider for working-age adults than in neighboring states."}`,
+    `SAMHSA lists approximately ${s.samhsaFacilities.toLocaleString()} licensed treatment facilities across the state. ${count > 0 ? `RehabLookup's directory currently surfaces ${count.toLocaleString()} of them across ${listAnd([s.primaryMetro, ...s.secondaryMetros])} and beyond.` : `Care is anchored in ${listAnd([s.primaryMetro, ...s.secondaryMetros])}.`} ${s.medicaidExpanded ? "ACA Medicaid expansion is in effect, broadening adult coverage." : "Medicaid was not expanded under the ACA, so coverage gaps remain wider for working-age adults than in neighboring states."}`,
   ].join(" ");
 }
 
@@ -196,6 +196,6 @@ function countyOverviewVariantC(
 ): string {
   return [
     `Treatment access in ${county} reflects ${stateName}'s broader pattern: about ${s.overdoseDeathRate.toFixed(1)} drug-overdose deaths per 100,000 residents (CDC), an estimated ${s.samhsaFacilities.toLocaleString()} licensed facilities, and ${s.medicaidExpanded ? "ACA Medicaid expansion in effect" : "no ACA Medicaid expansion"}.`,
-    `${count > 0 ? `RehabLookup currently surfaces ${count.toLocaleString()} verified provider${count === 1 ? "" : "s"} serving ${county}.` : `Use the directory below to compare verified facilities near ${county}.`} ${s.signatureNote}`,
+    `${count > 0 ? `RehabLookup currently surfaces ${count.toLocaleString()} verified provider${count === 1 ? "" : "s"} serving ${county}.` : `Use the directory below to compare facility listings near ${county}.`} ${s.signatureNote}`,
   ].join(" ");
 }

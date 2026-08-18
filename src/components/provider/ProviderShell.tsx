@@ -59,10 +59,11 @@ function ProviderShellContent() {
       return;
     }
     
-    // If user is client, redirect to client home
+    // Legacy consumer session — the seeker panel is retired, so send it to
+    // the public directory rather than the removed /account route.
     if (role === "seeker") {
       hasRedirected.current = true;
-      navigate("/account", { replace: true });
+      navigate("/search-results", { replace: true });
       return;
     }
     

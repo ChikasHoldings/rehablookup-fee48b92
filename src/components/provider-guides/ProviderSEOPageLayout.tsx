@@ -205,10 +205,15 @@ export function ProviderSEOPageLayout({
           <div className="container max-w-5xl mx-auto px-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
               {[
-                { icon: Users, stat: "50,000+", label: "Monthly Clients" },
+                // "50,000+ Monthly Clients" and "< 24hr Lead Delivery" were
+                // hard-coded marketing numbers with no data source behind them,
+                // and "Verified Quality Leads" described RehabLookup as selling
+                // screened patient leads. What is left is what the product
+                // actually is.
                 { icon: Star, stat: "Free", label: "Basic Listing" },
-                { icon: Shield, stat: "Verified", label: "Quality Leads" },
-                { icon: Clock, stat: "< 24hr", label: "Lead Delivery" },
+                { icon: Shield, stat: "Direct", label: "Facility Inquiries" },
+                { icon: Users, stat: "Independent", label: "Organic Position" },
+                { icon: Clock, stat: "Labeled", label: "Sponsored Placements" },
               ].map((item) => (
                 <div key={item.label} className="flex flex-col items-center gap-1">
                   <item.icon className="h-5 w-5 text-primary mb-1" />
@@ -285,7 +290,7 @@ export function ProviderSEOPageLayout({
                             Want to put these strategies into action?
                           </h3>
                           <p className="text-muted-foreground text-sm leading-relaxed mb-5">
-                            List your facility on RehabLookup for free and start receiving verified patient inquiries from families actively seeking treatment.
+                            Claim your facility listing on RehabLookup for free. Families searching for treatment can contact your facility directly.
                           </p>
                           <div className="flex flex-col sm:flex-row gap-2">
                             <Link to="/provider/onboarding">
@@ -338,24 +343,27 @@ export function ProviderSEOPageLayout({
               How RehabLookup Helps You Grow
             </h2>
             <p className="text-center text-muted-foreground mb-8 max-w-xl mx-auto">
-              We handle the marketing. You focus on patient care.
+              Keep your facility listing accurate so families can find and contact you.
             </p>
             <div className="grid md:grid-cols-3 gap-6">
               {[
+                // Rewritten off the lead-broker framing: RehabLookup does not
+                // sell, qualify or deliver patient leads, and cannot promise an
+                // admissions or census increase.
                 {
                   icon: Users,
-                  title: "High-Intent Patient Leads",
-                  desc: "Families and individuals actively searching for treatment — not cold leads, not purchased lists.",
+                  title: "Direct Facility Inquiries",
+                  desc: "Families searching for treatment contact your facility directly. RehabLookup does not sell or resell patient leads.",
                 },
                 {
                   icon: Shield,
-                  title: "Verified & Qualified",
-                  desc: "Every inquiry comes from a real person seeking care with verified contact info and detailed intake data.",
+                  title: "Independent Verification",
+                  desc: "Verification is earned and is independent of payment — it is not bundled with a plan and cannot be purchased.",
                 },
                 {
                   icon: TrendingUp,
-                  title: "Grow Your Census",
-                  desc: "SEO-optimized profiles that rank where families search. Measurable increases in admissions.",
+                  title: "A Profile You Control",
+                  desc: "Pro enhances your facility profile and provider tools. Organic directory position is determined independently and is never for sale.",
                 },
               ].map((card) => (
                 <div key={card.title} className="bg-background rounded-xl border border-border p-6 text-center hover:border-primary/30 hover:shadow-md transition-all">

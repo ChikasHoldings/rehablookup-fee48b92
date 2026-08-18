@@ -86,8 +86,8 @@ export function FreeTierValueTeaser({ facilityId }: FreeTierValueTeaserProps) {
           <ul className="mt-1.5 space-y-1 text-xs text-amber-800/90">
             <li>• Every inquiry's contact details delivered to your inbox (Pro)</li>
             <li>• See who's calling, clicking your website, and where (Pro analytics)</li>
-            <li>• Priority placement + the Verified badge (Pro)</li>
-            <li>• Featured rotation in your area, and advisor introductions to families (Featured / Concierge)</li>
+            <li>• More photos and a facility video on your profile (Pro)</li>
+            <li>• Featured rotation in your area — sponsored placement, clearly labeled (Featured)</li>
           </ul>
         </div>
 

@@ -40,15 +40,8 @@ const publicPageMap: Record<string, () => Promise<unknown>> = {
   "/faq": () => import("@/pages/FAQ"),
 };
 
-const seekerPageMap: Record<string, () => Promise<unknown>> = {
-  "/account": () => import("@/pages/seeker/SeekerHome"),
-  "/account/requests": () => import("@/pages/seeker/SeekerRequests"),
-  "/account/saved": () => import("@/pages/seeker/SeekerSaved"),
-  "/account/reviews": () => import("@/pages/seeker/SeekerReviews"),
-  "/account/settings": () => import("@/pages/seeker/SeekerSettings"),
-  "/account/notifications": () => import("@/pages/seeker/SeekerNotifications"),
-  "/account/help": () => import("@/pages/seeker/SeekerHelp"),
-};
+// The seeker panel map is gone: /account/* is a retired surface that now
+// 301s to /search-results, so there is nothing to prefetch for it.
 
 const providerPageMap: Record<string, () => Promise<unknown>> = {
   "/provider/dashboard": () => import("@/pages/provider/Dashboard"),
@@ -87,7 +80,7 @@ const adminPageMap: Record<string, () => Promise<unknown>> = {
 // Find the best matching route for a given path
 function findPrefetchFn(path: string): (() => Promise<unknown>) | null {
   // Check exact matches first
-  const allMaps = { ...publicPageMap, ...seekerPageMap, ...providerPageMap, ...adminPageMap };
+  const allMaps = { ...publicPageMap, ...providerPageMap, ...adminPageMap };
   if (allMaps[path]) return allMaps[path];
   
   // Check prefix matches for dynamic routes
@@ -130,12 +123,6 @@ export function prefetchAdjacentRoutes(currentPath: string): void {
     "/": ["/rehab-centers", "/locations", "/treatment-types"],
     "/rehab-centers": ["/locations", "/treatment-types"],
     "/locations": ["/rehab-centers"],
-    
-    // Seeker
-    "/account": ["/account/saved", "/account/requests", "/account/reviews"],
-    "/account/saved": ["/account", "/account/requests"],
-    "/account/requests": ["/account", "/account/saved"],
-    "/account/settings": ["/account", "/account/notifications"],
     
     // Provider
     "/provider/dashboard": ["/provider/inquiries", "/provider/listings", "/provider/analytics"],
@@ -228,31 +215,8 @@ export function preloadAdminPages(): void {
   });
 }
 
-/**
- * Preload all seeker panel pages eagerly on shell mount
- */
-export function preloadSeekerPages(): void {
-  if (preloadedPanels.has("seeker")) return;
-  preloadedPanels.add("seeker");
-  
-  const pages = [
-    () => import("@/pages/seeker/SeekerHome"),
-    () => import("@/pages/seeker/SeekerRequests"),
-    () => import("@/pages/seeker/SeekerSaved"),
-    () => import("@/pages/seeker/SeekerReviews"),
-    () => import("@/pages/seeker/SeekerSettings"),
-    () => import("@/pages/seeker/SeekerNotifications"),
-    () => import("@/pages/seeker/SeekerHelp"),
-  ];
-  
-  pages.forEach((load, i) => {
-    if (window.requestIdleCallback) {
-      window.requestIdleCallback(() => load().catch(() => {}), { timeout: 500 + i * 50 });
-    } else {
-      setTimeout(() => load().catch(() => {}), 50 + i * 50);
-    }
-  });
-}
+// preloadSeekerPages() removed with the seeker panel — there is no seeker
+// shell to mount, so nothing calls it and nothing to preload.
 
 /**
  * Preload key public website pages for instant navigation

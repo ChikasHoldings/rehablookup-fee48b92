@@ -298,9 +298,6 @@ verify_jwt = true
 [functions.set-renewal-switch-flag]
 verify_jwt = true
 
-[functions.delete-seeker-account]
-verify_jwt = true
-
 [functions.delete-provider-account]
 verify_jwt = true
 
@@ -320,9 +317,6 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.track-provider-event]
-verify_jwt = true
-
-[functions.link-inquiry-to-user]
 verify_jwt = true
 
 [functions.record-introduction-decision]
@@ -536,12 +530,6 @@ verify_jwt = false
 [functions.process-provider-drip]
 verify_jwt = false
 
-[functions.process-seeker-drip]
-verify_jwt = false
-
-[functions.process-seeker-followup-reminders]
-verify_jwt = false
-
 [functions.revenue-enforcement-cron]
 verify_jwt = false
 
@@ -549,9 +537,6 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.send-dunning-emails]
-verify_jwt = false
-
-[functions.send-new-facility-alerts]
 verify_jwt = false
 
 [functions.send-profile-reminders]
@@ -564,12 +549,6 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.send-retention-outreach]
-verify_jwt = false
-
-[functions.send-saved-search-alerts]
-verify_jwt = false
-
-[functions.send-seeker-weekly-digest]
 verify_jwt = false
 
 [functions.send-subscription-alerts]

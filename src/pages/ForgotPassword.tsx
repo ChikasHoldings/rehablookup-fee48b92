@@ -14,7 +14,7 @@ import {
   CheckCircle,
   ExternalLink,
   Building2,
-  User,
+  Search,
   KeyRound,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,6 +29,17 @@ const emailSchema = z.object({
 
 type AccountType = "provider" | "seeker" | "admin" | "unknown" | null;
 type Stage = "email" | "code" | "success";
+
+/**
+ * /forgot-password — PROVIDER password recovery.
+ *
+ * Consumer accounts are retired, so a legacy seeker email is refused here
+ * with an explanation instead of being emailed a reset code for an account
+ * product that no longer has a destination. Admins keep their separate
+ * process; providers are the only accounts this flow serves.
+ */
+const RETIRED_SEEKER_RESET_MESSAGE =
+  "RehabLookup no longer offers personal accounts, so there is no password to reset. You can search, compare and contact treatment centers without signing in.";
 
 export default function ForgotPassword() {
   const [stage, setStage] = useState<Stage>("email");
@@ -57,11 +68,13 @@ export default function ForgotPassword() {
     const { data: isProvider } = await supabase.rpc("is_email_provider", { p_email: normalizedEmail });
     if (isProvider) return { type: "provider", blocked: false };
     const { data: isSeeker } = await supabase.rpc("is_email_seeker", { p_email: normalizedEmail });
-    if (isSeeker) return { type: "seeker", blocked: false };
+    if (isSeeker) {
+      return { type: "seeker", blocked: true, message: RETIRED_SEEKER_RESET_MESSAGE };
+    }
     return {
       type: "unknown",
       blocked: true,
-      message: "No account found with this email address. Please check your email or create a new account.",
+      message: "No provider account found with this email address. Check the address, or list your facility to create one.",
     };
   };
 
@@ -166,7 +179,7 @@ export default function ForgotPassword() {
         : {
             icon: <Mail className="h-7 w-7 text-primary" />,
             ring: "bg-primary/10 ring-primary/15",
-            title: "Reset your password",
+            title: "Reset your provider password",
             subtitle: "Enter your email and we'll send you a 6-digit code to reset your password.",
           };
 
@@ -174,7 +187,7 @@ export default function ForgotPassword() {
     <>
       <Helmet>
         <title>
-          {stage === "success" ? "Password Reset" : "Forgot Password"} | RehabLookup
+          {stage === "success" ? "Password Reset" : "Provider Password Reset"} | RehabLookup
         </title>
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
@@ -220,14 +233,17 @@ export default function ForgotPassword() {
                       Go to Admin Login <ExternalLink className="h-3 w-3" />
                     </Link>
                   )}
+                  {detectedType === "seeker" && (
+                    <Link
+                      to="/search-results"
+                      className="mt-2 inline-flex items-center gap-1 text-sm font-medium hover:underline"
+                    >
+                      Search treatment centers <ExternalLink className="h-3 w-3" />
+                    </Link>
+                  )}
                   {detectedType === "unknown" && (
                     <div className="mt-3 flex gap-2">
-                      <Link to="/signup">
-                        <Button size="sm" variant="outline" className="text-xs">
-                          Create Personal Account
-                        </Button>
-                      </Link>
-                      <Link to="/provider-signup">
+                      <Link to="/provider/onboarding">
                         <Button size="sm" variant="outline" className="text-xs">
                           List Your Facility
                         </Button>
@@ -362,23 +378,25 @@ export default function ForgotPassword() {
               </p>
             )}
 
-            {/* Secondary card — signup CTAs (only on the entry stage) */}
+            {/* Secondary card (entry stage only). This flow is for provider
+                accounts; consumers need no account at all, so the second
+                option is the public directory rather than a signup. */}
             {stage === "email" && (
               <section className="rounded-2xl border border-border bg-card/60 backdrop-blur-sm p-4 sm:p-5">
                 <p className="text-center text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground mb-3">
-                  Need an account?
+                  Not a provider?
                 </p>
                 <div className="grid grid-cols-2 gap-3">
-                  <Link to="/signup">
-                    <Button variant="outline" className="w-full h-10 text-sm">
-                      <User className="h-4 w-4 mr-2" />
-                      Personal
-                    </Button>
-                  </Link>
-                  <Link to="/provider-signup">
+                  <Link to="/provider/onboarding">
                     <Button variant="outline" className="w-full h-10 text-sm">
                       <Building2 className="h-4 w-4 mr-2" />
-                      Provider
+                      List Facility
+                    </Button>
+                  </Link>
+                  <Link to="/search-results">
+                    <Button variant="outline" className="w-full h-10 text-sm">
+                      <Search className="h-4 w-4 mr-2" />
+                      Find Treatment
                     </Button>
                   </Link>
                 </div>

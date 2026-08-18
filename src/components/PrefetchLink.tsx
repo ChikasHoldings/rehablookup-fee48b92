@@ -17,14 +17,8 @@ const routePrefetchMap: Record<string, () => Promise<unknown>> = {
   "/contact": () => import("@/pages/Contact"),
   "/faq": () => import("@/pages/FAQ"),
   "/resources": () => import("@/pages/Resources"),
-  // Seeker panel routes (lazy loaded)
-  "/account": () => import("@/pages/seeker/SeekerHome"),
-  "/account/requests": () => import("@/pages/seeker/SeekerRequests"),
-  "/account/saved": () => import("@/pages/seeker/SeekerSaved"),
-  "/account/reviews": () => import("@/pages/seeker/SeekerReviews"),
-  "/account/settings": () => import("@/pages/seeker/SeekerSettings"),
-  "/account/notifications": () => import("@/pages/seeker/SeekerNotifications"),
-  "/account/help": () => import("@/pages/seeker/SeekerHelp"),
+  // Seeker panel routes retired — /account/* now 301s to /search-results,
+  // so there is no chunk to prefetch.
   // Provider panel routes (lazy loaded)
   "/provider/dashboard": () => import("@/pages/provider/Dashboard"),
   "/provider/listings": () => import("@/pages/provider/MyListings"),

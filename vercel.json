@@ -268,7 +268,7 @@
     },
     {
       "source": "/reset-password",
-      "destination": "/seeker/reset-password",
+      "destination": "/search-results",
       "statusCode": 301
     },
     {
@@ -278,12 +278,37 @@
     },
     {
       "source": "/seeker",
-      "destination": "/account",
+      "destination": "/search-results",
+      "statusCode": 301
+    },
+    {
+      "source": "/seeker/:path*",
+      "destination": "/search-results",
+      "statusCode": 301
+    },
+    {
+      "source": "/account",
+      "destination": "/search-results",
+      "statusCode": 301
+    },
+    {
+      "source": "/account/:path*",
+      "destination": "/search-results",
+      "statusCode": 301
+    },
+    {
+      "source": "/my-account",
+      "destination": "/search-results",
+      "statusCode": 301
+    },
+    {
+      "source": "/my-account/:path*",
+      "destination": "/search-results",
       "statusCode": 301
     },
     {
       "source": "/signup",
-      "destination": "/seeker/signup",
+      "destination": "/search-results",
       "statusCode": 301
     },
     {
@@ -1163,6 +1188,78 @@
         {
           "key": "Cache-Control",
           "value": "public, max-age=3600"
+        }
+      ]
+    },
+    {
+      "source": "/login",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/forgot-password",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/signup/complete",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/provider/(.*)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/admin",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/admin/(.*)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/review/(.*)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/inquiry/confirmation/(.*)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
         }
       ]
     }

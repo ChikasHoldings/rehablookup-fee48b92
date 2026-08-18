@@ -89,7 +89,7 @@ const CenterNotFound = ({ attemptedSlug, reason = "missing" }: CenterNotFoundPro
     <Layout>
       <SEO
         title="Treatment Center Not Found - RehabLookup"
-        description="The treatment center you're looking for is unavailable. Search RehabLookup's verified directory of rehab centers by city, state, or name."
+        description="The treatment center you're looking for is unavailable. Search RehabLookup's directory of rehab centers by city, state, or name."
         noindex={true}
       />
       <div className="min-h-[calc(100vh-200px)] bg-gradient-to-b from-primary/5 via-background to-muted/30 py-8 px-4 md:py-12">

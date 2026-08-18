@@ -92,26 +92,25 @@ export const PLAN_DETAILS = {
       "Basic dashboard",
     ],
     notIncluded: [
-      "Verified badge",
-      "Lead analytics + response insights",
-      "Priority placement (+50 ranking)",
+      // "Verified badge" and "Priority placement (+50 ranking)" were removed:
+      // verification is earned independently of payment, and organic position
+      // is not sold. Neither is a plan feature, so neither belongs in a
+      // plan comparison — in the included OR the not-included column.
+      "Inquiry analytics + response insights",
       "10 photos + 1 facility video",
-      "Marketing Hub (Featured + Concierge add-ons)",
+      "Featured placement add-on (sponsored, sold separately)",
     ],
   },
   pro: {
     name: "Pro",
     price: "$99",
     period: "/mo",
-    description: "Verified listing, lead analytics, priority placement",
+    description: "Enhanced profile, inquiry analytics, and multiple listings",
     location_limit: 5,
     features: [
-      "Verified badge on listing",
-      "Lead analytics + response insights",
-      "Priority placement on city & state pages",
-      "+50 ranking-score boost",
+      "Inquiry analytics + response insights",
       "10 photos + 1 facility video",
-      "Marketing Hub (Featured + Concierge add-ons)",
+      "Featured placement add-on (sponsored, sold separately)",
       "Up to 5 facility listings",
     ],
     // Stripe price/product ids are read from STRIPE_PRICE_PRO_ANNUAL

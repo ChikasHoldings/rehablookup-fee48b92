@@ -68,8 +68,12 @@ export interface FacilityViewParams {
   facility_state?: string | null;
   facility_city?: string | null;
   facility_type?: string | null;
-  /** "public" for /center/<slug>, "seeker_panel" for /account/facility/<id>. */
-  surface?: "public" | "seeker_panel";
+  /**
+   * "public" for /center/<slug>. The historical "seeker_panel" value (the
+   * retired /account/facility/<id> view) is no longer emittable — that
+   * surface is gone — but old GA rows still carry it.
+   */
+  surface?: "public";
 }
 
 /**
@@ -155,7 +159,8 @@ export const resolveContentGroup = (pathname: string): string => {
   if (p.includes("-near-me")) return "near_me";
   if (p.startsWith("/insurance/")) return "insurance_hub";
   if (p.startsWith("/resources/")) return "resources";
-  if (p.startsWith("/account/") || p.startsWith("/seeker/")) return "seeker_panel";
+  // /account/* and /seeker/* are retired: they 301 to /search-results, so a
+  // pageview should never be attributed to a "seeker_panel" group again.
   if (p.startsWith("/provider/")) return "provider_panel";
   if (p.startsWith("/admin/")) return "admin_panel";
   if (p.startsWith("/blog") || p.startsWith("/articles")) return "blog";

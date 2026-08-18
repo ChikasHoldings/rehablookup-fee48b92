@@ -269,12 +269,12 @@ function nearMeStatePage(urlPath) {
   return {
     title,
     metaTitle: `${title} — Find Local Treatment | RehabLookup`,
-    metaDesc: `Find ${nearMeName} near you in ${stateName}. Compare verified, accredited addiction treatment facilities. Verify insurance and get help today.`,
+    metaDesc: `Find ${nearMeName} near you in ${stateName}. Compare addiction treatment facility listings. Verify insurance and get help today.`,
     h1: title,
     content: `
-      <p>Find accredited ${nearMeName.toLowerCase()} programs in ${stateName}. RehabLookup's verified directory covers facilities across every county in ${stateName}, with detailed information on treatment approaches, insurance acceptance, and amenities.</p>
+      <p>Find accredited ${nearMeName.toLowerCase()} programs in ${stateName}. RehabLookup's directory covers facilities across every county in ${stateName}, with detailed information on treatment approaches, insurance acceptance, and amenities.</p>
       <h2>How to Find Treatment in ${stateName}</h2>
-      <p>Use our search tool to filter by city, zip code, insurance provider, and treatment type. All listed facilities are verified for state licensure and accreditation.</p>
+      <p>Use our search tool to filter by city, zip code, insurance provider, and treatment type. Listings show state licensure and accreditation details when a facility reports them. Confirm current licensing with the facility or the issuing state authority.</p>
       <h2>Insurance Coverage in ${stateName}</h2>
       <p>Most major insurance plans — including Aetna, Blue Cross Blue Shield, Cigna, UnitedHealthcare, Humana, and Medicaid — cover addiction treatment in ${stateName} under the Mental Health Parity and Addiction Equity Act.</p>
       <p><a href="/rehab-centers/${stateSlug}">Browse all rehab centers in ${stateName}</a> &middot; <a href="/${nearMeSlug}">Back to ${toTitleCase(nearMeSlug)}</a></p>`,
@@ -302,7 +302,7 @@ function nearMeCityPage(urlPath) {
     metaDesc: `Find ${nearMeName.toLowerCase()} programs in ${cityName}, ${stateName}. Compare accredited local facilities, verify insurance, and get help today.`,
     h1: title,
     content: `
-      <p>Find accredited ${nearMeName.toLowerCase()} programs in ${cityName}, ${stateName}. Our directory includes verified facilities with detailed information on treatment programs, insurance acceptance, and amenities.</p>
+      <p>Find accredited ${nearMeName.toLowerCase()} programs in ${cityName}, ${stateName}. Our directory includes facility listings with information on treatment programs, insurance acceptance and amenities as reported by each facility.</p>
       <h2>Treatment Options in ${cityName}</h2>
       <p>Facilities in ${cityName} offer a range of programs including medical detox, residential inpatient, partial hospitalization (PHP), intensive outpatient (IOP), and outpatient treatment.</p>
       <h2>Insurance Accepted in ${cityName}</h2>
@@ -362,9 +362,9 @@ function insuranceCityPage(urlPath) {
     metaDesc: `Find ${providerName}-covered rehab centers in ${cityName}, ${stateName}. Verify your benefits and find in-network addiction treatment facilities near you.`,
     h1: title,
     content: `
-      <p>Find addiction treatment centers in ${cityName}, ${stateName} that accept ${providerName} insurance. Our directory includes verified in-network facilities for detox, inpatient, and outpatient treatment.</p>
+      <p>Find addiction treatment centers in ${cityName}, ${stateName} that accept ${providerName} insurance. Our directory includes listings for facilities that report in-network coverage for detox, inpatient, and outpatient treatment.</p>
       <h2>In-Network Facilities in ${cityName}</h2>
-      <p>Use our search tool to filter by ${providerName} network status in ${cityName}. All listed facilities have been verified for insurance acceptance.</p>
+      <p>Use our search tool to filter by ${providerName} network status in ${cityName}. Insurance details are reported by each facility. Confirm network status with the facility and your insurer before admission.</p>
       <p><a href="/insurance/${providerSlug}/${stateSlug}">All ${providerName} Centers in ${stateName}</a> &middot; <a href="/rehab-centers/${stateSlug}">All Rehab Centers in ${stateName}</a></p>`,
     breadcrumbs: [
       { name: "Home", url: "/" },
@@ -392,7 +392,7 @@ function insuranceCountyPage(urlPath) {
     metaDesc: `Find ${providerName}-covered rehab centers in ${countyName}, ${stateName}. Verify your benefits and find in-network addiction treatment near you.`,
     h1: title,
     content: `
-      <p>Find addiction treatment centers in ${countyName}, ${stateName} that accept ${providerName} insurance. Our verified directory helps you locate in-network facilities for detox, inpatient, and outpatient treatment.</p>
+      <p>Find addiction treatment centers in ${countyName}, ${stateName} that accept ${providerName} insurance. Our directory helps you locate in-network facilities for detox, inpatient, and outpatient treatment.</p>
       <h2>Coverage in ${countyName}</h2>
       <p>${providerName} covers substance use disorder treatment in ${countyName} under the Mental Health Parity Act. Verify your specific benefits before starting treatment.</p>
       <p><a href="/insurance/${providerSlug}/${stateSlug}">All ${providerName} Centers in ${stateName}</a> &middot; <a href="/rehab-centers/${stateSlug}">All Rehab Centers in ${stateName}</a></p>`,
@@ -417,10 +417,10 @@ function rehabMarketingStateTreatmentPage(urlPath) {
   return {
     title,
     metaTitle: `${title} — Find Accredited Centers | RehabLookup`,
-    metaDesc: `Find accredited ${treatmentName.toLowerCase()} programs in ${stateName}. Compare verified facilities, verify insurance, and start recovery today.`,
+    metaDesc: `Find accredited ${treatmentName.toLowerCase()} programs in ${stateName}. Compare facility listings, check insurance, and contact facilities directly.`,
     h1: title,
     content: `
-      <p>Find accredited ${treatmentName.toLowerCase()} programs in ${stateName}. RehabLookup's verified directory covers facilities across all counties in ${stateName}.</p>
+      <p>Find accredited ${treatmentName.toLowerCase()} programs in ${stateName}. RehabLookup's directory covers facilities across all counties in ${stateName}.</p>
       <h2>Treatment Options in ${stateName}</h2>
       <p>${stateName} offers a range of ${treatmentName.toLowerCase()} programs including medical detox, residential inpatient, PHP, IOP, and outpatient services. Use our search tool to compare programs by location, insurance, and specialty.</p>
       <h2>Insurance Coverage</h2>
@@ -448,14 +448,14 @@ function rehabMarketingCountyPage(urlPath) {
   return {
     title,
     metaTitle: `${title} — Rehab Marketing | RehabLookup for Providers`,
-    metaDesc: `List your rehab in ${countyName}, ${stateName} on RehabLookup. Reach families searching for addiction treatment in your county with verified directory placement and EKRA-compliant referrals.`,
+    metaDesc: `List your rehab in ${countyName}, ${stateName} on RehabLookup. Families searching for treatment in your county can find and contact you directly.`,
     h1: `Rehab Marketing in ${countyName}, ${stateName}`,
     content: `
-      <p>RehabLookup connects ${countyName}, ${stateName} treatment providers with families actively searching for addiction care. Verified directory placement, geo-targeted visibility, and EKRA-compliant referrals.</p>
+      <p>RehabLookup lists treatment providers so families searching for addiction care can find and contact them directly. A claimed directory listing, geo-targeted visibility, and direct family inquiries.</p>
       <h2>Why ${countyName} Treatment Providers List With Us</h2>
-      <p>Our directory is editorially curated, not lead-broker-driven. We do not sell admission slots; placement is earned through accreditation, licensing, and clinical quality. Providers in ${countyName} reach families searching specifically for treatment in their service area.</p>
+      <p>RehabLookup is a directory, not a lead broker. Organic directory position is determined independently and is never purchased. Providers in ${countyName} reach families searching specifically for treatment in their service area.</p>
       <h2>How It Works for ${countyName} Facilities</h2>
-      <p>Claim your free listing or upgrade to Pro for priority placement, enriched profile content, and lead analytics. We verify every facility for state licensing and JCAHO/CARF accreditation before publishing.</p>
+      <p>Claim your free listing to keep your facility's directory information current. Pro enhances the profile and unlocks provider tools such as listing analytics; Featured is separately purchased, clearly labeled sponsored exposure. Organic position is never sold, and verification is earned independently of payment.</p>
       <p><a href="/for-providers">List Your Facility</a> &middot; <a href="/rehab-centers/${stateSlug}/county/${countySlug}">${countyName} Directory (Seeker View)</a> &middot; <a href="/rehab-marketing">All Provider Markets</a></p>`,
     breadcrumbs: [
       { name: "Home", url: "/" },
@@ -480,12 +480,12 @@ function rehabMarketingCountyTreatmentPage(urlPath) {
   return {
     title,
     metaTitle: `${title} — Rehab Marketing | RehabLookup for Providers`,
-    metaDesc: `${treatmentName} providers in ${countyName}, ${stateName} — fill more beds with verified directory placement. EKRA-compliant referrals, no lead-broker fees, claim your free listing today.`,
+    metaDesc: `${treatmentName} providers in ${countyName}, ${stateName} — claim your free directory listing. Families contact your facility directly, and organic position is never sold.`,
     h1: `${treatmentName} Marketing in ${countyName}, ${stateName}`,
     content: `
-      <p>${treatmentName} providers serving ${countyName}, ${stateName} reach more families through RehabLookup. Verified directory placement, geo-targeted visibility for ${treatmentName.toLowerCase()} searches, and EKRA-compliant referrals.</p>
+      <p>${treatmentName} providers serving ${countyName}, ${stateName} reach more families through RehabLookup. A claimed directory listing, geo-targeted visibility for ${treatmentName.toLowerCase()} searches, and direct family inquiries.</p>
       <h2>Why ${treatmentName} Providers in ${countyName} List With Us</h2>
-      <p>Our placement is editorial, not bid-based — facilities don't pay for admission slots. Pro listings get priority placement on the ${treatmentName.toLowerCase()} directory pages families are actually searching, plus enriched profile content and lead analytics.</p>
+      <p>Organic directory position is determined independently and is never purchased. Pro enhances the facility profile and unlocks provider tools such as listing analytics; Featured is a separately purchased, clearly labeled sponsored placement.</p>
       <h2>Get Started</h2>
       <p><a href="/for-providers">List Your ${treatmentName} Facility</a> &middot; <a href="/rehab-centers/${stateSlug}/county/${countySlug}/${treatmentSlug}">${countyName} ${treatmentName} Directory</a> &middot; <a href="/rehab-marketing/${stateSlug}/county/${countySlug}">All ${countyName} Provider Markets</a></p>`,
     breadcrumbs: [
@@ -512,12 +512,12 @@ function rehabMarketingCountyInsurancePage(urlPath) {
   return {
     title,
     metaTitle: `${title} — Rehab Marketing | RehabLookup for Providers`,
-    metaDesc: `${insName}-accepting rehab providers in ${countyName}, ${stateName} — fill more beds via verified directory placement. EKRA-compliant referrals from families searching for in-network ${insName} treatment.`,
+    metaDesc: `${insName}-accepting rehab providers in ${countyName}, ${stateName} — claim your free directory listing. Inquiries come directly from families searching for in-network ${insName} treatment.`,
     h1: `${insName} Patient Marketing in ${countyName}, ${stateName}`,
     content: `
       <p>${insName}-accepting providers in ${countyName}, ${stateName} reach more in-network patients through RehabLookup. Geo-targeted visibility on the directory pages families use to find ${insName}-covered addiction treatment.</p>
       <h2>Why ${insName}-Accepting Providers in ${countyName} List With Us</h2>
-      <p>Editorial placement, not bid-based auctions. Pro listings get priority on insurance-specific directory pages and enriched profile content showing accepted plans, network status, and verification flow.</p>
+      <p>Organic directory position is determined independently and is never purchased. Pro enhances the facility profile — including the plans and network status a facility reports — and unlocks provider tools; Featured is a separately purchased, clearly labeled sponsored placement.</p>
       <h2>Get Started</h2>
       <p><a href="/for-providers">List Your Facility</a> &middot; <a href="/insurance/${insSlug}-rehab/${stateSlug}/county/${countySlug}">${countyName} ${insName} Directory</a> &middot; <a href="/rehab-marketing/${stateSlug}/county/${countySlug}">All ${countyName} Provider Markets</a></p>`,
     breadcrumbs: [
@@ -541,10 +541,10 @@ function rehabCentersCountyPage(urlPath) {
   return {
     title,
     metaTitle: `${title} — Find Treatment | RehabLookup`,
-    metaDesc: `Find accredited rehab centers in ${countyName}, ${stateName}. Compare verified addiction treatment programs, verify insurance, and get help today.`,
+    metaDesc: `Find accredited rehab centers in ${countyName}, ${stateName}. Compare addiction treatment listings, check insurance, and contact facilities directly.`,
     h1: title,
     content: `
-      <p>Find accredited addiction treatment centers in ${countyName}, ${stateName}. Our verified directory covers all licensed facilities in the county offering detox, inpatient, and outpatient programs.</p>
+      <p>Find accredited addiction treatment centers in ${countyName}, ${stateName}. Our directory lists facilities in the county offering detox, inpatient, and outpatient programs.</p>
       <h2>Treatment Programs in ${countyName}</h2>
       <p>Facilities in ${countyName} offer comprehensive addiction treatment including medical detox, residential inpatient, partial hospitalization (PHP), intensive outpatient (IOP), and standard outpatient programs.</p>
       <h2>Insurance Coverage</h2>
@@ -572,10 +572,10 @@ function rehabCentersCountyTreatmentPage(urlPath) {
   return {
     title,
     metaTitle: `${title} — Find Accredited Centers | RehabLookup`,
-    metaDesc: `Find accredited ${treatmentName.toLowerCase()} programs in ${countyName}, ${stateName}. Compare verified facilities and verify insurance coverage.`,
+    metaDesc: `Find accredited ${treatmentName.toLowerCase()} programs in ${countyName}, ${stateName}. Compare facility listings and check insurance coverage.`,
     h1: title,
     content: `
-      <p>Find accredited ${treatmentName.toLowerCase()} programs in ${countyName}, ${stateName}. Our verified directory includes licensed facilities offering evidence-based addiction treatment.</p>
+      <p>Find accredited ${treatmentName.toLowerCase()} programs in ${countyName}, ${stateName}. Our directory includes listings for facilities offering evidence-based addiction treatment.</p>
       <h2>Insurance Coverage</h2>
       <p>Most major insurance plans cover ${treatmentName.toLowerCase()} in ${countyName} under the Mental Health Parity Act. Verify your benefits before starting treatment.</p>
       <p><a href="/rehab-centers/${stateSlug}/county/${countySlug}">All Rehab Centers in ${countyName}</a> &middot; <a href="/rehab-centers/${stateSlug}">All Rehab Centers in ${stateName}</a></p>`,
@@ -600,10 +600,10 @@ function rehabCentersCityPage(urlPath) {
   return {
     title,
     metaTitle: `${title} — Find Treatment | RehabLookup`,
-    metaDesc: `Find accredited rehab centers in ${cityName}, ${stateName}. Compare verified addiction treatment programs, verify insurance, and get help today.`,
+    metaDesc: `Find accredited rehab centers in ${cityName}, ${stateName}. Compare addiction treatment listings, check insurance, and contact facilities directly.`,
     h1: title,
     content: `
-      <p>Find accredited addiction treatment centers in ${cityName}, ${stateName}. Our verified directory covers all licensed facilities offering detox, inpatient, and outpatient programs.</p>
+      <p>Find accredited addiction treatment centers in ${cityName}, ${stateName}. Our directory lists facilities offering detox, inpatient, and outpatient programs.</p>
       <h2>Treatment Options in ${cityName}</h2>
       <p>Facilities in ${cityName} offer comprehensive programs including medical detox, residential inpatient, PHP, IOP, and outpatient treatment. Use our search tool to compare programs by insurance, specialty, and amenities.</p>
       <p><a href="/rehab-centers/${stateSlug}">All Rehab Centers in ${stateName}</a></p>`,
@@ -627,10 +627,10 @@ function substanceStatePage(urlPath) {
   return {
     title,
     metaTitle: `${title} — Find Accredited Programs | RehabLookup`,
-    metaDesc: `Find accredited ${typeName.toLowerCase()} programs in ${stateName}. Compare verified facilities, verify insurance, and start recovery today.`,
+    metaDesc: `Find accredited ${typeName.toLowerCase()} programs in ${stateName}. Compare facility listings, check insurance, and contact facilities directly.`,
     h1: title,
     content: `
-      <p>Find accredited ${typeName.toLowerCase()} programs in ${stateName}. RehabLookup's verified directory covers licensed facilities across all counties in ${stateName}.</p>
+      <p>Find accredited ${typeName.toLowerCase()} programs in ${stateName}. RehabLookup's directory covers licensed facilities across all counties in ${stateName}.</p>
       <h2>Treatment Options in ${stateName}</h2>
       <p>${stateName} offers a range of ${typeName.toLowerCase()} programs including medical detox, residential inpatient, partial hospitalization (PHP), intensive outpatient (IOP), and outpatient treatment.</p>
       <h2>Insurance Coverage in ${stateName}</h2>
@@ -655,11 +655,11 @@ function listYourFacilityPage(urlPath) {
     metaDesc: `List your addiction treatment facility in ${cityName} on RehabLookup. Reach patients searching for rehab centers in your area. Free and paid listing options available.`,
     h1: title,
     content: `
-      <p>Add your addiction treatment facility in ${cityName} to RehabLookup's verified provider directory. Thousands of patients and families search for rehab centers in ${cityName} every month.</p>
+      <p>Add your addiction treatment facility in ${cityName} to RehabLookup's provider directory so families searching for care in ${cityName} can find and contact you directly.</p>
       <h2>Why List on RehabLookup?</h2>
       <p>RehabLookup is one of the most trusted addiction treatment directories in the United States. Our platform helps patients find accredited, licensed facilities that match their needs, insurance, and location.</p>
       <h2>How to Get Listed</h2>
-      <p>Complete our provider application to have your facility reviewed and listed in our directory. We verify all facilities for state licensure and accreditation before listing.</p>
+      <p>Complete our provider application to have your facility reviewed and listed in our directory. Listings show state licensure and accreditation details when a facility reports them. Confirm current licensing with the facility or the issuing state authority.</p>
       <p><a href="/provider-signup">Apply to List Your Facility</a> &middot; <a href="/provider-resources">Provider Resources</a></p>`,
     breadcrumbs: [
       { name: "Home", url: "/" },
@@ -685,7 +685,7 @@ function nearMeCountyPage(urlPath) {
     metaDesc: `Find ${nearMeName.toLowerCase()} programs in ${countyName} County, ${stateName}. Compare accredited local facilities, verify insurance, and get help today.`,
     h1: title,
     content: `
-      <p>Find accredited ${nearMeName.toLowerCase()} programs in ${countyName} County, ${stateName}. Our directory includes verified facilities with detailed information on treatment programs, insurance acceptance, and amenities.</p>
+      <p>Find accredited ${nearMeName.toLowerCase()} programs in ${countyName} County, ${stateName}. Our directory includes facility listings with information on treatment programs, insurance acceptance and amenities as reported by each facility.</p>
       <h2>Treatment Options in ${countyName} County</h2>
       <p>Facilities in ${countyName} County offer a range of programs including medical detox, residential inpatient, partial hospitalization (PHP), intensive outpatient (IOP), and outpatient treatment.</p>
       <h2>Insurance Accepted in ${countyName} County</h2>
@@ -713,10 +713,10 @@ function substanceCityPage(urlPath) {
   return {
     title,
     metaTitle: `${title} — Local Treatment Centers | RehabLookup`,
-    metaDesc: `Find accredited ${typeName.toLowerCase()} programs in ${cityName}, ${stateName}. Compare verified local facilities, check insurance coverage, and start recovery today.`,
+    metaDesc: `Find accredited ${typeName.toLowerCase()} programs in ${cityName}, ${stateName}. Compare local facility listings, check insurance coverage, and contact facilities directly.`,
     h1: title,
     content: `
-      <p>Find accredited ${typeName.toLowerCase()} programs in ${cityName}, ${stateName}. RehabLookup's verified directory includes licensed facilities with detailed information on treatment programs, insurance acceptance, and amenities.</p>
+      <p>Find accredited ${typeName.toLowerCase()} programs in ${cityName}, ${stateName}. RehabLookup's directory includes licensed facilities with detailed information on treatment programs, insurance acceptance, and amenities.</p>
       <h2>Treatment Options in ${cityName}</h2>
       <p>Facilities in ${cityName} offer a range of ${typeName.toLowerCase()} programs including medical detox, residential inpatient, partial hospitalization (PHP), intensive outpatient (IOP), and outpatient treatment.</p>
       <h2>Insurance Coverage in ${cityName}</h2>
@@ -794,10 +794,10 @@ function genericPage(urlPath) {
   return {
     title,
     metaTitle: `${title} — RehabLookup`,
-    metaDesc: `${title} on RehabLookup — verified addiction treatment directory covering accredited facilities, insurance options, and recovery resources. Compare programs and find help today.`,
+    metaDesc: `${title} on RehabLookup — addiction treatment directory covering facility listings, insurance information and recovery resources. Compare programs and find help today.`,
     h1: title,
     content: `
-      <p>${title} on RehabLookup. Our verified directory covers accredited facilities across all 50 states. Compare programs, verify insurance, and connect with treatment that fits your situation.</p>
+      <p>${title} on RehabLookup. Our directory lists treatment centers across all 50 states. Compare programs, verify insurance, and connect with treatment that fits your situation.</p>
       <p><a href="/rehab-centers">Browse All Treatment Centers</a> &middot; <a href="/resources">Recovery Resources</a></p>`,
     breadcrumbs: [
       { name: "Home", url: "/" },

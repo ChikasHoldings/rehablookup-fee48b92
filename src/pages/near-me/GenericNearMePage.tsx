@@ -446,7 +446,7 @@ export default function GenericNearMePage({ configSlug }: GenericNearMePageProps
               {!isLoading && (
                 <p className="mt-1 text-sm text-muted-foreground">
                   {facilities.length > 0
-                    ? `${facilities.length} verified ${config.treatmentType.toLowerCase()} ${facilities.length === 1 ? "facility" : "facilities"} ${stateData ? `in ${stateData.state}` : "nearby"} · sorted by ranking`
+                    ? `${facilities.length} ${config.treatmentType.toLowerCase()} ${facilities.length === 1 ? "facility" : "facilities"} ${stateData ? `in ${stateData.state}` : "nearby"} · sorted by ranking`
                     : `We're growing our ${config.treatmentType.toLowerCase()} network. Browse all centers or get personalized help.`}
                 </p>
               )}

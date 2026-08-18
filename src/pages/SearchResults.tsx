@@ -10,7 +10,6 @@ import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
 import { scrollToTopSmooth } from "@/hooks/useScrollToTop";
 import { SearchResultsForm } from "@/components/search/SearchResultsForm";
-import { SaveSearchButton } from "@/components/search/SaveSearchButton";
 
 import { NoResultsDirectoryCTA } from "@/components/search/NoResultsDirectoryCTA";
 import { AreaWaitlistCapture } from "@/components/seo/AreaWaitlistCapture";
@@ -642,53 +641,10 @@ const SearchResults = () => {
     setSearchParams(new URLSearchParams());
   };
 
-  // Snapshot of current filter state for /account/saved-searches.
-  // Only fields that materially affect the result set are included.
-  const savedSearchCriteria = useMemo<Record<string, unknown>>(() => {
-    const c: Record<string, unknown> = {};
-    if (location) c.location = location;
-    if (treatment) c.treatment = treatment;
-    if (insurance) c.insurance = insurance;
-    if (type) c.type = type;
-    if (stateParam) c.state = stateParam;
-    if (queryParam) c.q = queryParam;
-    if (selectedTreatmentTypes.length) c.treatmentTypes = selectedTreatmentTypes;
-    if (selectedAmenities.length) c.amenities = selectedAmenities;
-    if (selectedInsuranceTypes.length) c.insuranceTypes = selectedInsuranceTypes;
-    if (selectedDistance) c.distance = selectedDistance;
-    if (verifiedOnly) c.verified = true;
-    if (featuredOnly) c.featuredOnly = true;
-    return c;
-  }, [
-    location, treatment, insurance, type, stateParam, queryParam,
-    selectedTreatmentTypes, selectedAmenities, selectedInsuranceTypes,
-    selectedDistance, verifiedOnly, featuredOnly,
-  ]);
-
-  const savedSearchSuggestedName = useMemo<string>(() => {
-    const parts: string[] = [];
-    if (selectedTreatmentTypes.length) {
-      parts.push(selectedTreatmentTypes.slice(0, 2).join(" + "));
-    } else if (treatment) {
-      parts.push(treatment);
-    } else if (type) {
-      parts.push(type.replace(/-/g, " "));
-    }
-    if (location) parts.push(`in ${location}`);
-    else if (stateParam) parts.push(`in ${stateParam}`);
-    if (selectedInsuranceTypes.length) parts.push(`(${selectedInsuranceTypes[0]})`);
-    else if (insurance) parts.push(`(${insurance})`);
-    if (parts.length === 0) parts.push(queryParam || "Treatment centers");
-    const name = parts.join(" ").trim();
-    return name.length > 80 ? name.slice(0, 77) + "..." : name;
-  }, [
-    selectedTreatmentTypes, selectedInsuranceTypes, treatment, type,
-    location, stateParam, insurance, queryParam,
-  ]);
-
-  const savedSearchUrl = typeof window !== "undefined"
-    ? `${window.location.pathname}${window.location.search || ""}`
-    : "/search";
+  // The saved-search snapshot (criteria / suggested name / deep-link URL)
+  // was removed with the consumer account product — nothing consumes it now
+  // that /account/saved-searches is retired. Filter state still round-trips
+  // through the URL, which is what Share copies.
 
   // Build a shareable URL that preserves all current filters/location/sort/page
   const handleShare = useCallback(async () => {
@@ -806,9 +762,13 @@ const SearchResults = () => {
   const seoCanonical = !shouldNoindex && currentPage > 1
     ? `/search-results?page=${currentPage}`
     : "/search-results";
-  const seoDescription = `Browse ${filteredCenters.length} verified addiction treatment centers${
+  // The count describes how many LISTINGS matched the filters — never how many
+  // of them are verified. `verified` is per-facility earned state (a handful of
+  // records carry it); attaching it to a directory-wide result count is the
+  // exact misstatement check-public-directory-truth exists to stop.
+  const seoDescription = `Browse ${filteredCenters.length} addiction treatment center listings${
     location ? ` near ${location}` : queryParam ? ` matching "${queryParam}"` : ""
-  }${currentPage > 1 ? ` (page ${currentPage} of ${totalPages})` : ""}. Compare rehab programs, check insurance, and start recovery.`;
+  }${currentPage > 1 ? ` (page ${currentPage} of ${totalPages})` : ""}. Compare rehab programs, review insurance information, and contact facilities directly.`;
 
   // rel="prev"/"next" — only emit on indexable paginated views so crawlers
   // can stitch the sequence together without us advertising filtered/noindex
@@ -1453,7 +1413,12 @@ const SearchResults = () => {
                         )}
                       </div>
 
-                      {/* RIGHT cluster: Filters (mobile) · Save · Share */}
+                      {/* RIGHT cluster: Filters (mobile) · Share.
+                          "Save search" is gone — it was the one control on
+                          this page that required a consumer account, and
+                          consumer accounts are retired. Share still gives
+                          the user a durable, filter-preserving link to come
+                          back to, with no sign-in. */}
                       <div className="flex items-center gap-2 shrink-0">
                         <Button
                           variant="outline"
@@ -1470,12 +1435,6 @@ const SearchResults = () => {
                             </Badge>
                           )}
                         </Button>
-                        <SaveSearchButton
-                          criteria={savedSearchCriteria}
-                          suggestedName={savedSearchSuggestedName}
-                          searchUrl={savedSearchUrl}
-                          resultCount={filteredCenters.length}
-                        />
                         <Button
                           variant="outline"
                           size="sm"

@@ -81,7 +81,7 @@ const getStateFAQs = (stateName: string, abbreviation: string, cityCount: number
   },
   {
     question: `How do I find the best rehab center in ${stateName}?`,
-    answer: `When choosing a rehab center in ${stateName}, consider: accreditation (look for Joint Commission or CARF), treatment approaches offered, staff credentials, success rates, aftercare planning, and whether they treat your specific addiction. We list ${facilityCount || 'multiple'} verified treatment centers across ${cityCount} cities in ${abbreviation} to help you compare options.`
+    answer: `When choosing a rehab center in ${stateName}, consider: accreditation (look for Joint Commission or CARF), treatment approaches offered, staff credentials, success rates, aftercare planning, and whether they treat your specific addiction. We list ${facilityCount || 'multiple'} treatment centers across ${cityCount} cities in ${abbreviation} to help you compare options.`
   },
   {
     question: `What is the success rate of rehab in ${stateName}?`,
@@ -305,7 +305,7 @@ const StatePage = () => {
                 metrics resurface in the stat band below the hero. */}
             <div className="hidden md:grid grid-cols-2 gap-3">
               <StatTile
-                label={stateCenters.length === 1 ? "Verified Facility" : "Verified Facilities"}
+                label={stateCenters.length === 1 ? "Facility Listed" : "Facilities Listed"}
                 value={isLoading ? "—" : stateCenters.length.toLocaleString()}
                 icon={Building2}
               />
@@ -371,7 +371,7 @@ const StatePage = () => {
         <div className="container py-4">
           <div className="grid grid-cols-2 gap-2">
             <StatTile
-              label={stateCenters.length === 1 ? "Verified" : "Verified"}
+              label={stateCenters.length === 1 ? "Listed" : "Listed"}
               value={isLoading ? "—" : stateCenters.length.toLocaleString()}
               icon={Building2}
               compact
@@ -420,7 +420,7 @@ const StatePage = () => {
               {!isLoading && (
                 <p className="mt-1 text-sm text-muted-foreground">
                   {stateCenters.length > 0
-                    ? `Showing top ${Math.min(stateCenters.length, 12)} of ${stateCenters.length} verified ${stateCenters.length === 1 ? "facility" : "facilities"} · sorted by ranking`
+                    ? `Showing top ${Math.min(stateCenters.length, 12)} of ${stateCenters.length} listed ${stateCenters.length === 1 ? "facility" : "facilities"} · sorted by ranking`
                     : `We're actively adding verified centers in ${stateData.name}.`}
                 </p>
               )}

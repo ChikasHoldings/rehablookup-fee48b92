@@ -28,13 +28,16 @@ export function ProvidersCTA() {
   const features = [
     {
       Icon: ShieldCheck,
-      title: "Verified Listings",
-      body: "A verified badge that builds family trust.",
+      title: "Independent Verification",
+      // "A verified badge" read as something a plan includes. Verification is
+      // earned and is not bundled with, or purchasable through, any plan.
+      body: "Verification is earned independently of payment.",
     },
     {
       Icon: Target,
-      title: "Qualified Leads",
-      body: "Reach families filtered by insurance and level of care.",
+      // Was "Qualified Leads" — RehabLookup does not sell or qualify leads.
+      title: "Direct Inquiries",
+      body: "Families filtering by insurance and level of care contact you directly.",
     },
     {
       Icon: BarChart3,

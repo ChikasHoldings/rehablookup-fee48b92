@@ -100,7 +100,7 @@ export function UpgradeDialog({ open, onOpenChange, feature, returnTo }: Upgrade
           <DialogTitle>{headline}</DialogTitle>
           <DialogDescription>
             Upgrade to Pro — ${PLANS.pro.priceMonthly}/month. Includes 10 photos,
-            1 facility video, priority placement, lead analytics, and dedicated
+            1 facility video, inquiry analytics, and dedicated
             support.
           </DialogDescription>
         </DialogHeader>

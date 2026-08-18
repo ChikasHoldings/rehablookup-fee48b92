@@ -19,7 +19,7 @@ export default function CityProviderPage() {
   return (
     <ProviderConversionPage
       metaTitle={`Get More Rehab Patients in ${city.city}, ${stateName} | RehabLookup`}
-      metaDescription={`Struggling to fill beds in ${city.city}? RehabLookup connects your facility with patients actively searching for addiction treatment in ${city.city}, ${stateName}.`}
+      metaDescription={`List your facility in ${city.city}, ${stateName} on RehabLookup so families searching for addiction treatment can find and contact you directly.`}
       canonical={`/get-more-patients-in-${city.citySlug}-${city.stateSlug}`}
       keywords={[`rehab marketing ${city.city}`, `get rehab patients ${city.city}`, `addiction treatment leads ${city.city}`, `rehab census ${stateName}`]}
       breadcrumbs={[
@@ -27,8 +27,8 @@ export default function CityProviderPage() {
         { label: "Rehab Marketing", href: "/rehab-marketing" },
         { label: city.city },
       ]}
-      heroHeadline={`Struggling to Fill Beds in ${city.city}?`}
-      heroSubheadline={`${city.city} is ${competitionText} for rehab admissions. With ${city.rehabFacilityCount}+ treatment facilities competing for patients, you need a smarter way to stand out and attract qualified leads.`}
+      heroHeadline={`Reach Families Searching for Treatment in ${city.city}`}
+      heroSubheadline={`${city.city} is ${competitionText} for rehab admissions. With ${city.rehabFacilityCount}+ treatment facilities competing for patients, an accurate, complete directory listing is how families find you.`}
       problemHeadline={`The Challenge of Getting Patients in ${city.city}`}
       problemPoints={[
         `${city.city} has ${city.rehabFacilityCount}+ treatment facilities competing for the same patients — visibility is everything`,

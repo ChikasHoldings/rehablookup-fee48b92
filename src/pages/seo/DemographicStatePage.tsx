@@ -59,7 +59,7 @@ export default function DemographicStatePage() {
   const faqs = [
     {
       question: `Are there ${demographic.title.toLowerCase()} programs in ${stateName}?`,
-      answer: `Yes, ${stateName} offers specialized ${demographic.title.toLowerCase()} programs that address the unique needs of this population. These programs provide tailored treatment approaches, age-appropriate or culturally sensitive care, and specialized therapeutic modalities. ${facilities.length > 0 ? `RehabLookup lists ${facilities.length}+ verified programs in ${stateName}.` : `Use the filters to narrow by level of care and insurance.`}`,
+      answer: `Yes, ${stateName} offers specialized ${demographic.title.toLowerCase()} programs that address the unique needs of this population. These programs provide tailored treatment approaches, age-appropriate or culturally sensitive care, and specialized therapeutic modalities. ${facilities.length > 0 ? `RehabLookup lists ${facilities.length}+ programs in ${stateName}.` : `Use the filters to narrow by level of care and insurance.`}`,
     },
     {
       question: `What makes ${demographic.title.toLowerCase()} different from general rehab?`,
@@ -120,7 +120,7 @@ export default function DemographicStatePage() {
     <SEOLandingTemplate
       title={pageTitle}
       metaTitle={`${demographic.title} in ${stateName} (${abbreviation}) — Find Programs | RehabLookup`}
-      metaDescription={`Find ${demographic.title.toLowerCase()} programs in ${stateName}. Compare ${facilities.length}+ verified facilities with specialized care and contact them directly.`}
+      metaDescription={`Find ${demographic.title.toLowerCase()} programs in ${stateName}. Compare ${facilities.length}+ facilities with specialized care and contact them directly.`}
       canonical={`https://rehablookup.com/${slug}`}
       noindex={!validation.shouldIndex}
       structuredData={structuredData}

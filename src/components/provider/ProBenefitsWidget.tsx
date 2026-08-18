@@ -23,8 +23,8 @@ export function ProBenefitsWidget({ className }: ProBenefitsWidgetProps) {
   const benefits = [
     {
       icon: Star,
-      label: "Priority placement",
-      description: "+50 ranking boost in search",
+      label: "Enhanced profile",
+      description: "More photos and a facility video",
       color: "text-amber-600",
       bgColor: "bg-amber-500/10",
     },

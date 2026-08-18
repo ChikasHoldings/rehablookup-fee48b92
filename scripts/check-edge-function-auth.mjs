@@ -146,8 +146,6 @@ const CRON_NAMES = new Set([
   "placement-monitor",
   "process-onboarding-emails",
   "process-provider-drip",
-  "process-seeker-drip",
-  "process-seeker-followup-reminders",
   "revenue-enforcement-cron",
   "enforce-plan-grace-cron",
   "run-re-verification-sweep",
@@ -160,8 +158,6 @@ const CRON_NAMES = new Set([
   "send-provider-weekly-digest",
   "send-renewal-reminder",
   "send-retention-outreach",
-  "send-saved-search-alerts",
-  "send-seeker-weekly-digest",
   "send-subscription-alerts",
   "send-marketing-followup",
   // signup-rollback-cleanup removed: it is NOT cron-scheduled — it's invoked by

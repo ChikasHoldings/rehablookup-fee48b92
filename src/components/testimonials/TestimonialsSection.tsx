@@ -19,6 +19,14 @@ export function TestimonialsSection({
   title = "What People Say",
   subtitle = "Real experiences from families and providers",
 }: TestimonialsSectionProps) {
+  // An empty list must render nothing at all — otherwise the section ships a
+  // heading and an empty carousel. Defensive today: the only caller passes
+  // seekerTestimonials, which is non-empty. It matters because
+  // providerTestimonials is now [] (the fabricated provider quotes were
+  // removed), so the first component to render that list would otherwise ship
+  // an empty section.
+  const isEmpty = testimonials.length === 0;
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
@@ -62,6 +70,8 @@ export function TestimonialsSection({
     return () => el.removeEventListener("scroll", checkScroll);
   }, [checkScroll]);
 
+
+  if (isEmpty) return null;
   return (
     <section className="py-10 md:py-14 lg:py-20 bg-muted/30 border-y border-border/50 overflow-hidden">
       <div className="container px-4 md:px-6 lg:px-8">

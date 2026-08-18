@@ -698,7 +698,7 @@ function buildListYourFacility(urlPath, slug) {
       ]},
     ],
     faqs: [
-      { q: `How much does it cost to list a facility in ${locale}?`, a: `Free basic listings are available. Pro plans ($399/mo) include priority placement, verified inquiries, and a 20% discount on lead unlocks.` },
+      { q: `How much does it cost to list a facility in ${locale}?`, a: `Basic directory presence is free. Pro enhances your facility profile and provider tools. Featured is purchased separately as clearly labeled sponsored exposure, and organic directory position is never for sale.` },
       { q: `How long does verification take?`, a: `Most facilities are verified within 24-48 hours after submitting accreditation and licensure documentation.` },
     ],
   };

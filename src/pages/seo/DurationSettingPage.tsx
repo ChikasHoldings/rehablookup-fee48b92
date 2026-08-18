@@ -47,7 +47,7 @@ const durationPages: DurationConfig[] = [
     slug: "60-day-rehab-programs",
     title: "60-Day Rehab Programs",
     metaTitle: "60-Day Rehab Programs — Extended Addiction Treatment | RehabLookup",
-    metaDescription: "Find 60-day rehab programs offering extended treatment for deeper recovery. Better outcomes than 30-day programs. Compare verified facilities.",
+    metaDescription: "Find 60-day rehab programs offering extended treatment for deeper recovery. Better outcomes than 30-day programs. compare facility listings.",
     heroSubtitle: "Extended treatment providing more time for deeper therapeutic work and sustainable behavior change.",
     filterKeys: ["inpatient", "residential", "60-day", "extended"],
     introContent: "60-day rehab programs provide nearly double the therapeutic contact of standard 30-day programs, allowing deeper exploration of underlying issues, more time to practice new coping skills, and better preparation for independent living. Research from NIDA shows treatment lasting 60+ days is significantly more effective than shorter stays, particularly for individuals with chronic addiction, co-occurring mental health conditions, or limited support systems.",

@@ -1,5 +1,4 @@
 [
-  "supabase/functions/process-seeker-drip/index.ts:77",
   "supabase/functions/request-facility-from-marketing/index.ts:52",
   "supabase/functions/send-marketing-followup/index.ts:62",
   "supabase/functions/send-marketing-followup/index.ts:90",

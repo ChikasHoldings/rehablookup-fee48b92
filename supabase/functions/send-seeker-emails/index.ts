@@ -12,28 +12,29 @@ const logStep = (step: string, details?: unknown) => {
   console.log(`[SEND-SEEKER-EMAILS] ${step}`, details ? JSON.stringify(details) : "");
 };
 
-type EmailType =
-  | "welcome"
-  | "welcome_followup"
-  // NOTE: `request_confirmation` was removed (Gap G1 cleanup). The
-  // live inquiry-confirmation email goes out from submit-qualified-
-  // lead/index.ts via a direct sendEmailWithRetry call keyed by
-  // lead.id — that path was always the truth; the case branch here
-  // was orphan dead code.
-  | "request_followup"
-  | "facility_contacted_you"
-  | "tips_finding_treatment"
-  | "weekly_digest"
-  | "account_reminder"
-  | "placement_intro"
-  // Security signal — confirms a successful password change so an
-  // unauthorized rotation can be detected. Transactional; NOT
-  // preference-gated.
-  | "password_changed"
-  // Security signal — fires when a seeker signs in from a browser /
-  // OS / device fingerprint they've never used before. Excludes the
-  // very-first session (signup auto-login). Transactional.
-  | "security_alert";
+/**
+ * The ONLY type this function still sends.
+ *
+ * Directory cutover stage 3 retired the consumer account product, and with it
+ * every account-lifecycle email this function used to carry: welcome,
+ * welcome_followup, tips_finding_treatment, account_reminder, weekly_digest,
+ * request_followup, placement_intro, password_changed and security_alert.
+ * Their senders are gone — the seeker drip, the followup-reminder cron, the
+ * weekly digest and the seeker signup/login screens — and the /account
+ * destinations they linked are now 301s to /search-results.
+ *
+ * `facility_contacted_you` is NOT part of that retirement. It is live
+ * directory product: a visitor contacts a facility through the public
+ * listing, the provider (or an admin) marks the inquiry responded in their
+ * panel, and this tells the person who asked. It works for anonymous
+ * inquirers — no account required, which is the whole point of the
+ * directory model.
+ *
+ * NOTE: `request_confirmation` was removed earlier (Gap G1 cleanup). The live
+ * inquiry-confirmation email goes out from submit-qualified-lead/index.ts via
+ * a direct sendEmailWithRetry call keyed by lead.id.
+ */
+type EmailType = "facility_contacted_you";
 
 interface SeekerEmailRequest {
   type: EmailType;
@@ -177,17 +178,20 @@ Deno.serve(async (req) => {
       }
     }
 
-    // AUTHZ for the non-leadId types (welcome / security_alert / password_changed
-    // / drip / digest / account_reminder / etc.). These resolve the recipient
-    // from the request body, so without a caller check anyone holding the public
-    // anon key could relay branded RehabLookup emails to arbitrary addresses
-    // (spam / domain-reputation abuse). Require EITHER the service-role key
-    // (trusted cron/server callers — process-seeker-drip / -followup-reminders,
-    // both of which invoke with the service-role client) OR an authenticated
-    // user, in which case the recipient is forced to that user's OWN email. Every
-    // real client caller (signup welcome, login security_alert, settings
-    // password_changed) only ever emails the signed-in user themselves, so this
-    // neutralizes the relay without affecting any legitimate send.
+    // AUTHZ for a call made WITHOUT a leadId. That path resolves the recipient
+    // from the request body, so without a caller check anyone holding the
+    // public anon key could relay branded RehabLookup emails to arbitrary
+    // addresses (spam / domain-reputation abuse). Require EITHER the
+    // service-role key (trusted server callers) OR an authenticated user, in
+    // which case the recipient is forced to that user's OWN email.
+    //
+    // Stage 3 note: the account-lifecycle types this guard was written for
+    // (welcome, security_alert, password_changed, drip, digest,
+    // account_reminder) are all gone, and the one surviving type —
+    // facility_contacted_you — is invoked with a leadId by the provider and
+    // admin inquiry panels, so it takes the branch below instead. The guard
+    // stays because the no-leadId fallback is still reachable and still
+    // relay-abusable; a narrower surface is not a closed one.
     if (!leadId) {
       const naAuthHeader = req.headers.get("Authorization") || req.headers.get("authorization") || "";
       const naToken = naAuthHeader.replace(/^Bearer\s+/i, "");
@@ -245,20 +249,11 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check notification preferences - map email types to preference keys
+    // Check notification preferences - map email types to preference keys.
+    // One entry, because one type survives. email_lead_alerts is the
+    // "a facility responded to me" switch.
     const emailTypePreferenceMap: Record<string, keyof typeof defaultPrefs> = {
-      "welcome": "email_lead_alerts", // Always send welcome
-      "welcome_followup": "email_product_updates",
-      "request_followup": "followup_reminders_enabled",
       "facility_contacted_you": "email_lead_alerts",
-      "tips_finding_treatment": "email_product_updates",
-      "weekly_digest": "email_weekly_digest",
-      "account_reminder": "email_product_updates",
-      "placement_intro": "email_product_updates",
-      // password_changed intentionally omitted — security signal,
-      // ALWAYS sent regardless of marketing preferences. The
-      // type !== "welcome" preference-gate check below also short-
-      // circuits when prefKey is undefined.
     };
 
     const defaultPrefs = {
@@ -272,13 +267,11 @@ Deno.serve(async (req) => {
     const prefs = { ...defaultPrefs, ...notificationPrefs };
     const prefKey = emailTypePreferenceMap[type];
     
-    // Transactional / security-critical types are exempt from the
-    // preference gate — they're not marketing. Welcome confirms account
-    // creation (the user just opted in by signing up); password_changed
-    // is a security signal that the user needs to see regardless of
-    // their marketing opt-outs.
-    const TRANSACTIONAL_TYPES = new Set(["welcome", "password_changed", "security_alert"]);
-    if (!TRANSACTIONAL_TYPES.has(type) && prefKey && !prefs[prefKey]) {
+    // The account-lifecycle and security types that used to be exempt from
+    // the preference gate are gone with the account product, so the gate is
+    // now unconditional: a recipient who turned off "a facility responded"
+    // alerts does not get one.
+    if (prefKey && !prefs[prefKey]) {
       logStep("Email skipped due to user preferences", { type, prefKey, enabled: prefs[prefKey] });
       return new Response(
         JSON.stringify({ success: true, skipped: true, reason: "User preference disabled" }),
@@ -293,56 +286,12 @@ Deno.serve(async (req) => {
     let html = "";
 
     switch (type) {
-      case "welcome":
-        subject = "Welcome to RehabLookup – We're Here to Help 💙";
-        html = generateWelcomeEmail(displayName);
-        break;
-
-      case "welcome_followup":
-        subject = "Quick Tips to Find the Right Treatment Center";
-        html = generateWelcomeFollowupEmail(displayName);
-        break;
-
-      case "request_followup":
-        subject = "Have You Heard Back? Here's What to Do Next";
-        html = generateRequestFollowupEmail(displayName, metadata);
-        break;
-
-      case "facility_contacted_you":
+      case "facility_contacted_you": {
         const contactFacility = metadata?.facilityName as string || "A treatment center";
         subject = `${contactFacility} Responded to Your Request`;
         html = generateFacilityContactedEmail(displayName, contactFacility, metadata);
         break;
-
-      case "tips_finding_treatment":
-        subject = "5 Things to Ask When Choosing a Treatment Center";
-        html = generateTipsEmail(displayName);
-        break;
-
-      case "weekly_digest":
-        subject = "Your Weekly Treatment Search Update";
-        html = generateWeeklyDigestEmail(displayName, metadata);
-        break;
-
-      case "account_reminder":
-        subject = "We Miss You – Continue Your Treatment Search";
-        html = generateAccountReminderEmail(displayName);
-        break;
-
-      case "placement_intro":
-        subject = "Need Help Finding the Right Treatment Center? We Can Place You";
-        html = generatePlacementIntroEmail(displayName);
-        break;
-
-      case "password_changed":
-        subject = "Your RehabLookup password was changed";
-        html = generatePasswordChangedEmail(displayName, metadata);
-        break;
-
-      case "security_alert":
-        subject = "New sign-in to your RehabLookup account";
-        html = generateSecurityAlertEmail(displayName, metadata);
-        break;
+      }
 
       default:
         logStep("Unknown email type", { type });
@@ -352,33 +301,15 @@ Deno.serve(async (req) => {
         );
     }
 
-    // Idempotency key — leadId scopes per-inquiry uniqueness so a seeker
-    // with N inquiries gets N emails (one per facility response), not
-    // one ever. password_changed includes a minute-window so a double-
-    // click dedupes within 60s but a legitimate re-change tomorrow
-    // produces a fresh email. Without leadId / minute we fall back to
-    // seeker-scope which is the right behaviour for welcome / drip
-    // emails (one per user lifetime).
+    // Idempotency key. leadId scopes per-inquiry uniqueness so someone with
+    // N inquiries gets N emails — one per facility response — rather than
+    // one ever. The password_changed (minute-window) and security_alert
+    // (per-day, per-device-fingerprint) branches went with those types in
+    // stage 3. The seekerId / email fallbacks remain for a
+    // facility_contacted_you call made without a leadId.
     let idempotencyKey: string;
     if (leadId) {
       idempotencyKey = `seeker-${type}-${leadId}`;
-    } else if (type === "password_changed" && seekerId) {
-      const minuteWindow = Math.floor(Date.now() / 60000);
-      idempotencyKey = `seeker-${type}-${seekerId}-${minuteWindow}`;
-    } else if (type === "security_alert" && seekerId) {
-      // Per-day per-fingerprint dedup. Multiple sign-ins from the same
-      // new device within 24h send ONE email; a sign-in tomorrow from
-      // the same device that has now been "seen" would not trigger the
-      // alert at all (client gates on fingerprint-first-seen, not on
-      // the email cooldown). A different new device on the same day
-      // produces a different fingerprint string → fresh key → second
-      // email. Fingerprint defaults to "unknown" if metadata is empty
-      // so we still dedup per-day at the user level.
-      const dayStamp = new Date().toISOString().slice(0, 10);
-      const fp = `${(metadata?.browser as string) || "unknown"}-${(metadata?.os as string) || "unknown"}-${(metadata?.device as string) || "unknown"}`
-        .toLowerCase()
-        .replace(/[^a-z0-9-]+/g, "_");
-      idempotencyKey = `seeker-${type}-${seekerId}-${dayStamp}-${fp}`;
     } else if (seekerId) {
       idempotencyKey = `seeker-${type}-${seekerId}`;
     } else {
@@ -407,41 +338,13 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Create in-app notification for certain email types (respect browser_notifications preference)
-    const shouldCreateInAppNotification = prefs.browser_notifications !== false;
-    if (seekerId && shouldCreateInAppNotification && ["facility_contacted_you", "welcome", "placement_intro"].includes(type)) {
-      let notificationTitle = subject;
-      let notificationMessage = "";
-      let notificationLink: string | null = null;
-      
-      switch (type) {
-        case "welcome":
-          notificationTitle = "Welcome to RehabLookup! 💙";
-          notificationMessage = "We're here to help you find the right treatment center. Start by browsing facilities or saving your favorites.";
-          notificationLink = "/account";
-          break;
-        case "facility_contacted_you":
-          notificationTitle = `${metadata?.facilityName || "A facility"} responded`;
-          notificationMessage = `${metadata?.facilityName || "A facility"} has responded to your request. Check your phone and email for their message.`;
-          notificationLink = "/account/requests";
-          break;
-        case "placement_intro":
-          notificationTitle = "Get Placed in a Treatment Center 🏥";
-          notificationMessage = "Our Treatment Placement service can help you find and get admitted to the right facility. An advisor will personally coordinate your placement.";
-          notificationLink = "/concierge";
-          break;
-      }
-
-      await supabase.from("seeker_notifications").insert({
-        user_id: seekerId,
-        type: type,
-        title: notificationTitle,
-        message: notificationMessage,
-        link: notificationLink,
-        metadata: metadata || {},
-      });
-      logStep("In-app notification created", { type, seekerId });
-    }
+    // The in-app notification write that used to live here is gone. It
+    // inserted seeker_notifications rows whose links pointed at /account,
+    // /account/requests and /concierge, to be read by the seeker
+    // notification bell and inbox — all three retired in stage 3. Writing
+    // rows no surface can render is not a notification, so the email (and
+    // the SMS below) is now the whole delivery path. Existing rows are left
+    // untouched.
 
     // SMS to the seeker when a facility responds — TCPA-gated. Only fires
     // for an account-holder whose phone is VERIFIED and who explicitly
@@ -462,7 +365,7 @@ Deno.serve(async (req) => {
             { accountSid: twilioSid, authToken: twilioToken, fromNumber: twilioFrom },
             {
               to: seekerProfile.phone as string,
-              body: `RehabLookup: ${facilityName} responded to your inquiry. See your email or rehablookup.com/account/requests for details. Reply STOP to opt out.`,
+              body: `RehabLookup: ${facilityName} responded to your inquiry. Check your email for their message. Reply STOP to opt out.`,
               userId: seekerId,
               notificationType: "facility_contacted_you",
             },
@@ -488,287 +391,6 @@ Deno.serve(async (req) => {
     );
   }
 });
-
-// Email Template Functions
-
-function generateWelcomeEmail(name: string): string {
-  return `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; background-color: #f4f6f9; -webkit-font-smoothing: antialiased;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f6f9;">
-    <tr>
-      <td align="center" style="padding: 40px 20px;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
-          
-          <!-- Header -->
-          <tr>
-            <td style="background-color: #1B365D; background: #1B365D; padding: 40px 32px; text-align: center;">
-              <h1 style="margin: 0; color: #ffffff; font-family: Arial, Helvetica, sans-serif; font-size: 28px; font-weight: 700;">
-                Welcome to RehabLookup
-              </h1>
-              <p style="margin: 12px 0 0 0; color: #ffffff; font-family: Arial, Helvetica, sans-serif; font-size: 16px;">
-                Your journey to recovery starts here
-              </p>
-            </td>
-          </tr>
-          
-          <!-- Body -->
-          <tr>
-            <td style="padding: 40px 32px;">
-              <p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 18px; color: #1B365D; font-weight: 600;">
-                Hi ${name},
-              </p>
-              
-              <p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #475569; line-height: 1.6;">
-                Thank you for joining RehabLookup. We understand that seeking treatment for yourself or a loved one can be overwhelming, and we're here to make this process easier.
-              </p>
-              
-              <div style="background: #f0f9ff; border-left: 4px solid #1B365D; padding: 20px; border-radius: 8px; margin: 24px 0;">
-                <p style="margin: 0 0 12px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #1B365D; font-weight: 600;">
-                  Here's what you can do:
-                </p>
-                <ul style="margin: 0; padding-left: 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; color: #475569; line-height: 1.8;">
-                  <li>Browse verified treatment centers near you</li>
-                  <li>Send requests directly to facilities</li>
-                  <li>Compare programs, amenities, and specialties</li>
-                  <li>Read reviews from real patients</li>
-                  <li>Save your favorites for easy access</li>
-                </ul>
-              </div>
-              
-              <!-- Placement Service Introduction -->
-              <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 20px; border-radius: 12px; margin: 24px 0;">
-                <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #166534; font-weight: 600;">
-                  🏥 Need Help Getting Placed?
-                </p>
-                <p style="margin: 0 0 12px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #475569; line-height: 1.6;">
-                  If searching on your own feels overwhelming, our Treatment Placement service can help. A dedicated advisor will personally match you with the right facility based on your needs, insurance, and preferences — and coordinate your admission.
-                </p>
-                <table role="presentation" cellpadding="0" cellspacing="0">
-                  <tr>
-                    <td style="background-color: #166534; border-radius: 6px;">
-                      <a href="https://rehablookup.com/concierge" style="display: inline-block; padding: 10px 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 600; color: #ffffff; text-decoration: none;">
-                        Learn About Treatment Placement →
-                      </a>
-                    </td>
-                  </tr>
-                </table>
-              </div>
-              
-              <p style="margin: 24px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #475569; line-height: 1.6;">
-                <strong>Remember:</strong> Taking the first step is the hardest part, and you've already done that. We're proud of you.
-              </p>
-              
-              <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 32px auto;">
-                <tr>
-                  <td style="background-color: #1B365D; background: #1B365D; border-radius: 8px;">
-                    <a href="https://rehablookup.com/account" style="display: inline-block; padding: 16px 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; font-weight: 600; color: #ffffff; text-decoration: none;">
-                      Start Your Search
-                    </a>
-                  </td>
-                </tr>
-              </table>
-              
-              <p style="margin: 24px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; color: #64748b; line-height: 1.6;">
-                If you have any questions, just reply to this email. We're here to help.
-              </p>
-              
-              <p style="margin: 20px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; color: #475569;">
-                With hope,<br>
-                <strong>The RehabLookup Team</strong>
-              </p>
-            </td>
-          </tr>
-          
-          ${generateEmailFooter()}
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`;
-}
-
-function generateWelcomeFollowupEmail(name: string): string {
-  return `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; background-color: #f4f6f9; -webkit-font-smoothing: antialiased;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f6f9;">
-    <tr>
-      <td align="center" style="padding: 40px 20px;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
-          
-          <!-- Header -->
-          <tr>
-            <td style="background-color: #1B365D; background: #1B365D; padding: 36px 32px; text-align: center;">
-              <h1 style="margin: 0; color: #ffffff; font-family: Arial, Helvetica, sans-serif; font-size: 24px; font-weight: 700;">
-                Tips for Your Treatment Search
-              </h1>
-            </td>
-          </tr>
-          
-          <!-- Body -->
-          <tr>
-            <td style="padding: 40px 32px;">
-              <p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 18px; color: #1B365D; font-weight: 600;">
-                Hi ${name},
-              </p>
-              
-              <p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #475569; line-height: 1.6;">
-                Finding the right treatment center is one of the most important decisions you'll make. Here are some tips to help you make an informed choice:
-              </p>
-              
-              <!-- Tip 1 -->
-              <div style="background: #f8fafc; padding: 20px; border-radius: 12px; margin: 16px 0;">
-                <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #1B365D; font-weight: 600;">
-                  1. Check Their Credentials
-                </p>
-                <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #64748b; line-height: 1.5;">
-                  Look for accreditation from JCAHO, CARF, or state licensing. This ensures quality care standards.
-                </p>
-              </div>
-              
-              <!-- Tip 2 -->
-              <div style="background: #f8fafc; padding: 20px; border-radius: 12px; margin: 16px 0;">
-                <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #1B365D; font-weight: 600;">
-                  2. Ask About Their Approach
-                </p>
-                <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #64748b; line-height: 1.5;">
-                  Different centers use different methods. Ask about evidence-based treatments like CBT, DBT, or MAT.
-                </p>
-              </div>
-              
-              <!-- Tip 3 -->
-              <div style="background: #f8fafc; padding: 20px; border-radius: 12px; margin: 16px 0;">
-                <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #1B365D; font-weight: 600;">
-                  3. Understand the Costs
-                </p>
-                <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #64748b; line-height: 1.5;">
-                  Ask about insurance acceptance, payment plans, and what's included in the program cost.
-                </p>
-              </div>
-              
-              <!-- Tip 4 -->
-              <div style="background: #f8fafc; padding: 20px; border-radius: 12px; margin: 16px 0;">
-                <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #1B365D; font-weight: 600;">
-                  4. Consider Aftercare
-                </p>
-                <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #64748b; line-height: 1.5;">
-                  Recovery doesn't end at discharge. Look for centers with strong aftercare and alumni programs.
-                </p>
-              </div>
-              
-              <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 32px auto;">
-                <tr>
-                  <td style="background-color: #1B365D; background: #1B365D; border-radius: 8px;">
-                    <a href="https://rehablookup.com/account" style="display: inline-block; padding: 16px 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; font-weight: 600; color: #ffffff; text-decoration: none;">
-                      Browse Treatment Centers
-                    </a>
-                  </td>
-                </tr>
-              </table>
-              
-              <p style="margin: 20px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; color: #475569;">
-                You've got this,<br>
-                <strong>The RehabLookup Team</strong>
-              </p>
-            </td>
-          </tr>
-          
-          ${generateEmailFooter()}
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`;
-}
-
-function generateRequestFollowupEmail(name: string, metadata?: Record<string, unknown>): string {
-  const daysSince = metadata?.daysSince || 3;
-  return `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; background-color: #f4f6f9; -webkit-font-smoothing: antialiased;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f6f9;">
-    <tr>
-      <td align="center" style="padding: 40px 20px;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
-          
-          <!-- Header -->
-          <tr>
-            <td style="background-color: #1B365D; background: #1B365D; padding: 36px 32px; text-align: center;">
-              <h1 style="margin: 0; color: #ffffff; font-family: Arial, Helvetica, sans-serif; font-size: 24px; font-weight: 700;">
-                Checking In On Your Search
-              </h1>
-            </td>
-          </tr>
-          
-          <!-- Body -->
-          <tr>
-            <td style="padding: 40px 32px;">
-              <p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 18px; color: #1B365D; font-weight: 600;">
-                Hi ${name},
-              </p>
-              
-              <p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #475569; line-height: 1.6;">
-                It's been ${daysSince} days since you sent a request to a treatment center. We wanted to check in and see how things are going.
-              </p>
-              
-              <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; border-radius: 8px; margin: 24px 0;">
-                <p style="margin: 0 0 12px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; color: #92400e; font-weight: 600;">
-                  Haven't heard back yet?
-                </p>
-                <ul style="margin: 0; padding-left: 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #92400e; line-height: 1.8;">
-                  <li>Try calling the facility directly – sometimes that's faster</li>
-                  <li>Check your spam folder for their response</li>
-                  <li>Consider reaching out to additional facilities</li>
-                </ul>
-              </div>
-              
-              <p style="margin: 24px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #475569; line-height: 1.6;">
-                Remember, finding the right fit takes time. Don't get discouraged – the right facility is out there.
-              </p>
-              
-              <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 32px auto;">
-                <tr>
-                  <td style="background-color: #1B365D; background: #1B365D; border-radius: 8px; margin-right: 8px;">
-                    <a href="https://rehablookup.com/account" style="display: inline-block; padding: 16px 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; font-weight: 600; color: #ffffff; text-decoration: none;">
-                      Find More Centers
-                    </a>
-                  </td>
-                </tr>
-              </table>
-              
-              <p style="margin: 20px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; color: #475569;">
-                We're here for you,<br>
-                <strong>The RehabLookup Team</strong>
-              </p>
-            </td>
-          </tr>
-          
-          ${generateEmailFooter()}
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`;
-}
 
 function generateFacilityContactedEmail(name: string, facilityName: string, metadata?: Record<string, unknown>): string {
   return `
@@ -822,8 +444,8 @@ function generateFacilityContactedEmail(name: string, facilityName: string, meta
               <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 32px auto;">
                 <tr>
                   <td style="background-color: #1B365D; background: #1B365D; border-radius: 8px;">
-                    <a href="https://rehablookup.com/account/requests" style="display: inline-block; padding: 16px 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; font-weight: 600; color: #ffffff; text-decoration: none;">
-                      View Your Requests
+                    <a href="https://rehablookup.com/search-results" style="display: inline-block; padding: 16px 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; font-weight: 600; color: #ffffff; text-decoration: none;">
+                      Compare More Treatment Centers
                     </a>
                   </td>
                 </tr>
@@ -836,604 +458,6 @@ function generateFacilityContactedEmail(name: string, facilityName: string, meta
             </td>
           </tr>
           
-          ${generateEmailFooter()}
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`;
-}
-
-function generateTipsEmail(name: string): string {
-  return `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; background-color: #f4f6f9; -webkit-font-smoothing: antialiased;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f6f9;">
-    <tr>
-      <td align="center" style="padding: 40px 20px;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
-          
-          <!-- Header -->
-          <tr>
-            <td style="background-color: #1B365D; background: #1B365D; padding: 36px 32px; text-align: center;">
-              <h1 style="margin: 0; color: #ffffff; font-family: Arial, Helvetica, sans-serif; font-size: 24px; font-weight: 700;">
-                5 Questions to Ask Treatment Centers
-              </h1>
-            </td>
-          </tr>
-          
-          <!-- Body -->
-          <tr>
-            <td style="padding: 40px 32px;">
-              <p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 18px; color: #1B365D; font-weight: 600;">
-                Hi ${name},
-              </p>
-              
-              <p style="margin: 0 0 24px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #475569; line-height: 1.6;">
-                When speaking with treatment centers, asking the right questions can help you find the best fit:
-              </p>
-              
-              <div style="margin: 20px 0;">
-                <div style="display: flex; margin-bottom: 16px;">
-                  <div style="min-width: 32px; height: 32px; background: #1B365D; border-radius: 50%; color: #fff; font-weight: bold; text-align: center; line-height: 32px; margin-right: 16px;">1</div>
-                  <div>
-                    <p style="margin: 0 0 4px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; color: #1B365D; font-weight: 600;">
-                      "What's your staff-to-patient ratio?"
-                    </p>
-                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #64748b;">
-                      More staff often means more personalized attention.
-                    </p>
-                  </div>
-                </div>
-                
-                <div style="display: flex; margin-bottom: 16px;">
-                  <div style="min-width: 32px; height: 32px; background: #1B365D; border-radius: 50%; color: #fff; font-weight: bold; text-align: center; line-height: 32px; margin-right: 16px;">2</div>
-                  <div>
-                    <p style="margin: 0 0 4px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; color: #1B365D; font-weight: 600;">
-                      "What happens after I complete the program?"
-                    </p>
-                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #64748b;">
-                      Aftercare support is crucial for long-term success.
-                    </p>
-                  </div>
-                </div>
-                
-                <div style="display: flex; margin-bottom: 16px;">
-                  <div style="min-width: 32px; height: 32px; background: #1B365D; border-radius: 50%; color: #fff; font-weight: bold; text-align: center; line-height: 32px; margin-right: 16px;">3</div>
-                  <div>
-                    <p style="margin: 0 0 4px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; color: #1B365D; font-weight: 600;">
-                      "How do you handle co-occurring disorders?"
-                    </p>
-                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #64748b;">
-                      Many people need treatment for both addiction and mental health.
-                    </p>
-                  </div>
-                </div>
-                
-                <div style="display: flex; margin-bottom: 16px;">
-                  <div style="min-width: 32px; height: 32px; background: #1B365D; border-radius: 50%; color: #fff; font-weight: bold; text-align: center; line-height: 32px; margin-right: 16px;">4</div>
-                  <div>
-                    <p style="margin: 0 0 4px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; color: #1B365D; font-weight: 600;">
-                      "Can my family be involved in treatment?"
-                    </p>
-                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #64748b;">
-                      Family involvement can significantly improve outcomes.
-                    </p>
-                  </div>
-                </div>
-                
-                <div style="display: flex; margin-bottom: 16px;">
-                  <div style="min-width: 32px; height: 32px; background: #1B365D; border-radius: 50%; color: #fff; font-weight: bold; text-align: center; line-height: 32px; margin-right: 16px;">5</div>
-                  <div>
-                    <p style="margin: 0 0 4px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; color: #1B365D; font-weight: 600;">
-                      "What's included in the cost?"
-                    </p>
-                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #64748b;">
-                      Understand what you're paying for to avoid surprises.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              
-              <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 32px auto;">
-                <tr>
-                  <td style="background-color: #1B365D; background: #1B365D; border-radius: 8px;">
-                    <a href="https://rehablookup.com/account" style="display: inline-block; padding: 16px 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; font-weight: 600; color: #ffffff; text-decoration: none;">
-                      Find Treatment Centers
-                    </a>
-                  </td>
-                </tr>
-              </table>
-              
-              <p style="margin: 20px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; color: #475569;">
-                Wishing you strength,<br>
-                <strong>The RehabLookup Team</strong>
-              </p>
-            </td>
-          </tr>
-          
-          ${generateEmailFooter()}
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`;
-}
-
-function generateWeeklyDigestEmail(name: string, metadata?: Record<string, unknown>): string {
-  const requestCount = metadata?.requestCount || 0;
-  const newFacilities = metadata?.newFacilities || 0;
-  
-  return `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; background-color: #f4f6f9; -webkit-font-smoothing: antialiased;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f6f9;">
-    <tr>
-      <td align="center" style="padding: 40px 20px;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
-          
-          <!-- Header -->
-          <tr>
-            <td style="background-color: #1B365D; background: #1B365D; padding: 36px 32px; text-align: center;">
-              <h1 style="margin: 0; color: #ffffff; font-family: Arial, Helvetica, sans-serif; font-size: 24px; font-weight: 700;">
-                Your Weekly Update
-              </h1>
-            </td>
-          </tr>
-          
-          <!-- Body -->
-          <tr>
-            <td style="padding: 40px 32px;">
-              <p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 18px; color: #1B365D; font-weight: 600;">
-                Hi ${name},
-              </p>
-              
-              <p style="margin: 0 0 24px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #475569; line-height: 1.6;">
-                Here's a summary of your treatment search activity this week:
-              </p>
-              
-              <!-- Stats -->
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin: 24px 0;">
-                <tr>
-                  <td style="width: 50%; padding: 16px; background: #f8fafc; border-radius: 12px 0 0 12px; text-align: center;">
-                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 32px; color: #1B365D; font-weight: 700;">
-                      ${requestCount}
-                    </p>
-                    <p style="margin: 4px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #64748b;">
-                      Requests Sent
-                    </p>
-                  </td>
-                  <td style="width: 50%; padding: 16px; background: #f0f9ff; border-radius: 0 12px 12px 0; text-align: center;">
-                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 32px; color: #1B365D; font-weight: 700;">
-                      ${newFacilities}
-                    </p>
-                    <p style="margin: 4px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #64748b;">
-                      New Facilities
-                    </p>
-                  </td>
-                </tr>
-              </table>
-              
-              ${requestCount === 0 ? `
-              <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; border-radius: 8px; margin: 24px 0;">
-                <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; color: #92400e; line-height: 1.6;">
-                  You haven't sent any requests yet. Browse treatment centers and reach out – most respond within 24 hours!
-                </p>
-              </div>
-              ` : ''}
-              
-              <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 32px auto;">
-                <tr>
-                  <td style="background-color: #1B365D; background: #1B365D; border-radius: 8px;">
-                    <a href="https://rehablookup.com/account" style="display: inline-block; padding: 16px 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; font-weight: 600; color: #ffffff; text-decoration: none;">
-                      Continue Your Search
-                    </a>
-                  </td>
-                </tr>
-              </table>
-              
-              <p style="margin: 20px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; color: #475569;">
-                Stay strong,<br>
-                <strong>The RehabLookup Team</strong>
-              </p>
-            </td>
-          </tr>
-          
-          ${generateEmailFooter()}
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`;
-}
-
-function generateAccountReminderEmail(name: string): string {
-  return `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; background-color: #f4f6f9; -webkit-font-smoothing: antialiased;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f6f9;">
-    <tr>
-      <td align="center" style="padding: 40px 20px;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
-          
-          <!-- Header -->
-          <tr>
-            <td style="background-color: #1B365D; background: #1B365D; padding: 36px 32px; text-align: center;">
-              <h1 style="margin: 0; color: #ffffff; font-family: Arial, Helvetica, sans-serif; font-size: 24px; font-weight: 700;">
-                We're Still Here for You
-              </h1>
-            </td>
-          </tr>
-          
-          <!-- Body -->
-          <tr>
-            <td style="padding: 40px 32px;">
-              <p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 18px; color: #1B365D; font-weight: 600;">
-                Hi ${name},
-              </p>
-              
-              <p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #475569; line-height: 1.6;">
-                We noticed you haven't visited RehabLookup in a while. Life can get busy, and we understand that finding treatment takes courage and time.
-              </p>
-              
-              <p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #475569; line-height: 1.6;">
-                Whether you're still searching, have found help, or just need more time – we're here whenever you're ready.
-              </p>
-              
-              <div style="background: #f0f9ff; border-left: 4px solid #1B365D; padding: 20px; border-radius: 8px; margin: 24px 0;">
-                <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; color: #1B365D; line-height: 1.6;">
-                  <strong>Remember:</strong> There's no wrong time to seek help. Every day is a new opportunity to take that step.
-                </p>
-              </div>
-              
-              <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 32px auto;">
-                <tr>
-                  <td style="background-color: #1B365D; background: #1B365D; border-radius: 8px;">
-                    <a href="https://rehablookup.com/account" style="display: inline-block; padding: 16px 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; font-weight: 600; color: #ffffff; text-decoration: none;">
-                      Continue Your Search
-                    </a>
-                  </td>
-                </tr>
-              </table>
-              
-              <p style="margin: 20px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; color: #475569;">
-                With hope,<br>
-                <strong>The RehabLookup Team</strong>
-              </p>
-            </td>
-          </tr>
-          
-          ${generateEmailFooter()}
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`;
-}
-
-function generatePlacementIntroEmail(name: string): string {
-  return `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; background-color: #f4f6f9; -webkit-font-smoothing: antialiased;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f6f9;">
-    <tr>
-      <td align="center" style="padding: 40px 20px;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
-          
-          <!-- Header -->
-          <tr>
-            <td style="background-color: #1B365D; background: #1B365D; padding: 40px 32px; text-align: center;">
-              <div style="font-size: 48px; margin-bottom: 12px;">🏥</div>
-              <h1 style="margin: 0; color: #ffffff; font-family: Arial, Helvetica, sans-serif; font-size: 24px; font-weight: 700;">
-                Let Us Help You Get Placed
-              </h1>
-              <p style="margin: 12px 0 0 0; color: #cbd5e1; font-family: Arial, Helvetica, sans-serif; font-size: 15px;">
-                Personalized treatment placement, handled for you
-              </p>
-            </td>
-          </tr>
-          
-          <!-- Body -->
-          <tr>
-            <td style="padding: 40px 32px;">
-              <p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 18px; color: #1B365D; font-weight: 600;">
-                Hi ${name},
-              </p>
-              
-              <p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #475569; line-height: 1.6;">
-                Finding the right treatment center can be overwhelming — comparing programs, verifying insurance, and coordinating admission takes time you may not have. That's why we created our <strong>Treatment Placement</strong> service.
-              </p>
-              
-              <div style="background: #f0fdf4; border-left: 4px solid #166534; padding: 20px; border-radius: 8px; margin: 24px 0;">
-                <p style="margin: 0 0 12px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #166534; font-weight: 600;">
-                  How it works:
-                </p>
-                <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-                  <tr>
-                    <td style="padding: 8px 0; font-size: 15px; color: #475569; line-height: 1.6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-                      <strong style="color: #166534;">1.</strong> Tell us about your needs and preferences
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="padding: 8px 0; font-size: 15px; color: #475569; line-height: 1.6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-                      <strong style="color: #166534;">2.</strong> A dedicated advisor finds and vets the best-fit facilities
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="padding: 8px 0; font-size: 15px; color: #475569; line-height: 1.6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-                      <strong style="color: #166534;">3.</strong> We coordinate insurance verification and admission
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="padding: 8px 0; font-size: 15px; color: #475569; line-height: 1.6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-                      <strong style="color: #166534;">4.</strong> You get placed at the right center, stress-free
-                    </td>
-                  </tr>
-                </table>
-              </div>
-              
-              <div style="background: #f8fafc; padding: 20px; border-radius: 12px; margin: 24px 0;">
-                <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #1B365D; font-weight: 600;">
-                  Why families choose Treatment Placement:
-                </p>
-                <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-                  <tr><td style="padding: 6px 0; font-size: 14px; color: #475569; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">✅ Save hours of research and phone calls</td></tr>
-                  <tr><td style="padding: 6px 0; font-size: 14px; color: #475569; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">✅ Advisor-matched to your specific needs</td></tr>
-                  <tr><td style="padding: 6px 0; font-size: 14px; color: #475569; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">✅ Insurance verification handled for you</td></tr>
-                  <tr><td style="padding: 6px 0; font-size: 14px; color: #475569; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">✅ Smooth admission coordination</td></tr>
-                </table>
-              </div>
-              
-              <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 32px auto;">
-                <tr>
-                  <td style="background-color: #166534; background: #166534; border-radius: 8px;">
-                    <a href="https://rehablookup.com/concierge" style="display: inline-block; padding: 16px 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; font-weight: 600; color: #ffffff; text-decoration: none;">
-                      Get Placed Now →
-                    </a>
-                  </td>
-                </tr>
-              </table>
-              
-              <p style="margin: 24px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #64748b; line-height: 1.6; text-align: center;">
-                You can also continue browsing treatment centers on your own — our directory is always free to use.
-              </p>
-              
-              <p style="margin: 20px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; color: #475569;">
-                With hope,<br>
-                <strong>The RehabLookup Team</strong>
-              </p>
-            </td>
-          </tr>
-          
-          ${generateEmailFooter()}
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`;
-}
-
-function generatePasswordChangedEmail(name: string, metadata?: Record<string, unknown>): string {
-  // Optional metadata: ipAddress + userAgent if the client could capture
-  // them. Sender does not require these; the template degrades cleanly
-  // when absent. Defensive HTML-escaping for any operator-supplied
-  // string would be ideal but these come straight from request headers
-  // that the function trusts.
-  const ipAddress = (metadata?.ipAddress as string | undefined) || null;
-  const userAgent = (metadata?.userAgent as string | undefined) || null;
-  const now = new Date();
-  const whenLine = `${now.toUTCString()} (UTC)`;
-  return `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; background-color: #f4f6f9; -webkit-font-smoothing: antialiased;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f6f9;">
-    <tr>
-      <td align="center" style="padding: 40px 20px;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
-
-          <!-- Header — neutral colour palette; this is NOT a marketing email -->
-          <tr>
-            <td style="background-color: #1B365D; background: #1B365D; padding: 36px 32px; text-align: center;">
-              <div style="width: 56px; height: 56px; background: rgba(255,255,255,0.18); border-radius: 50%; margin: 0 auto 14px; display: flex; align-items: center; justify-content: center;">
-                <span style="font-size: 28px;">🔐</span>
-              </div>
-              <h1 style="margin: 0; color: #ffffff; font-family: Arial, Helvetica, sans-serif; font-size: 22px; font-weight: 700;">
-                Your password was changed
-              </h1>
-            </td>
-          </tr>
-
-          <!-- Body -->
-          <tr>
-            <td style="padding: 36px 32px;">
-              <p style="margin: 0 0 16px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #1B365D; font-weight: 600;">
-                Hi ${name},
-              </p>
-
-              <p style="margin: 0 0 16px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; color: #475569; line-height: 1.6;">
-                The password on your RehabLookup account was just changed. If you made this change, no action is needed — you can ignore this email.
-              </p>
-
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin: 18px 0; border: 1px solid #e5e7eb; border-radius: 8px;">
-                <tr>
-                  <td style="padding: 12px 16px; border-bottom: 1px solid #f1f5f9;">
-                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">When</p>
-                    <p style="margin: 4px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #1B365D; font-weight: 600;">${whenLine}</p>
-                  </td>
-                </tr>
-                ${ipAddress ? `
-                <tr>
-                  <td style="padding: 12px 16px; ${userAgent ? "border-bottom: 1px solid #f1f5f9;" : ""}">
-                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">From IP</p>
-                    <p style="margin: 4px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #1B365D; font-weight: 600;">${ipAddress}</p>
-                  </td>
-                </tr>` : ""}
-                ${userAgent ? `
-                <tr>
-                  <td style="padding: 12px 16px;">
-                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Device</p>
-                    <p style="margin: 4px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #1B365D; font-weight: 600;">${userAgent}</p>
-                  </td>
-                </tr>` : ""}
-              </table>
-
-              <!-- Wasn't-you panel -->
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #fef2f2; border-left: 4px solid #dc2626; border-radius: 6px; margin: 18px 0;">
-                <tr>
-                  <td style="padding: 14px 16px;">
-                    <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #991b1b; font-weight: 600;">
-                      Didn't change your password?
-                    </p>
-                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; color: #991b1b; line-height: 1.5;">
-                      Your account may be compromised. Reset your password immediately and review your recent activity.
-                    </p>
-                  </td>
-                </tr>
-              </table>
-
-              <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 24px auto;">
-                <tr>
-                  <td style="background-color: #dc2626; background: #dc2626; border-radius: 8px;">
-                    <a href="https://rehablookup.com/forgot-password" style="display: inline-block; padding: 13px 28px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 600; color: #ffffff; text-decoration: none;">
-                      Secure my account
-                    </a>
-                  </td>
-                </tr>
-              </table>
-
-              <p style="margin: 18px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; color: #64748b; line-height: 1.5; text-align: center;">
-                You can also review recent activity in <a href="https://rehablookup.com/account/settings" style="color: #1B365D; text-decoration: underline;">Settings → Account</a>.
-              </p>
-            </td>
-          </tr>
-
-          ${generateEmailFooter()}
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`;
-}
-
-function generateSecurityAlertEmail(name: string, metadata?: Record<string, unknown>): string {
-  const browser = (metadata?.browser as string | undefined) || null;
-  const os = (metadata?.os as string | undefined) || null;
-  const device = (metadata?.device as string | undefined) || null;
-  const now = new Date();
-  const whenLine = `${now.toUTCString()} (UTC)`;
-  const deviceLine = device || [browser, os].filter(Boolean).join(" · ") || "Unknown device";
-  return `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; background-color: #f4f6f9; -webkit-font-smoothing: antialiased;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f6f9;">
-    <tr>
-      <td align="center" style="padding: 40px 20px;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
-
-          <!-- Header — neutral palette; security signal, not marketing -->
-          <tr>
-            <td style="background-color: #1B365D; background: #1B365D; padding: 36px 32px; text-align: center;">
-              <div style="width: 56px; height: 56px; background: rgba(255,255,255,0.18); border-radius: 50%; margin: 0 auto 14px; display: flex; align-items: center; justify-content: center;">
-                <span style="font-size: 28px;">🛡️</span>
-              </div>
-              <h1 style="margin: 0; color: #ffffff; font-family: Arial, Helvetica, sans-serif; font-size: 22px; font-weight: 700;">
-                New sign-in to your account
-              </h1>
-            </td>
-          </tr>
-
-          <!-- Body -->
-          <tr>
-            <td style="padding: 36px 32px;">
-              <p style="margin: 0 0 16px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #1B365D; font-weight: 600;">
-                Hi ${name},
-              </p>
-
-              <p style="margin: 0 0 16px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; color: #475569; line-height: 1.6;">
-                Your RehabLookup account was just accessed from a new device. If this was you, no action is needed.
-              </p>
-
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin: 18px 0; border: 1px solid #e5e7eb; border-radius: 8px;">
-                <tr>
-                  <td style="padding: 12px 16px; border-bottom: 1px solid #f1f5f9;">
-                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">When</p>
-                    <p style="margin: 4px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #1B365D; font-weight: 600;">${whenLine}</p>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 12px 16px;">
-                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Device</p>
-                    <p style="margin: 4px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #1B365D; font-weight: 600;">${deviceLine}</p>
-                  </td>
-                </tr>
-              </table>
-
-              <!-- Wasn't-you panel -->
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #fef2f2; border-left: 4px solid #dc2626; border-radius: 6px; margin: 18px 0;">
-                <tr>
-                  <td style="padding: 14px 16px;">
-                    <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #991b1b; font-weight: 600;">
-                      Didn't sign in?
-                    </p>
-                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; color: #991b1b; line-height: 1.5;">
-                      Someone else may have your password. Reset it now and review active sessions in Settings.
-                    </p>
-                  </td>
-                </tr>
-              </table>
-
-              <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 24px auto;">
-                <tr>
-                  <td style="background-color: #dc2626; background: #dc2626; border-radius: 8px;">
-                    <a href="https://rehablookup.com/forgot-password" style="display: inline-block; padding: 13px 28px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 600; color: #ffffff; text-decoration: none;">
-                      Secure my account
-                    </a>
-                  </td>
-                </tr>
-              </table>
-
-              <p style="margin: 18px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; color: #64748b; line-height: 1.5; text-align: center;">
-                You can also revoke active sessions in <a href="https://rehablookup.com/account/settings" style="color: #1B365D; text-decoration: underline;">Settings → Account</a>.
-              </p>
-            </td>
-          </tr>
-
           ${generateEmailFooter()}
         </table>
       </td>
@@ -1466,7 +490,7 @@ function generateEmailFooter(): string {
                 <tr>
                   <td align="center">
                     <p style="margin: 0; font-family: Arial, Helvetica, sans-serif; font-size: 12px; color: #94a3b8;">
-                      <a href="https://rehablookup.com/account/settings" style="color: #93c5fd; text-decoration: underline;">Manage email preferences</a>
+                      <a href="https://rehablookup.com/search-results" style="color: #93c5fd; text-decoration: underline;">Search treatment centers</a>
                        · 
                       <a href="https://rehablookup.com" style="color: #93c5fd; text-decoration: underline;">Visit RehabLookup</a>
                     </p>

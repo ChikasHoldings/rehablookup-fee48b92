@@ -88,7 +88,7 @@ const EXPANDED_HUB_CONFIGS: ExpandedHubConfig[] = [
     slug: "fentanyl-rehab",
     title: "Fentanyl Addiction Treatment",
     metaTitle: "Fentanyl Rehab Programs — Specialized Addiction Treatment",
-    metaDescription: "Find specialized fentanyl addiction treatment programs with medical detox and MAT. Compare verified facilities equipped for fentanyl recovery. Get help today.",
+    metaDescription: "Find specialized fentanyl addiction treatment programs with medical detox and MAT. compare facility listings equipped for fentanyl recovery. Get help today.",
     heroSubtitle: "Specialized treatment programs for fentanyl addiction with medical detox, MAT protocols, and comprehensive recovery support.",
     filterKeys: ["fentanyl", "opioid", "MAT"],
     overview: "Fentanyl addiction requires specialized treatment due to its extreme potency — 50-100 times stronger than morphine. Medical detox is critical as fentanyl withdrawal can be severe, and medication-assisted treatment (MAT) with buprenorphine or methadone is considered the gold standard for recovery. The fentanyl crisis has driven innovation in treatment protocols, with many facilities now offering specialized programs addressing the unique challenges of synthetic opioid addiction including higher tolerance thresholds and longer withdrawal timelines.",

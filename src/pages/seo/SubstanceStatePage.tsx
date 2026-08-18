@@ -69,7 +69,7 @@ export default function SubstanceStatePage() {
     },
     {
       question: `How many ${substance.conditionName.toLowerCase()} treatment centers are in ${stateName}?`,
-      answer: `${stateName} has ${facilities.length > 0 ? `${facilities.length}+ verified treatment facilities` : "treatment options available"} that address ${substance.conditionName.toLowerCase()}. Use RehabLookup to compare programs, read reviews, and verify insurance acceptance.`,
+      answer: `${stateName} has ${facilities.length > 0 ? `${facilities.length}+ treatment facilities` : "treatment options available"} that address ${substance.conditionName.toLowerCase()}. Use RehabLookup to compare programs, read reviews, and verify insurance acceptance.`,
     },
     {
       question: `What is the cost of ${substance.conditionName.toLowerCase()} treatment in ${stateName}?`,
@@ -128,7 +128,7 @@ export default function SubstanceStatePage() {
     <SEOLandingTemplate
       title={pageTitle}
       metaTitle={`${substance.title} in ${stateName} (${abbreviation}) — Find Help | RehabLookup`}
-      metaDescription={`Find ${substance.conditionName.toLowerCase()} treatment centers in ${stateName}. Compare ${facilities.length}+ verified programs, check insurance, get help today.`}
+      metaDescription={`Find ${substance.conditionName.toLowerCase()} treatment centers in ${stateName}. Compare ${facilities.length}+ programs, check insurance, get help today.`}
       canonical={`https://rehablookup.com/${slug}`}
       noindex={!validation.shouldIndex}
       structuredData={structuredData}

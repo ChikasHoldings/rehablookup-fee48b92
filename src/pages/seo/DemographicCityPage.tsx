@@ -127,7 +127,7 @@ export default function DemographicCityPage() {
     <SEOLandingTemplate
       title={pageTitle}
       metaTitle={`${demographic.title} in ${cityName}, ${abbreviation} — Find Programs | RehabLookup`}
-      metaDescription={`Find ${demographic.title.toLowerCase()} programs in ${cityName}, ${stateName}. Compare verified facilities with specialized care and contact them directly.`}
+      metaDescription={`Find ${demographic.title.toLowerCase()} programs in ${cityName}, ${stateName}. compare facility listings with specialized care and contact them directly.`}
       canonical={`https://rehablookup.com${canonicalPath}`}
       noindex={!validation.shouldIndex}
       structuredData={structuredData}
@@ -166,7 +166,7 @@ export default function DemographicCityPage() {
         },
         {
           heading: `How Facilities Are Verified`,
-          content: `Every ${cityName} facility in our directory is checked for state licensing, current accreditation (Joint Commission or CARF), and active clinical credentials. We do not sell admission slots; providers can't pay for placement. Pages are editorially curated, not lead-broker auctions.`,
+          content: `Listings show state licensing, accreditation and clinical credential details when a facility reports them; confirm them with the facility or the issuing authority. Organic directory position is determined independently and is never purchased.`,
         },
       ]}
       whatToExpect={[

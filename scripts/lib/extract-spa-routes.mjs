@@ -27,6 +27,7 @@ const SMART_CATCHALL = path.resolve(__dirname, "../../src/components/SmartCatchA
 // (and the other auth surfaces below) are excluded.
 const EXCLUDE_PATTERNS = [
   /^\/admin(\/|$)/,
+  /^\/admin-login$/,             // legacy alias — 301 to /admin/login
   /^\/account(\/|$)/,
   /^\/provider(\/|$)/,           // /provider, /provider/foo — but NOT /provider-guides
   /^\/provider-login$/,
@@ -35,12 +36,17 @@ const EXCLUDE_PATTERNS = [
   /^\/provider-support$/,
   /^\/provider-reset-password$/,
   /^\/seeker(\/|$)/,
+  /^\/my-account(\/|$)/,        // retired seeker alias — 301 to /search-results
   /^\/client(\/|$)/,
   /^\/auth(\/|$)/,
-  /^\/login$/,
-  /^\/signup$/,
-  /^\/reset-password$/,
-  /^\/forgot-password$/,
+  // Anchored at the segment boundary, not `$`: the previous `/^\/login$/`-style
+  // patterns let sub-paths through, so `/signup/complete` (a provider Stripe
+  // return page) and `/my-account/*` leaked into the SPA route inventory the
+  // sitemap generator reads. Auth surfaces have no indexable children.
+  /^\/login(\/|$)/,
+  /^\/signup(\/|$)/,
+  /^\/reset-password(\/|$)/,
+  /^\/forgot-password(\/|$)/,
   /^\/404$/,
   /^\/dev\//,
   /^\/ads\//,                    // tracking destinations, not SEO

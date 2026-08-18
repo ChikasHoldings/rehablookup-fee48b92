@@ -359,7 +359,7 @@ export function PlanSettingsTab() {
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>• Unlimited facility listings</li>
                 <li>• Verified badge + lead analytics</li>
-                <li>• Priority placement (+50 ranking)</li>
+                <li>• Enhanced profile: more photos + facility video</li>
                 <li>• 10 photos + 1 facility video</li>
                 <li>• Marketing Hub (Featured + Concierge)</li>
               </ul>

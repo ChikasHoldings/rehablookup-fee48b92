@@ -35,7 +35,6 @@ export const ROUTES_PUBLIC = {
   centerBySlug: (slug: string) => `/center/${slug}`,
   rehabCenters: "/search-results",
   resourceById: (id: string) => `/resources/${id}`,
-  account: "/account",
   medicalDisclaimer: "/medical-disclaimer",
 } as const;
 
@@ -47,11 +46,14 @@ export const ROUTES_PUBLIC = {
 // /provider/onboarding/new-listing, /provider/claim/:slug,
 // /provider/claim/:slug/submitted) is now an inline Navigate redirect
 // in App.tsx — no dedicated page files anymore.
+// Consumer accounts are retired (directory cutover stage 3): there is no
+// seeker signup, sign-in destination or password reset. /login and
+// /forgot-password are PROVIDER surfaces; admins use /admin/login.
 export const ROUTES_AUTH = {
   login: "/login",
-  signup: "/seeker/signup",
   providerOnboarding: "/provider/onboarding",
   forgotPassword: "/forgot-password",
+  providerForgotPassword: "/provider/forgot-password",
   providerResetPassword: "/provider/reset-password",
   signupComplete: "/signup/complete",
 } as const;
@@ -81,14 +83,9 @@ export const ROUTES_PROVIDER = {
 } as const;
 
 // ─── Seeker panel ─────────────────────────────────────────────────────
-export const ROUTES_SEEKER = {
-  account: "/account",
-  settings: "/account/settings",
-  notifications: "/account/notifications",
-  saved: "/account/saved",
-  reviews: "/account/reviews",
-  help: "/account/help",
-} as const;
+// Removed. /account, /account/*, /my-account/* and /seeker/* are retired
+// and 301 to /search-results (ROUTES_PUBLIC.rehabCenters) — see App.tsx,
+// vercel.json and middleware.ts. Nothing should link into them again.
 
 // ─── Admin panel ──────────────────────────────────────────────────────
 export const ROUTES_ADMIN = {

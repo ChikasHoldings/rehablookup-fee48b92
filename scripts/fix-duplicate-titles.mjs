@@ -102,10 +102,10 @@ function substanceCityPage(urlPath) {
     urlPath,
     title,
     metaTitle: `${title} — Local Treatment Centers | RehabLookup`,
-    metaDescription: `Find accredited ${typeName.toLowerCase()} programs in ${cityName}, ${stateName}. Compare verified local facilities, check insurance coverage, and start recovery today.`,
+    metaDescription: `Find accredited ${typeName.toLowerCase()} programs in ${cityName}, ${stateName}. Compare local facility listings, check insurance coverage, and contact facilities directly.`,
     h1: title,
     content: `
-      <p>Find accredited ${typeName.toLowerCase()} programs in ${cityName}, ${stateName}. RehabLookup's verified directory includes licensed facilities with detailed information on treatment programs, insurance acceptance, and amenities.</p>
+      <p>Find accredited ${typeName.toLowerCase()} programs in ${cityName}, ${stateName}. RehabLookup's directory includes licensed facilities with detailed information on treatment programs, insurance acceptance, and amenities.</p>
       <h2>Treatment Options in ${cityName}</h2>
       <p>Facilities in ${cityName} offer a range of ${typeName.toLowerCase()} programs including medical detox, residential inpatient, partial hospitalization (PHP), intensive outpatient (IOP), and outpatient treatment.</p>
       <h2>Insurance Coverage in ${cityName}</h2>
@@ -136,7 +136,7 @@ function nearMeCountyPage(urlPath) {
     metaDescription: `Find ${nearMeName.toLowerCase()} programs in ${countyName} County, ${stateName}. Compare accredited local facilities, verify insurance, and get help today.`,
     h1: title,
     content: `
-      <p>Find accredited ${nearMeName.toLowerCase()} programs in ${countyName} County, ${stateName}. Our directory includes verified facilities with detailed information on treatment programs, insurance acceptance, and amenities.</p>
+      <p>Find accredited ${nearMeName.toLowerCase()} programs in ${countyName} County, ${stateName}. Our directory includes facility listings with information on treatment programs, insurance acceptance and amenities as reported by each facility.</p>
       <h2>Treatment Options in ${countyName} County</h2>
       <p>Facilities in ${countyName} County offer a range of programs including medical detox, residential inpatient, partial hospitalization (PHP), intensive outpatient (IOP), and outpatient treatment.</p>
       <h2>Insurance Accepted in ${countyName} County</h2>

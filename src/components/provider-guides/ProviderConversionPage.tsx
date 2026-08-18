@@ -137,10 +137,13 @@ export function ProviderConversionPage({
             </div>
             <div className="grid md:grid-cols-2 gap-6">
               {[
-                { icon: TrendingUp, title: "High-Intent SEO Traffic", desc: "We rank for thousands of treatment-related keywords. Every visitor is actively searching for rehab — not browsing social media." },
-                { icon: Users, title: "Patients Ready to Act", desc: "Our visitors are patients and families who've already decided they need treatment. They're comparing options and ready to commit." },
-                { icon: DollarSign, title: "Pay-for-Performance", desc: "No monthly fees. No long-term contracts. You only pay when you receive a real, qualified lead that matches your services." },
-                { icon: Globe, title: "Nationwide Visibility", desc: "Your facility gets seen by patients across the country, with targeted visibility in your specific city, state, and treatment specialty." },
+                // Rewritten from the pay-per-lead pitch. RehabLookup does not
+                // sell leads, does not qualify or match patients, and cannot
+                // characterise visitor intent it does not measure.
+                { icon: TrendingUp, title: "Directory Search Visibility", desc: "Your listing appears in directory results families browse by location, level of care and insurance." },
+                { icon: Users, title: "Direct Facility Contact", desc: "Families contact your facility directly. RehabLookup does not sell, resell or broker patient leads." },
+                { icon: DollarSign, title: "Free Directory Presence", desc: "Basic directory presence is free. Pro enhances your facility profile and provider tools; Featured is purchased separately as clearly labeled sponsored exposure." },
+                { icon: Globe, title: "Nationwide Coverage", desc: "The directory covers listings nationwide, including your city, state and treatment specialty." },
               ].map((item, i) => (
                 <Card key={i}>
                   <CardContent className="p-6 flex items-start gap-4">
@@ -163,9 +166,9 @@ export function ProviderConversionPage({
             <div className="grid md:grid-cols-4 gap-6">
               {[
                 { step: "1", title: "List Your Facility", desc: "Create your free profile in under 5 minutes. Add your services, insurance, photos, and specialties." },
-                { step: "2", title: "Get Matched", desc: "Our SEO engine connects patients searching for treatment to facilities that match their needs." },
-                { step: "3", title: "Receive Leads", desc: "Get real inquiries from patients who are ready for treatment. Each lead includes contact info and treatment preferences." },
-                { step: "4", title: "Convert to Admissions", desc: "Contact leads directly. Our high-intent traffic means higher conversion rates than any other channel." },
+                { step: "2", title: "Appear in the Directory", desc: "Your listing appears in directory results families filter by location, level of care and insurance." },
+                { step: "3", title: "Receive Direct Inquiries", desc: "Families who choose your facility contact it directly through the details on your listing." },
+                { step: "4", title: "Respond to Families", desc: "Handle each inquiry with your own admissions process. RehabLookup does not coordinate admissions." },
               ].map((item, i) => (
                 <div key={i} className="text-center">
                   <div className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center text-xl font-bold mx-auto mb-4">{item.step}</div>
@@ -183,12 +186,12 @@ export function ProviderConversionPage({
             <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-12">Why Facilities Choose RehabLookup</h2>
             <div className="grid md:grid-cols-2 gap-4">
               {[
-                "Zero wasted ad spend — pay only for real leads",
-                "Increase occupancy rates with consistent lead flow",
+                "Basic directory presence is free",
+                "Organic directory position is determined independently and is never for sale",
                 "Nationwide visibility for your treatment programs",
                 "No contracts, no setup fees, no monthly minimums",
-                "Leads include patient contact info and preferences",
-                "Dedicated support for facility profile optimization",
+                "Families contact your facility directly — inquiries are not sold or resold",
+                "Verification is earned independently of payment",
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-3 p-4 bg-background rounded-lg border">
                   <CheckCircle className="h-5 w-5 text-accent shrink-0" />
@@ -202,17 +205,21 @@ export function ProviderConversionPage({
         {/* PROOF/TRUST */}
         <section className="py-16">
           <div className="container mx-auto px-4 max-w-5xl text-center">
-            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-8">Built on Growing Momentum</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-8">How the Directory Works</h2>
+            {/* The stat strip here previously published "5,400+ Monthly
+                Visitors", "10,000+ SEO Pages" and "100% Organic Traffic" as
+                hard-coded values with no live data source. Replaced with
+                statements of the commercial contract, which is verifiable from
+                the product itself. */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
               {[
-                { value: "5,400+", label: "Monthly Visitors" },
-                { value: "50", label: "States Covered" },
-                { value: "10,000+", label: "SEO Pages" },
-                { value: "100%", label: "Organic Traffic" },
-              ].map((stat, i) => (
-                <div key={i}>
-                  <div className="text-3xl md:text-4xl font-bold text-primary">{stat.value}</div>
-                  <div className="text-sm text-muted-foreground mt-1">{stat.label}</div>
+                { title: "Free", body: "Basic directory presence costs nothing." },
+                { title: "Never for sale", body: "Organic directory position is determined independently." },
+                { title: "Always labeled", body: "Featured placements are purchased separately and clearly marked as sponsored." },
+              ].map((item, i) => (
+                <div key={i} className="bg-muted/30 rounded-lg border p-5">
+                  <div className="text-lg font-bold text-primary">{item.title}</div>
+                  <div className="text-sm text-muted-foreground mt-1">{item.body}</div>
                 </div>
               ))}
             </div>
@@ -222,8 +229,8 @@ export function ProviderConversionPage({
         {/* FINAL CTA */}
         <section className="py-16 bg-gradient-to-br from-primary via-primary/95 to-primary/85 text-white">
           <div className="container mx-auto px-4 max-w-3xl text-center">
-            <h2 className="text-2xl md:text-4xl font-bold mb-4">Start Getting Patients Today</h2>
-            <p className="text-lg text-white/80 mb-8">List your facility for free. No contracts, no setup fees. Get matched with patients who are ready for treatment.</p>
+            <h2 className="text-2xl md:text-4xl font-bold mb-4">Claim Your Facility Listing</h2>
+            <p className="text-lg text-white/80 mb-8">Basic directory presence is free. No contracts, no setup fees. Families searching for treatment can find and contact your facility directly.</p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button asChild variant="hero-light" size="xl">
                 <Link to="/for-providers">List Your Facility Now <ArrowRight className="ml-2 h-5 w-5" /></Link>

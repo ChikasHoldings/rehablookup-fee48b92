@@ -1,0 +1,47 @@
+-- Unschedules the seeker weekly digest cron (directory cutover stage 3).
+--
+-- WHY
+--   Stage 3 retires the consumer account product: /account, /account/*,
+--   /my-account/* and /seeker/* are now permanent redirects to
+--   /search-results, and the seeker panel pages are gone from the repo.
+--
+--   send-seeker-weekly-digest was scheduled by
+--   20260706000000_schedule_seeker_weekly_digest_cron.sql to run Sundays at
+--   13:30 UTC. Its footer offered the recipient exactly one way to stop it:
+--
+--     https://rehablookup.com/account/notification-preferences?unsub=weekly
+--
+--   That page (src/pages/seeker/SeekerNotificationPreferences.tsx) never
+--   handled the ?unsub= parameter — it rendered an `email_weekly_digest`
+--   toggle the recipient had to flip by hand. Stage 3 deletes the page, so
+--   the link now 301s to /search-results and the toggle is unreachable.
+--   Leaving the job scheduled would mean a recurring email with no working
+--   opt-out, which is a CAN-SPAM problem, not just a dead link.
+--
+--   The product answer is the simple one: consumer accounts are retired, so
+--   the consumer recurring email stops too. Unscheduling is the smallest
+--   change that removes the exposure at the root — no email template edits,
+--   no new public route to maintain.
+--
+-- WHAT THIS DOES NOT DO
+--   • Does not drop or alter notification_preferences, seeker_profiles, or
+--     any other historical seeker data — stage 3 retires the product
+--     surface, not the records.
+--   • Does not delete or modify the send-seeker-weekly-digest edge function.
+--     It stays deployed and callable (manual invoke, dryRun, backfill), it
+--     simply stops firing on a timer.
+--   • Does not touch the provider digest (send_provider_weekly_digest) or
+--     any provider/admin job.
+--
+-- REVERSIBILITY
+--   Fully reversible: re-running
+--   20260706000000_schedule_seeker_weekly_digest_cron.sql restores the exact
+--   schedule. If the consumer product is ever revived, restore the schedule
+--   only after there is a working unsubscribe destination again.
+--
+-- Guarded by EXISTS so the migration is idempotent and safe on an
+-- environment where the job was never scheduled — same pattern as the
+-- schedule migration it reverses.
+
+SELECT cron.unschedule('send_seeker_weekly_digest')
+WHERE EXISTS (SELECT 1 FROM cron.job WHERE jobname = 'send_seeker_weekly_digest');
