@@ -108,6 +108,64 @@ const sortOptions: { value: SortOption; label: string }[] = [
 // bookmark is read by nothing and narrows nothing. Restoring a radius
 // filter requires real coordinates first.
 
+/**
+ * Crawler-facing wording for ONE resolved location scope.
+ *
+ * The result set on this page is exact-only: `splitByLocation` keeps
+ * `exact` and `nearby` in separate buckets, and only `exact` is counted,
+ * paginated and headed ("N facilities in <describeScope(...)>"). The
+ * <title> and meta description have to describe that same set. They used
+ * to say "Rehab Centers Near Los Angeles, CA", which promises a measured
+ * proximity the catalogue cannot support — `facilities` carries city,
+ * state, zip_code and address and no coordinates, so there is no radius,
+ * no distance, and therefore no "near" / "nearby" / "nearest" /
+ * "closest" / "within X miles" on an exact-scope page.
+ *
+ * `describeScope` stays the single source of the place label — this is
+ * NOT a second location parser. The only per-type work here is grammar:
+ * `title` slots into "Rehab Centers in <title>" and `sentence` into
+ * "...listings in <sentence>", and a state reads better under its
+ * canonical full name than under the bare abbreviation `describeScope`
+ * returns.
+ *
+ * Returns null for the two scopes that must never be phrased as "in
+ * <place>":
+ *   county     — no facility→county data exists, so the county branch
+ *                writes its own qualified copy instead of a claim.
+ *   unresolved — we never learned which place the string meant, so
+ *                neutral search wording is the only truthful option.
+ */
+function seoScopeWording(
+  scope: LocationScope | null,
+): { title: string; sentence: string } | null {
+  if (!scope) return null;
+  switch (scope.type) {
+    case "city":
+    case "zip": {
+      // "Los Angeles, CA" / "ZIP 21215" — already title-shaped.
+      const label = describeScope(scope);
+      return { title: label, sentence: label };
+    }
+    case "state": {
+      const label = stateDisplayName(scope.state) ?? scope.state;
+      return { title: label, sentence: label };
+    }
+    case "city-any-state":
+      // A bare "Springfield" is EVERY Springfield in the country. The
+      // copy has to reveal that span, or it names one town while listing
+      // several states' worth. `describeScope` writes it as a
+      // mid-sentence fragment ("cities named Springfield across the
+      // U.S."), which is exactly what the description needs; the title
+      // says the same thing in title case.
+      return {
+        title: `Cities Named ${scope.city} Across the U.S.`,
+        sentence: describeScope(scope),
+      };
+    default:
+      return null;
+  }
+}
+
 // Amenity filters
 const amenityFilters = [
   { value: "private-rooms", label: "Private Rooms" },
@@ -718,8 +776,12 @@ const SearchResults = () => {
   // Build a shareable URL that preserves all current filters/location/sort/page
   const handleShare = useCallback(async () => {
     const url = `${window.location.origin}${window.location.pathname}${window.location.search}`;
-    const shareTitle = location
-      ? `Rehab Centers near ${location} — RehabLookup`
+    // Same contract as the <title>: a shared link travels further than
+    // the page it came from, so it may not carry a proximity claim the
+    // result set cannot back. `describeScope` names the exact scope.
+    const shareScope = seoScopeWording(activeLocationScope);
+    const shareTitle = shareScope
+      ? `Rehab Centers in ${shareScope.title} — RehabLookup`
       : queryParam
       ? `Rehab Centers matching "${queryParam}" — RehabLookup`
       : "Rehab Centers Search — RehabLookup";
@@ -751,7 +813,7 @@ const SearchResults = () => {
         variant: "destructive",
       });
     }
-  }, [location, queryParam, toast]);
+  }, [activeLocationScope, queryParam, toast]);
 
   const handleSortChange = (value: SortOption) => {
     const newParams = new URLSearchParams(searchParams);
@@ -814,13 +876,38 @@ const SearchResults = () => {
     // Analytics provider removed — zero-result searches tracked via analytics.search() above.
   }, [isLoading, filteredCenters.length, location, treatment, insurance, queryParam]);
 
-  // Determine display title (used in the page header). The SEO <title> below
-  // augments this with the page number so paginated variants don't collide.
+  // Crawler-facing scope wording, derived from the SAME canonical scope
+  // the result set was filtered to. Null for county (its own qualified
+  // copy below), unresolved input, and no-location searches.
+  const seoScope = seoScopeWording(activeLocationScope);
+
+  // The search <title>. Nothing renders this on the page — the heading
+  // above the cards is built straight from `describeScope` — so it is
+  // read by crawlers and the share sheet only, and it has to make the
+  // same claim the listing does.
+  //
+  //   city           → Rehab Centers in Los Angeles, CA
+  //   zip            → Rehab Centers in ZIP 21215
+  //   state          → Rehab Centers in California
+  //   city-any-state → Rehab Centers in Cities Named Springfield Across the U.S.
+  //   county         → <county> County Treatment Facility Search — County
+  //                    Data Unavailable. NOT "Rehab Centers in Cook
+  //                    County": every county search returns zero exact
+  //                    matches because the catalogue has no county
+  //                    column, so a title that promised county listings
+  //                    would promise a filter we cannot run.
+  //   unresolved     → neutral search wording. We do not know what place
+  //                    the string meant, so nothing may be described as
+  //                    being "in" or "near" it.
   const searchDisplayTitle = queryParam
     ? `Results for "${queryParam}"`
-    : location
-      ? `Rehab Centers Near ${location}`
-      : "Find Treatment Centers";
+    : countyScope
+      ? `${countyScope.county} County Treatment Facility Search — County Data Unavailable`
+      : seoScope
+        ? `Rehab Centers in ${seoScope.title}`
+        : location
+          ? `Rehab Center Search — ${location}`
+          : "Find Treatment Centers";
 
   // Build a unique-per-variant SEO title and self-canonical for indexable
   // (i.e. unfiltered) paginated variants so page 2+ isn't deduped against
@@ -836,16 +923,31 @@ const SearchResults = () => {
   // records carry it); attaching it to a directory-wide result count is the
   // exact misstatement check-public-directory-truth exists to stop.
   //
+  // The location clause names the EXACT scope ("in Los Angeles, CA", "in
+  // ZIP 21215", "in cities named Springfield across the U.S.") because
+  // `filteredCenters.length` counts exactly that set. "near <location>"
+  // described a radius the catalogue cannot measure, and — worse —
+  // attached it to a count that was never a radius count.
+  //
   // County scope gets its own sentence. `filteredCenters.length` is 0 for
   // every county search because the catalogue has no county column, and
-  // "Browse 0 listings near Cook County, IL" would publish that 0 as a
+  // "Browse 0 listings in Cook County, IL" would publish that 0 as a
   // finding. It is a gap in our data, so the description says so.
+  //
+  // An unresolved location gets neutral search wording — never "in" or
+  // "near" a place we could not identify.
   const seoDescription = countyScope
     ? `RehabLookup does not currently have facility-level county assignments, so ${
         countyScope.county
       } County${countyStateName ? `, ${countyStateName}` : ""} cannot be filtered accurately yet. Browse the state directory, or search by city or ZIP code for exact matches.`
     : `Browse ${filteredCenters.length} addiction treatment center listings${
-        location ? ` near ${location}` : queryParam ? ` matching "${queryParam}"` : ""
+        seoScope
+          ? ` in ${seoScope.sentence}`
+          : queryParam
+            ? ` matching "${queryParam}"`
+            : location
+              ? ` for the search "${location}"`
+              : ""
       }${currentPage > 1 ? ` (page ${currentPage} of ${totalPages})` : ""}. Compare rehab programs, review insurance information, and contact facilities directly.`;
 
   // rel="prev"/"next" — only emit on indexable paginated views so crawlers
