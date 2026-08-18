@@ -63,6 +63,21 @@ jobs:
         if: env.SUPABASE_URL != ''
         run: npm run generate:facility-profiles-html
 
+      # Reproduces the production `build:vercel` ordering: city pages get their
+      # facility inventory injected BEFORE the sitemap step, so the guards below
+      # validate the same corpus Vercel deploys.
+      #
+      # Without this step CI validated the committed city pages, which carry no
+      # /center/ links — the injector's output is a build artifact and is never
+      # committed. Production ran the injector and passed the core-market smoke
+      # check; CI did not and failed it. Same scripts, different sequence.
+      #
+      # This runs the existing `inject:city-inventory` script unchanged. City
+      # matching semantics (exact state/city slug equality) are not touched here.
+      - name: Inject city facility inventory
+        if: env.SUPABASE_URL != ''
+        run: npm run inject:city-inventory
+
       - name: Generate sitemaps
         if: env.SUPABASE_URL != ''
         run: npm run generate:sitemaps
