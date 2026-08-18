@@ -55,13 +55,10 @@ function ChipGroup({ heading, options, selected, onToggle }: ChipGroupProps) {
 interface FilterChipsProps {
   treatmentOptions: FilterChipOption[];
   insuranceOptions: FilterChipOption[];
-  distanceOptions: FilterChipOption[];
   selectedTreatments: string[];
   selectedInsurance: string[];
-  selectedDistance: string;
   onToggleTreatment: (value: string) => void;
   onToggleInsurance: (value: string) => void;
-  onSetDistance: (value: string) => void;
   onClearAll?: () => void;
   className?: string;
 }
@@ -70,24 +67,25 @@ interface FilterChipsProps {
  * Horizontally-scrollable quick filter chips that mirror the sidebar filters.
  * Used at the top of Rehab Centers search results so users can refine without
  * opening the side-sheet. All state lives in the URL via the parent.
+ *
+ * There is no Distance group. The facility catalogue carries no latitude or
+ * longitude, so a "Within 25 miles" chip could not be honoured — the old
+ * one mapped miles onto a same-city / same-state / adjacent-state tier and
+ * presented the result as a radius. The sidebar and the search form dropped
+ * theirs for the same reason; this component keeps the same contract so a
+ * future consumer cannot reintroduce a mileage claim through it.
  */
 export function FilterChips({
   treatmentOptions,
   insuranceOptions,
-  distanceOptions,
   selectedTreatments,
   selectedInsurance,
-  selectedDistance,
   onToggleTreatment,
   onToggleInsurance,
-  onSetDistance,
   onClearAll,
   className,
 }: FilterChipsProps) {
-  const activeCount =
-    selectedTreatments.length +
-    selectedInsurance.length +
-    (selectedDistance ? 1 : 0);
+  const activeCount = selectedTreatments.length + selectedInsurance.length;
 
   return (
     <section
@@ -128,12 +126,6 @@ export function FilterChips({
         options={insuranceOptions}
         selected={selectedInsurance}
         onToggle={onToggleInsurance}
-      />
-      <ChipGroup
-        heading="Distance"
-        options={distanceOptions}
-        selected={selectedDistance ? [selectedDistance] : []}
-        onToggle={(value) => onSetDistance(selectedDistance === value ? "" : value)}
       />
     </section>
   );

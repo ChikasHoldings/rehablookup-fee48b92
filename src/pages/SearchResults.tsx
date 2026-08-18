@@ -13,7 +13,7 @@ import { SearchResultsForm } from "@/components/search/SearchResultsForm";
 
 import { NoResultsDirectoryCTA } from "@/components/search/NoResultsDirectoryCTA";
 import { AreaWaitlistCapture } from "@/components/seo/AreaWaitlistCapture";
-import { MapPin, Search, X, ArrowUpDown, ChevronLeft, ChevronRight, Phone, SlidersHorizontal, Building2, Shield, Star, DollarSign, Sparkles, ChevronDown, Navigation, CreditCard, Share2, Check, AlertCircle, RefreshCw, Scale } from "lucide-react";
+import { MapPin, Search, X, ArrowUpDown, ChevronLeft, ChevronRight, Phone, SlidersHorizontal, Building2, Shield, Star, DollarSign, Sparkles, ChevronDown, CreditCard, Share2, Check, AlertCircle, RefreshCw, Scale } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import {
@@ -41,6 +41,7 @@ import {
   parseLocation,
   splitByLocation,
   stateDisplayName,
+  stateSlugFor,
   type LocationScope,
 } from "@/lib/location";
 import { useZipcodeLookup } from "@/hooks/useZipcodeLookup";
@@ -79,8 +80,14 @@ const ITEMS_PER_PAGE = 12;
 
 type SortOption = "proximity" | "featured" | "rating-high" | "rating-low" | "name-asc" | "name-desc";
 
+// The internal key stays "proximity" (it is what `getProximityTier`
+// returns and what every URL already carries). The PUBLIC label may not
+// say "Nearest" / "Closest" / "Distance": with no latitude or longitude
+// in the catalogue we order by categorical location match — same ZIP,
+// then same city, then same state, then a neighbouring state — which is
+// a relevance ordering, not a measured one.
 const sortOptions: { value: SortOption; label: string }[] = [
-  { value: "proximity", label: "Nearest First" },
+  { value: "proximity", label: "Location Match" },
   { value: "featured", label: "Featured First" },
   { value: "rating-high", label: "Highest Rated" },
   { value: "rating-low", label: "Lowest Rated" },
@@ -92,14 +99,14 @@ const sortOptions: { value: SortOption; label: string }[] = [
 // (shared with `RehabCenters.tsx`) so a change to a `matches` array only has
 // to happen in one place. Imported above as TREATMENT_FILTERS / INSURANCE_FILTERS.
 
-// Distance filters
-const distanceFilters = [
-  { value: "10", label: "Within 10 miles" },
-  { value: "25", label: "Within 25 miles" },
-  { value: "50", label: "Within 50 miles" },
-  { value: "100", label: "Within 100 miles" },
-  { value: "any", label: "Any distance" },
-];
+// NO DISTANCE FILTERS. The `facilities` table has city, state, zip_code
+// and address — no latitude and no longitude. "Within 25 miles" was
+// implemented by mapping the mile value onto the categorical proximity
+// tier (exact / city / state / neighbouring state), which is not a
+// distance and cannot be made into one without coordinates. The control,
+// the chip and the filtering step are all gone; `?distance=` on an old
+// bookmark is read by nothing and narrows nothing. Restoring a radius
+// filter requires real coordinates first.
 
 // Amenity filters
 const amenityFilters = [
@@ -152,7 +159,6 @@ const SearchResults = () => {
   const treatmentTypesParam = searchParams.get("treatmentTypes") || "";
   const amenitiesParam = searchParams.get("amenities") || "";
   const insuranceTypesParam = searchParams.get("insuranceTypes") || "";
-  const distanceParam = searchParams.get("distance") || "";
   const verifiedOnly = searchParams.get("verified") === "true";
   const featuredOnly = searchParams.get("featuredOnly") === "true";
 
@@ -160,7 +166,6 @@ const SearchResults = () => {
   const selectedTreatmentTypes = useMemo(() => treatmentTypesParam ? treatmentTypesParam.split(",") : [], [treatmentTypesParam]);
   const selectedAmenities = useMemo(() => amenitiesParam ? amenitiesParam.split(",") : [], [amenitiesParam]);
   const selectedInsuranceTypes = useMemo(() => insuranceTypesParam ? insuranceTypesParam.split(",") : [], [insuranceTypesParam]);
-  const selectedDistance = distanceParam || "";
 
   const { data: approvedFacilities = [], isLoading, error: facilitiesError, refetch: refetchFacilities } = useStaticFacilities();
   const geo = useGeoLocation();
@@ -343,7 +348,7 @@ const SearchResults = () => {
       // labelled with the user's search term.
       //
       // Exact and nearby travel together through the REMAINING filters
-      // (query, treatment, insurance, amenities, distance, ...) so both
+      // (query, treatment, insurance, amenities, ...) so both
       // buckets are narrowed by the same criteria, then are separated
       // again at the end. They are never merged for counting: the split
       // below is by identity, so a nearby facility cannot leak into the
@@ -481,52 +486,15 @@ const SearchResults = () => {
       results = results.filter((center) => center.featured === true);
     }
 
-    // Distance filter. Without lat/long on every facility we can't compute
-    // true mile-distance, so we map the user's mile radius onto the
-    // categorical proximity tier — a defensible UX approximation that
-    // matches how the rest of the page already sorts results.
-    //   ≤10 mi   → exact OR city
-    //   ≤25 mi   → exact / city / state
-    //   ≤50/100 → also nearby
-    //   "any"   → unfiltered
-    // The chip was previously cosmetic (selectedDistance read + counted as
-    // active but never applied), so any results being narrowed is a win
-    // versus the prior dead-feature behavior.
-    // Audit fix (2026-05-23): the distance filter previously only fired
-    // when `locationMatch` existed, which was built strictly from the
-    // explicit `location` URL param. A user with no typed location but
-    // a geo-IP-resolved `effectiveLocation` could select "Within 10
-    // miles" and see a no-op — the filter chip displayed as active but
-    // nothing was actually narrowed. Now we build a separate distance
-    // location match from `effectiveLocation` as a fallback so the
-    // distance filter actually constrains results in the geo-IP path.
-    //
-    // Tier ladder also tightened: 50 mi no longer pulls in the "nearby
-    // state" tier (cross-state adjacents that can be 100s of miles
-    // away). 100 mi keeps the looser tier because at that radius
-    // crossing into an adjacent state is plausible.
-    const distanceLocationMatch: LocationMatch | null =
-      locationMatch ??
-      (effectiveLocation
-        ? (() => {
-            const m = parseLocationInput(effectiveLocation);
-            return resolvedZipData ? enrichLocationMatchWithZip(m, resolvedZipData) : m;
-          })()
-        : null);
-
-    if (selectedDistance && selectedDistance !== "any" && distanceLocationMatch) {
-      const miles = parseInt(selectedDistance, 10);
-      const allow = (tier: string): boolean => {
-        if (miles <= 10) return tier === "exact" || tier === "city";
-        if (miles <= 25) return tier === "exact" || tier === "city";
-        if (miles <= 50) return tier === "exact" || tier === "city" || tier === "state";
-        return tier === "exact" || tier === "city" || tier === "state" || tier === "nearby";
-      };
-      results = results.filter((center) => {
-        const { tier } = getProximityTier(center, distanceLocationMatch);
-        return allow(tier);
-      });
-    }
+    // NO DISTANCE STEP. This is where "Within N miles" used to translate
+    // a mile radius into the categorical proximity tier — 10 mi meant
+    // "same city", 100 mi meant "or a neighbouring state". Those tiers
+    // are not miles: two facilities in the same city can be 30 miles
+    // apart, and two facilities in adjacent states can be 600. With no
+    // coordinates in the catalogue there is no honest radius to compute,
+    // so the filter is gone rather than approximated. A stale
+    // `?distance=25` is inert: nothing below reads it, exact membership
+    // is untouched, and the result set is identical with or without it.
 
     // Build proximity scoring using the enriched location match
     const getProximityScore = (center: { city: string; state: string; zipCode?: string }): number => {
@@ -626,13 +594,13 @@ const SearchResults = () => {
       locationScope,
       facetPool: preMultiPool,
     };
-  }, [allCenters, location, effectiveLocation, treatment, insurance, type, stateParam, queryParam, sortParam, selectedTreatmentTypes, selectedAmenities, selectedInsuranceTypes, selectedDistance, verifiedOnly, featuredOnly, resolvedZipData, typeFilterMap]);
+  }, [allCenters, location, effectiveLocation, treatment, insurance, type, stateParam, queryParam, sortParam, selectedTreatmentTypes, selectedAmenities, selectedInsuranceTypes, verifiedOnly, featuredOnly, resolvedZipData, typeFilterMap]);
 
-  const hasFilters = location || treatment || insurance || type || stateParam || queryParam || selectedTreatmentTypes.length > 0 || selectedAmenities.length > 0 || selectedInsuranceTypes.length > 0 || selectedDistance || verifiedOnly || featuredOnly;
+  const hasFilters = location || treatment || insurance || type || stateParam || queryParam || selectedTreatmentTypes.length > 0 || selectedAmenities.length > 0 || selectedInsuranceTypes.length > 0 || verifiedOnly || featuredOnly;
   const activeTypeFilter = type ? typeDisplayNames[type] : null;
 
   // Count active filters
-  const activeFiltersCount = selectedTreatmentTypes.length + selectedAmenities.length + selectedInsuranceTypes.length + (selectedDistance ? 1 : 0) + (verifiedOnly ? 1 : 0) + (featuredOnly ? 1 : 0);
+  const activeFiltersCount = selectedTreatmentTypes.length + selectedAmenities.length + selectedInsuranceTypes.length + (verifiedOnly ? 1 : 0) + (featuredOnly ? 1 : 0);
 
   const totalPages = Math.max(1, Math.ceil(filteredCenters.length / ITEMS_PER_PAGE));
   // F11 clamp: ?page=99 against a 6-page result set previously rendered an
@@ -685,8 +653,29 @@ const SearchResults = () => {
     );
   }, [nearbyCenters, activeLocationScope]);
 
+  // COUNTY SCOPE — a CAPABILITY limitation, not a zero-facility fact.
+  //
+  // `matchesExactly` returns false for every facility against a county
+  // scope, and that is correct: the `facilities` table has city, state,
+  // zip_code and address and no county column, so there is no
+  // facility→county mapping to match on. The canonical layer refuses to
+  // infer one (a facility in the city of Orange is not evidence about
+  // Orange County).
+  //
+  // What must NOT follow is the sentence "no facilities found in Cook
+  // County, IL". Zero exact matches here means we cannot evaluate the
+  // question, not that we checked and the answer is none. Cook County
+  // certainly has treatment facilities; RehabLookup just cannot tell you
+  // which of its listings sit inside it. The county branch below says
+  // that instead, and offers the searches we CAN answer truthfully.
+  const countyScope = activeLocationScope?.type === "county" ? activeLocationScope : null;
+  const countyStateName = countyScope
+    ? stateDisplayName(countyScope.state) ?? countyScope.state
+    : null;
+  const countyStateSlug = countyScope ? stateSlugFor(countyScope.state) : null;
+
   // Facet counts — read from `facetPool`, which is the result set narrowed
-  // by location/state/query/type/distance/verified/featured but BEFORE the
+  // by location/state/query/type/verified/featured but BEFORE the
   // multi-select treatment + insurance + amenities filters apply. That way
   // toggling within those groups doesn't suppress the group's own counts,
   // while still reflecting the user's location/query context.
@@ -846,9 +835,18 @@ const SearchResults = () => {
   // of them are verified. `verified` is per-facility earned state (a handful of
   // records carry it); attaching it to a directory-wide result count is the
   // exact misstatement check-public-directory-truth exists to stop.
-  const seoDescription = `Browse ${filteredCenters.length} addiction treatment center listings${
-    location ? ` near ${location}` : queryParam ? ` matching "${queryParam}"` : ""
-  }${currentPage > 1 ? ` (page ${currentPage} of ${totalPages})` : ""}. Compare rehab programs, review insurance information, and contact facilities directly.`;
+  //
+  // County scope gets its own sentence. `filteredCenters.length` is 0 for
+  // every county search because the catalogue has no county column, and
+  // "Browse 0 listings near Cook County, IL" would publish that 0 as a
+  // finding. It is a gap in our data, so the description says so.
+  const seoDescription = countyScope
+    ? `RehabLookup does not currently have facility-level county assignments, so ${
+        countyScope.county
+      } County${countyStateName ? `, ${countyStateName}` : ""} cannot be filtered accurately yet. Browse the state directory, or search by city or ZIP code for exact matches.`
+    : `Browse ${filteredCenters.length} addiction treatment center listings${
+        location ? ` near ${location}` : queryParam ? ` matching "${queryParam}"` : ""
+      }${currentPage > 1 ? ` (page ${currentPage} of ${totalPages})` : ""}. Compare rehab programs, review insurance information, and contact facilities directly.`;
 
   // rel="prev"/"next" — only emit on indexable paginated views so crawlers
   // can stitch the sequence together without us advertising filtered/noindex
@@ -972,28 +970,7 @@ const SearchResults = () => {
         </Select>
       </FilterSection>
 
-      {/* Distance */}
-      <FilterSection id="distance" icon={<Navigation className="h-3.5 w-3.5" />} label="Distance" count={selectedDistance ? 1 : 0}>
-        <div className="space-y-1.5">
-          {distanceFilters.map((filter) => {
-            const active = selectedDistance === filter.value;
-            return (
-              <button
-                key={filter.value}
-                onClick={() => setSingleFilter("distance", active ? "" : filter.value)}
-                className={`w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-all ${
-                  active
-                    ? "bg-primary/10 text-primary font-medium border border-primary/20"
-                    : "text-foreground hover:bg-secondary/60 border border-transparent"
-                }`}
-              >
-                <span>{filter.label}</span>
-                {active && <X className="h-3.5 w-3.5" />}
-              </button>
-            );
-          })}
-        </div>
-      </FilterSection>
+      {/* No Distance section — see the note beside `sortOptions`. */}
 
       {/* Insurance — multi-select toggle buttons (mirrors Amenities pattern).
           Persists via the `insuranceTypes` URL param (comma-separated).
@@ -1446,17 +1423,6 @@ const SearchResults = () => {
                                 <X className="h-3 w-3" />
                               </button>
                             ))}
-                            {selectedDistance && (
-                              <button
-                                type="button"
-                                onClick={() => setSingleFilter("distance", "")}
-                                className="shrink-0 inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/20 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/15 transition-colors"
-                                aria-label="Remove distance filter"
-                              >
-                                <span>Within {selectedDistance} mi</span>
-                                <X className="h-3 w-3" />
-                              </button>
-                            )}
                             {verifiedOnly && (
                               <button
                                 type="button"
@@ -1586,8 +1552,8 @@ const SearchResults = () => {
                           Widen your search
                         </h3>
                         <p className="text-sm text-muted-foreground leading-relaxed flex-1">
-                          Drop the level-of-care or insurance filter, or look at nearby
-                          cities — many people travel a short distance for the right
+                          Drop the level-of-care or insurance filter, or look at other
+                          cities in the same state — many people travel for the right
                           program.
                         </p>
                         <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-primary group-hover:gap-2 transition-all">
@@ -1700,6 +1666,97 @@ const SearchResults = () => {
                     </dl>
                   </section>
                 </>
+              ) : countyScope ? (
+                /* COUNTY — capability limitation, NOT a zero-facility claim.
+                   Rendered instead of the generic empty state because every
+                   line of that state ("No matching centers", "No facilities
+                   found in Cook County, IL", "No listings match those filters
+                   in Cook County, IL") asserts a count we have no basis for.
+                   Nothing here is labelled a Cook County facility, and no
+                   statewide facility is relabelled as one. */
+                <div
+                  className="flex flex-col items-center justify-center py-12 px-4 animate-fade-in"
+                  data-testid="county-limitation"
+                >
+                  <div className="w-full max-w-2xl mx-auto rounded-2xl border border-amber-300/60 bg-amber-50/60 dark:bg-amber-950/20 dark:border-amber-800/50 p-6 md:p-8">
+                    <div className="flex items-start gap-4">
+                      <div className="h-12 w-12 rounded-xl bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center shrink-0">
+                        <AlertCircle className="h-6 w-6 text-amber-700 dark:text-amber-400" />
+                      </div>
+                      <div className="min-w-0">
+                        <h2 className="font-display text-xl md:text-2xl font-bold text-foreground mb-2">
+                          We can&rsquo;t filter by county yet
+                        </h2>
+                        <p className="text-sm text-foreground/80 leading-relaxed">
+                          RehabLookup does not currently have facility-level
+                          county assignments, so we can&rsquo;t filter{" "}
+                          <strong>
+                            {countyScope.county} County
+                            {countyStateName ? `, ${countyStateName}` : ""}
+                          </strong>{" "}
+                          accurately yet. Our listings record a city, state and
+                          ZIP code &mdash; not a county &mdash; and we will not
+                          guess which county a city sits in.
+                        </p>
+                        <p className="text-sm text-muted-foreground leading-relaxed mt-3">
+                          This is a gap in our data, not a statement about
+                          treatment in {countyScope.county} County. We are not
+                          telling you there are no facilities there &mdash; we
+                          are telling you we cannot yet identify which of our
+                          listings are inside it.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-6 border-t border-amber-300/50 dark:border-amber-800/40 pt-5">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-foreground mb-3">
+                        What we can search accurately
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {countyStateSlug && countyStateName && (
+                          <Link
+                            to={`/rehab-centers/${countyStateSlug}`}
+                            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3.5 py-1.5 text-xs font-medium hover:border-primary hover:text-primary transition-colors"
+                          >
+                            <MapPin className="h-3.5 w-3.5" />
+                            Browse the {countyStateName} directory
+                          </Link>
+                        )}
+                        <Link
+                          to={`/search-results?location=${encodeURIComponent(countyScope.state)}`}
+                          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3.5 py-1.5 text-xs font-medium hover:border-primary hover:text-primary transition-colors"
+                        >
+                          <Search className="h-3.5 w-3.5" />
+                          Search all of {countyStateName ?? countyScope.state}
+                        </Link>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-3">
+                        Searching a city inside the county &mdash; or a ZIP code
+                        &mdash; returns exact matches. Those are the geographies
+                        our listings actually carry.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Notify-me capture — county-level coverage is a real
+                      roadmap item, so the waitlist is an honest offer here. */}
+                  <div className="w-full mt-6">
+                    <AreaWaitlistCapture
+                      areaSlug={`county-${countyScope.county.toLowerCase().replace(/\s+/g, "-")}-${countyScope.state.toLowerCase()}`}
+                      areaLabel={`${countyScope.county} County, ${countyScope.state}`}
+                    />
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-3 mt-8">
+                    <Button onClick={clearAllFilters} variant="outline" className="gap-2">
+                      <X className="h-4 w-4" />
+                      Clear All Filters
+                    </Button>
+                    <Link to="/rehab-centers">
+                      <Button className="gap-2">Browse All Centers</Button>
+                    </Link>
+                  </div>
+                </div>
               ) : (
                 /* Empty State */
                 <div className="flex flex-col items-center justify-center py-12 px-4 animate-fade-in">
@@ -1734,7 +1791,7 @@ const SearchResults = () => {
                   </p>
 
                   {/* Suggested filter changes — one-tap removal of each active filter */}
-                  {(selectedTreatmentTypes.length > 0 || selectedInsuranceTypes.length > 0 || selectedDistance || verifiedOnly || featuredOnly) && (
+                  {(selectedTreatmentTypes.length > 0 || selectedInsuranceTypes.length > 0 || verifiedOnly || featuredOnly) && (
                     <div className="w-full max-w-md mb-6 rounded-xl border border-border bg-card p-4">
                       <p className="text-xs font-semibold text-foreground mb-3 uppercase tracking-wide">
                         Try removing a filter
@@ -1766,15 +1823,6 @@ const SearchResults = () => {
                             Insurance: {i}
                           </button>
                         ))}
-                        {selectedDistance && (
-                          <button
-                            onClick={() => setSingleFilter("distance", "")}
-                            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-xs hover:border-primary hover:text-primary transition-colors"
-                          >
-                            <X className="h-3 w-3" />
-                            Within {selectedDistance} mi
-                          </button>
-                        )}
                         {verifiedOnly && (
                           <button
                             onClick={() => toggleBooleanFilter("verified", true)}
@@ -1832,7 +1880,7 @@ const SearchResults = () => {
                     const nearbyAbbrs = parsed.stateAbbr ? getNearbyStates(parsed.stateAbbr) : [];
                     return nearbyAbbrs.length > 0 ? (
                       <div className="flex flex-wrap justify-center items-center gap-2 mb-6">
-                        <span className="text-xs text-muted-foreground">Try nearby states:</span>
+                        <span className="text-xs text-muted-foreground">Try neighboring states:</span>
                         {nearbyAbbrs.slice(0, 4).map((abbr) => (
                           <Link
                             key={abbr}

@@ -211,11 +211,14 @@ export const PROXIMITY_TIER_ORDER: Record<ProximityTier, number> = {
   nationwide: 4,
 };
 
+// PUBLIC copy. `nearby` is an adjacency lookup over `nearbyStates`, not a
+// distance — the catalogue has no coordinates — so the label says
+// "Neighboring", never "Nearby"/"Closest"/"N miles".
 export const PROXIMITY_TIER_LABELS: Record<ProximityTier, string> = {
   exact: "Exact Match",
   city: "Same City",
   state: "Same State",
-  nearby: "Nearby State",
+  nearby: "Neighboring State",
   nationwide: "Nationwide",
 };
 

@@ -78,8 +78,12 @@ const proximityBadgeConfig: Record<ProximityTier, {
     className: "text-purple-700",
     bgClassName: "bg-purple-100 border-purple-200"
   },
+  // "Nearby" claimed a distance. This tier means the facility's state is
+  // adjacent to the searched state — an adjacency lookup, not a
+  // measurement, and adjacent states can be hundreds of miles apart. The
+  // label now says exactly what the check proves.
   nearby: { 
-    label: "Nearby State", 
+    label: "Neighboring State", 
     icon: Compass, 
     className: "text-amber-700",
     bgClassName: "bg-amber-100 border-amber-200"

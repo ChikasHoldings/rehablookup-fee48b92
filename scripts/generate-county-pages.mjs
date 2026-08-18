@@ -30,9 +30,6 @@ import {
 // has to survive it.
 import { seoStyles, seoHeader, seoCtaStrip, seoFooter } from "./_seo-page-shell.mjs";
 
-// Direct TS import — Node 22 strip-types makes this safe at build time.
-const { stateCountyData } = await import("../src/data/countySeoData.ts");
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const publicDir = path.resolve(__dirname, "../public");
@@ -76,7 +73,46 @@ function buildHtml({ state, county, urlPath, facilities = [] }) {
   // first-pass crawl sees substantive content. Falls back to empty when
   // the build couldn't fetch facility data (logged once in
   // _facility-data.mjs).
-  const facilityList = renderFacilityList(facilities, `${county.name} County, ${state.stateName}`);
+  //
+  // QUALIFIED, NOT EXACT. This set was assembled by walking the county's
+  // hand-curated `majorCities` list and collecting the facilities in
+  // THOSE CITIES. It is a city crosswalk, not a facility→county mapping:
+  // the `facilities` table has no county column, so no listing here has
+  // ever been checked against Cook County's boundary. Two consequences
+  // are load-bearing and both are handled below rather than in a source
+  // comment no reader will see:
+  //
+  //   1. The heading names the approximation ("Selected Cities in X
+  //      County") instead of claiming the county's inventory.
+  //   2. The "View all N facilities in X County" footer is suppressed —
+  //      N is the count for a handful of curated cities, and printing it
+  //      beside the county's name states a county inventory figure we do
+  //      not have.
+  //
+  // The disclosure sentence is rendered as visible HTML so a reader and
+  // a crawler get the same caveat.
+  const countyPlace = `${county.name} County, ${state.stateName}`;
+  const curatedCities = county.majorCities.slice(0, 6).join(", ");
+  const countyInventoryNote =
+    `Facility links below are drawn from this county page's curated city list` +
+    `${curatedCities ? ` (${curatedCities}${county.majorCities.length > 6 ? " and other listed cities" : ""})` : ""}. ` +
+    `RehabLookup does not currently have facility-level county assignments, ` +
+    `so this is not a complete or exact ${county.name} County inventory. ` +
+    `Search by city or ZIP code for exact matches.`;
+  const facilityList = renderFacilityList(facilities, countyPlace, {
+    headingLabel: `Selected Cities in ${countyPlace}`,
+    note: countyInventoryNote,
+    // No "View all N facilities in <county>" — see above.
+    moreHtml: `<p style="margin-top:8px;color:#666;font-size:.9rem;"><a href="/rehab-centers/${state.stateSlug}">Browse all ${escHtml(state.stateName)} rehab centers &rarr;</a></p>`,
+  });
+  // When the curated cities yielded nothing, `renderFacilityList` returns
+  // "" and the caveat would vanish with it. The county page still shows
+  // county-level editorial copy, so the limitation still needs saying.
+  const countyInventoryBlock = facilityList
+    ? facilityList
+    : `<p style="margin:16px 0;color:#475569;font-size:.9rem;line-height:1.5;">${escHtml(
+        countyInventoryNote,
+      )}</p>`;
 
   const breadcrumbs = [
     { name: "Home", url: "/" },
@@ -180,7 +216,7 @@ function buildHtml({ state, county, urlPath, facilities = [] }) {
       <h2>Access &amp; Coverage</h2>
       <p>${escHtml(county.accessNotes)}</p>
       ${cityList ? `<h2>Cities in ${escHtml(county.name)} County</h2><ul style="columns:2;list-style:disc;padding-left:20px">${cityList}</ul>` : ""}
-      ${facilityList}
+      ${countyInventoryBlock}
       <h2>Frequently Asked Questions</h2>
       ${faqHtml}
       ${seoCtaStrip({ blurb: `Filter treatment center listings in ${escHtml(state.stateName)} by location, level of care, and insurance accepted.` })}
@@ -194,6 +230,11 @@ function buildHtml({ state, county, urlPath, facilities = [] }) {
 
 async function main() {
   console.log("[county-html] starting...");
+  // Direct TS import — Node 22 strip-types makes this safe at build time.
+  // Loaded here rather than at module scope so `buildHtml` can be imported
+  // by the regression suite without pulling in ~470KB of county editorial
+  // data (and without running the generator).
+  const { stateCountyData } = await import("../src/data/countySeoData.ts");
   // One DB pull per build, grouped by state+city for fast county lookups
   // (we map a county's `majorCities` list to the facilities in those cities).
   let countyPagesWithInventory = 0;
@@ -253,7 +294,20 @@ async function main() {
   );
 }
 
-await main().catch((err) => {
-  console.error("[county-html] fatal:", err);
-  process.exit(1);
-});
+// `buildHtml` is the crawler-facing output of this generator, and the
+// county-inventory qualification it emits is asserted in
+// src/__tests__/countyInventoryTruth.test.ts. Exported so that suite can
+// render a planted county without a database or a build.
+export { buildHtml };
+
+// Only generate when run as a script. An `import` (the test suite) gets the
+// pure renderer and no side effects.
+const invokedDirectly =
+  process.argv[1] !== undefined && path.resolve(process.argv[1]) === __filename;
+
+if (invokedDirectly) {
+  await main().catch((err) => {
+    console.error("[county-html] fatal:", err);
+    process.exit(1);
+  });
+}

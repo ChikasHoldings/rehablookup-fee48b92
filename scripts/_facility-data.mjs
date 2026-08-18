@@ -510,9 +510,41 @@ export function groupByStateCity(facilities) {
  * the list "Featured Facilities" told readers the whole list was paid
  * placement. The per-facility Featured badge below still marks the genuinely
  * sponsored rows; the heading no longer mislabels the rest.
+ *
+ * EXACTNESS OF THE HEADING (SEO Phase 2). The default heading —
+ * "Treatment Facilities in <label>" — and the default "View all N
+ * facilities in <label>" footer are EXACT-INVENTORY claims: every listed
+ * facility is inside <label>, and N is the size of that place's
+ * inventory. City and state callers can make that claim, because
+ * `matchesExactly` selected their sets on the facility's own city/state.
+ *
+ * County pages cannot. Their set comes from a curated `majorCities`
+ * crosswalk, not from a facility→county mapping (the `facilities` table
+ * has no county column). So the third argument also accepts an options
+ * object that lets such a caller qualify the block:
+ *
+ *   limit      — as before, when a number is passed directly.
+ *   headingLabel — replaces `locationLabel` in the heading only, so an
+ *                approximate set can name itself as one
+ *                ("Selected Cities in Cook County, Illinois").
+ *   note       — plain-text sentence rendered, escaped and visible, under
+ *                the heading. This is where the data limitation is
+ *                disclosed to READERS AND CRAWLERS, not just to whoever
+ *                opens the generator source.
+ *   moreHtml   — replaces the default "View all N facilities in <label>"
+ *                footer. Pass "" to drop it, which is what an
+ *                approximate set must do: N is not that place's
+ *                inventory count.
+ *
+ * Passing a number keeps the previous behaviour byte for byte, so the
+ * city / state / near-me generators are untouched.
  */
-export function renderFacilityList(facilities, locationLabel, limit = FACILITIES_PER_PAGE) {
+export function renderFacilityList(facilities, locationLabel, optionsOrLimit = FACILITIES_PER_PAGE) {
   if (!facilities || facilities.length === 0) return "";
+  const options =
+    typeof optionsOrLimit === "number" ? { limit: optionsOrLimit } : (optionsOrLimit ?? {});
+  const limit = options.limit ?? FACILITIES_PER_PAGE;
+  const headingLabel = options.headingLabel ?? locationLabel;
   const top = facilities.slice(0, limit);
   const items = top
     .map((f) => {
@@ -534,11 +566,15 @@ export function renderFacilityList(facilities, locationLabel, limit = FACILITIES
       </li>`;
     })
     .join("");
-  const more = facilities.length > limit
+  const defaultMore = facilities.length > limit
     ? `<p style="margin-top:8px;color:#666;font-size:.9rem;"><a href="/rehab-centers/${stateSlug(facilities[0].state)}">View all ${facilities.length} facilities in ${escapeHtml(locationLabel)} &rarr;</a></p>`
     : "";
-  return `<h2>Treatment Facilities in ${escapeHtml(locationLabel)}</h2>
-    <ul style="list-style:none;padding:0;">${items}</ul>${more}`;
+  const more = options.moreHtml === undefined ? defaultMore : options.moreHtml;
+  const note = options.note
+    ? `<p style="margin:0 0 12px;color:#475569;font-size:.9rem;line-height:1.5;">${escapeHtml(options.note)}</p>`
+    : "";
+  return `<h2>Treatment Facilities in ${escapeHtml(headingLabel)}</h2>
+    ${note}<ul style="list-style:none;padding:0;">${items}</ul>${more}`;
 }
 
 // ---------------------------------------------------------------------------
