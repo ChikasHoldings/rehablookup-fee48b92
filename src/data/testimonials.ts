@@ -302,276 +302,33 @@ export const seekerTestimonials: Testimonial[] = [
   },
 ];
 
-export const providerTestimonials: Testimonial[] = [
-  {
-    name: "Dr. Amanda Foster",
-    location: "Scottsdale, AZ",
-    quote: "Since listing on RehabLookup, our facility has seen a 35% increase in qualified admissions. The leads are pre-screened and genuinely seeking help — not tire-kickers.",
-    rating: 5,
-    role: "provider",
-    context: "Clinical Director, Desert Bloom Recovery",
-    avatar: amandaImg,
-  },
-  {
-    name: "James Whitfield",
-    location: "Malibu, CA",
-    quote: "We've tried every marketing channel out there. RehabLookup consistently delivers high-quality referrals for one flat monthly fee — no per-lead or per-admission charges. It's become one of our most reliable channels.",
-    rating: 5,
-    role: "provider",
-    context: "CEO, Pacific Coast Treatment Center",
-    avatar: jamesImg,
-  },
-  {
-    name: "Rachel Nguyen",
-    location: "Nashville, TN",
-    quote: "The concierge placement network is a game-changer. Families arrive already educated about our programs. Our show-up rate went from 60% to over 85%.",
-    rating: 5,
-    role: "provider",
-    context: "Admissions Director, Hope Springs Recovery",
-    avatar: rachelImg,
-  },
-  {
-    name: "Marcus Johnson, LCSW",
-    location: "Denver, CO",
-    quote: "As a smaller facility competing against big chains, RehabLookup levels the playing field. Our verified listing and reviews give families confidence to choose us.",
-    rating: 5,
-    role: "provider",
-    context: "Founder, Mountain View Wellness Center",
-    avatar: marcusImg,
-  },
-  {
-    name: "Patricia Reeves",
-    location: "Austin, TX",
-    quote: "The analytics dashboard shows exactly which services families search for. We adjusted our program offerings based on the data and filled 12 new beds in one quarter.",
-    rating: 5,
-    role: "provider",
-    context: "Operations Manager, Lone Star Recovery",
-    avatar: patriciaImg,
-  },
-  {
-    name: "Dr. Steven Park",
-    location: "Miami, FL",
-    quote: "RehabLookup's verification badge has become a trust signal for our marketing. Families specifically mention seeing our verified listing as why they chose us over competitors.",
-    rating: 5,
-    role: "provider",
-    context: "Medical Director, Coastal Healing Institute",
-    avatar: stevenImg,
-  },
-  {
-    name: "Karen Mitchell, NP",
-    location: "Portland, OR",
-    quote: "We went from struggling to fill beds to having a waitlist within 6 months of joining RehabLookup. The platform connected us with families we never would have reached through traditional marketing.",
-    rating: 5,
-    role: "provider",
-    context: "Director, Evergreen Recovery Center",
-    avatar: karenImg,
-  },
-  {
-    name: "Carlos Martinez",
-    location: "San Antonio, TX",
-    quote: "The Pro subscription paid for itself in the first week. Priority placement and the analytics tools helped us understand our market and grow admissions by 40% year-over-year.",
-    rating: 5,
-    role: "provider",
-    context: "Administrator, Alamo Behavioral Health",
-    avatar: carlosImg,
-  },
-  {
-    name: "Andre Jackson, MBA",
-    location: "Charlotte, NC",
-    quote: "Before RehabLookup, we spent $15,000/month on Google Ads with inconsistent results. Now we get a steady pipeline of qualified inquiries for one predictable flat monthly fee — none of the per-click unpredictability.",
-    rating: 5,
-    role: "provider",
-    context: "VP of Growth, Carolina Recovery Network",
-    avatar: andreImg,
-  },
-  {
-    name: "Catherine Brennan",
-    location: "Chicago, IL",
-    quote: "The international placement feature opened an entirely new revenue stream for us. We've admitted 8 international clients in the last quarter alone — families who found us exclusively through RehabLookup.",
-    rating: 5,
-    role: "provider",
-    context: "CEO, Lakeshore Treatment Center",
-    avatar: catherineImg,
-  },
-  {
-    name: "Dr. Priya Desai",
-    location: "Dallas, TX",
-    quote: "As a physician running a medication-assisted treatment program, credibility is everything. RehabLookup's accreditation verification gives families confidence that our clinical standards are real, not just marketing claims.",
-    rating: 5,
-    role: "provider",
-    context: "Medical Director, Horizon MAT Clinic",
-    avatar: priyaImg,
-  },
-  {
-    name: "William Keane",
-    location: "Raleigh, NC",
-    quote: "We opened a new facility and needed to fill beds fast. Within 90 days on RehabLookup, we had 22 new admissions directly from the platform. No other channel came close to that ROI.",
-    rating: 5,
-    role: "provider",
-    context: "Founder, Triangle Behavioral Health",
-    avatar: williamImg,
-  },
-  {
-    name: "Elena Rodriguez, RN",
-    location: "San Diego, CA",
-    quote: "The concierge team does incredible pre-screening. By the time a family contacts us, they already understand our program, insurance compatibility, and what to expect. It saves our admissions staff hours every week.",
-    rating: 5,
-    role: "provider",
-    context: "Nursing Director, Pacific Shores Recovery",
-    avatar: elenaImg,
-  },
-  // New provider testimonials
-  {
-    name: "Darnell Jackson",
-    location: "Atlanta, GA",
-    quote: "Our 45-bed facility had real occupancy headroom when we joined RehabLookup. Because inquiries arrive with detailed intake information, my admissions team actually has time to do proper clinical assessments instead of racing to dial numbers.",
-    rating: 5,
-    role: "provider",
-    context: "CEO, Peachtree Recovery Center",
-    avatar: darnellImg,
-  },
-  {
-    name: "Jason Fischer, LMFT",
-    location: "San Francisco, CA",
-    quote: "We specialize in LGBTQ+ affirming care, which can be hard to market. RehabLookup's search filters connect us directly with families looking for exactly what we offer. Our inquiry-to-admission rate went from 15% to 38%.",
-    rating: 5,
-    role: "provider",
-    context: "Program Director, Bay Area Wellness",
-    avatar: jasonImg,
-  },
-  {
-    name: "Anita Patel, MD",
-    location: "Houston, TX",
-    quote: "The detailed intake data that comes with each lead is remarkable. We know the substance, insurance carrier, urgency level, and preferred location before we ever pick up the phone. It's eliminated 90% of the back-and-forth in our admissions process.",
-    rating: 5,
-    role: "provider",
-    context: "Medical Director, Gulf Coast Behavioral Health",
-    avatar: anitaImg,
-  },
-  {
-    name: "Scott Anderson",
-    location: "Minneapolis, MN",
-    quote: "I manage three sober living facilities. RehabLookup is the only platform where we consistently get referrals for step-down care. Families searching for sober living specifically find us here. We've maintained 95%+ occupancy across all three houses.",
-    rating: 5,
-    role: "provider",
-    context: "Owner, North Star Sober Living",
-    avatar: scottImg,
-  },
-  {
-    name: "Laura Mitchell, LCSW",
-    location: "Phoenix, AZ",
-    quote: "We run a small women's-only residential program — 12 beds. Big directories buried us behind facilities with huge ad budgets. On RehabLookup, our verified listing and genuine reviews actually surface us to families who are the right fit. We haven't had an empty bed in 7 months.",
-    rating: 5,
-    role: "provider",
-    context: "Executive Director, Serenity Women's Center",
-    avatar: lauraImg,
-  },
-  {
-    name: "Ryan Chen, PharmD",
-    location: "Los Angeles, CA",
-    quote: "Our MAT clinic serves 200+ patients monthly. RehabLookup drives a steady stream of patients looking specifically for Suboxone and Vivitrol programs. The platform understands the difference between residential rehab and outpatient MAT, which most directories don't.",
-    rating: 5,
-    role: "provider",
-    context: "Director, Pacific MAT Clinic",
-    avatar: ryanImg,
-  },
-  {
-    name: "Roberto Valdez",
-    location: "El Paso, TX",
-    quote: "We serve a predominantly Hispanic community and needed a platform that could connect us with Spanish-speaking families. RehabLookup's bilingual search features bring us 30% of our new admissions. No other directory even comes close for our demographic.",
-    rating: 5,
-    role: "provider",
-    context: "Administrator, Frontera Treatment Center",
-    avatar: robertoImg,
-  },
-  {
-    name: "Dr. Nicole Stafford",
-    location: "Nashville, TN",
-    quote: "I was spending $8,000/month on other directories that resold the same shared leads to ten facilities at once. RehabLookup's flat monthly subscription gave us a predictable cost and far better-matched inquiries, and my admissions team's morale went through the roof.",
-    rating: 5,
-    role: "provider",
-    context: "CMO, Southern Behavioral Health Group",
-    avatar: nicoleImg,
-  },
-  {
-    name: "Malik Thompson",
-    location: "Philadelphia, PA",
-    quote: "RehabLookup's provider dashboard gives us real-time visibility into how families find us — which search terms, which pages, which filters. We used that data to add an adolescent program. It filled to capacity in 6 weeks.",
-    rating: 5,
-    role: "provider",
-    context: "VP of Operations, Liberty Recovery Network",
-    avatar: malikImg,
-  },
-  {
-    name: "Rosa Garcia, RN",
-    location: "Tampa, FL",
-    quote: "Our detox unit was underperforming because we couldn't market effectively to families in active crisis. RehabLookup's urgency-based search connects us with families who need same-day placement. Our detox admissions increased 55% in the first quarter.",
-    rating: 5,
-    role: "provider",
-    context: "Detox Unit Director, Suncoast Recovery",
-    avatar: rosaImg,
-  },
-  {
-    name: "Frank DiMaggio",
-    location: "Boston, MA",
-    quote: "I've been in this industry 25 years. The leads from RehabLookup are the most qualified I've ever seen from any directory. When my admissions team calls, the family is ready to have a real conversation about treatment — not asking basic questions about what rehab even is.",
-    rating: 5,
-    role: "provider",
-    context: "Owner, New England Recovery Institute",
-    avatar: frankImg,
-  },
-  {
-    name: "Jenny Liu",
-    location: "Seattle, WA",
-    quote: "We launched our IOP program during COVID and had zero patient pipeline. RehabLookup was the first platform to list virtual IOP as a searchable treatment type. Within 60 days we had a full roster. They understood the market shift before anyone else.",
-    rating: 5,
-    role: "provider",
-    context: "Program Director, Cascade Behavioral Health",
-    avatar: jennyImg,
-  },
-  {
-    name: "Terrence Howard, MBA",
-    location: "Detroit, MI",
-    quote: "We operate in a competitive urban market with 40+ facilities. RehabLookup's verified badge and patient reviews differentiate us from facilities that cut corners. Families tell us they chose us specifically because of our RehabLookup profile. That trust is priceless.",
-    rating: 5,
-    role: "provider",
-    context: "CEO, Great Lakes Recovery Center",
-    avatar: terrenceImg,
-  },
-  {
-    name: "Sophia Rivera, LMHC",
-    location: "Orlando, FL",
-    quote: "Our dual-diagnosis program treats complex cases that most facilities won't take. RehabLookup's detailed intake forms help us identify appropriate referrals before we invest time in an assessment. The match quality is exceptional — 70% of leads are clinically appropriate for our program.",
-    rating: 5,
-    role: "provider",
-    context: "Clinical Director, Central Florida Behavioral",
-    avatar: sophiaImg,
-  },
-  {
-    name: "Dr. Margaret Kelly",
-    location: "Denver, CO",
-    quote: "As chief medical officer of a 120-bed campus, I need marketing channels that deliver volume without sacrificing quality. RehabLookup has helped us grow admissions while maintaining our clinical selectivity, and it's consistently one of our most cost-effective channels.",
-    rating: 5,
-    role: "provider",
-    context: "CMO, Rocky Mountain Treatment Campus",
-    avatar: margaretImg,
-  },
-  {
-    name: "Gloria Jenkins, LCPC",
-    location: "Kansas City, MO",
-    quote: "We specialize in trauma-informed care for women who've experienced domestic violence alongside addiction. RehabLookup lets us specify our niche populations so families who need exactly what we offer find us. Our waitlist went from empty to 3 weeks within two months.",
-    rating: 5,
-    role: "provider",
-    context: "Founder, Haven Women's Recovery",
-    avatar: gloriaImg,
-  },
-  {
-    name: "Hannah Lewis",
-    location: "Albuquerque, NM",
-    quote: "Running a faith-based recovery program in a rural area, we struggled with visibility. RehabLookup's state-specific search pages rank on Google for searches we could never afford to target ourselves. We now receive 8–10 qualified inquiries monthly from families specifically seeking faith-based care.",
-    rating: 5,
-    role: "provider",
-    context: "Director, Grace Path Recovery Ministry",
-    avatar: hannahImg,
-  },
-];
+/**
+ * Provider testimonials — REMOVED 2026-08-17 (commercial-truth pass).
+ *
+ * All 30 entries were written for the retired lead-broker model and could not
+ * survive the directory contract. They fell into three groups, and nothing was
+ * left once those were taken out:
+ *
+ *   1. Products that do not exist — "the concierge placement network", "the
+ *      concierge team does incredible pre-screening", "the international
+ *      placement feature", "Priority placement". RehabLookup runs no concierge,
+ *      places no patients, and does not sell organic position.
+ *   2. Quantified outcomes attributed to RehabLookup that nothing substantiates
+ *      — "grow admissions by 40% year-over-year", "22 new admissions in 90
+ *      days", "show-up rate went from 60% to over 85%", "filled 12 new beds in
+ *      one quarter", "detox admissions increased 55%".
+ *   3. Lead-delivery framing — "the leads from RehabLookup are the most
+ *      qualified I've ever seen", "far better-matched leads", "the detailed
+ *      intake data that comes with each lead". RehabLookup does not sell,
+ *      qualify or deliver patient leads; families contact facilities directly.
+ *
+ * Group 3 is why this is an empty array rather than a filtered list: the
+ * fourteen quotes that carried no false product name and no invented number
+ * still described a lead product. Replacements are not invented here — real,
+ * attributable provider quotes can be added back through this export once they
+ * exist and describe what RehabLookup actually sells.
+ *
+ * TestimonialsSection renders nothing for an empty list, so the consuming page
+ * (/providers/resources) simply drops the section.
+ */
+export const providerTestimonials: Testimonial[] = [];

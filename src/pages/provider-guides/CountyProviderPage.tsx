@@ -18,7 +18,7 @@ export default function CountyProviderPage() {
   return (
     <ProviderConversionPage
       metaTitle={`Get More Rehab Patients in ${countyData.name} County, ${stateData.abbreviation} | RehabLookup`}
-      metaDescription={`List your treatment center and attract patients in ${countyData.name} County, ${stateData.name}. Serving ${populationStr} residents across ${cityList}. Get qualified leads today.`}
+      metaDescription={`List your treatment center and attract patients in ${countyData.name} County, ${stateData.name}. Serving ${populationStr} residents across ${cityList}. Basic directory presence is free.`}
       canonical={`/rehab-marketing/${stateSlug}/county/${countySlug}`}
       keywords={[`rehab marketing ${countyData.name} County`, `get rehab patients ${countyData.name} County`, `${countyData.name} County addiction treatment leads`, `rehab census ${stateData.name}`]}
       breadcrumbs={[
@@ -27,8 +27,8 @@ export default function CountyProviderPage() {
         { label: stateData.name, href: `/for-providers-in-${stateSlug}` },
         { label: `${countyData.name} County` },
       ]}
-      heroHeadline={`Struggling to Fill Beds in ${countyData.name} County?`}
-      heroSubheadline={`${countyData.name} County, ${stateData.name} has ${populationStr} residents who need addiction treatment. RehabLookup connects your facility with patients searching in ${cityList} and surrounding areas.`}
+      heroHeadline={`Reach Families Searching for Treatment in ${countyData.name} County`}
+      heroSubheadline={`${countyData.name} County, ${stateData.name} has ${populationStr} residents who need addiction treatment. A RehabLookup listing lets families searching in ${cityList} and surrounding areas find and contact your facility directly.`}
       problemHeadline={`The Challenge of Getting Patients in ${countyData.name} County`}
       problemPoints={[
         `${countyData.name} County's ${populationStr} residents search for treatment but struggle to find local options`,
@@ -37,7 +37,7 @@ export default function CountyProviderPage() {
         `Empty beds cost your facility $500–$1,500+ per day in unrealized revenue`,
       ]}
       insightHeadline={`${countyData.name} County Treatment Market`}
-      insightContent={`${countyData.name} County, ${stateData.name} represents a significant opportunity for treatment providers. ${countyData.treatmentOverview} Facilities that establish strong visibility in the ${cityList} corridor attract consistent, high-quality admissions.`}
+      insightContent={`${countyData.name} County, ${stateData.name} represents a significant opportunity for treatment providers. ${countyData.treatmentOverview} An accurate directory listing helps families in the ${cityList} corridor find your programs.`}
       relatedLinks={[
         { href: `/rehab-centers/${stateSlug}/county/${countySlug}`, label: `${countyData.name} County Directory` },
         { href: `/for-providers-in-${stateSlug}`, label: `All Providers in ${stateData.name}` },
