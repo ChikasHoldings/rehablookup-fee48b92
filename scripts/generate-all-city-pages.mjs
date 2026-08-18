@@ -39,6 +39,7 @@ import {
   groupByStateCity,
   renderFacilityList,
   citySlug,
+  stateCityKeyFromSlugs,
 } from "./_facility-data.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -241,7 +242,9 @@ async function main() {
   let withFacilities = 0;
   for (const state of states) {
     for (const city of state.cities) {
-      const key = `${city.stateSlug}/${citySlug(city.cityName)}`;
+      // Canonical association key (page side). Output path still uses
+      // the seed `city.citySlug`, so no published URL changes here.
+      const key = stateCityKeyFromSlugs(city.stateSlug, city.cityName.replace(/\s+/g, "-"));
       const cityFacilities = byCity.get(key) || [];
       if (cityFacilities.length > 0) withFacilities++;
       const outPath = path.join(publicDir, "rehab-centers", city.stateSlug, `${city.citySlug}.html`);

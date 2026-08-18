@@ -4,6 +4,7 @@ import { SEOLandingTemplate } from "@/components/seo/SEOLandingTemplate";
 import { getCityImage } from "@/data/locationImages";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { citiesMatch } from "@/lib/cityNameMatch";
+import { normalizeState } from "@/lib/location";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
 import { shouldEmitFAQSchema, validatePage } from "@/utils/seoPageValidator";
@@ -38,7 +39,8 @@ export default function CityInsurancePage() {
   const facilities = useMemo(() => {
     if (!insurer || !stateConfig || !cityName) return [];
     const allFacilities = [...treatmentCenters, ...approvedFacilities];
-    const stateLower = stateConfig.state.toLowerCase();
+    // Canonical state normalization (handles CA/California and DC).
+    const scopeState = normalizeState(stateConfig.state);
 
     // Use the shared insurance matcher (normalized + alias-aware). The
     // matcher resolves the insurer name to its canonical filter key so
@@ -51,7 +53,7 @@ export default function CityInsurancePage() {
     // City + insurer match
     const exact = allFacilities.filter((f) => {
       const cityMatch = citiesMatch(f.city, cityName);
-      const stateMatch = f.state.toLowerCase() === stateLower;
+      const stateMatch = normalizeState(f.state) === scopeState;
       return cityMatch && stateMatch && insMatch(f);
     });
 
@@ -60,7 +62,7 @@ export default function CityInsurancePage() {
     // Fallback: city + state (no insurer filter)
     const cityFallback = allFacilities.filter((f) => {
       const cityMatch = citiesMatch(f.city, cityName);
-      const stateMatch = f.state.toLowerCase() === stateLower;
+      const stateMatch = normalizeState(f.state) === scopeState;
       return cityMatch && stateMatch;
     });
 
@@ -68,7 +70,7 @@ export default function CityInsurancePage() {
 
     // Fallback: state + insurer
     return allFacilities
-      .filter((f) => f.state.toLowerCase() === stateLower && insMatch(f))
+      .filter((f) => normalizeState(f.state) === scopeState && insMatch(f))
       .slice(0, 12);
   }, [approvedFacilities, insurer, stateConfig, cityName]);
 

@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { normalizeState } from "@/lib/location";
 import { Navigate, useParams, useLocation } from "react-router-dom";
 import { SEOLandingTemplate } from "@/components/seo/SEOLandingTemplate";
 import { getStateImage } from "@/data/locationImages";
@@ -28,15 +29,16 @@ export default function DemographicStatePage() {
     }
     const all = [...treatmentCenters, ...approvedFacilities];
     const keywords = demographic.filterKeys.map((k) => k.toLowerCase());
-    const stateLower = stateData.name.toLowerCase();
+    // Canonical state normalization (handles CA/California and DC).
+    const scopeState = normalizeState(stateData.name);
 
     const matched = all.filter((f) => {
-      const stateMatch = f.state.toLowerCase() === stateLower;
+      const stateMatch = normalizeState(f.state) === scopeState;
       const keyMatch = f.treatmentTypes?.some((t) => keywords.some((k) => t.toLowerCase().includes(k))) ||
         keywords.some((k) => f.description?.toLowerCase().includes(k));
       return stateMatch && keyMatch;
     });
-    const stateAll = all.filter((f) => f.state.toLowerCase() === stateLower);
+    const stateAll = all.filter((f) => normalizeState(f.state) === scopeState);
     const display = matched.length >= 3 ? matched : stateAll;
 
     return {
@@ -46,6 +48,10 @@ export default function DemographicStatePage() {
     };
   }, [approvedFacilities, demographic, stateData]);
 
+  // `directMatchCount` is the truthful count for this page's scope.
+  // It is what the hero tile renders — never `facilities.length`,
+  // which may include the wider fallback list shown below when too
+  // few exact matches exist.
   const validation = validatePage("demographic-state", directMatchCount, { stateFallbackCount });
 
   if (!demographic || !stateData) {
@@ -147,7 +153,7 @@ export default function DemographicStatePage() {
       ]}
       facilities={facilities}
       isLoading={isLoading}
-      facilityCount={facilities.length}
+      facilityCount={directMatchCount}
       showMoreLink={`/rehab-centers/${stateSlug}`}
       faqs={faqs}
       faqTreatmentType={demographic.title}

@@ -38,6 +38,7 @@ import {
 import {
   fetchAllFacilities,
   groupByStateCity,
+  stateCityKeyFromSlugs,
   renderFacilityList,
   citySlug,
 } from "./_facility-data.mjs";
@@ -485,7 +486,12 @@ async function main() {
   let withFacilities = 0;
   for (const prefix of prefixes) {
     for (const city of cities) {
-      const key = `${city.stateSlug || stateSlugForAbbr(city.stateAbbr)}/${citySlug(city.city)}`;
+      // Canonical association key — same folding as every other city
+      // surface, so Saint/St variants resolve to one bucket.
+      const key = stateCityKeyFromSlugs(
+        city.stateSlug || stateSlugForAbbr(city.stateAbbr),
+        String(city.city).replace(/\s+/g, "-"),
+      );
       const cityFacilities = byCity.get(key) || [];
       if (cityFacilities.length > 0) withFacilities++;
       const outPath = path.join(publicDir, `${prefix}${city.slug}.html`);

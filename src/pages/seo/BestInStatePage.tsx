@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { normalizeState } from "@/lib/location";
 import { useLocation } from "react-router-dom";
 import { SEOLandingTemplate } from "@/components/seo/SEOLandingTemplate";
 import { getStateImage } from "@/data/locationImages";
@@ -23,10 +24,11 @@ export default function BestInStatePage() {
   const facilities = useMemo(() => {
     if (!stateConfig) return [];
     const allFacilities = [...treatmentCenters, ...approvedFacilities];
-    const stateLower = stateConfig.state.toLowerCase();
+    // Canonical state normalization (handles CA/California and DC).
+    const scopeState = normalizeState(stateConfig.state);
 
     return allFacilities
-      .filter((f) => f.state.toLowerCase() === stateLower)
+      .filter((f) => normalizeState(f.state) === scopeState)
       .sort((a, b) => {
         const aPro = (a as { isPro?: boolean }).isPro ? 1 : 0;
         const bPro = (b as { isPro?: boolean }).isPro ? 1 : 0;

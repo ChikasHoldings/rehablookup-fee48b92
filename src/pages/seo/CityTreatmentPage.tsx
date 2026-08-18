@@ -5,6 +5,7 @@ import { SEOLandingTemplate } from "@/components/seo/SEOLandingTemplate";
 import { getCityImage } from "@/data/locationImages";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { citiesMatch } from "@/lib/cityNameMatch";
+import { normalizeState } from "@/lib/location";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import {
   generateTreatmentCitySections,
@@ -39,7 +40,8 @@ export default function CityTreatmentPage() {
       return { facilities: [], directMatchCount: 0, stateFallbackCount: 0 };
     }
     const allFacilities = [...treatmentCenters, ...approvedFacilities];
-    const stateLower = city.state.toLowerCase();
+    // Canonical state normalization (handles CA/California and DC).
+    const scopeState = normalizeState(city.state);
     const filterLower = treatment.filterKey.toLowerCase();
 
     const sortByRank = (arr: typeof allFacilities) =>
@@ -55,7 +57,7 @@ export default function CityTreatmentPage() {
       });
 
     const directMatch = allFacilities.filter((f) => {
-      const cityMatch = citiesMatch(f.city, city.city) && f.state.toLowerCase() === stateLower;
+      const cityMatch = citiesMatch(f.city, city.city) && normalizeState(f.state) === scopeState;
       const typeMatch =
         f.treatmentTypes?.some((t) => t.toLowerCase().includes(filterLower)) ||
         f.description?.toLowerCase().includes(filterLower);
@@ -63,14 +65,14 @@ export default function CityTreatmentPage() {
     });
 
     const stateTypeMatch = allFacilities.filter((f) => {
-      const stateMatch = f.state.toLowerCase() === stateLower;
+      const stateMatch = normalizeState(f.state) === scopeState;
       const typeMatch =
         f.treatmentTypes?.some((t) => t.toLowerCase().includes(filterLower)) ||
         f.description?.toLowerCase().includes(filterLower);
       return stateMatch && typeMatch;
     });
 
-    const stateAll = allFacilities.filter((f) => f.state.toLowerCase() === stateLower);
+    const stateAll = allFacilities.filter((f) => normalizeState(f.state) === scopeState);
 
     let display = directMatch;
     if (display.length < 3) display = stateTypeMatch;
@@ -83,6 +85,10 @@ export default function CityTreatmentPage() {
     };
   }, [approvedFacilities, city, treatment]);
 
+  // `directMatchCount` is the truthful count for this page's scope.
+  // It is what the hero tile renders — never `facilities.length`,
+  // which may include the wider fallback list shown below when too
+  // few exact matches exist.
   const validation = validatePage("city-treatment", directMatchCount, { stateFallbackCount });
 
   const faqs = useMemo(() => {
@@ -194,7 +200,7 @@ export default function CityTreatmentPage() {
       benefits={treatmentBenefits}
       facilities={facilities}
       isLoading={isLoading}
-      facilityCount={facilities.length}
+      facilityCount={directMatchCount}
       showMoreLink={`/rehab-centers/${city.stateSlug}`}
       faqs={faqs}
       faqTreatmentType={treatment.label}

@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { normalizeState } from "@/lib/location";
 import { Navigate, useParams } from "react-router-dom";
 import { SEOLandingTemplate } from "@/components/seo/SEOLandingTemplate";
 import { getStateImage } from "@/data/locationImages";
@@ -98,10 +99,11 @@ export default function PaymentStatePage({ paymentType }: PaymentStatePageProps)
     if (!stateData) return { facilities: [], directMatchCount: 0, stateFallbackCount: 0 };
     const all = [...treatmentCenters, ...approvedFacilities];
     const keywords = config.filterKeys.map((k) => k.toLowerCase());
-    const stateLower = stateData.name.toLowerCase();
+    // Canonical state normalization (handles CA/California and DC).
+    const scopeState = normalizeState(stateData.name);
 
     const matched = all.filter((f) => {
-      const stateMatch = f.state.toLowerCase() === stateLower;
+      const stateMatch = normalizeState(f.state) === scopeState;
       if (!stateMatch) return false;
       // Try the canonical insurance matcher first — covers keywords like
       // "private-pay" / "sliding-scale" with whitespace-folded aliasing.
@@ -116,7 +118,7 @@ export default function PaymentStatePage({ paymentType }: PaymentStatePageProps)
       );
     });
 
-    const stateAll = all.filter((f) => f.state.toLowerCase() === stateLower);
+    const stateAll = all.filter((f) => normalizeState(f.state) === scopeState);
     const display = matched.length >= 3 ? matched : stateAll;
 
     return {
@@ -126,6 +128,10 @@ export default function PaymentStatePage({ paymentType }: PaymentStatePageProps)
     };
   }, [approvedFacilities, stateData, config.filterKeys]);
 
+  // `directMatchCount` is the truthful count for this page's scope.
+  // It is what the hero tile renders — never `facilities.length`,
+  // which may include the wider fallback list shown below when too
+  // few exact matches exist.
   const validation = validatePage("payment-state", directMatchCount, { stateFallbackCount });
 
   if (!stateData) return <Navigate to="/treatment-types" replace />;
@@ -188,7 +194,7 @@ export default function PaymentStatePage({ paymentType }: PaymentStatePageProps)
       sections={sections}
       facilities={facilities}
       isLoading={isLoading}
-      facilityCount={facilities.length}
+      facilityCount={directMatchCount}
       showMoreLink={`/rehab-centers/${stateSlug}`}
       faqs={faqs}
       faqTreatmentType={`${paymentType === "medicaid" ? "Medicaid" : "Medicare"} Coverage`}

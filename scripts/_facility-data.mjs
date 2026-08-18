@@ -26,6 +26,12 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
+// Canonical location layer — the SAME module the browser search uses.
+// Node 22 strips the TypeScript types on import, so the generators run
+// the real rules instead of a re-implementation that can drift.
+import { cityMatchKey, cityMatchKeyFromSlug } from "../src/lib/location/normalizeCity.ts";
+import { stateSlugFor } from "../src/lib/location/normalizeState.ts";
+
 // ---------------------------------------------------------------------------
 // Environment contract
 // ---------------------------------------------------------------------------
@@ -418,12 +424,51 @@ function stateSlug(s) {
 }
 
 /**
+ * Canonical grouping keys.
+ *
+ * `citySlug`/`stateSlug` above are URL-shaped helpers and are left
+ * untouched — published page paths do not change in this phase. What
+ * changed is the key used to ASSOCIATE a facility with a page: it now
+ * runs through the shared canonical location layer in `src/lib/location`
+ * (Node 22 strips the types on import), so the generators group
+ * facilities by exactly the same rules the browser uses.
+ *
+ * Concretely, the old raw-lowercase key filed "Saint Charles" and
+ * "St Charles" as two different cities. Five prerendered city pages —
+ * st-paul, st-louis, st-charles, st-george and st-clair-shores —
+ * therefore shipped with ZERO crawler-visible facility inventory while
+ * real approved facilities existed in those cities. Canonical keys
+ * recover 16 facility links across those five pages and lose none.
+ */
+function cityKey(cityName) {
+  return cityMatchKey(cityName);
+}
+
+function stateKey(stateName) {
+  return stateSlugFor(stateName) ?? stateSlug(stateName);
+}
+
+/** Canonical `state/city` association key from raw facility values. */
+export function stateCityKey(stateName, cityName) {
+  return `${stateKey(stateName)}/${cityKey(cityName)}`;
+}
+
+/**
+ * Canonical association key built from URL slugs, e.g.
+ * ("missouri", "st-charles") → "missouri/saint-charles". Use this on the
+ * PAGE side so both sides of the lookup fold identically.
+ */
+export function stateCityKeyFromSlugs(stateSlugValue, citySlugValue) {
+  return `${stateKey(String(stateSlugValue).replace(/-+/g, " "))}/${cityMatchKeyFromSlug(citySlugValue)}`;
+}
+
+/**
  * Build Map<state-slug, facility[]>. Used by state-page generators.
  */
 export function groupByState(facilities) {
   const map = new Map();
   for (const f of facilities) {
-    const k = stateSlug(f.state);
+    const k = stateKey(f.state);
     if (!k) continue;
     if (!map.has(k)) map.set(k, []);
     map.get(k).push(f);
@@ -432,13 +477,14 @@ export function groupByState(facilities) {
 }
 
 /**
- * Build Map<`${state-slug}/${city-slug}`, facility[]>. Used by city-page
- * generators.
+ * Build Map<`${state-key}/${city-key}`, facility[]>. Used by city-page
+ * generators. Keys are canonical — look them up with `stateCityKey` or
+ * `stateCityKeyFromSlugs`, never by hand-building a raw slug pair.
  */
 export function groupByStateCity(facilities) {
   const map = new Map();
   for (const f of facilities) {
-    const k = `${stateSlug(f.state)}/${citySlug(f.city)}`;
+    const k = stateCityKey(f.state, f.city);
     if (!k.includes("/") || k.startsWith("/") || k.endsWith("/")) continue;
     if (!map.has(k)) map.set(k, []);
     map.get(k).push(f);

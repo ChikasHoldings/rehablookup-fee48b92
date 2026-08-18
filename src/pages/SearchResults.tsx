@@ -30,13 +30,19 @@ import {
   parseLocationInput, 
   enrichLocationMatchWithZip,
   getProximityTier,
-  getStateAbbr,
   getNearbyStates,
-  facilityMatchesLocation,
   PROXIMITY_TIER_ORDER,
   type LocationMatch,
   type ProximityTier
 } from "@/lib/proximitySearch";
+import {
+  describeScope,
+  normalizeState,
+  parseLocation,
+  splitByLocation,
+  stateDisplayName,
+  type LocationScope,
+} from "@/lib/location";
 import { useZipcodeLookup } from "@/hooks/useZipcodeLookup";
 import { useGeoLocation } from "@/hooks/useGeoLocation";
 import { supabase } from "@/integrations/supabase/client";
@@ -285,46 +291,66 @@ const SearchResults = () => {
     setSearchParams(newParams);
   }, [searchParams, setSearchParams]);
 
-  const { filteredCenters, isExpandedSearch, facetPool } = useMemo(() => {
+  const { filteredCenters, nearbyCenters, locationScope: activeLocationScope, facetPool } = useMemo(() => {
     let results = [...allCenters];
-    let expanded = false;
+    // The geographic scope the user actually asked for, or null when no
+    // location was supplied.
+    let locationScope: LocationScope | null = null;
+    // IDs of the facilities that are genuinely inside `locationScope`.
+    // `null` means no location scope is active, so everything surviving
+    // the other filters is "exact" by default.
+    let exactIds: Set<string> | null = null;
     // Snapshot of the result set BEFORE treatment-multi and insurance-multi
     // and amenities filters are applied. Facet counts are computed against
     // this pool so toggling within a filter group doesn't suppress its
     // own counts — selecting "Aetna" must not show "(0)" for "BCBS" etc.
     let preMultiPool: typeof results = [];
 
-    // Direct state filter from URL param (e.g. from near-me pages: ?state=FL)
+    // Direct state filter from URL param (e.g. from near-me pages: ?state=FL).
+    // Canonical state normalization — exactly that state, never its
+    // neighbours, and DC-aware.
     if (stateParam) {
-      const stateUpper = stateParam.toUpperCase();
-      results = results.filter(c => {
-        const cState = getStateAbbr(c.state)?.toUpperCase() || c.state.toUpperCase();
-        return cState === stateUpper || c.state.toLowerCase() === stateParam.toLowerCase();
-      });
+      const wantState = normalizeState(stateParam);
+      results = wantState
+        ? results.filter((c) => normalizeState(c.state) === wantState)
+        : [];
     }
 
-    // Build location match from explicit location or effective fallback
+    // ---- CANONICAL LOCATION SCOPE -------------------------------------
+    // Geographic membership is decided by @/lib/location and nothing else.
+    // EXACT results are the only ones counted or labelled with the place
+    // name; same-state-different-city facilities go to a separate NEARBY
+    // bucket that is rendered under its own heading.
     let locationMatch: LocationMatch | null = null;
     const locationForFilter = location; // Only filter by explicit location
     const locationForSort = effectiveLocation; // Sort by effective (includes profile/geo fallback)
-    
+
     if (locationForFilter) {
       locationMatch = parseLocationInput(locationForFilter);
-      // Enrich with ZIP resolution data for better city/state matching
+      // ZIP enrichment stays available for SORTING and labels, but it no
+      // longer widens the FILTER: an exact ZIP query keeps matching that
+      // ZIP, not the whole city/state the ZIP happens to sit in.
       if (resolvedZipData) {
         locationMatch = enrichLocationMatchWithZip(locationMatch, resolvedZipData);
       }
-      
-      // Filter to include relevant results by location
-      const locationFiltered = results.filter((c) => facilityMatchesLocation(c, locationMatch!));
-      
-      // Auto-expand: if strict location filtering yields 0 results, show all results sorted by proximity
-      if (locationFiltered.length === 0) {
-        expanded = true;
-        // Don't filter — let proximity sort handle ranking
-      } else {
-        results = locationFiltered;
-      }
+
+      const scope = parseLocation(locationForFilter);
+      const split = splitByLocation(results, scope);
+
+      // No auto-expand. A location that matches nothing returns nothing.
+      // Previously a zero-match location silently disabled the location
+      // filter entirely and returned the whole nationwide catalogue still
+      // labelled with the user's search term.
+      //
+      // Exact and nearby travel together through the REMAINING filters
+      // (query, treatment, insurance, amenities, distance, ...) so both
+      // buckets are narrowed by the same criteria, then are separated
+      // again at the end. They are never merged for counting: the split
+      // below is by identity, so a nearby facility cannot leak into the
+      // exact set.
+      locationScope = scope;
+      exactIds = new Set(split.exact.map((c) => c.id));
+      results = [...split.exact, ...split.nearby];
     }
 
     // Free-text search with fuzzy/partial matching
@@ -394,7 +420,9 @@ const SearchResults = () => {
     // Capture the pool BEFORE the multi-select treatment / insurance /
     // amenities filters apply. Facet counts read from here so the user can
     // freely toggle within a group without each option self-suppressing.
-    preMultiPool = results;
+    // Facet counts describe the user's EXACT geographic context, so the
+    // nearby bucket is excluded here too.
+    preMultiPool = exactIds ? results.filter((c) => exactIds!.has(c.id)) : results;
 
     // Insurance Types dropdown filters — shared matcher folds case + internal
     // whitespace and walks the alias list in src/lib/searchFilters.ts so e.g.
@@ -587,7 +615,17 @@ const SearchResults = () => {
       });
     }
 
-    return { filteredCenters: results, isExpandedSearch: expanded, facetPool: preMultiPool };
+    // Separate the two buckets. Sort order established above is
+    // preserved within each. `filteredCenters` — the set that drives the
+    // visible count, pagination and the SEO description — is exact only.
+    const exactOnly = exactIds ? results.filter((c) => exactIds!.has(c.id)) : results;
+    const nearbyOnly = exactIds ? results.filter((c) => !exactIds!.has(c.id)) : [];
+    return {
+      filteredCenters: exactOnly,
+      nearbyCenters: nearbyOnly,
+      locationScope,
+      facetPool: preMultiPool,
+    };
   }, [allCenters, location, effectiveLocation, treatment, insurance, type, stateParam, queryParam, sortParam, selectedTreatmentTypes, selectedAmenities, selectedInsuranceTypes, selectedDistance, verifiedOnly, featuredOnly, resolvedZipData, typeFilterMap]);
 
   const hasFilters = location || treatment || insurance || type || stateParam || queryParam || selectedTreatmentTypes.length > 0 || selectedAmenities.length > 0 || selectedInsuranceTypes.length > 0 || selectedDistance || verifiedOnly || featuredOnly;
@@ -604,6 +642,42 @@ const SearchResults = () => {
     const start = (safePage - 1) * ITEMS_PER_PAGE;
     return filteredCenters.slice(start, start + ITEMS_PER_PAGE);
   }, [filteredCenters, safePage]);
+
+  // NEARBY — a separate, explicitly labelled bucket. These facilities are
+  // in the same state as the searched city but in a DIFFERENT city, so
+  // they are never counted in the exact total and never rendered under
+  // the exact heading. Capped for page weight; the cap is stated in the
+  // copy so the section never implies it is the complete nearby set.
+  //
+  // We say "elsewhere in <state>" rather than a mileage claim on purpose:
+  // the facility catalogue carries no latitude/longitude, so any radius
+  // number would be fabricated. Same-state-different-city is the closest
+  // relationship the data can actually prove.
+  const NEARBY_LIMIT = 12;
+  const nearbySection = useMemo(() => {
+    if (!nearbyCenters.length || !activeLocationScope) return null;
+    if (activeLocationScope.type !== "city") return null;
+    const shown = nearbyCenters.slice(0, NEARBY_LIMIT);
+    const stateLabel = stateDisplayName(activeLocationScope.state) ?? activeLocationScope.state;
+    return (
+      <section className="mt-12 border-t border-border pt-8" aria-labelledby="nearby-heading">
+        <h2 id="nearby-heading" className="font-display text-lg font-bold text-foreground">
+          Nearby facilities
+        </h2>
+        <p className="text-sm text-muted-foreground mt-1 mb-5">
+          {nearbyCenters.length.toLocaleString()}{" "}
+          {nearbyCenters.length === 1 ? "facility" : "facilities"} elsewhere in {stateLabel}
+          {nearbyCenters.length > shown.length ? ` — showing the first ${shown.length}` : ""}.
+          These are not in {activeLocationScope.city}.
+        </p>
+        <div className="space-y-4">
+          {shown.map((center) => (
+            <SearchResultCard key={`nearby-${center.id}`} center={center} featured={center.featured} />
+          ))}
+        </div>
+      </section>
+    );
+  }, [nearbyCenters, activeLocationScope]);
 
   // Facet counts — read from `facetPool`, which is the result set narrowed
   // by location/state/query/type/distance/verified/featured but BEFORE the
@@ -1272,18 +1346,16 @@ const SearchResults = () => {
                 </div>
               ) : paginatedCenters.length > 0 ? (
                 <>
-                  {/* Expanded search notice */}
-                  {isExpandedSearch && location && (
-                    <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800 px-4 py-3 flex items-start gap-3">
-                      <Navigation className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-sm font-medium text-foreground">
-                          No exact matches near "{location}"
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          Showing the closest facilities nationwide, sorted by proximity. Results nearest to your search appear first.
-                        </p>
-                      </div>
+                  {/* Exact-scope heading. The number here is the exact
+                      matched set and nothing else — no statewide or
+                      neighbouring-state facilities are folded into it. */}
+                  {location && activeLocationScope && (
+                    <div className="mb-5">
+                      <p className="text-sm font-medium text-foreground">
+                        {filteredCenters.length.toLocaleString()}{" "}
+                        {filteredCenters.length === 1 ? "facility" : "facilities"} in{" "}
+                        {describeScope(activeLocationScope)}
+                      </p>
                     </div>
                   )}
 
@@ -1469,6 +1541,8 @@ const SearchResults = () => {
                     className="mt-10 justify-center"
                   />
 
+                  {nearbySection}
+
                   {/* End-of-results helper bands. Two compact sections
                       that catch the visitor who scrolled the full list
                       without clicking through:
@@ -1646,9 +1720,11 @@ const SearchResults = () => {
                   <p className="text-muted-foreground text-center max-w-md mb-6">
                     {queryParam
                       ? `No treatment centers match "${queryParam}". Try a different search term or adjust the filters below.`
-                      : location
-                        ? `No centers found near "${location}". Try a wider area or remove a filter below.`
-                        : "We couldn't find any treatment centers matching your criteria. Try one of the suggestions below."}
+                      : location && activeLocationScope
+                        ? `No facilities found in ${describeScope(activeLocationScope)}. Try a different location or remove a filter below.`
+                        : location
+                          ? `No facilities found for "${location}". Try a different location or remove a filter below.`
+                          : "We couldn't find any treatment centers matching your criteria. Try one of the suggestions below."}
                   </p>
 
                   {/* Suggested filter changes — one-tap removal of each active filter */}
@@ -1799,6 +1875,12 @@ const SearchResults = () => {
                       </Button>
                     </Link>
                   </div>
+
+                  {/* Zero exact matches still means zero. If the state has
+                      facilities in OTHER cities we offer them here, under
+                      their own heading, rather than silently relabelling
+                      them as matches for the searched city. */}
+                  <div className="w-full text-left">{nearbySection}</div>
                 </div>
               )}
             </main>

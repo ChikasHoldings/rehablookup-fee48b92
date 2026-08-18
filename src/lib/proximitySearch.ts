@@ -1,6 +1,23 @@
-// Proximity-based search utilities for location matching
+// Proximity-based search utilities for location matching.
+//
+// SCOPE NOTE (Phase 2 — location truth): geographic MEMBERSHIP is no
+// longer decided here. `@/lib/location` is the single source of truth for
+// whether a facility is in a city/state/ZIP; this module now only:
+//   • re-exports canonical state helpers (so existing callers keep working)
+//   • computes a display TIER used for sort order and result badges
+//
+// The tier ladder below (exact → city → state → nearby → nationwide) is a
+// presentation concern only. It must never be used to decide who belongs
+// to a scope: doing exactly that is what made a "Los Angeles, CA" search
+// return 575 facilities when only 23 are in Los Angeles.
 
 import { usStatesWithAbbr } from "@/data/locationSuggestions";
+import {
+  matchesExactly,
+  normalizeState,
+  stateDisplayName,
+} from "@/lib/location";
+import type { LocationScope } from "@/lib/location";
 
 // Nearby states mapping for proximity search
 export const nearbyStates: Record<string, string[]> = {
@@ -56,24 +73,17 @@ export const nearbyStates: Record<string, string[]> = {
   WY: ["CO", "ID", "MT", "NE", "SD", "UT"],
 };
 
-// Get state abbreviation from full name
+// Get state abbreviation from full name.
+// Delegates to the canonical normalizer so every caller picks up
+// District of Columbia, which the local `usStatesWithAbbr` table omits
+// even though the live catalogue carries 18 approved DC facilities.
 export function getStateAbbr(stateName: string): string | null {
-  if (!stateName) return null;
-  const trimmed = stateName.trim();
-  const state = usStatesWithAbbr.find(
-    (s) => s.name.toLowerCase() === trimmed.toLowerCase() ||
-           s.abbr.toLowerCase() === trimmed.toLowerCase()
-  );
-  return state?.abbr || null;
+  return normalizeState(stateName);
 }
 
-// Get full state name from abbreviation
+// Get full state name from abbreviation (canonical, DC-aware).
 export function getStateName(stateAbbr: string): string | null {
-  if (!stateAbbr) return null;
-  const state = usStatesWithAbbr.find(
-    (s) => s.abbr.toLowerCase() === stateAbbr.toLowerCase()
-  );
-  return state?.name || null;
+  return stateDisplayName(stateAbbr);
 }
 
 // Get nearby states for a given state
@@ -320,13 +330,45 @@ export function normalizeLocation(input: string): string {
 }
 
 /**
- * Check if a facility matches a location filter (inclusive, with proximity fallback).
- * Returns true for ZIP/City/State/Nearby matches; false only for nationwide.
+ * Does this facility belong to the searched location?
+ *
+ * EXACT ONLY. Delegates to the canonical matcher in `@/lib/location`.
+ *
+ * This function used to return `tier !== "nationwide"`, which accepted
+ * the `state` and `nearby` tiers as well as the city itself. The effect
+ * on live data: a "Los Angeles, CA" search returned 575 facilities —
+ * all 402 in California plus 173 across Arizona, Nevada and Oregon —
+ * while only 23 are actually in Los Angeles. The label said Los Angeles;
+ * 552 of the results were not.
+ *
+ * Callers that genuinely want same-state-but-different-city facilities
+ * must ask for them separately via `splitByLocation`, which returns them
+ * in a distinct `nearby` bucket that is labelled as nearby and excluded
+ * from the exact count.
  */
 export function facilityMatchesLocation(
   facility: { city: string; state: string; zipCode?: string },
   locationMatch: LocationMatch
 ): boolean {
-  const { tier } = getProximityTier(facility, locationMatch);
-  return tier !== "nationwide";
+  return matchesExactly(facility, locationMatchToScope(locationMatch));
+}
+
+/**
+ * Bridge the legacy `LocationMatch` shape onto a canonical
+ * `LocationScope`, so existing callers get exact semantics without
+ * having to be rewritten in this phase.
+ *
+ * A ZIP query stays a ZIP query. It is NOT re-expanded into the city and
+ * state the ZIP happens to sit in — that expansion is what turned an
+ * exact ZIP search into a four-state result set.
+ */
+export function locationMatchToScope(match: LocationMatch): LocationScope {
+  if (match.zipcode) return { type: "zip", zip: match.zipcode };
+  const state = match.stateAbbr ? normalizeState(match.stateAbbr) : null;
+  if (match.city) {
+    if (state) return { type: "city", city: match.city, state };
+    return { type: "city-any-state", city: match.city };
+  }
+  if (state) return { type: "state", state };
+  return { type: "unresolved", raw: "" };
 }

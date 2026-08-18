@@ -8,6 +8,12 @@ export const usStatesWithAbbr = [
   { name: "Colorado", abbr: "CO", type: "state" as const },
   { name: "Connecticut", abbr: "CT", type: "state" as const },
   { name: "Delaware", abbr: "DE", type: "state" as const },
+  // The district is a real market: the live catalogue carries 18 approved
+  // facilities recorded as "District of Columbia". Omitting it here meant
+  // a "Washington, DC" search normalized to nothing and matched none of
+  // them. Canonical normalization lives in @/lib/location; this entry
+  // keeps the autocomplete list consistent with it.
+  { name: "District of Columbia", abbr: "DC", type: "state" as const },
   { name: "Florida", abbr: "FL", type: "state" as const },
   { name: "Georgia", abbr: "GA", type: "state" as const },
   { name: "Hawaii", abbr: "HI", type: "state" as const },

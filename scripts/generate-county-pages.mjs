@@ -16,7 +16,12 @@ import { writeFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { GA_MEASUREMENT_ID } from "./_ga.mjs";
-import { fetchAllFacilities, renderFacilityList, citySlug } from "./_facility-data.mjs";
+import {
+  fetchAllFacilities,
+  renderFacilityList,
+  stateCityKey,
+  stateCityKeyFromSlugs,
+} from "./_facility-data.mjs";
 // The `seoCtaStrip()` blurb below is state-scoped but describes DIRECTORY
 // activity only. It previously promised, in the first person, that
 // RehabLookup would locate verified treatment in the state on the reader's
@@ -194,9 +199,20 @@ async function main() {
   let countyPagesWithInventory = 0;
   let countyFacilityLinks = 0;
   const allFacilities = await fetchAllFacilities();
+  // Canonical city keys so "Saint Charles" / "St Charles" land in one
+  // bucket, matching the browser and the city-page injector.
+  //
+  // COUNTY DATA LIMITATION (unchanged by this phase, stated explicitly):
+  // the `facilities` table has no county column, so there is no
+  // facility→county mapping to match on. These pages aggregate the
+  // county's hand-curated `majorCities` list, which is a curated
+  // approximation of the county rather than verified county inventory.
+  // We do not infer county from city names and we do not relabel this
+  // as exact county inventory. Enriching it needs real county data and
+  // is deliberately deferred.
   const byStateCity = new Map();
   for (const f of allFacilities) {
-    const k = `${String(f.state).toLowerCase().replace(/\s+/g, "-")}|${citySlug(f.city)}`;
+    const k = stateCityKey(f.state, f.city);
     if (!byStateCity.has(k)) byStateCity.set(k, []);
     byStateCity.get(k).push(f);
   }
@@ -210,7 +226,7 @@ async function main() {
       // the existing text-only template.
       const facilities = [];
       for (const cityName of county.majorCities) {
-        const k = `${state.stateSlug}|${citySlug(cityName)}`;
+        const k = stateCityKeyFromSlugs(state.stateSlug, cityName.replace(/\s+/g, "-"));
         const inCity = byStateCity.get(k);
         if (inCity) facilities.push(...inCity);
       }
