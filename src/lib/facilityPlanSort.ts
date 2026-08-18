@@ -1,10 +1,13 @@
 /**
- * Utility for sorting facilities by Pro status.
- * 
- * Order: Pro (featured/paid) > Free
- * 
- * This ensures Pro providers appear before free listings
- * across all pages in the platform.
+ * Facility ordering helpers.
+ *
+ * getPlanRank() is the live one — Featured (labeled sponsored) → claimed →
+ * unclaimed. Pro does NOT buy organic position; see the note on getPlanRank.
+ *
+ * The getPlanPriority / sortByPlanHierarchy* helpers below still encode the
+ * retired "Pro before Free" ordering. They have no callers anywhere in src/
+ * and are kept only so an external import does not break; do not wire them
+ * into a new surface without revisiting the commercial contract first.
  */
 
 // Support both new model (pro/free) and legacy values (featured/professional) for backward compatibility
@@ -27,20 +30,33 @@ interface FacilityWithRank {
 }
 
 /**
- * Four-tier organic rank for the search-results ordering. Lower = higher.
- *   0  paid/editorial Featured (true ad inventory — also fed by the rails)
- *   1  Pro-claimed (subscriber, not Featured)
- *   2  free-claimed (claimed listing, no Pro)
- *   3  unclaimed
+ * Three-tier organic rank for the search-results ordering. Lower = higher.
+ *   0  paid/editorial Featured (true ad inventory, labeled as sponsored)
+ *   1  claimed listing
+ *   2  unclaimed listing
  *
  * Proximity is the PRIMARY sort on location searches; this rank is the
  * secondary tie-break within each distance band (see SearchResults).
+ *
+ * Pro USED TO BE its own tier here, ranking a subscriber above an equally
+ * relevant free-claimed listing. That made organic position a thing money
+ * buys, which contradicts the commercial contract ("ORGANIC RANK = never for
+ * sale") and the copy now shipped on ~46k indexable pages ("organic directory
+ * position is determined independently and is never purchased"). The tier is
+ * gone: Pro and free listings that are both claimed now rank identically.
+ *
+ * What remains is deliberate and defensible:
+ *   • Featured stays tier 0 because it IS advertising — separately purchased
+ *     and labeled as sponsored wherever it appears, which is the one form of
+ *     paid position the contract allows.
+ *   • Claimed outranks unclaimed because claiming is FREE and signals an
+ *     operator maintaining accurate data. That is a quality signal available
+ *     to every facility at no cost, not a purchased one.
  */
 export function getPlanRank(facility: FacilityWithRank): number {
   if (facility.isFeaturedPaid) return 0;
-  if (facility.isPro) return 1;
-  if (facility.isClaimed) return 2;
-  return 3;
+  if (facility.isClaimed) return 1;
+  return 2;
 }
 
 /**
