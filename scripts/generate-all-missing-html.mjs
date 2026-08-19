@@ -70,7 +70,7 @@ import { buildProviderMarketContent } from "../src/lib/seo/providerMarketContent
 // The topic axis for the 58 near-me families. Twenty-one of them ran ~420
 // pages on TWO distinct bodies, because a "methadone clinic" page and a
 // "sober living" page differed only by a noun.
-import { buildNearMeContent } from "../src/lib/seo/nearMeTopics.mjs";
+import { buildNearMeContent, nearMeSlugForTreatment } from "../src/lib/seo/nearMeTopics.mjs";
 import { renderComposedHtml } from "../src/lib/seo/composedHtml.mjs";
 import { getStateLicensing } from "./_unique-content.mjs";
 
@@ -709,12 +709,18 @@ function rehabCentersCountyPage(urlPath) {
   const stateName = slugToName(stateSlug);
   const countyName = slugToName(countySlug) + " County";
   const title = `Rehab Centers in ${countyName}, ${stateName}`;
+  // Topic axis (where the URL names a service) plus real place facts.
+  const dstats = getStateStatsBySlug(stateSlug);
+  const dlic = getStateLicensing(stateSlug);
+  const dir = buildNearMeContent({ topicSlug: 'rehab-near-me', topicLabel: 'Addiction treatment', stateName, stats: dstats, licensing: dlic, placeName: countyName, countySeat: lookupCounty(stateSlug, countySlug)?.seat, placePopulation: lookupCounty(stateSlug, countySlug)?.population, majorCities: lookupCounty(stateSlug, countySlug)?.majorCities });
+
   return {
     title,
     metaTitle: `${title} — Find Treatment | RehabLookup`,
     metaDesc: `Find accredited rehab centers in ${countyName}, ${stateName}. Compare addiction treatment listings, check insurance, and contact facilities directly.`,
     h1: title,
     content: `
+      ${renderComposedHtml(dir)}
       <p>Find accredited addiction treatment centers in ${countyName}, ${stateName}. Our directory lists facilities in the county offering detox, inpatient, and outpatient programs.</p>
       <h2>Treatment Programs in ${countyName}</h2>
       <p>Facilities in ${countyName} offer comprehensive addiction treatment including medical detox, residential inpatient, partial hospitalization (PHP), intensive outpatient (IOP), and standard outpatient programs.</p>
@@ -740,12 +746,18 @@ function rehabCentersCountyTreatmentPage(urlPath) {
   const countyName = slugToName(countySlug) + " County";
   const treatmentName = slugToName(treatmentSlug);
   const title = `${treatmentName} in ${countyName}, ${stateName}`;
+  // Topic axis (where the URL names a service) plus real place facts.
+  const dstats = getStateStatsBySlug(stateSlug);
+  const dlic = getStateLicensing(stateSlug);
+  const dir = buildNearMeContent({ topicSlug: nearMeSlugForTreatment(treatmentSlug) ?? 'rehab-near-me', topicLabel: treatmentName, stateName, stats: dstats, licensing: dlic, placeName: countyName, countySeat: lookupCounty(stateSlug, countySlug)?.seat, placePopulation: lookupCounty(stateSlug, countySlug)?.population, majorCities: lookupCounty(stateSlug, countySlug)?.majorCities });
+
   return {
     title,
     metaTitle: `${title} — Find Accredited Centers | RehabLookup`,
     metaDesc: `Find accredited ${treatmentName.toLowerCase()} programs in ${countyName}, ${stateName}. Compare facility listings and check insurance coverage.`,
     h1: title,
     content: `
+      ${renderComposedHtml(dir)}
       <p>Find accredited ${treatmentName.toLowerCase()} programs in ${countyName}, ${stateName}. Our directory includes listings for facilities offering evidence-based addiction treatment.</p>
       <h2>Insurance Coverage</h2>
       <p>Most major insurance plans cover ${treatmentName.toLowerCase()} in ${countyName} under the Mental Health Parity Act. Verify your benefits before starting treatment.</p>
@@ -768,12 +780,18 @@ function rehabCentersCityPage(urlPath) {
   const stateName = slugToName(stateSlug);
   const cityName = slugToName(citySlug);
   const title = `Rehab Centers in ${cityName}, ${stateName}`;
+  // Topic axis (where the URL names a service) plus real place facts.
+  const dstats = getStateStatsBySlug(stateSlug);
+  const dlic = getStateLicensing(stateSlug);
+  const dir = buildNearMeContent({ topicSlug: 'rehab-near-me', topicLabel: 'Addiction treatment', stateName, stats: dstats, licensing: dlic, placeName: cityName });
+
   return {
     title,
     metaTitle: `${title} — Find Treatment | RehabLookup`,
     metaDesc: `Find accredited rehab centers in ${cityName}, ${stateName}. Compare addiction treatment listings, check insurance, and contact facilities directly.`,
     h1: title,
     content: `
+      ${renderComposedHtml(dir)}
       <p>Find accredited addiction treatment centers in ${cityName}, ${stateName}. Our directory lists facilities offering detox, inpatient, and outpatient programs.</p>
       <h2>Treatment Options in ${cityName}</h2>
       <p>Facilities in ${cityName} offer comprehensive programs including medical detox, residential inpatient, PHP, IOP, and outpatient treatment. Use our search tool to compare programs by insurance, specialty, and amenities.</p>
@@ -968,12 +986,37 @@ function genericPage(urlPath) {
   // Include the page title in the metaDesc so generic fallback pages
   // don't all share an identical meta description (which Google flags as
   // 'Duplicate without user-selected canonical' across the cohort).
+  // /treatment-types/{service}/{state}[/{city}] and other topic+place
+  // fallthroughs reach genericPage, which had one sentence for all of
+  // them (910 /treatment-types pages on 16 distinct bodies). Where the
+  // URL names a service AND a state we can compose the same topic and
+  // place axes the dedicated families use. Where it does not, the page
+  // keeps its original copy rather than being given facts that do not
+  // apply to it.
+  let generic = null;
+  if (parts[0] === "treatment-types" && parts.length >= 3) {
+    const gTopic = nearMeSlugForTreatment(parts[1]);
+    const gStateSlug = parts[2];
+    const gStats = getStateStatsBySlug(gStateSlug);
+    if (gTopic && gStats) {
+      generic = buildNearMeContent({
+        topicSlug: gTopic,
+        topicLabel: slugToName(parts[1]),
+        stateName: slugToName(gStateSlug),
+        stats: gStats,
+        licensing: getStateLicensing(gStateSlug),
+        placeName: parts.length >= 4 ? slugToName(parts[3]) : undefined,
+      });
+    }
+  }
+
   return {
     title,
     metaTitle: `${title} — RehabLookup`,
     metaDesc: `${title} on RehabLookup — addiction treatment directory covering facility listings, insurance information and recovery resources. Compare programs and find help today.`,
     h1: title,
     content: `
+      ${generic ? renderComposedHtml(generic) : ""}
       <p>${title} on RehabLookup. Our directory lists treatment centers across all 50 states. Compare programs, verify insurance, and connect with treatment that fits your situation.</p>
       <p><a href="/rehab-centers">Browse All Treatment Centers</a> &middot; <a href="/resources">Recovery Resources</a></p>`,
     breadcrumbs: [

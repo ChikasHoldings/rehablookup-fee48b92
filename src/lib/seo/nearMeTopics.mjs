@@ -459,3 +459,96 @@ export function buildNearMeContent(input) {
 
   return { metaDescription, intro, sections, faqs };
 }
+
+/**
+ * Resolve a treatment/service slug used elsewhere in the URL space to a
+ * near-me topic profile.
+ *
+ * The same services appear under several slug spellings across families
+ * — `/rehab-centers/{state}/county/{county}/detox`,
+ * `/treatment-types/residential-inpatient/{state}`, `detox-near-me`.
+ * They describe one service and should draw on one profile rather than
+ * three descriptions that drift apart.
+ *
+ * Returns null when a slug has no confident mapping, so the caller omits
+ * the topic section rather than attaching the wrong clinical facts to a
+ * page — mislabelling a service is worse than a shorter page.
+ */
+const TREATMENT_SLUG_ALIASES = {
+  detox: "detox-near-me",
+  "detox-programs": "detox-near-me",
+  "medical-detox": "detox-near-me",
+  inpatient: "inpatient-rehab-near-me",
+  "residential-inpatient": "inpatient-rehab-near-me",
+  residential: "inpatient-rehab-near-me",
+  "inpatient-rehabilitation": "inpatient-rehab-near-me",
+  outpatient: "outpatient-rehab-near-me",
+  "outpatient-programs": "outpatient-rehab-near-me",
+  "outpatient-rehabilitation": "outpatient-rehab-near-me",
+  iop: "iop-near-me",
+  php: "php-near-me",
+  "dual-diagnosis": "dual-diagnosis-near-me",
+  "dual-diagnosis-treatment": "dual-diagnosis-near-me",
+  "alcohol-rehabilitation": "alcohol-rehab-near-me",
+  "alcohol-addiction-treatment": "alcohol-rehab-near-me",
+  "drug-rehabilitation": "drug-rehab-near-me",
+  "drug-addiction-treatment": "drug-rehab-near-me",
+  "drug-addiction": "drug-rehab-near-me",
+  "holistic-therapy": "holistic-rehab-near-me",
+  "holistic-treatment": "holistic-rehab-near-me",
+  "luxury-rehab": "luxury-rehab-near-me",
+  "sober-living": "sober-living-near-me",
+  mat: "mat-clinic-near-me",
+  "medication-assisted-treatment": "mat-clinic-near-me",
+  suboxone: "suboxone-clinic-near-me",
+  methadone: "methadone-clinic-near-me",
+  "opioid-addiction-treatment": "opioid-rehab-near-me",
+  "heroin-addiction-treatment": "heroin-rehab-near-me",
+  "fentanyl-addiction-treatment": "fentanyl-rehab-near-me",
+  "meth-addiction-treatment": "meth-rehab-near-me",
+  "cocaine-addiction-treatment": "cocaine-rehab-near-me",
+  "benzodiazepine-addiction-treatment": "benzo-rehab-near-me",
+  "xanax-addiction-treatment": "xanax-rehab-near-me",
+  "marijuana-addiction-treatment": "marijuana-rehab-near-me",
+  "kratom-addiction-treatment": "kratom-rehab-near-me",
+  "prescription-drug-rehab": "prescription-drug-rehab-near-me",
+  "veterans-rehab": "veterans-rehab-near-me",
+  "womens-rehab": "womens-rehab-near-me",
+  "mens-rehab": "mens-rehab-near-me",
+  "teen-rehab": "teen-rehab-near-me",
+  "young-adult-rehab": "young-adult-rehab-near-me",
+  "lgbtq-rehab": "lgbtq-rehab-near-me",
+  "seniors-rehab": "seniors-rehab-near-me",
+  "couples-rehab": "couples-rehab-near-me",
+  "executive-rehab": "executive-rehab-near-me",
+  "faith-based-rehab": "faith-based-rehab-near-me",
+  "christian-rehab": "christian-rehab-near-me",
+  "free-rehab": "free-rehab-near-me",
+  "affordable-rehab": "affordable-rehab-near-me",
+  "low-cost-rehab": "low-cost-rehab-near-me",
+  "court-ordered-rehab": "court-ordered-rehab-near-me",
+  "30-day-rehab": "30-day-rehab-near-me",
+  "60-day-rehab": "60-day-rehab-near-me",
+  "90-day-rehab": "90-day-rehab-near-me",
+  "long-term-rehab": "long-term-rehab-near-me",
+  "short-term-rehab": "short-term-rehab-near-me",
+};
+
+export function topicForTreatmentSlug(slug) {
+  if (!slug) return null;
+  const s = String(slug).toLowerCase();
+  if (NEAR_ME_TOPICS[s]) return NEAR_ME_TOPICS[s];
+  const alias = TREATMENT_SLUG_ALIASES[s];
+  if (alias && NEAR_ME_TOPICS[alias]) return NEAR_ME_TOPICS[alias];
+  if (NEAR_ME_TOPICS[`${s}-near-me`]) return NEAR_ME_TOPICS[`${s}-near-me`];
+  return null;
+}
+
+/** Slug form accepted by `buildNearMeContent` for a treatment slug. */
+export function nearMeSlugForTreatment(slug) {
+  const s = String(slug ?? "").toLowerCase();
+  if (NEAR_ME_TOPICS[s]) return s;
+  if (TREATMENT_SLUG_ALIASES[s]) return TREATMENT_SLUG_ALIASES[s];
+  if (NEAR_ME_TOPICS[`${s}-near-me`]) return `${s}-near-me`;
+  return null;
+}
