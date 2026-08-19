@@ -91,7 +91,18 @@ export function buildInsuranceCityContent(input) {
   const profile = insurerProfile(insurerSlug) ?? insurerProfileByName(insurerName);
   const name = profile?.name ?? insurerName ?? "your insurer";
   const typeLabel = profile ? CARRIER_TYPE_LABEL[profile.type] : null;
-  const place = `${cityName}, ${stateAbbr || stateName}`;
+  // Three scopes share this composer: a city, a whole state (called with
+  // cityName === stateName), and the national carrier hub (called with
+  // neither). Naming the place twice — "in the United States, the United
+  // States", "in Ohio, OH" — is what happens without this.
+  const national = !cityName && !stateName;
+  const sameAsState = Boolean(cityName && stateName && cityName === stateName);
+  const place = national
+    ? "the United States"
+    : sameAsState
+      ? stateName
+      : `${cityName}, ${stateAbbr || stateName}`;
+  const localScope = national ? "the country" : cityName || stateName;
 
   // Only stated when the caller supplied a real number. `undefined` and
   // `null` mean "not known here" and produce no claim at all.
@@ -106,7 +117,11 @@ export function buildInsuranceCityContent(input) {
   const intro =
     `${name} is ${typeLabel ? `a ${typeLabel}` : "a health plan"}${profile?.parent ? `, part of ${profile.parent}` : ""}. ` +
     `This page covers how its addiction-treatment benefit works for people seeking care in ${place}, ` +
-    `what to confirm before admission, and which ${stateName} rules affect it.${countClause}`;
+    `what to confirm before admission, and ` +
+    (national
+      ? `how the answer changes state by state.`
+      : `which ${stateName} rules affect it.`) +
+    countClause;
 
   const sections = [];
 
@@ -123,7 +138,7 @@ export function buildInsuranceCityContent(input) {
           ? `${name} plans in this category include ${list(profile.planTypes)}, and the level of cost sharing and referral requirement depends on which one you hold. `
           : "") +
         (profile.network
-          ? `Its network here is ${profile.network}, which is what determines whether a ${cityName} program is treated as in-network.`
+          ? `Its network here is ${profile.network}, which is what determines whether a program in ${localScope} is treated as in-network.`
           : ""),
     });
 

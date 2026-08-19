@@ -20,12 +20,36 @@ import { seoStyles, seoHeader, seoCtaStrip, seoFooter } from "./_seo-page-shell.
 import { getStateStatsBySlug, getStateLicensing } from "./_unique-content.mjs";
 import { buildNearMeContent, nearMeSlugForTreatment } from "../src/lib/seo/nearMeTopics.mjs";
 import { renderComposedHtml } from "../src/lib/seo/composedHtml.mjs";
+import { buildCityIndex } from "../src/lib/seo/cityProfiles.mjs";
+import { buildCityTreatmentContent } from "../src/lib/seo/cityTreatmentContent.mjs";
+import { buildInsuranceCityContent } from "../src/lib/seo/insuranceContent.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const publicDir = path.resolve(__dirname, "../public");
 
 const BASE_URL = "https://rehablookup.com";
+
+// City-level facts, same layer the other generators use. Fail loudly:
+// silently regenerating the city pages without it is exactly how they
+// stayed templated through the whole of Phase 3.
+let CITY_INDEX;
+try {
+  const [{ statesData }, { stateCountyData }] = await Promise.all([
+    import("../src/data/locationSeoData.ts"),
+    import("../src/data/countySeoData.ts"),
+  ]);
+  CITY_INDEX = buildCityIndex({ statesData, stateCountyData });
+  if (CITY_INDEX.size === 0) throw new Error("city index is empty");
+} catch (err) {
+  console.error("\u2717 could not build the city profile index:", err?.message ?? err);
+  process.exit(1);
+}
+
+const cityProfileFor = (stateSlug, city) =>
+  CITY_INDEX.get(city.slug) ??
+  CITY_INDEX.get(`${stateSlug}|${String(city.city).toLowerCase().replace(/[^a-z0-9]+/g, "")}`) ??
+  null;
 let pagesGenerated = 0;
 
 // ============================================================
@@ -684,19 +708,29 @@ async function generateCityPages() {
   for (const city of topCities) {
     const stateSlug = stateToSlug(city.state);
     const title = `Rehab Centers in ${city.city}, ${city.stateAbbr}`;
+    // City axis + topic axis, the same pair every other city surface
+    // uses. Without them these pages were one body per city name.
+    const profile = cityProfileFor(stateSlug, city);
+    const cityBlock = profile
+      ? renderComposedHtml(buildCityTreatmentContent({ profile, treatmentLabel: "Addiction treatment", treatmentSlug: "rehab" }))
+      : "";
+    const cityDirectory = buildNearMeContent({
+      topicSlug: "rehab-near-me",
+      topicLabel: "Addiction treatment",
+      stateName: city.state,
+      stats: getStateStatsBySlug(stateSlug),
+      licensing: getStateLicensing(stateSlug),
+      placeName: city.city,
+    });
     const html = generatePage({
       urlPath: `/rehab-centers/${stateSlug}/${city.slug}`,
       title,
       metaTitle: `Rehab Centers in ${city.city}, ${city.stateAbbr} — Find Treatment | RehabLookup`,
       metaDescription: `Find accredited rehab centers in ${city.city}, ${city.stateAbbr}. Compare treatment programs, verify insurance, and start recovery today.`,
       h1: title,
-      content: `<p>Search addiction treatment facility listings in ${city.city}, ${city.state}. Compare inpatient, outpatient, detox, and specialty programs in the ${city.city} metropolitan area.</p>
-        <h2>Treatment Programs in ${city.city}</h2>
-        <p>${city.city} offers diverse addiction treatment options including medical detox, residential inpatient, intensive outpatient programs (IOP), partial hospitalization (PHP), dual diagnosis treatment, and medication-assisted treatment (MAT).</p>
-        <h2>Insurance & Payment</h2>
-        <p>Most rehab centers in ${city.city} accept major insurance plans. Verify your coverage with our free insurance check tool to find in-network facilities near you.</p>
-        <h2>Getting Help in ${city.city}</h2>
-        <p>If you or a loved one needs help with addiction in ${city.city}, search the directory to compare accredited programs by level of care, insurance accepted, and location.</p>`,
+      content: `<p>Search addiction treatment facility listings in ${city.city}, ${city.state}. Compare inpatient, outpatient, detox, and specialty programs serving ${city.city}.</p>
+        ${cityBlock}
+        ${renderComposedHtml(cityDirectory)}`,
       breadcrumbs: [
         { name: "Home", url: "/" },
         { name: "Locations", url: "/locations" },
@@ -779,15 +813,21 @@ async function generateInsuranceStatePages() {
     // visitors hitting direct URLs read as a broken / 404 page. Overwriting
     // them with the branded shell brings the carrier hubs in line with the
     // rest of the directory.)
+    // The 16 carrier hubs were 162-word stubs, 37.5% of them duplicates
+    // of one another. The carrier profile is what makes them differ:
+    // who administers the behavioral-health benefit, plan types,
+    // network structure, what to verify.
+    const hubContent = buildInsuranceCityContent({
+      insurerSlug: ins.slug,
+      insurerName: ins.name,
+    });
     const html = generatePage({
       urlPath: `/insurance/${ins.slug}`,
       title: `${ins.name} Rehab Coverage`,
       metaTitle: `${ins.name} Rehab Coverage — Addiction Treatment Insurance | RehabLookup`,
       metaDescription: `Learn how ${ins.name} covers addiction treatment. Find rehab centers accepting ${ins.name} insurance near you.`,
       h1: `${ins.name} Rehab Coverage`,
-      content: `<p>Find rehab centers that accept ${ins.name} insurance. Learn about coverage for detox, inpatient, outpatient, and medication-assisted treatment.</p>
-        <h2>What ${ins.name} Covers</h2>
-        <p>${ins.name} covers substance use disorder treatment under the Mental Health Parity Act, including medical detox, inpatient rehabilitation, outpatient programs, and medication-assisted treatment (MAT).</p>`,
+      content: `${renderComposedHtml(hubContent)}`,
       breadcrumbs: [
         { name: "Home", url: "/" },
         { name: "Insurance", url: "/insurance" },
@@ -801,15 +841,27 @@ async function generateInsuranceStatePages() {
     for (const stateSlug of topStates) {
       const stateName = usStates.find((s) => stateToSlug(s) === stateSlug) || stateSlug;
       const slug = `${ins.slug}/${stateSlug}`;
+      // Carrier axis x state posture — the same composer the
+      // prerendered /insurance/{carrier}/{state} page uses, so these ten
+      // do not disagree with the other forty.
+      const stStats = getStateStatsBySlug(stateSlug);
+      const stateContent = buildInsuranceCityContent({
+        insurerSlug: ins.slug,
+        insurerName: ins.name,
+        cityName: stateName,
+        stateName,
+        medicaidExpanded: stStats?.medicaidExpanded,
+        notableInfo: stStats?.signatureNote,
+        primaryMetro: stStats?.primaryMetro,
+        secondaryMetros: stStats?.secondaryMetros,
+      });
       const html = generatePage({
         urlPath: `/insurance/${slug}`,
         title: `${ins.name} Rehab Coverage in ${stateName}`,
         metaTitle: `${ins.name} Rehab Coverage in ${stateName} | RehabLookup`,
         metaDescription: `Find rehab centers in ${stateName} that accept ${ins.name}. Learn about coverage, in-network facilities, and costs.`,
         h1: `${ins.name} Rehab Coverage in ${stateName}`,
-        content: `<p>Find addiction treatment centers in ${stateName} that accept ${ins.name} insurance. Compare in-network facilities, verify your benefits, and start treatment.</p>
-          <h2>${ins.name} Coverage Details in ${stateName}</h2>
-          <p>${ins.name} provides coverage for substance abuse treatment in ${stateName}, including medical detox, residential treatment, outpatient programs, and MAT. Coverage details vary by specific plan.</p>`,
+        content: `${renderComposedHtml(stateContent)}`,
         breadcrumbs: [
           { name: "Home", url: "/" },
           { name: "Insurance", url: "/insurance" },
