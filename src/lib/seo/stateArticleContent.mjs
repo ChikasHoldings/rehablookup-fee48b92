@@ -25,6 +25,8 @@
  * it is the only version that is true.
  */
 
+import { countyLabel } from "./textCase.mjs";
+
 const num = (n) => Number(n).toLocaleString("en-US");
 
 function list(items) {
@@ -89,7 +91,7 @@ function bestCities({ stateName, stats, ranked, regulator }) {
       heading: `The ${stateName} markets this directory covers`,
       body:
         top
-          .map((c, i) => `${i + 1}. ${c.name}${Number.isFinite(c.population) ? ` — about ${num(c.population)} residents` : ""}${c.county ? `, in ${c.county} County` : ""}`)
+          .map((c, i) => `${i + 1}. ${c.name}${Number.isFinite(c.population) ? ` — about ${num(c.population)} residents` : ""}${c.county ? `, in ${countyLabel(c.county)}` : ""}`)
           .join(". ") +
         `. Larger markets generally carry more levels of care, which matters most for the levels that are hardest to staff — withdrawal management and residential beds.`,
     });

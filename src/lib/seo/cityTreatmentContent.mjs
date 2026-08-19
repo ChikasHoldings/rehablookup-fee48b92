@@ -38,7 +38,7 @@
  * 30-day residential bed impose completely different geography on a
  * patient, and that is the honest reason these pages differ.
  */
-import { ordinal, sentenceLabel } from "./textCase.mjs";
+import { countyLabel, ordinal, sentenceLabel } from "./textCase.mjs";
 
 export const CARE_SETTINGS = {
   detox: ["detox", "detox-centers"],
@@ -178,13 +178,13 @@ export function buildCityTreatmentContent({ profile, treatmentLabel, treatmentSl
 
   if (county) {
     const seatClause = county.isSeat
-      ? `${city} is the seat of ${county.name} County`
-      : `${city} sits in ${county.name} County, whose seat is ${county.seat}`;
+      ? `${city} is the seat of ${countyLabel(county.name)}`
+      : `${city} sits in ${countyLabel(county.name)}, whose seat is ${county.seat}`;
     placeBody += `${placeBody ? " " : ""}${seatClause} — a county of roughly ${num(county.population)} residents.`;
     if (countyPeers.length) {
       placeBody += ` Other places this directory lists in the same county: ${listNames(countyPeers, 4)}.`;
     }
-    placeBody += ` County matters more than it looks for treatment: in a number of states, publicly funded treatment is administered through a county or regional behavioral-health authority rather than the state directly, so check which body covers ${county.name} County before assuming a state-level answer applies.`;
+    placeBody += ` County matters more than it looks for treatment: in a number of states, publicly funded treatment is administered through a county or regional behavioral-health authority rather than the state directly, so check which body covers ${countyLabel(county.name)} before assuming a state-level answer applies.`;
   }
 
   // ─── Guidance ──────────────────────────────────────────────────────
@@ -220,8 +220,8 @@ export function buildCityTreatmentContent({ profile, treatmentLabel, treatmentSl
       : `. RehabLookup does not currently list a facility in ${city} itself, so the context below covers what to look for and where else to search`;
   }
   intro += knowsSize
-    ? `. ${city} is a ${band.label} of about ${num(population)} people${county ? ` in ${county.name} County` : ""}, and what that means for ${lower} specifically is set out below.`
-    : `.${county ? ` ${city} sits in ${county.name} County, ${stateAbbr}.` : ""} What the local picture means for ${lower} specifically is set out below.`;
+    ? `. ${city} is a ${band.label} of about ${num(population)} people${county ? ` in ${countyLabel(county.name)}` : ""}, and what that means for ${lower} specifically is set out below.`
+    : `.${county ? ` ${city} sits in ${countyLabel(county.name)}, ${stateAbbr}.` : ""} What the local picture means for ${lower} specifically is set out below.`;
 
   // ─── FAQs ──────────────────────────────────────────────────────────
   const faqs = [];
@@ -237,7 +237,7 @@ export function buildCityTreatmentContent({ profile, treatmentLabel, treatmentSl
   if (county) {
     faqs.push({
       question: `What county is ${city} in, and why does it matter?`,
-      answer: `${city} is in ${county.name} County, ${stateAbbr}${county.isSeat ? ", and is the county seat" : `, whose seat is ${county.seat}`}. It matters because eligibility for publicly funded treatment is frequently administered at county or regional level rather than state level, and because providers often describe their service area by county. When you call, asking whether they take referrals from ${county.name} County residents is usually a faster question than asking about ${city} specifically.`,
+      answer: `${city} is in ${countyLabel(county.name)}, ${stateAbbr}${county.isSeat ? ", and is the county seat" : `, whose seat is ${county.seat}`}. It matters because eligibility for publicly funded treatment is frequently administered at county or regional level rather than state level, and because providers often describe their service area by county. When you call, asking whether they take referrals from ${countyLabel(county.name)} residents is usually a faster question than asking about ${city} specifically.`,
     });
   } else if (peers.length) {
     faqs.push({
@@ -256,8 +256,8 @@ export function buildCityTreatmentContent({ profile, treatmentLabel, treatmentSl
   });
 
   const sizeClause = knowsSize
-    ? ` — a ${band.label} of about ${num(population)}${county ? ` in ${county.name} County` : ""}`
-    : county ? ` — ${county.name} County` : "";
+    ? ` — a ${band.label} of about ${num(population)}${county ? ` in ${countyLabel(county.name)}` : ""}`
+    : county ? ` — ${countyLabel(county.name)}` : "";
   const metaDescription = `${label} in ${city}, ${stateAbbr}${sizeClause}. Compare programs, coverage and what the local market typically supports.`;
 
   return { metaDescription, intro, sections, faqs };

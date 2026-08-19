@@ -33,7 +33,7 @@
 
 import { CARRIER_TYPE_LABEL, insurerProfile, insurerProfileByName } from "./insurerProfiles.mjs";
 import { levelOfCareProfile } from "./levelOfCareProfiles.mjs";
-import { sentenceLabel } from "./textCase.mjs";
+import { countyLabel, sentenceLabel } from "./textCase.mjs";
 
 function list(items) {
   const xs = (items ?? []).filter(Boolean);
@@ -94,7 +94,7 @@ export function buildProviderMarketContent(input) {
     insurerName,
   } = input;
 
-  const county = countyName ? `${countyName} County` : null;
+  const county = countyName ? countyLabel(countyName) : null;
   const scope = county ? `${county}, ${stateName}` : stateName;
   const service = treatmentName ? sentenceLabel(treatmentName) : "addiction treatment";
 

@@ -40,6 +40,7 @@
  */
 
 import { CARRIER_TYPE_LABEL, insurerProfile, insurerProfileByName } from "./insurerProfiles.mjs";
+import { countyLabel } from "./textCase.mjs";
 
 /** Join a list into readable prose: "a, b and c". */
 function list(items) {
@@ -290,7 +291,7 @@ export function buildInsuranceCountyContent(input) {
   const profile = insurerProfile(insurerSlug) ?? insurerProfileByName(insurerName);
   const name = profile?.name ?? insurerName ?? "your insurer";
   const typeLabel = profile ? CARRIER_TYPE_LABEL[profile.type] : null;
-  const county = `${countyName} County`;
+  const county = countyLabel(countyName);
   const place = `${county}, ${stateAbbr || stateName}`;
 
   const cities = Array.isArray(majorCities) ? majorCities.filter(Boolean) : [];

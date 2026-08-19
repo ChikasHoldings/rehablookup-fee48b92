@@ -69,7 +69,7 @@ import {
 import { buildProviderMarketContent } from "../src/lib/seo/providerMarketContent.mjs";
 import { PAYER_SLUGS } from "../src/lib/seo/levelOfCareProfiles.mjs";
 import { buildStateArticleContent, stateArticleKind } from "../src/lib/seo/stateArticleContent.mjs";
-import { ordinal, titleCaseSlug } from "../src/lib/seo/textCase.mjs";
+import { countyLabel, ordinal, titleCaseSlug } from "../src/lib/seo/textCase.mjs";
 import { buildCityIndex } from "../src/lib/seo/cityProfiles.mjs";
 import { buildCityTreatmentContent } from "../src/lib/seo/cityTreatmentContent.mjs";
 import { countySupplement } from "../src/lib/seo/countySupplementalFacts.mjs";
@@ -564,7 +564,7 @@ function insuranceCountyPage(urlPath) {
   const countySlug = parts[4];
   const providerName = slugToName(providerSlug.replace(/-rehab$/, ""));
   const stateName = slugToName(stateSlug);
-  const countyName = slugToName(countySlug) + " County";
+  const countyName = countyScopeLabel(stateSlug, countySlug);
   const title = `${providerName} Rehab Coverage in ${countyName}, ${stateName}`;
 
   // The largest sub-family in the corpus (6,704 pages). Composed from the
@@ -691,7 +691,7 @@ function rehabMarketingCountyPage(urlPath) {
   const stateSlug = parts[1];
   const countySlug = parts[3];
   const stateName = slugToName(stateSlug);
-  const countyName = slugToName(countySlug) + " County";
+  const countyName = countyScopeLabel(stateSlug, countySlug);
   const title = `Reach Patients in ${countyName}, ${stateName}`;
   // Market intelligence for operators, composed from real per-state
   // and per-county data. Added ABOVE the existing provider truth copy
@@ -731,7 +731,7 @@ function rehabMarketingCountyTreatmentPage(urlPath) {
   const countySlug = parts[3];
   const treatmentSlug = parts[4];
   const stateName = slugToName(stateSlug);
-  const countyName = slugToName(countySlug) + " County";
+  const countyName = countyScopeLabel(stateSlug, countySlug);
   const treatmentName = treatmentLabel(treatmentSlug);
   const title = `Get More ${treatmentName} Patients in ${countyName}, ${stateName}`;
   // Market intelligence for operators, composed from real per-state
@@ -773,7 +773,7 @@ function rehabMarketingCountyInsurancePage(urlPath) {
   const countySlug = parts[3];
   const insSlug = parts[5];
   const stateName = slugToName(stateSlug);
-  const countyName = slugToName(countySlug) + " County";
+  const countyName = countyScopeLabel(stateSlug, countySlug);
   const insName = slugToName(insSlug);
   const title = `Reach ${insName} Patients in ${countyName}, ${stateName}`;
   // Market intelligence for operators, composed from real per-state
@@ -922,7 +922,7 @@ function rehabCentersCountyPage(urlPath) {
   const stateSlug = parts[1];
   const countySlug = parts[3];
   const stateName = slugToName(stateSlug);
-  const countyName = slugToName(countySlug) + " County";
+  const countyName = countyScopeLabel(stateSlug, countySlug);
   const title = `Rehab Centers in ${countyName}, ${stateName}`;
   // Topic axis (where the URL names a service) plus real place facts.
   const dstats = getStateStatsBySlug(stateSlug);
@@ -958,7 +958,7 @@ function rehabCentersCountyTreatmentPage(urlPath) {
   const countySlug = parts[3];
   const treatmentSlug = parts[4];
   const stateName = slugToName(stateSlug);
-  const countyName = slugToName(countySlug) + " County";
+  const countyName = countyScopeLabel(stateSlug, countySlug);
   const treatmentName = treatmentLabel(treatmentSlug);
   const title = `${treatmentName} in ${countyName}, ${stateName}`;
   // Topic axis (where the URL names a service) plus real place facts.
@@ -1076,31 +1076,31 @@ function nearMeCountyPage(urlPath) {
   const countySlug = parts[3];
   const nearMeName = slugToName(nearMeSlug.replace(/-near-me$/, "").replace(/-/g, " "));
   const stateName = slugToName(stateSlug);
-  const countyName = slugToName(countySlug);
-  const title = `${toTitleCase(nearMeSlug)} in ${countyName} County, ${stateName}`;
+  const countyName = countyScopeLabel(stateSlug, countySlug);
+  const title = `${toTitleCase(nearMeSlug)} in ${countyName}, ${stateName}`;
   // Topic axis + real place facts. See src/lib/seo/nearMeTopics.mjs.
   const nstats = getStateStatsBySlug(stateSlug);
   const nlic = getStateLicensing(stateSlug);
-  const nearMe = buildNearMeContent({ topicSlug: nearMeSlug, topicLabel: toTitleCase(nearMeSlug.replace(/-near-me$/, '')), stateName, stats: nstats, licensing: nlic, placeName: `${countyName} County`, countySeat: lookupCounty(stateSlug, countySlug)?.seat, placePopulation: lookupCounty(stateSlug, countySlug)?.population, majorCities: lookupCounty(stateSlug, countySlug)?.majorCities, countyGovernance: lookupCounty(stateSlug, countySlug)?.governance });
+  const nearMe = buildNearMeContent({ topicSlug: nearMeSlug, topicLabel: toTitleCase(nearMeSlug.replace(/-near-me$/, '')), stateName, stats: nstats, licensing: nlic, placeName: countyName, countySeat: lookupCounty(stateSlug, countySlug)?.seat, placePopulation: lookupCounty(stateSlug, countySlug)?.population, majorCities: lookupCounty(stateSlug, countySlug)?.majorCities, countyGovernance: lookupCounty(stateSlug, countySlug)?.governance });
 
   return {
     title,
     metaTitle: `${title} — Local Treatment Centers | RehabLookup`,
-    metaDesc: `Find ${nearMeName.toLowerCase()} programs in ${countyName} County, ${stateName}. Compare accredited local facilities, verify insurance, and get help today.`,
+    metaDesc: `Find ${nearMeName.toLowerCase()} programs in ${countyName}, ${stateName}. Compare accredited local facilities, verify insurance, and get help today.`,
     h1: title,
     content: `
       ${renderComposedHtml(nearMe)}
-      <p>Find accredited ${nearMeName.toLowerCase()} programs in ${countyName} County, ${stateName}. Our directory includes facility listings with information on treatment programs, insurance acceptance and amenities as reported by each facility.</p>
-      <h2>Treatment Options in ${countyName} County</h2>
-      <p>Facilities in ${countyName} County offer a range of programs including medical detox, residential inpatient, partial hospitalization (PHP), intensive outpatient (IOP), and outpatient treatment.</p>
-      <h2>Insurance Accepted in ${countyName} County</h2>
-      <p>Most rehab centers in ${countyName} County accept major insurance plans. Use our free insurance verification tool to find in-network facilities.</p>
+      <p>Find accredited ${nearMeName.toLowerCase()} programs in ${countyName}, ${stateName}. Our directory includes facility listings with information on treatment programs, insurance acceptance and amenities as reported by each facility.</p>
+      <h2>Treatment Options in ${countyName}</h2>
+      <p>Facilities in ${countyName} offer a range of programs including medical detox, residential inpatient, partial hospitalization (PHP), intensive outpatient (IOP), and outpatient treatment.</p>
+      <h2>Insurance Accepted in ${countyName}</h2>
+      <p>Most rehab centers in ${countyName} accept major insurance plans. Use our free insurance verification tool to find in-network facilities.</p>
       <p><a href="/${nearMeSlug}/${stateSlug}">All ${toTitleCase(nearMeSlug)} in ${stateName}</a> &middot; <a href="/rehab-centers/${stateSlug}">All Rehab Centers in ${stateName}</a></p>`,
     breadcrumbs: [
       { name: "Home", url: "/" },
       { name: toTitleCase(nearMeSlug), url: `/${nearMeSlug}` },
       { name: stateName, url: `/${nearMeSlug}/${stateSlug}` },
-      { name: `${countyName} County`, url: urlPath },
+      { name: countyName, url: urlPath },
     ],
   };
 }
@@ -1286,16 +1286,26 @@ const FLAT_PROVIDER_PREFIXES = {
     title: (place) => `List Your Rehab Facility in ${place}`,
     lead: (place) =>
       `Add your addiction treatment facility in ${place} to RehabLookup's provider directory so families searching for care there can find and contact you directly.`,
+    // Each family needs its OWN description. All three took the market
+    // composer's, which is keyed on place — so the two city families
+    // produced an identical description for every city and tripped 250
+    // check:unique-meta errors.
+    desc: (place) =>
+      `List your addiction treatment facility in ${place} on RehabLookup. Free directory listing, a market overview of ${place}, and organic position that is never sold.`,
   },
   "for-providers-in-": {
     title: (place) => `RehabLookup for Treatment Providers in ${place}`,
     lead: (place) =>
       `What RehabLookup offers treatment providers operating in ${place}, and what the local market looks like before you commit to it.`,
+    desc: (place) =>
+      `What RehabLookup offers treatment providers in ${place}: how listings work, what Pro and Featured do, and a market overview of ${place} before you commit.`,
   },
   "get-more-patients-in-": {
     title: (place) => `Get More Treatment Admissions in ${place}`,
     lead: (place) =>
       `How treatment programs in ${place} reach families searching for care, and what the market they are competing in actually looks like.`,
+    desc: (place) =>
+      `How treatment programs in ${place} reach families searching for care — referral routes, directory visibility, and what the ${place} market looks like on the numbers.`,
   },
 };
 
@@ -1310,7 +1320,7 @@ function renderMarketSizeLine(profile, stateName, county) {
   } else {
     bits.push(`${profile.city} is one of the ${stateName} markets this directory covers`);
   }
-  if (county) bits.push(`it sits in ${county.name} County`);
+  if (county) bits.push(`it sits in ${countyLabel(county.name)}`);
   return `<h2>The ${profile.city} market</h2><p>${bits.join(", and ")}.</p>`;
 }
 
@@ -1345,7 +1355,7 @@ function flatProviderPlacePage(urlPath, prefix) {
   return {
     title,
     metaTitle: `${title} — RehabLookup for Providers`,
-    metaDesc: market.metaDescription,
+    metaDesc: meta.desc(placeLabel),
     h1: title,
     content: `
       <p>${meta.lead(placeLabel)}</p>
@@ -1398,7 +1408,7 @@ function bestRehabCentersPage(urlPath) {
   return {
     title,
     metaTitle: `${title} — How to Compare Them | RehabLookup`,
-    metaDesc: composed.metaDescription,
+    metaDesc: `How to compare rehab centers in ${placeLabel}: what to verify with the ${stateName} regulator, what accreditation does and does not tell you, and why this is not a ranking.`,
     h1: title,
     content: `
       <h2>What "best" can and cannot mean here</h2>
@@ -1412,6 +1422,25 @@ function bestRehabCentersPage(urlPath) {
       { name: placeLabel, url: urlPath },
     ],
   };
+}
+
+/** County-page label, disambiguated where a county-equivalent shares its
+ *  slug with a city in the same state.
+ *
+ *  Most county slugs render with a " County" suffix that separates them
+ *  from the city page automatically. Consolidated city-counties do not:
+ *  Nevada publishes both /rehab-centers/nevada/carson-city and
+ *  /rehab-centers/nevada/county/carson-city, and "Carson City County"
+ *  is not a place. Naming the scope is the honest way to tell the two
+ *  URLs apart. */
+function countyScopeLabel(stateSlug, countySlug) {
+  const label = countyLabel(slugToName(countySlug));
+  if (/\bCounty$/i.test(label)) return label;
+  const cityShares = Boolean(
+    CITY_INDEX.get(countySlug) ??
+      CITY_INDEX.get(`${stateSlug}|${countySlug.replace(/-/g, "")}`),
+  );
+  return cityShares ? `${label} (county)` : label;
 }
 
 const GENERIC_FALLBACK = new Map();

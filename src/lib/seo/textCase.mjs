@@ -85,3 +85,17 @@ export function indefiniteArticle(word) {
   if (CONSONANT_SOUND_WORD.test(first)) return "a";
   return /^[aeiou]/i.test(first) ? "an" : "a";
 }
+
+/** Render a county name with the right suffix, or none.
+ *
+ *  countySeoData carries names in three shapes — "Jefferson",
+ *  "St. Louis County" (suffix already there) and "St. Louis City" (an
+ *  independent city that is a county equivalent). Blindly appending
+ *  " County" shipped "St. Louis City County". Louisiana's parishes and
+ *  Alaska's boroughs and census areas are the same problem. */
+export function countyLabel(name) {
+  const base = String(name ?? "").trim().replace(/\s+County$/i, "");
+  if (!base) return "";
+  if (/\b(City|Parish|Borough|Census Area|Municipality)$/i.test(base)) return base;
+  return `${base} County`;
+}
