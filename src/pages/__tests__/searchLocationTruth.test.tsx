@@ -121,10 +121,17 @@ const CATALOGUE = [...IN_21215, ...BALTIMORE_OTHER_ZIPS, ...ELSEWHERE];
 // Module doubles
 // ---------------------------------------------------------------------------
 
+/** The `seeker_profiles` row the page's profile query resolves to. Null
+ *  by default — restored in `beforeEach` — so only the hero-fallback
+ *  block sees a stored profile. */
+let seekerProfileRow: { city: string | null; state: string | null } | null = null;
+
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
     from: () => ({
-      select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: null, error: null }) }) }),
+      select: () => ({
+        eq: () => ({ maybeSingle: async () => ({ data: seekerProfileRow, error: null }) }),
+      }),
     }),
     channel: () => {
       const ch: Record<string, unknown> = {};
@@ -152,18 +159,21 @@ vi.mock("@/hooks/useStaticFacilities", () => ({
   useStaticFacilities: () => STATIC_FACILITIES,
 }));
 
-/** No geo-IP in tests — an ambient location would give the page a second
- *  way to pick a scope and make the assertions ambiguous. */
+/** No geo-IP in tests by DEFAULT — an ambient location would give the
+ *  page a second way to pick a scope and make every other assertion in
+ *  this file ambiguous. `beforeEach` restores this shape, so only the
+ *  hero-fallback block below ever sees a detected location. */
 const GEO_OFF = {
-  city: null,
-  region: null,
-  regionCode: null,
+  city: null as string | null,
+  region: null as string | null,
+  regionCode: null as string | null,
   isUS: false,
   isLoading: false,
   error: null,
 };
+let geoState: typeof GEO_OFF = { ...GEO_OFF };
 vi.mock("@/hooks/useGeoLocation", () => ({
-  useGeoLocation: () => GEO_OFF,
+  useGeoLocation: () => geoState,
 }));
 
 /**
@@ -283,8 +293,36 @@ const seoDescription = () =>
  */
 const PROXIMITY_WORDING = /\bnear(by|est)?\b|\bclosest\b|\bwithin\s+\d+\s*mi/i;
 
+/**
+ * The hero's location subtitle — the quiet line under the search form.
+ *
+ * Found by its MapPin-flagged paragraph rather than by copy, so the test
+ * fails when the line DISAPPEARS instead of silently passing a
+ * "contains no proximity wording" assertion against an empty string.
+ */
+const heroSubtitle = () =>
+  screen.getByTestId("hero-location-subtitle").textContent?.replace(/\s+/g, " ").trim() ?? "";
+
+/** Present-or-absent form, for the cases where the line should not render
+ *  at all (no explicit location and no fallback). */
+const heroSubtitleOrNull = () =>
+  screen.queryByTestId("hero-location-subtitle")?.textContent?.replace(/\s+/g, " ").trim() ?? null;
+
+/** Localstorage key `getStoredUserId()` reads. The page falls back to
+ *  this project ref when VITE_SUPABASE_URL is unset, which it is here. */
+const AUTH_STORAGE_KEY = "sb-mldbxpntzcjalgjmwnqa-auth-token";
+
+const signInAs = (userId: string) =>
+  localStorage.setItem(
+    AUTH_STORAGE_KEY,
+    JSON.stringify({ currentSession: { user: { id: userId } } }),
+  );
+
 beforeEach(() => {
   zipLookupCalls.length = 0;
+  geoState = { ...GEO_OFF };
+  seekerProfileRow = null;
+  localStorage.removeItem(AUTH_STORAGE_KEY);
 });
 
 // ---------------------------------------------------------------------------
@@ -692,5 +730,164 @@ describe("BLOCKER 4 — search SEO copy names the exact scope", () => {
         });
       }
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// BLOCKER 5 — the VISIBLE hero subtitle names the scope, not a proximity
+// ---------------------------------------------------------------------------
+//
+// The <title> and meta description were corrected earlier in this phase,
+// but the line a human actually reads — the quiet subtitle under the
+// search form — still opened with "Near ". That word promises a measured
+// distance from a point, and the catalogue has city, state, zip_code and
+// address and no coordinates, so there is no point and no distance to
+// measure from it.
+//
+// These tests read the REAL rendered paragraph (not the meta tags, which
+// BLOCKER 4 already covers) and assert it names the same canonical scope
+// the result set was filtered to. `PROXIMITY_WORDING` is the shared
+// regex the SEO-copy block uses, so hero and crawler copy are held to
+// one standard.
+
+describe("BLOCKER 5 — the visible hero subtitle names the exact scope", () => {
+  it("names an explicit city search by its canonical city and state", async () => {
+    renderSearch("/search-results?location=Los%20Angeles%2C%20CA");
+
+    await waitFor(() => expect(heroSubtitle()).not.toBe(""));
+
+    const hero = heroSubtitle();
+    expect(hero).toContain("Los Angeles, CA");
+    // The exact failure this block exists for.
+    expect(hero).not.toMatch(/\bNear\b/i);
+    expect(hero).not.toMatch(/\bNearby\b/i);
+    expect(hero).not.toMatch(/\bNearest\b/i);
+    expect(hero).not.toMatch(/\bClosest\b/i);
+    expect(hero).not.toMatch(PROXIMITY_WORDING);
+  });
+
+  it("names an exact ZIP search by the ZIP, never by its resolved city", async () => {
+    // The ZIP lookup is stubbed to SUCCEED and resolve to Baltimore, so
+    // a hero that still substituted the resolved city would say
+    // "Baltimore, MD" here. The scope is the ZIP; the label follows it.
+    renderSearch("/search-results?location=21215");
+
+    await waitFor(() => expect(heroSubtitle()).not.toBe(""));
+
+    const hero = heroSubtitle();
+    expect(hero).toContain("ZIP 21215");
+    expect(hero).not.toMatch(/Baltimore/i);
+    expect(hero).not.toMatch(PROXIMITY_WORDING);
+  });
+
+  it("names a state search by the canonical full state name", async () => {
+    renderSearch("/search-results?location=CA");
+
+    await waitFor(() => expect(heroSubtitle()).not.toBe(""));
+
+    const hero = heroSubtitle();
+    expect(hero).toContain("California");
+    expect(hero).not.toMatch(PROXIMITY_WORDING);
+  });
+
+  it("reveals the multi-state span behind a bare ambiguous city", async () => {
+    // Springfield exists in both Illinois and Missouri in the catalogue.
+    // A hero reading "Results in Springfield" would name one town while
+    // the list spans two states.
+    renderSearch("/search-results?location=Springfield");
+
+    await waitFor(() => expect(heroSubtitle()).not.toBe(""));
+
+    const hero = heroSubtitle();
+    expect(hero).toMatch(/cities named Springfield across the U\.S\./i);
+    // No state may be silently chosen on the user's behalf.
+    expect(hero).not.toMatch(/\bIllinois\b|\bMissouri\b|,\s*IL\b|,\s*MO\b/);
+    expect(hero).not.toMatch(PROXIMITY_WORDING);
+  });
+
+  it("labels a geo-IP location as context, not as a search or a proximity", async () => {
+    geoState = {
+      city: "Chicago",
+      region: "Illinois",
+      regionCode: "IL",
+      isUS: true,
+      isLoading: false,
+      error: null,
+    };
+
+    renderSearch("/search-results");
+
+    await waitFor(() => expect(heroSubtitle()).not.toBe(""));
+
+    const hero = heroSubtitle();
+    // It may still show the detected place — it drives the sort — but
+    // only as a neutral label.
+    expect(hero).toContain("Chicago, IL");
+    expect(hero).toMatch(/^Location:/);
+    expect(hero).not.toMatch(/\bNear\b/i);
+    expect(hero).not.toMatch(PROXIMITY_WORDING);
+    // And it must not have become a search: no location filtered the page.
+    expect(locationParam()).toBeNull();
+  });
+
+  it("does not let a detected location narrow the result set", async () => {
+    geoState = {
+      city: "Chicago",
+      region: "Illinois",
+      regionCode: "IL",
+      isUS: true,
+      isLoading: false,
+      error: null,
+    };
+
+    renderSearch("/search-results");
+
+    await waitFor(() => expect(screen.queryAllByTestId("facility-card").length).toBeGreaterThan(0));
+
+    // Every planted facility is still eligible — the detected city only
+    // orders them. A hero that turned into a filter would leave Chicago.
+    const cities = new Set(
+      screen.queryAllByTestId("facility-card").map((el) => el.getAttribute("data-city")),
+    );
+    expect(cities.size).toBeGreaterThan(1);
+  });
+
+  it("labels a seeker-profile location as context too", async () => {
+    signInAs("user-1");
+    seekerProfileRow = { city: "Chicago", state: "Illinois" };
+
+    renderSearch("/search-results");
+
+    await waitFor(() => expect(heroSubtitle()).not.toBe(""));
+
+    const hero = heroSubtitle();
+    expect(hero).toMatch(/^Location:/);
+    expect(hero).toContain("Chicago");
+    expect(hero).not.toMatch(/\bNear\b/i);
+    expect(hero).not.toMatch(PROXIMITY_WORDING);
+    expect(locationParam()).toBeNull();
+  });
+
+  it("says what was searched, without an 'in <place>' claim, for a county", async () => {
+    // `seoScopeWording` returns null for county — there is no
+    // facility→county data — so the hero must not read "Results in Cook
+    // County, IL". BLOCKER 3 owns the limitation panel; this only checks
+    // the hero makes no membership claim.
+    renderSearch("/search-results?location=Cook%20County%2C%20IL");
+
+    await waitFor(() => expect(heroSubtitle()).not.toBe(""));
+
+    const hero = heroSubtitle();
+    expect(hero).not.toMatch(/Results in/i);
+    expect(hero).toMatch(/Cook County/i);
+    expect(hero).not.toMatch(PROXIMITY_WORDING);
+  });
+
+  it("renders no location line at all when there is neither a search nor a fallback", async () => {
+    renderSearch("/search-results");
+
+    await waitFor(() => expect(screen.queryAllByTestId("facility-card").length).toBeGreaterThan(0));
+
+    expect(heroSubtitleOrNull()).toBeNull();
   });
 });

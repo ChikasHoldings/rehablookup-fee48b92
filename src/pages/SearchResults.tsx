@@ -1281,25 +1281,69 @@ const SearchResults = () => {
               with full-width prominence. */}
           <SearchResultsForm />
 
-          {/* Location subtitle. Single quiet line under the search
-              form. Renders "Near <city, state>" whether the location
-              came from the user (explicit `?location=`) or geo-IP
-              (effectiveLocation fallback) — the chrome no longer
-              distinguishes the two ("(auto-detected)" label removed
-              per the 2026-05-23 cleanup). Result count + queryParam
-              context are NOT surfaced here anymore — they live
-              inside the toolbar's range chip below. */}
+          {/* Location subtitle. Single quiet line under the search form,
+              and the LAST public surface that still said "Near <city,
+              state>".
+
+              It cannot. The catalogue has city, state, zip_code and
+              address and no coordinates, so "near" promises a measured
+              proximity nothing here can compute — the same reason the
+              <title>, the meta description, the distance filter and the
+              same-state bucket heading were rewritten earlier in this
+              phase. This line now names the SAME canonical scope the
+              results were filtered to, via the SAME `seoScopeWording`
+              helper the crawler copy uses. No second parser, no second
+              formatter, and no place label that the result set does not
+              actually mean:
+
+                Los Angeles, CA → Results in Los Angeles, CA
+                21215          → Results in ZIP 21215
+                California     → Results in California
+                Springfield    → Results in cities named Springfield
+                                 across the U.S.
+
+              A typed ZIP keeps its own label rather than being swapped
+              for the Zippopotam-resolved city, matching the exact-ZIP
+              behaviour fixed earlier: the lookup is presentation detail,
+              never the scope.
+
+              Two cases deliberately do NOT get "Results in <place>".
+              County and unresolved input return null from
+              `seoScopeWording` — there is no facility→county data, and
+              an unplaceable string never became a place — so the line
+              states what was searched without claiming the listing sits
+              inside it. And a location the USER never typed (seeker
+              profile or geo-IP, via `effectiveLocation`) is contextual
+              only: it informs the sort, it did not filter the results,
+              so it reads as a neutral "Location:" label. Presenting it
+              as "Near Chicago" would claim both a proximity and a
+              search the page never performed. */}
           {(location || effectiveLocation) && (
-            <p className="mt-4 text-xs sm:text-sm text-muted-foreground inline-flex items-center gap-1.5">
+            <p
+              data-testid="hero-location-subtitle"
+              className="mt-4 text-xs sm:text-sm text-muted-foreground inline-flex items-center gap-1.5"
+            >
               <MapPin className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary shrink-0" aria-hidden />
-              Near{" "}
-              <span className="font-semibold text-foreground">
-                {location
-                  ? (resolvedZipData
-                      ? `${resolvedZipData.city}, ${resolvedZipData.stateAbbr}`
-                      : location)
-                  : effectiveLocation}
-              </span>
+              {location ? (
+                seoScope ? (
+                  <>
+                    Results in{" "}
+                    <span className="font-semibold text-foreground">{seoScope.sentence}</span>
+                  </>
+                ) : (
+                  <>
+                    Searched{" "}
+                    <span className="font-semibold text-foreground">
+                      {unresolvedLocation || location}
+                    </span>
+                  </>
+                )
+              ) : (
+                <>
+                  Location:{" "}
+                  <span className="font-semibold text-foreground">{effectiveLocation}</span>
+                </>
+              )}
             </p>
           )}
         </div>
@@ -1386,10 +1430,12 @@ const SearchResults = () => {
             <main className="flex-1 min-w-0">
               {/* Auto-detected-location banner removed per the
                   2026-05-23 cleanup. The geo-IP detection itself
-                  still runs (effectiveLocation drives the proximity
-                  sort) — the chrome around it is gone. The hero's
-                  "Near <city, state>" subtitle is the only surface
-                  that hints at the detected location. */}
+                  still runs (effectiveLocation feeds the categorical
+                  location-match sort) — the chrome around it is gone.
+                  The hero's "Location: <city, state>" subtitle is the
+                  only surface that hints at the detected location, and
+                  it is labelled as context rather than as a search:
+                  a detected location has never filtered this page. */}
 
               {/* Featured rail — bucket resolved from current filters.
                   city+state → (city, slug); state only → (state, abbr);
