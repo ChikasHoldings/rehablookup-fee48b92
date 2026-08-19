@@ -25,6 +25,7 @@ import { buildProviderMarketContent, facilityDensityPer100k } from "../providerM
 import { renderComposedHtml } from "../composedHtml.mjs";
 import { LEVEL_OF_CARE_PROFILES, levelOfCareProfile, PAYER_SLUGS } from "../levelOfCareProfiles.mjs";
 import { buildStateArticleContent, stateArticleKind } from "../stateArticleContent.mjs";
+import { indefiniteArticle, ordinal, sentenceLabel, titleCaseSlug } from "../textCase.mjs";
 
 const CA_STATS = {
   abbr: "CA",
@@ -306,5 +307,41 @@ describe("per-state articles", () => {
   it("does not present a population ranking as a quality ranking", () => {
     const text = allText(mk("bestCities")!);
     expect(text).toMatch(/not a quality ranking/i);
+  });
+});
+
+describe("text helpers", () => {
+  it("picks the article by sound, including for acronyms read as words", () => {
+    // "an MAT clinic" and "a IOP" both shipped before this existed.
+    expect(indefiniteArticle("IOP")).toBe("an");
+    expect(indefiniteArticle("MAT Clinic")).toBe("a");
+    expect(indefiniteArticle("PHP")).toBe("a");
+    expect(indefiniteArticle("Anxiety and Addiction Treatment")).toBe("an");
+    expect(indefiniteArticle("Detox")).toBe("a");
+    // Spelling and sound disagree the other way here.
+    expect(indefiniteArticle("University Program")).toBe("a");
+  });
+
+  it("falls back to the safer article for an acronym it does not know", () => {
+    expect(indefiniteArticle("ZZQ")).toBe("a");
+  });
+
+  it("writes ordinals that are right for numbers ending 1, 2 and 3", () => {
+    expect([1, 2, 3, 4, 11, 12, 13, 21, 22].map(ordinal)).toEqual([
+      "1st", "2nd", "3rd", "4th", "11th", "12th", "13th", "21st", "22nd",
+    ]);
+  });
+
+  it("title-cases a slug without capitalizing its prepositions", () => {
+    expect(titleCaseSlug("cost-of-rehab-in-ohio")).toBe("Cost of Rehab in Ohio");
+    expect(titleCaseSlug("anxiety-and-addiction-treatment")).toBe("Anxiety and Addiction Treatment");
+    // A leading or trailing minor word still gets capitalized.
+    expect(titleCaseSlug("in-network-care")).toBe("In Network Care");
+  });
+
+  it("lowercases for mid-sentence use without flattening acronyms", () => {
+    expect(sentenceLabel("Inpatient Rehab")).toBe("inpatient rehab");
+    expect(sentenceLabel("MAT Clinic")).toBe("MAT clinic");
+    expect(sentenceLabel("IOP")).toBe("IOP");
   });
 });

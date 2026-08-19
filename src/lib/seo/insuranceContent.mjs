@@ -270,6 +270,7 @@ export function buildInsuranceCityContent(input) {
  * @param {string} [input.countySeat]
  * @param {number} [input.countyPopulation]
  * @param {string[]} [input.majorCities]
+ * @param {string} [input.countyGovernance] where county government is absent or limited
  */
 export function buildInsuranceCountyContent(input) {
   const {
@@ -279,6 +280,7 @@ export function buildInsuranceCountyContent(input) {
     countySeat,
     countyPopulation,
     majorCities,
+    countyGovernance,
     stateName,
     stateAbbr,
     medicaidExpanded,
@@ -323,7 +325,7 @@ export function buildInsuranceCountyContent(input) {
   if (cities.length) {
     geo.push(
       cities.length === 1
-        ? `${cities[0]} is the other population centre the county's programs draw from.`
+        ? `${cities[0]} is the other population center the county's programs draw from.`
         : `Programs serving the county also draw from ${list(cities.slice(0, 5))}, which is the practical catchment for outpatient scheduling.`,
     );
   }
@@ -332,6 +334,10 @@ export function buildInsuranceCountyContent(input) {
       `${county} has about ${countyPopulation.toLocaleString()} residents. County population is a reasonable proxy for how many programs operate locally, but it says nothing about which of them are in-network for your plan — that is a ${name} question, not a geographic one.`,
     );
   }
+  // Where county government is absent or limited, say so: the advice to
+  // ask a county authority about publicly funded care is wrong in the
+  // several states that do not have one.
+  if (countyGovernance) geo.push(countyGovernance);
   if (geo.length) sections.push({ heading: `Treatment access across ${county}`, body: geo.join(" ") });
 
   if (profile) {

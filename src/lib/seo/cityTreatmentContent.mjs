@@ -38,7 +38,7 @@
  * 30-day residential bed impose completely different geography on a
  * patient, and that is the honest reason these pages differ.
  */
-import { sentenceLabel } from "./textCase.mjs";
+import { ordinal, sentenceLabel } from "./textCase.mjs";
 
 export const CARE_SETTINGS = {
   detox: ["detox", "detox-centers"],
@@ -123,12 +123,6 @@ const VERIFY = "Availability changes constantly and a directory listing is a sta
 
 const num = (n) => Number(n).toLocaleString("en-US");
 
-function ordinal(n) {
-  const s = ["th", "st", "nd", "rd"];
-  const v = n % 100;
-  return n + (s[(v - 20) % 10] || s[v] || s[0]);
-}
-
 function listNames(names, max = 3) {
   const take = names.slice(0, max);
   if (take.length === 0) return "";
@@ -164,7 +158,9 @@ export function buildCityTreatmentContent({ profile, treatmentLabel, treatmentSl
   const placeParts = [];
   if (knowsSize) {
     placeParts.push(
-      `${city} has about ${num(population)} residents, which makes it the ${ordinal(rankInState)} largest of the ${listedInState} ${state} cities this directory covers`,
+      rankInState === 1
+        ? `${city} has about ${num(population)} residents, which makes it the largest of the ${listedInState} ${state} cities this directory covers`
+        : `${city} has about ${num(population)} residents, which makes it the ${ordinal(rankInState)} largest of the ${listedInState} ${state} cities this directory covers`,
     );
     if (stateSharePct != null && stateSharePct >= 0.1) {
       placeParts.push(`roughly ${stateSharePct}% of the state's population lives here`);

@@ -27,6 +27,8 @@
  * implying clinical superiority.
  */
 
+import { indefiniteArticle, sentenceLabel } from "./textCase.mjs";
+
 /** Shared closing guidance — one sentence, appended per page, not a section. */
 export const UNIVERSAL_VERIFY =
   "Confirm state licensure, the levels of care actually offered on site, and how the program handles a patient who needs a higher level of care than it provides.";
@@ -336,6 +338,108 @@ export const NEAR_ME_TOPICS = {
   },
 
   // ── Legal ──────────────────────────────────────────────────────────
+  // ── Co-occurring conditions and populations ─────────────────────────
+  // These 19 topics exist because 42 substance/population families
+  // publish a page per state — 2,100 pages — and every one of them was
+  // the same 234 words with a name swapped. A co-occurring page that
+  // does not say what integrated treatment actually is has no reason to
+  // exist. Each states what the thing IS, the one point most often got
+  // wrong about it, and what to ask a program.
+  "adderall-rehab-near-me": {
+    whatItIs: "Treatment for prescription stimulant use disorder — amphetamine salts, methylphenidate and related medications, whether prescribed or diverted.",
+    keyPoint: "There is no approved medication for stimulant use disorder, so treatment is behavioral: contingency management has the strongest evidence base of any intervention here. Withdrawal is a crash rather than a medical emergency, which is why stimulant detox is rarely inpatient.",
+    verify: "Ask whether the program runs contingency management, and — if the stimulant was prescribed for ADHD — how it plans to treat the ADHD without it.",
+  },
+  "gabapentin-rehab-near-me": {
+    whatItIs: "Treatment for gabapentin or pregabalin misuse, usually alongside opioid or alcohol use rather than on its own.",
+    keyPoint: "Gabapentin is widely assumed to have no abuse potential and prescribed accordingly. It does, particularly in combination with opioids, where it raises overdose risk. Abrupt discontinuation after sustained high-dose use can trigger withdrawal including seizures, so tapering matters.",
+    verify: "Ask whether the program tapers gabapentinoids rather than stopping them, and whether it screens for the opioid use that usually accompanies this.",
+  },
+  "tramadol-rehab-near-me": {
+    whatItIs: "Treatment for tramadol dependence, an opioid with an additional serotonergic mechanism.",
+    keyPoint: "Tramadol is frequently described as a mild opioid and prescribed as though dependence were unlikely. Its withdrawal has both a classic opioid component and an atypical serotonergic one, and it carries a seizure risk that other opioids do not, which changes how detox is managed.",
+    verify: "Ask whether the program has managed tramadol withdrawal specifically, and how it handles the seizure risk and any serotonergic medications you take.",
+  },
+  "pregnancy-rehab-near-me": {
+    whatItIs: "Substance use treatment during pregnancy and the postpartum period, coordinated with obstetric care.",
+    keyPoint: "For opioid use disorder in pregnancy, medication — buprenorphine or methadone — is the standard of care, and withdrawal without it carries risk to the pregnancy. Programs that require detoxification off medication before admission are working against the clinical guidance.",
+    verify: "Ask whether the program continues medication through pregnancy, whether obstetric care is coordinated or referred, and what its policy is on reporting to child welfare — the answer to that last one varies by state and you should know it before you disclose.",
+  },
+  "healthcare-professional-rehab-near-me": {
+    whatItIs: "Treatment structured around licensed clinicians — physicians, nurses, pharmacists, dentists — whose licensure is entangled with their treatment.",
+    keyPoint: "Most states run a physician or nurse health program that offers monitored treatment as an alternative to disciplinary action. Entering one has consequences for licensure, employment and confidentiality that are different from ordinary treatment, and those consequences depend on whether you self-report before or after a complaint.",
+    verify: "Ask whether the program works with your state's professional health program, what is reported to the licensing board and when, and get that in writing before admission.",
+  },
+  "educator-rehab-near-me": {
+    whatItIs: "Treatment structured around teachers and school staff, whose employment and certification are affected by disclosure.",
+    keyPoint: "The practical constraints are the academic calendar and mandatory-reporting rules, not clinical ones. Summer admission is often the only realistic residential window, and intensive outpatient in the evening is what makes treatment possible during term.",
+    verify: "Ask about evening intensive-outpatient tracks, and about what a program will and will not disclose to an employer or a certification body.",
+  },
+  "college-student-rehab-near-me": {
+    whatItIs: "Treatment for students, coordinated with enrollment status, campus services and academic deadlines.",
+    keyPoint: "A medical leave of absence usually protects enrollment and sometimes tuition in a way that simply disappearing does not, and campus counseling services can often initiate it. Collegiate recovery programs — dedicated recovery communities on campus — exist at a growing number of institutions and are the thing most students do not know to ask about.",
+    verify: "Ask how the program coordinates with a medical leave, and whether your institution has a collegiate recovery program to return to.",
+  },
+  "eating-disorder-rehab-near-me": {
+    whatItIs: "Integrated treatment for a co-occurring eating disorder and substance use disorder.",
+    keyPoint: "These co-occur often, and treating one while ignoring the other predictably worsens both — substances are frequently used for restriction or purging. Medical monitoring requirements are also different: refeeding and electrolyte management are not standard capabilities at an addiction program.",
+    verify: "Ask whether both conditions are treated on site by the same team, and what medical monitoring is available for cardiac and electrolyte risk.",
+  },
+  "anxiety-rehab-near-me": {
+    whatItIs: "Integrated treatment for a co-occurring anxiety disorder and substance use disorder.",
+    keyPoint: "Withdrawal from alcohol and benzodiazepines produces anxiety that is indistinguishable from an anxiety disorder for weeks, so a diagnosis made in early withdrawal is unreliable. The harder problem is that benzodiazepines are the obvious anxiety treatment and the wrong one for someone with a substance use disorder.",
+    verify: "Ask when the program assesses for anxiety relative to withdrawal, and what it offers instead of benzodiazepines.",
+  },
+  "depression-rehab-near-me": {
+    whatItIs: "Integrated treatment for a co-occurring depressive disorder and substance use disorder.",
+    keyPoint: "Substance-induced depression and independent major depression look identical at intake and are distinguished largely by whether symptoms persist after weeks of abstinence. That distinction matters because it changes whether antidepressants are indicated, and it is why a program that diagnoses on day two is guessing.",
+    verify: "Ask who prescribes, how often psychiatric review happens during the episode, and how the program handles suicide risk.",
+  },
+  "ptsd-rehab-near-me": {
+    whatItIs: "Integrated treatment for post-traumatic stress disorder alongside substance use.",
+    keyPoint: "The old sequencing — get sober first, treat the trauma later — has been superseded: concurrent evidence-based trauma treatment produces better outcomes for both. But trauma processing requires trained clinicians and real stability, and a program that offers neither is not doing trauma treatment by putting the word on a brochure.",
+    verify: "Ask which trauma protocol is delivered, who is trained in it, and how many sessions a typical episode includes.",
+  },
+  "bipolar-rehab-near-me": {
+    whatItIs: "Integrated treatment for bipolar disorder alongside substance use.",
+    keyPoint: "Substance use disorder is more common in bipolar disorder than in almost any other psychiatric condition, and untreated mood instability drives relapse directly. Mood stabilizers need prescriber management and laboratory monitoring, which an addiction program without psychiatric capability cannot provide.",
+    verify: "Ask whether a psychiatric prescriber is on staff rather than on call, and how medication is monitored during and after the episode.",
+  },
+  "adhd-rehab-near-me": {
+    whatItIs: "Integrated treatment for ADHD alongside substance use.",
+    keyPoint: "Untreated ADHD raises relapse risk, and treating it is complicated by the fact that the first-line medications are controlled stimulants. Programs differ sharply on whether they will prescribe them, and non-stimulant options exist — the honest position is that this is a risk-benefit decision, not a rule.",
+    verify: "Ask what the program's policy on stimulant prescribing is, and what it offers if the answer is no.",
+  },
+  "ocd-rehab-near-me": {
+    whatItIs: "Integrated treatment for obsessive-compulsive disorder alongside substance use.",
+    keyPoint: "OCD's evidence-based treatment is exposure and response prevention, which is a specific protocol and not the same as general cognitive behavioral therapy. Substances are often used to blunt obsessional distress, so removing them without treating the OCD leaves the driver intact.",
+    verify: "Ask specifically whether exposure and response prevention is delivered on site and by whom — general CBT is a different treatment.",
+  },
+  "schizophrenia-rehab-near-me": {
+    whatItIs: "Integrated treatment for schizophrenia or schizoaffective disorder alongside substance use.",
+    keyPoint: "This requires genuine psychiatric capability — antipsychotic management, injection administration, and staff who can tell psychosis from stimulant intoxication. Many addiction programs are not equipped for it and will say so if asked directly; a program that treats this well usually has a formal relationship with a community mental health center.",
+    verify: "Ask whether long-acting injectable antipsychotics can be administered on site, and what the program does if symptoms escalate during treatment.",
+  },
+  "chronic-pain-rehab-near-me": {
+    whatItIs: "Treatment for opioid use disorder in people who also have genuine chronic pain.",
+    keyPoint: "The pain is real and does not disappear when the opioid does, which is why abrupt tapers fail and sometimes push people toward illicit supply. Buprenorphine has analgesic properties and is often the route that treats both, alongside non-opioid pain management.",
+    verify: "Ask whether the program treats the pain as well as the use disorder, and whether it coordinates with your pain physician rather than discharging you from their care.",
+  },
+  "bpd-rehab-near-me": {
+    whatItIs: "Integrated treatment for borderline personality disorder alongside substance use.",
+    keyPoint: "Dialectical behavior therapy is the treatment with the strongest evidence, and full DBT is a specific package — individual therapy, skills group, phone coaching and a consultation team. Programs frequently advertise \"DBT-informed\" care, which means skills groups without the rest, and the distinction is worth insisting on.",
+    verify: "Ask whether the program delivers full DBT with all four components or DBT skills only, and who is intensively trained.",
+  },
+  "beach-rehab-near-me": {
+    whatItIs: "Residential treatment in a coastal setting.",
+    keyPoint: "Setting is an amenity, not a level of care, and it is not regulated: no license category and no accreditation standard references the view. What determines outcome is licensure, clinical staffing, whether co-occurring conditions are treated and what aftercare is arranged — all of which are worth checking before location.",
+    verify: "Ask for the license category and clinical staffing first; the setting is a preference to apply after the clinical questions are answered.",
+  },
+  "mountain-rehab-near-me": {
+    whatItIs: "Residential treatment in a mountain or wilderness setting.",
+    keyPoint: "Setting is an amenity rather than a level of care and carries no separate licensure. One practical consideration is real: a remote location lengthens the distance to emergency medical care, which matters during withdrawal, and it complicates the transition to outpatient care back home.",
+    verify: "Ask how far the nearest emergency department is, what medical cover is on site during withdrawal, and what aftercare it arranges in your own community.",
+  },
   "court-ordered-rehab-near-me": {
     whatItIs: "Treatment completed to satisfy a court requirement, including DUI and drug-court programs.",
     keyPoint: "Court-mandated treatment requires the program to provide documentation the court will accept, and not every program does this routinely. Confirming the reporting format before admission avoids completing treatment that does not satisfy the order.",
@@ -372,9 +476,10 @@ export function profiledNearMeSlugs() {
  * @param {string} [input.countySeat]
  * @param {number} [input.placePopulation]
  * @param {string[]} [input.majorCities]
+ * @param {string} [input.countyGovernance] where county government is absent or limited
  */
 export function buildNearMeContent(input) {
-  const { topicSlug, topicLabel, stateName, stats, licensing, placeName, countySeat, placePopulation, majorCities } =
+  const { topicSlug, topicLabel, stateName, stats, licensing, placeName, countySeat, placePopulation, majorCities, countyGovernance } =
     input;
 
   const topic = nearMeTopic(topicSlug);
@@ -383,7 +488,7 @@ export function buildNearMeContent(input) {
   const sections = [];
 
   const intro = topic
-    ? `${topic.whatItIs} This page covers what to look for when choosing a ${label.toLowerCase()} program in ${scope}, and what ${stateName} adds to that picture.`
+    ? `${topic.whatItIs} This page covers what to look for when choosing ${indefiniteArticle(label)} ${sentenceLabel(label)} program in ${scope}, and what ${stateName} adds to that picture.`
     : `This page covers ${label.toLowerCase()} options in ${scope} and what to verify before choosing a program.`;
 
   if (topic) {
@@ -432,6 +537,9 @@ export function buildNearMeContent(input) {
   if (placeName && majorCities?.length) {
     placeBits.push(`Programs serving the area also draw from ${majorCities.slice(0, 4).join(", ")}.`);
   }
+  // Where county government is absent or limited, say so rather than
+  // pointing the reader at an authority that does not exist.
+  if (placeName && countyGovernance) placeBits.push(countyGovernance);
   if (typeof stats?.medicaidExpanded === "boolean") {
     placeBits.push(
       stats.medicaidExpanded
@@ -488,6 +596,37 @@ export function buildNearMeContent(input) {
  * page — mislabelling a service is worse than a shorter page.
  */
 const TREATMENT_SLUG_ALIASES = {
+  // The /{type}/{state} families use different slug spellings for the
+  // same services. Without these they resolved to no topic at all, and
+  // all 50 state pages in each family rendered the same 234 words.
+  "teen-rehab-programs": "teen-rehab-near-me",
+  "senior-addiction-treatment": "seniors-rehab-near-me",
+  "first-responders-rehab": "first-responder-rehab-near-me",
+  "executive-rehab-programs": "executive-rehab-near-me",
+  "lgbtq-rehab-programs": "lgbtq-rehab-near-me",
+  "30-day-rehab-programs": "30-day-rehab-near-me",
+  "60-day-rehab-programs": "60-day-rehab-near-me",
+  "90-day-rehab-programs": "90-day-rehab-near-me",
+  "long-term-rehab-programs": "long-term-rehab-near-me",
+  "adderall-addiction-treatment": "adderall-rehab-near-me",
+  "gabapentin-addiction-treatment": "gabapentin-rehab-near-me",
+  "tramadol-addiction-treatment": "tramadol-rehab-near-me",
+  "pregnant-women-addiction-treatment": "pregnancy-rehab-near-me",
+  "healthcare-professionals-rehab": "healthcare-professional-rehab-near-me",
+  "teachers-rehab-programs": "educator-rehab-near-me",
+  "college-student-addiction-treatment": "college-student-rehab-near-me",
+  "eating-disorders-and-addiction-treatment": "eating-disorder-rehab-near-me",
+  "anxiety-and-addiction-treatment": "anxiety-rehab-near-me",
+  "depression-and-addiction-treatment": "depression-rehab-near-me",
+  "ptsd-and-addiction-treatment": "ptsd-rehab-near-me",
+  "bipolar-and-addiction-treatment": "bipolar-rehab-near-me",
+  "adhd-and-addiction-treatment": "adhd-rehab-near-me",
+  "ocd-and-addiction-treatment": "ocd-rehab-near-me",
+  "schizophrenia-and-addiction-treatment": "schizophrenia-rehab-near-me",
+  "chronic-pain-and-addiction-treatment": "chronic-pain-rehab-near-me",
+  "bpd-and-addiction-treatment": "bpd-rehab-near-me",
+  "beach-rehab-programs": "beach-rehab-near-me",
+  "mountain-rehab-programs": "mountain-rehab-near-me",
   detox: "detox-near-me",
   "detox-programs": "detox-near-me",
   "medical-detox": "detox-near-me",

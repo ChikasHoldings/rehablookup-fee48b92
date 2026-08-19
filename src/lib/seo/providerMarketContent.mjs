@@ -74,6 +74,7 @@ function densityReading(density) {
  * @param {string} [input.countySeat]
  * @param {number} [input.countyPopulation]
  * @param {string[]} [input.majorCities]
+ * @param {string} [input.countyGovernance] where county government is absent or limited
  * @param {string} [input.insurerSlug]
  * @param {string} [input.insurerName]
  */
@@ -88,6 +89,7 @@ export function buildProviderMarketContent(input) {
     countySeat,
     countyPopulation,
     majorCities,
+    countyGovernance,
     insurerSlug,
     insurerName,
   } = input;
@@ -144,8 +146,12 @@ export function buildProviderMarketContent(input) {
       );
     }
     if (majorCities?.length) {
-      catch_.push(`The practical catchment also includes ${list(majorCities.slice(0, 5))}.`);
+      catch_.push(`The practical catchment ${countySeat ? "also " : ""}includes ${list(majorCities.slice(0, 5))}.`);
     }
+    // Where county government is absent or limited, saying so is the
+    // point: the licensing and contracting advice on this page assumes
+    // a county authority exists, and in several states it does not.
+    if (countyGovernance) catch_.push(countyGovernance);
     if (catch_.length) sections.push({ heading: `${county} catchment`, body: catch_.join(" ") });
   }
 
