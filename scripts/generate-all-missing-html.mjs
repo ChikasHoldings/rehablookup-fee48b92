@@ -67,6 +67,10 @@ import {
 // Operator-facing market intelligence for /rehab-marketing/*: 6,653 pages
 // that had only a state name and a treatment name to vary on.
 import { buildProviderMarketContent } from "../src/lib/seo/providerMarketContent.mjs";
+// The topic axis for the 58 near-me families. Twenty-one of them ran ~420
+// pages on TWO distinct bodies, because a "methadone clinic" page and a
+// "sober living" page differed only by a noun.
+import { buildNearMeContent } from "../src/lib/seo/nearMeTopics.mjs";
 import { renderComposedHtml } from "../src/lib/seo/composedHtml.mjs";
 import { getStateLicensing } from "./_unique-content.mjs";
 
@@ -330,12 +334,18 @@ function nearMeStatePage(urlPath) {
   const nearMeName = slugToName(nearMeSlug.replace(/-near-me$/, "").replace(/-/g, " "));
   const stateName = slugToName(stateSlug);
   const title = `${toTitleCase(nearMeSlug)} in ${stateName}`;
+  // Topic axis + real place facts. See src/lib/seo/nearMeTopics.mjs.
+  const nstats = getStateStatsBySlug(stateSlug);
+  const nlic = getStateLicensing(stateSlug);
+  const nearMe = buildNearMeContent({ topicSlug: nearMeSlug, topicLabel: toTitleCase(nearMeSlug.replace(/-near-me$/, '')), stateName, stats: nstats, licensing: nlic });
+
   return {
     title,
     metaTitle: `${title} — Find Local Treatment | RehabLookup`,
     metaDesc: `Find ${nearMeName} near you in ${stateName}. Compare addiction treatment facility listings. Verify insurance and get help today.`,
     h1: title,
     content: `
+      ${renderComposedHtml(nearMe)}
       <p>Find accredited ${nearMeName.toLowerCase()} programs in ${stateName}. RehabLookup's directory covers facilities across every county in ${stateName}, with detailed information on treatment approaches, insurance acceptance, and amenities.</p>
       <h2>How to Find Treatment in ${stateName}</h2>
       <p>Use our search tool to filter by city, zip code, insurance provider, and treatment type. Listings show state licensure and accreditation details when a facility reports them. Confirm current licensing with the facility or the issuing state authority.</p>
@@ -360,12 +370,18 @@ function nearMeCityPage(urlPath) {
   const stateName = slugToName(stateSlug);
   const cityName = slugToName(citySlug);
   const title = `${toTitleCase(nearMeSlug)} in ${cityName}, ${stateName}`;
+  // Topic axis + real place facts. See src/lib/seo/nearMeTopics.mjs.
+  const nstats = getStateStatsBySlug(stateSlug);
+  const nlic = getStateLicensing(stateSlug);
+  const nearMe = buildNearMeContent({ topicSlug: nearMeSlug, topicLabel: toTitleCase(nearMeSlug.replace(/-near-me$/, '')), stateName, stats: nstats, licensing: nlic, placeName: cityName });
+
   return {
     title,
     metaTitle: `${title} — Local Treatment Centers | RehabLookup`,
     metaDesc: `Find ${nearMeName.toLowerCase()} programs in ${cityName}, ${stateName}. Compare accredited local facilities, verify insurance, and get help today.`,
     h1: title,
     content: `
+      ${renderComposedHtml(nearMe)}
       <p>Find accredited ${nearMeName.toLowerCase()} programs in ${cityName}, ${stateName}. Our directory includes facility listings with information on treatment programs, insurance acceptance and amenities as reported by each facility.</p>
       <h2>Treatment Options in ${cityName}</h2>
       <p>Facilities in ${cityName} offer a range of programs including medical detox, residential inpatient, partial hospitalization (PHP), intensive outpatient (IOP), and outpatient treatment.</p>
@@ -834,12 +850,18 @@ function nearMeCountyPage(urlPath) {
   const stateName = slugToName(stateSlug);
   const countyName = slugToName(countySlug);
   const title = `${toTitleCase(nearMeSlug)} in ${countyName} County, ${stateName}`;
+  // Topic axis + real place facts. See src/lib/seo/nearMeTopics.mjs.
+  const nstats = getStateStatsBySlug(stateSlug);
+  const nlic = getStateLicensing(stateSlug);
+  const nearMe = buildNearMeContent({ topicSlug: nearMeSlug, topicLabel: toTitleCase(nearMeSlug.replace(/-near-me$/, '')), stateName, stats: nstats, licensing: nlic, placeName: `${countyName} County`, countySeat: lookupCounty(stateSlug, countySlug)?.seat, placePopulation: lookupCounty(stateSlug, countySlug)?.population, majorCities: lookupCounty(stateSlug, countySlug)?.majorCities });
+
   return {
     title,
     metaTitle: `${title} — Local Treatment Centers | RehabLookup`,
     metaDesc: `Find ${nearMeName.toLowerCase()} programs in ${countyName} County, ${stateName}. Compare accredited local facilities, verify insurance, and get help today.`,
     h1: title,
     content: `
+      ${renderComposedHtml(nearMe)}
       <p>Find accredited ${nearMeName.toLowerCase()} programs in ${countyName} County, ${stateName}. Our directory includes facility listings with information on treatment programs, insurance acceptance and amenities as reported by each facility.</p>
       <h2>Treatment Options in ${countyName} County</h2>
       <p>Facilities in ${countyName} County offer a range of programs including medical detox, residential inpatient, partial hospitalization (PHP), intensive outpatient (IOP), and outpatient treatment.</p>
