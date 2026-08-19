@@ -32,6 +32,8 @@
  */
 
 import { CARRIER_TYPE_LABEL, insurerProfile, insurerProfileByName } from "./insurerProfiles.mjs";
+import { levelOfCareProfile } from "./levelOfCareProfiles.mjs";
+import { sentenceLabel } from "./textCase.mjs";
 
 function list(items) {
   const xs = (items ?? []).filter(Boolean);
@@ -67,6 +69,7 @@ function densityReading(density) {
  * @param {object} [input.stats]      from `_unique-content.mjs` getStateStatsBySlug
  * @param {object} [input.licensing]  from `_unique-content.mjs` getStateLicensing
  * @param {string} [input.treatmentName]
+ * @param {string} [input.levelSlug]     level-of-care slug, e.g. "iop"
  * @param {string} [input.countyName] without the "County" suffix
  * @param {string} [input.countySeat]
  * @param {number} [input.countyPopulation]
@@ -80,6 +83,7 @@ export function buildProviderMarketContent(input) {
     stats,
     licensing,
     treatmentName,
+    levelSlug,
     countyName,
     countySeat,
     countyPopulation,
@@ -90,7 +94,7 @@ export function buildProviderMarketContent(input) {
 
   const county = countyName ? `${countyName} County` : null;
   const scope = county ? `${county}, ${stateName}` : stateName;
-  const service = treatmentName ? treatmentName.toLowerCase() : "addiction treatment";
+  const service = treatmentName ? sentenceLabel(treatmentName) : "addiction treatment";
 
   const density = facilityDensityPer100k(stats?.samhsaFacilities, stats?.populationMillions);
   const sections = [];
@@ -159,6 +163,21 @@ export function buildProviderMarketContent(input) {
   );
   sections.push({ heading: `Who pays for ${service} in ${stateName}`, body: payerBits.join(" ") });
 
+  // 3b. Level of care — what actually differs between the fourteen
+  // variants a county publishes. Without this the level was a word in
+  // the heading and nothing else.
+  const level = levelOfCareProfile(levelSlug);
+  if (level) {
+    sections.push({
+      heading: `What running a ${level.label.toLowerCase()} program involves`,
+      body:
+        `${level.label} is ${level.asam}. It needs ${level.licensure}. Staffing floor: ${level.staffing}. ` +
+        `Length of stay runs to ${level.stay}. Revenue arrives ${level.revenue}. ` +
+        `The operational fact most often missed: ${level.constraint}. ` +
+        `State specifics — the exact license names, staffing ratios and rates — come from ${licensing?.regulatoryBody ?? `the ${stateName} regulator`}, not from a national generalization.`,
+    });
+  }
+
   // 4. Carrier contracting — only on the insurance sub-family.
   const profile = insurerProfile(insurerSlug) ?? insurerProfileByName(insurerName);
   if (profile) {
@@ -192,14 +211,22 @@ export function buildProviderMarketContent(input) {
       answer:
         density !== null
           ? `${stateName} carries about ${density} SAMHSA-listed facilities per 100,000 residents, which makes it ${densityReading(density)}. Density is concentrated in ${stats?.primaryMetro || "the largest metros"}, so a county-level view usually differs from the state average.`
-          : `Competition varies sharply by metro. Capacity concentrates in the largest population centres, and coverage gaps persist outside them.`,
+          : `Competition varies sharply by metro. Capacity concentrates in the largest population centers, and coverage gaps persist outside them.`,
     },
     {
-      question: `What licence does a ${service} program need in ${stateName}?`,
+      question: `What license does a ${service} program need in ${stateName}?`,
       answer: licensing?.regulatoryBody
         ? `Licensure is issued by ${licensing.regulatoryBody}${licensing.regulatoryAbbr ? ` (${licensing.regulatoryAbbr})` : ""}${licensing.licensureTypes?.length ? `, across categories including ${list(licensing.licensureTypes.slice(0, 3))}` : ""}. Confirm current requirements directly with the regulator before planning a service line.`
         : `Licensure is issued by the state regulator. Confirm current requirements with them before planning a service line.`,
     },
+    ...(level
+      ? [
+          {
+            question: `What is different about operating ${level.label.toLowerCase()} specifically?`,
+            answer: `${level.constraint} On the regulatory side it needs ${level.licensure}, and the staffing floor is ${level.staffing}. Confirm the ${stateName} specifics with ${licensing?.regulatoryBody ?? "the state regulator"} before committing capital.`,
+          },
+        ]
+      : []),
     {
       question: `What does the payer mix look like in ${stateName}?`,
       answer:

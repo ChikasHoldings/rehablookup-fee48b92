@@ -67,6 +67,11 @@ import {
 // Operator-facing market intelligence for /rehab-marketing/*: 6,653 pages
 // that had only a state name and a treatment name to vary on.
 import { buildProviderMarketContent } from "../src/lib/seo/providerMarketContent.mjs";
+import { PAYER_SLUGS } from "../src/lib/seo/levelOfCareProfiles.mjs";
+import { buildStateArticleContent, stateArticleKind } from "../src/lib/seo/stateArticleContent.mjs";
+import { titleCaseSlug } from "../src/lib/seo/textCase.mjs";
+import { buildCityIndex } from "../src/lib/seo/cityProfiles.mjs";
+import { buildCityTreatmentContent } from "../src/lib/seo/cityTreatmentContent.mjs";
 // The topic axis for the 58 near-me families. Twenty-one of them ran ~420
 // pages on TWO distinct bodies, because a "methadone clinic" page and a
 // "sober living" page differed only by a noun.
@@ -85,8 +90,10 @@ import { getStateLicensing } from "./_unique-content.mjs";
  * `src/lib/seo/insuranceContent.mjs`.
  */
 const COUNTY_INDEX = new Map();
+let STATE_COUNTY_DATA = [];
 try {
   const { stateCountyData } = await import("../src/data/countySeoData.ts");
+  STATE_COUNTY_DATA = stateCountyData ?? [];
   for (const state of stateCountyData ?? []) {
     for (const county of state.counties ?? []) {
       COUNTY_INDEX.set(`${state.stateSlug}/${county.slug}`, county);
@@ -101,6 +108,39 @@ try {
 
 function lookupCounty(stateSlug, countySlug) {
   return COUNTY_INDEX.get(`${stateSlug}/${countySlug}`) ?? null;
+}
+
+// City-level facts for the city-scoped families. Same reasoning as the
+// county index: without it every city page in a state renders the same
+// body. Fail loudly rather than regenerate thousands of pages without
+// the axis that distinguishes them.
+let CITY_INDEX;
+let STATE_CITIES;
+try {
+  const { statesData } = await import("../src/data/locationSeoData.ts");
+  CITY_INDEX = buildCityIndex({ statesData, stateCountyData: STATE_COUNTY_DATA });
+  STATE_CITIES = new Map(
+    statesData.map((st) => [
+      st.slug,
+      (st.cities ?? []).map((c) => ({
+        name: c.name,
+        population: c.population,
+        county: CITY_INDEX.get(c.slug)?.county?.name ?? null,
+      })),
+    ]),
+  );
+  if (CITY_INDEX.size === 0) throw new Error("city index is empty");
+} catch (err) {
+  console.error("\u2717 could not build the city profile index:", err?.message ?? err);
+  process.exit(1);
+}
+
+function lookupCity(stateSlug, citySlug, cityName) {
+  return (
+    CITY_INDEX.get(citySlug) ??
+    CITY_INDEX.get(`${stateSlug}|${String(cityName ?? "").toLowerCase().replace(/[^a-z0-9]+/g, "")}`) ??
+    null
+  );
 }
 
 // Block this generator from writing static HTML at any path that vercel.json
@@ -542,12 +582,51 @@ function insuranceCountyPage(urlPath) {
 }
 
 // Rehab-marketing state/treatment: /rehab-marketing/{state}/{treatment}
+// The /rehab-marketing county pages publish fourteen variants: eight
+// levels of care and six payers. `slugToName` renders both as Title
+// Case, which turned IOP into "Iop" and MAT into "Mat" on every one of
+// them, and routed the payer slugs through the level-of-care path where
+// they picked up no carrier facts at all.
+const TREATMENT_ACRONYMS = { iop: "IOP", php: "PHP", mat: "MAT" };
+
+function treatmentLabel(slug) {
+  return TREATMENT_ACRONYMS[slug] ?? slugToName(slug);
+}
+
+/** Payer slug → the insurer-profile key, which spells some of them
+ *  differently (blue-cross is published as bcbs-treatment). Returns null
+ *  for anything that is a level of care rather than a payer. */
+const PAYER_PROFILE_SLUG = {
+  "blue-cross": "bcbs-treatment",
+  "united-healthcare": "united-healthcare-rehab",
+  aetna: "aetna-rehab",
+  cigna: "cigna-rehab",
+  medicaid: "medicaid-rehab",
+  medicare: "medicare-rehab",
+  humana: "humana-rehab",
+  tricare: "tricare-rehab",
+};
+
+function payerProfileSlug(slug) {
+  return PAYER_SLUGS.has(slug) ? PAYER_PROFILE_SLUG[slug] ?? `${slug}-rehab` : null;
+}
+
+/** The market-composer arguments for a /rehab-marketing variant: a level
+ *  of care gets the level axis, a payer gets the carrier axis, and
+ *  neither gets both. */
+function marketAxisFor(slug) {
+  const payer = payerProfileSlug(slug);
+  return payer
+    ? { insurerSlug: payer, insurerName: treatmentLabel(slug) }
+    : { levelSlug: slug };
+}
+
 function rehabMarketingStateTreatmentPage(urlPath) {
   const parts = urlPath.replace(/^\//, "").split("/");
   const stateSlug = parts[1];
   const treatmentSlug = parts[2];
   const stateName = slugToName(stateSlug);
-  const treatmentName = slugToName(treatmentSlug);
+  const treatmentName = treatmentLabel(treatmentSlug);
   const title = `${treatmentName} Programs in ${stateName}`;
   // Market intelligence for operators, composed from real per-state
   // and per-county data. Added ABOVE the existing provider truth copy
@@ -555,7 +634,7 @@ function rehabMarketingStateTreatmentPage(urlPath) {
   // earlier phases established and which is preserved verbatim below.
   const mstats = getStateStatsBySlug(stateSlug);
   const mlic = getStateLicensing(stateSlug);
-  const market = buildProviderMarketContent({ stateName, stats: mstats, licensing: mlic, treatmentName });
+  const market = buildProviderMarketContent({ stateName, stats: mstats, licensing: mlic, treatmentName, ...marketAxisFor(treatmentSlug) });
 
   return {
     title,
@@ -628,7 +707,7 @@ function rehabMarketingCountyTreatmentPage(urlPath) {
   const treatmentSlug = parts[4];
   const stateName = slugToName(stateSlug);
   const countyName = slugToName(countySlug) + " County";
-  const treatmentName = slugToName(treatmentSlug);
+  const treatmentName = treatmentLabel(treatmentSlug);
   const title = `Get More ${treatmentName} Patients in ${countyName}, ${stateName}`;
   // Market intelligence for operators, composed from real per-state
   // and per-county data. Added ABOVE the existing provider truth copy
@@ -636,7 +715,8 @@ function rehabMarketingCountyTreatmentPage(urlPath) {
   // earlier phases established and which is preserved verbatim below.
   const mstats = getStateStatsBySlug(stateSlug);
   const mlic = getStateLicensing(stateSlug);
-  const market = buildProviderMarketContent({ stateName, stats: mstats, licensing: mlic, treatmentName, countyName: slugToName(countySlug), countySeat: lookupCounty(stateSlug, countySlug)?.seat, countyPopulation: lookupCounty(stateSlug, countySlug)?.population, majorCities: lookupCounty(stateSlug, countySlug)?.majorCities });
+  const county = lookupCounty(stateSlug, countySlug);
+  const market = buildProviderMarketContent({ stateName, stats: mstats, licensing: mlic, treatmentName, ...marketAxisFor(treatmentSlug), countyName: slugToName(countySlug), countySeat: county?.seat, countyPopulation: county?.population, majorCities: county?.majorCities });
 
   return {
     title,
@@ -702,6 +782,116 @@ function rehabMarketingCountyInsurancePage(urlPath) {
 }
 
 // Rehab-centers county: /rehab-centers/{state}/county/{county}
+// Rehab-marketing state hub: /rehab-marketing/{state}
+// Fifty of these shipped as identical stubs carrying the SEEKER
+// boilerplate — "Compare programs, verify insurance, and connect with
+// treatment that fits your situation" — on a page for operators. They
+// were reaching genericPage because no branch claimed depth 2.
+function rehabMarketingStatePage(urlPath) {
+  const stateSlug = urlPath.replace(/^\//, "").split("/")[1];
+  const stateName = slugToName(stateSlug);
+  const market = buildProviderMarketContent({
+    stateName,
+    stats: getStateStatsBySlug(stateSlug),
+    licensing: getStateLicensing(stateSlug),
+  });
+  const title = `Rehab Marketing in ${stateName}`;
+
+  return {
+    title,
+    metaTitle: `${title} — Provider Market Overview | RehabLookup`,
+    metaDesc: market.metaDescription,
+    h1: `${stateName} Treatment Market Overview for Providers`,
+    content: `
+      ${renderComposedHtml(market)}
+      <h2>List your ${stateName} facility</h2>
+      <p>Organic directory position is determined independently and is never purchased. Pro enhances the facility profile and unlocks provider tools; Featured is a separately purchased, clearly labeled sponsored placement.</p>
+      <p><a href="/for-providers">List Your Facility</a> &middot; <a href="/rehab-marketing">Rehab Marketing Hub</a> &middot; <a href="/rehab-centers/${stateSlug}">${stateName} Treatment Directory</a></p>`,
+    breadcrumbs: [
+      { name: "Home", url: "/" },
+      { name: "For Providers", url: "/for-providers" },
+      { name: stateName, url: urlPath },
+    ],
+  };
+}
+
+// Rehab-marketing state/insurance: /rehab-marketing/{state}/insurance/{payer}
+// Also unclaimed, so all six payers in a state rendered the same body.
+function rehabMarketingStateInsurancePage(urlPath) {
+  const parts = urlPath.replace(/^\//, "").split("/");
+  const stateSlug = parts[1];
+  const payerSlug = parts[3];
+  const stateName = slugToName(stateSlug);
+  const payerName = treatmentLabel(payerSlug);
+  const market = buildProviderMarketContent({
+    stateName,
+    stats: getStateStatsBySlug(stateSlug),
+    licensing: getStateLicensing(stateSlug),
+    ...marketAxisFor(payerSlug),
+  });
+  const title = `Reach ${payerName} Patients in ${stateName}`;
+
+  return {
+    title,
+    metaTitle: `${title} — Rehab Marketing | RehabLookup for Providers`,
+    metaDesc: `${payerName}-accepting rehab providers in ${stateName} — market conditions, payer mix and licensing, plus a free directory listing.`,
+    h1: `${payerName} Patient Marketing in ${stateName}`,
+    content: `
+      ${renderComposedHtml(market)}
+      <h2>Why ${payerName}-accepting providers list with us</h2>
+      <p>Organic directory position is determined independently and is never purchased. Pro enhances the facility profile — including the plans and network status a facility reports — and unlocks provider tools; Featured is a separately purchased, clearly labeled sponsored placement.</p>
+      <p><a href="/for-providers">List Your Facility</a> &middot; <a href="/rehab-marketing/${stateSlug}">All ${stateName} Provider Markets</a></p>`,
+    breadcrumbs: [
+      { name: "Home", url: "/" },
+      { name: "For Providers", url: "/for-providers" },
+      { name: stateName, url: `/rehab-marketing/${stateSlug}` },
+      { name: payerName, url: urlPath },
+    ],
+  };
+}
+
+// Rehab-centers state article: /rehab-centers/{state}/articles/{slug}
+// Three articles across fifty states, previously three identical bodies
+// with the state name swapped — on the three questions people most often
+// type. See src/lib/seo/stateArticleContent.mjs for why the cost article
+// publishes no price.
+function rehabCentersArticlePage(urlPath) {
+  const parts = urlPath.replace(/^\//, "").split("/");
+  const stateSlug = parts[1];
+  const articleSlug = parts[3];
+  const stateName = slugToName(stateSlug);
+  const kind = stateArticleKind(articleSlug);
+  if (!kind) return null;
+
+  const article = buildStateArticleContent({
+    kind,
+    stateName,
+    stats: getStateStatsBySlug(stateSlug),
+    licensing: getStateLicensing(stateSlug),
+    cities: STATE_CITIES.get(stateSlug) ?? [],
+  });
+  if (!article) return null;
+
+  // titleCaseSlug rather than toTitleCase: the latter capitalises every
+  // word, which shipped "Cost Of Rehab In Ohio" as an <h1>.
+  const title = titleCaseSlug(articleSlug);
+  return {
+    title,
+    metaTitle: `${title} | RehabLookup`,
+    metaDesc: article.metaDescription,
+    h1: title,
+    content: `
+      ${renderComposedHtml(article)}
+      <p><a href="/rehab-centers/${stateSlug}">All Treatment Centers in ${stateName}</a> &middot; <a href="/rehab-centers">Browse All States</a></p>`,
+    breadcrumbs: [
+      { name: "Home", url: "/" },
+      { name: "Rehab Centers", url: "/rehab-centers" },
+      { name: stateName, url: `/rehab-centers/${stateSlug}` },
+      { name: title, url: urlPath },
+    ],
+  };
+}
+
 function rehabCentersCountyPage(urlPath) {
   const parts = urlPath.replace(/^\//, "").split("/");
   const stateSlug = parts[1];
@@ -744,7 +934,7 @@ function rehabCentersCountyTreatmentPage(urlPath) {
   const treatmentSlug = parts[4];
   const stateName = slugToName(stateSlug);
   const countyName = slugToName(countySlug) + " County";
-  const treatmentName = slugToName(treatmentSlug);
+  const treatmentName = treatmentLabel(treatmentSlug);
   const title = `${treatmentName} in ${countyName}, ${stateName}`;
   // Topic axis (where the URL names a service) plus real place facts.
   const dstats = getStateStatsBySlug(stateSlug);
@@ -784,6 +974,12 @@ function rehabCentersCityPage(urlPath) {
   const dstats = getStateStatsBySlug(stateSlug);
   const dlic = getStateLicensing(stateSlug);
   const dir = buildNearMeContent({ topicSlug: 'rehab-near-me', topicLabel: 'Addiction treatment', stateName, stats: dstats, licensing: dlic, placeName: cityName });
+  // City-level facts. Without these every city in a state renders the
+  // same body, which is what put 26 Georgia cities in one cluster.
+  const cityProfile = lookupCity(stateSlug, citySlug, cityName);
+  const cityBlock = cityProfile
+    ? renderComposedHtml(buildCityTreatmentContent({ profile: cityProfile, treatmentLabel: "Addiction treatment", treatmentSlug: "rehab" }))
+    : "";
 
   return {
     title,
@@ -791,6 +987,7 @@ function rehabCentersCityPage(urlPath) {
     metaDesc: `Find accredited rehab centers in ${cityName}, ${stateName}. Compare addiction treatment listings, check insurance, and contact facilities directly.`,
     h1: title,
     content: `
+      ${cityBlock}
       ${renderComposedHtml(dir)}
       <p>Find accredited addiction treatment centers in ${cityName}, ${stateName}. Our directory lists facilities offering detox, inpatient, and outpatient programs.</p>
       <h2>Treatment Options in ${cityName}</h2>
@@ -1058,6 +1255,8 @@ function classifyAndBuildPage(urlPath) {
 
   // Rehab-marketing patterns
   if (p0 === "rehab-marketing") {
+    if (depth === 2) return rehabMarketingStatePage(urlPath);
+    if (depth === 4 && p2 === "insurance") return rehabMarketingStateInsurancePage(urlPath);
     if (depth === 3 && p2 !== "county") return rehabMarketingStateTreatmentPage(urlPath);
     if (depth === 4 && p2 === "county") return rehabMarketingCountyPage(urlPath);
     if (depth === 5 && p2 === "county" && p4 !== "insurance") return rehabMarketingCountyTreatmentPage(urlPath);
@@ -1067,6 +1266,7 @@ function classifyAndBuildPage(urlPath) {
   // Rehab-centers patterns
   if (p0 === "rehab-centers") {
     if (depth === 2) return null; // already generated by generate-seo-html
+    if (depth === 4 && p2 === "articles") return rehabCentersArticlePage(urlPath);
     if (depth === 3 && p2 !== "county") return rehabCentersCityPage(urlPath);
     if (depth === 4 && p2 === "county") return rehabCentersCountyPage(urlPath);
     if (depth === 5 && p2 === "county") return rehabCentersCountyTreatmentPage(urlPath);

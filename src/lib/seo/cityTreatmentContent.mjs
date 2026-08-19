@@ -38,6 +38,8 @@
  * 30-day residential bed impose completely different geography on a
  * patient, and that is the honest reason these pages differ.
  */
+import { sentenceLabel } from "./textCase.mjs";
+
 export const CARE_SETTINGS = {
   detox: ["detox", "detox-centers"],
   bed: [
@@ -125,16 +127,6 @@ function ordinal(n) {
   const s = ["th", "st", "nd", "rd"];
   const v = n % 100;
   return n + (s[(v - 20) % 10] || s[v] || s[0]);
-}
-
-/** Lowercase a label for mid-sentence use WITHOUT destroying acronyms:
- *  "Inpatient Rehab" → "inpatient rehab", but "IOP" and "MAT Clinic"
- *  keep the capitals that make them readable. */
-function sentenceLabel(label) {
-  return String(label)
-    .split(" ")
-    .map((w) => (w.length > 1 && w === w.toUpperCase() && /[A-Z]/.test(w) ? w : w.toLowerCase()))
-    .join(" ");
 }
 
 function listNames(names, max = 3) {

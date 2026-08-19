@@ -23,6 +23,8 @@ import { NEAR_ME_TOPICS, nearMeTopic, nearMeSlugForTreatment, buildNearMeContent
 import { buildInsuranceCityContent, buildInsuranceCountyContent } from "../insuranceContent.mjs";
 import { buildProviderMarketContent, facilityDensityPer100k } from "../providerMarketContent.mjs";
 import { renderComposedHtml } from "../composedHtml.mjs";
+import { LEVEL_OF_CARE_PROFILES, levelOfCareProfile, PAYER_SLUGS } from "../levelOfCareProfiles.mjs";
+import { buildStateArticleContent, stateArticleKind } from "../stateArticleContent.mjs";
 
 const CA_STATS = {
   abbr: "CA",
@@ -216,5 +218,93 @@ describe("derived market figures", () => {
   it("returns null rather than a number when an input is missing", () => {
     expect(facilityDensityPer100k(undefined as unknown as number, 39)).toBeNull();
     expect(facilityDensityPer100k(1200, 0)).toBeNull();
+  });
+});
+
+describe("level of care is a real axis, not a word in the heading", () => {
+  // The /rehab-marketing county pages publish fourteen variants each.
+  // Before the level profiles, the level was substituted into headings
+  // and nothing else, so all fourteen were the same page.
+  const base = { stateName: "Ohio", stats: CA_STATS, licensing: CA_LIC };
+
+  it("gives every published level of care a profile", () => {
+    const published = ["detox", "residential", "php", "iop", "sober-living", "mat", "dual-diagnosis", "luxury"];
+    const missing = published.filter((s) => !levelOfCareProfile(s));
+    expect(missing).toEqual([]);
+  });
+
+  it("does not hand a payer slug a level-of-care profile", () => {
+    // aetna is not a level of care. Routing it here would have produced
+    // a page asserting staffing floors for an insurer.
+    for (const payer of PAYER_SLUGS) expect(levelOfCareProfile(payer)).toBeNull();
+  });
+
+  it("separates the levels within one state", () => {
+    const bodies = ["detox", "residential", "iop", "mat", "sober-living", "luxury", "php", "dual-diagnosis"].map((levelSlug) =>
+      allText(buildProviderMarketContent({ ...base, levelSlug, treatmentName: levelSlug })),
+    );
+    expect(new Set(bodies).size).toBe(bodies.length);
+  });
+
+  it("defers state specifics to the state regulator rather than asserting them", () => {
+    const text = allText(buildProviderMarketContent({ ...base, levelSlug: "iop", treatmentName: "IOP" }));
+    expect(text).toMatch(/come from California Department of Health Care Services/);
+  });
+
+  it("states no rate, margin or occupancy figure", () => {
+    for (const levelSlug of Object.keys(LEVEL_OF_CARE_PROFILES)) {
+      const text = allText(buildProviderMarketContent({ ...base, levelSlug, treatmentName: levelSlug }));
+      expect(text).not.toMatch(/\$\s?\d/);
+      expect(text).not.toMatch(/\b\d{1,3}\s?%\s*(occupancy|margin|conversion)/i);
+    }
+  });
+
+  it("keeps acronyms readable mid-sentence", () => {
+    const text = allText(buildProviderMarketContent({ ...base, levelSlug: "iop", treatmentName: "IOP" }));
+    expect(text).toMatch(/Who pays for IOP/);
+  });
+});
+
+describe("per-state articles", () => {
+  const cities = [
+    { name: "Columbus", population: 905748, county: "Franklin" },
+    { name: "Cleveland", population: 372624, county: "Cuyahoga" },
+    { name: "Akron", population: 190469, county: "Summit" },
+  ];
+  const mk = (kind: string, stateName = "Ohio") =>
+    buildStateArticleContent({ kind, stateName, stats: CA_STATS, licensing: CA_LIC, cities });
+
+  it("routes each published article slug to a composer", () => {
+    expect(stateArticleKind("cost-of-rehab-in-ohio")).toBe("cost");
+    expect(stateArticleKind("best-cities-for-addiction-treatment-in-new-york")).toBe("bestCities");
+    expect(stateArticleKind("how-to-find-best-rehab-centers-in-texas")).toBe("howToChoose");
+  });
+
+  it("returns null for an article it does not own", () => {
+    expect(stateArticleKind("some-new-article-in-ohio")).toBeNull();
+    expect(mk("notAKind")).toBeNull();
+  });
+
+  it("separates the three articles and separates states", () => {
+    const bodies = ["cost", "bestCities", "howToChoose"].map((k) => allText(mk(k)!));
+    expect(new Set(bodies).size).toBe(3);
+    expect(allText(mk("cost")!)).not.toBe(allText(mk("cost", "Texas")!));
+  });
+
+  it("quotes no price on the cost article", () => {
+    // The whole point of that page is that it refuses to invent a range.
+    const text = allText(mk("cost")!);
+    expect(text).not.toMatch(/\$\s?\d/);
+    expect(text).toMatch(/does not quote a price/i);
+    expect(text).toContain("1-800-662-4357");
+  });
+
+  it("says plainly that a listing is not a vetting", () => {
+    expect(allText(mk("howToChoose")!)).toMatch(/not an endorsement|is not a verification/i);
+  });
+
+  it("does not present a population ranking as a quality ranking", () => {
+    const text = allText(mk("bestCities")!);
+    expect(text).toMatch(/not a quality ranking/i);
   });
 });
