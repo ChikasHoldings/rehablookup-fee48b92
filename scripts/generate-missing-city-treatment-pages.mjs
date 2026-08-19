@@ -42,6 +42,11 @@ import {
   renderFacilityList,
   citySlug,
 } from "./_facility-data.mjs";
+import { buildCityIndex } from "../src/lib/seo/cityProfiles.mjs";
+import { buildCityTreatmentContent } from "../src/lib/seo/cityTreatmentContent.mjs";
+import { renderComposedHtml } from "../src/lib/seo/composedHtml.mjs";
+
+let CITY_INDEX = new Map();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "..");
@@ -50,16 +55,23 @@ const BASE_URL = "https://rehablookup.com";
 
 function parseTopCities() {
   const txt = fs.readFileSync(path.join(repoRoot, "src/data/seoPageConfig.ts"), "utf8");
-  const re = /\{\s*slug:\s*"([a-z0-9-]+)",\s*city:\s*"([^"]+)"(?:,\s*population:\s*"([^"]+)")?[^}]*?stateAbbr:\s*"([A-Z]{2})"[^}]*?stateSlug:\s*"([a-z-]+)"/g;
+  const re = /\{\s*slug:\s*"([a-z0-9-]+)",\s*city:\s*"([^"]+)"(?:,\s*population:\s*"([^"]+)")?[^}]*?stateAbbr:\s*"([A-Z]{2})"[^}]*?stateSlug:\s*"([a-z-]+)"([^}]*)/g;
   const out = [];
   let m;
   while ((m = re.exec(txt))) {
+    // `nearbyCities` is a curated, shipped association between markets.
+    // It is NOT a distance calculation, and the composer says so where it
+    // uses it — but it is per-city, which is exactly what these pages
+    // were missing, and it covers cities the population table does not.
+    const tail = m[6] ?? "";
+    const nearby = (tail.match(/nearbyCities:\s*\[([^\]]*)\]/) ?? [])[1] ?? "";
     out.push({
       slug: m[1],
       city: m[2],
       population: m[3] || "",
       stateAbbr: m[4],
       stateSlug: m[5],
+      nearbyCities: [...nearby.matchAll(/"([a-z0-9-]+)"/g)].map((x) => x[1]),
     });
   }
   return out;
@@ -406,6 +418,23 @@ function renderPage({ prefix, city, facilities = [] }) {
     specialty: "Addiction Medicine",
   });
 
+  // The city-keyed half of the page. Without a profile there is nothing
+  // truthful to add, so the block is simply absent rather than filled
+  // with a generic paragraph that would rejoin the duplicate cluster.
+  const profile =
+    CITY_INDEX.get(city.slug) ??
+    CITY_INDEX.get(`${stateSlug}|${String(city.city).toLowerCase().replace(/[^a-z0-9]+/g, "")}`);
+  const cityBlock = profile
+    ? renderComposedHtml(
+        buildCityTreatmentContent({
+          profile,
+          treatmentLabel: label,
+          treatmentSlug: prefix,
+          facilityCount: facilities.length,
+        }),
+      )
+    : "";
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -449,6 +478,8 @@ function renderPage({ prefix, city, facilities = [] }) {
 
     ${renderFacilityList(facilities, `${city.city}, ${city.stateAbbr}`)}
 
+    ${cityBlock}
+
     ${renderStateFactBox(stateName, stateSlug)}
     ${renderStateSignature(stateName, stateSlug)}
 
@@ -472,9 +503,47 @@ function renderPage({ prefix, city, facilities = [] }) {
 </html>`;
 }
 
+/**
+ * City-level facts. Everything else on these pages is keyed on STATE,
+ * which is exactly why two cities in one state used to render the same
+ * body. Fail loudly rather than silently regenerating 13,824 pages
+ * without the axis that makes them distinct.
+ *
+ * `cities` is the published page list, which is a slightly different set
+ * from `locationSeoData` — some published cities are absent there, and a
+ * few use a different slug spelling. Both are handed to the index: the
+ * absent ones come back as reduced profiles (county and curated peers,
+ * no invented population) and the misspelled ones resolve by name.
+ */
+async function buildCityProfiles(cities) {
+  const [{ statesData }, { stateCountyData }] = await Promise.all([
+    import("../src/data/locationSeoData.ts"),
+    import("../src/data/countySeoData.ts"),
+  ]);
+  const nameBySlug = new Map(cities.map((c) => [c.slug, c.city]));
+  const relatedMarkets = Object.fromEntries(
+    cities.map((c) => [c.slug, (c.nearbyCities ?? []).map((s) => nameBySlug.get(s)).filter(Boolean)]),
+  );
+  const index = buildCityIndex({
+    statesData,
+    stateCountyData,
+    extraCities: cities.map((c) => ({
+      name: c.city,
+      slug: c.slug,
+      stateSlug: c.stateSlug || stateSlugForAbbr(c.stateAbbr),
+      stateAbbr: c.stateAbbr,
+      relatedMarkets: relatedMarkets[c.slug] ?? [],
+    })),
+    relatedMarkets,
+  });
+  if (index.size === 0) throw new Error("city profile index is empty");
+  return index;
+}
+
 async function main() {
   const prefixes = parsePrefixes();
   const cities = parseTopCities();
+  CITY_INDEX = await buildCityProfiles(cities);
   // Inject real local facilities (with /center/ links) so each page carries
   // unique, substantive content instead of templated boilerplate — the fix
   // for GSC "soft 404 / thin / crawled-not-indexed". Fetched once; matched
