@@ -39,6 +39,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import {
   fetchAllFacilities,
   groupByStateCity,
+  stateCityKeyFromSlugs,
   renderFacilityList,
   ALLOW_EMPTY_FACILITY_DATA,
 } from "./_facility-data.mjs";
@@ -127,7 +128,11 @@ async function main() {
     for (const file of entries) {
       if (!file.endsWith(".html")) continue;
       const city = file.slice(0, -".html".length);
-      const matches = byCity.get(`${stateSlug}/${city}`) ?? [];
+      // Canonical association key. Folds the page slug and the
+      // facility's recorded city to the same value, so
+      // /rehab-centers/missouri/st-charles finds the facilities stored
+      // as "Saint Charles" instead of shipping an empty inventory block.
+      const matches = byCity.get(stateCityKeyFromSlugs(stateSlug, city)) ?? [];
       if (matches.length === 0) {
         pagesWithout++;
         continue;

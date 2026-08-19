@@ -3,7 +3,7 @@ import { Navigate, useParams } from "react-router-dom";
 import { SEOLandingTemplate } from "@/components/seo/SEOLandingTemplate";
 import { getCityImage } from "@/data/locationImages";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
-import { citiesMatch } from "@/lib/cityNameMatch";
+import { cityScope, citiesMatch, filterExact } from "@/lib/location";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
 import { shouldEmitFAQSchema, validatePage } from "@/utils/seoPageValidator";
@@ -35,48 +35,87 @@ export default function CityInsurancePage() {
       .join(" ");
   }, [citySlug]);
 
-  const facilities = useMemo(() => {
-    if (!insurer || !stateConfig || !cityName) return [];
+  const { facilities, exactMatchCount, indexabilityInventoryCount } = useMemo(() => {
+    if (!insurer || !stateConfig || !cityName) {
+      return { facilities: [], exactMatchCount: 0, indexabilityInventoryCount: 0 };
+    }
     const allFacilities = [...treatmentCenters, ...approvedFacilities];
-    const stateLower = stateConfig.state.toLowerCase();
+    // ONE canonical membership predicate, shared with search and the
+    // Node generators — not a private citiesMatch/normalizeState pair.
+    const scope = cityScope(cityName, stateConfig.state);
 
     // Use the shared insurance matcher (normalized + alias-aware). The
     // matcher resolves the insurer name to its canonical filter key so
     // "Self-Pay / Private Pay" lands on facilities tagged "Self-Pay/Private
     // Pay" (no spaces) — the inline `.includes()` here previously dropped
     // those silently. See docs/search-audit-2026-05-21.md §F1.
+    //
+    // The matcher itself is UNCHANGED by this correction. Insurance
+    // semantics — what counts as accepting a plan, and the fact that
+    // acceptance is not in-network status — are out of scope here; only
+    // the geography wrapped around the matcher moved.
     const insMatch = (f: typeof allFacilities[number]) =>
       matchesInsuranceFilter(asSearchableFacility(f), insurer.name);
 
-    // City + insurer match
-    const exact = allFacilities.filter((f) => {
-      const cityMatch = citiesMatch(f.city, cityName);
-      const stateMatch = f.state.toLowerCase() === stateLower;
-      return cityMatch && stateMatch && insMatch(f);
-    });
+    // THE page's inventory: exact city membership AND the insurer
+    // matcher. Nothing else. This page used to widen twice — first
+    // dropping the insurer filter, then dropping the city — so a
+    // "Cigna in Berkeley" page with no Cigna facility in Berkeley
+    // listed Berkeley facilities that take other plans, or Cigna
+    // facilities in Fresno, and reported that number as the answer to
+    // "how many Cigna-accepting centers are in Berkeley".
+    const exact = filterExact(allFacilities, scope).filter(insMatch);
 
-    if (exact.length >= 3) return exact.slice(0, 12);
+    // NOT inventory. This reproduces the OLD widening ladder for the
+    // sole purpose of feeding `validatePage`, so that correcting the
+    // public list does not also flip this page family's pre-existing
+    // indexability. It is never rendered, never counted in copy, and
+    // never described as local inventory. It goes away with the
+    // dedicated SEO indexability phase.
+    //
+    // FROZEN, deliberately. It uses the raw `.toLowerCase()` state
+    // comparison main shipped — NOT `normalizeState` and NOT the
+    // canonical scope above. That looks like a bug and is the opposite:
+    // the two agree on every row in the live catalogue (every facility
+    // state is a full name, e.g. "California"), but only the verbatim
+    // copy makes "this correction changes zero noindex URLs" true by
+    // construction instead of true-because-today's-data-happens-to-
+    // agree. A future row stored as "CA" would join the public list via
+    // the canonical predicate and still be invisible here, which is
+    // correct: indexability policy is a later phase's call to change,
+    // not a side effect of fixing geography.
+    const legacyStateLower = stateConfig.state.toLowerCase();
+    const legacyCityStateMatch = (f: typeof allFacilities[number]) =>
+      citiesMatch(f.city, cityName) && f.state.toLowerCase() === legacyStateLower;
 
-    // Fallback: city + state (no insurer filter)
-    const cityFallback = allFacilities.filter((f) => {
-      const cityMatch = citiesMatch(f.city, cityName);
-      const stateMatch = f.state.toLowerCase() === stateLower;
-      return cityMatch && stateMatch;
-    });
+    const legacyInventory = () => {
+      const legacyExact = allFacilities.filter((f) => legacyCityStateMatch(f) && insMatch(f));
+      if (legacyExact.length >= 3) return legacyExact.slice(0, 12).length;
+      const cityFallback = allFacilities.filter(legacyCityStateMatch);
+      if (cityFallback.length >= 3) return cityFallback.slice(0, 12).length;
+      return allFacilities
+        .filter((f) => f.state.toLowerCase() === legacyStateLower && insMatch(f))
+        .slice(0, 12).length;
+    };
 
-    if (cityFallback.length >= 3) return cityFallback.slice(0, 12);
-
-    // Fallback: state + insurer
-    return allFacilities
-      .filter((f) => f.state.toLowerCase() === stateLower && insMatch(f))
-      .slice(0, 12);
+    return {
+      facilities: exact.slice(0, 12),
+      // The ONLY number this page may publish as "N facilities
+      // accepting <insurer> in <city>". Uncapped — `facilities` is
+      // capped at 12 for page weight, the count is not.
+      exactMatchCount: exact.length,
+      indexabilityInventoryCount: legacyInventory(),
+    };
   }, [approvedFacilities, insurer, stateConfig, cityName]);
 
   if (!insurer || !stateConfig || !cityName) {
     return <Navigate to="/insurance" replace />;
   }
 
-  const validation = validatePage("city-insurance", facilities.length);
+  // See `indexabilityInventoryCount` above: the pre-PR validator input,
+  // preserved verbatim so this correction introduces zero new noindex
+  // URLs and zero newly indexable ones.
+  const validation = validatePage("city-insurance", indexabilityInventoryCount);
   const pageTitle = `${insurer.name} Rehab Coverage in ${cityName}, ${stateData?.abbreviation || stateConfig.state}`;
 
   const faqs = [
@@ -90,7 +129,7 @@ export default function CityInsurancePage() {
     },
     {
       question: `How many ${insurer.name}-accepting rehab centers are in ${cityName}?`,
-      answer: `${cityName}, ${stateConfig.state} has ${facilities.length > 0 ? `${facilities.length}+ treatment facilities` : "treatment options available through nearby providers"}. Use RehabLookup to compare programs, check reviews, and verify insurance acceptance before choosing a facility.`,
+      answer: `RehabLookup lists ${exactMatchCount > 0 ? `${exactMatchCount} ${exactMatchCount === 1 ? "facility" : "facilities"} in ${cityName}, ${stateConfig.state}` : `no facility in ${cityName}, ${stateConfig.state}`} accepting ${insurer.name}. ${exactMatchCount > 0 ? "Compare programs, check reviews, and verify insurance acceptance before choosing a facility." : `The ${stateConfig.state} directory covers the rest of the state.`}`,
     },
   ];
 
@@ -124,7 +163,7 @@ export default function CityInsurancePage() {
     <SEOLandingTemplate
       title={pageTitle}
       metaTitle={`${insurer.name} Rehab in ${cityName}, ${stateData?.abbreviation || ""} — Find Coverage | RehabLookup`}
-      metaDescription={`Find rehab centers accepting ${insurer.name} in ${cityName}, ${stateConfig.state}. Compare ${facilities.length}+ facilities, verify coverage, get help today.`}
+      metaDescription={`Find rehab centers accepting ${insurer.name} in ${cityName}, ${stateConfig.state}. Compare ${exactMatchCount} listed facilities, verify coverage, get help today.`}
       canonical={`https://rehablookup.com/insurance/${insurerSlug}/${stateSlug}/${citySlug}`}
       noindex={!validation.shouldIndex}
       structuredData={structuredData}
@@ -185,7 +224,7 @@ export default function CityInsurancePage() {
       ]}
       facilities={facilities}
       isLoading={isLoading}
-      facilityCount={facilities.length}
+      facilityCount={exactMatchCount}
       showMoreLink={`/insurance/${insurerSlug}/${stateSlug}`}
       faqs={faqs}
       faqTreatmentType={`${insurer.name} Coverage`}

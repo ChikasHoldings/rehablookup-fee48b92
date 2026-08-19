@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { normalizeState } from "@/lib/location";
 import { Navigate, useParams } from "react-router-dom";
 import { SEOLandingTemplate } from "@/components/seo/SEOLandingTemplate";
 import { getStateImage } from "@/data/locationImages";
@@ -32,10 +33,11 @@ export default function InsuranceStatePage() {
       return { facilities: [], directMatchCount: 0, stateFallbackCount: 0 };
     }
     const allFacilities = [...treatmentCenters, ...approvedFacilities];
-    const stateLower = stateConfig.state.toLowerCase();
+    // Canonical state normalization (handles CA/California and DC).
+    const scopeState = normalizeState(stateConfig.state);
 
     const exactMatch = allFacilities.filter((f) => {
-      const stateMatch = f.state.toLowerCase() === stateLower;
+      const stateMatch = normalizeState(f.state) === scopeState;
       const insuranceMatch = matchesInsuranceFilter(
         asSearchableFacility(f),
         insurer.name,
@@ -43,7 +45,7 @@ export default function InsuranceStatePage() {
       return stateMatch && insuranceMatch;
     });
 
-    const stateAll = allFacilities.filter((f) => f.state.toLowerCase() === stateLower);
+    const stateAll = allFacilities.filter((f) => normalizeState(f.state) === scopeState);
     const display = exactMatch.length > 0 ? exactMatch : stateAll;
 
     return {
@@ -53,6 +55,10 @@ export default function InsuranceStatePage() {
     };
   }, [approvedFacilities, insurer, stateConfig]);
 
+  // `directMatchCount` is the truthful count for this page's scope.
+  // It is what the hero tile renders — never `facilities.length`,
+  // which may include the wider fallback list shown below when too
+  // few exact matches exist.
   const validation = validatePage("insurance-state", directMatchCount, { stateFallbackCount });
 
   const faqs = useMemo(() => {
@@ -168,7 +174,7 @@ export default function InsuranceStatePage() {
       ]}
       facilities={facilities}
       isLoading={isLoading}
-      facilityCount={facilities.length}
+      facilityCount={directMatchCount}
       showMoreLink={`/rehab-centers/${stateSlug}`}
       faqs={faqs}
       faqTreatmentType={`${insurer.name} Coverage`}

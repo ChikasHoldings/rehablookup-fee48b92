@@ -13,7 +13,7 @@ import { SearchResultsForm } from "@/components/search/SearchResultsForm";
 
 import { NoResultsDirectoryCTA } from "@/components/search/NoResultsDirectoryCTA";
 import { AreaWaitlistCapture } from "@/components/seo/AreaWaitlistCapture";
-import { MapPin, Search, X, ArrowUpDown, ChevronLeft, ChevronRight, Phone, SlidersHorizontal, Building2, Shield, Star, DollarSign, Sparkles, ChevronDown, Navigation, CreditCard, Share2, Check, AlertCircle, RefreshCw, Scale } from "lucide-react";
+import { MapPin, Search, X, ArrowUpDown, ChevronLeft, ChevronRight, Phone, SlidersHorizontal, Building2, Shield, Star, DollarSign, Sparkles, ChevronDown, CreditCard, Share2, Check, AlertCircle, RefreshCw, Scale } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,13 +30,20 @@ import {
   parseLocationInput, 
   enrichLocationMatchWithZip,
   getProximityTier,
-  getStateAbbr,
   getNearbyStates,
-  facilityMatchesLocation,
   PROXIMITY_TIER_ORDER,
   type LocationMatch,
   type ProximityTier
 } from "@/lib/proximitySearch";
+import {
+  describeScope,
+  normalizeState,
+  parseLocation,
+  splitByLocation,
+  stateDisplayName,
+  stateSlugFor,
+  type LocationScope,
+} from "@/lib/location";
 import { useZipcodeLookup } from "@/hooks/useZipcodeLookup";
 import { useGeoLocation } from "@/hooks/useGeoLocation";
 import { supabase } from "@/integrations/supabase/client";
@@ -73,8 +80,14 @@ const ITEMS_PER_PAGE = 12;
 
 type SortOption = "proximity" | "featured" | "rating-high" | "rating-low" | "name-asc" | "name-desc";
 
+// The internal key stays "proximity" (it is what `getProximityTier`
+// returns and what every URL already carries). The PUBLIC label may not
+// say "Nearest" / "Closest" / "Distance": with no latitude or longitude
+// in the catalogue we order by categorical location match — same ZIP,
+// then same city, then same state, then a neighbouring state — which is
+// a relevance ordering, not a measured one.
 const sortOptions: { value: SortOption; label: string }[] = [
-  { value: "proximity", label: "Nearest First" },
+  { value: "proximity", label: "Location Match" },
   { value: "featured", label: "Featured First" },
   { value: "rating-high", label: "Highest Rated" },
   { value: "rating-low", label: "Lowest Rated" },
@@ -86,14 +99,72 @@ const sortOptions: { value: SortOption; label: string }[] = [
 // (shared with `RehabCenters.tsx`) so a change to a `matches` array only has
 // to happen in one place. Imported above as TREATMENT_FILTERS / INSURANCE_FILTERS.
 
-// Distance filters
-const distanceFilters = [
-  { value: "10", label: "Within 10 miles" },
-  { value: "25", label: "Within 25 miles" },
-  { value: "50", label: "Within 50 miles" },
-  { value: "100", label: "Within 100 miles" },
-  { value: "any", label: "Any distance" },
-];
+// NO DISTANCE FILTERS. The `facilities` table has city, state, zip_code
+// and address — no latitude and no longitude. "Within 25 miles" was
+// implemented by mapping the mile value onto the categorical proximity
+// tier (exact / city / state / neighbouring state), which is not a
+// distance and cannot be made into one without coordinates. The control,
+// the chip and the filtering step are all gone; `?distance=` on an old
+// bookmark is read by nothing and narrows nothing. Restoring a radius
+// filter requires real coordinates first.
+
+/**
+ * Crawler-facing wording for ONE resolved location scope.
+ *
+ * The result set on this page is exact-only: `splitByLocation` keeps
+ * `exact` and `nearby` in separate buckets, and only `exact` is counted,
+ * paginated and headed ("N facilities in <describeScope(...)>"). The
+ * <title> and meta description have to describe that same set. They used
+ * to say "Rehab Centers Near Los Angeles, CA", which promises a measured
+ * proximity the catalogue cannot support — `facilities` carries city,
+ * state, zip_code and address and no coordinates, so there is no radius,
+ * no distance, and therefore no "near" / "nearby" / "nearest" /
+ * "closest" / "within X miles" on an exact-scope page.
+ *
+ * `describeScope` stays the single source of the place label — this is
+ * NOT a second location parser. The only per-type work here is grammar:
+ * `title` slots into "Rehab Centers in <title>" and `sentence` into
+ * "...listings in <sentence>", and a state reads better under its
+ * canonical full name than under the bare abbreviation `describeScope`
+ * returns.
+ *
+ * Returns null for the two scopes that must never be phrased as "in
+ * <place>":
+ *   county     — no facility→county data exists, so the county branch
+ *                writes its own qualified copy instead of a claim.
+ *   unresolved — we never learned which place the string meant, so
+ *                neutral search wording is the only truthful option.
+ */
+function seoScopeWording(
+  scope: LocationScope | null,
+): { title: string; sentence: string } | null {
+  if (!scope) return null;
+  switch (scope.type) {
+    case "city":
+    case "zip": {
+      // "Los Angeles, CA" / "ZIP 21215" — already title-shaped.
+      const label = describeScope(scope);
+      return { title: label, sentence: label };
+    }
+    case "state": {
+      const label = stateDisplayName(scope.state) ?? scope.state;
+      return { title: label, sentence: label };
+    }
+    case "city-any-state":
+      // A bare "Springfield" is EVERY Springfield in the country. The
+      // copy has to reveal that span, or it names one town while listing
+      // several states' worth. `describeScope` writes it as a
+      // mid-sentence fragment ("cities named Springfield across the
+      // U.S."), which is exactly what the description needs; the title
+      // says the same thing in title case.
+      return {
+        title: `Cities Named ${scope.city} Across the U.S.`,
+        sentence: describeScope(scope),
+      };
+    default:
+      return null;
+  }
+}
 
 // Amenity filters
 const amenityFilters = [
@@ -146,7 +217,6 @@ const SearchResults = () => {
   const treatmentTypesParam = searchParams.get("treatmentTypes") || "";
   const amenitiesParam = searchParams.get("amenities") || "";
   const insuranceTypesParam = searchParams.get("insuranceTypes") || "";
-  const distanceParam = searchParams.get("distance") || "";
   const verifiedOnly = searchParams.get("verified") === "true";
   const featuredOnly = searchParams.get("featuredOnly") === "true";
 
@@ -154,7 +224,6 @@ const SearchResults = () => {
   const selectedTreatmentTypes = useMemo(() => treatmentTypesParam ? treatmentTypesParam.split(",") : [], [treatmentTypesParam]);
   const selectedAmenities = useMemo(() => amenitiesParam ? amenitiesParam.split(",") : [], [amenitiesParam]);
   const selectedInsuranceTypes = useMemo(() => insuranceTypesParam ? insuranceTypesParam.split(",") : [], [insuranceTypesParam]);
-  const selectedDistance = distanceParam || "";
 
   const { data: approvedFacilities = [], isLoading, error: facilitiesError, refetch: refetchFacilities } = useStaticFacilities();
   const geo = useGeoLocation();
@@ -285,46 +354,66 @@ const SearchResults = () => {
     setSearchParams(newParams);
   }, [searchParams, setSearchParams]);
 
-  const { filteredCenters, isExpandedSearch, facetPool } = useMemo(() => {
+  const { filteredCenters, nearbyCenters, locationScope: activeLocationScope, facetPool } = useMemo(() => {
     let results = [...allCenters];
-    let expanded = false;
+    // The geographic scope the user actually asked for, or null when no
+    // location was supplied.
+    let locationScope: LocationScope | null = null;
+    // IDs of the facilities that are genuinely inside `locationScope`.
+    // `null` means no location scope is active, so everything surviving
+    // the other filters is "exact" by default.
+    let exactIds: Set<string> | null = null;
     // Snapshot of the result set BEFORE treatment-multi and insurance-multi
     // and amenities filters are applied. Facet counts are computed against
     // this pool so toggling within a filter group doesn't suppress its
     // own counts — selecting "Aetna" must not show "(0)" for "BCBS" etc.
     let preMultiPool: typeof results = [];
 
-    // Direct state filter from URL param (e.g. from near-me pages: ?state=FL)
+    // Direct state filter from URL param (e.g. from near-me pages: ?state=FL).
+    // Canonical state normalization — exactly that state, never its
+    // neighbours, and DC-aware.
     if (stateParam) {
-      const stateUpper = stateParam.toUpperCase();
-      results = results.filter(c => {
-        const cState = getStateAbbr(c.state)?.toUpperCase() || c.state.toUpperCase();
-        return cState === stateUpper || c.state.toLowerCase() === stateParam.toLowerCase();
-      });
+      const wantState = normalizeState(stateParam);
+      results = wantState
+        ? results.filter((c) => normalizeState(c.state) === wantState)
+        : [];
     }
 
-    // Build location match from explicit location or effective fallback
+    // ---- CANONICAL LOCATION SCOPE -------------------------------------
+    // Geographic membership is decided by @/lib/location and nothing else.
+    // EXACT results are the only ones counted or labelled with the place
+    // name; same-state-different-city facilities go to a separate NEARBY
+    // bucket that is rendered under its own heading.
     let locationMatch: LocationMatch | null = null;
     const locationForFilter = location; // Only filter by explicit location
     const locationForSort = effectiveLocation; // Sort by effective (includes profile/geo fallback)
-    
+
     if (locationForFilter) {
       locationMatch = parseLocationInput(locationForFilter);
-      // Enrich with ZIP resolution data for better city/state matching
+      // ZIP enrichment stays available for SORTING and labels, but it no
+      // longer widens the FILTER: an exact ZIP query keeps matching that
+      // ZIP, not the whole city/state the ZIP happens to sit in.
       if (resolvedZipData) {
         locationMatch = enrichLocationMatchWithZip(locationMatch, resolvedZipData);
       }
-      
-      // Filter to include relevant results by location
-      const locationFiltered = results.filter((c) => facilityMatchesLocation(c, locationMatch!));
-      
-      // Auto-expand: if strict location filtering yields 0 results, show all results sorted by proximity
-      if (locationFiltered.length === 0) {
-        expanded = true;
-        // Don't filter — let proximity sort handle ranking
-      } else {
-        results = locationFiltered;
-      }
+
+      const scope = parseLocation(locationForFilter);
+      const split = splitByLocation(results, scope);
+
+      // No auto-expand. A location that matches nothing returns nothing.
+      // Previously a zero-match location silently disabled the location
+      // filter entirely and returned the whole nationwide catalogue still
+      // labelled with the user's search term.
+      //
+      // Exact and nearby travel together through the REMAINING filters
+      // (query, treatment, insurance, amenities, ...) so both
+      // buckets are narrowed by the same criteria, then are separated
+      // again at the end. They are never merged for counting: the split
+      // below is by identity, so a nearby facility cannot leak into the
+      // exact set.
+      locationScope = scope;
+      exactIds = new Set(split.exact.map((c) => c.id));
+      results = [...split.exact, ...split.nearby];
     }
 
     // Free-text search with fuzzy/partial matching
@@ -394,7 +483,9 @@ const SearchResults = () => {
     // Capture the pool BEFORE the multi-select treatment / insurance /
     // amenities filters apply. Facet counts read from here so the user can
     // freely toggle within a group without each option self-suppressing.
-    preMultiPool = results;
+    // Facet counts describe the user's EXACT geographic context, so the
+    // nearby bucket is excluded here too.
+    preMultiPool = exactIds ? results.filter((c) => exactIds!.has(c.id)) : results;
 
     // Insurance Types dropdown filters — shared matcher folds case + internal
     // whitespace and walks the alias list in src/lib/searchFilters.ts so e.g.
@@ -453,52 +544,15 @@ const SearchResults = () => {
       results = results.filter((center) => center.featured === true);
     }
 
-    // Distance filter. Without lat/long on every facility we can't compute
-    // true mile-distance, so we map the user's mile radius onto the
-    // categorical proximity tier — a defensible UX approximation that
-    // matches how the rest of the page already sorts results.
-    //   ≤10 mi   → exact OR city
-    //   ≤25 mi   → exact / city / state
-    //   ≤50/100 → also nearby
-    //   "any"   → unfiltered
-    // The chip was previously cosmetic (selectedDistance read + counted as
-    // active but never applied), so any results being narrowed is a win
-    // versus the prior dead-feature behavior.
-    // Audit fix (2026-05-23): the distance filter previously only fired
-    // when `locationMatch` existed, which was built strictly from the
-    // explicit `location` URL param. A user with no typed location but
-    // a geo-IP-resolved `effectiveLocation` could select "Within 10
-    // miles" and see a no-op — the filter chip displayed as active but
-    // nothing was actually narrowed. Now we build a separate distance
-    // location match from `effectiveLocation` as a fallback so the
-    // distance filter actually constrains results in the geo-IP path.
-    //
-    // Tier ladder also tightened: 50 mi no longer pulls in the "nearby
-    // state" tier (cross-state adjacents that can be 100s of miles
-    // away). 100 mi keeps the looser tier because at that radius
-    // crossing into an adjacent state is plausible.
-    const distanceLocationMatch: LocationMatch | null =
-      locationMatch ??
-      (effectiveLocation
-        ? (() => {
-            const m = parseLocationInput(effectiveLocation);
-            return resolvedZipData ? enrichLocationMatchWithZip(m, resolvedZipData) : m;
-          })()
-        : null);
-
-    if (selectedDistance && selectedDistance !== "any" && distanceLocationMatch) {
-      const miles = parseInt(selectedDistance, 10);
-      const allow = (tier: string): boolean => {
-        if (miles <= 10) return tier === "exact" || tier === "city";
-        if (miles <= 25) return tier === "exact" || tier === "city";
-        if (miles <= 50) return tier === "exact" || tier === "city" || tier === "state";
-        return tier === "exact" || tier === "city" || tier === "state" || tier === "nearby";
-      };
-      results = results.filter((center) => {
-        const { tier } = getProximityTier(center, distanceLocationMatch);
-        return allow(tier);
-      });
-    }
+    // NO DISTANCE STEP. This is where "Within N miles" used to translate
+    // a mile radius into the categorical proximity tier — 10 mi meant
+    // "same city", 100 mi meant "or a neighbouring state". Those tiers
+    // are not miles: two facilities in the same city can be 30 miles
+    // apart, and two facilities in adjacent states can be 600. With no
+    // coordinates in the catalogue there is no honest radius to compute,
+    // so the filter is gone rather than approximated. A stale
+    // `?distance=25` is inert: nothing below reads it, exact membership
+    // is untouched, and the result set is identical with or without it.
 
     // Build proximity scoring using the enriched location match
     const getProximityScore = (center: { city: string; state: string; zipCode?: string }): number => {
@@ -587,14 +641,24 @@ const SearchResults = () => {
       });
     }
 
-    return { filteredCenters: results, isExpandedSearch: expanded, facetPool: preMultiPool };
-  }, [allCenters, location, effectiveLocation, treatment, insurance, type, stateParam, queryParam, sortParam, selectedTreatmentTypes, selectedAmenities, selectedInsuranceTypes, selectedDistance, verifiedOnly, featuredOnly, resolvedZipData, typeFilterMap]);
+    // Separate the two buckets. Sort order established above is
+    // preserved within each. `filteredCenters` — the set that drives the
+    // visible count, pagination and the SEO description — is exact only.
+    const exactOnly = exactIds ? results.filter((c) => exactIds!.has(c.id)) : results;
+    const nearbyOnly = exactIds ? results.filter((c) => !exactIds!.has(c.id)) : [];
+    return {
+      filteredCenters: exactOnly,
+      nearbyCenters: nearbyOnly,
+      locationScope,
+      facetPool: preMultiPool,
+    };
+  }, [allCenters, location, effectiveLocation, treatment, insurance, type, stateParam, queryParam, sortParam, selectedTreatmentTypes, selectedAmenities, selectedInsuranceTypes, verifiedOnly, featuredOnly, resolvedZipData, typeFilterMap]);
 
-  const hasFilters = location || treatment || insurance || type || stateParam || queryParam || selectedTreatmentTypes.length > 0 || selectedAmenities.length > 0 || selectedInsuranceTypes.length > 0 || selectedDistance || verifiedOnly || featuredOnly;
+  const hasFilters = location || treatment || insurance || type || stateParam || queryParam || selectedTreatmentTypes.length > 0 || selectedAmenities.length > 0 || selectedInsuranceTypes.length > 0 || verifiedOnly || featuredOnly;
   const activeTypeFilter = type ? typeDisplayNames[type] : null;
 
   // Count active filters
-  const activeFiltersCount = selectedTreatmentTypes.length + selectedAmenities.length + selectedInsuranceTypes.length + (selectedDistance ? 1 : 0) + (verifiedOnly ? 1 : 0) + (featuredOnly ? 1 : 0);
+  const activeFiltersCount = selectedTreatmentTypes.length + selectedAmenities.length + selectedInsuranceTypes.length + (verifiedOnly ? 1 : 0) + (featuredOnly ? 1 : 0);
 
   const totalPages = Math.max(1, Math.ceil(filteredCenters.length / ITEMS_PER_PAGE));
   // F11 clamp: ?page=99 against a 6-page result set previously rendered an
@@ -605,8 +669,71 @@ const SearchResults = () => {
     return filteredCenters.slice(start, start + ITEMS_PER_PAGE);
   }, [filteredCenters, safePage]);
 
+  // SAME-STATE — a separate, explicitly labelled bucket. These facilities
+  // are in the same state as the searched city but in a DIFFERENT city,
+  // so they are never counted in the exact total and never rendered under
+  // the exact heading. Capped for page weight; the cap is stated in the
+  // copy so the section never implies it is the complete set.
+  //
+  // The heading says "Other facilities in <state>", NOT "Nearby
+  // facilities". The catalogue carries no latitude/longitude, so we
+  // cannot prove that a Redding facility is near Los Angeles — both are
+  // in California and that is the whole of what the data supports.
+  // Same-state is a fact; nearby, at 500 miles, would be a lie. No
+  // mileage, radius, "nearest" or "close by" claim may appear here
+  // unless coordinates exist. The internal variable stays `nearby`
+  // (that is `relateToScope`'s vocabulary); only the public copy is
+  // constrained.
+  const NEARBY_LIMIT = 12;
+  const nearbySection = useMemo(() => {
+    if (!nearbyCenters.length || !activeLocationScope) return null;
+    if (activeLocationScope.type !== "city") return null;
+    const shown = nearbyCenters.slice(0, NEARBY_LIMIT);
+    const stateLabel = stateDisplayName(activeLocationScope.state) ?? activeLocationScope.state;
+    return (
+      <section className="mt-12 border-t border-border pt-8" aria-labelledby="nearby-heading">
+        <h2 id="nearby-heading" className="font-display text-lg font-bold text-foreground">
+          Other facilities in {stateLabel}
+        </h2>
+        <p className="text-sm text-muted-foreground mt-1 mb-5">
+          {nearbyCenters.length.toLocaleString()}{" "}
+          {nearbyCenters.length === 1 ? "facility" : "facilities"} elsewhere in {stateLabel}
+          {nearbyCenters.length > shown.length ? ` — showing the first ${shown.length}` : ""}.
+          These are not in {activeLocationScope.city}, and we do not hold
+          the coordinates needed to say how far away they are.
+        </p>
+        <div className="space-y-4">
+          {shown.map((center) => (
+            <SearchResultCard key={`nearby-${center.id}`} center={center} featured={center.featured} />
+          ))}
+        </div>
+      </section>
+    );
+  }, [nearbyCenters, activeLocationScope]);
+
+  // COUNTY SCOPE — a CAPABILITY limitation, not a zero-facility fact.
+  //
+  // `matchesExactly` returns false for every facility against a county
+  // scope, and that is correct: the `facilities` table has city, state,
+  // zip_code and address and no county column, so there is no
+  // facility→county mapping to match on. The canonical layer refuses to
+  // infer one (a facility in the city of Orange is not evidence about
+  // Orange County).
+  //
+  // What must NOT follow is the sentence "no facilities found in Cook
+  // County, IL". Zero exact matches here means we cannot evaluate the
+  // question, not that we checked and the answer is none. Cook County
+  // certainly has treatment facilities; RehabLookup just cannot tell you
+  // which of its listings sit inside it. The county branch below says
+  // that instead, and offers the searches we CAN answer truthfully.
+  const countyScope = activeLocationScope?.type === "county" ? activeLocationScope : null;
+  const countyStateName = countyScope
+    ? stateDisplayName(countyScope.state) ?? countyScope.state
+    : null;
+  const countyStateSlug = countyScope ? stateSlugFor(countyScope.state) : null;
+
   // Facet counts — read from `facetPool`, which is the result set narrowed
-  // by location/state/query/type/distance/verified/featured but BEFORE the
+  // by location/state/query/type/verified/featured but BEFORE the
   // multi-select treatment + insurance + amenities filters apply. That way
   // toggling within those groups doesn't suppress the group's own counts,
   // while still reflecting the user's location/query context.
@@ -649,8 +776,12 @@ const SearchResults = () => {
   // Build a shareable URL that preserves all current filters/location/sort/page
   const handleShare = useCallback(async () => {
     const url = `${window.location.origin}${window.location.pathname}${window.location.search}`;
-    const shareTitle = location
-      ? `Rehab Centers near ${location} — RehabLookup`
+    // Same contract as the <title>: a shared link travels further than
+    // the page it came from, so it may not carry a proximity claim the
+    // result set cannot back. `describeScope` names the exact scope.
+    const shareScope = seoScopeWording(activeLocationScope);
+    const shareTitle = shareScope
+      ? `Rehab Centers in ${shareScope.title} — RehabLookup`
       : queryParam
       ? `Rehab Centers matching "${queryParam}" — RehabLookup`
       : "Rehab Centers Search — RehabLookup";
@@ -682,7 +813,7 @@ const SearchResults = () => {
         variant: "destructive",
       });
     }
-  }, [location, queryParam, toast]);
+  }, [activeLocationScope, queryParam, toast]);
 
   const handleSortChange = (value: SortOption) => {
     const newParams = new URLSearchParams(searchParams);
@@ -745,13 +876,43 @@ const SearchResults = () => {
     // Analytics provider removed — zero-result searches tracked via analytics.search() above.
   }, [isLoading, filteredCenters.length, location, treatment, insurance, queryParam]);
 
-  // Determine display title (used in the page header). The SEO <title> below
-  // augments this with the page number so paginated variants don't collide.
+  // Crawler-facing scope wording, derived from the SAME canonical scope
+  // the result set was filtered to. Null for county (its own qualified
+  // copy below), unresolved input, and no-location searches.
+  const seoScope = seoScopeWording(activeLocationScope);
+  // The trimmed, whitespace-collapsed form of a location we could not
+  // place. Taken off the scope rather than off the raw `?location=` so a
+  // padded or doubled-space query does not leak into the meta strings.
+  const unresolvedLocation =
+    activeLocationScope?.type === "unresolved" ? activeLocationScope.raw : "";
+
+  // The search <title>. Nothing renders this on the page — the heading
+  // above the cards is built straight from `describeScope` — so it is
+  // read by crawlers and the share sheet only, and it has to make the
+  // same claim the listing does.
+  //
+  //   city           → Rehab Centers in Los Angeles, CA
+  //   zip            → Rehab Centers in ZIP 21215
+  //   state          → Rehab Centers in California
+  //   city-any-state → Rehab Centers in Cities Named Springfield Across the U.S.
+  //   county         → <county> County Treatment Facility Search — County
+  //                    Data Unavailable. NOT "Rehab Centers in Cook
+  //                    County": every county search returns zero exact
+  //                    matches because the catalogue has no county
+  //                    column, so a title that promised county listings
+  //                    would promise a filter we cannot run.
+  //   unresolved     → neutral search wording. We do not know what place
+  //                    the string meant, so nothing may be described as
+  //                    being "in" or "near" it.
   const searchDisplayTitle = queryParam
     ? `Results for "${queryParam}"`
-    : location
-      ? `Rehab Centers Near ${location}`
-      : "Find Treatment Centers";
+    : countyScope
+      ? `${countyScope.county} County Treatment Facility Search — County Data Unavailable`
+      : seoScope
+        ? `Rehab Centers in ${seoScope.title}`
+        : unresolvedLocation
+          ? `Rehab Center Search — ${unresolvedLocation}`
+          : "Find Treatment Centers";
 
   // Build a unique-per-variant SEO title and self-canonical for indexable
   // (i.e. unfiltered) paginated variants so page 2+ isn't deduped against
@@ -766,9 +927,33 @@ const SearchResults = () => {
   // of them are verified. `verified` is per-facility earned state (a handful of
   // records carry it); attaching it to a directory-wide result count is the
   // exact misstatement check-public-directory-truth exists to stop.
-  const seoDescription = `Browse ${filteredCenters.length} addiction treatment center listings${
-    location ? ` near ${location}` : queryParam ? ` matching "${queryParam}"` : ""
-  }${currentPage > 1 ? ` (page ${currentPage} of ${totalPages})` : ""}. Compare rehab programs, review insurance information, and contact facilities directly.`;
+  //
+  // The location clause names the EXACT scope ("in Los Angeles, CA", "in
+  // ZIP 21215", "in cities named Springfield across the U.S.") because
+  // `filteredCenters.length` counts exactly that set. "near <location>"
+  // described a radius the catalogue cannot measure, and — worse —
+  // attached it to a count that was never a radius count.
+  //
+  // County scope gets its own sentence. `filteredCenters.length` is 0 for
+  // every county search because the catalogue has no county column, and
+  // "Browse 0 listings in Cook County, IL" would publish that 0 as a
+  // finding. It is a gap in our data, so the description says so.
+  //
+  // An unresolved location gets neutral search wording — never "in" or
+  // "near" a place we could not identify.
+  const seoDescription = countyScope
+    ? `RehabLookup does not currently have facility-level county assignments, so ${
+        countyScope.county
+      } County${countyStateName ? `, ${countyStateName}` : ""} cannot be filtered accurately yet. Browse the state directory, or search by city or ZIP code for exact matches.`
+    : `Browse ${filteredCenters.length} addiction treatment center listings${
+        seoScope
+          ? ` in ${seoScope.sentence}`
+          : queryParam
+            ? ` matching "${queryParam}"`
+            : unresolvedLocation
+              ? ` for the search "${unresolvedLocation}"`
+              : ""
+      }${currentPage > 1 ? ` (page ${currentPage} of ${totalPages})` : ""}. Compare rehab programs, review insurance information, and contact facilities directly.`;
 
   // rel="prev"/"next" — only emit on indexable paginated views so crawlers
   // can stitch the sequence together without us advertising filtered/noindex
@@ -892,28 +1077,7 @@ const SearchResults = () => {
         </Select>
       </FilterSection>
 
-      {/* Distance */}
-      <FilterSection id="distance" icon={<Navigation className="h-3.5 w-3.5" />} label="Distance" count={selectedDistance ? 1 : 0}>
-        <div className="space-y-1.5">
-          {distanceFilters.map((filter) => {
-            const active = selectedDistance === filter.value;
-            return (
-              <button
-                key={filter.value}
-                onClick={() => setSingleFilter("distance", active ? "" : filter.value)}
-                className={`w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-all ${
-                  active
-                    ? "bg-primary/10 text-primary font-medium border border-primary/20"
-                    : "text-foreground hover:bg-secondary/60 border border-transparent"
-                }`}
-              >
-                <span>{filter.label}</span>
-                {active && <X className="h-3.5 w-3.5" />}
-              </button>
-            );
-          })}
-        </div>
-      </FilterSection>
+      {/* No Distance section — see the note beside `sortOptions`. */}
 
       {/* Insurance — multi-select toggle buttons (mirrors Amenities pattern).
           Persists via the `insuranceTypes` URL param (comma-separated).
@@ -1117,25 +1281,69 @@ const SearchResults = () => {
               with full-width prominence. */}
           <SearchResultsForm />
 
-          {/* Location subtitle. Single quiet line under the search
-              form. Renders "Near <city, state>" whether the location
-              came from the user (explicit `?location=`) or geo-IP
-              (effectiveLocation fallback) — the chrome no longer
-              distinguishes the two ("(auto-detected)" label removed
-              per the 2026-05-23 cleanup). Result count + queryParam
-              context are NOT surfaced here anymore — they live
-              inside the toolbar's range chip below. */}
+          {/* Location subtitle. Single quiet line under the search form,
+              and the LAST public surface that still said "Near <city,
+              state>".
+
+              It cannot. The catalogue has city, state, zip_code and
+              address and no coordinates, so "near" promises a measured
+              proximity nothing here can compute — the same reason the
+              <title>, the meta description, the distance filter and the
+              same-state bucket heading were rewritten earlier in this
+              phase. This line now names the SAME canonical scope the
+              results were filtered to, via the SAME `seoScopeWording`
+              helper the crawler copy uses. No second parser, no second
+              formatter, and no place label that the result set does not
+              actually mean:
+
+                Los Angeles, CA → Results in Los Angeles, CA
+                21215          → Results in ZIP 21215
+                California     → Results in California
+                Springfield    → Results in cities named Springfield
+                                 across the U.S.
+
+              A typed ZIP keeps its own label rather than being swapped
+              for the Zippopotam-resolved city, matching the exact-ZIP
+              behaviour fixed earlier: the lookup is presentation detail,
+              never the scope.
+
+              Two cases deliberately do NOT get "Results in <place>".
+              County and unresolved input return null from
+              `seoScopeWording` — there is no facility→county data, and
+              an unplaceable string never became a place — so the line
+              states what was searched without claiming the listing sits
+              inside it. And a location the USER never typed (seeker
+              profile or geo-IP, via `effectiveLocation`) is contextual
+              only: it informs the sort, it did not filter the results,
+              so it reads as a neutral "Location:" label. Presenting it
+              as "Near Chicago" would claim both a proximity and a
+              search the page never performed. */}
           {(location || effectiveLocation) && (
-            <p className="mt-4 text-xs sm:text-sm text-muted-foreground inline-flex items-center gap-1.5">
+            <p
+              data-testid="hero-location-subtitle"
+              className="mt-4 text-xs sm:text-sm text-muted-foreground inline-flex items-center gap-1.5"
+            >
               <MapPin className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary shrink-0" aria-hidden />
-              Near{" "}
-              <span className="font-semibold text-foreground">
-                {location
-                  ? (resolvedZipData
-                      ? `${resolvedZipData.city}, ${resolvedZipData.stateAbbr}`
-                      : location)
-                  : effectiveLocation}
-              </span>
+              {location ? (
+                seoScope ? (
+                  <>
+                    Results in{" "}
+                    <span className="font-semibold text-foreground">{seoScope.sentence}</span>
+                  </>
+                ) : (
+                  <>
+                    Searched{" "}
+                    <span className="font-semibold text-foreground">
+                      {unresolvedLocation || location}
+                    </span>
+                  </>
+                )
+              ) : (
+                <>
+                  Location:{" "}
+                  <span className="font-semibold text-foreground">{effectiveLocation}</span>
+                </>
+              )}
             </p>
           )}
         </div>
@@ -1222,10 +1430,12 @@ const SearchResults = () => {
             <main className="flex-1 min-w-0">
               {/* Auto-detected-location banner removed per the
                   2026-05-23 cleanup. The geo-IP detection itself
-                  still runs (effectiveLocation drives the proximity
-                  sort) — the chrome around it is gone. The hero's
-                  "Near <city, state>" subtitle is the only surface
-                  that hints at the detected location. */}
+                  still runs (effectiveLocation feeds the categorical
+                  location-match sort) — the chrome around it is gone.
+                  The hero's "Location: <city, state>" subtitle is the
+                  only surface that hints at the detected location, and
+                  it is labelled as context rather than as a search:
+                  a detected location has never filtered this page. */}
 
               {/* Featured rail — bucket resolved from current filters.
                   city+state → (city, slug); state only → (state, abbr);
@@ -1272,18 +1482,16 @@ const SearchResults = () => {
                 </div>
               ) : paginatedCenters.length > 0 ? (
                 <>
-                  {/* Expanded search notice */}
-                  {isExpandedSearch && location && (
-                    <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800 px-4 py-3 flex items-start gap-3">
-                      <Navigation className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-sm font-medium text-foreground">
-                          No exact matches near "{location}"
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          Showing the closest facilities nationwide, sorted by proximity. Results nearest to your search appear first.
-                        </p>
-                      </div>
+                  {/* Exact-scope heading. The number here is the exact
+                      matched set and nothing else — no statewide or
+                      neighbouring-state facilities are folded into it. */}
+                  {location && activeLocationScope && (
+                    <div className="mb-5">
+                      <p className="text-sm font-medium text-foreground">
+                        {filteredCenters.length.toLocaleString()}{" "}
+                        {filteredCenters.length === 1 ? "facility" : "facilities"} in{" "}
+                        {describeScope(activeLocationScope)}
+                      </p>
                     </div>
                   )}
 
@@ -1368,17 +1576,6 @@ const SearchResults = () => {
                                 <X className="h-3 w-3" />
                               </button>
                             ))}
-                            {selectedDistance && (
-                              <button
-                                type="button"
-                                onClick={() => setSingleFilter("distance", "")}
-                                className="shrink-0 inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/20 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/15 transition-colors"
-                                aria-label="Remove distance filter"
-                              >
-                                <span>Within {selectedDistance} mi</span>
-                                <X className="h-3 w-3" />
-                              </button>
-                            )}
                             {verifiedOnly && (
                               <button
                                 type="button"
@@ -1469,6 +1666,8 @@ const SearchResults = () => {
                     className="mt-10 justify-center"
                   />
 
+                  {nearbySection}
+
                   {/* End-of-results helper bands. Two compact sections
                       that catch the visitor who scrolled the full list
                       without clicking through:
@@ -1506,8 +1705,8 @@ const SearchResults = () => {
                           Widen your search
                         </h3>
                         <p className="text-sm text-muted-foreground leading-relaxed flex-1">
-                          Drop the level-of-care or insurance filter, or look at nearby
-                          cities — many people travel a short distance for the right
+                          Drop the level-of-care or insurance filter, or look at other
+                          cities in the same state — many people travel for the right
                           program.
                         </p>
                         <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-primary group-hover:gap-2 transition-all">
@@ -1620,6 +1819,97 @@ const SearchResults = () => {
                     </dl>
                   </section>
                 </>
+              ) : countyScope ? (
+                /* COUNTY — capability limitation, NOT a zero-facility claim.
+                   Rendered instead of the generic empty state because every
+                   line of that state ("No matching centers", "No facilities
+                   found in Cook County, IL", "No listings match those filters
+                   in Cook County, IL") asserts a count we have no basis for.
+                   Nothing here is labelled a Cook County facility, and no
+                   statewide facility is relabelled as one. */
+                <div
+                  className="flex flex-col items-center justify-center py-12 px-4 animate-fade-in"
+                  data-testid="county-limitation"
+                >
+                  <div className="w-full max-w-2xl mx-auto rounded-2xl border border-amber-300/60 bg-amber-50/60 dark:bg-amber-950/20 dark:border-amber-800/50 p-6 md:p-8">
+                    <div className="flex items-start gap-4">
+                      <div className="h-12 w-12 rounded-xl bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center shrink-0">
+                        <AlertCircle className="h-6 w-6 text-amber-700 dark:text-amber-400" />
+                      </div>
+                      <div className="min-w-0">
+                        <h2 className="font-display text-xl md:text-2xl font-bold text-foreground mb-2">
+                          We can&rsquo;t filter by county yet
+                        </h2>
+                        <p className="text-sm text-foreground/80 leading-relaxed">
+                          RehabLookup does not currently have facility-level
+                          county assignments, so we can&rsquo;t filter{" "}
+                          <strong>
+                            {countyScope.county} County
+                            {countyStateName ? `, ${countyStateName}` : ""}
+                          </strong>{" "}
+                          accurately yet. Our listings record a city, state and
+                          ZIP code &mdash; not a county &mdash; and we will not
+                          guess which county a city sits in.
+                        </p>
+                        <p className="text-sm text-muted-foreground leading-relaxed mt-3">
+                          This is a gap in our data, not a statement about
+                          treatment in {countyScope.county} County. We are not
+                          telling you there are no facilities there &mdash; we
+                          are telling you we cannot yet identify which of our
+                          listings are inside it.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-6 border-t border-amber-300/50 dark:border-amber-800/40 pt-5">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-foreground mb-3">
+                        What we can search accurately
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {countyStateSlug && countyStateName && (
+                          <Link
+                            to={`/rehab-centers/${countyStateSlug}`}
+                            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3.5 py-1.5 text-xs font-medium hover:border-primary hover:text-primary transition-colors"
+                          >
+                            <MapPin className="h-3.5 w-3.5" />
+                            Browse the {countyStateName} directory
+                          </Link>
+                        )}
+                        <Link
+                          to={`/search-results?location=${encodeURIComponent(countyScope.state)}`}
+                          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3.5 py-1.5 text-xs font-medium hover:border-primary hover:text-primary transition-colors"
+                        >
+                          <Search className="h-3.5 w-3.5" />
+                          Search all of {countyStateName ?? countyScope.state}
+                        </Link>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-3">
+                        Searching a city inside the county &mdash; or a ZIP code
+                        &mdash; returns exact matches. Those are the geographies
+                        our listings actually carry.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Notify-me capture — county-level coverage is a real
+                      roadmap item, so the waitlist is an honest offer here. */}
+                  <div className="w-full mt-6">
+                    <AreaWaitlistCapture
+                      areaSlug={`county-${countyScope.county.toLowerCase().replace(/\s+/g, "-")}-${countyScope.state.toLowerCase()}`}
+                      areaLabel={`${countyScope.county} County, ${countyScope.state}`}
+                    />
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-3 mt-8">
+                    <Button onClick={clearAllFilters} variant="outline" className="gap-2">
+                      <X className="h-4 w-4" />
+                      Clear All Filters
+                    </Button>
+                    <Link to="/rehab-centers">
+                      <Button className="gap-2">Browse All Centers</Button>
+                    </Link>
+                  </div>
+                </div>
               ) : (
                 /* Empty State */
                 <div className="flex flex-col items-center justify-center py-12 px-4 animate-fade-in">
@@ -1646,13 +1936,15 @@ const SearchResults = () => {
                   <p className="text-muted-foreground text-center max-w-md mb-6">
                     {queryParam
                       ? `No treatment centers match "${queryParam}". Try a different search term or adjust the filters below.`
-                      : location
-                        ? `No centers found near "${location}". Try a wider area or remove a filter below.`
-                        : "We couldn't find any treatment centers matching your criteria. Try one of the suggestions below."}
+                      : location && activeLocationScope
+                        ? `No facilities found in ${describeScope(activeLocationScope)}. Try a different location or remove a filter below.`
+                        : location
+                          ? `No facilities found for "${location}". Try a different location or remove a filter below.`
+                          : "We couldn't find any treatment centers matching your criteria. Try one of the suggestions below."}
                   </p>
 
                   {/* Suggested filter changes — one-tap removal of each active filter */}
-                  {(selectedTreatmentTypes.length > 0 || selectedInsuranceTypes.length > 0 || selectedDistance || verifiedOnly || featuredOnly) && (
+                  {(selectedTreatmentTypes.length > 0 || selectedInsuranceTypes.length > 0 || verifiedOnly || featuredOnly) && (
                     <div className="w-full max-w-md mb-6 rounded-xl border border-border bg-card p-4">
                       <p className="text-xs font-semibold text-foreground mb-3 uppercase tracking-wide">
                         Try removing a filter
@@ -1684,15 +1976,6 @@ const SearchResults = () => {
                             Insurance: {i}
                           </button>
                         ))}
-                        {selectedDistance && (
-                          <button
-                            onClick={() => setSingleFilter("distance", "")}
-                            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-xs hover:border-primary hover:text-primary transition-colors"
-                          >
-                            <X className="h-3 w-3" />
-                            Within {selectedDistance} mi
-                          </button>
-                        )}
                         {verifiedOnly && (
                           <button
                             onClick={() => toggleBooleanFilter("verified", true)}
@@ -1750,7 +2033,7 @@ const SearchResults = () => {
                     const nearbyAbbrs = parsed.stateAbbr ? getNearbyStates(parsed.stateAbbr) : [];
                     return nearbyAbbrs.length > 0 ? (
                       <div className="flex flex-wrap justify-center items-center gap-2 mb-6">
-                        <span className="text-xs text-muted-foreground">Try nearby states:</span>
+                        <span className="text-xs text-muted-foreground">Try neighboring states:</span>
                         {nearbyAbbrs.slice(0, 4).map((abbr) => (
                           <Link
                             key={abbr}
@@ -1799,6 +2082,12 @@ const SearchResults = () => {
                       </Button>
                     </Link>
                   </div>
+
+                  {/* Zero exact matches still means zero. If the state has
+                      facilities in OTHER cities we offer them here, under
+                      their own heading, rather than silently relabelling
+                      them as matches for the searched city. */}
+                  <div className="w-full text-left">{nearbySection}</div>
                 </div>
               )}
             </main>

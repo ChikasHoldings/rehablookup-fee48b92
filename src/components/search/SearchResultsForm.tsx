@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, type FormEvent } from "react";
 import { useSearchParams } from "react-router-dom";
-import { MapPin, Search, Building2, Shield, Navigation, Loader2, CheckCircle2 } from "lucide-react";
+import { MapPin, Search, Building2, Shield, Loader2, CheckCircle2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,12 +21,10 @@ import { useZipcodeLookup } from "@/hooks/useZipcodeLookup";
 const TREATMENT_OPTIONS = TREATMENT_FILTERS;
 const INSURANCE_OPTIONS = INSURANCE_FILTERS;
 
-const DISTANCE_OPTIONS = [
-  { value: "10", label: "Within 10 miles" },
-  { value: "25", label: "Within 25 miles" },
-  { value: "50", label: "Within 50 miles" },
-  { value: "100", label: "Within 100 miles" },
-] as const;
+// No distance options. The catalogue carries no latitude/longitude, so a
+// "Within 25 miles" control could only ever be a guess dressed up as a
+// measurement. The field is gone from the form and `?distance=` is inert
+// everywhere it is still read. See src/pages/SearchResults.tsx.
 
 const ANY_VALUE = "__any__";
 
@@ -35,7 +33,7 @@ const ANY_VALUE = "__any__";
  *
  * Visual structure (desktop):
  *   ┌──────────────────────────────────┬─ refinements ─┬───────┐
- *   │  📍 Location (prominent)         │ Dist · Tx · Ins│ 🔍 Search │
+ *   │  📍 Location (prominent)         │  Tx  ·  Ins    │ 🔍 Search │
  *   └──────────────────────────────────┴────────────────┴───────┘
  *
  * Location is the hero input; refinement selects are grouped together inside
@@ -54,13 +52,16 @@ export function SearchResultsForm() {
     const raw = searchParams.get("insuranceTypes") ?? "";
     return raw.split(",").filter(Boolean)[0] ?? "";
   });
-  const [distance, setDistance] = useState<string>(searchParams.get("distance") ?? "");
-
   // ZIP-code autocomplete: when the user types a 5-digit numeric in the
   // location field, debounce-lookup the ZIP and surface the resolved
-  // city/state as inline feedback. On submit we send the resolved
-  // "City, ST" to the URL (still falls back to raw ZIP if Zippopotam.us
-  // is unreachable so the post-submit SearchResults effect can try).
+  // city/state as inline feedback.
+  //
+  // PRESENTATION ONLY. The resolved "City, ST" is shown next to the
+  // input and announced to screen readers; it is never substituted into
+  // the submitted query. A user who types 21215 gets `?location=21215`
+  // and a `{ type: "zip", zip: "21215" }` filter — not every facility in
+  // Baltimore. Widening an exact ZIP into its city is the exact failure
+  // this form used to ship.
   const { data: zipcodeData, isLoading: isZipLookupLoading, lookup: lookupZipcode, reset: resetZipLookup } = useZipcodeLookup();
   const lookupTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -70,7 +71,6 @@ export function SearchResultsForm() {
     setTreatment(t);
     const i = (searchParams.get("insuranceTypes") ?? "").split(",").filter(Boolean)[0] ?? "";
     setInsurance(i);
-    setDistance(searchParams.get("distance") ?? "");
   }, [searchParams]);
 
   // Debounced ZIP detection — runs whenever the location string changes.
@@ -101,16 +101,13 @@ export function SearchResultsForm() {
     e.preventDefault();
     const next = new URLSearchParams(searchParams);
 
-    // If the user typed a 5-digit ZIP and we've resolved it, send the
-    // expanded "City, ST" form. The downstream SearchResults effect still
-    // calls lookupZipcode on raw 5-digit input (defense in depth), but
-    // landing on "Brooklyn, NY" rather than "11201" gives the proximity
-    // sorter a usable city + state match immediately on first render,
-    // before the secondary lookup completes.
-    let trimmedLocation = location.trim();
-    if (isCompleteZipcode && zipcodeData?.city && zipcodeData?.stateAbbr) {
-      trimmedLocation = `${zipcodeData.city}, ${zipcodeData.stateAbbr}`;
-    }
+    // The user's location string goes to the URL verbatim. A ZIP stays a
+    // ZIP: `21215` submits as `location=21215`, which the canonical
+    // parser resolves to `{ type: "zip", zip: "21215" }` and matches on
+    // the 5-digit code alone (ZIP+4 folds to its base in the normalizer).
+    // The Zippopotam lookup above informs the on-screen label and nothing
+    // else — a successful lookup must never widen the query.
+    const trimmedLocation = location.trim();
     if (trimmedLocation) {
       next.set("location", trimmedLocation);
     } else {
@@ -123,8 +120,10 @@ export function SearchResultsForm() {
     if (insurance) next.set("insuranceTypes", insurance);
     else next.delete("insuranceTypes");
 
-    if (distance) next.set("distance", distance);
-    else next.delete("distance");
+    // Drop any stale `?distance=` a bookmark or old link carried in.
+    // Nothing reads it any more, but leaving it in the URL implies a
+    // radius filter is active.
+    next.delete("distance");
 
     next.delete("page");
     setSearchParams(next);
@@ -184,8 +183,9 @@ export function SearchResultsForm() {
               id="zip-resolved"
               className="mt-1 text-xs text-emerald-700 dark:text-emerald-400 lg:absolute lg:left-5 lg:bottom-0 lg:translate-y-full lg:mt-0 lg:pt-0.5"
             >
-              <span className="lg:hidden">Searching near </span>
+              <span className="lg:hidden">ZIP {location.trim()} is in </span>
               <span className="font-medium">{zipcodeData.city}, {zipcodeData.stateAbbr}</span>
+              <span className="lg:hidden"> — searching ZIP {location.trim()}</span>
             </p>
           )}
         </div>
@@ -195,39 +195,12 @@ export function SearchResultsForm() {
           <div className="h-7 w-px bg-border" aria-hidden="true" />
         </div>
 
-        {/* GROUPED REFINEMENTS: distance · treatment · insurance */}
+        {/* GROUPED REFINEMENTS: treatment · insurance */}
         <div
           role="group"
           aria-label="Refine results"
-          className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 lg:flex lg:items-center lg:gap-1.5 lg:flex-1 lg:w-auto"
+          className="w-full grid grid-cols-1 sm:grid-cols-2 gap-2 lg:flex lg:items-center lg:gap-1.5 lg:flex-1 lg:w-auto"
         >
-          <Select
-            value={distance || ANY_VALUE}
-            onValueChange={(v) => setDistance(v === ANY_VALUE ? "" : v)}
-          >
-            <SelectTrigger
-              className="h-11 text-sm px-3 lg:h-10 lg:flex-1 lg:rounded-full lg:border-0 lg:bg-muted/50 hover:lg:bg-muted transition-colors"
-              aria-label="Distance from location"
-            >
-              <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                <Navigation className="hidden md:block h-3.5 w-3.5 text-muted-foreground shrink-0" aria-hidden="true" />
-                <span className="truncate text-left">
-                  {distance
-                    ? DISTANCE_OPTIONS.find((o) => o.value === distance)?.label ?? "Distance"
-                    : "Distance"}
-                </span>
-              </div>
-            </SelectTrigger>
-            <SelectContent className="bg-card">
-              <SelectItem value={ANY_VALUE}>Any distance</SelectItem>
-              {DISTANCE_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
           <Select
             value={treatment || ANY_VALUE}
             onValueChange={(v) => setTreatment(v === ANY_VALUE ? "" : v)}
@@ -260,7 +233,7 @@ export function SearchResultsForm() {
             onValueChange={(v) => setInsurance(v === ANY_VALUE ? "" : v)}
           >
             <SelectTrigger
-              className="h-11 text-sm px-3 sm:col-span-2 md:col-span-1 lg:h-10 lg:flex-1 lg:rounded-full lg:border-0 lg:bg-muted/50 hover:lg:bg-muted transition-colors"
+              className="h-11 text-sm px-3 lg:h-10 lg:flex-1 lg:rounded-full lg:border-0 lg:bg-muted/50 hover:lg:bg-muted transition-colors"
               aria-label="Insurance (optional)"
             >
               <div className="flex items-center gap-1.5 min-w-0 flex-1">

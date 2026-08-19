@@ -26,6 +26,16 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
+// Canonical location layer — the SAME implementation the browser search
+// uses. Plain .mjs so it loads on every Node version the generators run
+// under (the sitemap/static-route CI job is pinned to Node 20, which
+// cannot import .ts at all), rather than a copy that drifts.
+import {
+  cityMatchKey,
+  cityMatchKeyFromSlug,
+  stateSlugFor,
+} from "../src/lib/location/core.mjs";
+
 // ---------------------------------------------------------------------------
 // Environment contract
 // ---------------------------------------------------------------------------
@@ -418,12 +428,51 @@ function stateSlug(s) {
 }
 
 /**
+ * Canonical grouping keys.
+ *
+ * `citySlug`/`stateSlug` above are URL-shaped helpers and are left
+ * untouched — published page paths do not change in this phase. What
+ * changed is the key used to ASSOCIATE a facility with a page: it now
+ * runs through the shared canonical location layer in `src/lib/location`
+ * (Node 22 strips the types on import), so the generators group
+ * facilities by exactly the same rules the browser uses.
+ *
+ * Concretely, the old raw-lowercase key filed "Saint Charles" and
+ * "St Charles" as two different cities. Five prerendered city pages —
+ * st-paul, st-louis, st-charles, st-george and st-clair-shores —
+ * therefore shipped with ZERO crawler-visible facility inventory while
+ * real approved facilities existed in those cities. Canonical keys
+ * recover 16 facility links across those five pages and lose none.
+ */
+function cityKey(cityName) {
+  return cityMatchKey(cityName);
+}
+
+function stateKey(stateName) {
+  return stateSlugFor(stateName) ?? stateSlug(stateName);
+}
+
+/** Canonical `state/city` association key from raw facility values. */
+export function stateCityKey(stateName, cityName) {
+  return `${stateKey(stateName)}/${cityKey(cityName)}`;
+}
+
+/**
+ * Canonical association key built from URL slugs, e.g.
+ * ("missouri", "st-charles") → "missouri/saint-charles". Use this on the
+ * PAGE side so both sides of the lookup fold identically.
+ */
+export function stateCityKeyFromSlugs(stateSlugValue, citySlugValue) {
+  return `${stateKey(String(stateSlugValue).replace(/-+/g, " "))}/${cityMatchKeyFromSlug(citySlugValue)}`;
+}
+
+/**
  * Build Map<state-slug, facility[]>. Used by state-page generators.
  */
 export function groupByState(facilities) {
   const map = new Map();
   for (const f of facilities) {
-    const k = stateSlug(f.state);
+    const k = stateKey(f.state);
     if (!k) continue;
     if (!map.has(k)) map.set(k, []);
     map.get(k).push(f);
@@ -432,13 +481,14 @@ export function groupByState(facilities) {
 }
 
 /**
- * Build Map<`${state-slug}/${city-slug}`, facility[]>. Used by city-page
- * generators.
+ * Build Map<`${state-key}/${city-key}`, facility[]>. Used by city-page
+ * generators. Keys are canonical — look them up with `stateCityKey` or
+ * `stateCityKeyFromSlugs`, never by hand-building a raw slug pair.
  */
 export function groupByStateCity(facilities) {
   const map = new Map();
   for (const f of facilities) {
-    const k = `${stateSlug(f.state)}/${citySlug(f.city)}`;
+    const k = stateCityKey(f.state, f.city);
     if (!k.includes("/") || k.startsWith("/") || k.endsWith("/")) continue;
     if (!map.has(k)) map.set(k, []);
     map.get(k).push(f);
@@ -460,9 +510,41 @@ export function groupByStateCity(facilities) {
  * the list "Featured Facilities" told readers the whole list was paid
  * placement. The per-facility Featured badge below still marks the genuinely
  * sponsored rows; the heading no longer mislabels the rest.
+ *
+ * EXACTNESS OF THE HEADING (SEO Phase 2). The default heading —
+ * "Treatment Facilities in <label>" — and the default "View all N
+ * facilities in <label>" footer are EXACT-INVENTORY claims: every listed
+ * facility is inside <label>, and N is the size of that place's
+ * inventory. City and state callers can make that claim, because
+ * `matchesExactly` selected their sets on the facility's own city/state.
+ *
+ * County pages cannot. Their set comes from a curated `majorCities`
+ * crosswalk, not from a facility→county mapping (the `facilities` table
+ * has no county column). So the third argument also accepts an options
+ * object that lets such a caller qualify the block:
+ *
+ *   limit      — as before, when a number is passed directly.
+ *   headingLabel — replaces `locationLabel` in the heading only, so an
+ *                approximate set can name itself as one
+ *                ("Selected Cities in Cook County, Illinois").
+ *   note       — plain-text sentence rendered, escaped and visible, under
+ *                the heading. This is where the data limitation is
+ *                disclosed to READERS AND CRAWLERS, not just to whoever
+ *                opens the generator source.
+ *   moreHtml   — replaces the default "View all N facilities in <label>"
+ *                footer. Pass "" to drop it, which is what an
+ *                approximate set must do: N is not that place's
+ *                inventory count.
+ *
+ * Passing a number keeps the previous behaviour byte for byte, so the
+ * city / state / near-me generators are untouched.
  */
-export function renderFacilityList(facilities, locationLabel, limit = FACILITIES_PER_PAGE) {
+export function renderFacilityList(facilities, locationLabel, optionsOrLimit = FACILITIES_PER_PAGE) {
   if (!facilities || facilities.length === 0) return "";
+  const options =
+    typeof optionsOrLimit === "number" ? { limit: optionsOrLimit } : (optionsOrLimit ?? {});
+  const limit = options.limit ?? FACILITIES_PER_PAGE;
+  const headingLabel = options.headingLabel ?? locationLabel;
   const top = facilities.slice(0, limit);
   const items = top
     .map((f) => {
@@ -484,11 +566,15 @@ export function renderFacilityList(facilities, locationLabel, limit = FACILITIES
       </li>`;
     })
     .join("");
-  const more = facilities.length > limit
+  const defaultMore = facilities.length > limit
     ? `<p style="margin-top:8px;color:#666;font-size:.9rem;"><a href="/rehab-centers/${stateSlug(facilities[0].state)}">View all ${facilities.length} facilities in ${escapeHtml(locationLabel)} &rarr;</a></p>`
     : "";
-  return `<h2>Treatment Facilities in ${escapeHtml(locationLabel)}</h2>
-    <ul style="list-style:none;padding:0;">${items}</ul>${more}`;
+  const more = options.moreHtml === undefined ? defaultMore : options.moreHtml;
+  const note = options.note
+    ? `<p style="margin:0 0 12px;color:#475569;font-size:.9rem;line-height:1.5;">${escapeHtml(options.note)}</p>`
+    : "";
+  return `<h2>Treatment Facilities in ${escapeHtml(headingLabel)}</h2>
+    ${note}<ul style="list-style:none;padding:0;">${items}</ul>${more}`;
 }
 
 // ---------------------------------------------------------------------------
