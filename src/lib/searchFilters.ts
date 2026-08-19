@@ -305,14 +305,14 @@ export const INSURANCE_FILTERS: readonly InsuranceFilterOption[] = [
  * fallback in `resolveTreatmentFilterKey` covers that without forcing
  * every form to migrate URL writers.
  */
-const TREATMENT_FILTER_ALIASES: Record<string, string> = {
+export const TREATMENT_FILTER_ALIASES: Record<string, string> = {
   iop: "outpatient",
   php: "outpatient",
   "mental-health": "dual-diagnosis",
   residential: "inpatient",
 };
 
-const INSURANCE_FILTER_ALIASES: Record<string, string> = {
+export const INSURANCE_FILTER_ALIASES: Record<string, string> = {
   bluecross: "bcbs",
   "blue-cross": "bcbs",
   uhc: "united",
@@ -326,7 +326,7 @@ const INSURANCE_FILTER_ALIASES: Record<string, string> = {
  * TREATMENT_FILTERS value, or `null` if no match. Matching is whitespace +
  * case insensitive so callers can pass "Dual Diagnosis", "dual-diagnosis",
  * or "dualdiagnosis" interchangeably. */
-const resolveTreatmentFilterKey = (raw: string): string | null => {
+export const resolveTreatmentFilterKey = (raw: string): string | null => {
   if (!raw) return null;
   const direct = raw.toLowerCase().trim();
   if (TREATMENT_FILTERS.some((o) => o.value === direct)) return direct;
@@ -342,7 +342,7 @@ const resolveTreatmentFilterKey = (raw: string): string | null => {
   return null;
 };
 
-const resolveInsuranceFilterKey = (raw: string): string | null => {
+export const resolveInsuranceFilterKey = (raw: string): string | null => {
   if (!raw) return null;
   const direct = raw.toLowerCase().trim();
   if (INSURANCE_FILTERS.some((o) => o.value === direct)) return direct;
