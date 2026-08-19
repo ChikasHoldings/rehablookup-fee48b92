@@ -391,9 +391,22 @@ export function buildNearMeContent(input) {
       heading: `What matters most with ${label.toLowerCase()}`,
       body: `${topic.keyPoint}`,
     });
+
+    // Coverage-route topics raise network status, so they must also carry
+    // the same distinction the insurance pages hold: a facility REPORTS
+    // which plans it accepts, and only the carrier can confirm that the
+    // facility is in-network for a specific plan. Without this the page
+    // implies a network guarantee the directory cannot make.
+    const isCoverageRoute = /^(medicaid|medicare|tricare|blue-cross|aetna|cigna|united-healthcare|humana)-/.test(
+      topicSlug ?? "",
+    );
+    const acceptanceNote = isCoverageRoute
+      ? " Facilities on RehabLookup report which plans they accept; acceptance is not the same as being in-network for your specific plan, which only your insurer can confirm."
+      : "";
+
     sections.push({
       heading: `Choosing a program in ${scope}`,
-      body: `${topic.verify} ${UNIVERSAL_VERIFY}`,
+      body: `${topic.verify} ${UNIVERSAL_VERIFY}${acceptanceNote}`,
     });
   }
 
