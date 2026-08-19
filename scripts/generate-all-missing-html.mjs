@@ -46,6 +46,53 @@ import { parseStringPromise } from "xml2js";
 import { readFile } from "node:fs/promises";
 import { GA_MEASUREMENT_ID } from "./_ga.mjs";
 import { seoStyles, seoHeader, seoCtaStrip, seoFooter } from "./_seo-page-shell.mjs";
+// Per-state fact renderers already used by five other generators. This
+// generator emits the largest families in the corpus and was the only
+// major one not drawing on them, which is most of why its pages were
+// interchangeable.
+import {
+  renderStateFactBox,
+  renderStateSignature,
+  renderLicensingBox,
+  renderMetrosLine,
+  getStateStatsBySlug,
+} from "./_unique-content.mjs";
+// The carrier axis: /insurance/* pages had a name and nothing else to
+// say about the insurer, so 7,527 of them reduced to 29 distinct bodies.
+import {
+  buildInsuranceCityContent,
+  buildInsuranceCountyContent,
+  renderInsuranceCityHtml,
+} from "../src/lib/seo/insuranceContent.mjs";
+
+/**
+ * County facts, indexed as "<stateSlug>/<countySlug>".
+ *
+ * Direct TS import under `--experimental-strip-types`, matching what
+ * `generate-county-pages.mjs` already does against the same file in the
+ * same build. Only the FACTS are read here — name, seat, population,
+ * major cities. `countySeoData`'s prose fields are one template per
+ * county and are deliberately not propagated; see the note in
+ * `src/lib/seo/insuranceContent.mjs`.
+ */
+const COUNTY_INDEX = new Map();
+try {
+  const { stateCountyData } = await import("../src/data/countySeoData.ts");
+  for (const state of stateCountyData ?? []) {
+    for (const county of state.counties ?? []) {
+      COUNTY_INDEX.set(`${state.stateSlug}/${county.slug}`, county);
+    }
+  }
+} catch (err) {
+  // Fail loudly rather than silently regenerating 6,704 county pages
+  // without the facts that make them distinct.
+  console.error("✗ could not load countySeoData for county page facts:", err?.message ?? err);
+  process.exit(1);
+}
+
+function lookupCounty(stateSlug, countySlug) {
+  return COUNTY_INDEX.get(`${stateSlug}/${countySlug}`) ?? null;
+}
 
 // Block this generator from writing static HTML at any path that vercel.json
 // already 301-redirects. The competing file would otherwise win Vercel's
@@ -74,6 +121,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.resolve(__dirname, "../public");
 const BASE_URL = "https://rehablookup.com";
 const FORCE = process.argv.includes("--force");
+const ONLY = (process.argv.find((a) => a.startsWith("--only=")) ?? "").split("=").slice(1).join("=") || "";
 
 let generated = 0;
 let skipped = 0;
@@ -336,17 +384,33 @@ function insuranceStatePage(urlPath) {
   const providerName = slugToName(providerSlug.replace(/-rehab$/, ""));
   const stateName = slugToName(stateSlug);
   const title = `${providerName} Rehab Coverage in ${stateName}`;
+
+  // Statewide scope: the carrier axis plus this state's own posture. No
+  // city or county is named, so the composer is called without them.
+  const stats = getStateStatsBySlug(stateSlug);
+  const composed = buildInsuranceCityContent({
+    insurerSlug: providerSlug,
+    insurerName: providerName,
+    cityName: stateName,
+    stateName,
+    stateAbbr: stats?.abbr,
+    medicaidExpanded: stats?.medicaidExpanded,
+    notableInfo: stats?.signatureNote,
+    primaryMetro: stats?.primaryMetro,
+    secondaryMetros: stats?.secondaryMetros,
+  });
+
   return {
     title,
     metaTitle: `${title} — Find In-Network Treatment | RehabLookup`,
-    metaDesc: `Find rehab centers in ${stateName} that accept ${providerName} insurance. Verify your behavioral health benefits and find in-network addiction treatment facilities.`,
+    metaDesc: composed.metaDescription,
     h1: title,
     content: `
-      <p>Find addiction treatment centers in ${stateName} that accept ${providerName} insurance. RehabLookup helps you verify your behavioral health benefits and locate in-network facilities for detox, inpatient, and outpatient treatment.</p>
-      <h2>${providerName} Coverage for Addiction Treatment in ${stateName}</h2>
-      <p>Under the Mental Health Parity and Addiction Equity Act (MHPAEA), ${providerName} is required to cover substance use disorder treatment at the same level as medical and surgical benefits. This includes medical detox, residential treatment, PHP, IOP, and outpatient services.</p>
-      <h2>How to Verify Your ${providerName} Benefits</h2>
-      <p>Call the member services number on the back of your insurance card, or use our free insurance verification tool to check your coverage before starting treatment.</p>
+      ${renderInsuranceCityHtml(composed)}
+      ${renderStateFactBox(stateName, stateSlug)}
+      ${renderMetrosLine(stateName, stateSlug)}
+      ${renderLicensingBox(stateName, stateSlug)}
+      ${renderStateSignature(stateName, stateSlug)}
       <p><a href="/insurance/${providerSlug}">All ${providerName} Rehab Coverage</a> &middot; <a href="/rehab-centers/${stateSlug}">All Rehab Centers in ${stateName}</a></p>`,
     breadcrumbs: [
       { name: "Home", url: "/" },
@@ -367,16 +431,35 @@ function insuranceCityPage(urlPath) {
   const stateName = slugToName(stateSlug);
   const cityName = slugToName(citySlug);
   const title = `${providerName} Rehab Coverage in ${cityName}, ${stateName}`;
+
+  // Three independent real axes instead of one template with three
+  // substitutions: the carrier's own structure and verification route,
+  // this state's Medicaid posture / regulator / signature note, and the
+  // city itself. See src/lib/seo/insuranceContent.mjs.
+  const stats = getStateStatsBySlug(stateSlug);
+  const composed = buildInsuranceCityContent({
+    insurerSlug: providerSlug,
+    insurerName: providerName,
+    cityName,
+    stateName,
+    stateAbbr: stats?.abbr,
+    medicaidExpanded: stats?.medicaidExpanded,
+    notableInfo: stats?.signatureNote,
+    primaryMetro: stats?.primaryMetro,
+    secondaryMetros: stats?.secondaryMetros,
+  });
+
   return {
     title,
     metaTitle: `${title} — In-Network Treatment | RehabLookup`,
-    metaDesc: `Find ${providerName}-covered rehab centers in ${cityName}, ${stateName}. Verify your benefits and find in-network addiction treatment facilities near you.`,
+    metaDesc: composed.metaDescription,
     h1: title,
     content: `
-      <p>Find addiction treatment centers in ${cityName}, ${stateName} that accept ${providerName} insurance. Our directory includes listings for facilities that report in-network coverage for detox, inpatient, and outpatient treatment.</p>
-      <h2>In-Network Facilities in ${cityName}</h2>
-      <p>Use our search tool to filter by ${providerName} network status in ${cityName}. Insurance details are reported by each facility. Confirm network status with the facility and your insurer before admission.</p>
-      <p><a href="/insurance/${providerSlug}/${stateSlug}">All ${providerName} Centers in ${stateName}</a> &middot; <a href="/rehab-centers/${stateSlug}">All Rehab Centers in ${stateName}</a></p>`,
+      ${renderInsuranceCityHtml(composed)}
+      ${renderStateFactBox(stateName, stateSlug)}
+      ${renderLicensingBox(stateName, stateSlug)}
+      ${renderStateSignature(stateName, stateSlug)}
+      <p><a href="/insurance/${providerSlug}/${stateSlug}">All ${providerName} Centers in ${stateName}</a> &middot; <a href="/rehab-centers/${stateSlug}/${citySlug}">Rehab Centers in ${cityName}</a> &middot; <a href="/rehab-centers/${stateSlug}">All Rehab Centers in ${stateName}</a></p>`,
     breadcrumbs: [
       { name: "Home", url: "/" },
       { name: "Insurance", url: "/insurance" },
@@ -397,16 +480,36 @@ function insuranceCountyPage(urlPath) {
   const stateName = slugToName(stateSlug);
   const countyName = slugToName(countySlug) + " County";
   const title = `${providerName} Rehab Coverage in ${countyName}, ${stateName}`;
+
+  // The largest sub-family in the corpus (6,704 pages). Composed from the
+  // carrier axis, this state's posture, and the county's OWN facts — seat,
+  // population and major cities — rather than a name substitution.
+  const stats = getStateStatsBySlug(stateSlug);
+  const county = lookupCounty(stateSlug, countySlug);
+  const composed = buildInsuranceCountyContent({
+    insurerSlug: providerSlug,
+    insurerName: providerName,
+    countyName: slugToName(countySlug),
+    countySeat: county?.seat,
+    countyPopulation: county?.population,
+    majorCities: county?.majorCities,
+    stateName,
+    stateAbbr: stats?.abbr,
+    medicaidExpanded: stats?.medicaidExpanded,
+    notableInfo: stats?.signatureNote,
+  });
+
   return {
     title,
     metaTitle: `${title} — In-Network Treatment | RehabLookup`,
-    metaDesc: `Find ${providerName}-covered rehab centers in ${countyName}, ${stateName}. Verify your benefits and find in-network addiction treatment near you.`,
+    metaDesc: composed.metaDescription,
     h1: title,
     content: `
-      <p>Find addiction treatment centers in ${countyName}, ${stateName} that accept ${providerName} insurance. Our directory helps you locate in-network facilities for detox, inpatient, and outpatient treatment.</p>
-      <h2>Coverage in ${countyName}</h2>
-      <p>${providerName} covers substance use disorder treatment in ${countyName} under the Mental Health Parity Act. Verify your specific benefits before starting treatment.</p>
-      <p><a href="/insurance/${providerSlug}/${stateSlug}">All ${providerName} Centers in ${stateName}</a> &middot; <a href="/rehab-centers/${stateSlug}">All Rehab Centers in ${stateName}</a></p>`,
+      ${renderInsuranceCityHtml(composed)}
+      ${renderStateFactBox(stateName, stateSlug)}
+      ${renderLicensingBox(stateName, stateSlug)}
+      ${renderStateSignature(stateName, stateSlug)}
+      <p><a href="/insurance/${providerSlug}/${stateSlug}">All ${providerName} Centers in ${stateName}</a> &middot; <a href="/rehab-centers/${stateSlug}/county/${countySlug}">Rehab Centers in ${countyName}</a> &middot; <a href="/rehab-centers/${stateSlug}">All Rehab Centers in ${stateName}</a></p>`,
     breadcrumbs: [
       { name: "Home", url: "/" },
       { name: "Insurance", url: "/insurance" },
@@ -921,7 +1024,18 @@ async function main() {
 
   // With --force, regenerate every URL we know about so legacy stubs that
   // predated the branded `_seo-page-shell.mjs` upgrade get overwritten.
-  const missing = FORCE ? [...allUrls] : [...allUrls].filter((u) => !hasHtmlFile(u));
+  let missing = FORCE ? [...allUrls] : [...allUrls].filter((u) => !hasHtmlFile(u));
+
+  // `--only=/prefix` narrows the run to one page family. Content
+  // remediation proceeds family by family — each one needs its own data
+  // axes wired and its own before/after uniqueness measurement — and
+  // regenerating all 46k pages to inspect 7k of them makes the diff
+  // unreadable and the measurement ambiguous.
+  if (ONLY) {
+    const before = missing.length;
+    missing = missing.filter((u) => u.startsWith(ONLY));
+    console.log(`  --only=${ONLY}: ${missing.length.toLocaleString()} of ${before.toLocaleString()} URLs selected`);
+  }
   console.log(`  Already have HTML: ${(allUrls.size - missing.length).toLocaleString()}`);
   console.log(`  Need to generate: ${missing.length.toLocaleString()}`);
   console.log();

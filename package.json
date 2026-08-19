@@ -79,7 +79,7 @@
     "check:vercel-cutover": "node scripts/check-vercel-cutover.mjs",
     "check:ua-routing": "node scripts/check-ua-routing.mjs",
     "generate:resources-html": "node --experimental-strip-types scripts/generate-resources-html.mjs",
-    "generate:all-missing-html": "node scripts/generate-all-missing-html.mjs",
+    "generate:all-missing-html": "node --experimental-strip-types scripts/generate-all-missing-html.mjs",
     "generate:remaining-nearme": "node scripts/generate-remaining-nearme.mjs",
     "generate:missing-nearme": "node scripts/generate-missing-nearme-html.mjs",
     "inject:city-inventory": "node scripts/inject-city-facility-inventory.mjs",
