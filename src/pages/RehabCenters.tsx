@@ -514,7 +514,7 @@ const RehabCenters = () => {
                 </h2>
                 <p className="text-sm text-muted-foreground mt-1">Medical detoxification and withdrawal management</p>
               </div>
-              <Link to="/search-results?treatmentType=detox" className="hidden sm:flex items-center gap-1 text-sm font-medium text-primary hover:underline">
+              <Link to="/search-results?treatmentTypes=detox" className="hidden sm:flex items-center gap-1 text-sm font-medium text-primary hover:underline">
                 View All <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
@@ -524,7 +524,7 @@ const RehabCenters = () => {
               ))}
             </div>
             <div className="mt-6 text-center sm:hidden">
-              <Link to="/search-results?treatmentType=detox">
+              <Link to="/search-results?treatmentTypes=detox">
                 <Button variant="outline" size="sm" className="gap-2">View All Detox Programs <ChevronRight className="h-4 w-4" /></Button>
               </Link>
             </div>
@@ -544,7 +544,7 @@ const RehabCenters = () => {
                 </h2>
                 <p className="text-sm text-muted-foreground mt-1">24/7 residential treatment programs</p>
               </div>
-              <Link to="/search-results?treatmentType=inpatient" className="hidden sm:flex items-center gap-1 text-sm font-medium text-primary hover:underline">
+              <Link to="/search-results?treatmentTypes=inpatient" className="hidden sm:flex items-center gap-1 text-sm font-medium text-primary hover:underline">
                 View All <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
@@ -554,7 +554,7 @@ const RehabCenters = () => {
               ))}
             </div>
             <div className="mt-6 text-center sm:hidden">
-              <Link to="/search-results?treatmentType=inpatient">
+              <Link to="/search-results?treatmentTypes=inpatient">
                 <Button variant="outline" size="sm" className="gap-2">View All Inpatient Programs <ChevronRight className="h-4 w-4" /></Button>
               </Link>
             </div>
@@ -574,7 +574,7 @@ const RehabCenters = () => {
                 </h2>
                 <p className="text-sm text-muted-foreground mt-1">Flexible outpatient and IOP treatment options</p>
               </div>
-              <Link to="/search-results?treatmentType=outpatient" className="hidden sm:flex items-center gap-1 text-sm font-medium text-primary hover:underline">
+              <Link to="/search-results?treatmentTypes=outpatient" className="hidden sm:flex items-center gap-1 text-sm font-medium text-primary hover:underline">
                 View All <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
@@ -584,7 +584,7 @@ const RehabCenters = () => {
               ))}
             </div>
             <div className="mt-6 text-center sm:hidden">
-              <Link to="/search-results?treatmentType=outpatient">
+              <Link to="/search-results?treatmentTypes=outpatient">
                 <Button variant="outline" size="sm" className="gap-2">View All Outpatient Programs <ChevronRight className="h-4 w-4" /></Button>
               </Link>
             </div>
@@ -604,7 +604,7 @@ const RehabCenters = () => {
                 </h2>
                 <p className="text-sm text-muted-foreground mt-1">Programs for co-occurring mental health and substance use</p>
               </div>
-              <Link to="/search-results?treatmentType=dual-diagnosis" className="hidden sm:flex items-center gap-1 text-sm font-medium text-primary hover:underline">
+              <Link to="/search-results?treatmentTypes=dual-diagnosis" className="hidden sm:flex items-center gap-1 text-sm font-medium text-primary hover:underline">
                 View All <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
@@ -614,7 +614,7 @@ const RehabCenters = () => {
               ))}
             </div>
             <div className="mt-6 text-center sm:hidden">
-              <Link to="/search-results?treatmentType=dual-diagnosis">
+              <Link to="/search-results?treatmentTypes=dual-diagnosis">
                 <Button variant="outline" size="sm" className="gap-2">View All Dual Diagnosis Programs <ChevronRight className="h-4 w-4" /></Button>
               </Link>
             </div>

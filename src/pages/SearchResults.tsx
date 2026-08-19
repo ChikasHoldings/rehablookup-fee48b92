@@ -13,7 +13,7 @@ import { SearchResultsForm } from "@/components/search/SearchResultsForm";
 
 import { NoResultsDirectoryCTA } from "@/components/search/NoResultsDirectoryCTA";
 import { AreaWaitlistCapture } from "@/components/seo/AreaWaitlistCapture";
-import { MapPin, Search, X, ArrowUpDown, ChevronLeft, ChevronRight, Phone, SlidersHorizontal, Building2, Shield, Star, DollarSign, Sparkles, ChevronDown, CreditCard, Share2, Check, AlertCircle, RefreshCw, Scale } from "lucide-react";
+import { MapPin, Search, X, ArrowUpDown, ChevronLeft, ChevronRight, Phone, SlidersHorizontal, Building2, Shield, DollarSign, Sparkles, ChevronDown, CreditCard, Share2, Check, AlertCircle, RefreshCw, Scale } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import {
@@ -59,6 +59,15 @@ import {
   countInsuranceFacets,
   asSearchableFacility,
 } from "@/lib/searchFilters";
+import {
+  activeFilterCount,
+  canonicalizeSearchParams,
+  clearAllSearchParams,
+  insuranceLabel,
+  parsePublicSearchState,
+  treatmentLabel,
+} from "@/lib/publicSearchState";
+import { isMeaningfulQuery, matchesFreeTextQuery, MIN_TOKEN_LENGTH } from "@/lib/publicSearchText";
 
 // Restore user ID from localStorage to avoid getSession/getUser deadlocks
 function getStoredUserId(): string | null {
@@ -166,26 +175,422 @@ function seoScopeWording(
   }
 }
 
-// Amenity filters
-const amenityFilters = [
-  { value: "private-rooms", label: "Private Rooms" },
-  { value: "gym", label: "Fitness Center" },
-  { value: "pool", label: "Swimming Pool" },
-  { value: "meditation", label: "Meditation" },
-];
+// NO AMENITIES FILTER. Private Rooms / Fitness Center / Swimming Pool /
+// Meditation were never structured attributes — the canonical facility
+// dataset exposes none — so the filter INFERRED them by substring over the
+// description and the treatment-type strings: "pool" matched "pooling",
+// "private" + "room" matched a sentence about privacy in a room, and
+// "meditation" matched any facility whose narrative used the word
+// "holistic". That publishes an inference as a fact about a facility, which
+// is the same class of claim the distance filter was removed for. The
+// control, the chips and the membership step are gone; a stale
+// `?amenities=pool` narrows nothing. It is still counted by
+// `hasSearchParams` (so an old filtered URL does not become newly indexable
+// merely because we stopped honouring its filter) and is deleted from the
+// URL on the next user interaction. Restoring an amenities filter requires
+// structured amenity data first.
+
+
+// ── SHARED FILTER PANEL ───────────────────────────────────────────────────
+//
+// One component, rendered by BOTH the desktop sidebar and the mobile sheet,
+// declared at module scope. Previously these lived inside the SearchResults
+// function body, which made them a new component TYPE on every render: React
+// tore down and rebuilt the whole panel after each filter click, dropping
+// keyboard focus and closing the accordion mid-interaction. Module scope also
+// makes desktop/mobile parity structural rather than a convention — there is
+// only one implementation of the values, counts, disabled states and
+// clear-all behaviour, so they cannot drift.
+
+interface FilterSectionProps {
+  id: string;
+  icon: ReactNode;
+  label: string;
+  children: ReactNode;
+  count?: number;
+  openSection: string | null;
+  onToggleSection: (section: string) => void;
+}
+
+/** Collapsible filter section. Hairline-divided rows (no per-section
+ *  border/rounded box) — each section is a button-header + collapsible body
+ *  separated from siblings by the divide-y on the parent. */
+const FilterSection = ({
+  id,
+  icon,
+  label,
+  children,
+  count,
+  openSection,
+  onToggleSection,
+}: FilterSectionProps) => {
+  const isOpen = openSection === id;
+  const bodyId = `filter-section-${id}`;
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => onToggleSection(id)}
+        className="w-full flex items-center justify-between py-3.5 text-sm font-semibold text-foreground hover:text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 rounded"
+        aria-expanded={isOpen}
+        aria-controls={bodyId}
+      >
+        <span className="flex items-center gap-2.5">
+          <span className="text-muted-foreground">{icon}</span>
+          {label}
+          {count && count > 0 ? (
+            <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground tabular-nums">{count}</span>
+          ) : null}
+        </span>
+        <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} aria-hidden="true" />
+      </button>
+      <div
+        id={bodyId}
+        hidden={!isOpen}
+        className={`overflow-hidden transition-all duration-200 ${isOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"}`}
+      >
+        <div className="pb-4 pt-0">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+interface FilterToggleRowProps {
+  active: boolean;
+  disabled: boolean;
+  count?: number;
+  label: string;
+  icon: ReactNode;
+  onClick: () => void;
+  activeClassName?: string;
+  /** Filter group this row belongs to — surfaced for parity assertions. */
+  group: string;
+  /** Canonical filter value — surfaced for parity assertions. */
+  value: string;
+}
+
+/** One multi-select filter row. Selecting several rows inside one group is
+ *  an OR; the groups AND together. A row that is ACTIVE is never disabled,
+ *  even when its recomputed count is zero — the user must always be able to
+ *  undo the choice that emptied the result set. */
+const FilterToggleRow = ({
+  active,
+  disabled,
+  count,
+  label,
+  icon,
+  onClick,
+  activeClassName,
+  group,
+  value,
+}: FilterToggleRowProps) => (
+  <button
+    type="button"
+    onClick={() => { if (!disabled) onClick(); }}
+    aria-pressed={active}
+    aria-disabled={disabled}
+    disabled={disabled}
+    // Machine-readable mirror of everything this row asserts, so the
+    // desktop/mobile parity suite can compare the two rendered panels
+    // field by field instead of eyeballing two screenshots.
+    data-testid="filter-option"
+    data-group={group}
+    data-value={value}
+    data-count={count}
+    data-active={active ? "true" : "false"}
+    data-disabled={disabled ? "true" : "false"}
+    className={`w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 ${
+      active
+        ? activeClassName ?? "bg-primary/10 text-primary font-medium border border-primary/20"
+        : disabled
+        ? "text-muted-foreground/50 border border-transparent cursor-not-allowed"
+        : "text-foreground hover:bg-secondary/60 border border-transparent"
+    }`}
+  >
+    <span className="flex items-center gap-2 min-w-0">
+      {icon}
+      <span className="truncate">{label}</span>
+    </span>
+    <span className="flex items-center gap-2 shrink-0">
+      {typeof count === "number" && (
+        <span className="text-xs text-muted-foreground tabular-nums">({count.toLocaleString()})</span>
+      )}
+      {active && <X className="h-3.5 w-3.5" aria-hidden="true" />}
+    </span>
+  </button>
+);
+
+export interface FilterSidebarProps {
+  sortParam: SortOption;
+  onSortChange: (value: SortOption) => void;
+  openSection: string | null;
+  onToggleSection: (section: string) => void;
+  activeTreatment: string[];
+  activeInsurance: string[];
+  treatmentFacets: Record<string, number>;
+  insuranceFacets: Record<string, number>;
+  verifiedOnly: boolean;
+  featuredOnly: boolean;
+  verifiedFacetCount: number;
+  featuredFacetCount: number;
+  onToggleTreatment: (value: string) => void;
+  onToggleInsurance: (value: string) => void;
+  onToggleBoolean: (paramName: string, currentValue: boolean) => void;
+  activeFiltersCount: number;
+  onClearAll: () => void;
+  /** "desktop" | "mobile" — identifies which panel rendered these rows. */
+  panel: string;
+}
+
+const FilterSidebar = ({
+  sortParam,
+  onSortChange,
+  openSection,
+  onToggleSection,
+  activeTreatment,
+  activeInsurance,
+  treatmentFacets,
+  insuranceFacets,
+  verifiedOnly,
+  featuredOnly,
+  verifiedFacetCount,
+  featuredFacetCount,
+  onToggleTreatment,
+  onToggleInsurance,
+  onToggleBoolean,
+  activeFiltersCount,
+  onClearAll,
+  panel,
+}: FilterSidebarProps) => (
+  <div className="divide-y divide-border/70" data-testid="filter-panel" data-panel={panel}>
+    {/* Sort — same FilterSection chrome as everything else so the
+        sidebar reads as one consistent column. */}
+    <FilterSection
+      id="sort"
+      icon={<ArrowUpDown className="h-3.5 w-3.5" />}
+      label="Sort by"
+      openSection={openSection}
+      onToggleSection={onToggleSection}
+    >
+      <Select value={sortParam} onValueChange={(v) => onSortChange(v as SortOption)}>
+        <SelectTrigger className="w-full h-10 text-sm border-border bg-background" aria-label="Sort results by">
+          <SelectValue placeholder="Sort" />
+        </SelectTrigger>
+        <SelectContent className="bg-card border-border shadow-lg">
+          {sortOptions.map((option) => (
+            <SelectItem key={option.value} value={option.value} className="text-sm cursor-pointer">
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </FilterSection>
+
+    {/* Treatment type — MULTI-select, OR within the group. Was a
+        single-value <Select> bound to `selectedTreatmentTypes[0]`, which
+        rendered a multi-value URL as if only the first value were active.
+        Counts are self-excluding: each number is the size of the result set
+        the user would get by picking that option, with every OTHER active
+        constraint (location, free text, payment, quick filters) applied. */}
+    <FilterSection
+      id="treatment"
+      icon={<Building2 className="h-3.5 w-3.5" />}
+      label="Treatment type"
+      count={activeTreatment.length}
+      openSection={openSection}
+      onToggleSection={onToggleSection}
+    >
+      <div className="space-y-1.5" role="group" aria-label="Treatment type filters">
+        {TREATMENT_FILTERS.map((filter) => {
+          const active = activeTreatment.includes(filter.value);
+          const count = treatmentFacets[filter.value] ?? 0;
+          return (
+            <FilterToggleRow
+              key={filter.value}
+              group="treatment"
+              value={filter.value}
+              active={active}
+              disabled={count === 0 && !active}
+              count={count}
+              label={filter.label}
+              icon={<Building2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />}
+              onClick={() => onToggleTreatment(filter.value)}
+            />
+          );
+        })}
+      </div>
+    </FilterSection>
+
+    {/* No Distance section — see the note beside `sortOptions`. */}
+    {/* No Amenities section — see the note beside the removed registry. */}
+
+    {/* PAYMENT & INSURANCE. The group is NOT called "Insurance": the options
+        include Self-Pay / Private Pay and Sliding Scale / Financial
+        Assistance, which are payment methods, not carriers. Calling the
+        whole group "Insurance" told the user every option was a plan the
+        facility is in network with — a claim the underlying records do not
+        establish. Individual option labels are unchanged. */}
+    <FilterSection
+      id="insurance"
+      icon={<Shield className="h-3.5 w-3.5" />}
+      label="Payment & insurance"
+      count={activeInsurance.length}
+      openSection={openSection}
+      onToggleSection={onToggleSection}
+    >
+      <div className="space-y-1.5" role="group" aria-label="Payment and insurance filters">
+        {INSURANCE_FILTERS.map((filter) => {
+          const active = activeInsurance.includes(filter.value);
+          const count = insuranceFacets[filter.value] ?? 0;
+          return (
+            <FilterToggleRow
+              key={filter.value}
+              group="insurance"
+              value={filter.value}
+              active={active}
+              disabled={count === 0 && !active}
+              count={count}
+              label={filter.label}
+              icon={filter.logo ? (
+                <img
+                  src={filter.logo}
+                  alt=""
+                  aria-hidden="true"
+                  className="h-3.5 w-4 object-contain shrink-0"
+                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                />
+              ) : (
+                <CreditCard className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+              )}
+              onClick={() => onToggleInsurance(filter.value)}
+            />
+          );
+        })}
+      </div>
+    </FilterSection>
+
+    {/* Quick filters. Both are structured booleans on the facility record —
+        `verified === true` and `featured === true` — so their counts are as
+        truthful as the other groups' and are shown the same way. Each
+        self-excludes: the Verified count applies every constraint except
+        Verified itself. */}
+    <FilterSection
+      id="quick"
+      icon={<Sparkles className="h-3.5 w-3.5" />}
+      label="Quick filters"
+      count={(verifiedOnly ? 1 : 0) + (featuredOnly ? 1 : 0)}
+      openSection={openSection}
+      onToggleSection={onToggleSection}
+    >
+      <div className="space-y-1.5" role="group" aria-label="Quick filters">
+        <FilterToggleRow
+          group="quick"
+          value="verified"
+          active={verifiedOnly}
+          disabled={verifiedFacetCount === 0 && !verifiedOnly}
+          count={verifiedFacetCount}
+          label="Verified only"
+          icon={<Shield className="h-4 w-4 shrink-0" aria-hidden="true" />}
+          onClick={() => onToggleBoolean("verified", verifiedOnly)}
+        />
+        <FilterToggleRow
+          group="quick"
+          value="featuredOnly"
+          active={featuredOnly}
+          disabled={featuredFacetCount === 0 && !featuredOnly}
+          count={featuredFacetCount}
+          label="Featured only"
+          icon={<Sparkles className="h-4 w-4 shrink-0" aria-hidden="true" />}
+          onClick={() => onToggleBoolean("featuredOnly", featuredOnly)}
+          activeClassName="bg-amber-50 text-amber-700 font-medium border border-amber-200"
+        />
+      </div>
+    </FilterSection>
+
+    {/* Clear-all — appears at the bottom of the divider stack as
+        its own row when any filter is active. */}
+    {activeFiltersCount > 0 && (
+      <div className="pt-3">
+        <button
+          type="button"
+          onClick={onClearAll}
+          className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium text-muted-foreground hover:text-destructive hover:border-destructive/40 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
+        >
+          <X className="h-4 w-4" aria-hidden="true" />
+          Clear all filters ({activeFiltersCount})
+        </button>
+      </div>
+    )}
+  </div>
+);
+
+// Directory helper CTA — rendered OUTSIDE the FilterSidebar component so
+// it sits below the divider stack with its own breathing room. Was
+// previously the last child of FilterSidebar which made it inherit
+// the new divide-y rule and stack visually adjacent to the filter
+// sections; the standalone block reads more like a contextual
+// affordance, less like another filter.
+const DirectoryHelperCTA = () => (
+  <div className="mt-5 rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-4 border border-primary/15">
+    <div className="flex items-center gap-3 mb-3">
+      <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-primary/20 bg-primary/10 shrink-0">
+        <Scale className="h-4 w-4 text-primary" />
+      </div>
+      <div className="min-w-0">
+        <p className="text-xs font-semibold text-foreground">Narrowed it down?</p>
+        <p className="text-xs text-muted-foreground">Compare your shortlist side by side</p>
+      </div>
+    </div>
+    <Link to="/compare">
+      <Button size="sm" className="w-full gap-2 text-xs">
+        <Scale className="h-3.5 w-3.5" />
+        Compare Facilities
+      </Button>
+    </Link>
+  </div>
+);
+
 
 const SearchResults = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
   const [shareCopied, setShareCopied] = useState(false);
   
+  // ── ONE CANONICAL FILTER STATE ──────────────────────────────────────
+  // Every treatment/payment refinement on this page is read from here and
+  // nowhere else. `parsePublicSearchState` collapses the three treatment
+  // spellings (`treatmentTypes`, legacy `treatment`, legacy `type` preset)
+  // and the two payment spellings (`insuranceTypes`, legacy `insurance`) by
+  // PRECEDENCE into two canonical arrays. They used to be AND-ed together as
+  // independent constraints, so `?treatment=detox&treatmentTypes=outpatient`
+  // silently required both while the sidebar showed one. Counts, chips,
+  // cards and the URL now describe the same set because they read the same
+  // arrays.
+  const searchState = useMemo(
+    () => parsePublicSearchState(searchParams),
+    [searchParams],
+  );
+  const activeTreatmentFilters = searchState.treatment.values;
+  const activeInsuranceFilters = searchState.insurance.values;
+
   // Basic search params
-  const location = searchParams.get("location") || "";
-  const treatment = searchParams.get("treatment") || "";
-  const insurance = searchParams.get("insurance") || "";
-  const type = searchParams.get("type") || "";
-  const stateParam = searchParams.get("state") || ""; // Support direct state filtering from near-me pages
-  const queryParam = searchParams.get("q") || ""; // Free-text search from header/seeker
+  const location = searchState.location;
+  const stateParam = searchState.stateParam; // Support direct state filtering from near-me pages
+  const queryParam = searchState.query; // Free-text search from header/seeker
+  // Raw legacy params. Read ONLY for the Featured-rail bucket, the analytics
+  // payloads and `hasSearchParams` — never for membership, which goes
+  // through `searchState` above.
+  const rawTreatmentParam = searchParams.get("treatment") || "";
+  const rawInsuranceParam = searchParams.get("insurance") || "";
+  const rawTypeParam = searchParams.get("type") || "";
+  // A query that carries no usable token ("x", "!", "  ") cannot be honoured.
+  // It is NOT a no-op filter: returning the whole catalogue under the heading
+  // `Results for "x"` would present thousands of facilities as matches for
+  // something that matched nothing. The result set stays empty and the empty
+  // state says why.
+  const unusableQuery = !!queryParam && !isMeaningfulQuery(queryParam);
   // A non-numeric ?page= (mangled external link) used to parse to NaN, which
   // survived the clamp below and made the grid slice(NaN, NaN) → zero cards
   // rendered under a non-zero result count.
@@ -208,22 +613,22 @@ const SearchResults = () => {
     () => resolveSearchBucket({
       state: stateParam || null,
       citySlug: location && stateParam ? location : null,
-      treatmentSlug: treatment || null,
+      // Featured placement resolution is unchanged — it keeps reading the
+      // legacy `?treatment=` slug it has always read. Featured architecture
+      // is out of scope for this phase.
+      treatmentSlug: rawTreatmentParam || null,
     }),
-    [stateParam, location, treatment],
+    [stateParam, location, rawTreatmentParam],
   );
 
-  // Filter params (comma-separated values)
+  // Raw param presence, for `hasSearchParams` only. The indexability
+  // expression must keep its exact pre-Phase-3A composition — including the
+  // now-inert `amenities` — so that no URL changes its noindex verdict.
   const treatmentTypesParam = searchParams.get("treatmentTypes") || "";
   const amenitiesParam = searchParams.get("amenities") || "";
   const insuranceTypesParam = searchParams.get("insuranceTypes") || "";
-  const verifiedOnly = searchParams.get("verified") === "true";
-  const featuredOnly = searchParams.get("featuredOnly") === "true";
-
-  // Parse comma-separated filter values — wrapped in useMemo so array references are stable across renders
-  const selectedTreatmentTypes = useMemo(() => treatmentTypesParam ? treatmentTypesParam.split(",") : [], [treatmentTypesParam]);
-  const selectedAmenities = useMemo(() => amenitiesParam ? amenitiesParam.split(",") : [], [amenitiesParam]);
-  const selectedInsuranceTypes = useMemo(() => insuranceTypesParam ? insuranceTypesParam.split(",") : [], [insuranceTypesParam]);
+  const verifiedOnly = searchState.verifiedOnly;
+  const featuredOnly = searchState.featuredOnly;
 
   const { data: approvedFacilities = [], isLoading, error: facilitiesError, refetch: refetchFacilities } = useStaticFacilities();
   const geo = useGeoLocation();
@@ -288,73 +693,60 @@ const SearchResults = () => {
 
   const allCenters = approvedFacilities;
 
-  // Wrapped in useMemo so the object reference is stable across renders
-  const typeFilterMap = useMemo<Record<string, string[]>>(() => ({
-    drug: ["Detox", "Inpatient", "Outpatient"],
-    alcohol: ["Detox", "Inpatient", "Outpatient"],
-    "mental-health": ["Dual Diagnosis"],
-    residential: ["Inpatient"],
-    outpatient: ["Outpatient"],
-    holistic: ["Inpatient", "Outpatient"],
-  }), []);
+  // ── CANONICAL URL WRITERS ───────────────────────────────────────────
+  // Every deliberate interaction routes through `canonicalizeSearchParams`,
+  // which rewrites both dimensions in their canonical form, deletes the
+  // legacy `treatment` / `insurance` / `type` spellings, drops the inert
+  // `distance` / `amenities` leftovers and resets `page`. That converges the
+  // URL onto ONE representation: after any interaction the address bar means
+  // exactly what the filter panel shows, with no second hidden constraint
+  // and no stale unsupported value left to be re-read on the next visit.
 
-  const typeDisplayNames: Record<string, string> = {
-    drug: "Drug Addiction",
-    alcohol: "Alcohol Treatment",
-    "mental-health": "Mental Health",
-    residential: "Residential Rehab",
-    outpatient: "Outpatient Programs",
-    holistic: "Holistic Therapy",
-  };
-
-  // Toggle filter helper
-  const toggleFilter = useCallback((paramName: string, value: string, currentValues: string[]) => {
-    const newParams = new URLSearchParams(searchParams);
-    const isCurrentlySelected = currentValues.includes(value);
-    
-    let newValues: string[];
-    if (isCurrentlySelected) {
-      newValues = currentValues.filter(v => v !== value);
-    } else {
-      newValues = [...currentValues, value];
-    }
-    
-    if (newValues.length > 0) {
-      newParams.set(paramName, newValues.join(","));
-    } else {
-      newParams.delete(paramName);
-    }
-    
-    newParams.delete("page"); // Reset to page 1 when filtering
-    setSearchParams(newParams);
+  const setTreatmentFilters = useCallback((values: string[]) => {
+    setSearchParams(canonicalizeSearchParams(searchParams, { treatment: values }));
   }, [searchParams, setSearchParams]);
 
-  // Set single value filter
-  const setSingleFilter = useCallback((paramName: string, value: string) => {
-    const newParams = new URLSearchParams(searchParams);
-    if (value && value !== "any") {
-      newParams.set(paramName, value);
-    } else {
-      newParams.delete(paramName);
-    }
-    newParams.delete("page");
-    setSearchParams(newParams);
+  const setInsuranceFilters = useCallback((values: string[]) => {
+    setSearchParams(canonicalizeSearchParams(searchParams, { insurance: values }));
   }, [searchParams, setSearchParams]);
 
-  // Toggle boolean filter
+  const toggleTreatmentFilter = useCallback((value: string) => {
+    setTreatmentFilters(
+      activeTreatmentFilters.includes(value)
+        ? activeTreatmentFilters.filter((v) => v !== value)
+        : [...activeTreatmentFilters, value],
+    );
+  }, [activeTreatmentFilters, setTreatmentFilters]);
+
+  const toggleInsuranceFilter = useCallback((value: string) => {
+    setInsuranceFilters(
+      activeInsuranceFilters.includes(value)
+        ? activeInsuranceFilters.filter((v) => v !== value)
+        : [...activeInsuranceFilters, value],
+    );
+  }, [activeInsuranceFilters, setInsuranceFilters]);
+
+  // Toggle boolean filter (Verified Only / Featured Only)
   const toggleBooleanFilter = useCallback((paramName: string, currentValue: boolean) => {
-    const newParams = new URLSearchParams(searchParams);
+    const newParams = canonicalizeSearchParams(searchParams);
 
     if (currentValue) {
       newParams.delete(paramName);
     } else {
       newParams.set(paramName, "true");
     }
-    newParams.delete("page");
     setSearchParams(newParams);
   }, [searchParams, setSearchParams]);
 
-  const { filteredCenters, nearbyCenters, locationScope: activeLocationScope, facetPool } = useMemo(() => {
+  const {
+    filteredCenters,
+    nearbyCenters,
+    locationScope: activeLocationScope,
+    treatmentFacetPool,
+    insuranceFacetPool,
+    verifiedFacetCount,
+    featuredFacetCount,
+  } = useMemo(() => {
     let results = [...allCenters];
     // The geographic scope the user actually asked for, or null when no
     // location was supplied.
@@ -363,11 +755,6 @@ const SearchResults = () => {
     // `null` means no location scope is active, so everything surviving
     // the other filters is "exact" by default.
     let exactIds: Set<string> | null = null;
-    // Snapshot of the result set BEFORE treatment-multi and insurance-multi
-    // and amenities filters are applied. Facet counts are computed against
-    // this pool so toggling within a filter group doesn't suppress its
-    // own counts — selecting "Aetna" must not show "(0)" for "BCBS" etc.
-    let preMultiPool: typeof results = [];
 
     // Direct state filter from URL param (e.g. from near-me pages: ?state=FL).
     // Canonical state normalization — exactly that state, never its
@@ -406,143 +793,74 @@ const SearchResults = () => {
       // labelled with the user's search term.
       //
       // Exact and nearby travel together through the REMAINING filters
-      // (query, treatment, insurance, amenities, ...) so both
-      // buckets are narrowed by the same criteria, then are separated
-      // again at the end. They are never merged for counting: the split
-      // below is by identity, so a nearby facility cannot leak into the
-      // exact set.
+      // (query, treatment, payment/insurance, ...) so both buckets are
+      // narrowed by the same criteria, then are separated again at the
+      // end. They are never merged for counting: the split below is by
+      // identity, so a nearby facility cannot leak into the exact set.
       locationScope = scope;
       exactIds = new Set(split.exact.map((c) => c.id));
       results = [...split.exact, ...split.nearby];
     }
 
-    // Free-text search with fuzzy/partial matching
+    // ---- FREE TEXT ----------------------------------------------------
+    // One pure matcher in @/lib/publicSearchText. Field-by-field word and
+    // word-prefix matching, never the old concatenated-haystack substring
+    // scan that let `q=mat` match "traumatic" and `q=x` match the whole
+    // catalogue. A query with no usable token matches NOTHING and the page
+    // says why, rather than presenting every facility as a match for it.
     if (queryParam) {
-      const q = queryParam.toLowerCase().trim();
-      // Split query into individual tokens for partial matching
-      const tokens = q.split(/\s+/).filter(t => t.length > 1);
-      
-      results = results.filter((c) => {
-        const nameL = c.name.toLowerCase();
-        const descL = (c.description || "").toLowerCase();
-        const cityL = c.city.toLowerCase();
-        const stateL = c.state.toLowerCase();
-        const treatmentL = c.treatmentTypes.map(t => t.toLowerCase()).join(" ");
-        const insuranceL = c.insuranceAccepted.map(i => i.toLowerCase()).join(" ");
-        const zipL = c.zipCode || "";
-        const facilityTypeL = (c.facilityType || "").toLowerCase();
-        const haystack = `${nameL} ${descL} ${cityL} ${stateL} ${treatmentL} ${insuranceL} ${zipL} ${facilityTypeL}`;
-        
-        // Full query match
-        if (haystack.includes(q)) return true;
-        
-        // All individual tokens must match somewhere (AND logic for multi-word queries)
-        if (tokens.length > 1) {
-          return tokens.every(token => haystack.includes(token));
-        }
-        
-        // Single token: also check partial word starts for typo tolerance
-        if (tokens.length === 1) {
-          const token = tokens[0];
-          const words = haystack.split(/\s+/);
-          return words.some(w => w.startsWith(token) || w.includes(token));
-        }
-        
-        return false;
-      });
+      results = results.filter((c) => matchesFreeTextQuery(c, queryParam));
     }
 
-    // Treatment filter from the hero search form. Supports comma-separated
-    // multi-select. Routed through the same matcher as the dropdown so
-    // `?treatment=inpatient` resolves the 44 facility_type='Residential
-    // Treatment Center' rows (previously zero-result).
-    if (treatment) {
-      const treatmentValues = treatment.split(",").map((t) => t.trim().toLowerCase()).filter(Boolean);
-      results = results.filter((c) =>
-        treatmentValues.some((tv) => matchesTreatmentFilter(asSearchableFacility(c), tv)),
-      );
-    }
+    // ---- GROUP PREDICATES ---------------------------------------------
+    // Within a group: OR (Detox OR Outpatient).
+    // Across groups:  AND (location AND treatment AND payment AND quick).
+    // Both dimensions read the ONE canonical filter state, so there is no
+    // longer a legacy param applying a second, invisible constraint.
+    const treatmentOk = (c: (typeof results)[number]) =>
+      activeTreatmentFilters.length === 0 ||
+      activeTreatmentFilters.some((v) => matchesTreatmentFilter(asSearchableFacility(c), v));
 
-    // Type filter from homepage cards
-    if (type && typeFilterMap[type]) {
-      results = results.filter((c) =>
-        c.treatmentTypes.some((t) => typeFilterMap[type].includes(t))
-      );
-    }
+    const insuranceOk = (c: (typeof results)[number]) =>
+      activeInsuranceFilters.length === 0 ||
+      activeInsuranceFilters.some((v) => matchesInsuranceFilter(asSearchableFacility(c), v));
 
-    // Insurance filter from the hero search form. Same shared matcher as the
-    // dropdown so `?insurance=private-pay` recovers ~2,918 facilities the
-    // pre-2026-05-21 substring matcher silently excluded.
-    if (insurance) {
-      const insuranceValues = insurance.split(",").map((i) => i.trim().toLowerCase()).filter(Boolean);
-      results = results.filter((c) =>
-        insuranceValues.some((iv) => matchesInsuranceFilter(asSearchableFacility(c), iv)),
-      );
-    }
+    const verifiedOk = (c: (typeof results)[number]) =>
+      !verifiedOnly || c.verified === true;
 
-    // Capture the pool BEFORE the multi-select treatment / insurance /
-    // amenities filters apply. Facet counts read from here so the user can
-    // freely toggle within a group without each option self-suppressing.
-    // Facet counts describe the user's EXACT geographic context, so the
-    // nearby bucket is excluded here too.
-    preMultiPool = exactIds ? results.filter((c) => exactIds!.has(c.id)) : results;
+    const featuredOk = (c: (typeof results)[number]) =>
+      !featuredOnly || c.featured === true;
 
-    // Insurance Types dropdown filters — shared matcher folds case + internal
-    // whitespace and walks the alias list in src/lib/searchFilters.ts so e.g.
-    // `private-pay` matches "Self-Pay/Private Pay" (no spaces) which the
-    // production catalog actually contains.
-    if (selectedInsuranceTypes.length > 0) {
-      results = results.filter((center) =>
-        selectedInsuranceTypes.some((filterValue) =>
-          matchesInsuranceFilter(asSearchableFacility(center), filterValue),
-        ),
-      );
-    }
+    // NO AMENITIES STEP. See the note beside the removed `amenityFilters`
+    // registry: the four options were inferred from narrative text against a
+    // dataset that carries no structured amenity attribute, so a stale
+    // `?amenities=pool` narrows nothing here.
 
-    // Treatment Type dropdown filters — shared matcher walks services →
-    // facility_type → description so `inpatient` (zero rows in
-    // facility_services) still resolves the 44 facilities tagged
-    // `facility_type='Residential Treatment Center'`.
-    if (selectedTreatmentTypes.length > 0) {
-      results = results.filter((center) =>
-        selectedTreatmentTypes.some((filterValue) =>
-          matchesTreatmentFilter(asSearchableFacility(center), filterValue),
-        ),
-      );
-    }
+    // ---- SELF-EXCLUDING FACET POOLS -----------------------------------
+    // A facet count must answer "how many results would I get if I picked
+    // this option?" — so each group's counts apply every OTHER active
+    // constraint and skip its own. Previously the pool was snapshotted
+    // before BOTH multi-select groups, so treatment counts ignored the
+    // active payment selection (and vice versa) and neither reflected the
+    // quick filters at all. Facet scope is exact-only: the same-state
+    // bucket is not part of the counted set and must not inflate a count.
+    const exactBase = exactIds ? results.filter((c) => exactIds!.has(c.id)) : results;
+    const treatmentFacetSource = exactBase.filter(
+      (c) => insuranceOk(c) && verifiedOk(c) && featuredOk(c),
+    );
+    const insuranceFacetSource = exactBase.filter(
+      (c) => treatmentOk(c) && verifiedOk(c) && featuredOk(c),
+    );
+    const verifiedCount = exactBase.filter(
+      (c) => treatmentOk(c) && insuranceOk(c) && featuredOk(c) && c.verified === true,
+    ).length;
+    const featuredCount = exactBase.filter(
+      (c) => treatmentOk(c) && insuranceOk(c) && verifiedOk(c) && c.featured === true,
+    ).length;
 
-    // Amenity filters — match against description + treatment types + facility type
-    if (selectedAmenities.length > 0) {
-      results = results.filter((center) => {
-        const description = (center.description || "").toLowerCase();
-        const allTypes = center.treatmentTypes.map(t => t.toLowerCase()).join(" ");
-        const combined = `${description} ${allTypes}`;
-        return selectedAmenities.some(amenity => {
-          switch (amenity) {
-            case "private-rooms":
-              return combined.includes("private") && (combined.includes("room") || combined.includes("suite"));
-            case "gym":
-              return combined.includes("gym") || combined.includes("fitness") || combined.includes("exercise");
-            case "pool":
-              return combined.includes("pool") || combined.includes("aqua") || combined.includes("swimming");
-            case "meditation":
-              return combined.includes("meditation") || combined.includes("yoga") || combined.includes("mindfulness") || combined.includes("holistic");
-            default:
-              return false;
-          }
-        });
-      });
-    }
-
-    // Verified only filter
-    if (verifiedOnly) {
-      results = results.filter((center) => center.verified === true);
-    }
-
-    // Featured only filter
-    if (featuredOnly) {
-      results = results.filter((center) => center.featured === true);
-    }
+    results = results.filter(
+      (c) => treatmentOk(c) && insuranceOk(c) && verifiedOk(c) && featuredOk(c),
+    );
 
     // NO DISTANCE STEP. This is where "Within N miles" used to translate
     // a mile radius into the categorical proximity tier — 10 mi meant
@@ -626,10 +944,19 @@ const SearchResults = () => {
       }
     });
 
-    // Attach proximity tier to each result for badge display
-    const sortLoc = locationForSort || locationForFilter;
-    if (sortLoc) {
-      let match = locationMatch || parseLocationInput(sortLoc);
+    // Attach the location-relation tier for the card badge — ONLY when the
+    // user explicitly entered or selected a location.
+    //
+    // The badge used to be attached off `locationForSort`, which falls back
+    // to the seeker profile and then to geo-IP. A visitor who searched
+    // nothing therefore saw "Exact Match" / "In Your City" badges derived
+    // from an IP lookup, on a result set that geo-IP never filtered — a
+    // claim about the user's own location, made from an inference, about
+    // cards that were not selected for it. Geo-IP still informs the
+    // ORDERING below (`getProximityScore` is unchanged); it may not label a
+    // card. `locationForFilter` is the explicit search and nothing else.
+    if (locationForFilter) {
+      let match = locationMatch || parseLocationInput(locationForFilter);
       if (resolvedZipData) {
         match = enrichLocationMatchWithZip(match, resolvedZipData);
       }
@@ -650,15 +977,17 @@ const SearchResults = () => {
       filteredCenters: exactOnly,
       nearbyCenters: nearbyOnly,
       locationScope,
-      facetPool: preMultiPool,
+      treatmentFacetPool: treatmentFacetSource,
+      insuranceFacetPool: insuranceFacetSource,
+      verifiedFacetCount: verifiedCount,
+      featuredFacetCount: featuredCount,
     };
-  }, [allCenters, location, effectiveLocation, treatment, insurance, type, stateParam, queryParam, sortParam, selectedTreatmentTypes, selectedAmenities, selectedInsuranceTypes, verifiedOnly, featuredOnly, resolvedZipData, typeFilterMap]);
+  }, [allCenters, location, effectiveLocation, stateParam, queryParam, sortParam, activeTreatmentFilters, activeInsuranceFilters, verifiedOnly, featuredOnly, resolvedZipData]);
 
-  const hasFilters = location || treatment || insurance || type || stateParam || queryParam || selectedTreatmentTypes.length > 0 || selectedAmenities.length > 0 || selectedInsuranceTypes.length > 0 || verifiedOnly || featuredOnly;
-  const activeTypeFilter = type ? typeDisplayNames[type] : null;
-
-  // Count active filters
-  const activeFiltersCount = selectedTreatmentTypes.length + selectedAmenities.length + selectedInsuranceTypes.length + (verifiedOnly ? 1 : 0) + (featuredOnly ? 1 : 0);
+  // Active refinement count — canonical, so a URL carrying three spellings
+  // of one treatment dimension counts once and an unsupported value counts
+  // zero (it narrows nothing, so it is not an active filter).
+  const activeFiltersCount = activeFilterCount(searchState);
 
   const totalPages = Math.max(1, Math.ceil(filteredCenters.length / ITEMS_PER_PAGE));
   // F11 clamp: ?page=99 against a 6-page result set previously rendered an
@@ -732,22 +1061,18 @@ const SearchResults = () => {
     : null;
   const countyStateSlug = countyScope ? stateSlugFor(countyScope.state) : null;
 
-  // Facet counts — read from `facetPool`, which is the result set narrowed
-  // by location/state/query/type/verified/featured but BEFORE the
-  // multi-select treatment + insurance + amenities filters apply. That way
-  // toggling within those groups doesn't suppress the group's own counts,
-  // while still reflecting the user's location/query context.
-  const facetSourceFacilities = useMemo(
-    () => facetPool.map(asSearchableFacility),
-    [facetPool],
-  );
+  // Facet counts — SELF-EXCLUDING. Each group is counted against every other
+  // active constraint (location, state, free text, the OTHER filter group,
+  // and both quick filters) but not against itself, so the number beside an
+  // option is the size of the result set the user would get by picking it.
+  // Both pools are exact-scope only: the same-state bucket is never counted.
   const treatmentFacets = useMemo(
-    () => countTreatmentFacets(facetSourceFacilities),
-    [facetSourceFacilities],
+    () => countTreatmentFacets(treatmentFacetPool.map(asSearchableFacility)),
+    [treatmentFacetPool],
   );
   const insuranceFacets = useMemo(
-    () => countInsuranceFacets(facetSourceFacilities),
-    [facetSourceFacilities],
+    () => countInsuranceFacets(insuranceFacetPool.map(asSearchableFacility)),
+    [insuranceFacetPool],
   );
 
   const handlePageChange = (page: number) => {
@@ -757,16 +1082,21 @@ const SearchResults = () => {
     scrollToTopSmooth();
   };
 
-  const clearFilter = (filterKey: string) => {
-    const newParams = new URLSearchParams(searchParams);
-    newParams.delete(filterKey);
-    newParams.delete("page");
-    setSearchParams(newParams);
-  };
+  // Clear-all removes EVERY public refinement by name — location, free
+  // text, state, both canonical dimensions, the legacy `treatment` /
+  // `insurance` / `type` spellings, both quick filters, the inert
+  // `distance` / `amenities` leftovers, page and sort. Enumerating them
+  // means a hidden legacy param cannot survive a "Clear all".
+  const clearAllFilters = useCallback(() => {
+    setSearchParams(clearAllSearchParams(searchParams));
+  }, [searchParams, setSearchParams]);
 
-  const clearAllFilters = () => {
-    setSearchParams(new URLSearchParams());
-  };
+  // Drop just the free-text query, keeping every other refinement.
+  const clearQuery = useCallback(() => {
+    const next = canonicalizeSearchParams(searchParams);
+    next.delete("q");
+    setSearchParams(next);
+  }, [searchParams, setSearchParams]);
 
   // The saved-search snapshot (criteria / suggested name / deep-link URL)
   // was removed with the consumer account product — nothing consumes it now
@@ -816,18 +1146,24 @@ const SearchResults = () => {
   }, [activeLocationScope, queryParam, toast]);
 
   const handleSortChange = (value: SortOption) => {
-    const newParams = new URLSearchParams(searchParams);
+    const newParams = canonicalizeSearchParams(searchParams);
     if (value === "proximity") {
       newParams.delete("sort");
     } else {
       newParams.set("sort", value);
     }
-    newParams.delete("page");
     setSearchParams(newParams);
   };
 
-  // Determine if this is a search with query params (should be noindexed)
-  const hasSearchParams = !!(location || treatment || insurance || type || stateParam || queryParam || treatmentTypesParam || amenitiesParam || insuranceTypesParam);
+  // Determine if this is a search with query params (should be noindexed).
+  //
+  // COMPOSITION FROZEN. This expression reads RAW param presence, exactly as
+  // it did before Phase 3A — including the now-inert `amenities`. An old
+  // filtered URL must not become newly indexable merely because we stopped
+  // honouring one of its filters, and no URL may newly acquire a noindex it
+  // did not have. Adding or removing a term here changes the indexability of
+  // live URLs; do not.
+  const hasSearchParams = !!(location || rawTreatmentParam || rawInsuranceParam || rawTypeParam || stateParam || queryParam || treatmentTypesParam || amenitiesParam || insuranceTypesParam);
   const shouldNoindex = hasSearchParams || filteredCenters.length === 0;
 
   // Zero-result tracking for queries that originated on the 404 page
@@ -840,14 +1176,14 @@ const SearchResults = () => {
     if (isLoading) return;
     if (filteredCenters.length !== 0) return;
     // Build a stable key per query so we only fire once per unique search.
-    const key = `${location}|${treatment}|${insurance}`;
+    const key = `${location}|${rawTreatmentParam}|${rawInsuranceParam}`;
     if (reportedZeroQueryRef.current === key) return;
     reportedZeroQueryRef.current = key;
 
     analytics.notFoundSearchZeroResults({
       location: location || undefined,
-      treatment: treatment || undefined,
-      insurance: insurance || undefined,
+      treatment: rawTreatmentParam || undefined,
+      insurance: rawInsuranceParam || undefined,
       resultsCount: 0,
       sourcePath: "/search-results",
       referrer: typeof document !== "undefined" ? document.referrer : undefined,
@@ -860,7 +1196,7 @@ const SearchResults = () => {
           ? window.sessionStorage?.getItem("rl_session_id") ?? null
           : null,
     });
-  }, [fromParam, isLoading, filteredCenters.length, location, treatment, insurance]);
+  }, [fromParam, isLoading, filteredCenters.length, location, rawTreatmentParam, rawInsuranceParam]);
 
   // Phase 4: generic funnel event — fire `search_performed` and
   // `search_zero_results` for every search (not just /404 referrals) so we
@@ -868,13 +1204,13 @@ const SearchResults = () => {
   const reportedSearchKeyRef = useRef<string | null>(null);
   useEffect(() => {
     if (isLoading) return;
-    const key = `${location}|${treatment}|${insurance}|${queryParam}`;
+    const key = `${location}|${rawTreatmentParam}|${rawInsuranceParam}|${queryParam}`;
     if (reportedSearchKeyRef.current === key) return;
     reportedSearchKeyRef.current = key;
 
     analytics.search(queryParam || location || "(empty)", filteredCenters.length);
     // Analytics provider removed — zero-result searches tracked via analytics.search() above.
-  }, [isLoading, filteredCenters.length, location, treatment, insurance, queryParam]);
+  }, [isLoading, filteredCenters.length, location, rawTreatmentParam, rawInsuranceParam, queryParam]);
 
   // Crawler-facing scope wording, derived from the SAME canonical scope
   // the result set was filtered to. Null for county (its own qualified
@@ -984,247 +1320,33 @@ const SearchResults = () => {
     setOpenFilterSection(prev => prev === section ? null : section);
   }, []);
 
-  // Collapsible filter section. Hairline-divided rows (no per-section
-  // border/rounded box) — each section is a button-header + collapsible
-  // body separated from siblings by the divide-y on the parent. Result
-  // is a clean tabular feel, similar to Airbnb / Yelp's filter panels.
-  const FilterSection = ({ id, icon, label, children, count }: { id: string; icon: ReactNode; label: string; children: ReactNode; count?: number }) => {
-    const isOpen = openFilterSection === id;
-    return (
-      <div>
-        <button
-          type="button"
-          onClick={() => toggleFilterSection(id)}
-          className="w-full flex items-center justify-between py-3.5 text-sm font-semibold text-foreground hover:text-primary transition-colors"
-          aria-expanded={isOpen}
-        >
-          <span className="flex items-center gap-2.5">
-            <span className="text-muted-foreground">{icon}</span>
-            {label}
-            {count && count > 0 ? (
-              <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground tabular-nums">{count}</span>
-            ) : null}
-          </span>
-          <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
-        </button>
-        <div className={`overflow-hidden transition-all duration-200 ${isOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"}`}>
-          <div className="pb-4 pt-0">
-            {children}
-          </div>
-        </div>
-      </div>
-    );
+  // FilterSection / FilterSidebar / DirectoryHelperCTA are declared at MODULE
+  // scope (above) rather than inline here. Declaring a component inside the
+  // render body creates a new component TYPE on every render, so React
+  // unmounted and remounted the entire filter panel after every single
+  // filter click — which destroyed keyboard focus and collapsed the open
+  // accordion mid-interaction. Desktop and mobile render the SAME component
+  // with the SAME props below, so their values, counts, disabled states and
+  // clear-all behaviour cannot drift apart.
+  const filterSidebarProps: Omit<FilterSidebarProps, "panel"> = {
+    sortParam,
+    onSortChange: handleSortChange,
+    openSection: openFilterSection,
+    onToggleSection: toggleFilterSection,
+    activeTreatment: activeTreatmentFilters,
+    activeInsurance: activeInsuranceFilters,
+    treatmentFacets,
+    insuranceFacets,
+    verifiedOnly,
+    featuredOnly,
+    verifiedFacetCount,
+    featuredFacetCount,
+    onToggleTreatment: toggleTreatmentFilter,
+    onToggleInsurance: toggleInsuranceFilter,
+    onToggleBoolean: toggleBooleanFilter,
+    activeFiltersCount,
+    onClearAll: clearAllFilters,
   };
-
-  // Sidebar filter content — reused for desktop card and mobile sheet.
-  // `divide-y` between sections gives the hairline structure; sort sits
-  // at the top as a FilterSection (consistent chrome) instead of its
-  // own special heading + Select.
-  const FilterSidebar = () => (
-    <div className="divide-y divide-border/70">
-      {/* Sort — same FilterSection chrome as everything else so the
-          sidebar reads as one consistent column. Defaults open since
-          sort is the most likely first interaction. */}
-      <FilterSection id="sort" icon={<ArrowUpDown className="h-3.5 w-3.5" />} label="Sort by">
-        <Select value={sortParam} onValueChange={(v) => handleSortChange(v as SortOption)}>
-          <SelectTrigger className="w-full h-10 text-sm border-border bg-background">
-            <SelectValue placeholder="Sort" />
-          </SelectTrigger>
-          <SelectContent className="bg-card border-border shadow-lg">
-            {sortOptions.map((option) => (
-              <SelectItem key={option.value} value={option.value} className="text-sm cursor-pointer">
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </FilterSection>
-
-      {/* Treatment Type — single-select dropdown. Options come from
-          src/lib/searchFilters.ts; facet badge shows how many facilities
-          match each option against the current location/state/query filters
-          so users can see "(N)" before clicking and avoid zero-result dead
-          ends. */}
-      <FilterSection id="treatment" icon={<Building2 className="h-3.5 w-3.5" />} label="Treatment Type" count={selectedTreatmentTypes.length}>
-        <Select
-          value={selectedTreatmentTypes[0] ?? "any"}
-          onValueChange={(v) => setSingleFilter("treatmentTypes", v)}
-        >
-          <SelectTrigger className="w-full h-9 text-sm border-border bg-card">
-            <SelectValue placeholder="Any treatment type" />
-          </SelectTrigger>
-          <SelectContent className="bg-card border-border shadow-lg max-h-72">
-            <SelectItem value="any" className="text-sm cursor-pointer">
-              Any treatment type
-            </SelectItem>
-            {TREATMENT_FILTERS.map((filter) => {
-              const count = treatmentFacets[filter.value] ?? 0;
-              return (
-                <SelectItem
-                  key={filter.value}
-                  value={filter.value}
-                  className="text-sm cursor-pointer"
-                  disabled={count === 0}
-                >
-                  <span className="flex items-center gap-2">
-                    <span>{filter.label}</span>
-                    <span className="text-xs text-muted-foreground tabular-nums">({count})</span>
-                  </span>
-                </SelectItem>
-              );
-            })}
-          </SelectContent>
-        </Select>
-      </FilterSection>
-
-      {/* No Distance section — see the note beside `sortOptions`. */}
-
-      {/* Insurance — multi-select toggle buttons (mirrors Amenities pattern).
-          Persists via the `insuranceTypes` URL param (comma-separated).
-          Facet counts surface up-front so users see e.g. "Medicaid (2,759)" vs
-          "Aetna (2)" before they click. Options with zero matches are
-          disabled to prevent dead-end interactions. */}
-      <FilterSection id="insurance" icon={<Shield className="h-3.5 w-3.5" />} label="Insurance" count={selectedInsuranceTypes.length}>
-        <div className="space-y-1.5">
-          {INSURANCE_FILTERS.map((filter) => {
-            const active = selectedInsuranceTypes.includes(filter.value);
-            const count = insuranceFacets[filter.value] ?? 0;
-            const disabled = count === 0 && !active;
-            return (
-              <button
-                key={filter.value}
-                onClick={() => {
-                  if (disabled) return;
-                  toggleFilter("insuranceTypes", filter.value, selectedInsuranceTypes);
-                }}
-                aria-pressed={active}
-                aria-disabled={disabled}
-                disabled={disabled}
-                className={`w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-all ${
-                  active
-                    ? "bg-primary/10 text-primary font-medium border border-primary/20"
-                    : disabled
-                    ? "text-muted-foreground/50 border border-transparent cursor-not-allowed"
-                    : "text-foreground hover:bg-secondary/60 border border-transparent"
-                }`}
-              >
-                <span className="flex items-center gap-2 min-w-0">
-                  {filter.logo ? (
-                    <img
-                      src={filter.logo}
-                      alt=""
-                      aria-hidden="true"
-                      className="h-3.5 w-4 object-contain shrink-0"
-                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-                    />
-                  ) : (
-                    <CreditCard className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                  )}
-                  <span className="truncate">{filter.label}</span>
-                </span>
-                <span className="flex items-center gap-2 shrink-0">
-                  <span className="text-xs text-muted-foreground tabular-nums">({count.toLocaleString()})</span>
-                  {active && <X className="h-3.5 w-3.5" aria-hidden="true" />}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </FilterSection>
-
-      {/* Amenities */}
-      <FilterSection id="amenities" icon={<Star className="h-3.5 w-3.5" />} label="Amenities" count={selectedAmenities.length}>
-        <div className="space-y-1.5">
-          {amenityFilters.map((filter) => {
-            const active = selectedAmenities.includes(filter.value);
-            return (
-              <button
-                key={filter.value}
-                onClick={() => toggleFilter("amenities", filter.value, selectedAmenities)}
-                className={`w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-all ${
-                  active
-                    ? "bg-primary/10 text-primary font-medium border border-primary/20"
-                    : "text-foreground hover:bg-secondary/60 border border-transparent"
-                }`}
-              >
-                <span>{filter.label}</span>
-                {active && <X className="h-3.5 w-3.5" />}
-              </button>
-            );
-          })}
-        </div>
-      </FilterSection>
-
-      {/* Quick Filters */}
-      <FilterSection id="quick" icon={<Sparkles className="h-3.5 w-3.5" />} label="Quick Filters" count={(verifiedOnly ? 1 : 0) + (featuredOnly ? 1 : 0)}>
-        <div className="space-y-1.5">
-          <button
-            onClick={() => toggleBooleanFilter("verified", verifiedOnly)}
-            className={`w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-all ${
-              verifiedOnly
-                ? "bg-primary/10 text-primary font-medium border border-primary/20"
-                : "text-foreground hover:bg-secondary/60 border border-transparent"
-            }`}
-          >
-            <Shield className="h-4 w-4 shrink-0" />
-            <span>Verified Only</span>
-          </button>
-          <button
-            onClick={() => toggleBooleanFilter("featuredOnly", featuredOnly)}
-            className={`w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-all ${
-              featuredOnly
-                ? "bg-amber-50 text-amber-700 font-medium border border-amber-200"
-                : "text-foreground hover:bg-secondary/60 border border-transparent"
-            }`}
-          >
-            <Sparkles className="h-4 w-4 shrink-0" />
-            <span>Featured Only</span>
-          </button>
-        </div>
-      </FilterSection>
-
-      {/* Clear-all — appears at the bottom of the divider stack as
-          its own row when any filter is active. */}
-      {activeFiltersCount > 0 && (
-        <div className="pt-3">
-          <button
-            type="button"
-            onClick={clearAllFilters}
-            className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium text-muted-foreground hover:text-destructive hover:border-destructive/40 transition-colors"
-          >
-            <X className="h-4 w-4" />
-            Clear all filters ({activeFiltersCount})
-          </button>
-        </div>
-      )}
-    </div>
-  );
-
-  // Directory helper CTA — rendered OUTSIDE the FilterSidebar component so
-  // it sits below the divider stack with its own breathing room. Was
-  // previously the last child of FilterSidebar which made it inherit
-  // the new divide-y rule and stack visually adjacent to the filter
-  // sections; the standalone block reads more like a contextual
-  // affordance, less like another filter.
-  const DirectoryHelperCTA = () => (
-    <div className="mt-5 rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-4 border border-primary/15">
-      <div className="flex items-center gap-3 mb-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-primary/20 bg-primary/10 shrink-0">
-          <Scale className="h-4 w-4 text-primary" />
-        </div>
-        <div className="min-w-0">
-          <p className="text-xs font-semibold text-foreground">Narrowed it down?</p>
-          <p className="text-xs text-muted-foreground">Compare your shortlist side by side</p>
-        </div>
-      </div>
-      <Link to="/compare">
-        <Button size="sm" className="w-full gap-2 text-xs">
-          <Scale className="h-3.5 w-3.5" />
-          Compare Facilities
-        </Button>
-      </Link>
-    </div>
-  );
 
   return (
     <Layout>
@@ -1368,7 +1490,7 @@ const SearchResults = () => {
               </Button>
             </div>
             <div className="p-4 flex-1 overflow-y-auto">
-              <FilterSidebar />
+              <FilterSidebar {...filterSidebarProps} panel="mobile" />
               <DirectoryHelperCTA />
             </div>
             {/* Sticky "Show results" footer — closes the sheet and confirms the
@@ -1420,7 +1542,7 @@ const SearchResults = () => {
                       </span>
                     )}
                   </div>
-                  <FilterSidebar />
+                  <FilterSidebar {...filterSidebarProps} panel="desktop" />
                 </div>
                 <DirectoryHelperCTA />
               </div>
@@ -1540,40 +1662,35 @@ const SearchResults = () => {
                               WebkitMaskImage: "linear-gradient(to right, black calc(100% - 24px), transparent)",
                             }}
                           >
-                            {selectedTreatmentTypes.map((value) => (
+                            {/* Chips read the SAME canonical filter state as
+                                the sidebar and the result grid, and render the
+                                human LABEL rather than the raw slug. An
+                                unsupported URL value produces no chip because
+                                it produces no constraint. No Amenities chip —
+                                the filter is gone. No Distance chip — there is
+                                no distance. */}
+                            {activeTreatmentFilters.map((value) => (
                               <button
                                 key={`tt-${value}`}
                                 type="button"
-                                onClick={() => toggleFilter("treatmentTypes", value, selectedTreatmentTypes)}
+                                onClick={() => toggleTreatmentFilter(value)}
                                 className="shrink-0 inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/20 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/15 transition-colors"
-                                aria-label={`Remove ${value} filter`}
+                                aria-label={`Remove treatment filter ${treatmentLabel(value)}`}
                               >
-                                <span className="truncate max-w-[140px]">{value}</span>
-                                <X className="h-3 w-3" />
+                                <span className="truncate max-w-[140px]">{treatmentLabel(value)}</span>
+                                <X className="h-3 w-3" aria-hidden="true" />
                               </button>
                             ))}
-                            {selectedInsuranceTypes.map((value) => (
+                            {activeInsuranceFilters.map((value) => (
                               <button
                                 key={`ins-${value}`}
                                 type="button"
-                                onClick={() => toggleFilter("insuranceTypes", value, selectedInsuranceTypes)}
+                                onClick={() => toggleInsuranceFilter(value)}
                                 className="shrink-0 inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/20 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/15 transition-colors"
-                                aria-label={`Remove ${value} filter`}
+                                aria-label={`Remove payment or insurance filter ${insuranceLabel(value)}`}
                               >
-                                <span className="truncate max-w-[140px]">{value}</span>
-                                <X className="h-3 w-3" />
-                              </button>
-                            ))}
-                            {selectedAmenities.map((value) => (
-                              <button
-                                key={`am-${value}`}
-                                type="button"
-                                onClick={() => toggleFilter("amenities", value, selectedAmenities)}
-                                className="shrink-0 inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/20 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/15 transition-colors"
-                                aria-label={`Remove ${value} filter`}
-                              >
-                                <span className="truncate max-w-[140px]">{value}</span>
-                                <X className="h-3 w-3" />
+                                <span className="truncate max-w-[140px]">{insuranceLabel(value)}</span>
+                                <X className="h-3 w-3" aria-hidden="true" />
                               </button>
                             ))}
                             {verifiedOnly && (
@@ -1584,7 +1701,7 @@ const SearchResults = () => {
                                 aria-label="Remove verified-only filter"
                               >
                                 <span>Verified</span>
-                                <X className="h-3 w-3" />
+                                <X className="h-3 w-3" aria-hidden="true" />
                               </button>
                             )}
                             {featuredOnly && (
@@ -1595,7 +1712,7 @@ const SearchResults = () => {
                                 aria-label="Remove featured-only filter"
                               >
                                 <span>Featured</span>
-                                <X className="h-3 w-3" />
+                                <X className="h-3 w-3" aria-hidden="true" />
                               </button>
                             )}
                             <button
@@ -1916,8 +2033,8 @@ const SearchResults = () => {
                   {/* Zero-result recovery CTA — widen the search */}
                   <NoResultsDirectoryCTA
                     location={location}
-                    treatmentTypes={selectedTreatmentTypes}
-                    insuranceTypes={selectedInsuranceTypes}
+                    treatmentTypes={activeTreatmentFilters}
+                    insuranceTypes={activeInsuranceFilters}
                     source="search_results"
                   />
 
@@ -1932,48 +2049,83 @@ const SearchResults = () => {
                   <div className="w-16 h-16 rounded-2xl bg-muted/60 flex items-center justify-center mt-10 mb-5 ring-1 ring-border">
                     <Search className="h-8 w-8 text-muted-foreground" />
                   </div>
-                  <h2 className="font-display text-xl md:text-2xl font-bold text-foreground mb-2">No matching centers</h2>
-                  <p className="text-muted-foreground text-center max-w-md mb-6">
-                    {queryParam
-                      ? `No treatment centers match "${queryParam}". Try a different search term or adjust the filters below.`
-                      : location && activeLocationScope
-                        ? `No facilities found in ${describeScope(activeLocationScope)}. Try a different location or remove a filter below.`
-                        : location
-                          ? `No facilities found for "${location}". Try a different location or remove a filter below.`
-                          : "We couldn't find any treatment centers matching your criteria. Try one of the suggestions below."}
-                  </p>
 
-                  {/* Suggested filter changes — one-tap removal of each active filter */}
-                  {(selectedTreatmentTypes.length > 0 || selectedInsuranceTypes.length > 0 || verifiedOnly || featuredOnly) && (
+                  {/* ZERO IS ZERO. Nothing below widens the search, drops a
+                      filter automatically, or relabels a non-match as a
+                      match. What the empty state owes the user is the TRUTH
+                      about which refinements are active and a deterministic
+                      way to relax any one of them. */}
+                  {unusableQuery ? (
+                    <>
+                      <h2 className="font-display text-xl md:text-2xl font-bold text-foreground mb-2">
+                        Enter at least {MIN_TOKEN_LENGTH} characters
+                      </h2>
+                      <p className="text-muted-foreground text-center max-w-md mb-6">
+                        &ldquo;{queryParam}&rdquo; is too short to search on. A
+                        one-character query would match almost every listing in
+                        the directory, and calling those matches would not be
+                        true. Try a facility name, a city, a ZIP code, or a
+                        service such as &ldquo;detox&rdquo;.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <h2 className="font-display text-xl md:text-2xl font-bold text-foreground mb-2">No matching centers</h2>
+                      <p className="text-muted-foreground text-center max-w-md mb-6">
+                        {queryParam
+                          ? `No treatment centers match "${queryParam}". Try a different search term or adjust the filters below.`
+                          : location && activeLocationScope
+                            ? `No facilities found in ${describeScope(activeLocationScope)}. Try a different location or remove a filter below.`
+                            : location
+                              ? `No facilities found for "${location}". Try a different location or remove a filter below.`
+                              : "We couldn't find any treatment centers matching your criteria. Try one of the suggestions below."}
+                      </p>
+                    </>
+                  )}
+
+                  {/* Suggested filter changes — one-tap removal of each ACTIVE
+                      refinement, read from the canonical state. The old list
+                      only covered `treatmentTypes` / `insuranceTypes`, so a
+                      zero result caused by a legacy `?treatment=`, a `?type=`
+                      preset or an `?amenities=` value offered no way to relax
+                      the filter that actually caused it. */}
+                  {(activeTreatmentFilters.length > 0 || activeInsuranceFilters.length > 0 || verifiedOnly || featuredOnly || queryParam) && (
                     <div className="w-full max-w-md mb-6 rounded-xl border border-border bg-card p-4">
                       <p className="text-xs font-semibold text-foreground mb-3 uppercase tracking-wide">
-                        Try removing a filter
+                        Active filters — remove one to widen the search
                       </p>
                       <div className="flex flex-wrap gap-2">
-                        {selectedTreatmentTypes.map((t) => (
+                        {queryParam && (
+                          <button
+                            onClick={clearQuery}
+                            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-xs hover:border-primary hover:text-primary transition-colors"
+                          >
+                            <X className="h-3 w-3" aria-hidden="true" />
+                            Search: {queryParam}
+                          </button>
+                        )}
+                        {activeTreatmentFilters.map((t) => (
                           <button
                             key={`rm-t-${t}`}
-                            onClick={() => {
-                              const next = selectedTreatmentTypes.filter((x) => x !== t);
-                              setSingleFilter("treatmentTypes", next.join(","));
-                            }}
+                            onClick={() =>
+                              setTreatmentFilters(activeTreatmentFilters.filter((x) => x !== t))
+                            }
                             className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-xs hover:border-primary hover:text-primary transition-colors"
                           >
-                            <X className="h-3 w-3" />
-                            Treatment: {t}
+                            <X className="h-3 w-3" aria-hidden="true" />
+                            Treatment: {treatmentLabel(t)}
                           </button>
                         ))}
-                        {selectedInsuranceTypes.map((i) => (
+                        {activeInsuranceFilters.map((i) => (
                           <button
                             key={`rm-i-${i}`}
-                            onClick={() => {
-                              const next = selectedInsuranceTypes.filter((x) => x !== i);
-                              setSingleFilter("insuranceTypes", next.join(","));
-                            }}
+                            onClick={() =>
+                              setInsuranceFilters(activeInsuranceFilters.filter((x) => x !== i))
+                            }
                             className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-xs hover:border-primary hover:text-primary transition-colors"
                           >
-                            <X className="h-3 w-3" />
-                            Insurance: {i}
+                            <X className="h-3 w-3" aria-hidden="true" />
+                            Payment: {insuranceLabel(i)}
                           </button>
                         ))}
                         {verifiedOnly && (
@@ -1981,7 +2133,7 @@ const SearchResults = () => {
                             onClick={() => toggleBooleanFilter("verified", true)}
                             className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-xs hover:border-primary hover:text-primary transition-colors"
                           >
-                            <X className="h-3 w-3" />
+                            <X className="h-3 w-3" aria-hidden="true" />
                             Verified only
                           </button>
                         )}
@@ -1990,7 +2142,7 @@ const SearchResults = () => {
                             onClick={() => toggleBooleanFilter("featuredOnly", true)}
                             className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-xs hover:border-primary hover:text-primary transition-colors"
                           >
-                            <X className="h-3 w-3" />
+                            <X className="h-3 w-3" aria-hidden="true" />
                             Featured only
                           </button>
                         )}
@@ -1999,25 +2151,19 @@ const SearchResults = () => {
                   )}
 
                   {/* Try a different treatment type */}
-                  {selectedTreatmentTypes.length > 0 && (
+                  {activeTreatmentFilters.length > 0 && (
                     <div className="w-full max-w-md mb-6">
                       <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide text-center">
                         Or try a different treatment type
                       </p>
                       <div className="flex flex-wrap justify-center gap-2">
-                        {[
-                          { value: "outpatient", label: "Outpatient" },
-                          { value: "inpatient", label: "Inpatient" },
-                          { value: "detox", label: "Detox" },
-                          { value: "dual-diagnosis", label: "Dual Diagnosis" },
-                          { value: "holistic", label: "Holistic" },
-                        ]
-                          .filter((opt) => !selectedTreatmentTypes.includes(opt.value))
+                        {TREATMENT_FILTERS
+                          .filter((opt) => !activeTreatmentFilters.includes(opt.value))
                           .slice(0, 4)
                           .map((opt) => (
                             <button
                               key={`alt-${opt.value}`}
-                              onClick={() => setSingleFilter("treatmentTypes", opt.value)}
+                              onClick={() => setTreatmentFilters([opt.value])}
                               className="rounded-full border border-border bg-background px-3 py-1 text-xs hover:border-primary hover:text-primary transition-colors"
                             >
                               {opt.label}

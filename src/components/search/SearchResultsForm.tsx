@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, type FormEvent } from "react";
+import { useEffect, useMemo, useState, useRef, type FormEvent } from "react";
 import { useSearchParams } from "react-router-dom";
 import { MapPin, Search, Building2, Shield, Loader2, CheckCircle2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,10 @@ import {
   SelectTrigger,
 } from "@/components/ui/select";
 import { TREATMENT_FILTERS, INSURANCE_FILTERS } from "@/lib/searchFilters";
+import {
+  canonicalizeSearchParams,
+  parsePublicSearchState,
+} from "@/lib/publicSearchState";
 import { useZipcodeLookup } from "@/hooks/useZipcodeLookup";
 
 // Treatment + insurance options come from the canonical filter library so
@@ -27,6 +31,17 @@ const INSURANCE_OPTIONS = INSURANCE_FILTERS;
 // everywhere it is still read. See src/pages/SearchResults.tsx.
 
 const ANY_VALUE = "__any__";
+/**
+ * Sentinel for "this dimension currently holds more than one value".
+ *
+ * The form is single-choice; the sidebar is multi-select. Before this the
+ * form read `treatmentTypes.split(",")[0]` and, on submit, wrote that single
+ * value back — so a user who had selected Detox + Outpatient in the sidebar
+ * and then pressed Search to change their CITY silently lost Outpatient. The
+ * form now shows that several filters are active, and a submit that does not
+ * touch the dropdown preserves the whole set.
+ */
+const MULTI_VALUE = "__multiple__";
 
 /**
  * Inline search form for the /search-results page.
@@ -43,15 +58,21 @@ const ANY_VALUE = "__any__";
 export function SearchResultsForm() {
   const [searchParams, setSearchParams] = useSearchParams();
 
+  // The canonical filter state, read the same way /search-results reads it:
+  // by precedence across `treatmentTypes` / legacy `treatment` / `type`, and
+  // `insuranceTypes` / legacy `insurance`. Reading the raw canonical param
+  // alone meant the form displayed "Any treatment" while a legacy param was
+  // actively narrowing the results.
+  const searchState = useMemo(() => parsePublicSearchState(searchParams), [searchParams]);
+  const activeTreatment = searchState.treatment.values;
+  const activeInsurance = searchState.insurance.values;
+
   const [location, setLocation] = useState(searchParams.get("location") ?? "");
-  const [treatment, setTreatment] = useState<string>(() => {
-    const raw = searchParams.get("treatmentTypes") ?? "";
-    return raw.split(",").filter(Boolean)[0] ?? "";
-  });
-  const [insurance, setInsurance] = useState<string>(() => {
-    const raw = searchParams.get("insuranceTypes") ?? "";
-    return raw.split(",").filter(Boolean)[0] ?? "";
-  });
+  // `null` = untouched since the last URL change. A submit only REPLACES a
+  // dimension the user deliberately changed; an untouched dimension keeps
+  // whatever the canonical state holds, however many values that is.
+  const [treatmentChoice, setTreatmentChoice] = useState<string | null>(null);
+  const [insuranceChoice, setInsuranceChoice] = useState<string | null>(null);
   // ZIP-code autocomplete: when the user types a 5-digit numeric in the
   // location field, debounce-lookup the ZIP and surface the resolved
   // city/state as inline feedback.
@@ -65,12 +86,13 @@ export function SearchResultsForm() {
   const { data: zipcodeData, isLoading: isZipLookupLoading, lookup: lookupZipcode, reset: resetZipLookup } = useZipcodeLookup();
   const lookupTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Any external URL change (sidebar toggle, chip removal, back button)
+  // re-syncs the form and clears the dirty flags — the user's pending
+  // dropdown edit is no longer pending once the URL moved underneath it.
   useEffect(() => {
     setLocation(searchParams.get("location") ?? "");
-    const t = (searchParams.get("treatmentTypes") ?? "").split(",").filter(Boolean)[0] ?? "";
-    setTreatment(t);
-    const i = (searchParams.get("insuranceTypes") ?? "").split(",").filter(Boolean)[0] ?? "";
-    setInsurance(i);
+    setTreatmentChoice(null);
+    setInsuranceChoice(null);
   }, [searchParams]);
 
   // Debounced ZIP detection — runs whenever the location string changes.
@@ -97,9 +119,60 @@ export function SearchResultsForm() {
 
   const isCompleteZipcode = /^\d{5}$/.test(location.trim());
 
+  // What the dropdown SHOWS. A dirty edit wins; otherwise the canonical
+  // state decides: one value shows that value, several show the multi
+  // sentinel, none shows "Any".
+  const treatmentValue =
+    treatmentChoice ??
+    (activeTreatment.length === 0
+      ? ANY_VALUE
+      : activeTreatment.length === 1
+        ? activeTreatment[0]
+        : MULTI_VALUE);
+  const insuranceValue =
+    insuranceChoice ??
+    (activeInsurance.length === 0
+      ? ANY_VALUE
+      : activeInsurance.length === 1
+        ? activeInsurance[0]
+        : MULTI_VALUE);
+
+  const treatmentTriggerLabel =
+    treatmentValue === MULTI_VALUE
+      ? `${activeTreatment.length} treatment filters`
+      : treatmentValue === ANY_VALUE
+        ? "Treatment"
+        : TREATMENT_OPTIONS.find((o) => o.value === treatmentValue)?.label ?? "Treatment";
+  const insuranceTriggerLabel =
+    insuranceValue === MULTI_VALUE
+      ? `${activeInsurance.length} payment filters`
+      : insuranceValue === ANY_VALUE
+        ? "Payment"
+        : INSURANCE_OPTIONS.find((o) => o.value === insuranceValue)?.label ?? "Payment";
+
+  /**
+   * Resolve one dimension for submit.
+   *   untouched            → keep the entire canonical set (multi included)
+   *   deliberately "Any"   → clear this dimension only
+   *   deliberate value     → replace this dimension with that single value
+   */
+  const resolveDimension = (choice: string | null, current: string[]): string[] => {
+    if (choice === null || choice === MULTI_VALUE) return current;
+    if (choice === ANY_VALUE) return [];
+    return [choice];
+  };
+
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    const next = new URLSearchParams(searchParams);
+    // Canonicalizes BOTH dimensions, deletes the legacy `treatment` /
+    // `insurance` / `type` spellings and the inert `distance` / `amenities`
+    // leftovers, and resets `page`. A submit therefore cannot leave a hidden
+    // second constraint behind, and cannot silently drop a filter the user
+    // did not touch.
+    const next = canonicalizeSearchParams(searchParams, {
+      treatment: resolveDimension(treatmentChoice, activeTreatment),
+      insurance: resolveDimension(insuranceChoice, activeInsurance),
+    });
 
     // The user's location string goes to the URL verbatim. A ZIP stays a
     // ZIP: `21215` submits as `location=21215`, which the canonical
@@ -114,18 +187,6 @@ export function SearchResultsForm() {
       next.delete("location");
     }
 
-    if (treatment) next.set("treatmentTypes", treatment);
-    else next.delete("treatmentTypes");
-
-    if (insurance) next.set("insuranceTypes", insurance);
-    else next.delete("insuranceTypes");
-
-    // Drop any stale `?distance=` a bookmark or old link carried in.
-    // Nothing reads it any more, but leaving it in the URL implies a
-    // radius filter is active.
-    next.delete("distance");
-
-    next.delete("page");
     setSearchParams(next);
   };
 
@@ -202,8 +263,8 @@ export function SearchResultsForm() {
           className="w-full grid grid-cols-1 sm:grid-cols-2 gap-2 lg:flex lg:items-center lg:gap-1.5 lg:flex-1 lg:w-auto"
         >
           <Select
-            value={treatment || ANY_VALUE}
-            onValueChange={(v) => setTreatment(v === ANY_VALUE ? "" : v)}
+            value={treatmentValue}
+            onValueChange={(v) => setTreatmentChoice(v)}
           >
             <SelectTrigger
               className="h-11 text-sm px-3 lg:h-10 lg:flex-1 lg:rounded-full lg:border-0 lg:bg-muted/50 hover:lg:bg-muted transition-colors"
@@ -211,15 +272,20 @@ export function SearchResultsForm() {
             >
               <div className="flex items-center gap-1.5 min-w-0 flex-1">
                 <Building2 className="hidden md:block h-3.5 w-3.5 text-muted-foreground shrink-0" aria-hidden="true" />
-                <span className="truncate text-left">
-                  {treatment
-                    ? TREATMENT_OPTIONS.find((o) => o.value === treatment)?.label ?? "Treatment"
-                    : "Treatment"}
-                </span>
+                <span className="truncate text-left">{treatmentTriggerLabel}</span>
               </div>
             </SelectTrigger>
             <SelectContent className="bg-card">
               <SelectItem value={ANY_VALUE}>Any treatment</SelectItem>
+              {/* Present only while several treatment filters are active, so
+                  the form states the multi-selection instead of pretending
+                  the first value is the whole of it. Choosing a real option
+                  below replaces the set; leaving it alone preserves it. */}
+              {treatmentValue === MULTI_VALUE && (
+                <SelectItem value={MULTI_VALUE}>
+                  {activeTreatment.length} treatment filters selected
+                </SelectItem>
+              )}
               {TREATMENT_OPTIONS.map((opt) => (
                 <SelectItem key={opt.value} value={opt.value}>
                   {opt.label}
@@ -228,25 +294,30 @@ export function SearchResultsForm() {
             </SelectContent>
           </Select>
 
+          {/* PAYMENT / INSURANCE. The options include Self-Pay and Sliding
+              Scale, so the control may not be labelled "Insurance" — that
+              told the user every option was a carrier the facility is in
+              network with. Option labels themselves are unchanged. */}
           <Select
-            value={insurance || ANY_VALUE}
-            onValueChange={(v) => setInsurance(v === ANY_VALUE ? "" : v)}
+            value={insuranceValue}
+            onValueChange={(v) => setInsuranceChoice(v)}
           >
             <SelectTrigger
               className="h-11 text-sm px-3 lg:h-10 lg:flex-1 lg:rounded-full lg:border-0 lg:bg-muted/50 hover:lg:bg-muted transition-colors"
-              aria-label="Insurance (optional)"
+              aria-label="Payment or insurance (optional)"
             >
               <div className="flex items-center gap-1.5 min-w-0 flex-1">
                 <Shield className="hidden md:block h-3.5 w-3.5 text-muted-foreground shrink-0" aria-hidden="true" />
-                <span className="truncate text-left">
-                  {insurance
-                    ? INSURANCE_OPTIONS.find((o) => o.value === insurance)?.label ?? "Insurance"
-                    : "Insurance"}
-                </span>
+                <span className="truncate text-left">{insuranceTriggerLabel}</span>
               </div>
             </SelectTrigger>
             <SelectContent className="bg-card">
-              <SelectItem value={ANY_VALUE}>Any insurance</SelectItem>
+              <SelectItem value={ANY_VALUE}>Any payment type</SelectItem>
+              {insuranceValue === MULTI_VALUE && (
+                <SelectItem value={MULTI_VALUE}>
+                  {activeInsurance.length} payment filters selected
+                </SelectItem>
+              )}
               {INSURANCE_OPTIONS.map((opt) => (
                 <SelectItem key={opt.value} value={opt.value}>
                   {opt.label}

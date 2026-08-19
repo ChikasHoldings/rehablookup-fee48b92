@@ -54,6 +54,22 @@ interface SearchResultCardProps {
   featured?: boolean;
 }
 
+/**
+ * How this facility relates to the place the user SEARCHED.
+ *
+ * Two constraints on the wording:
+ *
+ * 1. Not "Nearby". The `nearby` tier is an adjacency lookup over a
+ *    state-neighbour table, not a measurement — the catalogue has no
+ *    coordinates — and adjacent states can be hundreds of miles apart.
+ *
+ * 2. Not "Your". The badge describes the SEARCHED place, which is very
+ *    often not where the user lives: someone in Ohio searching Malibu is
+ *    not being shown facilities in "your city". The page also only
+ *    attaches these tiers when a location was EXPLICITLY entered — a
+ *    geo-IP or profile fallback informs ordering but may not label a card,
+ *    because a detected location is an inference, not a search.
+ */
 const proximityBadgeConfig: Record<ProximityTier, { 
   label: string; 
   icon: React.ElementType; 
@@ -61,19 +77,19 @@ const proximityBadgeConfig: Record<ProximityTier, {
   bgClassName: string;
 }> = {
   exact: { 
-    label: "Exact Match", 
+    label: "Exact Location Match", 
     icon: MapPin, 
     className: "text-emerald-700",
     bgClassName: "bg-emerald-100 border-emerald-200"
   },
   city: { 
-    label: "In Your City", 
+    label: "In Searched City", 
     icon: Building2, 
     className: "text-blue-700",
     bgClassName: "bg-blue-100 border-blue-200"
   },
   state: { 
-    label: "In Your State", 
+    label: "In Searched State", 
     icon: Navigation, 
     className: "text-purple-700",
     bgClassName: "bg-purple-100 border-purple-200"
@@ -144,8 +160,16 @@ export const SearchResultCard = memo(forwardRef<HTMLElement, SearchResultCardPro
     ? new Date().getFullYear() - center.year_established 
     : null;
 
+  // `insuranceAccepted` is a MIXED list: payer names (Aetna, Cigna), public
+  // programs (Medicaid, Medicare, TRICARE) and payment methods
+  // (Self-Pay/Private Pay, Sliding Scale/Financial Assistance). The badge
+  // used to publish the count as "N Insurance Plans", which asserts three
+  // things the records do not establish — that every entry is an insurance
+  // plan, that the facility is in network with it, and that a plan is
+  // currently accepted. The wording below counts what is actually stored: a
+  // list of payment and insurance options associated with the listing.
   const hasInsurance = center.insuranceAccepted && center.insuranceAccepted.length > 0;
-  const insuranceCount = center.insuranceAccepted?.length || 0;
+  const paymentOptionCount = center.insuranceAccepted?.length || 0;
   
   // Proximity badge configuration
   const proximityTier = center._proximityTier;
@@ -416,7 +440,7 @@ export const SearchResultCard = memo(forwardRef<HTMLElement, SearchResultCardPro
             {hasInsurance && (
               <Badge variant="secondary" className="gap-1 px-2 py-0.5 text-xs font-semibold bg-purple-100 text-purple-700 border-0 rounded-md" role="listitem">
                 <CreditCard className="h-3 w-3" aria-hidden="true" />
-                {insuranceCount} Insurance Plans
+                {paymentOptionCount} payment / insurance {paymentOptionCount === 1 ? "option" : "options"}
               </Badge>
             )}
             {center.facilityType && (
@@ -491,8 +515,14 @@ export const SearchResultCard = memo(forwardRef<HTMLElement, SearchResultCardPro
                 })
               }
               className="sm:w-auto focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg"
-              aria-label={`See other treatment centers in ${center.city}`}
+              aria-label={`See more treatment centers in ${center.city}, ${center.state}`}
             >
+              {/* The link runs an EXACT-CITY search — `?location=<city, state>`
+                  resolves to a city scope and returns facilities in that city
+                  and nowhere else. It used to be labelled "Nearby" / "See
+                  Centers Nearby", which promised a radius the catalogue cannot
+                  measure and described the wrong query besides. The analytics
+                  event name is left alone; only the public copy changes. */}
               <Button 
                 size="default"
                 variant="outline"
@@ -500,8 +530,8 @@ export const SearchResultCard = memo(forwardRef<HTMLElement, SearchResultCardPro
                 className="w-full sm:w-auto h-10 text-sm font-semibold gap-2 rounded-lg group/btn"
               >
                 <MapPin className="h-4 w-4" aria-hidden="true" />
-                <span className="md:hidden">Nearby</span>
-                <span className="hidden md:inline">See Centers Nearby</span>
+                <span className="md:hidden">More in {center.city}</span>
+                <span className="hidden md:inline">See more in {center.city}</span>
               </Button>
             </Link>
           </div>
