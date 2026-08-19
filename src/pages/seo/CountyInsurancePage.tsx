@@ -11,6 +11,9 @@ import { insurerConfigs } from "@/data/seoInsuranceStateConfig";
 import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
 import { shouldEmitFAQSchema, validatePage, getFacilityDensity } from "@/utils/seoPageValidator";
 import { matchesInsuranceFilter, asSearchableFacility } from "@/lib/searchFilters";
+import { buildInsuranceCountyContent } from "@/lib/seo/insuranceContent.mjs";
+import { mergeFaqs, mergeSections } from "@/lib/seo/composedTemplate";
+import { stateAddictionStats } from "@/data/stateAddictionStats";
 
 export default function CountyInsurancePage() {
   const { slug, stateSlug, countySlug } = useParams<{
@@ -68,6 +71,24 @@ export default function CountyInsurancePage() {
   const density = getFacilityDensity(facilities.length);
   const validation = validatePage("county-treatment", facilities.length);
   const cityList = countyData.majorCities.slice(0, 4).join(", ");
+
+  // Same composer as the prerendered /insurance/{carrier}/{state}/county
+  // page, so the SPA and the crawler read one page rather than two.
+  const composed = useMemo(() => {
+    const stats = stateAddictionStats.find((st) => st.slug === stateSlug);
+    return buildInsuranceCountyContent({
+      insurerSlug: slug,
+      insurerName: insurer.name,
+      countyName: countyData.name,
+      countySeat: countyData.seat,
+      countyPopulation: countyData.population,
+      majorCities: countyData.majorCities,
+      stateName: stateData.name,
+      stateAbbr: stateData.abbreviation,
+      medicaidExpanded: stats?.medicaidExpanded,
+      notableInfo: stats?.signatureNote,
+    });
+  }, [slug, insurer.name, countyData, stateData, stateSlug]);
 
   const faqs = [
     {
@@ -129,7 +150,7 @@ export default function CountyInsurancePage() {
       heroImage={getStateImage(stateSlug)}
       heroBadge={`${insurer.name} Coverage`}
       introContent={`Looking for rehab centers in ${countyData.name} County, ${stateData.name} that accept ${insurer.name}? RehabLookup connects you with verified treatment facilities serving ${cityList} and surrounding areas. ${density === "high" ? `${countyData.name} County has strong access to ${insurer.name}-accepting programs.` : density === "moderate" ? `${countyData.name} County offers several ${insurer.name}-accepting options.` : `While local options may be limited, nearby ${stateData.name} facilities provide accessible ${insurer.name}-covered treatment.`}`}
-      sections={[
+      sections={mergeSections([
         {
           heading: `${insurer.name} Coverage in ${countyData.name} County`,
           content: `${insurer.name} insurance plans generally cover substance abuse treatment in ${countyData.name} County under the Mental Health Parity and Addiction Equity Act. Coverage typically includes medical detox, residential treatment, PHP, IOP, and outpatient counseling. ${countyData.population && countyData.population > 100000 ? `With over ${Math.round(countyData.population / 1000)}K residents, ${countyData.name} County has multiple ${insurer.name}-accepting facilities.` : `${countyData.name} County residents can access ${insurer.name}-covered treatment both locally and across ${stateData.name}.`}`,
@@ -154,7 +175,7 @@ export default function CountyInsurancePage() {
           heading: `If Coverage Is Denied`,
           content: `Most coverage denials come down to documentation, not policy exclusion. ${countyData.name} County facilities have utilization-review teams that handle ${insurer.name} appeals as part of standard service. State insurance commissioners and federal parity-compliance offices provide additional escalation paths if internal appeals are unsuccessful.`,
         },
-      ]}
+      ], composed)}
       whatToExpect={[
         `Free, confidential ${insurer.name} benefits verification`,
         `Pre-authorization handled by the facility's admissions team`,
@@ -175,7 +196,7 @@ export default function CountyInsurancePage() {
       isLoading={isLoading}
       facilityCount={facilities.length}
       showMoreLink={`/rehab-centers/${stateSlug}/county/${countySlug}`}
-      faqs={faqs}
+      faqs={mergeFaqs(faqs, composed)}
       faqTreatmentType={insurer.name}
       faqLocation={{ state: stateData.name }}
       relatedCityLinks={countyData.majorCities.slice(0, 6).map((city) => ({
