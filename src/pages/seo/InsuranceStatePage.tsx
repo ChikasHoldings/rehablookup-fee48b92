@@ -13,6 +13,9 @@ import {
 import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
 import { shouldEmitFAQSchema, validatePage } from "@/utils/seoPageValidator";
 import { matchesInsuranceFilter, asSearchableFacility } from "@/lib/searchFilters";
+import { buildInsuranceCityContent } from "@/lib/seo/insuranceContent.mjs";
+import { mergeFaqs, mergeSections } from "@/lib/seo/composedTemplate";
+import { stateAddictionStats } from "@/data/stateAddictionStats";
 
 export default function InsuranceStatePage() {
   const { slug, stateSlug } = useParams<{ slug: string; stateSlug: string }>();
@@ -110,6 +113,24 @@ export default function InsuranceStatePage() {
       href: `/insurance/${i.slug}/${stateSlug}`,
     }));
 
+  // Same composer the prerendered /insurance/{carrier}/{state} page
+  // uses. It is the city composer called with no city — statewide scope
+  // names no place below the state, which is what the generator does.
+  const composed = useMemo(() => {
+    const stats = stateAddictionStats.find((st) => st.slug === stateSlug);
+    return buildInsuranceCityContent({
+      insurerSlug: slug,
+      insurerName: insurer.name,
+      cityName: stateConfig.state,
+      stateName: stateConfig.state,
+      stateAbbr: stats?.abbreviation,
+      medicaidExpanded: stateConfig.medicaidExpanded,
+      notableInfo: stats?.signatureNote,
+      primaryMetro: stats?.primaryMetro,
+      secondaryMetros: stats?.secondaryMetros,
+    });
+  }, [slug, insurer.name, stateConfig, stateSlug]);
+
   return (
     <SEOLandingTemplate
       title={pageTitle}
@@ -130,7 +151,7 @@ export default function InsuranceStatePage() {
       heroImage={getStateImage(stateSlug)}
       heroBadge="Insurance Verified"
       introContent={`Looking for rehab centers that accept ${insurer.name} in ${stateConfig.state}? Under the Mental Health Parity and Addiction Equity Act, ${insurer.name} is required to cover substance abuse treatment at the same level as other medical conditions. ${stateConfig.medicaidExpanded ? `${stateConfig.state} has expanded Medicaid, providing additional coverage options for qualifying residents.` : ""} RehabLookup helps you find verified facilities in ${stateConfig.state} that accept ${insurer.name}, compare programs, and start treatment with confidence.`}
-      sections={[
+      sections={mergeSections([
         {
           heading: `${insurer.name} Coverage in ${stateConfig.state}`,
           content: `${insurer.name} provides comprehensive addiction treatment coverage in ${stateConfig.state}, including medical detoxification, inpatient rehabilitation, outpatient programs (IOP/PHP), medication-assisted treatment, and therapy sessions. Coverage specifics depend on your plan type, network status, and whether pre-authorization is obtained. ${stateConfig.state} ${stateConfig.medicaidExpanded ? "has expanded Medicaid under the ACA, providing additional options for individuals who qualify based on income." : "provides state-funded treatment programs for residents without adequate insurance coverage."}`,
@@ -155,7 +176,7 @@ export default function InsuranceStatePage() {
           heading: `If Coverage Is Denied`,
           content: `If ${insurer.name} denies authorization or coverage for treatment, you have a right to appeal. Most denials come down to medical-necessity documentation; ${stateConfig.state} facilities have utilization-review teams that handle appeals as part of their service. The state insurance commissioner and federal parity-compliance offices provide additional escalation paths if internal appeals are unsuccessful.`,
         },
-      ]}
+      ], composed)}
       whatToExpect={[
         `Free, confidential ${insurer.name} benefits verification`,
         `Pre-authorization handled by the facility's admissions team`,
@@ -176,7 +197,7 @@ export default function InsuranceStatePage() {
       isLoading={isLoading}
       facilityCount={directMatchCount}
       showMoreLink={`/rehab-centers/${stateSlug}`}
-      faqs={faqs}
+      faqs={mergeFaqs(faqs, composed)}
       faqTreatmentType={`${insurer.name} Coverage`}
       faqLocation={{ state: stateConfig.state }}
       relatedCityLinks={relatedInsuranceLinks}

@@ -23,6 +23,10 @@ import {
 } from "@/components/seo/InternalLinkingSection";
 import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 import { useMemo } from "react";
+import { ComposedContentSection } from "@/components/seo/ComposedContentSection";
+import { buildNearMeContent } from "@/lib/seo/nearMeTopics.mjs";
+import { stateAddictionStats } from "@/data/stateAddictionStats";
+import { stateLicensingData } from "@/data/stateLicensingData";
 
 /**
  * Generate unique county-specific FAQs based on treatment category.
@@ -131,6 +135,24 @@ export default function NearMeCountyPage() {
   const description = `Find ${nearMeType.label.toLowerCase()} centers in ${countyName}, ${stateInfo.abbreviation}. Compare verified ${nearMeType.treatmentType.toLowerCase()} programs serving ${countyData.majorCities.slice(0, 3).join(", ")}.`;
 
   // Unique FAQs per category
+  // Same topic composer the prerendered county page uses, with the same
+  // county facts, so the two renderings of this URL agree.
+  const composed = useMemo(
+    () =>
+      buildNearMeContent({
+        topicSlug: nearMeType.slug,
+        topicLabel: nearMeType.label,
+        stateName: stateInfo.name,
+        stats: stateAddictionStats.find((st) => st.slug === stateInfo.slug),
+        licensing: stateLicensingData[stateInfo.slug],
+        placeName: countyName,
+        countySeat: countyData.seat,
+        placePopulation: countyData.population,
+        majorCities: countyData.majorCities,
+      }),
+    [nearMeType.slug, nearMeType.label, stateInfo.name, stateInfo.slug, countyName, countyData],
+  );
+
   const faqs = generateCountyFAQs(
     nearMeType.label,
     nearMeType.treatmentType,
@@ -281,6 +303,8 @@ export default function NearMeCountyPage() {
           </div>
         </section>
       )}
+
+      <ComposedContentSection content={composed} />
 
       <ComparisonSection facilities={facilities} location={`${countyName}, ${stateInfo.abbreviation}`} />
       <ConversionSection location={`${countyName}, ${stateInfo.abbreviation}`} />

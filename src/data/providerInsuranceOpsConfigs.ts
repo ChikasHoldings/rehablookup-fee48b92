@@ -1,4 +1,4 @@
-import { ProviderBusinessConfig } from "./providerBusinessConfigs";
+import type { ProviderBusinessConfig } from "./providerBusinessConfigs";
 
 // Target provider searches around insurance, billing, and payer-specific operations
 export const providerInsuranceOpsConfigs: ProviderBusinessConfig[] = [

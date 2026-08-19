@@ -13,6 +13,9 @@ import {
 } from "@/data/seoInsuranceStateConfig";
 import { statesData } from "@/data/locationSeoData";
 import { matchesInsuranceFilter, asSearchableFacility } from "@/lib/searchFilters";
+import { buildInsuranceCityContent } from "@/lib/seo/insuranceContent.mjs";
+import { mergeFaqs, mergeSections } from "@/lib/seo/composedTemplate";
+import { stateAddictionStats } from "@/data/stateAddictionStats";
 
 export default function CityInsurancePage() {
   const { insurerSlug, stateSlug, citySlug } = useParams<{
@@ -118,6 +121,27 @@ export default function CityInsurancePage() {
   const validation = validatePage("city-insurance", indexabilityInventoryCount);
   const pageTitle = `${insurer.name} Rehab Coverage in ${cityName}, ${stateData?.abbreviation || stateConfig.state}`;
 
+  // The same composer the prerendered HTML uses, fed the same exact
+  // count. Without this the crawler and a visitor arriving by
+  // client-side navigation read two different pages at one URL — and
+  // the indexed one was not the one anybody saw.
+  const composed = useMemo(() => {
+    const stats = stateAddictionStats.find((st) => st.slug === stateSlug);
+    return buildInsuranceCityContent({
+      insurerSlug,
+      insurerName: insurer.name,
+      cityName,
+      stateName: stateConfig.state,
+      stateAbbr: stateData?.abbreviation,
+      medicaidExpanded: stateConfig.medicaidExpanded,
+      notableInfo: stats?.signatureNote,
+      population: stateData?.cities.find((c) => c.slug === citySlug)?.population,
+      facilityCount: exactMatchCount,
+      primaryMetro: stats?.primaryMetro,
+      secondaryMetros: stats?.secondaryMetros,
+    });
+  }, [insurerSlug, insurer.name, cityName, stateConfig, stateData, stateSlug, citySlug, exactMatchCount]);
+
   const faqs = [
     {
       question: `Does ${insurer.name} cover rehab in ${cityName}?`,
@@ -180,7 +204,7 @@ export default function CityInsurancePage() {
       heroBadge="Insurance Verified"
       heroImage={getCityImage(stateSlug, citySlug)}
       introContent={`Looking for rehab centers that accept ${insurer.name} in ${cityName}, ${stateConfig.state}? Under federal law, ${insurer.name} must cover substance abuse treatment at the same level as other medical conditions. RehabLookup helps you find verified facilities in ${cityName} that accept ${insurer.name}, compare programs, and start treatment with confidence.${stateConfig.medicaidExpanded ? ` ${stateConfig.state} has expanded Medicaid, providing additional coverage options for qualifying residents.` : ""}`}
-      sections={[
+      sections={mergeSections([
         {
           heading: `${insurer.name} Coverage in ${cityName}`,
           content: `${insurer.name} provides addiction treatment coverage in ${cityName} including medical detoxification, inpatient rehabilitation, outpatient programs (IOP/PHP), medication-assisted treatment, and therapy sessions. Coverage specifics depend on your plan type, network status, and whether pre-authorization is obtained. Contact the facilities listed below or use our free benefits verification service.`,
@@ -205,7 +229,7 @@ export default function CityInsurancePage() {
           heading: `When Coverage Is Denied — Your Options`,
           content: `If ${insurer.name} denies authorization or coverage for treatment, you have a right to appeal. Most denials come down to medical-necessity documentation; ${cityName} facilities have utilization-review teams that handle appeals as part of their service. State insurance commissioners and federal parity-compliance offices provide additional escalation paths if internal appeals fail.`,
         },
-      ]}
+      ], composed)}
       whatToExpect={[
         `Free, confidential benefits verification before any commitment`,
         `${insurer.name} pre-authorization handled by the facility's admissions team`,
@@ -226,7 +250,7 @@ export default function CityInsurancePage() {
       isLoading={isLoading}
       facilityCount={exactMatchCount}
       showMoreLink={`/insurance/${insurerSlug}/${stateSlug}`}
-      faqs={faqs}
+      faqs={mergeFaqs(faqs, composed)}
       faqTreatmentType={`${insurer.name} Coverage`}
       faqLocation={{ city: cityName, state: stateConfig.state }}
       relatedCityLinks={otherInsurers.map((ins) => ({

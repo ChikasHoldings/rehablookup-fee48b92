@@ -1,4 +1,4 @@
-import { ProviderBusinessConfig } from "./providerBusinessConfigs";
+import type { ProviderBusinessConfig } from "./providerBusinessConfigs";
 
 export const providerRevenueConfigs: ProviderBusinessConfig[] = [
   {

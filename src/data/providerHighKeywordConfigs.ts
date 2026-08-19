@@ -1,4 +1,4 @@
-import { ProviderBusinessConfig } from "./providerBusinessConfigs";
+import type { ProviderBusinessConfig } from "./providerBusinessConfigs";
 
 // These target the HIGHEST-VOLUME provider-intent keywords in addiction treatment marketing
 // Each page is designed to rank for keywords that cost $25-$50/click on Google Ads

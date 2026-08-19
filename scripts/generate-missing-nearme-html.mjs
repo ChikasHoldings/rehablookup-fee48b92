@@ -18,6 +18,9 @@ import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import { GA_MEASUREMENT_ID } from './_ga.mjs';
 import { seoStyles, seoHeader, seoCtaStrip, seoFooter } from './_seo-page-shell.mjs';
+import { getStateStatsBySlug, getStateLicensing } from './_unique-content.mjs';
+import { buildNearMeContent } from '../src/lib/seo/nearMeTopics.mjs';
+import { renderComposedHtml } from '../src/lib/seo/composedHtml.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = join(__dirname, '..', 'public');
@@ -135,15 +138,22 @@ let count = 0;
 for (const state of US_STATES) {
   const stateName = toTitleCase(state);
   const urlPath = `/opioid-rehab-near-me/${state}`;
+  // All 50 of these were one body with the state name swapped. The topic
+  // axis says what opioid treatment actually is; the state axis carries
+  // the regulator, the payer posture and the market picture.
+  const composed = buildNearMeContent({
+    topicSlug: 'opioid-rehab-near-me',
+    topicLabel: 'Opioid Rehab',
+    stateName,
+    stats: getStateStatsBySlug(state),
+    licensing: getStateLicensing(state),
+  });
   writePage(urlPath, {
     title: `Opioid Rehab Near Me in ${stateName} | RehabLookup`,
-    metaDesc: `Find opioid addiction treatment centers near you in ${stateName}. Compare inpatient, outpatient, and MAT programs. Free insurance verification available.`,
+    metaDesc: composed.metaDescription,
     h1: `Opioid Rehab Near Me in ${stateName}`,
-    content: `<p>Find accredited opioid addiction treatment centers in ${stateName}. RehabLookup lists rehab facilities offering medically supervised detox, inpatient residential programs, intensive outpatient (IOP), and medication-assisted treatment (MAT) for opioid use disorder.</p>
-<h2>Types of Opioid Treatment in ${stateName}</h2>
-<p>Treatment options for opioid addiction in ${stateName} include medical detox, inpatient residential care, partial hospitalization programs (PHP), intensive outpatient programs (IOP), and medication-assisted treatment with buprenorphine (Suboxone) or methadone.</p>
-<h2>Find Help Today</h2>
-<p>Use our free directory to search opioid rehab center listings in ${stateName} by location, insurance, and treatment type. Many facilities offer same-day admissions and free insurance verification.</p>`,
+    content: `${renderComposedHtml(composed)}
+<p>Use the directory to search opioid rehab listings in ${stateName} by location, insurance, and level of care.</p>`,
     breadcrumbs: [
       { name: 'Home', url: '/' },
       { name: 'Opioid Rehab Near Me', url: '/opioid-rehab-near-me' },

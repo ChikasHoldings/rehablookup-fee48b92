@@ -20,6 +20,15 @@ import {
 } from "@/data/seoPageConfig";
 import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
 import { shouldEmitFAQSchema, validatePage } from "@/utils/seoPageValidator";
+import { buildCityIndex } from "@/lib/seo/cityProfiles.mjs";
+import { buildCityTreatmentContent } from "@/lib/seo/cityTreatmentContent.mjs";
+import { mergeFaqs, mergeSections } from "@/lib/seo/composedTemplate";
+import { statesData } from "@/data/locationSeoData";
+import { stateCountyData } from "@/data/countySeoData";
+
+/** Derived from two static datasets, so it is built once for the module
+ *  rather than on every render. */
+const CITY_PROFILES = buildCityIndex({ statesData, stateCountyData });
 
 export default function CityTreatmentPage() {
   const location = useLocation();
@@ -176,6 +185,20 @@ export default function CityTreatmentPage() {
     lastReviewed: new Date().toISOString().split("T")[0],
   });
 
+  // Same city profile layer the prerendered /{treatment}-in-{city} page
+  // uses. Built once for the module rather than per render — it is
+  // derived from two static datasets and does not change.
+  const composed = useMemo(() => {
+    const profile = CITY_PROFILES.get(city.slug) ?? CITY_PROFILES.get(`${city.stateSlug}|${city.city.toLowerCase().replace(/[^a-z0-9]+/g, "")}`);
+    if (!profile) return null;
+    return buildCityTreatmentContent({
+      profile,
+      treatmentLabel: treatment.label,
+      treatmentSlug: treatment.slug,
+      facilityCount: directMatchCount,
+    });
+  }, [city.slug, city.stateSlug, city.city, treatment.label, treatment.slug, directMatchCount]);
+
   return (
     <SEOLandingTemplate
       title={pageTitle}
@@ -195,14 +218,14 @@ export default function CityTreatmentPage() {
       heroBadge="Verified & Accredited"
       heroImage={getCityImage(city.stateSlug, city.slug)}
       introContent={`Looking for ${treatment.label.toLowerCase()} in ${city.city}, ${city.stateAbbr}? RehabLookup connects you with verified, accredited treatment facilities in the ${city.city} area.${populationText} has a range of addiction treatment resources available for individuals and families seeking help. Every listed center is checked for proper licensing, qualified clinical staff, and evidence-based treatment approaches. Whether you need immediate placement or want to compare programs, our directory makes finding the right ${treatment.label.toLowerCase()} simple and confidential.`}
-      sections={treatmentSections}
+      sections={mergeSections(treatmentSections, composed)}
       whatToExpect={treatmentWhatToExpect}
       benefits={treatmentBenefits}
       facilities={facilities}
       isLoading={isLoading}
       facilityCount={directMatchCount}
       showMoreLink={`/rehab-centers/${city.stateSlug}`}
-      faqs={faqs}
+      faqs={mergeFaqs(faqs, composed)}
       faqTreatmentType={treatment.label}
       faqLocation={{ city: city.city, state: city.state }}
       relatedCityLinks={relatedCityLinks}

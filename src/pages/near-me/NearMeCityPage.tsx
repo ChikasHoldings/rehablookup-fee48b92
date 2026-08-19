@@ -22,6 +22,10 @@ import {
 } from "@/components/seo/InternalLinkingSection";
 import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 import { useMemo } from "react";
+import { ComposedContentSection } from "@/components/seo/ComposedContentSection";
+import { buildNearMeContent } from "@/lib/seo/nearMeTopics.mjs";
+import { stateAddictionStats } from "@/data/stateAddictionStats";
+import { stateLicensingData } from "@/data/stateLicensingData";
 
 /**
  * Generate unique FAQs based on treatment type category to avoid duplicate FAQ content.
@@ -125,6 +129,22 @@ export default function NearMeCityPage() {
   const description = `Find ${nearMeType.label.toLowerCase()} centers in ${cityData.name}, ${stateData.abbreviation}. Compare verified ${nearMeType.treatmentType.toLowerCase()} programs, check insurance, and get help today.`;
 
   // Unique FAQs based on treatment category (not template-swapped)
+  // Same topic composer the prerendered /{type}/{state}/{city} page
+  // uses, so a visitor arriving by client-side navigation reads the
+  // page a crawler was given rather than a different one.
+  const composed = useMemo(
+    () =>
+      buildNearMeContent({
+        topicSlug: nearMeType.slug,
+        topicLabel: nearMeType.label,
+        stateName: stateData.name,
+        stats: stateAddictionStats.find((st) => st.slug === stateData.slug),
+        licensing: stateLicensingData[stateData.slug],
+        placeName: cityData.name,
+      }),
+    [nearMeType.slug, nearMeType.label, stateData.name, stateData.slug, cityData.name],
+  );
+
   const faqs = generateCityFAQs(
     nearMeType.label,
     nearMeType.treatmentType,
@@ -269,6 +289,11 @@ export default function NearMeCityPage() {
           </div>
         </section>
       )}
+
+      <ComposedContentSection
+        content={composed}
+        skipHeadings={[`${nearMeType.treatmentType} Centers in ${cityData.name}, ${stateData.abbreviation}`]}
+      />
 
       {/* Comparison — only if we have enough facilities */}
       <ComparisonSection facilities={facilities} location={`${cityData.name}, ${stateData.abbreviation}`} />
