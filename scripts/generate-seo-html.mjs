@@ -17,6 +17,9 @@ import { fileURLToPath } from "node:url";
 import { GA_MEASUREMENT_ID } from "./_ga.mjs";
 import { fetchAllFacilities, groupByState, renderFacilityList } from "./_facility-data.mjs";
 import { seoStyles, seoHeader, seoCtaStrip, seoFooter } from "./_seo-page-shell.mjs";
+import { getStateStatsBySlug, getStateLicensing } from "./_unique-content.mjs";
+import { buildNearMeContent, nearMeSlugForTreatment } from "../src/lib/seo/nearMeTopics.mjs";
+import { renderComposedHtml } from "../src/lib/seo/composedHtml.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -727,17 +730,25 @@ async function generateStateTreatmentPages() {
     for (const state of usStates) {
       const slug = stateToSlug(state);
       const title = `${tt.label} in ${state}`;
+      // 300 of these (6 treatment types x 50 states) shipped as one body
+      // with two names swapped, and CI regenerates them on every build —
+      // which is why the committed corpus looked clean while the deployed
+      // one did not. Same topic + state axes as the other state families.
+      const composed = buildNearMeContent({
+        topicSlug: nearMeSlugForTreatment(tt.routePrefix) ?? "rehab-near-me",
+        topicLabel: tt.label,
+        stateName: state,
+        stats: getStateStatsBySlug(slug),
+        licensing: getStateLicensing(slug),
+      });
       const html = generatePage({
         urlPath: `/treatment-types/${tt.routePrefix}/${slug}`,
         title,
         metaTitle: `${tt.label} in ${state} — Find Programs | RehabLookup`,
-        metaDescription: `Find ${tt.label.toLowerCase()} centers in ${state}. Compare accredited facilities, verify insurance, and start recovery today.`,
+        metaDescription: composed.metaDescription,
         h1: title,
-        content: `<p>Search accredited ${tt.label.toLowerCase()} programs in ${state}. RehabLookup provides facility listings with program information as reported by each facility.</p>
-          <h2>${tt.label} Options in ${state}</h2>
-          <p>${state} offers a range of ${tt.label.toLowerCase()} programs with varying levels of care, program lengths, and specializations to meet individual needs.</p>
-          <h2>Insurance Coverage</h2>
-          <p>Most insurance plans cover ${tt.label.toLowerCase()} in ${state}. Use our free insurance verification tool to check your benefits and find in-network facilities.</p>`,
+        content: `${renderComposedHtml(composed)}
+          <p>Search accredited ${tt.label.toLowerCase()} programs in ${state}. RehabLookup provides facility listings with program information as reported by each facility.</p>`,
         breadcrumbs: [
           { name: "Home", url: "/" },
           { name: "Treatment Types", url: "/treatment-types" },

@@ -1533,6 +1533,15 @@ function classifyAndBuildPage(urlPath) {
     if (built) return built;
   }
 
+  // /resources is owned by generate-resources-html, which writes the
+  // published articles from the database and PRUNES the rest. Those
+  // pruned URLs are still in the sitemap, so the generic fallback was
+  // recreating all 84 of them as boilerplate stubs immediately after
+  // they were deleted — visible in the CI log as "Generic fallback: 84
+  // URLs — /resources 84". An unpublished article should have no page;
+  // the sitemap generator drops URLs with no prerendered file.
+  if (p0 === "resources") return null;
+
   // Fallback. Counted so the "stub factory" is visible: a URL that
   // reaches here gets a page whose body is the generic directory
   // boilerplate, which is how 254 provider guides, 50 provider market
