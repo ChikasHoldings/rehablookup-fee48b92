@@ -28,6 +28,7 @@
     "patch:og-image": "node scripts/patch-og-image.mjs",
     "check:seo-meta": "node scripts/check-seo-meta.mjs",
     "check:unique-meta": "node scripts/check-unique-meta.mjs",
+    "check:content-uniqueness": "node scripts/check-content-uniqueness.mjs",
     "check:canonical-ga": "node scripts/check-canonical-ga-parity.mjs",
     "check:internal-links": "node scripts/validate-internal-links.mjs",
     "check:no-undef-jsx": "node scripts/check-no-undef-jsx.mjs",
