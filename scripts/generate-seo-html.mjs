@@ -23,6 +23,7 @@ import { renderComposedHtml } from "../src/lib/seo/composedHtml.mjs";
 import { buildCityIndex } from "../src/lib/seo/cityProfiles.mjs";
 import { buildCityTreatmentContent } from "../src/lib/seo/cityTreatmentContent.mjs";
 import { buildInsuranceCityContent } from "../src/lib/seo/insuranceContent.mjs";
+import { buildStateArticleContent, stateArticleKind } from "../src/lib/seo/stateArticleContent.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -44,6 +45,19 @@ try {
 } catch (err) {
   console.error("\u2717 could not build the city profile index:", err?.message ?? err);
   process.exit(1);
+}
+
+/** The cities this directory lists in a state, for the "best cities"
+ *  article. Read from the same profile index everything else uses. */
+function citiesForState(stateSlug) {
+  const seen = new Set();
+  const out = [];
+  for (const profile of CITY_INDEX.values()) {
+    if (profile.stateSlug !== stateSlug || seen.has(profile.slug)) continue;
+    seen.add(profile.slug);
+    out.push({ name: profile.city, population: profile.population, county: profile.county?.name ?? null });
+  }
+  return out;
 }
 
 const cityProfileFor = (stateSlug, city) =>
@@ -674,15 +688,26 @@ async function generateStateArticlePages() {
     for (const tpl of articleTemplates) {
       const articleSlug = `${tpl.slugBase}-${slug}`;
       const title = tpl.titleTemplate(state);
+      // These 150 pages answer the three questions people most often
+      // type — what does rehab cost, how do I choose, where do I go —
+      // and they were three bodies with the state name swapped. This
+      // generator writes them BEFORE generate-all-missing-html, so the
+      // composed builder over there never got to run: whichever
+      // generator reaches a path first owns it.
+      const article = buildStateArticleContent({
+        kind: stateArticleKind(articleSlug),
+        stateName: state,
+        stats: getStateStatsBySlug(slug),
+        licensing: getStateLicensing(slug),
+        cities: citiesForState(slug),
+      });
       const html = generatePage({
         urlPath: `/rehab-centers/${slug}/articles/${articleSlug}`,
         title,
         metaTitle: `${title} | RehabLookup`,
-        metaDescription: tpl.descTemplate(state),
+        metaDescription: article?.metaDescription ?? tpl.descTemplate(state),
         h1: title,
-        content: `<p>${tpl.descTemplate(state)}</p>
-          <h2>Finding Quality Treatment in ${state}</h2>
-          <p>Choosing the right rehab center in ${state} requires evaluating accreditation, treatment approaches, staff qualifications, and insurance acceptance. This guide helps you navigate the process with confidence.</p>
+        content: `${article ? renderComposedHtml(article) : `<p>${tpl.descTemplate(state)}</p>`}
           <h2>Resources</h2>
           <ul><li><a href="/rehab-centers/${slug}">All Rehab Centers in ${state}</a></li><li><a href="/locations">Browse All Locations</a></li><li><a href="/compare">Compare Facilities</a></li></ul>`,
         breadcrumbs: [
@@ -694,7 +719,7 @@ async function generateStateArticlePages() {
           "@context": "https://schema.org",
           "@type": "Article",
           headline: title,
-          description: tpl.descTemplate(state),
+          description: article?.metaDescription ?? tpl.descTemplate(state),
           url: `${BASE_URL}/rehab-centers/${slug}/articles/${articleSlug}`,
         }],
       });
