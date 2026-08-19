@@ -1,4 +1,4 @@
-import { ProviderBusinessConfig } from "./providerBusinessConfigs";
+import type { ProviderBusinessConfig } from "./providerBusinessConfigs";
 
 // Target the highest-volume entrepreneurial and startup provider searches
 export const providerEntrepreneurConfigs: ProviderBusinessConfig[] = [

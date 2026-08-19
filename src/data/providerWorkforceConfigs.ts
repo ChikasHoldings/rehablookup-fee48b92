@@ -1,4 +1,4 @@
-import { ProviderBusinessConfig } from "./providerBusinessConfigs";
+import type { ProviderBusinessConfig } from "./providerBusinessConfigs";
 
 // Target provider searches around workforce, training, clinical program development
 export const providerWorkforceConfigs: ProviderBusinessConfig[] = [

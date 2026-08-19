@@ -1,4 +1,4 @@
-import { ProviderBusinessConfig } from "./providerBusinessConfigs";
+import type { ProviderBusinessConfig } from "./providerBusinessConfigs";
 
 // Target military/VA, managed care, and specialized market segments providers search for
 export const providerSpecializedMarketConfigs: ProviderBusinessConfig[] = [
