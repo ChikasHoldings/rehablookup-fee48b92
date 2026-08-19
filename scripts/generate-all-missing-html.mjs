@@ -64,6 +64,11 @@ import {
   buildInsuranceCountyContent,
   renderInsuranceCityHtml,
 } from "../src/lib/seo/insuranceContent.mjs";
+// Operator-facing market intelligence for /rehab-marketing/*: 6,653 pages
+// that had only a state name and a treatment name to vary on.
+import { buildProviderMarketContent } from "../src/lib/seo/providerMarketContent.mjs";
+import { renderComposedHtml } from "../src/lib/seo/composedHtml.mjs";
+import { getStateLicensing } from "./_unique-content.mjs";
 
 /**
  * County facts, indexed as "<stateSlug>/<countySlug>".
@@ -528,12 +533,21 @@ function rehabMarketingStateTreatmentPage(urlPath) {
   const stateName = slugToName(stateSlug);
   const treatmentName = slugToName(treatmentSlug);
   const title = `${treatmentName} Programs in ${stateName}`;
+  // Market intelligence for operators, composed from real per-state
+  // and per-county data. Added ABOVE the existing provider truth copy
+  // (organic position never sold, Featured labelled sponsored), which
+  // earlier phases established and which is preserved verbatim below.
+  const mstats = getStateStatsBySlug(stateSlug);
+  const mlic = getStateLicensing(stateSlug);
+  const market = buildProviderMarketContent({ stateName, stats: mstats, licensing: mlic, treatmentName });
+
   return {
     title,
     metaTitle: `${title} — Find Accredited Centers | RehabLookup`,
     metaDesc: `Find accredited ${treatmentName.toLowerCase()} programs in ${stateName}. Compare facility listings, check insurance, and contact facilities directly.`,
     h1: title,
     content: `
+      ${renderComposedHtml(market)}
       <p>Find accredited ${treatmentName.toLowerCase()} programs in ${stateName}. RehabLookup's directory covers facilities across all counties in ${stateName}.</p>
       <h2>Treatment Options in ${stateName}</h2>
       <p>${stateName} offers a range of ${treatmentName.toLowerCase()} programs including medical detox, residential inpatient, PHP, IOP, and outpatient services. Use our search tool to compare programs by location, insurance, and specialty.</p>
@@ -559,12 +573,21 @@ function rehabMarketingCountyPage(urlPath) {
   const stateName = slugToName(stateSlug);
   const countyName = slugToName(countySlug) + " County";
   const title = `Reach Patients in ${countyName}, ${stateName}`;
+  // Market intelligence for operators, composed from real per-state
+  // and per-county data. Added ABOVE the existing provider truth copy
+  // (organic position never sold, Featured labelled sponsored), which
+  // earlier phases established and which is preserved verbatim below.
+  const mstats = getStateStatsBySlug(stateSlug);
+  const mlic = getStateLicensing(stateSlug);
+  const market = buildProviderMarketContent({ stateName, stats: mstats, licensing: mlic, countyName: slugToName(countySlug), countySeat: lookupCounty(stateSlug, countySlug)?.seat, countyPopulation: lookupCounty(stateSlug, countySlug)?.population, majorCities: lookupCounty(stateSlug, countySlug)?.majorCities });
+
   return {
     title,
     metaTitle: `${title} — Rehab Marketing | RehabLookup for Providers`,
     metaDesc: `List your rehab in ${countyName}, ${stateName} on RehabLookup. Families searching for treatment in your county can find and contact you directly.`,
     h1: `Rehab Marketing in ${countyName}, ${stateName}`,
     content: `
+      ${renderComposedHtml(market)}
       <p>RehabLookup lists treatment providers so families searching for addiction care can find and contact them directly. A claimed directory listing, geo-targeted visibility, and direct family inquiries.</p>
       <h2>Why ${countyName} Treatment Providers List With Us</h2>
       <p>RehabLookup is a directory, not a lead broker. Organic directory position is determined independently and is never purchased. Providers in ${countyName} reach families searching specifically for treatment in their service area.</p>
@@ -591,12 +614,21 @@ function rehabMarketingCountyTreatmentPage(urlPath) {
   const countyName = slugToName(countySlug) + " County";
   const treatmentName = slugToName(treatmentSlug);
   const title = `Get More ${treatmentName} Patients in ${countyName}, ${stateName}`;
+  // Market intelligence for operators, composed from real per-state
+  // and per-county data. Added ABOVE the existing provider truth copy
+  // (organic position never sold, Featured labelled sponsored), which
+  // earlier phases established and which is preserved verbatim below.
+  const mstats = getStateStatsBySlug(stateSlug);
+  const mlic = getStateLicensing(stateSlug);
+  const market = buildProviderMarketContent({ stateName, stats: mstats, licensing: mlic, treatmentName, countyName: slugToName(countySlug), countySeat: lookupCounty(stateSlug, countySlug)?.seat, countyPopulation: lookupCounty(stateSlug, countySlug)?.population, majorCities: lookupCounty(stateSlug, countySlug)?.majorCities });
+
   return {
     title,
     metaTitle: `${title} — Rehab Marketing | RehabLookup for Providers`,
     metaDesc: `${treatmentName} providers in ${countyName}, ${stateName} — claim your free directory listing. Families contact your facility directly, and organic position is never sold.`,
     h1: `${treatmentName} Marketing in ${countyName}, ${stateName}`,
     content: `
+      ${renderComposedHtml(market)}
       <p>${treatmentName} providers serving ${countyName}, ${stateName} reach more families through RehabLookup. A claimed directory listing, geo-targeted visibility for ${treatmentName.toLowerCase()} searches, and direct family inquiries.</p>
       <h2>Why ${treatmentName} Providers in ${countyName} List With Us</h2>
       <p>Organic directory position is determined independently and is never purchased. Pro enhances the facility profile and unlocks provider tools such as listing analytics; Featured is a separately purchased, clearly labeled sponsored placement.</p>
@@ -623,12 +655,21 @@ function rehabMarketingCountyInsurancePage(urlPath) {
   const countyName = slugToName(countySlug) + " County";
   const insName = slugToName(insSlug);
   const title = `Reach ${insName} Patients in ${countyName}, ${stateName}`;
+  // Market intelligence for operators, composed from real per-state
+  // and per-county data. Added ABOVE the existing provider truth copy
+  // (organic position never sold, Featured labelled sponsored), which
+  // earlier phases established and which is preserved verbatim below.
+  const mstats = getStateStatsBySlug(stateSlug);
+  const mlic = getStateLicensing(stateSlug);
+  const market = buildProviderMarketContent({ stateName, stats: mstats, licensing: mlic, insurerSlug: `${insSlug}-rehab`, insurerName: insName, countyName: slugToName(countySlug), countySeat: lookupCounty(stateSlug, countySlug)?.seat, countyPopulation: lookupCounty(stateSlug, countySlug)?.population, majorCities: lookupCounty(stateSlug, countySlug)?.majorCities });
+
   return {
     title,
     metaTitle: `${title} — Rehab Marketing | RehabLookup for Providers`,
     metaDesc: `${insName}-accepting rehab providers in ${countyName}, ${stateName} — claim your free directory listing. Inquiries come directly from families searching for in-network ${insName} treatment.`,
     h1: `${insName} Patient Marketing in ${countyName}, ${stateName}`,
     content: `
+      ${renderComposedHtml(market)}
       <p>${insName}-accepting providers in ${countyName}, ${stateName} reach more in-network patients through RehabLookup. Geo-targeted visibility on the directory pages families use to find ${insName}-covered addiction treatment.</p>
       <h2>Why ${insName}-Accepting Providers in ${countyName} List With Us</h2>
       <p>Organic directory position is determined independently and is never purchased. Pro enhances the facility profile — including the plans and network status a facility reports — and unlocks provider tools; Featured is a separately purchased, clearly labeled sponsored placement.</p>

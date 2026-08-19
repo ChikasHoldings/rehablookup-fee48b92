@@ -393,17 +393,8 @@ export function buildInsuranceCountyContent(input) {
   return { metaDescription, intro, sections, faqs };
 }
 
-/** Render composed content to the HTML body the static generators emit. */
-export function renderInsuranceCityHtml(content) {
-  const parts = [`<p>${content.intro}</p>`];
-  for (const s of content.sections) {
-    parts.push(`<h2>${s.heading}</h2>`, `<p>${s.body}</p>`);
-  }
-  if (content.faqs?.length) {
-    parts.push("<h2>Frequently asked questions</h2>");
-    for (const f of content.faqs) {
-      parts.push(`<h3>${f.question}</h3>`, `<p>${f.answer}</p>`);
-    }
-  }
-  return parts.join("\n      ");
-}
+/**
+ * Back-compatible alias. The renderer now lives in `composedHtml.mjs` so
+ * the provider-market composer can use it without importing this module.
+ */
+export { renderComposedHtml as renderInsuranceCityHtml } from "./composedHtml.mjs";
