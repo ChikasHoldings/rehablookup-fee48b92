@@ -1,0 +1,12 @@
+Reason,Source,Validation,Pages
+Not found (404),Website,Not Started,1268.0
+Page with redirect,Website,Not Started,1164.0
+Duplicate without user-selected canonical,Website,Not Started,704.0
+Alternate page with proper canonical tag,Website,Not Started,385.0
+Soft 404,Website,Not Started,104.0
+Blocked by robots.txt,Website,Not Started,4.0
+Blocked due to other 4xx issue,Website,Not Started,3.0
+Excluded by ‘noindex’ tag,Website,Not Started,2.0
+Crawled - currently not indexed,Google systems,Not Started,14130.0
+"Duplicate, Google chose different canonical than user",Google systems,Not Started,6.0
+Discovered - currently not indexed,Google systems,Passed,21337.0
