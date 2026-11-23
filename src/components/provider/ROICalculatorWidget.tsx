@@ -256,7 +256,7 @@ export function ROICalculatorWidget() {
       <div className="grid grid-cols-1 gap-3 pt-2 sm:grid-cols-3">
         {[
           { icon: ShieldCheck, label: "24h Exclusive", desc: "No competing facilities on your lead" },
-          { icon: Users, label: "Verified Leads", desc: "Real families with real intent" },
+          { icon: Users, label: "Direct Inquiries", desc: "Sent from your own listing, not bought from a lead broker" },
           { icon: Clock, label: "Respond First", desc: "Speed-to-lead lifts conversion" },
         ].map((item) => (
           <div key={item.label} className="flex items-start gap-2.5 rounded-lg bg-muted/30 p-3">

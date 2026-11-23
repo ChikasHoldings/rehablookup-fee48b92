@@ -12,7 +12,6 @@ import {
   ChevronRight,
   ArrowLeft,
   X,
-  Handshake,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -42,11 +41,6 @@ const categories = [
   { id: "getting-started", name: "Getting Started", icon: BookOpen, color: "bg-blue-500" },
   { id: "listing", name: "Managing Your Listing", icon: FileText, color: "bg-green-500" },
   { id: "leads", name: "Leads & Plans", icon: Users, color: "bg-purple-500" },
-  // Category id "placements" intentionally preserved so existing
-  // ?category=placements links (from Help.tsx helpTopics and any
-  // outbound documentation) keep working — only the display name
-  // updates to the current product (Concierge Partner).
-  { id: "placements", name: "Concierge Partner", icon: Handshake, color: "bg-teal-500" },
   { id: "billing", name: "Billing & Pro", icon: CreditCard, color: "bg-amber-500" },
   { id: "analytics", name: "Analytics & Insights", icon: TrendingUp, color: "bg-cyan-500" },
   { id: "account", name: "Account & Security", icon: Shield, color: "bg-red-500" },
@@ -67,21 +61,19 @@ This guide walks you through every step from creating your listing to receiving 
 
 1. **Complete Your Listing** — Go to **My Listing** and fill in your facility name, address, description, services offered, insurance accepted, and images.
 2. **Set Up Notifications** — In **Settings > Notifications**, enable email and SMS alerts for new leads so you never miss an inquiry.
-3. **Choose a Plan** — Free gets you a directory listing. Pro ($99/mo) unlocks verified badge, lead analytics, priority placement, and the Marketing Hub (Featured + Concierge add-ons).
+3. **Choose a Plan** — Free gets you a directory listing. Pro ($99/mo) unlocks verified badge, lead analytics, priority placement, and the Marketing Hub (Featured add-on).
 
 ## Understanding Your Dashboard
 
 Your dashboard shows at a glance:
 - **Profile Views** — How many families viewed your listing this period
 - **Active Leads** — New and in-progress leads awaiting action
-- **Placement Opportunities** — Pending introductions surfaced by our concierge advisors
 - **Listing Status** — Whether your facility profile is live and visible in search results
 
 ## Key Concepts
 
 - **Leads** are generated when a family submits a contact or tour request from your listing. They're exclusive to your facility for 24 hours, with full contact details visible to you immediately — no per-lead fees, ever.
 - **Pro plan** is a flat $99/month per provider account: verified badge, lead analytics, +50 ranking boost, 10 photos + video, Marketing Hub.
-- **Placements** are referrals from our concierge advisors matching pre-screened families to your facility. EKRA-compliant: advisors always present at least two non-partner alternatives alongside any Concierge partner.
 
 ## Need Help?
 
@@ -113,7 +105,6 @@ Navigate to **Settings > Profile** to update:
 
 In **Settings > Notifications** you can control:
 - **New lead alerts** — Instant email when a family submits an inquiry
-- **Placement introductions** — Alerts when our concierge team sends a matched case
 - **Billing events** — Payment confirmations and renewal reminders
 
 ## Best Practices
@@ -283,7 +274,7 @@ Each lead is exclusive to your facility for **24 hours**. If you don't respond w
   {
     id: "plan-pricing",
     title: "Pricing & Plan Benefits",
-    excerpt: "Free vs Pro, the Featured Add-On, and the Concierge Add-On — flat fees only, no per-lead charges.",
+    excerpt: "Free vs Pro and the Featured Add-On — flat fees only, no per-lead charges.",
     content: `
 # Pricing & Plan Benefits
 
@@ -308,7 +299,7 @@ RehabLookup uses a flat-fee subscription model. There are no per-lead charges, n
 | Lead analytics + response insights | Yes |
 | Priority placement (+50 ranking) | Yes |
 | 10 photos + 1 facility video | Yes |
-| Marketing Hub (Featured + Concierge add-ons) | Yes |
+| Marketing Hub (Featured add-on) | Yes |
 | Up to 5 facility listings | Yes (Free plan includes 1) |
 
 Cancel anytime from **Billing**.
@@ -318,12 +309,11 @@ Cancel anytime from **Billing**.
 | Add-On | Price | What you get |
 |---|---|---|
 | **Featured** | $599/mo | Rotating placement on the homepage + state pages |
-| **Concierge** | $1,000/mo | Verified-partner badge in advisor matching; EKRA-compliant (advisors always present ≥2 non-partner alternatives) |
 
 ## Viewing & Managing Your Plan
 
 - **Billing** page shows your current plan, next renewal date, and saved payment method
-- **Marketing Hub** lets Pro users add or remove Featured / Concierge add-ons
+- **Marketing Hub** lets Pro users add or remove the Featured add-on
 - **Provider Panel sidebar** shows your active plan at a glance
     `,
     category: "leads",
@@ -348,7 +338,7 @@ Speed matters — families often contact multiple facilities. Being first to res
 
 ### In-App Notifications
 - Bell icon in the header shows unread count
-- Click to see recent leads and placement introductions
+- Click to see recent leads
 
 ## Setting Up Notifications
 
@@ -367,125 +357,11 @@ Enable **instant email notifications** and keep your email open during business 
     updatedAt: "2026-04-09"
   },
 
-  // ── Concierge Partner ──
-  // The legacy success-based Placement Network was retired in the
-  // 2026-05 monetization rebuild and replaced with the Concierge
-  // Add-On — a flat $1,000/mo subscription. These articles describe
-  // the current product. (Article IDs renamed to match.)
-  {
-    id: "concierge-overview",
-    title: "Concierge Partner Overview",
-    excerpt: "How human advisors match pre-screened families to your facility — flat fee, EKRA-clean, no per-admission charges.",
-    content: `
-# Concierge Partner Overview
-
-The Concierge Partner Add-On is a premium surface that puts your facility in front of pre-screened, treatment-ready families when our human advisors match a case to your geography and accepted levels of care.
-
-## How It Works
-
-1. **Family submits intake** — They complete a detailed intake form (location, insurance, levels of care, urgency).
-2. **An advisor reviews** — A RehabLookup care advisor reads the intake and shortlists facilities that fit the clinical and logistical criteria.
-3. **You receive an introduction** — Matched cases appear on the Inquiries page with full contact details. You also get an email + in-app notification.
-4. **You respond** — Mark each case Interested or Not interested. If interested, you can call/text the family directly.
-5. **Coordination** — Our advisor stays in the loop to help with tour scheduling and admission questions when asked.
-
-## EKRA-safe by design
-
-Advisors always present at least two non-partner alternatives alongside any Concierge partner. Pricing is a flat subscription — never per-call, per-lead, or per-admission. The whole product is built to keep your operations clean under 18 U.S.C. § 220.
-
-## What you pay
-
-- **Flat $1,000/month** for the Concierge Add-On (Pro-only, billed via Stripe).
-- **No per-admission, per-call, or per-lead fees** — ever.
-- **No commission** on placements.
-- The add-on is independent of your Pro subscription — you can cancel it at any time without losing Pro itself.
-    `,
-    category: "placements",
-    tags: ["concierge", "referrals", "EKRA", "add-on"],
-    readTime: 5,
-    updatedAt: "2026-05-24"
-  },
-  {
-    id: "becoming-concierge-partner",
-    title: "Becoming a Concierge Partner",
-    excerpt: "Step-by-step guide to subscribing, setting your service area, and configuring the levels of care you accept.",
-    content: `
-# Becoming a Concierge Partner
-
-The add-on activates instantly once you're subscribed. Setup takes about 5 minutes.
-
-## Prerequisites
-
-1. **Pro subscription** — Concierge is a Pro-only add-on. Subscribe to Pro from **Subscription** in the sidebar if you haven't already.
-2. **Verified facility profile** — Your listing must be approved by admin (typically same business day after onboarding).
-
-## Steps to subscribe
-
-1. Navigate to **Marketing → Concierge Partner**.
-2. Click **Become a Concierge Partner**.
-3. Complete Stripe checkout for the $1,000/month add-on.
-4. Configure your concierge geography:
-   - **Service areas** — Cities or states where you accept new admissions.
-   - **Levels of care** — Residential, PHP, IOP, Detox, Sober Living, Telehealth, Outpatient.
-   - **Capacity cap** — Optional monthly intro limit so the advisor team doesn't overwhelm your admissions line.
-5. Add an admissions contact (name + phone + email) so the family knows who to call when matched.
-
-## Pausing or stopping
-
-You can pause new introductions at any time from the Concierge management panel — useful when you're at capacity. Cancel the add-on entirely from **Subscription → Manage add-ons**; Pro stays active.
-    `,
-    category: "placements",
-    tags: ["onboarding", "concierge", "geography", "levels-of-care"],
-    readTime: 4,
-    updatedAt: "2026-05-24"
-  },
-  {
-    id: "responding-to-concierge-intros",
-    title: "Responding to Concierge Introductions",
-    excerpt: "What lands when an advisor matches a family to your facility, how to review it, and what counts as a good response.",
-    content: `
-# Responding to Concierge Introductions
-
-When a RehabLookup care advisor matches a family to your facility, here's what happens on your end.
-
-## Where it shows up
-
-Every concierge introduction lands in three places at once:
-- **Inquiries** — The full case appears on the same queue as your direct leads (filterable by inquiry type).
-- **Notifications** — An in-app notification with the case summary.
-- **Email + SMS** — If you've enabled those channels in Settings → Notifications.
-
-## What you'll see
-
-Each intro includes:
-- **Family contact details** — Name, phone, email (full contact, not anonymized — you're a verified partner).
-- **Care needs** — Primary concern, level of care, co-occurring conditions.
-- **Insurance** — Carrier and coverage estimate.
-- **Location** — Where the family is searching.
-- **Urgency** — How quickly they need admission.
-
-## How to respond
-
-1. Open the inquiry from your Leads page.
-2. Mark it **Interested** or **Not interested**.
-3. If interested, call or email the family within 2 business hours — concierge cases convert significantly better when the first response is fast.
-4. Add notes back in the inquiry record so the advisor team knows the outcome (toured, admitted, declined).
-
-## What good looks like
-
-The strongest concierge partners respond within an hour, follow up with a tour offer, and keep the inquiry notes current so the advisor can step in if the family has follow-up questions. Your response rate and outcome metrics are visible on your Analytics page.
-    `,
-    category: "placements",
-    tags: ["introductions", "response", "coordination", "cases"],
-    readTime: 4,
-    updatedAt: "2026-05-24"
-  },
-
   // ── Billing & Pro ──
   {
     id: "how-billing-works",
     title: "How Billing Works",
-    excerpt: "Free listings, flat-fee Pro membership, and optional Featured / Concierge add-ons — a complete billing overview.",
+    excerpt: "Free listings, flat-fee Pro membership, and the optional Featured add-on — a complete billing overview.",
     content: `
 # How Billing Works
 
@@ -506,7 +382,7 @@ For facilities wanting maximum exposure:
 - **Lead analytics** + response insights
 - **Priority placement** on city / state pages (+50 ranking boost)
 - **10 photos + 1 facility video**
-- **Marketing Hub** unlocked (Featured + Concierge add-ons)
+- **Marketing Hub** unlocked (Featured add-on)
 - **Up to 5 facility listings** under one account
 - **Embed badge** for your website
 
@@ -515,7 +391,6 @@ Cancel anytime from the billing page.
 ## Add-Ons (Pro-only)
 
 - **Featured Add-On — $599/mo**: rotating placement on the homepage + state pages
-- **Concierge Add-On — $1,000/mo**: verified-partner badge in advisor matching (EKRA-compliant)
 
 ## Payment Methods
 
@@ -537,7 +412,7 @@ All billing management is available on the **Billing** page (in the sidebar).
 
 ## Viewing Plan & Add-Ons
 
-- The Billing page shows your current plan (Free or Pro), any active add-ons (Featured / Concierge), and your next renewal date
+- The Billing page shows your current plan (Free or Pro), any active add-on (Featured), and your next renewal date
 - The sidebar shows your active plan at a glance
 
 ## Managing Your Pro Subscription
@@ -586,9 +461,6 @@ The Analytics page gives you data-driven insights into your facility's performan
 ### Response Time
 - Average time between receiving a lead and making contact
 - Faster response times correlate with higher conversion rates
-
-### Concierge Activity
-- If you have the Concierge Add-On: advisor introductions received, your interest responses, and successful admissions
 
 ## Date Range Filters
 
@@ -685,13 +557,12 @@ The **facility dropdown** in the top header lets you switch between your listing
 - Profile information
 - Notification preferences
 - Pro subscription status + saved payment method
-- Featured / Concierge add-on activation
+- Featured add-on activation
 
 ### Per-Facility
 - Leads and lead history
 - Analytics and performance data
 - Listing content and images
-- Concierge Add-On configuration + advisor introductions
 - Reviews
 
 ## Adding or Removing Facilities

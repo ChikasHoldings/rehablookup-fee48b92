@@ -351,7 +351,7 @@ const ProviderBillingPlacementsPage = lazy(() => import("./pages/provider/Billin
 const ProviderBillingConciergePage = lazy(() => import("./pages/provider/BillingConcierge"));
 const ProviderMarketingHub = lazy(() => import("./pages/provider/MarketingHub"));
 const ProviderMarketingFeatured = lazy(() => import("./pages/provider/MarketingFeatured"));
-const ProviderMarketingConcierge = lazy(() => import("./pages/provider/MarketingConcierge"));
+const ProviderConciergeRetired = lazy(() => import("./pages/provider/ConciergeRetired"));
 // Pro upgrade page + Placement network removed in monetization rebuild.
 // /provider/pro-upgrade and /provider/placement-network now Navigate
 // to /for-providers so any stale bookmark / external link still lands
@@ -1848,7 +1848,7 @@ const AppInner = () => {
               <Route path="billing/concierge" element={<ProviderBillingConciergePage />} />
               <Route path="marketing" element={<ProviderMarketingHub />} />
               <Route path="marketing/featured" element={<ProviderMarketingFeatured />} />
-              <Route path="marketing/concierge" element={<ProviderMarketingConcierge />} />
+              <Route path="marketing/concierge" element={<ProviderConciergeRetired />} />
               <Route path="settings" element={<ProviderSettingsPage />} />
               <Route path="embed-badge" element={<ProviderEmbedBadgePage />} />
               {/* Credential Kit — Pro + verified gate enforced server-side
