@@ -412,7 +412,7 @@ function getLeadConfirmationEmail(firstName: string, facilityCount: number): str
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top: 28px;">
                 <tr>
                   <td align="center">
-                    <a href="https://rehablookup.com/concierge" style="display: inline-block; background: #0f766e; color: #ffffff; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px;">
+                    <a href="https://rehablookup.com/search-results" style="display: inline-block; background: #0f766e; color: #ffffff; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px;">
                       Get Expert Help
                     </a>
                   </td>

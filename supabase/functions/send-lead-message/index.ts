@@ -171,7 +171,7 @@ Deno.serve(async (req) => {
             type: "lead_message",
             title: `New message from ${facilityName}`,
             message: preview,
-            link: "/account/requests",
+            link: "/contact",
             metadata: { lead_id: leadId },
           });
         } catch (_e) { /* non-fatal */ }
@@ -194,7 +194,7 @@ Deno.serve(async (req) => {
               { accountSid: twilioSid, authToken: twilioToken, fromNumber: twilioFrom },
               {
                 to: sp!.phone as string,
-                body: `RehabLookup: New message from ${facilityName}. Reply at rehablookup.com/account/requests. Reply STOP to opt out.`,
+                body: `RehabLookup: New message from ${facilityName}. Questions? rehablookup.com/contact. Reply STOP to opt out.`,
                 userId: seekerId,
                 notificationType: "lead_message",
               },
@@ -216,8 +216,8 @@ Deno.serve(async (req) => {
               heading: "You have a new message",
               intro: `${escapeHtml(facilityName)} sent you a message about your inquiry:`,
               preview: escapeHtml(preview),
-              ctaUrl: "https://rehablookup.com/account/requests",
-              ctaLabel: "View & reply",
+              ctaUrl: "https://rehablookup.com/contact",
+              ctaLabel: "Contact RehabLookup",
             }),
           }, { emailType: "lead_message", idempotencyKey: `lead-msg-${msg.id}-seeker` });
         } catch (_e) { /* non-fatal */ }

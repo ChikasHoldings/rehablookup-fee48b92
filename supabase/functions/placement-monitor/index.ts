@@ -93,10 +93,10 @@ function seekerReminderEmail(userName: string, facilitiesCount: number): string 
       We wanted to follow up — <strong>${facilitiesCount} treatment facilities</strong> have confirmed they can help with your situation. Your personalized options are waiting for your review.
     </p>
     <p style="margin:0 0 24px;font-size:15px;color:#334155;line-height:1.6;">
-      Taking the next step is easy — just review your options and let us know which facility feels right for you.
+      Taking the next step is easy — just reply to this email and let us know which facility feels right for you.
     </p>
     <div style="text-align:center;">
-      <a href="${DASHBOARD_URL}/account/concierge" style="display:inline-block;padding:14px 28px;background:#0EA5E9;color:#fff;text-decoration:none;border-radius:8px;font-size:15px;font-weight:600;">Review My Options</a>
+      <a href="${DASHBOARD_URL}/contact" style="display:inline-block;padding:14px 28px;background:#0EA5E9;color:#fff;text-decoration:none;border-radius:8px;font-size:15px;font-weight:600;">Contact RehabLookup</a>
     </div>
     <p style="margin:24px 0 0;font-size:13px;color:#94a3b8;text-align:center;">
       Questions? Reply to this email or call us at <a href="tel:+12146396420" style="color:#94a3b8;font-weight:600;">(214) 639-6420</a>.

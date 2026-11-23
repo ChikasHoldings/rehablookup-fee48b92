@@ -167,10 +167,10 @@ export function messageToSeekerEmail(data: MessageEmailData): string {
 
   const content = `
     ${paragraph(`Hi ${firstName},`)}
-    ${paragraph(`You have a new message in your concierge portal.`)}
+    ${paragraph(`You have a new message from the RehabLookup team.`)}
     ${messageBox(truncateMessage(data.messagePreview), senderLabel)}
-    ${paragraph(`Log in to your portal to view the full message and respond.`)}
-    ${ctaButton("View & Reply", "https://rehablookup.com/account/concierge", BRAND_COLORS.accent)}
+    ${paragraph(`Reply to this email to respond.`)}
+    ${ctaButton("Contact RehabLookup", "https://rehablookup.com/contact", BRAND_COLORS.accent)}
   `;
 
   return emailWrapper(

@@ -93,7 +93,7 @@ Deno.serve(async (req) => {
   if (notifyResolve || notifyReopen) {
     try {
       const isProvider = ticket.source === "provider_support";
-      const link = isProvider ? `/provider/help?ticket=${ticketId}` : `/account/support?ticket=${ticketId}`;
+      const link = isProvider ? `/provider/help?ticket=${ticketId}` : `/contact`;
       const subjectLabel = ticket.subject || ticket.category || "your support ticket";
       const title = notifyResolve ? `Your support ticket was ${newStatus}` : "Your support ticket was reopened";
       const recipients = new Set<string>();

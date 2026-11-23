@@ -289,8 +289,8 @@ export function tourProposedUserEmail(data: TourEmailData): string {
     ${paragraph(`Hi ${firstName},`)}
     ${paragraph(`Great news! <strong>${data.facilityName}</strong> has responded to your ${data.tourType === "virtual" ? "virtual" : "in-person"} tour request and proposed a time.`)}
     ${infoBox(proposalBox, BRAND_COLORS.accent)}
-    ${paragraph(`Please log in to your concierge portal to accept this time or request a different one.`)}
-    ${ctaButton("View & Respond", "https://rehablookup.com/account/concierge", BRAND_COLORS.success)}
+    ${paragraph(`Reply to this email to accept this time or ask for a different one.`)}
+    ${ctaButton("Contact RehabLookup", "https://rehablookup.com/contact", BRAND_COLORS.success)}
   `;
 
   return emailWrapper(
@@ -368,11 +368,11 @@ export function tourCancelledUserEmail(data: TourEmailData): string {
     ${paragraph(`Unfortunately, ${data.facilityName} is unable to accommodate your tour request at this time.`)}
     ${infoBox(`
       <p style="margin: 0; font-size: 15px; color: ${BRAND_COLORS.textPrimary};">
-        Don't worry — you can request tours from other matched facilities in your concierge portal. 
+        Don't worry — you can search for other treatment centers that fit your needs. 
         Our team is here to help you find the right treatment center.
       </p>
     `)}
-    ${ctaButton("View Other Matches", "https://rehablookup.com/account/concierge")}
+    ${ctaButton("Search Treatment Centers", "https://rehablookup.com/search-results")}
   `;
 
   return emailWrapper(
@@ -428,8 +428,8 @@ export function tourConfirmedUserEmail(data: TourEmailData): string {
     ${paragraph(`Your tour is locked in. <strong>${data.facilityName}</strong> is expecting you at the time below.`)}
     ${successBox(confirmationBox)}
     ${infoBox(tipsBlock)}
-    ${paragraph(`If anything changes, you can reschedule or cancel from your concierge portal — or just reply to this email and our team will help.`)}
-    ${ctaButton("View Tour Details", "https://rehablookup.com/account/concierge", BRAND_COLORS.success)}
+    ${paragraph(`If anything changes, just reply to this email and our team will help.`)}
+    ${ctaButton("Contact RehabLookup", "https://rehablookup.com/contact", BRAND_COLORS.success)}
   `;
 
   return emailWrapper(

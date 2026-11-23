@@ -119,7 +119,7 @@ Deno.serve(async (req) => {
       recipients.delete(user.id);
 
       const isProvider = ticket.source === "provider_support";
-      const link = isProvider ? `/provider/help?ticket=${ticketId}` : `/account/support?ticket=${ticketId}`;
+      const link = isProvider ? `/provider/help?ticket=${ticketId}` : `/contact`;
       for (const uid of recipients) {
         if (isProvider) {
           await admin.from("provider_notifications").insert({
@@ -142,7 +142,7 @@ Deno.serve(async (req) => {
       if (resendKey && ticket.sender_email) {
         const portal = isProvider
           ? `https://rehablookup.com/provider/help?ticket=${ticketId}`
-          : `https://rehablookup.com/account/support?ticket=${ticketId}`;
+          : `https://rehablookup.com/contact`;
         await sendEmailWithRetry(admin, new Resend(resendKey), {
           from: "RehabLookup Support <no-reply@rehablookup.com>",
           to: [ticket.sender_email as string],

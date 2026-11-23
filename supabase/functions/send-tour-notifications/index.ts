@@ -302,8 +302,8 @@ export function tourProposedUserEmail(data: TourEmailData): string {
     ${paragraph(`Hi ${firstName},`)}
     ${paragraph(`Great news! <strong>${data.facilityName}</strong> has responded to your ${data.tourType === "virtual" ? "virtual" : "in-person"} tour request and proposed a time.`)}
     ${infoBox(proposalBox, BRAND_COLORS.accent)}
-    ${paragraph(`Please log in to your concierge portal to accept this time or request a different one.`)}
-    ${ctaButton("View & Respond", "https://rehablookup.com/account/concierge", BRAND_COLORS.success)}
+    ${paragraph(`Reply to this email to accept this time or ask for a different one.`)}
+    ${ctaButton("Contact RehabLookup", "https://rehablookup.com/contact", BRAND_COLORS.success)}
   `;
 
   return emailWrapper(
@@ -381,11 +381,11 @@ export function tourCancelledUserEmail(data: TourEmailData): string {
     ${paragraph(`Unfortunately, ${data.facilityName} is unable to accommodate your tour request at this time.`)}
     ${infoBox(`
       <p style="margin: 0; font-size: 15px; color: ${BRAND_COLORS.textPrimary};">
-        Don't worry — you can request tours from other matched facilities in your concierge portal. 
+        Don't worry — you can search for other treatment centers that fit your needs. 
         Our team is here to help you find the right treatment center.
       </p>
     `)}
-    ${ctaButton("View Other Matches", "https://rehablookup.com/account/concierge")}
+    ${ctaButton("Search Treatment Centers", "https://rehablookup.com/search-results")}
   `;
 
   return emailWrapper(
@@ -441,8 +441,8 @@ export function tourConfirmedUserEmail(data: TourEmailData): string {
     ${paragraph(`Your tour is locked in. <strong>${data.facilityName}</strong> is expecting you at the time below.`)}
     ${successBox(confirmationBox)}
     ${infoBox(tipsBlock)}
-    ${paragraph(`If anything changes, you can reschedule or cancel from your concierge portal — or just reply to this email and our team will help.`)}
-    ${ctaButton("View Tour Details", "https://rehablookup.com/account/concierge", BRAND_COLORS.success)}
+    ${paragraph(`If anything changes, just reply to this email and our team will help.`)}
+    ${ctaButton("Contact RehabLookup", "https://rehablookup.com/contact", BRAND_COLORS.success)}
   `;
 
   return emailWrapper(
@@ -1410,7 +1410,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         // SMS to seeker — only if they consented to SMS at intake.
         if (userPhone && tour.inquiry?.sms_consent) {
           const proposedTime = formatDateTime(tour.proposed_datetime);
-          const smsMessage = `RehabLookup: ${emailData.facilityName} proposed tour for ${proposedTime}. Confirm here: https://rehablookup.com/account/concierge`;
+          const smsMessage = `RehabLookup: ${emailData.facilityName} proposed tour for ${proposedTime}. Reply to our email or visit https://rehablookup.com/contact`;
           const smsSent = await sendSMS(userPhone, smsMessage);
           results.userSMS = smsSent;
         }
@@ -1422,7 +1422,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
             type: "tour_proposed",
             title: "Tour Time Proposed",
             message: `${emailData.facilityName} has proposed a tour time: ${formatDateTime(tour.proposed_datetime)}.`,
-            link: "/account/concierge",
+            link: "/contact",
           });
         }
 
@@ -1486,7 +1486,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
             type: "tour_confirmed",
             title: "Tour Confirmed",
             message: `Your tour at ${emailData.facilityName} is confirmed for ${formatDateTime(tour.confirmed_datetime)}.`,
-            link: "/account/concierge",
+            link: "/contact",
             metadata: { tour_id: tourId, facility_id: tour.facility?.id },
           });
         }
@@ -1622,7 +1622,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
           // SMS to seeker — only if they consented to SMS at intake.
           if (userPhone && tour.inquiry?.sms_consent) {
-            const smsMessage = `RehabLookup: Unfortunately, ${emailData.facilityName} had to reschedule. View other options: https://rehablookup.com/account/concierge`;
+            const smsMessage = `RehabLookup: Unfortunately, ${emailData.facilityName} had to reschedule. Find other options: https://rehablookup.com/search-results`;
             await sendSMS(userPhone, smsMessage);
           }
 
@@ -1633,7 +1633,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
               type: "tour_cancelled",
               title: "Tour Update",
               message: `${emailData.facilityName} is unable to accommodate your tour.`,
-              link: "/account/concierge",
+              link: "/contact",
             });
           }
         }
