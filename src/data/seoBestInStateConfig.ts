@@ -78,7 +78,7 @@ const coreBestInStateConfigs: BestInStateConfig[] = [
       "Year-round access to outdoor recreation and wellness activities",
     ],
     benefits: [
-      "Nation's largest recovery community in South Florida",
+      "A large, active recovery community in South Florida",
       "Warm climate supporting year-round outdoor therapy",
       "High concentration creates competitive quality and pricing",
       "Marchman Act provides involuntary treatment option",

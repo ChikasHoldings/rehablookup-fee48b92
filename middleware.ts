@@ -75,8 +75,19 @@ export const config = {
 
 const PRERENDERED = new Set(PRERENDERED_PATHS);
 
+// Search engines, social previews and AI search/assistant agents. None of the
+// AI agents execute JavaScript reliably, so they must receive the prerendered
+// (snapshot) HTML rather than the empty SPA shell.
 const CRAWLER_UA =
-  /(googlebot|bingbot|yandex|duckduckbot|baiduspider|slurp|applebot|petalbot|sogou|exabot|facebot|facebookexternalhit|twitterbot|linkedinbot|pinterestbot|slackbot|telegrambot|whatsapp|discordbot|embedly|quora link preview|redditbot|tumblr|vkshare|w3c_validator|ahrefsbot|semrushbot|mj12bot|dotbot|rogerbot|screaming frog|gptbot|chatgpt-user|oai-searchbot|claudebot|perplexitybot|google-inspectiontool|adsbot-google|mediapartners-google|bytespider|googleother)/i;
+  /(googlebot|bingbot|bingpreview|yandex|duckduckbot|duckassistbot|baiduspider|slurp|applebot|petalbot|sogou|exabot|facebot|facebookexternalhit|twitterbot|linkedinbot|pinterestbot|slackbot|telegrambot|whatsapp|discordbot|embedly|quora link preview|redditbot|tumblr|vkshare|w3c_validator|ahrefsbot|semrushbot|mj12bot|dotbot|rogerbot|screaming frog|gptbot|chatgpt-user|oai-searchbot|claudebot|claude-user|claude-searchbot|anthropic-ai|perplexitybot|perplexity-user|meta-externalagent|meta-externalfetcher|amazonbot|mistralai-user|youbot|cohere-ai|ccbot|google-inspectiontool|adsbot-google|mediapartners-google|bytespider|googleother)/i;
+
+// Crawler snapshot of the homepage (scripts/render-crawler-snapshots.mjs).
+// The build always writes this file — the rendered homepage, or a copy of the
+// SPA shell if rendering was unavailable — so the rewrite never 404s.
+const HOME_SNAPSHOT_PATH = "/_crawler-home.html";
+
+// Pages that exist only as static HTML in public/ (no React route).
+const STATIC_ONLY_PAGES = new Set(["/notice-of-privacy-practices"]);
 
 // Social media crawlers that fetch OG/Twitter cards. Articles have
 // pre-rendered static HTML files at dist/resources/<slug>.html with correct
@@ -234,8 +245,18 @@ export default function middleware(request: Request) {
   const url = new URL(request.url);
   const pathname = url.pathname;
 
-  // Apex always serves the SPA shell directly.
-  if (pathname === "/") return next();
+  // Homepage: visitors get the SPA shell; crawlers get the rendered homepage
+  // (same React page, captured at build time) instead of an empty shell.
+  if (pathname === "/") {
+    return CRAWLER_UA.test(ua) ? rewrite(new URL(HOME_SNAPSHOT_PATH, url)) : next();
+  }
+
+  // Standalone static pages with no React route: serve the HTML file to
+  // everyone (the vercel.json rewrite never fires because this middleware
+  // rewrites humans to the SPA first, which rendered "not found").
+  if (STATIC_ONLY_PAGES.has(pathname.replace(/\/+$/, ""))) {
+    return rewrite(new URL(`${pathname.replace(/\/+$/, "")}.html`, url));
+  }
 
   // Retired consumer-account URLs 301 out before any prerender/SPA handling,
   // so they can never be served as an indexable 200 or a soft 404. This runs

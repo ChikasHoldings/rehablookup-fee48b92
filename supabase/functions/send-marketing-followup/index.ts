@@ -272,7 +272,7 @@ function getFollowUpEmail(firstName: string, unsubToken: string): string {
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top: 8px;">
                 <tr>
                   <td align="center">
-                    <a href="https://rehablookup.com/concierge" style="display: inline-block; background-color: #1B365D; background: #1B365D; color: #ffffff; padding: 16px 40px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; font-family: Arial, Helvetica, sans-serif;">
+                    <a href="https://rehablookup.com/search-results" style="display: inline-block; background-color: #1B365D; background: #1B365D; color: #ffffff; padding: 16px 40px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; font-family: Arial, Helvetica, sans-serif;">
                       Get Expert Help Now →
                     </a>
                   </td>

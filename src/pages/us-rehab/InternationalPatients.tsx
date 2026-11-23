@@ -193,7 +193,7 @@ const InternationalPatients = () => {
             {[
               { q: "Why do international patients choose US rehab?", a: "International patients choose US treatment for world-class clinical care, privacy from their home community, access to innovative therapies, and the opportunity to focus entirely on recovery in a new environment." },
               { q: "How does the visa process work?", a: "Most patients enter on a B-2 tourist visa for medical treatment or via ESTA for eligible countries. You'll need a letter from the treatment facility and proof of funds. Our team helps facilitate the documentation process." },
-              { q: "What if I don't speak English fluently?", a: "Many US treatment centres have multilingual staff and translation services. We match you with facilities that accommodate your language needs." },
+              { q: "What if I don't speak English fluently?", a: "Many US treatment centres have multilingual staff and translation services. Ask each facility about language support before you commit." },
               { q: "How do I pay for treatment without US insurance?", a: "International patients typically self-pay. Treatment centres accept wire transfers, credit cards, and payment plans. Costs range from $20,000–$100,000+ per month depending on the programme." },
               { q: "Is my treatment confidential?", a: "Absolutely. US HIPAA laws protect your privacy, and being in a different country adds geographic separation from your community. Records cannot be shared without explicit consent." },
             ].map((faq, i) => (

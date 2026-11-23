@@ -7,7 +7,6 @@
 import { writeFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { GA_MEASUREMENT_ID } from "./_ga.mjs";
 import { seoStyles, seoHeader, seoCtaStrip, seoFooter } from "./_seo-page-shell.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -88,8 +87,6 @@ function buildHtml(slug, title, desc) {
   <link rel="icon" type="image/png" href="/favicon.png">
   <script type="application/ld+json">${bcSchema}</script>
   ${seoStyles()}
-  <script async src="https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}"></script>
-  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_MEASUREMENT_ID}',{send_page_view:true});</script>
 </head>
 <body>
   ${seoHeader()}

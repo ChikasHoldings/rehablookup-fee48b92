@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ShieldCheck, ArrowRight, CheckCircle2, Lock } from "lucide-react";
+import { ShieldCheck, ArrowRight, CheckCircle2, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface Props {
@@ -25,12 +25,15 @@ interface Props {
  * param to pre-select the carrier in the verification form.
  */
 export function InsuranceVerifyCarrierCTA({ carrier, description }: Props) {
-  const href = `/insurance-verification?carrier=${encodeURIComponent(carrier)}`;
+  // RehabLookup does not run benefits checks (the former "our care team will
+  // verify" service was retired). This panel explains how to check coverage
+  // directly and links to centers whose listings name the carrier.
+  const href = `/search-results?insurance=${encodeURIComponent(carrier)}`;
   const benefits = [
-    "No cost, no obligation",
-    "HIPAA-aware handling",
-    "Plain-English coverage summary",
-    "Same or next business day",
+    "Call the member services number on your card",
+    "Ask which levels of care are covered (detox, residential, outpatient)",
+    "Ask about prior authorization and in-network requirements",
+    "Ask the treatment center to confirm your benefits before admission",
   ];
 
   return (
@@ -54,20 +57,20 @@ export function InsuranceVerifyCarrierCTA({ carrier, description }: Props) {
                   conversion surfaces (homepage hero, providers CTA). */}
               <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-primary ring-1 ring-primary/20">
                 <ShieldCheck className="h-3 w-3" aria-hidden />
-                Free Insurance Check
+                Check Your Coverage
               </span>
 
               <h2
                 id="verify-carrier-cta-heading"
                 className="mt-3 font-display text-xl font-bold leading-tight tracking-tight text-foreground sm:text-2xl md:text-[1.625rem] lg:text-3xl"
               >
-                Verify your {carrier} coverage —{" "}
-                <span className="text-primary">free &amp; confidential</span>
+                How to check your {carrier} coverage{" "}
+                <span className="text-primary">for treatment</span>
               </h2>
 
               <p className="mt-3 max-w-prose text-sm leading-relaxed text-muted-foreground sm:text-[15px] md:text-base">
                 {description ||
-                  `Submit your ${carrier} member ID and our care team will confirm what your plan covers for rehab, medications, and out-of-pocket cost — usually within one business day.`}
+                  `Your plan and the treatment center are the only sources that can confirm what ${carrier} covers for rehab, medications and out-of-pocket cost. Before you call, have your member ID ready and ask:`}
               </p>
 
               {/* Benefits — 1 col on mobile, 2 col on sm+. Each row uses
@@ -91,25 +94,25 @@ export function InsuranceVerifyCarrierCTA({ carrier, description }: Props) {
             <div className="relative border-t border-primary/15 bg-primary/[0.04] p-6 sm:p-7 md:w-[44%] md:max-w-sm md:border-l md:border-t-0 md:p-8 lg:p-10">
               <div className="flex h-full flex-col justify-center text-center md:text-left">
                 <p className="text-sm font-bold text-foreground sm:text-base">
-                  Ready to check your benefits?
+                  Looking for a center?
                 </p>
                 <p className="mt-1 text-xs leading-relaxed text-muted-foreground sm:text-[13px]">
-                  Takes about a minute. Our care team confirms coverage by
-                  the next business day.
+                  See treatment centers whose listings name {carrier}, then
+                  confirm your benefits with the center and your plan.
                 </p>
                 <Button
                   asChild
                   size="lg"
                   className="mt-4 w-full gap-2 shadow-md hover:shadow-lg transition-shadow"
                 >
-                  <Link to={href} aria-label={`Verify my ${carrier} insurance coverage`}>
-                    Verify my {carrier} coverage
+                  <Link to={href} aria-label={`Find treatment centers that list ${carrier}`}>
+                    Find centers that list {carrier}
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                 </Button>
                 <p className="mt-3 inline-flex items-center justify-center gap-1.5 text-[11px] font-medium text-muted-foreground md:justify-start">
-                  <Lock className="h-3 w-3" aria-hidden />
-                  HIPAA-aware · No commitment
+                  <Phone className="h-3 w-3" aria-hidden />
+                  Listings are as reported; always confirm coverage
                 </p>
               </div>
             </div>

@@ -16,7 +16,6 @@
 import { writeFileSync, mkdirSync } from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
-import { GA_MEASUREMENT_ID } from './_ga.mjs';
 import { seoStyles, seoHeader, seoCtaStrip, seoFooter } from './_seo-page-shell.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -102,8 +101,6 @@ function buildHtml({ urlPath, title, metaDesc, h1, content, breadcrumbs }) {
   <link rel="icon" type="image/png" href="/favicon.png">
   ${bcSchema ? `<script type="application/ld+json">${bcSchema}</script>` : ''}
   ${seoStyles()}
-  <script async src="https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}"></script>
-  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_MEASUREMENT_ID}',{send_page_view:true});</script>
 </head>
 <body>
   ${seoHeader()}

@@ -9,36 +9,36 @@ Companion files: `SEO_PERFORMANCE_BASELINE.md` (analytics), `SEO_URL_INVENTORY.c
 
 Companion files added in Phase 1: `SEO_ROOT_CAUSE_INVESTIGATION.md`, `SEO_SAMHSA_IMPORT_PLAN.md` (+ `SEO_SAMHSA_VALIDATION_APPENDIX.md`), `SEO_REMOVAL_PLAN.md`, `ADR-001-single-document-rendering.md`.
 
-## Phase 1 status by finding (2026-11-23)
+## Phase 1 status by finding (2026-11-23; updated after batch 2 the same day)
 
 | Finding | Phase 1 status | Notes |
 |---|---|---|
 | F-01 May 29 collapse | **Revalidated, conclusion softened** | No technical trigger found in code, deployment or infrastructure history. Consistent with an algorithmic or manual quality judgement, but *not* proven to be a sitewide penalty. Manual Actions / Security Issues still not supplied. See `SEO_ROOT_CAUSE_INVESTIGATION.md`. |
 | F-02 templated pages at scale | **Reassessed, not executed** | Six-class reassessment in `SEO_REMOVAL_PLAN.md`; no page removed (owner did not authorize). |
-| F-03 crawler/human split | **Measured; design proposed** | Parity measured on 11 templates (crawler HTML 2–27× thinner than the SPA). `ADR-001` proposes one document for everyone. `/locations` now has parity. |
+| F-03 crawler/human split | **Fixed for retained families (2026-11-23, batch 2)** | Crawlers now receive a snapshot of the real SPA render for home, hubs, states, cities, counties, guides, articles, treatment and insurance pages (ADR-001 step 1). Facility profiles and removal-candidate families still get generator HTML. |
 | F-04 fabricated facility schema | **Fixed** | Only data-backed attributes are emitted, in both renderers, from one shared module. Blocking guard checks every `/center/*` JSON-LD node at build. |
 | F-05 E-E-A-T signals | **Fixed (pending owner confirmation of people)** | Bulk "medically reviewed" stamps cleared (backed up). Advisory Board `reviewedBy` and today-dated `lastReviewed` removed. Unverified named staff removed from About. Testimonials unwired. "Verified/accredited directory" claims removed. |
 | F-06 firewall | **Revalidated: unlikely cause** | Vercel request logs (Nov 16–23) show verified Googlebot allowed with 200s. The 429 seen here is the challenge for unclassified automation. September itself is outside log retention. New finding F-26. |
 | F-07 retired-service claims | **Fixed (copy); product decisions open** | Insurance-verification, concierge and placement claims removed from source and the prerendered corpus; `llms.txt` and noscript rewritten. `/ads/:slug`, `/lp/convert`, `/insurance-verification` pages and the seeker edge-function emails remain (owner decisions). |
 | F-08 `/rehab-centers` → noindexed search | **Fixed** | 301 → `/locations`, which is now an indexable crawler hub listing every state with live counts. All breadcrumbs updated. |
 | F-09 mass redirects to search | **Audited, not changed** | Destination validation in `SEO_REMOVAL_PLAN.md` §4–5 (1,970 have a true-equivalent hub; 1,001 have none). Mass redirect changes not authorized. |
-| F-10 orphaned link graph | **Partly fixed** | `/locations` now links all states and their cities. Visitor-side facility cards still aren't `<a href>` links (ADR-001 §5). |
+| F-10 orphaned link graph | **Largely fixed (batch 2)** | Facility cards are real `<a href="/center/…">` links; state and city snapshots carry 12 facility links each. Removal-candidate families remain orphaned by design. |
 | F-11 thin catalogue | **Validated, not published** | 7,434 usable new SAMHSA facilities (≈7,300 after dedupe). `SEO_SAMHSA_IMPORT_PLAN.md`. |
 | F-12 unsupported attribute pages | Open | Covered by the removal plan. |
 | F-13 cannibalization | Open | Mapping in the removal plan. |
-| F-14 sitemaps | Open | Source of `sitemap-facilities` already uses `application/xml` and `updated_at`; the deployed function measured in Phase 0 did not. Redeploying it is backend scope. |
-| F-15 measurement | Open | gtag still injected into crawler-only HTML; GA4 key events need owner configuration. |
+| F-14 sitemaps | **Fixed (batch 2)** | Deployed `sitemap-facilities` function is byte-identical to source; production serves the static, build-generated `sitemap-facilities.xml` (correct type). The real defect was `lastmod`: the daily ranking job rewrote `updated_at` on ~1,000 facilities. Migration `20261123000200` (applied) makes score-only updates leave `updated_at` alone. |
+| F-15 measurement | **Partly fixed (batch 2)** | GA removed from all crawler-only HTML (93k files) and blocked from returning (`check:crawler-analytics`). GA4 key events still need owner configuration. |
 | F-16 "best rehab" ranking | **Copy fixed; pages open** | FAQ answer now states the real order (Featured paid → claimed → others). Pages themselves are in "Requires more investigation". |
 | F-17 uniqueness branch | **Not merged** (per owner) | — |
 | F-18 robots.txt | **Partly fixed** | Disallows on 301 sources removed; `public/vercel.json` deleted. Per-bot group simplification not done. |
-| F-19 homepage SPA shell | Open | ADR-001 covers it (crawler view is 4 words; canonical only after JS). |
+| F-19 homepage SPA shell | **Fixed (batch 2)** | Crawlers get the rendered homepage (`_crawler-home.html`), with its canonical. |
 | F-20 facility data quality | **Display fixed; data open** | Listings say where their data came from; "licensed" and "recognized by" wording replaced; credentials labelled "as reported to SAMHSA". Underlying data unchanged. |
 | F-21 FAQPage markup | Open | — |
 | F-22 Organization schema | **Fixed** | Plain `Organization`; LegitScript/HIPAA credential and 24/7 hours removed. |
-| F-23 consumer-account remnants | **Fixed (site); emails open** | Review CTA hidden for signed-out visitors; save/account copy removed. Provider and admin routes untouched; seeker emails remain. |
+| F-23 consumer-account remnants | **Fixed (batch 2)** | Seeker emails/SMS in 10 edge functions no longer link `/account/*`, `/seeker-auth` or `/concierge`; the account-signup invitation email is account-free. `/ads/:slug`, `/lp/convert` and `/insurance-verification` (0 submissions ever) now 301 to `/`, `/` and `/insurance`; insurance CTAs give self-serve guidance. |
 | F-24 medical statistics | **Fixed where found** | NIDA 40–60% now correctly described as a relapse rate in all listed locations. Clinical review still required. |
 | F-25 hygiene | Open | — |
-| F-26–F-29 | **New in Phase 1** | See §4. |
+| F-26–F-29 | **New in Phase 1** | F-26 (AI crawlers): robots.txt and middleware updated; the Vercel Firewall change itself needs the owner (this integration cannot read or write firewall settings). F-27: fixed by the snapshots. F-28: extended — 9 crashing pages plus provider Settings fixed. F-29: fixed. |
 
 ---
 

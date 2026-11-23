@@ -59,7 +59,7 @@ export function RecoveryJourneyCTA({ nearbyLocation = "" }: RecoveryJourneyCTAPr
           {/* ── Left content (60% on desktop = lg:col-span-3) ───────── */}
           <div className="lg:col-span-3">
             <span className="inline-flex items-center rounded-full bg-[#1B365D]/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#1B365D]">
-              Find your match
+              Find treatment
             </span>
 
             <h2

@@ -180,10 +180,10 @@ export function messageToSeekerEmail(data: MessageEmailData): string {
 
   const content = `
     ${paragraph(`Hi ${firstName},`)}
-    ${paragraph(`You have a new message in your concierge portal.`)}
+    ${paragraph(`You have a new message from the RehabLookup team.`)}
     ${messageBox(truncateMessage(data.messagePreview), senderLabel)}
-    ${paragraph(`Log in to your portal to view the full message and respond.`)}
-    ${ctaButton("View & Reply", "https://rehablookup.com/account/concierge", BRAND_COLORS.accent)}
+    ${paragraph(`Reply to this email to respond.`)}
+    ${ctaButton("Contact RehabLookup", "https://rehablookup.com/contact", BRAND_COLORS.accent)}
   `;
 
   return emailWrapper(
@@ -788,7 +788,7 @@ Deno.serve(async (req) => {
     const emails: Array<{ to: string; subject: string; html: string }> = [];
     let smsRecipient: { phone: string; message: string } | null = null;
 
-    const portalLink = "https://rehablookup.com/account/concierge";
+    const portalLink = "https://rehablookup.com/contact";
 
     switch (payload.notificationType) {
       case "message_to_seeker": {
@@ -814,7 +814,7 @@ Deno.serve(async (req) => {
               : payload.messageContent;
             smsRecipient = {
               phone: inquiry.user_phone,
-              message: `RehabLookup: New message from ${senderLabel}. "${preview}" View & reply: ${portalLink}`,
+              message: `RehabLookup: New message from ${senderLabel}. "${preview}" Questions: ${portalLink}`,
             };
           }
         }

@@ -41,9 +41,10 @@ interface Tier {
   blurb: string;
 }
 
-// Two plans: Free and Pro. Featured and Concierge are MARKETING
-// ADD-ONS bolted onto an active Pro subscription — they're not
-// standalone plan tiers. See ADD_ONS below for the add-on display.
+// Two plans: Free and Pro. Featured is a MARKETING ADD-ON bolted onto an
+// active Pro subscription — not a standalone plan tier. (The Concierge
+// add-on was removed from this page: the concierge/placement service it
+// described was retired in the directory cutover.)
 // Annual: Pro = 99 × 12 × 0.85 = 1,009.80 (15% off).
 const TIERS: Tier[] = [
   { id: "free", name: "Free", monthly: 0,  annual: 0,       monthlyEquivOfAnnual: 0,     blurb: "Basic claim" },
@@ -51,7 +52,7 @@ const TIERS: Tier[] = [
 ];
 
 interface AddOn {
-  id: "featured" | "concierge";
+  id: "featured";
   name: string;
   monthly: number;
   annual: number;
@@ -66,14 +67,6 @@ const ADD_ONS: AddOn[] = [
     monthly: 599,
     annual: 6108.60,
     blurb: "Priority placement on the homepage and your state directory. Listings see ~4× the profile views.",
-    requires: "pro",
-  },
-  {
-    id: "concierge",
-    name: "Concierge",
-    monthly: 1000,
-    annual: 10200,
-    blurb: "Surfaced by our concierge advisors to high-intent families during placement calls.",
     requires: "pro",
   },
 ];
@@ -320,7 +313,7 @@ const COMPARISON_ROWS: Row[] = [
   { label: "Photo gallery",                       values: ["5 photos", "10 photos"] },
   { label: "Video upload",                        values: [false, "1 video"] },
   { label: "Contact info visible publicly",       values: ["From SAMHSA", "Direct line"] },
-  { label: "Inquiries from your listing",         values: ["Routed to concierge", "Direct to your inbox"] },
+  { label: "Inquiries from your listing",         values: ["Delivered to you once claimed", "Delivered to you"] },
   { label: "Respond to reviews",                  values: [false, true] },
   { label: "Lead analytics dashboard",            values: [false, true] },
   { label: "Priority placement on city + state",  values: [false, true] },
@@ -455,7 +448,7 @@ function PlanComparisonSection() {
           </div>
 
           <p className="mt-4 text-sm text-slate-600 italic">
-            Featured and Concierge are marketing add-ons available on Pro — see below.
+            Featured is a marketing add-on available on Pro — see below.
           </p>
         </div>
 
@@ -522,7 +515,7 @@ function PlanComparisonSection() {
             ))}
           </Accordion>
           <p className="mt-4 text-xs text-slate-600 italic">
-            Featured and Concierge are marketing add-ons available on Pro — see below.
+            Featured is a marketing add-on available on Pro — see below.
           </p>
         </div>
       </div>
@@ -531,7 +524,7 @@ function PlanComparisonSection() {
 }
 
 // ──────────────────────────────────────────────────────────────────────
-// Add-ons (Featured, Concierge) — NOT plans
+// Add-ons (Featured) — NOT plans
 // ──────────────────────────────────────────────────────────────────────
 
 function AddOnsSection() {
@@ -546,8 +539,8 @@ function AddOnsSection() {
             Marketing add-ons for Pro subscribers
           </h2>
           <p className="mt-3 text-base md:text-lg text-slate-600">
-            Featured and Concierge aren't separate plans — they're optional
-            marketing layers you can add to an active Pro subscription. Slot
+            Featured isn't a separate plan — it's an optional marketing
+            layer you can add to an active Pro subscription. Slot
             availability varies by state.
           </p>
         </div>
@@ -579,8 +572,8 @@ function AddOnsSection() {
 
         <p className="mt-6 text-center text-xs text-slate-500">
           Add-ons are managed from your provider dashboard after Pro is active.
-          Featured slots are EKRA-clean rotational placements; Concierge surfacing
-          is non-weighted.
+          Featured slots are rotational placements and are labelled "Featured"
+          to visitors.
         </p>
       </div>
     </section>
@@ -670,57 +663,12 @@ function FeaturedRotationSection() {
 }
 
 // ──────────────────────────────────────────────────────────────────────
-// Concierge Partner — EKRA-defensive
-// ──────────────────────────────────────────────────────────────────────
-
-function ConciergePartnerSection() {
-  return (
-    <section className="py-14 md:py-20 bg-slate-50/60 border-y border-slate-200/70">
-      <div className="container px-4 md:px-6 lg:px-8">
-        <div className="mx-auto max-w-3xl">
-          <h2 className="font-display text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight text-[#1B365D] text-center">
-            Prominent surfacing. Families still choose.
-          </h2>
-
-          <div className="mt-6 space-y-4 text-[15px] md:text-base leading-relaxed text-slate-700">
-            <p>
-              When a family calls our concierge, our advisors match them based on their
-              insurance, level of care, geography, and clinical needs — never based on
-              who's paid us.
-            </p>
-            <p>
-              Among facilities that match a family's criteria, Concierge Partners get a visual
-              badge in our advisors' tools so the advisor naturally mentions you:{" "}
-              <em className="text-slate-900">"X is one of our Placement Partners, meaning
-              they've been verified and have committed to 24-hour response times."</em> The
-              advisor always presents <strong>at least two non-partner options alongside any
-              partner facilities</strong>. The family always picks. The call goes directly to
-              your admissions line — never through ours.
-            </p>
-            <p>
-              This is the model we believe is the right answer post-EKRA: flat monthly
-              subscription for prominent surfacing, never per-call or per-admission. We pay
-              our advisors a salary, not a commission. We record every placement to
-              demonstrate that non-partner alternatives were always presented.
-            </p>
-            <p>
-              Concierge Partner is capped at <strong>3-5 facilities per major city</strong> to
-              maintain placement quality. When a city fills, we open a waitlist.
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// ──────────────────────────────────────────────────────────────────────
 // Cancellation policy — covers both monthly and annual cadence
 // ──────────────────────────────────────────────────────────────────────
 
 // ──────────────────────────────────────────────────────────────────────
 // Mid-page CTA strip — reinforces conversion after the value/pricing/
-// addons/concierge sections. Navy block with gold accent.
+// add-on sections. Navy block with gold accent.
 // ──────────────────────────────────────────────────────────────────────
 
 function MidPageCtaStrip() {
@@ -850,27 +798,23 @@ const FAQ: Array<{ q: string; a: string }> = [
   },
   {
     q: "Is RehabLookup EKRA-compliant?",
-    a: "Yes by design. All fees are flat subscriptions for ad inventory — never per-call, per-lead, or per-admission. Concierge always presents non-partner alternatives alongside any partner facilities. Our advisors are paid a salary, not a commission. None of this is legal advice; facilities should confirm with their own counsel before subscribing.",
+    a: "That is how it is designed: all fees are flat subscriptions for listing features and ad inventory — never per-call, per-lead, or per-admission — and RehabLookup does not refer or place patients. None of this is legal advice; facilities should confirm with their own counsel before subscribing.",
   },
   {
     q: "Do we need LegitScript certification?",
-    a: "Recommended for paid SUD listings, not required to register at the Pro tier. Facilities holding current LegitScript certification get a verified-LegitScript badge on their listing. Featured and Concierge tiers will require LegitScript certification once we publicly launch those tiers.",
+    a: "Recommended for paid SUD listings, not required to register at the Pro tier. Facilities holding current LegitScript certification get a verified-LegitScript badge on their listing. Featured may require LegitScript certification in future; we will announce any change before it applies.",
   },
   {
     q: "How do you decide who gets a Featured slot when a state is at cap?",
     a: "First to purchase. When at cap, you're added to a public waitlist. We open additional slots in 5-slot increments only when sustained demand and quality justify it. There is no bidding — every Featured subscriber pays the same flat fee.",
   },
   {
-    q: "Why is Concierge Partner so much more than Featured?",
-    a: "Concierge involves a human advisor's time, qualification work, and 24-hour response coordination. We cap at 3-5 per major city, so it's premium scarce inventory. Featured is impression-based and scales to higher slot counts per geo (up to 30 per state).",
-  },
-  {
     q: "Do you compete with us by listing competitors?",
-    a: "Yes — every licensed facility is in the directory whether they pay or not. We don't pick winners. We sell ad placement (Featured) and prominent surfacing (Concierge Partner) to amplify visibility for facilities who choose to invest in it.",
+    a: "Yes — every licensed facility is in the directory whether they pay or not. We don't pick winners. We sell ad placement (Featured), labelled as such, to amplify visibility for facilities who choose to invest in it.",
   },
   {
     q: "What happens to inquiries on a Free listing?",
-    a: "They route to our concierge, who presents your facility plus 2 matching alternatives to the family. You get a notification: \"A family submitted on your listing — upgrade to Pro to receive these directly.\" If you're already busy without paid placements, Free is genuinely viable.",
+    a: "Once you have claimed your listing, inquiries are delivered to you on the Free plan as well as Pro. Inquiries sent to a listing nobody has claimed yet are held until the facility claims it. If you're already busy without paid placements, Free is genuinely viable.",
   },
   {
     q: "How do I see ROI?",
@@ -929,7 +873,6 @@ export default function ForProviders() {
       <PlanComparisonSection />
       <AddOnsSection />
       <FeaturedRotationSection />
-      <ConciergePartnerSection />
       <MidPageCtaStrip />
       <CancellationSection />
       <FaqSection />

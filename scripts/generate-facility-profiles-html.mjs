@@ -32,7 +32,6 @@ import {
 } from "../src/lib/seo/facilityTruth.mjs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { GA_MEASUREMENT_ID } from "./_ga.mjs";
 import { seoHeader, seoFooter, seoStyles } from "./_seo-page-shell.mjs";
 import {
   fetchPaginated,
@@ -1036,8 +1035,6 @@ a:hover{text-decoration:underline}
 .faq-item p{margin:0;color:#333}
 footer{margin-top:40px;padding-top:20px;border-top:1px solid #e5e7eb;font-size:.8rem;color:#888}
 </style>
-<script async src="https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}"></script>
-<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_MEASUREMENT_ID}');</script>
 </head>
 <body data-page="facility-profile">
 ${seoHeader()}

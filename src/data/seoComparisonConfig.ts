@@ -1,3 +1,4 @@
+import { comparisonPages as optionComparisonPages, type ComparisonConfig } from "./seoPageConfig";
 /**
  * Comparison & decision-stage SEO page configs.
  * These target mid-to-bottom funnel users comparing options or ready to decide.
@@ -307,8 +308,46 @@ export const comparisonPageConfigs: ComparisonPageConfig[] = [
   },
 ];
 
+/**
+ * Ten comparison routes in App.tsx (/php-vs-iop, /rehab-vs-therapy, …) have
+ * their content in seoPageConfig.comparisonPages, a different shape that no
+ * component rendered: visitors got "not found" while the prerendered crawler
+ * page showed the content. Adapt those entries so the SPA renders the same
+ * content crawlers already see.
+ */
+function fromOptionComparison(c: ComparisonConfig): ComparisonPageConfig {
+  const { optionA: a, optionB: b } = c;
+  return {
+    slug: c.slug,
+    title: c.title,
+    metaTitle: c.metaTitle.includes("RehabLookup") ? c.metaTitle : `${c.metaTitle} | RehabLookup`,
+    metaDescription: c.metaDescription,
+    heroTitle: c.metaTitle.replace(/\s*\|\s*RehabLookup$/, ""),
+    heroSubtitle: c.metaDescription,
+    sections: [
+      { heading: "Overview", content: c.introContent },
+      { heading: a.label, content: `${a.description} Best for: ${a.bestFor}.` },
+      { heading: b.label, content: `${b.description} Best for: ${b.bestFor}.` },
+    ],
+    comparisonTable: {
+      headers: ["Feature", a.label, b.label],
+      rows: [
+        { label: "Typical cost", values: [a.avgCost, b.avgCost] },
+        { label: "Typical duration", values: [a.duration, b.duration] },
+        { label: "Key features", values: [a.features.join(", "), b.features.join(", ")] },
+        { label: "Best for", values: [a.bestFor, b.bestFor] },
+      ],
+    },
+    faqs: c.faqs,
+    relatedSlugs: [],
+  };
+}
+
 export function getComparisonPageBySlug(slug: string): ComparisonPageConfig | undefined {
-  return comparisonPageConfigs.find((p) => p.slug === slug);
+  const primary = comparisonPageConfigs.find((p) => p.slug === slug);
+  if (primary) return primary;
+  const legacy = optionComparisonPages.find((p) => p.slug === slug);
+  return legacy ? fromOptionComparison(legacy) : undefined;
 }
 
 export const COMPARISON_SLUGS = comparisonPageConfigs.map((p) => p.slug);

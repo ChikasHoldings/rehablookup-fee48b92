@@ -23,7 +23,6 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { GA_MEASUREMENT_ID } from "./_ga.mjs";
 import {
   escHtml,
   renderStateFactBox,
@@ -432,8 +431,6 @@ function renderPage({ prefix, city, facilities = [] }) {
   <script type="application/ld+json">${breadcrumbSchema}</script>
   <script type="application/ld+json">${pageSchema}</script>
   <style>${SHARED_DIRECTORY_CSS}</style>
-  <script async src="https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}"></script>
-  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_MEASUREMENT_ID}');</script>
 </head>
 <body>
   ${SHARED_HEADER_HTML}

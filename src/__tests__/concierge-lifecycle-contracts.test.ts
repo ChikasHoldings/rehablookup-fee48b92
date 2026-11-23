@@ -68,16 +68,16 @@ describe("concierge lifecycle contracts", () => {
     expect(offenders).toEqual([]);
   });
 
-  // C8 — the seeker placement-reminder email still links to /account/concierge.
-  // Stage 1 kept that link alive with an in-panel redirect to /account/saved.
-  // Stage 3 retires the whole seeker panel, so the link now resolves through
-  // the /account/* retirement redirect to the public directory. The contract
-  // is unchanged — an already-delivered email must not dead-end — only the
-  // destination moved. placement-monitor itself is still not modified.
-  it("placement-monitor reminder links to a route that still resolves", () => {
+  // C8 — the seeker placement-reminder email. Seekers have no account, so it
+  // now links the public contact page (SEO recovery, 2026-11-23) instead of the
+  // retired /account/concierge portal. Emails already delivered with the old
+  // link must still not dead-end: /account/* keeps resolving through the
+  // retirement redirect, asserted below.
+  it("placement-monitor reminder links a live page, and old links still resolve", () => {
     const src = read("supabase/functions/placement-monitor/index.ts");
     expect(src).not.toMatch(/\/seeker\/concierge/);
-    expect(src).toMatch(/\/account\/concierge/);
+    expect(src).not.toMatch(/\/account\/concierge/);
+    expect(src).toMatch(/\$\{DASHBOARD_URL\}\/contact/);
     const app = read("src/App.tsx");
     // Every /account/<anything> deep link — including /account/concierge —
     // must still be caught by a registered route rather than falling through

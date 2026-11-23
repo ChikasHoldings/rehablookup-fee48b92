@@ -35,6 +35,21 @@ Interpretation follows Google's documentation:
 | Change in search demand | **Ruled out** | A 98.5% one-day drop is not seasonal. |
 | Analytics / reporting artefact | **Ruled out for GSC** | The drop is in GSC's own impression counts. GA4 only starts around 2026-05-01. |
 
+### Owner input (2026-11-23): "we switched the Google Analytics tag, removed the old one and added a new one"
+
+Checked against the repository history (legacy branch `fix/prelaunch-seo-legal`) and Vercel:
+
+| Fact | Evidence |
+|---|---|
+| The GA switch happened on **2026-05-09**, not May 29 | `69d4454700` "remove Google Analytics completely from platform" (05-09 04:31 UTC), then `7e74f858b7` "GA Cleanup: Replace old G-2VB6C1X2MQ with new G-MM5K8398LY" (05-09 08:45 UTC) across `index.html` and 3,913 prerendered pages; `40ef82607c` (05-14) centralized the ID. No analytics change is in the May 26–31 history. |
+| Impressions **rose** after the switch | GSC: about 645/day before May, rising to the 1,832/day peak in the week of 05-18. A tag change on 05-09 cannot explain a cliff on 05-29. |
+| No host or property change | `www` → apex 301 was configured 2026-05-07 (Vercel domain record). Every URL in the GSC exports is on `https://rehablookup.com`, and the same property shows 1,253 impressions on 05-28 and 38 on 05-29, so the drop is not data moving to another property. |
+| Analytics tags do not affect Google Search | Google does not use GA to crawl, index or rank pages. Removing or replacing a GA tag changes what GA reports, not what Search shows, so it cannot move GSC impressions. |
+
+**Verdict: ruled out as the cause of May 29.** What the GA history does explain:
+* **GA4 data discontinuity.** The new property starts in early May, so GA cannot be compared with GSC before then.
+* **Inflated GA numbers.** From May 9 the GA tag was also on ~45,000 prerendered pages that are served only to crawlers. Any crawler that runs JavaScript was recorded as a "user". This is the most likely source of the "65,000 users / 1,000+ concurrent users" April–May figures published in two Platform News articles, which do not match ~600 GSC impressions and ~1 click a day. Both articles were corrected, and GA was removed from crawler-only HTML on 2026-11-23.
+
 **Conclusion:** the collapse is **not explained by any technical change found in the code or infrastructure history.** The evidence fits a quality-driven loss of ranking (algorithmic or manual) acting on a corpus that is overwhelmingly templated. This is a well-supported hypothesis, not a confirmed cause. Two owner-side checks decide between algorithmic and manual: the Manual Actions and Security Issues reports.
 
 **Discriminating test the owner can run (10 minutes):** GSC → Performance → Search results → Compare *Apr 30–May 28* vs *May 29–Jun 26* → Pages tab → export.

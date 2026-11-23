@@ -1,5 +1,5 @@
 import { getFacilityPlaceholder } from "@/lib/facilityPlaceholder";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Crown, ShieldCheck, Clock, CreditCard, Sparkles, Phone, ExternalLink } from "lucide-react";
@@ -10,6 +10,7 @@ import { buildFacilityPath } from "@/lib/slugUtils";
 import { useState, useCallback, memo, useRef, useEffect, forwardRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProviderEventTracking } from "@/hooks/useProviderEventTracking";
+import { presentListingDescription } from "@/lib/seo/facilityTruth.mjs";
 
 
 interface TreatmentCenterCardProps {
@@ -155,11 +156,13 @@ export const TreatmentCenterCard = memo(forwardRef<HTMLElement, TreatmentCenterC
 
   // Profile button — same destination as the card, but stops propagation so
   // the click is unambiguous and we don't double-fire the card's onClick.
+  // It is a real <a href> (React Router <Link>) so crawlers and keyboard/
+  // middle-click users can follow it; the whole-card click stays as a
+  // convenience for pointer users.
   const handleProfileClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     handleFeaturedClick();
-    navigate(detailsUrl, { state: { fromSearch: true } });
-  }, [handleFeaturedClick, navigate, detailsUrl]);
+  }, [handleFeaturedClick]);
 
   // Call button — tracks the featured click for analytics parity, then lets
   // the native tel: handler take over. We don't preventDefault.
@@ -316,17 +319,23 @@ export const TreatmentCenterCard = memo(forwardRef<HTMLElement, TreatmentCenterC
               </Button>
             )}
             <Button
+              asChild
               variant={telLink ? "outline" : "default"}
               size="sm"
-              onClick={handleProfileClick}
-              aria-label={`View profile for ${center.name}`}
               className={cn(
                 "flex-1 h-8 text-xs font-semibold gap-1.5",
                 "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
               )}
             >
-              <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
-              Profile
+              <Link
+                to={detailsUrl}
+                state={{ fromSearch: true }}
+                onClick={handleProfileClick}
+                aria-label={`View profile for ${center.name}`}
+              >
+                <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+                Profile
+              </Link>
             </Button>
           </div>
         </div>
@@ -519,7 +528,7 @@ export const TreatmentCenterCard = memo(forwardRef<HTMLElement, TreatmentCenterC
 
         {/* Description - 2 lines */}
         <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2 flex-1">
-          {center.description}
+          {presentListingDescription(center.description)}
         </p>
 
         {/* CTAs — Call + Profile (Call hidden when phone unavailable) */}
@@ -548,17 +557,23 @@ export const TreatmentCenterCard = memo(forwardRef<HTMLElement, TreatmentCenterC
             </Button>
           )}
           <Button
+            asChild
             variant={telLink ? "outline" : "default"}
             size="sm"
-            onClick={handleProfileClick}
-            aria-label={`View profile for ${center.name}`}
             className={cn(
               "flex-1 gap-1.5 h-9 text-xs font-semibold",
               "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
             )}
           >
-            <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
-            View Profile
+            <Link
+              to={detailsUrl}
+              state={{ fromSearch: true }}
+              onClick={handleProfileClick}
+              aria-label={`View profile for ${center.name}`}
+            >
+              <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+              View Profile
+            </Link>
           </Button>
         </div>
       </div>

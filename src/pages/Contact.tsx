@@ -18,6 +18,7 @@ import {
   Heart,
   Globe,
   Headphones,
+  Search,
 } from "lucide-react";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { TOPIC_HERO_IMAGES } from "@/data/locationImages";

@@ -7,7 +7,7 @@ import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSec
 import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
 import { shouldEmitFAQSchema } from "@/utils/seoPageValidator";
 import { statesData } from "@/data/locationSeoData";
-import { ArrowRight, Shield, MapPin } from "lucide-react";
+import { ArrowRight, Shield, MapPin, Search } from "lucide-react";
 import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
 
 interface HubConfig {

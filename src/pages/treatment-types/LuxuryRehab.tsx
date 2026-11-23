@@ -13,6 +13,7 @@ import {
   Users,
   Utensils,
   Dumbbell,
+  Search,
 } from "lucide-react";
 import {
   Accordion,

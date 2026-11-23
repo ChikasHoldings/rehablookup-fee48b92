@@ -59,10 +59,12 @@ export type DirectoryArticleContent = string | DirectoryArticleBlock;
 
 /**
  * The subset of an article row this layer may replace. Anything not listed
- * here (title, author, dates, images, keywords…) always passes through from
- * the database unchanged.
+ * here (author, dates, images, keywords…) always passes through from the
+ * database unchanged. `title` is overridden only where the stored headline
+ * itself states something untrue.
  */
 export interface DirectoryArticleOverride {
+  title?: string;
   meta_title?: string;
   meta_description?: string;
   excerpt?: string;
@@ -88,55 +90,38 @@ export interface DirectoryArticleLike {
 export const DIRECTORY_ARTICLE_OVERRIDES: Record<string, DirectoryArticleOverride> = {
   // ── Platform News: April 2026 analytics milestone ────────────────────────
   //
-  // Preserved: title, the April 2026 analytics, all usage metrics, the growth
-  // narrative, the SEO/content infrastructure pillar, transparent-discovery
-  // framing. `meta_description` and `excerpt` were already directory-safe and
-  // are therefore not overridden.
-  //
-  // Rewritten: "connect with advisors" → compare/review/save/contact;
-  // "The Concierge Placement Network — free domestic placement support" →
-  // structured directory discovery; "expanding our international placement
-  // network" → international directory coverage; advisor thanks → users,
-  // providers, clinicians, contributors. The closing CTA dropped the 24/7
-  // advisor claim and the `/concierge/intake` link for a `/search-results`
-  // directory CTA.
+  // SEO recovery correction (2026-11-23). The original post presented the
+  // April 2026 Google Analytics totals (65,000 users, 279,000 events,
+  // "1,000+ concurrent users") as families using RehabLookup. In April the GA
+  // tag was also installed on ~45,000 prerendered pages served only to
+  // search-engine crawlers, while Google Search Console recorded roughly 600
+  // impressions and about one click a day — so the totals included automated
+  // traffic and cannot stand as a count of people. The article is kept (its
+  // URL has been public since May 2026) and rewritten as a correction; the
+  // stored headline is overridden because it states the figure as fact.
   "rehablookup-april-2026-analytics-milestone": {
+    title: "A Correction to Our April 2026 Traffic Figures",
+    meta_title: "A Correction to Our April 2026 Traffic Figures | RehabLookup",
+    meta_description:
+      "Our April 2026 post reported 65,000 users. Analytics also counted search-engine crawlers, so that figure overstated real visitors. Here is what changed.",
+    excerpt:
+      "Our April 2026 analytics also counted automated crawler traffic, so the user totals we published overstated real visitors. Here is what we found and what we changed.",
     content: [
-      "April 2026 marked a defining month for RehabLookup. According to our Google Analytics dashboard, the platform served **65,000 total users** with **279,000 tracked events** — and consistently held an average of **1,000+ concurrent active users** throughout the month.",
-      "## A Defining Moment for Transparent Rehab Discovery",
-      "When we launched RehabLookup, our mission was simple: bring transparency, dignity, and clarity to one of the hardest decisions a family ever has to make — choosing the right addiction treatment provider. The April 2026 numbers tell us that mission is resonating.",
-      "## What the Numbers Show",
+      "In May 2026 we published a post reporting that RehabLookup had 65,000 users and more than 1,000 concurrent users in April 2026, based on our Google Analytics dashboard. Those figures should not have been presented as families using the site, and this post replaces it.",
+      "## What we found",
+      "In April our analytics tag was installed not only on the pages people visit but also on tens of thousands of pages that are served only to search-engine crawlers. Analytics therefore recorded automated visits alongside real ones, and the April totals — users, events, and the concurrent-user figure — include that automated traffic. Google Search Console, which counts only real searches on Google, recorded far fewer visits from search in the same period.",
+      "## What we changed",
       {
         type: "list",
         items: [
-          "**65,000 total users** in a single month — up 1,520% over the prior period",
-          "**65,000 new users** discovering RehabLookup for the first time",
-          "**279,000 events tracked** — searches, facility profile views, and comparisons",
-          "**65,000 sessions** across the month",
-          "**1,002 active users in the last 30 minutes** observed during peak hours",
-          "Traffic primarily from the United States, with international interest from France, Spain, and the Netherlands",
+          "Analytics has been removed from every page that is served only to crawlers",
+          "Visitor analytics now runs only on the pages people actually load",
+          "We will publish traffic figures only from reports that exclude automated traffic",
         ],
       },
-      "## Why This Matters",
-      "Behind every number is a person — a parent, a sibling, a friend, or someone fighting their own battle — searching for help. A 1,000-user concurrency baseline means at any given second of the day, a thousand families are using RehabLookup to compare verified treatment centers, review transparent facility profiles, save the options that fit, and contact treatment centers directly.",
-      {
-        type: "callout",
-        content:
-          "Every minute on RehabLookup is a minute someone is one step closer to recovery. We do not take that responsibility lightly.",
-      },
-      "## What Powers the Growth",
-      "Three pillars are driving this momentum:",
-      {
-        type: "list",
-        items: [
-          "**Verified, transparent listings** — no pay-to-play rankings",
-          "**Structured discovery** — directory search, side-by-side comparison, and detailed facility profiles, free to use",
-          "**SEO-first content engine** — state, city, treatment, and insurance directories built for discovery",
-        ],
-      },
-      "## Looking Ahead",
-      "May and June will focus on deepening provider quality, improving international treatment discovery and directory coverage, and shipping a faster, more personalized search experience. Thank you to every family, treatment provider, clinician, and content contributor who trusted us in April. We are just getting started.",
-      "If you or a loved one needs help finding treatment, [search treatment centers](/search-results) by state, level of care, or insurance — comparing facility listings on RehabLookup is always free.",
+      "## What RehabLookup is",
+      "RehabLookup is a free directory of addiction treatment centers. Most listings come from SAMHSA's FindTreatment.gov directory, and each profile says where its information came from and when it may need confirming with the facility. Featured listings are paid placements and are labelled as such.",
+      "If you or a loved one needs help finding treatment, [search treatment centers](/search-results) by state, level of care, or insurance — searching and comparing listings on RehabLookup is free.",
     ],
   },
 
@@ -158,35 +143,35 @@ export const DIRECTORY_ARTICLE_OVERRIDES: Record<string, DirectoryArticleOverrid
   // advisor team.
   "ceo-chiedu-kabakwu-scaling-rehablookup": {
     meta_description:
-      "How RehabLookup CEO Chiedu Kabakwu is scaling the platform — verified providers, transparent facility data, and a directory built for families.",
+      "How RehabLookup CEO Chiedu Kabakwu is scaling the platform — clearly sourced listings, transparent facility data, and a directory built for families.",
     content: [
-      "Behind the 65,000 users we served in April is a team — and a CEO — pushing relentlessly to make RehabLookup the most trusted name in rehab discovery. Founder & CEO **Chiedu Kabakwu** has been working around the clock to scale every part of the platform: from verified provider onboarding to the search, comparison, and facility-profile tools families use every day.",
+      "Behind RehabLookup is a small team — and a CEO — working to make it a trustworthy place to start the search for addiction treatment. Founder & CEO **Chiedu Kabakwu** has been working to scale every part of the platform: from provider onboarding to the search, comparison, and facility-profile tools families use every day.",
       "## The Mission Has Not Changed",
-      "From day one, Chiedu has been clear: families deserve the same transparency choosing a rehab that they get choosing a doctor or a hospital. No pay-to-play rankings. No misleading affiliate sites. No anonymous lead farms. Just verified providers, honest information, and a direct line to the treatment centers themselves.",
+      "From day one, Chiedu has been clear: families deserve the same transparency choosing a rehab that they get choosing a doctor or a hospital. Paid placements clearly labelled. No misleading affiliate sites. No anonymous lead farms. Just clearly sourced listings, honest information, and a direct line to the treatment centers themselves.",
       {
         type: "quote",
         content:
-          "We are building the directory families wish existed when they were searching at 2 a.m. for help — verified, transparent, and accountable to patients rather than advertisers. That is the only standard that matters.",
+          "We are building the directory families wish existed when they were searching at 2 a.m. for help — transparent about its sources, and accountable to patients rather than advertisers. That is the only standard that matters.",
       },
       "## What He Has Been Scaling",
       {
         type: "list",
         items: [
           "**Transparent sourcing** — most listings come from SAMHSA's FindTreatment.gov directory, and each profile says where its information came from",
-          "**Open directory access** — search, filter, and compare every verified facility for free, with no account required and no gatekeeping",
+          "**Open directory access** — search, filter, and compare every listed facility for free, with no account required and no gatekeeping",
           "**Always-on availability** — so a family searching at 3 a.m. can compare programs and reach a treatment center on their own terms",
           "**SEO and content infrastructure** — state directories, treatment guides, and insurance resources built to be discoverable and genuinely useful",
-          "**Engineering reliability** — handling 1,000+ concurrent users with the same speed and security as the largest healthcare platforms",
+          "**Engineering reliability** — fast, secure pages that work on any device",
         ],
       },
       "## The Hardest Problem in Healthcare Discovery",
-      "Addiction treatment discovery has been broken for decades. Most 'rehab directories' are lead-generation funnels. Most reviews are gamed. Most rankings are paid. Chiedu's thesis is that the only way to fix it is to rebuild the trust layer from scratch — verified data, transparent fees, independent listings, and a relentless commitment to patient outcomes over provider economics.",
+      "Addiction treatment discovery has been broken for decades. Most 'rehab directories' are lead-generation funnels. Most reviews are gamed. Most rankings are paid. Chiedu's thesis is that the only way to fix it is to rebuild the trust layer from scratch — clearly sourced data, disclosed paid placements, independent listings, and a relentless commitment to patient outcomes over provider economics.",
       "## What Comes Next",
       "Over the coming months, the team is focused on three things:",
       {
         type: "list",
         items: [
-          "Expanding verified coverage to every U.S. state and major international destination",
+          "Expanding coverage to every U.S. state and major international destination",
           "Deepening facility data with measurable quality signals — accreditation, licensing, levels of care, and aftercare support",
           "Launching new tools that help families compare programs, costs, and clinical fit with confidence",
         ],
@@ -197,8 +182,8 @@ export const DIRECTORY_ARTICLE_OVERRIDES: Record<string, DirectoryArticleOverrid
           "If you are a treatment provider committed to transparency, or a clinician who wants to help families find the right fit, we want to hear from you.",
       },
       "## Thank You",
-      "To every family who trusted us, every provider who chose to be verified, and every clinician and contributor who helped build the directory — thank you. The work is far from done, but April 2026 proved the model. Now we scale.",
-      "Learn more about our team and mission on our [About page](/about), or [search treatment centers](/search-results) to start comparing verified programs.",
+      "To every family who trusted us, every provider who claimed and updated their listing, and every clinician and contributor who helped build the directory — thank you. The work is far from done.",
+      "Learn more about our team and mission on our [About page](/about), or [search treatment centers](/search-results) to start comparing programs.",
     ],
   },
 };

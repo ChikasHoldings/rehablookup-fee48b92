@@ -167,10 +167,11 @@ export default function ProviderSettingsPage() {
   const [leadNotificationFrequency, setLeadNotificationFrequency] = useState<'instant' | 'daily_digest' | 'weekly_digest' | 'none'>('instant');
   const [notifyNewLeads, setNotifyNewLeads] = useState(true);
   // Retained for the saved-prefs shape, but no longer surfaced as UI toggles —
-  // no sender reads notify_lead_status_changes / notify_facility_views, so they
-  // were dead switches. (Setters dropped since nothing flips them anymore.)
-  const [notifyLeadStatusChanges] = useState(true);
-  const [notifyFacilityViews] = useState(false);
+  // no sender reads notify_lead_status_changes / notify_facility_views. The
+  // setters are still needed: the load/discard effects sync them from the
+  // saved preferences (calling an undefined setter crashed this page).
+  const [notifyLeadStatusChanges, setNotifyLeadStatusChanges] = useState(true);
+  const [notifyFacilityViews, setNotifyFacilityViews] = useState(false);
   const [digestTime, setDigestTime] = useState('09:00');
   const [followupRemindersEnabled, setFollowupRemindersEnabled] = useState(true);
   const [defaultSnoozeDuration, setDefaultSnoozeDuration] = useState('1_day');

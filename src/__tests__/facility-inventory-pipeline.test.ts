@@ -343,7 +343,7 @@ describe("production build wiring", () => {
 
   it("injects city inventory after every step that rewrites page HTML", () => {
     const bv: string = pkg.scripts["build:vercel"];
-    for (const earlier of ["sync:prerendered-shell", "patch:og-image", "backfill:ga-snippet"]) {
+    for (const earlier of ["sync:prerendered-shell", "patch:og-image", "strip:crawler-analytics"]) {
       expect(bv.indexOf(earlier)).toBeLessThan(bv.indexOf("inject:city-inventory"));
     }
     // and before the sitemap is built from the result

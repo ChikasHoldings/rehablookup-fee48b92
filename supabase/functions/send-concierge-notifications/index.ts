@@ -845,7 +845,7 @@ async function sendIntakeReceivedEmail(
       type: 'concierge_intake_received',
       title: 'Request Received',
       message: `Your concierge request (Case #${caseId}) has been received. We'll find matches within 24-48 hours.`,
-      link: '/account/concierge',
+      link: '/contact',
       metadata: { inquiry_id: inquiry.id },
     }).select('id').single();
     
@@ -893,7 +893,7 @@ async function sendMatchesFoundEmail(
           You'll receive introductions from interested facilities soon. Keep an eye on your inbox and phone for their outreach.
         </p>
         
-        ${ctaButton('View Your Case', 'https://rehablookup.com/account/concierge')}
+        ${ctaButton('Contact RehabLookup', 'https://rehablookup.com/contact')}
       </td>
     </tr>
     ${emailFooter()}
@@ -919,7 +919,7 @@ async function sendMatchesFoundEmail(
       type: 'concierge_matches_found',
       title: 'Matches Found!',
       message: `We found ${matchCount} facilities that match your needs. Your advisor will coordinate introductions shortly.`,
-      link: '/account/concierge',
+      link: '/contact',
       metadata: { inquiry_id: inquiry.id, match_count: matchCount },
     }).select('id').single();
     
@@ -957,7 +957,7 @@ async function sendIntroductionsSentEmail(
           You don't need to do anything right now. Your advisor will reach out as soon as we have updates.
         </p>
         
-        ${ctaButton('View Your Case', 'https://rehablookup.com/account/concierge')}
+        ${ctaButton('Contact RehabLookup', 'https://rehablookup.com/contact')}
       </td>
     </tr>
     ${emailFooter()}
@@ -983,7 +983,7 @@ async function sendIntroductionsSentEmail(
       type: 'concierge_introductions_sent',
       title: 'Advisor Contacting Facilities',
       message: 'Your advisor has reached out to treatment facilities on your behalf. We\'ll update you as facilities respond.',
-      link: '/account/concierge',
+      link: '/contact',
       metadata: { inquiry_id: inquiry.id },
     }).select('id').single();
     
@@ -1022,7 +1022,7 @@ async function sendFacilitiesReadyForReviewEmail(
           Take your time reviewing the options. Your advisor is available if you have any questions.
         </p>
         
-        ${ctaButton('Review Your Options', 'https://rehablookup.com/account/concierge')}
+        ${ctaButton('Contact RehabLookup', 'https://rehablookup.com/contact')}
       </td>
     </tr>
     ${emailFooter()}
@@ -1048,7 +1048,7 @@ async function sendFacilitiesReadyForReviewEmail(
       type: 'concierge_options_ready',
       title: 'Your Options Are Ready!',
       message: 'Treatment facilities are ready to work with you. Review your options and choose your preferred facility.',
-      link: '/account/concierge',
+      link: '/contact',
       metadata: { inquiry_id: inquiry.id },
     }).select('id').single();
     
@@ -1130,7 +1130,7 @@ async function sendAdmissionStageNotification(
         <p style="margin: 0 0 24px 0; font-size: 15px; color: #4b5563; line-height: 1.6;">
           ${config.seekerBody}
         </p>
-        ${ctaButton('View Your Case', 'https://rehablookup.com/account/concierge')}
+        ${ctaButton('Contact RehabLookup', 'https://rehablookup.com/contact')}
       </td>
     </tr>
     ${emailFooter()}
@@ -1161,7 +1161,7 @@ async function sendAdmissionStageNotification(
       type: `concierge_${stage}`,
       title: config.title,
       message: config.seekerBody.replace(/<[^>]*>/g, ''),
-      link: '/account/concierge',
+      link: '/contact',
       metadata: { inquiry_id: inquiry.id, ...(metadata || {}) },
     });
 
@@ -1169,7 +1169,7 @@ async function sendAdmissionStageNotification(
     if (stage === 'move_in_scheduled' || stage === 'moved_in') {
       const smsMsg = stage === 'moved_in'
         ? `RehabLookup: 🏠 Congratulations on your move-in! We're rooting for your recovery.`
-        : `RehabLookup: 📅 Your move-in date has been set! Check your dashboard for details.`;
+        : `RehabLookup: 📅 Your move-in date has been set! Questions? https://rehablookup.com/contact`;
       await sendSeekerSmsNotification(supabase, inquiry.user_id, smsMsg);
     }
   }
@@ -1238,7 +1238,7 @@ async function sendProviderInterestedNotification(
       type: 'concierge_progress_update',
       title: 'Case Progress Update',
       message: 'A facility has reviewed your case and is interested. Your advisor is coordinating the next steps.',
-      link: '/account/concierge',
+      link: '/contact',
       metadata: { inquiry_id: inquiry.id },
     });
   }
@@ -1265,7 +1265,7 @@ async function sendProviderInterestedNotification(
           Your advisor will reach out to you directly with details. No action needed from you right now.
         </p>
         
-        ${ctaButton('View Your Case', 'https://rehablookup.com/account/concierge')}
+        ${ctaButton('Contact RehabLookup', 'https://rehablookup.com/contact')}
       </td>
     </tr>
     ${emailFooter()}
@@ -1373,7 +1373,7 @@ async function sendCaseClosedByAdminNotification(
         <p style="margin: 24px 0; font-size: 15px; color: #4b5563; line-height: 1.6;">
           If you still need help finding treatment, we're here for you — you can start a new request anytime, or simply reply to this email and we'll be glad to assist.
         </p>
-        ${ctaButton('Start a New Request', 'https://rehablookup.com/concierge')}
+        ${ctaButton('Search Treatment Centers', 'https://rehablookup.com/search-results')}
       </td>
     </tr>
     ${emailFooter()}
@@ -1401,7 +1401,7 @@ async function sendCaseClosedByAdminNotification(
       message: reason
         ? `Your concierge case (Case #${caseId}) has been closed. Reason: ${reason}`
         : `Your concierge case (Case #${caseId}) has been closed. You can start a new request anytime.`,
-      link: '/account/concierge',
+      link: '/contact',
       metadata: { inquiry_id: inquiry.id, ...(metadata || {}) },
     }).select('id').single();
 
@@ -1420,31 +1420,20 @@ async function sendSignupPromptEmail(
   const caseId = inquiry.id.slice(0, 8).toUpperCase();
   
   const html = emailWrapper(`
-    ${emailHeader('Create Your Account to Track Your Case', `Case #${caseId}`, '🔐')}
+    ${emailHeader('Your Request Is In Progress', `Case #${caseId}`, '📋')}
     <tr>
       <td style="padding: 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
         <p style="margin: 0 0 20px 0; font-size: 16px; color: #1a1a1a;">
           Hi ${firstName},
         </p>
         <p style="margin: 0 0 24px 0; font-size: 15px; color: #4b5563; line-height: 1.6;">
-          Your placement request is being processed! To get real-time updates, message your advisor, and track your case progress, create a free RehabLookup account.
+          Your request is being handled by our team. There is nothing you need to sign up for: we will email you at <strong>${inquiry.user_email}</strong> with any updates.
+        </p>
+        <p style="margin: 0 0 24px 0; font-size: 15px; color: #4b5563; line-height: 1.6;">
+          If you have questions in the meantime, reply to this email or contact us.
         </p>
         
-        ${infoBox(`<strong>With an account you can:</strong><br><br>
-          ✅ Track your case status in real-time<br>
-          ✅ Message your advisor directly<br>
-          ✅ View matched facilities<br>
-          ✅ Receive instant notifications`)}
-        
-        <p style="margin: 24px 0; font-size: 15px; color: #4b5563; line-height: 1.6;">
-          Sign up using the same email address (<strong>${inquiry.user_email}</strong>) to automatically link your case.
-        </p>
-        
-        ${ctaButton('Create Your Free Account', 'https://rehablookup.com/seeker-auth?tab=signup&email=' + encodeURIComponent(inquiry.user_email))}
-        
-        <p style="margin: 24px 0 0 0; font-size: 13px; color: #9ca3af; text-align: center;">
-          Don't worry — your case is being handled regardless of whether you create an account. This just gives you more visibility.
-        </p>
+        ${ctaButton('Contact RehabLookup', 'https://rehablookup.com/contact')}
       </td>
     </tr>
     ${emailFooter()}
@@ -1453,7 +1442,7 @@ async function sendSignupPromptEmail(
   const { emailId: emailData, error: emailError } = await sendEmailWithRetry(supabase, resend, {
     from: "RehabLookup Concierge <no-reply@rehablookup.com>",
     to: [inquiry.user_email],
-    subject: `Create Your Account to Track Case #${caseId}`,
+    subject: `Your request is in progress — Case #${caseId}`,
     html,
   }, {
     emailType: "concierge_signup_prompt",
@@ -1562,7 +1551,7 @@ async function sendProviderConfirmedEmail(
           We're so proud of you for taking this step. Your journey to recovery starts now.
         </p>
         
-        ${ctaButton('View Case Details', 'https://rehablookup.com/account/concierge')}
+        ${ctaButton('Contact RehabLookup', 'https://rehablookup.com/contact')}
       </td>
     </tr>
     ${emailFooter()}
@@ -1588,7 +1577,7 @@ async function sendProviderConfirmedEmail(
       type: 'concierge_provider_confirmed',
       title: 'Placement Confirmed!',
       message: `${facility.name} has confirmed your placement. Congratulations on taking this important step!`,
-      link: '/account/concierge',
+      link: '/contact',
       metadata: { inquiry_id: inquiry.id, facility_id: facility.id },
     }).select('id').single();
     
@@ -1598,7 +1587,7 @@ async function sendProviderConfirmedEmail(
     await sendSeekerSmsNotification(
       supabase,
       inquiry.user_id,
-      `RehabLookup: Great news! ${facility.name} has confirmed your placement. Check your dashboard for next steps.`
+      `RehabLookup: Great news! ${facility.name} has confirmed your placement. Questions? https://rehablookup.com/contact`
     );
   }
 }
@@ -1710,7 +1699,7 @@ async function sendPlacementCompleteEmails(
       type: 'concierge_placement_complete',
       title: 'Placement Complete!',
       message: `Your placement with ${facility.name} is confirmed. Congratulations!`,
-      link: '/account/concierge',
+      link: '/contact',
       metadata: { inquiry_id: inquiry.id, facility_id: facility.id },
     });
 
@@ -1946,7 +1935,7 @@ async function sendAdvisorClaimedNotification(
       type: 'concierge_advisor_assigned',
       title: 'Advisor Assigned',
       message: 'A placement advisor has been assigned to your case and will be reaching out soon.',
-      link: '/account/concierge',
+      link: '/contact',
       metadata: { inquiry_id: inquiry.id },
     });
   }
@@ -1974,10 +1963,10 @@ async function sendAdvisorClaimedNotification(
             • You'll never be contacted directly by facilities — your advisor manages everything`)}
 
           <p style="margin: 24px 0; font-size: 15px; color: #4b5563; line-height: 1.6;">
-            No action is required from you right now. If anything changes or you have urgent questions, you can reply to this email or message your advisor through your portal.
+            No action is required from you right now. If anything changes or you have urgent questions, you can reply to this email.
           </p>
 
-          ${ctaButton('View Your Case', 'https://rehablookup.com/account/concierge')}
+          ${ctaButton('Contact RehabLookup', 'https://rehablookup.com/contact')}
         </td>
       </tr>
       ${emailFooter()}

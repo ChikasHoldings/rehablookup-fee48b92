@@ -95,6 +95,22 @@ const publicTargets = [...walk(publicDir)].filter((f) => f.endsWith(".html"));
 for (const extra of [path.join(publicDir, "llms.txt"), path.join(ROOT, "index.html")]) {
   if (existsSync(extra)) publicTargets.push(extra);
 }
+// Crawler snapshots of the live SPA (scripts/render-crawler-snapshots.mjs) only
+// exist in dist/ after a build; they carry live database text, so they are
+// checked too.
+const SNAPSHOT_MARKER = "Crawler snapshot of the live page";
+const distDir = path.join(ROOT, "dist");
+let snapshotFiles = 0;
+if (existsSync(distDir)) {
+  for (const f of walk(distDir)) {
+    if (!f.endsWith(".html")) continue;
+    const head = readFileSync(f, "utf8").slice(0, 400);
+    if (head.includes(SNAPSHOT_MARKER)) {
+      publicTargets.push(f);
+      snapshotFiles++;
+    }
+  }
+}
 for (const file of publicTargets) {
   htmlFiles++;
   const raw = readFileSync(file, "utf8");
@@ -150,7 +166,7 @@ for (const file of sourceTargets) {
 
 const byWhy = new Map();
 for (const f of failures) byWhy.set(f.why, (byWhy.get(f.why) ?? 0) + 1);
-console.log(`check-trust-claims: ${htmlFiles} public files, ${facilityNodes} facility schema nodes, ${sourceTargets.length} source files scanned`);
+console.log(`check-trust-claims: ${htmlFiles} public files (${snapshotFiles} crawler snapshots), ${facilityNodes} facility schema nodes, ${sourceTargets.length} source files scanned`);
 if (failures.length) {
   for (const [why, n] of byWhy) console.error(`  ✗ ${why}: ${n}`);
   for (const f of failures.slice(0, 25)) console.error(`    ${f.file}${f.sample ? `  «${f.sample}»` : ""}  — ${f.why}`);
