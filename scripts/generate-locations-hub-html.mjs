@@ -22,7 +22,6 @@
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { GA_MEASUREMENT_ID } from "./_ga.mjs";
 import { seoStyles, seoHeader, seoCtaStrip, seoFooter } from "./_seo-page-shell.mjs";
 import {
   fetchAllFacilities,
@@ -112,8 +111,6 @@ async function main() {
   <meta property="og:image" content="${BASE_URL}/og-image.jpg" />
   <script type="application/ld+json">${JSON.stringify(breadcrumbLd)}</script>
   <script type="application/ld+json">${JSON.stringify(collectionLd)}</script>
-  <script async src="https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}"></script>
-  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_MEASUREMENT_ID}');</script>
   ${seoStyles()}
   <style>
     .rl-states{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;margin-top:16px}

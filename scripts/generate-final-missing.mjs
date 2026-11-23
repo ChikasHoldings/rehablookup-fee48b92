@@ -6,7 +6,6 @@
 
 import { writeFileSync, mkdirSync, existsSync } from 'fs';
 import { dirname } from 'path';
-import { GA_MEASUREMENT_ID } from './_ga.mjs';
 import { seoHeader, seoFooter, seoStyles, seoCtaStrip } from './_seo-page-shell.mjs';
 
 const BRANDED_SHELL_CSS = seoStyles().replace(/<\/?style[^>]*>/g, '').trim();
@@ -101,19 +100,6 @@ function buildHtml({ path, title, description, h1, breadcrumbs }) {
     .breadcrumbs{font-size:.85rem;color:#666;margin-bottom:16px}
     .breadcrumbs a{color:#666}
   </style>
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('consent', 'default', {
-      analytics_storage: 'denied',
-      ad_storage: 'denied',
-      wait_for_update: 500
-    });
-    gtag('config', '${GA_MEASUREMENT_ID}', { send_page_view: true });
-  </script>
 </head>
 <body>
   ${seoHeader()}

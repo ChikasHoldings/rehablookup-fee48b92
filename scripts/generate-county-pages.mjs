@@ -15,7 +15,6 @@
 import { writeFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { GA_MEASUREMENT_ID } from "./_ga.mjs";
 import {
   fetchAllFacilities,
   renderFacilityList,
@@ -199,8 +198,6 @@ function buildHtml({ state, county, urlPath, facilities = [] }) {
   <script type="application/ld+json">${JSON.stringify(collectionSchema)}</script>
   <script type="application/ld+json">${JSON.stringify(faqSchema)}</script>
   ${seoStyles()}
-  <script async src="https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}"></script>
-  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_MEASUREMENT_ID}');</script>
 </head>
 <body>
   ${seoHeader()}

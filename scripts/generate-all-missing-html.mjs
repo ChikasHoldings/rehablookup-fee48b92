@@ -44,7 +44,6 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseStringPromise } from "xml2js";
 import { readFile } from "node:fs/promises";
-import { GA_MEASUREMENT_ID } from "./_ga.mjs";
 import { seoStyles, seoHeader, seoCtaStrip, seoFooter } from "./_seo-page-shell.mjs";
 
 // Block this generator from writing static HTML at any path that vercel.json
@@ -158,8 +157,6 @@ function buildHtml({ urlPath, title, metaTitle, metaDesc, h1, content, breadcrum
   <link rel="icon" type="image/png" href="/favicon.png">
   ${bcSchema ? `<script type="application/ld+json">${bcSchema}</script>` : ""}
   ${seoStyles()}
-  <script async src="https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}"></script>
-  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_MEASUREMENT_ID}',{send_page_view:true});</script>
 </head>
 <body>
   ${seoHeader()}

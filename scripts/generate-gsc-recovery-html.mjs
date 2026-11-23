@@ -17,7 +17,6 @@
 import { writeFile, mkdir, access } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { GA_MEASUREMENT_ID } from "./_ga.mjs";
 import { seoStyles, seoHeader, seoCtaStrip, seoFooter } from "./_seo-page-shell.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -207,8 +206,6 @@ function renderHtml({ urlPath, metaTitle, metaDescription, h1, breadcrumbs, intr
   ${faqSchema}
   ${seoStyles()}
   <style>.intro{font-size:1.05rem;color:#1f2a44}</style>
-  <script async src="https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}"></script>
-  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_MEASUREMENT_ID}');</script>
 </head>
 <body>
   ${seoHeader()}

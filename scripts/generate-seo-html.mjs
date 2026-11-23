@@ -14,7 +14,6 @@
 import { writeFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { GA_MEASUREMENT_ID } from "./_ga.mjs";
 import { fetchAllFacilities, groupByState, renderFacilityList } from "./_facility-data.mjs";
 import { seoStyles, seoHeader, seoCtaStrip, seoFooter } from "./_seo-page-shell.mjs";
 
@@ -302,8 +301,6 @@ function generatePage({ urlPath, title, metaTitle, metaDescription, h1, content,
   ${breadcrumbSchema ? `<script type="application/ld+json">${breadcrumbSchema}</script>` : ""}
   ${sdScripts}
   ${seoStyles()}
-  <script async src="https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}"></script>
-  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_MEASUREMENT_ID}');</script>
 </head>
 <body>
   ${seoHeader()}
