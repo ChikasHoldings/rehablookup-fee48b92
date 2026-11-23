@@ -23,6 +23,8 @@ Recovery is measured against these values, not against the May 2026 peak, which 
 
 ## 2. Measurement fixes required first (Phase 1)
 
+**Status 2026-11-23:** none of items 1–6 are done; items 1, 2, 5 and 6 need the owner's GA4/GSC/Bing access, and item 3 is in Phase 1 batch 2. New in Phase 1: Vercel observability (`vercel.request.count` grouped by `bot_name`, `waf_action`, `http_status`) gives a weekly check that verified Googlebot gets 200s; retention is about 36 days, so export it weekly.
+
 1. **GA4 key events:** `facility_contact` (phone/email click), `inquiry_submit`, `outbound_website_click`, `provider_signup_complete`, `claim_submit`, `compare_add`. Mark the first four as key events.
 2. Link **GSC ↔ GA4**. Create an "Organic Search – Google" exploration segmented by landing-page template, using URL patterns from `SEO_URL_INVENTORY.csv` → `template_family`.
 3. Remove the gtag snippet from crawler-only prerendered HTML so crawlers that execute JS don't pollute GA4.
@@ -60,15 +62,18 @@ For each retained family: URLs live, URLs in the sitemap, % indexed (GSC URL-pre
 | Sitemap URL with 0 facility links (non-editorial family) | > 0 after Phase 3 | The generator threshold has regressed |
 | Duplicate-body share (tools/check-content-uniqueness on the build) | > 5% of retained pages | Block the deploy (CI gate) |
 | Facility schema with hard-coded attributes | any | Block the deploy (CI gate, batch 1) |
+| Banned trust/retired-service phrase, or a `/center/*` JSON-LD node with an unsupported attribute | any | **Implemented:** `check:trust-claims` fails `build:vercel`, `validate:blocking` and the SEO Validators workflow |
+| Vercel logs: `googlebot` or `bingbot` with `waf_action` ≠ allow, or status 403/429 | any | Check the firewall rule immediately (F-06/F-26) |
+| Crawler vs visitor parity (title, H1, canonical, word count ±15%) on a sample of each retained template | any mismatch after ADR-001 ships | Block the deploy (`tools/render_parity.mjs` as a CI step) |
 | Clicks or impressions for a retained family | −30% over 28 days vs the prior 28 days | Template review |
 
 ---
 
 ## 5. Post-deployment validation checklist (every batch)
 
-1. Build passes, including `npm run test`, `validate:seo-schema`, `check:structured-data`, `check:unique-meta`, `check:canonical-ga`, `check:redirect-targets`, `check:internal-links`, `check:public-directory-truth`.
+1. Build passes, including `npm run test`, `check:trust-claims`, `validate:seo-schema`, `check:structured-data`, `check:unique-meta`, `check:canonical-ga`, `check:redirect-targets`, `check:internal-links`, `check:public-directory-truth`.
 2. Re-run the inventory and link-graph tools on the build output. Diff against the previous run: retained URL count, orphans, thin and duplicate share, sitemap size.
-3. Sample at least 30 URLs per changed family from an allowed network, as Googlebot UA **and** browser UA: status, canonical, robots, title, H1, JSON-LD validity (Rich Results Test or schema validator), and the main-content parity between the two UAs.
+3. Sample at least 30 URLs per changed family from an allowed network (this cloud environment is challenged by the Vercel checkpoint and is **not** an allowed network; use GSC URL Inspection or an allowlisted IP), as Googlebot UA **and** browser UA: status, canonical, robots, title, H1, JSON-LD validity (Rich Results Test or schema validator), and the main-content parity between the two UAs.
 4. For removal waves: every retired URL returns 410 (or its 301 target returns 200 and is indexable, single hop). The URL is absent from all sitemaps and from all internal links. The SPA no longer renders it for humans.
 5. Resubmit sitemaps in GSC. Use URL Inspection "Request indexing" on 10 key URLs (state hubs, `/rehab-centers`, top facility profiles).
 6. Log the results in `SEO_IMPLEMENTATION_LOG.md`.

@@ -1,63 +1,59 @@
 # SEO Phase Handoff — RehabLookup
 
-**Read this first in every new session.** Then read `SEO_MASTER_AUDIT.md` (findings F-01…F-25 and decision rules R01–R35) and `SEO_IMPLEMENTATION_LOG.md` (what has actually changed).
+**Read this first in every new session.** Then read `SEO_MASTER_AUDIT.md` (Phase 1 status table, findings F-01…F-29, decision rules R01–R35) and `SEO_IMPLEMENTATION_LOG.md` (what has actually changed).
 
 ---
 
-## Current state (2026-11-22)
+## Current state (2026-11-23, end of Phase 1 batch 1)
 
 | Item | Status |
 |---|---|
-| Current phase | **Phase 0 complete. Phase 1 diagnostics started.** Phase 1 implementation **not started**. |
-| Code changes to the site | **None.** This session added documentation and analysis tools only. |
-| Branch | `henry/zealous-lovelace-83d834` (docs commit). A draft PR is opened from it. |
-| Production | `main@f31fd7dbf6`, deployed 2026-08-19. Vercel firewall config published 2026-09-06. |
-| Approvals received | **None.** Every destructive row in `SEO_PAGE_DECISIONS.csv` is `PENDING_OWNER_APPROVAL`. |
+| Current phase | **Phase 1 batch 1 implemented** (truth, schema, directory hub, guards). Phase 1 investigations complete (root cause, SAMHSA validation, removal reassessment, rendering ADR). |
+| Branch / PR | `henry/zealous-lovelace-83d834` → PR #89 (Phase 0 docs + Phase 1 commits). Merge and deploy outcome: see the last `SEO_IMPLEMENTATION_LOG.md` entry. |
+| Production data change | Migration `20261123000100_seo_recovery_clear_bulk_medical_review_stamps` **applied** to Supabase `mldbxpntzcjalgjmwnqa` (live immediately; backup in schema `seo_recovery_backup`). |
+| Production code | `main@f31fd7dbf6` (2026-08-19) until PR #89 deploys. Vercel firewall config unchanged since 2026-09-06. |
+| Approvals received | Batch 1 (non-destructive). **Not approved:** bulk deletion, mass redirects, publishing staged SAMHSA facilities, merging `seo/content-uniqueness-audit` (PR #88). |
 
-## Completed in Phase 0
-* Repository, architecture, middleware, generators, sitemap pipeline, schema emitters: inspected.
-* Production-equivalent build generated and scanned (50,380 pages); committed corpus scanned (46,668).
-* Database facts gathered (read-only).
-* GSC and GA4 exports analyzed. Collapse dated to **2026-05-29**; second index drop **2026-09-18→21**.
-* Deliverables written: master audit, baseline, URL inventory, page decisions, keyword map, content roadmap, monitoring plan, tools.
+## Completed in Phase 1
+* Facility schema emits only data-backed attributes, from one shared module (`src/lib/seo/facilityTruth.mjs`) used by the crawler generator and the SPA. Provenance notice on every profile.
+* Bulk "medically reviewed" stamps cleared (40 articles, backed up); Advisory Board schema, unverified staff, testimonials, "verified/accredited directory", insurance-verification, concierge and placement claims removed from source and the committed corpus.
+* `/rehab-centers` 301 → `/locations` (indexable crawler hub with all states and cities); breadcrumbs updated; robots.txt no longer blocks 301 sources; stray `public/vercel.json` deleted; `llms.txt` and noscript rewritten.
+* Blocking guard `check:trust-claims` in `build:vercel`, `validate:blocking` and the SEO Validators workflow.
+* Investigations: `SEO_ROOT_CAUSE_INVESTIGATION.md`, `SEO_SAMHSA_IMPORT_PLAN.md`, `SEO_REMOVAL_PLAN.md` (six classes, destinations validated), `ADR-001-single-document-rendering.md` (parity measured).
 
 ## Blockers / owner inputs needed (in priority order)
-1. **GSC → Manual actions + Security issues** (screenshot). This decides whether a reconsideration request is in scope.
-2. **Vercel → Firewall:** share the rules published 2026-09-06, and confirm that verified bots (Googlebot, Google-InspectionTool, Bingbot) are exempt. Run **GSC URL Inspection → Test live URL** on `/`, `/rehab-centers/colorado`, one `/center/*` URL and one `/provider-guides/*` URL. This environment cannot reach the live site (every request gets the Security Checkpoint, 429). Allowlisting an audit IP or user agent would enable live validation.
-3. **Approval of the Phase 2 pruning manifest:** at minimum, wave A (zero-evidence families). See "Approval request" below.
-4. **People and credentials:** confirm or remove Dr. Sarah Mitchell, Patricia Owens, James Chen and David Reyes (`About.tsx`); confirm LegitScript status; name any real medical reviewer.
-5. **Product decisions:** (a) insurance-verification form: retire it, or confirm a staffed process? (b) `/ads/:slug` and `/lp/convert` paid landing pages still promise matching: retire or rewrite? (c) promote the 10k+ staged SAMHSA records (Phase 3)? (d) keep the `/us-rehab/*` international pages?
-6. Extra GSC/GA4 exports: Crawl Stats, Sitemaps, Core Web Vitals, date-compared Pages/Queries (Apr 30–May 28 vs May 29–Jun 26), GA4 source/medium by week, and backlinks.
+1. **GSC → Manual actions + Security issues** (screenshot). Still the most important missing input.
+2. **GSC → Crawl stats** (Aug–Nov, response codes and host status) and **URL Inspection → Test live URL** on `/`, `/locations`, `/rehab-centers/colorado`, one `/center/*` and one `/provider-guides/*`. This environment is challenged by the Vercel checkpoint, so it cannot verify production pages; the owner's live tests are the production verification.
+3. **Firewall / AI bots decision** (F-26): allow Applebot, OAI-SearchBot, ChatGPT-User, PerplexityBot? Screenshot of the 2026-09-06 rules.
+4. **Removal waves A–D** (`SEO_REMOVAL_PLAN.md` §8): approve wave by wave, after a backlink export and a full-history GSC page export.
+5. **People:** confirm or permanently remove the staff previously named in `About.tsx` (removed in Phase 1); name any real medical reviewer before any "reviewed" label returns.
+6. **Product decisions:** `/ads/:slug` and `/lp/convert` (lead forms with no concierge behind them), `/insurance-verification` (promises an admissions-team check), `/us-rehab/*` international pages.
+7. **SAMHSA:** approve a complete re-scrape, the facet schema migration, and 1–2 pilot states (`SEO_SAMHSA_IMPORT_PLAN.md` §6).
+8. **Editorial:** the CEO article override still claims "65,000 users we served in April".
+9. GSC date-compared Pages/Queries export (Apr 30–May 28 vs May 29–Jun 26), Sitemaps report, Core Web Vitals, GA4 source/medium, backlinks.
 
 ## Decisions taken (by analysis; the owner may overrule)
-* **Do not merge `seo/content-uniqueness-audit` as is.** Its composer creates cosmetic uniqueness on pages slated for removal. Salvage `scripts/check-content-uniqueness.mjs`, the SPA/crawler parity test, and `fd62a9b6d5` (prerender the real provider-guide content).
-* `seo/location-truth` is already merged (#86); nothing is outstanding there. `seo/public-search-hardening` (1 commit, 13 files) is unreviewed; review it in Phase 1 before it diverges further.
-* The legacy history is on `origin/fix/prelaunch-seo-legal`. Use it for any archaeology from before 2026-06-20.
-
-## Approval request (needed before Phase 2)
-| Wave | Families | URLs → 410 | URLs → 301/MERGE | GSC impressions on the 410 set | GSC impressions on the 301/MERGE set (16 mo) |
-|---|---|---:|---:|---:|---:|
-| A (no evidence) | provider_marketing_* (all), near_me_county, insurance_x_county/city, county_x_service | 22,714 | 361 | 0 | 2,849 |
-| B | city_combo (incl. retargeting the 3,168 currently → `/search-results`), specialty_x_state/city, near_me_city | 12,711 | 3,414 | 0 | 1,296 |
-| C (consolidation) | near_me_state MERGE, commercial insurance_x_state MERGE, zero-inventory city/county hub MERGE, provider_city_landing → /for-providers, unsupported treatment_x_state/city | 1,748 | 2,843 | 0 | 10,681 |
-
-Exact URLs, rules and replacement targets are in `SEO_PAGE_DECISIONS.csv` (filter `recommended_action`). Before executing any wave, run a backlink check and switch any externally linked URL from 410 to 301.
+* `seo/content-uniqueness-audit` stays unmerged (owner agreed). Salvage only the measurement script and the parity idea (now `tools/render_parity.mjs`).
+* Facility credentials are labelled by source ("as reported to SAMHSA"); nothing is described as RehabLookup-verified unless a verification record exists.
+* The 40 previously "reviewed" articles show as unreviewed until a real clinical review happens.
 
 ## Exact next steps (next session)
-1. Re-read this file, the master audit §8, and the log. Check `git log` for anything merged since 2026-11-22.
-2. If the owner has answered blockers 1–2, record the answers in the log and adjust the priorities (a manual action makes Phase 2 urgent; a firewall block makes the rule fix P0).
-3. **Implement Phase 1, batch 1** (master audit §8, items 1–6) on a new branch:
-   1. In `scripts/generate-facility-profiles-html.mjs`: remove hard-coded `openingHoursSpecification`, `isAcceptingNewPatients`, `medicalSpecialty`, `knowsAbout` and `isAccessibleForFree`; fix `hasCredential`; drop the empty `geo`; remove the FAQ sentence at line 363; label accreditations by provenance. Mirror the same in the SPA (`src/components/SEO.tsx` facility schema around line 529, and `CenterProfile.tsx:806`).
-   2. Remove `reviewedBy` "Medical Advisory Board" and the today-dated `lastReviewed` (`SEO.tsx:310-316`). Gate "Medically reviewed by" in `ArticleByline.tsx` on real data. Write a migration nulling `last_medically_reviewed_at` and `medical_reviewer_id` where they were set by `20260828000200_seed_blog_authors.sql` (match on reviewer = `medical-review-team`). Unwire `testimonials.ts`. Comment out the unverified staff in `About.tsx` until confirmed.
-   3. Rewrite `public/llms.txt`; fix `index.html:301` noscript and `src/data/pageFaqs.ts:73`; replace "free insurance verification tool" in every generator that emits it (`grep -rn "free insurance verification" scripts src`); remove "verified/accredited directory" phrasing (`pageFaqs.ts`, `locationDescriptions.ts`, `SEOLandingTemplate.tsx`, `CityPage.tsx`).
-   4. Organization schema: plain Organization; remove the LegitScript credential and the 24/7 hours.
-   5. `scripts/backfill-ga-snippet.mjs`: stop injecting gtag into crawler-only HTML.
-   6. Add CI guards: extend `scripts/check-structured-data.mjs` to fail on hard-coded facility attributes and on `reviewedBy` without a real reviewer.
-   7. Run the validation listed in master audit §8.6 plus `tools/` re-runs; record the results in the log; open a draft PR.
-4. Then batch 2 (indexable `/rehab-centers` root, crawler hubs listing their children, provider-guide and article prerender parity, homepage prerender, facility sitemap content type and lastmod, robots.txt cleanup, delete `public/vercel.json`, remove the review sign-in CTA).
-5. Phase 1 design note (write as `docs/seo-recovery/ADR-001-single-document-rendering.md`): end the crawler/human split (F-03). Options: (a) serve the prerendered HTML to everyone and mount the SPA on top; (b) SSR. Estimate the effort and risk to provider and admin workflows.
+1. Re-read this file, the master audit status table, and the log. Check `git log origin/main` and the Vercel production deployment for PR #89.
+2. Record any owner answers (blockers 1–9) in the log; a manual action makes the removal waves urgent.
+3. **Phase 1 batch 2 (non-destructive, already in scope):**
+   1. Stop injecting gtag into crawler-only HTML (`scripts/backfill-ga-snippet.mjs`) — F-15.
+   2. Redeploy the `sitemap-facilities` edge function so the live response matches source (`application/xml`, `updated_at` lastmod) — F-14; verify from an allowed network.
+   3. Crawler hubs `/resources`, `/treatment-types`, `/insurance`, `/provider-guides` list their children like `/locations` now does — F-10.
+   4. Prerender the real provider-guide and article content (salvage `fd62a9b6d5`) — F-03.
+   5. Homepage crawler HTML with static canonical and real content — F-19.
+   6. Make facility cards real `<a href="/center/…">` links in the SPA — F-10, ADR-001 §5.
+   7. Seeker edge-function emails: stop linking retired `/account/*` URLs (backend; needs a function deploy).
+4. **Phase 2 (approval-gated):** execute removal waves per `SEO_REMOVAL_PLAN.md` §6 mechanics (static output, SPA routes, 410 in middleware, sitemaps/manifest, link check, post-deploy sampling).
+5. **Phase 3:** ADR-001 single-document rendering for the retained set; SAMHSA pilot import if approved.
 
 ## Consumer-account migration: remaining items (from the sweep; re-check before editing)
+
+**Phase 1 done:** ReviewForm CTA (hidden for signed-out visitors), `pageFaqs.ts`, `index.html` noscript, `public/llms.txt`, `Comparison.tsx` copy, robots.txt 301-source disallows, stray `public/vercel.json`. Provider (`/login`, `/provider/*`, claim flow) and admin routes were not changed. **Still open:** the edge-function emails/SMS below, international CTAs, and `useFavorites`/`useCompareList` DB sync.
 * P1: `ReviewForm.tsx:172-182` "Sign in to review" (every profile); `pageFaqs.ts:73`; `index.html:301`; `public/llms.txt`.
 * P1: seeker emails and SMS that link to `/account/concierge` or `/seeker-auth`: `send-concierge-notifications`, `send-tour-notifications`, `_shared/tour-email-templates.ts`, `send-message-notifications`, and the scheduled `placement-monitor` (migration `20260827000300`).
 * P2: `support-ticket-reply` / `support-ticket-status` (`/account/support`); `send-review-notification` fallback `/account/reviews`; `send-marketing-followup` and `submit-marketing-lead` (→ `/concierge`); international CTAs → `/international/apply` (14 pages and 7 inline links); `Comparison.tsx:620`.

@@ -1,6 +1,14 @@
 # SEO Content Roadmap — RehabLookup
 
-Phase 0 draft, 2026-11-22. This is a plan only; no content has been created or changed.
+Phase 0 draft, 2026-11-22; updated for Phase 1, 2026-11-23.
+
+**Phase 1 changes to this roadmap:**
+* §1 is superseded in detail by `SEO_REMOVAL_PLAN.md` (six owner-defined classes, validated destinations, evidence gaps per URL). The families below are unchanged; the totals there are authoritative. Nothing has been removed.
+* §2.1 truth fixes and the provenance block are **done** (Phase 1 batch 1). Profiles now show "information from a government directory (SAMHSA), not independently verified", "provided by the facility" for claimed listings, or a staff-entered notice. The "Independently verified by RehabLookup" state is still not shown anywhere, because no verification process exists.
+* §2.1 internal links: the breadcrumb now goes to the indexable `/locations` hub (the `/rehab-centers` root 301s there), not to a `/rehab-centers` page.
+* §2.2 "remove accredited/verified overclaims" is **done**.
+* §2.3 data figures are refined by the SAMHSA validation: 7,434 usable new facilities (≈7,300 after dedupe); among them OTP/methadone 576, buprenorphine 3,264, residential/hospital inpatient 1,638, detox 1,048, Spanish-language 1,765 (`SEO_SAMHSA_IMPORT_PLAN.md` §3). Thresholds apply to *published* listings only, so none of these pages qualify until an import is approved.
+* ADR-001: before upgrading any retained template, the crawler HTML must first show the same page as the SPA; otherwise improvements stay invisible to Google.
 **Ground rule:** build fewer pages, and make each one carry real data or real expertise. Every new page type needs (a) demand evidence, (b) a data source that makes it true, and (c) a minimum-inventory threshold. **We will not create pages to "target" keywords the data cannot answer.**
 
 ---

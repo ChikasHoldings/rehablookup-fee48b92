@@ -2,6 +2,31 @@
 
 Phase 0 deliverable. Prepared 2026-11-22. Every number here comes from the exports listed under **Evidence used**. Where the evidence ends, this document says so and leaves the gap open. It does not fill gaps with estimates.
 
+**Phase 1 update (2026-11-23):** §0 reconciles the URL, sitemap, index and facility counts used across these documents; §7 is revised; §8 shows which items are still open. No new GSC or GA4 exports were supplied in Phase 1, so the performance numbers are unchanged.
+
+---
+
+## 0. Count reconciliation (Phase 1)
+
+Different documents quote different "page counts". They measure different things and are all correct for what they measure:
+
+| Count | Value | What it is | Source |
+|---|---:|---|---|
+| Known URLs (inventory) | **50,607** | Union of every URL the production build generates, every URL in the GSC exports, and every sitemap URL | `SEO_URL_INVENTORY.csv` |
+| Prerendered in a production build | **50,380** | HTML files `build:vercel` writes against the live database (Phase 0 build); Phase 1 build checked **50,466** public files (adds `/locations` and other hub outputs, counts all files including non-page HTML) | Phase 0 / Phase 1 worktree builds |
+| Committed prerendered corpus | **46,668** | `public/**/*.html` in git. Smaller because facility profiles and several families are generated only at build time | git |
+| Production sitemaps | **34,822** | `sitemap.xml` 30,793 + `sitemap-extras.xml` 233 + `sitemap-facilities.xml` 3,796. Generators filter out redirect sources, city hubs without exact listings (since Aug 19), noindexed pages and most city combos | build output |
+| GSC indexed | **2,654** (11-15) | Google's choice. It was 12,730 on 08-27 and 12,441 on 09-17 | GSC Page indexing |
+| GSC not indexed | **39,107** (11-15) | Includes Discovered/Crawled – currently not indexed (35,467), redirects (1,164), 404s and noindex. "Known" to Google includes URLs that no longer exist or redirect | GSC Page indexing |
+| Facility rows | **3,810** | `facilities` table; **3,796** public (`public_facilities`) and therefore 3,796 `/center/*` profiles and sitemap entries | Supabase |
+| Staged SAMHSA | **14,726** rows / **14,133** entities | Unpublished staging table; ≈7,434 usable new facilities after validation (Phase 0 quoted 14,071 distinct by a looser key) | `SEO_SAMHSA_IMPORT_PLAN.md` |
+
+**Why they differ:**
+1. Many pages are generated at build time and are never committed (50,380 vs 46,668).
+2. The sitemap generators intentionally exclude about 15.6k generated URLs (50,380 vs 34,822); those URLs still return 200 to crawlers, which is why Google keeps discovering them.
+3. GSC "all known pages" (2,654 + 39,107 = 41,761) mixes current URLs with retired, redirected and never-generated ones Google found through links; it is not a subset of the build.
+4. Indexing is Google's decision: 2,654 indexed out of ~34.8k submitted is the outcome being diagnosed, not a counting error.
+
 ---
 
 ## 1. Evidence used
@@ -164,11 +189,18 @@ The **indexed sample** (1,000 of 2,654, last crawled 2026-10-01 → 2026-11-16) 
 | **Vercel firewall challenge** (config published 2026-09-06) | **Hypothesis for the Sept 18–21 index drop**, not for May 29 | Timing: firewall published Sept 6, index fell by 74% on Sept 18–21, and there were no deployments in between. Counter-evidence: Google still crawled indexed URLs through 2026-11-16, and no 5xx bucket appears. |
 | Competitor improvement | Not assessable | No rank-tracking data. |
 
+**Phase 1 revision (2026-11-23):**
+* The two incidents are treated separately (`SEO_ROOT_CAUSE_INVESTIGATION.md`).
+* **May 29:** still no technical trigger. "Site-wide quality or spam judgement" below is the best-supported hypothesis, not a confirmed cause; Manual Actions and Security Issues remain unchecked, and the date-compared page export (§8 item 5) is the test that would show whether every template fell together.
+* **Sept 18–21:** the firewall row above is downgraded to **unlikely**. Vercel request logs (Nov 16–23) show verified Googlebot allowed with 200s; the 429s this audit received were the challenge for unclassified automation. The more likely contributor is the **2026-08-19 release** (sitemap cut by ~8.4k URLs; 612 city hubs left with no listings), followed by Google's re-evaluation about four weeks later. GSC reporting-batch dates may also explain the step shape.
+
 **Summary:** RehabLookup lost almost all search visibility on **2026-05-29** while staying indexed. That is the signature of a site-wide quality or spam judgement, not a technical break. Every available piece of evidence points to the same underlying weakness: a very large set of templated, thin, data-unsupported pages around a small real catalogue. Two technical risks are layered on top: crawler/human divergence and fabricated structured data. The September index loss is a separate event, and the Vercel firewall timing must be checked.
 
 ---
 
-## 8. Open measurement items (to close in Phase 1)
+## 8. Open measurement items (still open after Phase 1 — all need the owner's GSC/GA4 access)
+
+Item 3 is now less urgent (Googlebot is allowed per request logs) but is still the only direct view of what Google receives. None of these were supplied during Phase 1.
 
 1. GSC **Manual actions** and **Security issues**: screenshot or export. *This is the single most important missing input.*
 2. GSC **Crawl stats**: host status, response-code breakdown (look for 429), and file-type breakdown for Aug–Nov 2026.

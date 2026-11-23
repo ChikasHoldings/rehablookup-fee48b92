@@ -1,10 +1,44 @@
 # SEO Master Audit — RehabLookup.com
 
-**Phase 0 (Baseline and system discovery): complete.** Phase 1 diagnostics have started.
-**Audit date:** 2026-11-22. **Code audited:** `main` @ `f31fd7dbf6` (2026-08-18), the last production deployment (Vercel `dpl_DqE67ckwyDbUsZGPT5cSatbQmTMv`, 2026-08-19). There have been no production deployments since.
-**Status of this document:** findings and recommendations only. **No production code, data, routes, redirects or sitemaps were changed in Phase 0.**
+**Phase 0 (Baseline and system discovery): complete 2026-11-22. Phase 1 (critical recovery, batch 1): implemented 2026-11-23** — see the status table directly below and `SEO_IMPLEMENTATION_LOG.md`.
+**Audit date:** 2026-11-22 (revalidated 2026-11-23). **Code audited:** `main` @ `f31fd7dbf6` (2026-08-18), the last production deployment (Vercel `dpl_DqE67ckwyDbUsZGPT5cSatbQmTMv`, 2026-08-19).
+**Status of this document:** findings and recommendations. Phase 0 changed nothing. Phase 1 changes are listed per finding below; the findings text is kept as originally written, with Phase 1 revalidation notes added inline where a conclusion changed.
 
 Companion files: `SEO_PERFORMANCE_BASELINE.md` (analytics), `SEO_URL_INVENTORY.csv` (50,607 URLs), `SEO_PAGE_DECISIONS.csv` (per-URL proposals, approval-gated), `SEO_KEYWORD_MAP.csv`, `SEO_CONTENT_ROADMAP.md`, `SEO_MONITORING_PLAN.md`, `SEO_PHASE_HANDOFF.md`, `SEO_IMPLEMENTATION_LOG.md`.
+
+
+Companion files added in Phase 1: `SEO_ROOT_CAUSE_INVESTIGATION.md`, `SEO_SAMHSA_IMPORT_PLAN.md` (+ `SEO_SAMHSA_VALIDATION_APPENDIX.md`), `SEO_REMOVAL_PLAN.md`, `ADR-001-single-document-rendering.md`.
+
+## Phase 1 status by finding (2026-11-23)
+
+| Finding | Phase 1 status | Notes |
+|---|---|---|
+| F-01 May 29 collapse | **Revalidated, conclusion softened** | No technical trigger found in code, deployment or infrastructure history. Consistent with an algorithmic or manual quality judgement, but *not* proven to be a sitewide penalty. Manual Actions / Security Issues still not supplied. See `SEO_ROOT_CAUSE_INVESTIGATION.md`. |
+| F-02 templated pages at scale | **Reassessed, not executed** | Six-class reassessment in `SEO_REMOVAL_PLAN.md`; no page removed (owner did not authorize). |
+| F-03 crawler/human split | **Measured; design proposed** | Parity measured on 11 templates (crawler HTML 2–27× thinner than the SPA). `ADR-001` proposes one document for everyone. `/locations` now has parity. |
+| F-04 fabricated facility schema | **Fixed** | Only data-backed attributes are emitted, in both renderers, from one shared module. Blocking guard checks every `/center/*` JSON-LD node at build. |
+| F-05 E-E-A-T signals | **Fixed (pending owner confirmation of people)** | Bulk "medically reviewed" stamps cleared (backed up). Advisory Board `reviewedBy` and today-dated `lastReviewed` removed. Unverified named staff removed from About. Testimonials unwired. "Verified/accredited directory" claims removed. |
+| F-06 firewall | **Revalidated: unlikely cause** | Vercel request logs (Nov 16–23) show verified Googlebot allowed with 200s. The 429 seen here is the challenge for unclassified automation. September itself is outside log retention. New finding F-26. |
+| F-07 retired-service claims | **Fixed (copy); product decisions open** | Insurance-verification, concierge and placement claims removed from source and the prerendered corpus; `llms.txt` and noscript rewritten. `/ads/:slug`, `/lp/convert`, `/insurance-verification` pages and the seeker edge-function emails remain (owner decisions). |
+| F-08 `/rehab-centers` → noindexed search | **Fixed** | 301 → `/locations`, which is now an indexable crawler hub listing every state with live counts. All breadcrumbs updated. |
+| F-09 mass redirects to search | **Audited, not changed** | Destination validation in `SEO_REMOVAL_PLAN.md` §4–5 (1,970 have a true-equivalent hub; 1,001 have none). Mass redirect changes not authorized. |
+| F-10 orphaned link graph | **Partly fixed** | `/locations` now links all states and their cities. Visitor-side facility cards still aren't `<a href>` links (ADR-001 §5). |
+| F-11 thin catalogue | **Validated, not published** | 7,434 usable new SAMHSA facilities (≈7,300 after dedupe). `SEO_SAMHSA_IMPORT_PLAN.md`. |
+| F-12 unsupported attribute pages | Open | Covered by the removal plan. |
+| F-13 cannibalization | Open | Mapping in the removal plan. |
+| F-14 sitemaps | Open | Source of `sitemap-facilities` already uses `application/xml` and `updated_at`; the deployed function measured in Phase 0 did not. Redeploying it is backend scope. |
+| F-15 measurement | Open | gtag still injected into crawler-only HTML; GA4 key events need owner configuration. |
+| F-16 "best rehab" ranking | **Copy fixed; pages open** | FAQ answer now states the real order (Featured paid → claimed → others). Pages themselves are in "Requires more investigation". |
+| F-17 uniqueness branch | **Not merged** (per owner) | — |
+| F-18 robots.txt | **Partly fixed** | Disallows on 301 sources removed; `public/vercel.json` deleted. Per-bot group simplification not done. |
+| F-19 homepage SPA shell | Open | ADR-001 covers it (crawler view is 4 words; canonical only after JS). |
+| F-20 facility data quality | **Display fixed; data open** | Listings say where their data came from; "licensed" and "recognized by" wording replaced; credentials labelled "as reported to SAMHSA". Underlying data unchanged. |
+| F-21 FAQPage markup | Open | — |
+| F-22 Organization schema | **Fixed** | Plain `Organization`; LegitScript/HIPAA credential and 24/7 hours removed. |
+| F-23 consumer-account remnants | **Fixed (site); emails open** | Review CTA hidden for signed-out visitors; save/account copy removed. Provider and admin routes untouched; seeker emails remain. |
+| F-24 medical statistics | **Fixed where found** | NIDA 40–60% now correctly described as a relapse rate in all listed locations. Clinical review still required. |
+| F-25 hygiene | Open | — |
+| F-26–F-29 | **New in Phase 1** | See §4. |
 
 ---
 
@@ -28,11 +62,11 @@ Companion files: `SEO_PERFORMANCE_BASELINE.md` (analytics), `SEO_URL_INVENTORY.c
 
 ## 1. Executive diagnosis
 
-1. **Visibility collapsed in a single day, 2026-05-29.** Impressions per day went from 1,182 to 17.6 (−98.5%), while pages **stayed indexed**: 12,730 indexed on 2026-08-27 with about 5 impressions a day. That is a site-wide quality or spam judgement, not a technical outage. It happened inside Google's May 2026 core update rollout (May 21 → Jun 2). **A manual action has not been ruled out**, because the report was not supplied. *Leading hypothesis; not verified.*
+1. **Visibility collapsed in a single day, 2026-05-29.** Impressions per day went from 1,182 to 17.6 (−98.5%), while pages **stayed indexed**: 12,730 indexed on 2026-08-27 with about 5 impressions a day. That is a site-wide quality or spam judgement, not a technical outage. It happened inside Google's May 2026 core update rollout (May 21 → Jun 2). **A manual action has not been ruled out**, because the report was not supplied. *Leading hypothesis; not verified.* *(Phase 1: no technical trigger found; "sitewide judgement" remains a hypothesis — see F-01.)*
 2. **The cause underneath is page volume without substance.** There are 50,380 prerendered pages for a catalogue of **3,796** listings. **89%** of pages share a body with other pages once geography is stripped out, **91%** are under 300 words, and **90.6%** link to no facility at all. Twenty-one "near-me" families render 420 pages each from **2** distinct bodies. Google declined to index 35,467 URLs ("Discovered/Crawled – currently not indexed"). *Verified.*
 3. **Many pages make claims the data cannot support.** Examples: commercial-insurance pages for carriers recorded at ≤5 facilities; "luxury", "Christian" and "couples" pages with no data; "verified/accredited directory" copy when 6 of 3,810 facilities are verified; **fabricated structured data on all 3,796 facility profiles** (open 24/7, accepting patients, Psychiatry); SQL-stamped "medically reviewed" dates; and unverified named clinical staff and testimonials. For a YMYL healthcare site these are ranking problems, and also legal and trust problems. *Verified.*
 4. **Crawlers and humans get different pages.** Middleware sniffs the user agent: crawlers get prerendered HTML, humans always get the SPA. The crawler versions of hub pages are 178-word generic shells. Provider-guide HTML for crawlers is a templated shell while humans see the real article. This creates cloaking risk and breaks the crawler-visible link graph: **40,881** prerendered pages have zero internal inbound links, including **1,734 facility profiles**. *Verified from code and build output.*
-5. **A second, separate drop happened in September.** Indexed URLs fell from 12,441 to 3,194 on Sept 18–21. A **Vercel firewall configuration was published on 2026-09-06** (its first ever), and the site currently challenges automated traffic. Whether verified Googlebot is exempt is **unknown and must be checked now**. *Hypothesis.*
+5. **A second, separate drop happened in September.** Indexed URLs fell from 12,441 to 3,194 on Sept 18–21. A **Vercel firewall configuration was published on 2026-09-06** (its first ever), and the site currently challenges automated traffic. Whether verified Googlebot is exempt is **unknown and must be checked now**. *Hypothesis.* *(Phase 1: request logs show verified Googlebot allowed with 200s in Nov; the firewall is now an unlikely cause. The Aug 19 release, which cut the sitemap and emptied 612 city hubs, is the more likely contributor — see F-06.)*
 6. **The legitimate path to recovery is clear:** far fewer, much better pages built on real data. The database already holds **14,071 distinct SAMHSA records (staged, unpublished)** with rich facets (service setting, OTP/buprenorphine, special programs, languages, payment). Today's catalogue uses about 27% of those records and about 11 coarse tags.
 
 ---
@@ -107,6 +141,7 @@ Confidence: **Verified** means observed in code, data or exports. **Hypothesis**
 ### F-01 · P0 · Site-wide visibility collapse on 2026-05-29 while pages stayed indexed
 * **Evidence:** GSC daily impressions were 1,253 on 05-28 and 38 on 05-29, and never recovered (see `SEO_PERFORMANCE_BASELINE.md` §2). 12,730 URLs were indexed on 08-27. No commits landed on 05-28. The May 2026 core update rolled out May 21 → Jun 2.
 * **Root cause:** a **hypothesis**. Either (a) a manual action (scaled content abuse, thin content, cloaking or structured-data misuse would each fit F-02 to F-05), or (b) a site-level quality reassessment during the core update. The two are not mutually exclusive.
+* **Phase 1 revalidation:** treated as a separate incident from September. No code, deployment, robots, canonical or redirect change explains a one-day cliff (the 05-23 redirect change was followed by five normal days). The "site-wide quality or spam judgement" wording in §1 is a hypothesis, not a finding; a manual action and a security issue remain unchecked. Full table: `SEO_ROOT_CAUSE_INVESTIGATION.md`.
 * **Action:** **Today:** open GSC → Security & Manual Actions → Manual actions and Security issues. If there is a manual action, the remediation plan becomes the reconsideration request scope and the Phase 2 pruning becomes mandatory. If there isn't, proceed as a quality recovery (Phases 1–4). Do not expect recovery before Google re-evaluates the site, which typically takes months and often waits for a later core update.
 
 ### F-02 · P0 · Templated, thin, data-free pages at scale (doorway pattern)
@@ -144,6 +179,7 @@ Confidence: **Verified** means observed in code, data or exports. **Hypothesis**
 * **Counter-evidence:** indexed URLs were recrawled through 2026-11-16, and there is no "Server error (5xx)" category in Page indexing.
 * **Action:** **Today:** check Vercel → Firewall. Confirm verified bots (Googlebot, Bingbot, Google-InspectionTool) bypass any challenge rule, run GSC URL Inspection "Test live URL", and check Crawl Stats for 429s. If Googlebot is challenged, fix the rule and resubmit sitemaps.
 * **Confidence:** Hypothesis (access was not verifiable from here).
+* **Phase 1 revalidation → unlikely cause.** Vercel observability for 2026-11-16 → 11-23 shows `googlebot` / `allow` / 200 (1,024 requests) and bingbot allowed, while unclassified automation gets `challenge` / 429. That matches Vercel's documented behaviour (Bot Protection excludes verified bots). A 429 seen by this environment therefore says nothing about Googlebot. The configuration has not changed since 2026-09-06, but September is outside the 36-day log window, so GSC Crawl Stats for Aug–Nov are still the decisive check.
 
 ### F-07 · P0 · Retired-service and lead-generation claims still live at scale
 * **Evidence:**
@@ -262,6 +298,29 @@ Confidence: **Verified** means observed in code, data or exports. **Hypothesis**
 * `/international/*` and `/us-rehab/*` link to the retired `/international/apply`.
 * "Organic Shopping" sessions appear in GA4.
 * "Content Temporarily Unavailable" appears as a page title.
+
+
+### F-26 · P1 · Firewall denies Applebot, GoogleOther and AI search/assistant crawlers (new, Phase 1)
+* **Evidence:** Vercel request logs, 2026-11-16 → 11-23: `applebot` deny/403 (78), `googleother` deny/403 (11), `gptbot`, `oai-searchbot`, `chatgpt-user`, `perplexitybot`, `duckassistbot`, `meta-webindexer` deny/403 (85 together).
+* **Risk:** excludes the site from Apple Search/Spotlight/Siri and from ChatGPT search and Perplexity citations (business goal 13). GoogleOther is used for some Google research and product crawls; it does not affect Search ranking.
+* **Action:** owner decision in Vercel → Firewall → AI Bots ruleset. Recommended: allow Applebot, OAI-SearchBot, ChatGPT-User and PerplexityBot; keep training crawlers denied if preferred.
+* **Confidence:** Verified (logs). Rule contents not readable by this integration.
+
+### F-27 · P0 · Crawler HTML is materially thinner than what visitors see (new measurement, Phase 1)
+* **Evidence:** `tools/render_parity.mjs` on the production-equivalent build: crawler/visitor words `/` 4/1,439; `/rehab-centers/texas` 421/2,787; `/rehab-centers/texas/houston` 437/2,436; `/center/{slug}` 843/1,446; `/treatment-types/detox-programs/texas` 233/2,786; `/insurance/aetna-rehab` 171/1,786; `/resources` 172/4,675; `/about` 168/1,146. Titles and H1s differ on most templates; canonicals agree except `/`.
+* **Consequence:** much of the Phase 0 "thin" measurement (F-02) describes the crawler shells, not what users read. It does not make the SPA text automatically valuable — it must still be judged per template — but it changes what "improve" means: first make Google see the real page.
+* **Action:** ADR-001 (Phase 3, after removal waves A–B). **Limit:** this is a local reproduction of the routing rule, not a fetch of production as Googlebot.
+* **Confidence:** Verified (local build).
+
+### F-28 · P2 · Two pages crashed at runtime (fixed in Phase 1)
+* **Evidence:** `About.tsx` and `MidArticleCTA.tsx` rendered `<Search />` without importing it (`tsc` errors on `main`). Any visitor reaching those components hit a React error.
+* **Action:** imports added in commit `15d4a0339c`. `tsc` error count 123 → 121; the rest are pre-existing type errors with no runtime effect found.
+* **Confidence:** Verified.
+
+### F-29 · P2 · Facility provenance was invisible (fixed in Phase 1)
+* **Evidence:** 3,802 of 3,810 rows have `data_source` beginning `samhsa`; 7 are claimed; 6 `verified`. Profiles described every facility as "licensed" and its accreditations as recognitions, without saying the source.
+* **Action:** shared `facilityProvenance()` drives a visible notice on every profile (government directory / facility-provided / staff-entered) and source labels on credentials. 458 rows labelled `samhsa_import` have no staged SAMHSA match (SAMHSA plan §2), so the label itself needs a data fix in Phase 3.
+* **Confidence:** Verified.
 
 ---
 
