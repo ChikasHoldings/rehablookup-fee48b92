@@ -236,7 +236,10 @@ function generateCostOfRehab(stateName: string, abbr: string, p: StateProfile): 
 }
 
 function generateBestCities(stateName: string, abbr: string, p: StateProfile): StateArticle {
-  const slug = `best-cities-in-${stateName.toLowerCase().replace(/\s+/g, "-")}-for-addiction-treatment`;
+  // Same slug the prerendered crawler page and the sitemap use. (The app used
+  // "best-cities-in-{state}-for-addiction-treatment", so the URL Google had
+  // rendered "not found" for visitors; middleware 301s that old form here.)
+  const slug = `best-cities-for-addiction-treatment-in-${stateName.toLowerCase().replace(/\s+/g, "-")}`;
   return {
     slug,
     type: "best-cities",

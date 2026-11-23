@@ -127,6 +127,66 @@
       "statusCode": 301
     },
     {
+      "source": "/faith-based-rehab-centers",
+      "destination": "/faith-based-rehab",
+      "statusCode": 301
+    },
+    {
+      "source": "/fentanyl-rehab-centers",
+      "destination": "/fentanyl-rehab",
+      "statusCode": 301
+    },
+    {
+      "source": "/veterans-rehab-centers",
+      "destination": "/veterans-rehab",
+      "statusCode": 301
+    },
+    {
+      "source": "/womens-rehab-centers",
+      "destination": "/womens-rehab",
+      "statusCode": 301
+    },
+    {
+      "source": "/mens-rehab-centers",
+      "destination": "/mens-rehab",
+      "statusCode": 301
+    },
+    {
+      "source": "/inpatient-rehab-centers",
+      "destination": "/inpatient-rehab",
+      "statusCode": 301
+    },
+    {
+      "source": "/luxury-rehab-centers",
+      "destination": "/treatment-types/luxury-rehab",
+      "statusCode": 301
+    },
+    {
+      "source": "/near-me",
+      "destination": "/rehab-near-me",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment-types/aftercare-programs",
+      "destination": "/aftercare-and-relapse-prevention",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment-types/medication-assisted-treatment",
+      "destination": "/mat-programs",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment-types/outpatient-rehab",
+      "destination": "/treatment-types/outpatient-programs",
+      "statusCode": 301
+    },
+    {
+      "source": "/rehab-centers/new-york/new-york",
+      "destination": "/rehab-centers/new-york/new-york-city",
+      "statusCode": 301
+    },
+    {
       "source": "/lp/social",
       "destination": "/",
       "statusCode": 301
