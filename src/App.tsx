@@ -134,7 +134,6 @@ const RehabCenterMarketingIdeas = lazy(() => import("./pages/provider-guides/Reh
 const TreatmentCenterPatientAcquisition = lazy(() => import("./pages/provider-guides/TreatmentCenterPatientAcquisition"));
 const BehavioralHealthLeadGeneration = lazy(() => import("./pages/provider-guides/BehavioralHealthLeadGeneration"));
 const RehabCenterSEO = lazy(() => import("./pages/provider-guides/RehabCenterSEO"));
-const MarketingLanding = lazy(() => import("./pages/MarketingLanding"));
 const DrugRehabAdvertising = lazy(() => import("./pages/provider-guides/DrugRehabAdvertising"));
 const RehabCensusManagement = lazy(() => import("./pages/provider-guides/RehabCensusManagement"));
 const TreatmentCenterReferralSources = lazy(() => import("./pages/provider-guides/TreatmentCenterReferralSources"));
@@ -213,14 +212,12 @@ const ProviderResourceArticle = lazy(() => import("./pages/providers/ProviderRes
 
 // International — informational directory landing page.
 const InternationalLanding = lazy(() => import("./pages/international/InternationalLanding"));
-const AdLanding = lazy(() => import("./pages/AdLanding"));
 const SocialLanding = lazy(() => import("./pages/SocialLanding"));
 const Resources = lazy(() => import("./pages/Resources"));
 const CategoryHub = lazy(() => import("./pages/CategoryHub"));
 const Authors = lazy(() => import("./pages/Authors"));
 const AuthorProfile = lazy(() => import("./pages/AuthorProfile"));
 const Insurance = lazy(() => import("./pages/Insurance"));
-const InsuranceVerification = lazy(() => import("./pages/InsuranceVerification"));
 const AetnaRehab = lazy(() => import("./pages/insurance/AetnaRehab"));
 const BCBSTreatment = lazy(() => import("./pages/insurance/BCBSTreatment"));
 const CignaRehab = lazy(() => import("./pages/insurance/CignaRehab"));
@@ -1293,7 +1290,9 @@ const AppInner = () => {
             <Route path="/directory" element={<Navigate to="/search-results" replace />} />
 
             {/* Ad Landing Pages */}
-            <Route path="/ads/:slug" element={<PublicRouteGuard><AdLanding /></PublicRouteGuard>} />
+            {/* Retired lead-capture surfaces (no concierge or verification service
+                behind them; 0 submissions recorded). Mirrors the vercel.json 301s. */}
+            <Route path="/ads/:slug" element={<Navigate to="/" replace />} />
             <Route path="/go/:slug" element={<PublicRouteGuard><SocialLanding /></PublicRouteGuard>} />
             
             {/* Static Pages */}
@@ -1347,9 +1346,9 @@ const AppInner = () => {
             <Route path="/blog" element={<Navigate to="/resources" replace />} />
             <Route path="/blog/:id" element={<BlogRedirect />} />
             <Route path="/insurance" element={<PublicRouteGuard><Insurance /></PublicRouteGuard>} />
-            <Route path="/insurance-verification" element={<PublicRouteGuard><InsuranceVerification /></PublicRouteGuard>} />
-            <Route path="/verify-insurance" element={<Navigate to="/insurance-verification" replace />} />
-            <Route path="/vob" element={<Navigate to="/insurance-verification" replace />} />
+            <Route path="/insurance-verification" element={<Navigate to="/insurance" replace />} />
+            <Route path="/verify-insurance" element={<Navigate to="/insurance" replace />} />
+            <Route path="/vob" element={<Navigate to="/insurance" replace />} />
             {/* Insurance short URLs → redirect to canonical */}
             <Route path="/insurance/aetna" element={<Navigate to="/insurance/aetna-rehab" replace />} />
             <Route path="/insurance/bcbs" element={<Navigate to="/insurance/bcbs-treatment" replace />} />
@@ -1917,7 +1916,7 @@ const AppInner = () => {
             </Route>
             
             {/* Marketing Landing Page (Ad Traffic) */}
-            <Route path="/lp/convert" element={<MarketingLanding />} />
+            <Route path="/lp/convert" element={<Navigate to="/" replace />} />
             <Route path="/lp/treatment" element={<Navigate to="/treatment-types" replace />} />
             <Route path="/lp/social" element={<Navigate to="/" replace />} />
             

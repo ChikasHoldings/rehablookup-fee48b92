@@ -264,7 +264,6 @@ describe("seeker retirement — no account CTA left in the consumer flow", () =>
     "src/pages/SearchResults.tsx",
     "src/pages/Comparison.tsx",
     "src/pages/CenterProfile.tsx",
-    "src/pages/InsuranceVerification.tsx",
     "src/pages/PublicReviewSubmission.tsx",
     "src/pages/FAQ.tsx",
   ];

@@ -132,6 +132,21 @@
       "statusCode": 301
     },
     {
+      "source": "/lp/convert",
+      "destination": "/",
+      "statusCode": 301
+    },
+    {
+      "source": "/ads/:slug*",
+      "destination": "/",
+      "statusCode": 301
+    },
+    {
+      "source": "/insurance-verification",
+      "destination": "/insurance",
+      "statusCode": 301
+    },
+    {
       "source": "/lp/treatment",
       "destination": "/treatment-types",
       "statusCode": 301
@@ -173,12 +188,12 @@
     },
     {
       "source": "/verify-insurance",
-      "destination": "/insurance-verification",
+      "destination": "/insurance",
       "statusCode": 301
     },
     {
       "source": "/vob",
-      "destination": "/insurance-verification",
+      "destination": "/insurance",
       "statusCode": 301
     },
     {
@@ -213,6 +228,60 @@
     },
     {
       "source": "/rehab",
+      "destination": "/search-results",
+      "statusCode": 301
+    },
+    {
+      "source": "/rehab-centers",
+      "has": [{ "type": "query", "key": "q" }],
+      "destination": "/search-results",
+      "statusCode": 301
+    },
+    {
+      "source": "/rehab-centers",
+      "has": [{ "type": "query", "key": "location" }],
+      "destination": "/search-results",
+      "statusCode": 301
+    },
+    {
+      "source": "/rehab-centers",
+      "has": [{ "type": "query", "key": "browseInsurance" }],
+      "destination": "/search-results",
+      "statusCode": 301
+    },
+    {
+      "source": "/rehab-centers",
+      "has": [{ "type": "query", "key": "browseTreatment" }],
+      "destination": "/search-results",
+      "statusCode": 301
+    },
+    {
+      "source": "/rehab-centers",
+      "has": [{ "type": "query", "key": "browsePage" }],
+      "destination": "/search-results",
+      "statusCode": 301
+    },
+    {
+      "source": "/rehab-centers",
+      "has": [{ "type": "query", "key": "insurance" }],
+      "destination": "/search-results",
+      "statusCode": 301
+    },
+    {
+      "source": "/rehab-centers",
+      "has": [{ "type": "query", "key": "treatment" }],
+      "destination": "/search-results",
+      "statusCode": 301
+    },
+    {
+      "source": "/rehab-centers",
+      "has": [{ "type": "query", "key": "state" }],
+      "destination": "/search-results",
+      "statusCode": 301
+    },
+    {
+      "source": "/rehab-centers",
+      "has": [{ "type": "query", "key": "city" }],
       "destination": "/search-results",
       "statusCode": 301
     },

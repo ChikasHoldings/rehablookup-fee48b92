@@ -1,5 +1,4 @@
-import { Link } from "react-router-dom";
-import { Info, ArrowRight, ShieldCheck } from "lucide-react";
+import { Info, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // Two-letter (or short) wordmarks for known plans. Rendered in a colored
@@ -55,10 +54,6 @@ function shortInitials(name: string): string {
   return letters.slice(0, 2) || name.slice(0, 2).toUpperCase();
 }
 
-function planLink(name: string): string {
-  return `/insurance-verification?plan=${encodeURIComponent(name)}`;
-}
-
 export interface InsuranceShowcaseProps {
   insurance: string[];
   className?: string;
@@ -110,12 +105,9 @@ export function InsuranceShowcase({ insurance, className }: InsuranceShowcasePro
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold text-slate-900">{name}</p>
-                      <Link
-                        to={planLink(name)}
-                        className="mt-0.5 inline-flex items-center gap-1 text-xs font-medium text-[#1B365D] hover:underline"
-                      >
-                        Verify benefits <ArrowRight className="h-3 w-3" />
-                      </Link>
+                      <p className="mt-0.5 text-xs text-slate-500">
+                        Listed by this center
+                      </p>
                     </div>
                   </div>
                 );

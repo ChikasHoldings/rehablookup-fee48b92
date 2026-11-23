@@ -608,18 +608,18 @@ export default function Insurance() {
           <div className="mx-auto max-w-2xl text-center">
             <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-teal-500/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-teal-100 backdrop-blur-sm ring-1 ring-teal-400/25">
               <Shield className="h-3 w-3" />
-              Coverage Verification
+              Insurance Coverage
             </div>
             <h1 className="mb-2 font-display text-2xl font-bold text-white md:text-3xl lg:text-4xl">
               Insurance Coverage for Addiction Treatment
             </h1>
             <p className="text-white/80 text-sm md:text-base mb-4 max-w-xl mx-auto">
-              Most health insurance plans cover addiction treatment. Verify your benefits in minutes.
+              Most health insurance plans include some coverage for addiction treatment. Your plan and the treatment center can confirm what yours covers.
             </p>
             <Button asChild size="default" variant="secondary" className="font-semibold gap-2 shadow-lg shadow-black/20">
-              <Link to="/insurance-verification">
+              <Link to="/search-results">
                 <Shield className="h-4 w-4" />
-                Verify my insurance — free
+                Find treatment centers
               </Link>
             </Button>
           </div>
