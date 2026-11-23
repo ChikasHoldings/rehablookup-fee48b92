@@ -61,7 +61,7 @@ function buildAuthorsItemListSchema(authors: AuthorRow[]) {
     "@context": "https://schema.org",
     "@type": "ItemList",
     name: "RehabLookup Editorial Team",
-    description: "Writers, editors, and medical reviewers behind RehabLookup's guides on addiction treatment, recovery, and mental health.",
+    description: "The writers and editors behind RehabLookup's guides on addiction treatment, recovery, and mental health.",
     numberOfItems: authors.length,
     itemListElement: authors.map((a, i) => ({
       "@type": "ListItem",
@@ -150,8 +150,8 @@ export default function Authors() {
   return (
     <Layout>
       <SEO
-        title="Editorial Team & Medical Reviewers | RehabLookup"
-        description="Meet the writers, editors, and clinical reviewers behind RehabLookup's addiction-treatment guides. Every article is reviewed for clinical accuracy and adherence to current SAMHSA, NIDA, and ASAM guidance."
+        title="Editorial Team | RehabLookup"
+        description="Meet the writers and editors behind RehabLookup's addiction-treatment guides, and see how articles are sourced and which have been clinically reviewed."
         canonical="/authors"
         structuredData={schema || undefined}
         breadcrumbs={[
@@ -282,13 +282,13 @@ export default function Authors() {
                 step: "2",
                 icon: Pen,
                 title: "Draft",
-                body: "Written in plain English by the team that owns the topic. Clinical claims are tagged for medical review.",
+                body: "Written in plain English by the team that owns the topic, citing primary sources such as SAMHSA, NIDA, and NIAAA.",
               },
               {
                 step: "3",
                 icon: Stethoscope,
-                title: "Medical review",
-                body: "Any clinical content — detox, MAT, withdrawal, dual-diagnosis — is reviewed by a licensed clinician before publication.",
+                title: "Clinical review",
+                body: "We are setting up review by named, licensed clinicians. An article shows a reviewer only after a real review — until then it is marked as not yet clinically reviewed.",
               },
               {
                 step: "4",
@@ -300,7 +300,7 @@ export default function Authors() {
                 step: "5",
                 icon: BookOpen,
                 title: "Publish + maintain",
-                body: "Article goes live with the reviewer's name and date stamped. Updated when laws or clinical standards change.",
+                body: "Articles show their author and, once reviewed, the reviewer's name, credentials and review date.",
               },
             ].map((s) => (
               <li
