@@ -4,6 +4,20 @@ Append-only log. Each entry records what changed, where, how it was tested, and 
 
 ---
 
+## 2026-11-23 · Phase 1 batch 1 · deployment record
+
+* **CI on PR #89 (head `e1a6401a43`):** SEO Validators passed; Vercel preview `dpl_4dDVmV1sxriEbFCfRb33Muv27sbZ` built and deployed.
+* **Merged:** PR #89 squash-merged to `main` as `a81a79a294`. SEO Validators passed again on the push to `main`.
+* **Production:** Vercel deployment `dpl_ByWrZ5ruxRQJKUtLjqXt3zFZxfJU`, target production, **READY at 2026-11-23 03:51:30 UTC**, aliased to `rehablookup.com` and `www.rehablookup.com`.
+* **Production build log (Vercel's own build, live database):**
+  * `check-trust-claims`: 50,466 public files, 3,796 facility schema nodes, 1,109 source files, clean.
+  * `check-redirect-targets`: 219 redirects, 0 dead, 0 chained.
+  * `check-canonical-ga`: 50,461 pages, 0 canonical errors.
+  * `check-public-directory-truth`, `check-public-navigation`, `check-inquiry-routing-prerender` and `check-pro-phone-visibility` all passed.
+* **Runtime errors:** none reported for the project in the hour after deploy.
+* **Not verified — production HTTP responses.** Every request from this environment (browser UA and Googlebot UA, plus Vercel's authenticated fetch of the preview) receives the Vercel Security Checkpoint (`429`, `x-vercel-mitigated: challenge`). This is the challenge for unclassified automation, not evidence about Googlebot. **Owner action:** GSC → URL Inspection → *Test live URL* on `/locations` (expect 200, indexable), `/rehab-centers` (expect 301 → `/locations`), and one `/center/*` page (expect JSON-LD without opening hours, Psychiatry or `knowsAbout`, and a provenance notice); then resubmit `sitemap.xml`. Weekly, check Vercel observability for `googlebot` / `allow` / 200.
+* **Rollback:** Vercel → Deployments → promote `dpl_DqE67ckwyDbUsZGPT5cSatbQmTMv` (previous production, `f31fd7dbf6`), or revert `a81a79a294`. The database change is independent; see the migration header for its rollback SQL.
+
 ## 2026-11-23 · Phase 1 (Critical SEO recovery, batch 1) · code + one data migration
 
 **Owner approval (2026-11-23):** the first safe repair batch, covering structured data, medical-review claims, misleading statements, account/service messaging, crawler/visitor consistency, confirmed technical defects, validation, and SAMHSA pipeline *preparation*. **Not approved:** bulk deletion, mass redirects, publishing staged facilities, or merging `seo/content-uniqueness-audit` (open PR #88).

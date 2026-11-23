@@ -9,9 +9,9 @@
 | Item | Status |
 |---|---|
 | Current phase | **Phase 1 batch 1 implemented** (truth, schema, directory hub, guards). Phase 1 investigations complete (root cause, SAMHSA validation, removal reassessment, rendering ADR). |
-| Branch / PR | `henry/zealous-lovelace-83d834` → PR #89 (Phase 0 docs + Phase 1 commits). Merge and deploy outcome: see the last `SEO_IMPLEMENTATION_LOG.md` entry. |
+| Branch / PR | PR #89 (Phase 0 docs + Phase 1 commits) squash-merged to `main` as `a81a79a294`. |
 | Production data change | Migration `20261123000100_seo_recovery_clear_bulk_medical_review_stamps` **applied** to Supabase `mldbxpntzcjalgjmwnqa` (live immediately; backup in schema `seo_recovery_backup`). |
-| Production code | `main@f31fd7dbf6` (2026-08-19) until PR #89 deploys. Vercel firewall config unchanged since 2026-09-06. |
+| Production code | `main@a81a79a294`, Vercel `dpl_ByWrZ5ruxRQJKUtLjqXt3zFZxfJU`, READY 2026-11-23 03:51 UTC. Production HTTP not verifiable from this environment (Security Checkpoint); owner live tests pending. Vercel firewall config unchanged since 2026-09-06. |
 | Approvals received | Batch 1 (non-destructive). **Not approved:** bulk deletion, mass redirects, publishing staged SAMHSA facilities, merging `seo/content-uniqueness-audit` (PR #88). |
 
 ## Completed in Phase 1
