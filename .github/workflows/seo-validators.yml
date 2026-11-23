@@ -109,6 +109,12 @@ jobs:
       - name: Verify healthcare trust claims and facility schema truth
         run: npm run check:trust-claims
 
+      - name: Verify crawler-only HTML carries no analytics
+        run: npm run check:crawler-analytics
+
+      - name: Verify no references to undefined names (runtime crash guard)
+        run: npm run check:undefined-identifiers
+
       - name: Verify SPA <Navigate> ↔ vercel.json 301 parity
         run: npm run check:redirect-parity
 
