@@ -16,9 +16,9 @@ const BENEFITS: Benefit[] = [
   },
   {
     icon: TrendingUp,
-    title: "Verified Leads, Not Just Traffic",
+    title: "Direct Inquiries, Not Just Traffic",
     description:
-      "Our concierge team pre-qualifies every inquiry before sending it to you — so you spend time on real admissions, not tire-kickers.",
+      "Inquiries come straight from people looking at your listing, with the details they chose to share — no lead brokers in between.",
   },
   {
     icon: Shield,

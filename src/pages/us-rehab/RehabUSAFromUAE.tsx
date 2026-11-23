@@ -146,7 +146,7 @@ export default function RehabUSAFromUAE() {
           <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-5">
             {[
               { step: "1", title: "Confidential Inquiry", desc: "Complete our secure intake form. All communications are encrypted." },
-              { step: "2", title: "Facility Matching", desc: "We match you with facilities offering Arabic support and cultural accommodations." },
+              { step: "2", title: "Facility Matching", desc: "Compare facilities that list Arabic support and cultural accommodations, and confirm them with each facility." },
               { step: "3", title: "Travel Coordination", desc: "Visa documentation, private flights, and discreet airport transfers arranged." },
               { step: "4", title: "Begin Treatment", desc: "Arrive at your luxury facility and begin your personalised recovery programme." },
             ].map((item, i) => (
@@ -228,7 +228,7 @@ export default function RehabUSAFromUAE() {
           <div className="space-y-3">
             {[
               { q: "Is treatment in America confidential from UAE authorities?", a: "Absolutely. US treatment facilities operate completely independently. Records are protected by HIPAA and cannot be shared with UAE authorities, employers, or family without explicit written consent." },
-              { q: "Do US rehabs accommodate Arabic-speaking patients?", a: "Many facilities offer Arabic-speaking staff or professional translation. We match you with programmes that accommodate language, dietary (halal), and prayer requirements." },
+              { q: "Do US rehabs accommodate Arabic-speaking patients?", a: "Many facilities offer Arabic-speaking staff or professional translation. Ask each programme about language, dietary (halal), and prayer accommodations before you commit." },
               { q: "What is the cost for UAE patients?", a: "Luxury US treatment ranges from $30,000–$100,000+ per month. Executive programmes with private suites and concierge services are most popular with Gulf region patients." },
               { q: "How do I travel from Dubai to US rehab?", a: "UAE citizens apply for a US B-2 visa for medical treatment. Our team coordinates all logistics including visa documentation, private flights, and VIP airport transfers." },
               { q: "Can my family be involved in treatment?", a: "Yes. Many programmes offer family therapy via secure video conferencing across time zones. We can arrange luxury accommodation for visiting family members." },

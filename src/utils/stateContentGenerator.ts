@@ -382,7 +382,7 @@ export function generateStateTreatmentSections(
     },
     {
       heading: `Insurance Coverage for ${treatment.label} in ${stateName}`,
-      content: `${ctx.medicaidExpanded ? `${stateName} has expanded Medicaid, providing substance use treatment coverage for qualifying residents with limited income.` : `While ${stateName} has not expanded Medicaid, state-funded programs and the federal marketplace provide treatment coverage options.`} Under federal law, insurance plans must cover addiction treatment at parity with other medical conditions. Key tips for verifying your coverage: ${treatment.insuranceTips.join(". ")}. Our concierge team can help verify your specific benefits at no cost.`,
+      content: `${ctx.medicaidExpanded ? `${stateName} has expanded Medicaid, providing substance use treatment coverage for qualifying residents with limited income.` : `While ${stateName} has not expanded Medicaid, state-funded programs and the federal marketplace provide treatment coverage options.`} Under federal law, insurance plans must cover addiction treatment at parity with other medical conditions. Key tips for verifying your coverage: ${treatment.insuranceTips.join(". ")}. Your plan and the treatment center can confirm your specific benefits before admission.`,
     },
   ];
 }
