@@ -19,6 +19,13 @@ Append-only log. Each entry records what changed, where, how it was tested, and 
 * `vitest run`: 61 files, 1,103 passed. `check:undefined-identifiers` passes. `check:redirect-parity`: every SPA redirect mirrored; `check-redirect-targets`: all resolve. Lint clean on changed files.
 * Local snapshot test: both sampled "best cities" articles now render for visitors and snapshot; client redirects recorded only when the destination exists in the build.
 
+### Deployment record
+* **Merged:** PR #91, squash `49bdce4bca`. SEO Validators passed on the final head. The final preview (`dpl_8CtGgLsLHUxGiqPp5pysamj8JyEJ`) wrote 2,183/2,754 snapshots and mirrored 59 client-side redirects, and every build guard passed (retired-concierge scan of 100,935 artifacts, trust claims, analytics, redirect targets, internal links).
+* **Production:** `dpl_J3w58ZCDVeqB6M5Cn6GPJvWHCVer` READY at 2026-11-23 20:16 UTC (aliases rehablookup.com and www). Build log: 2,175/2,754 snapshots via Playwright's Chromium; all 150 state articles snapshot (0 kept); **59 client-side redirects mirrored as 301s for crawlers**. Vercel runtime errors (last hour): none.
+* **Edge function:** `create-checkout-session` deployed from `main` by workflow run 45253901305 (success). The live version 21 contains the `PRODUCT_RETIRED` guard.
+* **Not verified from here:** live HTTP responses on rehablookup.com. This environment is challenged by the Vercel Security Checkpoint, so the owner's URL Inspection is the production check, for example `/drug-rehabilitation-ohio` with a Googlebot UA should return 301 → `/treatment-types/drug-addiction/ohio`.
+* **Observation:** the "SPA noindex vs indexable generator page" count varies between builds (498 / 511 / 519). Some treatment × state pages decide indexability from live data at render time. Those routes keep their generator page, so the variation cannot regress anything. It is part of the noindex alignment decision.
+
 ### Known issues / not done
 * **International acceptance on listings** stays locked behind the retired add-on (UI + a DB trigger), so no listing can mark "accepts international patients". Unlocking it for every claimed listing is a schema change for the owner to approve.
 * Fixed in a follow-up commit: `/drug-rehabilitation-{state}` URLs (3 are in `sitemap-extras.xml`) redirected visitors to `/treatment-types/drug-addiction-treatment/{state}`, which has no page. They now go to `/treatment-types/drug-addiction/{state}` (which exists for every state), so the crawler mirror picks them up too.
