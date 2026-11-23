@@ -4,6 +4,29 @@ Append-only log. Each entry records what changed, where, how it was tested, and 
 
 ---
 
+## 2026-11-23 · Phase 1 batch 3 (remaining problems) · code + one edge function
+
+**Owner request:** "continue fixing the remaining problems" — the items left open after batch 2.
+
+### Commits (branch `henry/zealous-lovelace-83d834`, PR #91)
+| Commit | What |
+|---|---|
+| `b499d7c072` | 14 `/us-rehab` pages: removed claims that RehabLookup runs intake forms, matches patients, coordinates visas/flights/airport transfers, verifies insurance, negotiates with facilities or pre-vets its network. The step flows now say: define your needs → compare programs → contact the facility (admission letter, arrival; you book travel) → begin treatment. |
+| `dfdf306ef9` | **Concierge Partner add-on retired in the provider portal.** It was still sold at $1,000/month with "advisor-matched introductions" from a service that no longer exists; 0 facilities ever held it, 0 introductions were ever made, 0 active subscriptions of any kind. `/provider/marketing/concierge` now explains the retirement; hub cards, dashboard tile, mobile nav, plan table, listing-editor upsell, Help and Knowledge Base no longer offer it; `create-checkout-session` returns 410 `PRODUCT_RETIRED` for `concierge`. ROI widget "Verified Leads" → "Direct Inquiries". |
+| `a4b9406783` | Visitors and crawlers now land on the same page: (1) the 50 "best cities" state articles — the app used a different slug from the prerendered page/sitemap; aligned, old app slug 301s; (2) 12 dead-end or duplicate routes 301 (edge + app) to their true equivalents (`/*-rehab-centers` → hub, `/near-me` → `/rehab-near-me`, 3 `/treatment-types` aliases, NYC `new-york` → `new-york-city`); (3) routes whose React page redirects visitors client-side are mirrored as 301s for crawlers via a build-generated `crawler-redirects.ts`, and removed from the built sitemaps. |
+
+### Validation
+* `vitest run`: 61 files, 1,103 passed. `check:undefined-identifiers` passes. `check:redirect-parity`: every SPA redirect mirrored; `check-redirect-targets`: all resolve. Lint clean on changed files.
+* Local snapshot test: both sampled "best cities" articles now render for visitors and snapshot; client redirects recorded only when the destination exists in the build.
+
+### Known issues / not done
+* **International acceptance on listings** stays locked behind the retired add-on (UI + a DB trigger), so no listing can mark "accepts international patients". Unlocking it for every claimed listing is a schema change for the owner to approve.
+* Fixed in a follow-up commit: `/drug-rehabilitation-{state}` URLs (3 are in `sitemap-extras.xml`) redirected visitors to `/treatment-types/drug-addiction-treatment/{state}`, which has no page. They now go to `/treatment-types/drug-addiction/{state}` (which exists for every state), so the crawler mirror picks them up too.
+* 511 routes the app marks noindex still serve indexable generator HTML to crawlers; aligning them is part of the removal decisions.
+* Vercel Firewall AI Bots setting: owner action.
+
+---
+
 ## 2026-11-23 · Phase 1 batch 2 · deployment record
 
 * **Final preview (head `603daff1d8`):** build green in 21 min. `[crawler-snapshots] 2133/2754 snapshots written in 908s` — home 1, state hubs 50/50, **city hubs 484/485**, county hubs 438/438, provider guides 254/254, insurance hubs 17/17, government-payer state pages 150/150, resources 109/114, state articles 100/150, content pages 147/169, treatment types 383/926. Kept on generator HTML: 511 the app marks noindex, 59 that 404 for visitors, ~30 the app redirects. Every guard passed on the snapshot output (`check:directory-public-shell`, `check:no-fake-inventory`, `check:trust-claims`, `check:crawler-analytics` on 100,923 files, `check:canonical-ga` 0 errors on 50,461 pages, 0 dead redirects).

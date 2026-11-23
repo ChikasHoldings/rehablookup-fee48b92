@@ -19,11 +19,15 @@ import NotFound from "@/pages/NotFound";
  * to their canonical equivalents (/treatment-types/alcohol-rehabilitation/maryland)
  * to eliminate "Duplicate without user-selected canonical" GSC errors.
  */
-const LEGACY_STATE_SUFFIX_REDIRECTS: Array<{ prefix: string; canonical: string }> = [
+// `stateBase` is used when the state-level pages live under a different path
+// than the national hub. Drug addiction: the hub is
+// /treatment-types/drug-addiction-treatment but the state pages are
+// /treatment-types/drug-addiction/{state}; /…-treatment/{state} has no page.
+const LEGACY_STATE_SUFFIX_REDIRECTS: Array<{ prefix: string; canonical: string; stateBase?: string }> = [
   { prefix: "/alcohol-rehabilitation-", canonical: "/treatment-types/alcohol-rehabilitation" },
   { prefix: "/inpatient-rehabilitation-", canonical: "/treatment-types/residential-inpatient" },
   { prefix: "/outpatient-rehabilitation-", canonical: "/treatment-types/outpatient-programs" },
-  { prefix: "/drug-rehabilitation-", canonical: "/treatment-types/drug-addiction-treatment" },
+  { prefix: "/drug-rehabilitation-", canonical: "/treatment-types/drug-addiction-treatment", stateBase: "/treatment-types/drug-addiction" },
   { prefix: "/detox-programs-", canonical: "/treatment-types/detox-programs" },
   { prefix: "/dual-diagnosis-treatment-", canonical: "/treatment-types/dual-diagnosis-treatment" },
 ];
@@ -170,11 +174,11 @@ export function SmartCatchAll() {
   // 2) Legacy hyphenated state-suffix slugs → canonical /treatment-types/* path.
   // Eliminates "Duplicate without user-selected canonical" for legacy URLs like
   // /alcohol-rehabilitation-maryland, /inpatient-rehabilitation-rhode-island, etc.
-  for (const { prefix, canonical } of LEGACY_STATE_SUFFIX_REDIRECTS) {
+  for (const { prefix, canonical, stateBase } of LEGACY_STATE_SUFFIX_REDIRECTS) {
     if (pathname.startsWith(prefix)) {
       const stateSlug = pathname.slice(prefix.length).replace(/\/.*$/, "");
       if (STATE_SLUGS.has(stateSlug)) {
-        return <Navigate to={`${canonical}/${stateSlug}`} replace />;
+        return <Navigate to={`${stateBase ?? canonical}/${stateSlug}`} replace />;
       }
       return <Navigate to={canonical} replace />;
     }
