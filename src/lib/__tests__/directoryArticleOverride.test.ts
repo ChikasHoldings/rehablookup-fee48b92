@@ -167,23 +167,32 @@ describe("applyDirectoryArticleOverride — legacy articles are rewritten", () =
     expect(text).not.toMatch(/24\/7/);
   });
 
-  it("preserves the april article's legitimate historical facts", () => {
+  it("rewrites the april article as a correction of its traffic claims", () => {
     const overridden = applyDirectoryArticleOverride(LIVE_APRIL_ANALYTICS_ARTICLE)!;
     const text = contentText(overridden.content as DirectoryArticleContent[]);
-    // Title and the already-clean metadata pass straight through.
-    expect(overridden.title).toBe(LIVE_APRIL_ANALYTICS_ARTICLE.title);
-    expect(overridden.meta_description).toBe(LIVE_APRIL_ANALYTICS_ARTICLE.meta_description);
-    expect(overridden.excerpt).toBe(LIVE_APRIL_ANALYTICS_ARTICLE.excerpt);
-    // The analytics themselves are facts and must survive verbatim.
-    for (const fact of [
-      "**65,000 total users**",
-      "**279,000 tracked events**",
-      "1,520%",
-      "**1,002 active users in the last 30 minutes**",
-      "SEO-first content engine",
-    ]) {
-      expect(text).toContain(fact);
-    }
+    // The stored headline states the 65,000-user figure as fact: overridden.
+    expect(overridden.title).not.toBe(LIVE_APRIL_ANALYTICS_ARTICLE.title);
+    expect(String(overridden.title)).toMatch(/correction/i);
+    expect(String(overridden.meta_description).length).toBeLessThanOrEqual(160);
+    // The figures may only appear as what was wrongly reported, never as fact.
+    expect(text).not.toContain("**65,000 total users**");
+    expect(text).not.toMatch(/thousand families are using/i);
+    expect(text).toMatch(/automated traffic/i);
+    expect(text).toMatch(/crawlers/i);
+    // No unsupported trust claims.
+    expect(text).not.toMatch(/no pay-to-play/i);
+    expect(text).not.toMatch(/\bverified\b/i);
+  });
+
+  it("drops the CEO article's unsupported traffic and verification claims", () => {
+    const text = contentText(
+      applyDirectoryArticleOverride(LIVE_CEO_SCALING_ARTICLE)!
+        .content as DirectoryArticleContent[],
+    );
+    expect(text).not.toMatch(/65,000/);
+    expect(text).not.toMatch(/1,000\+ concurrent/);
+    expect(text).not.toMatch(/no pay-to-play/i);
+    expect(text).not.toMatch(/\bverified\b/i);
   });
 
   it("rewrites the CEO article's directory-contradicting quote", () => {
@@ -274,7 +283,7 @@ describe("static generator (crawler path) applies the override", () => {
     expect(head).not.toMatch(/placement network|advisor team|concierge/i);
     // og:description / twitter:description / meta description all derive from
     // the overridden meta_description.
-    expect(head).toContain("verified providers, transparent facility data");
+    expect(head).toContain("clearly sourced listings, transparent facility data");
   });
 
   it("leaves an unrelated article's content intact through the renderer", () => {
