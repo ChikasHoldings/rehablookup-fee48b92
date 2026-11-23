@@ -232,7 +232,7 @@ function renderPage({ nm, state }) {
       `Browse and compare licensed ${state.name} treatment providers, then contact them directly.`,
     )}
 
-    <p class="small"><a href="/rehab-centers">Browse All States</a> &middot; <a href="/resources">Recovery Resources</a> &middot; <a href="/">Home</a></p>
+    <p class="small"><a href="/locations">Browse All States</a> &middot; <a href="/resources">Recovery Resources</a> &middot; <a href="/">Home</a></p>
   </main>
   ${SHARED_FOOTER_HTML}
 </body>

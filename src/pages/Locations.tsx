@@ -132,7 +132,7 @@ const Locations = () => {
     <Layout>
       <SEO
         title="Find Rehab Centers by Location | All 50 States & Major Cities"
-        description="Browse drug and alcohol treatment centers across all 50 US states and major cities. Find verified rehab facilities near you with our comprehensive location directory."
+        description="Browse drug and alcohol treatment centers across all 50 US states and major cities. Find rehab facility listings near you with our location directory."
         canonical="/locations"
         structuredData={structuredData}
         breadcrumbs={[
@@ -171,7 +171,7 @@ const Locations = () => {
               Find Rehab Centers by Location
             </h1>
             <p className="mx-auto mt-2 text-sm md:text-base text-white/80 max-w-2xl">
-              Verified treatment facilities across all 50 US states and major cities.
+              Treatment facility listings across all 50 US states and major cities.
             </p>
 
             <div className="mx-auto mt-4 max-w-lg">
@@ -198,7 +198,7 @@ const Locations = () => {
             <div className="mt-4 grid grid-cols-3 gap-2 max-w-2xl mx-auto">
               <LocationStatTile size="sm" label="States" value="50" icon={Globe} />
               <LocationStatTile size="sm" label="Cities" value="1,000+" icon={MapPin} />
-              <LocationStatTile size="sm" label="Facilities" value="Verified" icon={Shield} />
+              <LocationStatTile size="sm" label="Source" value="SAMHSA" icon={Shield} />
             </div>
           </div>
         </div>

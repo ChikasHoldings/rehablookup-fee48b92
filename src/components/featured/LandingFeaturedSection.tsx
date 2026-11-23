@@ -95,11 +95,13 @@ export function LandingFeaturedSection({
   // When falling back to organic top-rated, relabel so we don't imply
   // paid placement. Caller-supplied title still wins.
   const defaultTitle = isFallback
-    ? "Top-Rated Treatment Facilities"
+    ? "Treatment Facilities"
     : "Featured Treatment Facilities";
+  // No ranking or verification claim: fallback rows are not rated, and
+  // listings are not independently verified (src/lib/seo/facilityTruth.mjs).
   const defaultSubtitle = isFallback
-    ? "Verified, accredited facilities ready to help"
-    : "Verified, accredited facilities ready to help";
+    ? "Facility listings in this area"
+    : "Sponsored listings — contact facilities directly to confirm details";
 
   return (
     <FeaturedScroller

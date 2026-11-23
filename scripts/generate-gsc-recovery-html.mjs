@@ -282,7 +282,7 @@ function buildTreatmentType(urlPath, parts) {
   if (!stateSlug) {
     return {
       metaTitle: `${typeName} Programs | RehabLookup`,
-      metaDescription: `Compare ${typeName.toLowerCase()} programs across the US. Find accredited treatment centers, verify insurance, and start recovery.`,
+      metaDescription: `Compare ${typeName.toLowerCase()} programs across the US. Find treatment centers, verify insurance, and start recovery.`,
       h1: `${typeName} Programs`,
       intro: `Explore ${typeName.toLowerCase()} programs across the United States. RehabLookup lists accredited facilities, treatment approaches, and insurance acceptance so you can choose the right level of care.`,
       breadcrumbs: [{ name: "Home", url: "/" }, { name: "Treatment Types", url: "/treatment-types" }, { name: typeName, url: urlPath }],
@@ -301,9 +301,9 @@ function buildTreatmentType(urlPath, parts) {
   const locale = city ? `${city}, ${state}` : state;
   return {
     metaTitle: `${typeName} in ${locale} | RehabLookup`,
-    metaDescription: `Find ${typeName.toLowerCase()} programs in ${locale}. Compare accredited centers, verify insurance, and start treatment.`,
+    metaDescription: `Find ${typeName.toLowerCase()} programs in ${locale}. Compare center listings and contact programs directly.`,
     h1: `${typeName} in ${locale}`,
-    intro: `Looking for ${typeName.toLowerCase()} in ${locale}? RehabLookup connects you with accredited facilities offering evidence-based care, insurance verification, and tailored treatment plans.`,
+    intro: `Looking for ${typeName.toLowerCase()} in ${locale}? RehabLookup lists facilities offering evidence-based care, insurance verification, and tailored treatment plans.`,
     breadcrumbs: [
       { name: "Home", url: "/" }, { name: "Treatment Types", url: "/treatment-types" },
       { name: typeName, url: `/treatment-types/${typeSlug}` },
@@ -338,7 +338,7 @@ function buildNearMe(urlPath, parts) {
   const locale = county ? `${county} County, ${state}` : city ? `${city}, ${state}` : state;
   return {
     metaTitle: `${label} Near Me in ${locale} | RehabLookup`,
-    metaDescription: `Find ${label.toLowerCase()} programs in ${locale}. Compare accredited facilities, verify insurance, and start treatment today.`,
+    metaDescription: `Find ${label.toLowerCase()} programs in ${locale}. Compare facility listings, verify insurance, and start treatment today.`,
     h1: `${label} in ${locale}`,
     intro: `Find ${label.toLowerCase()} programs in ${locale}. RehabLookup helps you compare local facilities, check insurance acceptance, and connect with admissions teams the same day.`,
     breadcrumbs: [
@@ -420,14 +420,14 @@ function buildRehabCenters(urlPath, parts) {
   return {
     metaTitle: `${titlePrefix} | RehabLookup`,
     metaDescription: care
-      ? `Find ${care.toLowerCase()} programs in ${locale}. Compare accredited facilities and verify insurance.`
-      : `Find accredited rehab centers in ${locale}. Compare programs, verify insurance, and start treatment.`,
+      ? `Find ${care.toLowerCase()} programs in ${locale}. Compare facility listings and verify insurance.`
+      : `Find rehab centers in ${locale}. Compare programs, verify insurance, and start treatment.`,
     h1: titlePrefix,
     intro: care
       ? `Looking for ${care.toLowerCase()} in ${locale}? Browse accredited facilities, compare clinical approaches, and verify insurance coverage in one place.`
       : `Browse accredited rehab centers in ${locale}. Compare inpatient, outpatient, detox, and dual diagnosis programs side by side.`,
     breadcrumbs: [
-      { name: "Home", url: "/" }, { name: "Rehab Centers", url: "/rehab-centers" },
+      { name: "Home", url: "/" }, { name: "Rehab Centers", url: "/locations" },
       { name: state, url: `/rehab-centers/${stateSlug}` },
       ...(county ? [{ name: `${county} County`, url: `/rehab-centers/${stateSlug}/county/${parts[3]}` }] : city ? [{ name: city, url: `/rehab-centers/${stateSlug}/${parts[2]}` }] : []),
       ...(care ? [{ name: care, url: urlPath }] : []),
@@ -463,7 +463,7 @@ function buildLocalizedRehab(urlPath, slug) {
   const locale = city ? `${city}, ${state}` : state;
   return {
     metaTitle: `${topicLabel} in ${locale} | RehabLookup`,
-    metaDescription: `Find ${topicLabel.toLowerCase()} programs in ${locale}. Compare accredited centers, verify insurance, and start care.`,
+    metaDescription: `Find ${topicLabel.toLowerCase()} programs in ${locale}. Compare center listings and contact programs directly.`,
     h1: `${topicLabel} in ${locale}`,
     intro: `Looking for ${topicLabel.toLowerCase()} in ${locale}? RehabLookup connects you with accredited treatment programs, insurance verification, and same-day admissions support.`,
     breadcrumbs: [
@@ -500,7 +500,7 @@ function buildStateRehabilitation(urlPath, slug) {
     : `${titleCase(typeRaw)} Rehabilitation`;
   return {
     metaTitle: `${typeLabel} in ${state} | RehabLookup`,
-    metaDescription: `Find ${typeLabel.toLowerCase()} programs in ${state}. Compare accredited facilities, verify insurance, and start treatment.`,
+    metaDescription: `Find ${typeLabel.toLowerCase()} programs in ${state}. Compare facility listings, verify insurance, and start treatment.`,
     h1: `${typeLabel} in ${state}`,
     intro: `Find ${typeLabel.toLowerCase()} programs in ${state}. RehabLookup lists accredited facilities, insurance acceptance, and admissions contacts so you can take the next step quickly.`,
     breadcrumbs: [
@@ -558,9 +558,9 @@ function buildCityRehab(urlPath, slug) {
   const typeLabel = titleCase(typeSlug.replace(/-/g, " "));
   return {
     metaTitle: `${typeLabel} in ${city} | RehabLookup`,
-    metaDescription: `Find ${typeLabel.toLowerCase()} programs in ${city}. Compare accredited facilities, verify insurance, and start treatment.`,
+    metaDescription: `Find ${typeLabel.toLowerCase()} programs in ${city}. Compare facility listings, verify insurance, and start treatment.`,
     h1: `${typeLabel} in ${city}`,
-    intro: `Find ${typeLabel.toLowerCase()} programs in ${city}. Compare accredited facilities, check insurance acceptance, and connect with admissions teams the same day.`,
+    intro: `Find ${typeLabel.toLowerCase()} programs in ${city}. Compare facility listings, check insurance acceptance, and connect with admissions teams the same day.`,
     breadcrumbs: (() => {
       // Map typeSlug to a real canonical hub route; if none, omit middle crumb.
       const HUB_ROUTE = {
@@ -626,7 +626,7 @@ function buildBestRehab(urlPath, slug) {
     metaDescription: `Compare the best accredited rehab centers in ${state}. Verified reviews, insurance acceptance, and program details.`,
     h1: `Best Rehab Centers in ${state}`,
     intro: `Compare top-rated, accredited rehab centers in ${state}. RehabLookup ranks facilities by accreditation, verified reviews, insurance acceptance, and clinical specialties.`,
-    breadcrumbs: [{ name: "Home", url: "/" }, { name: "Rehab Centers", url: "/rehab-centers" }, { name: state, url: `/rehab-centers/${stateSlug}` }, { name: `Best in ${state}`, url: urlPath }],
+    breadcrumbs: [{ name: "Home", url: "/" }, { name: "Rehab Centers", url: "/locations" }, { name: state, url: `/rehab-centers/${stateSlug}` }, { name: `Best in ${state}`, url: urlPath }],
     sections: [
       { h: `What Makes a Top Rehab Center in ${state}`, body: [
         `Top-rated rehab centers in ${state} share common attributes: state licensure, third-party accreditation (Joint Commission or CARF), board-certified clinical staff, evidence-based therapies, and structured aftercare planning.`,

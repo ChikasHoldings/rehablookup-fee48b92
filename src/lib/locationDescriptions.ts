@@ -63,7 +63,7 @@ export function buildStateOverview(stateSlug: string, stateName: string, facilit
 function stateOverviewVariantA(name: string, s: StateAddictionStats, count: number): string {
   return [
     `${name} runs an addiction-treatment landscape shaped by its ${s.regionalContext} geography and a ${s.populationMillions.toFixed(s.populationMillions < 5 ? 2 : 1)}-million-resident population. The state's most recent overdose-mortality figure sits at roughly ${s.overdoseDeathRate.toFixed(1)} deaths per 100,000 residents, with opioids involved in about ${s.opioidShare}% of those losses.`,
-    `Approximately ${s.samhsaFacilities.toLocaleString()} licensed treatment facilities operate across ${name} according to SAMHSA's national survey. ${count > 0 ? `RehabLookup currently tracks ${count.toLocaleString()} verified listings statewide.` : ""} ${s.medicaidExpanded ? `${name} expanded Medicaid under the ACA, broadening coverage for adults seeking residential and outpatient care.` : `${name} has not adopted ACA Medicaid expansion, which keeps a wider coverage gap for working-age adults than neighboring states.`}`,
+    `Approximately ${s.samhsaFacilities.toLocaleString()} licensed treatment facilities operate across ${name} according to SAMHSA's national survey. ${count > 0 ? `RehabLookup currently lists ${count.toLocaleString()} facilities statewide.` : ""} ${s.medicaidExpanded ? `${name} expanded Medicaid under the ACA, broadening coverage for adults seeking residential and outpatient care.` : `${name} has not adopted ACA Medicaid expansion, which keeps a wider coverage gap for working-age adults than neighboring states.`}`,
     `${s.signatureNote}`,
   ].join(" ");
 }
@@ -72,7 +72,7 @@ function stateOverviewVariantB(name: string, s: StateAddictionStats, count: numb
   const metros = listAnd([s.primaryMetro, ...s.secondaryMetros]);
   return [
     `Treatment options in ${name} concentrate in ${metros}, though SAMHSA's tally of around ${s.samhsaFacilities.toLocaleString()} licensed providers also reaches smaller communities across the ${s.regionalContext}.`,
-    `CDC data place ${name}'s drug-overdose death rate near ${s.overdoseDeathRate.toFixed(1)} per 100,000 — roughly ${s.opioidShare}% of those losses involve opioids. ${count > 0 ? `${count.toLocaleString()} verified facility listings in the RehabLookup directory currently serve ${name} residents.` : ""}`,
+    `CDC data place ${name}'s drug-overdose death rate near ${s.overdoseDeathRate.toFixed(1)} per 100,000 — roughly ${s.opioidShare}% of those losses involve opioids. ${count > 0 ? `The RehabLookup directory currently lists ${count.toLocaleString()} facilities in ${name}.` : ""}`,
     `${s.medicaidExpanded ? "Medicaid expansion" : "The absence of ACA Medicaid expansion"} continues to shape who can afford detox, residential, and long-term care here. ${s.signatureNote}`,
   ].join(" ");
 }
@@ -115,7 +115,7 @@ function cityOverviewVariantA(
     isPrimary
       ? `As the state's largest metro, ${city} carries the deepest concentration of inpatient and outpatient providers — both private and publicly-funded.`
       : `Seekers in ${city} commonly compare local options against larger ${stateName} metros like ${s.primaryMetro}; many treatment programs operate across both.`,
-    `Statewide overdose-mortality data (about ${s.overdoseDeathRate.toFixed(1)} per 100,000, ${s.opioidShare}% opioid-related) inform how local programs triage detox vs longer-term residential care. ${count > 0 ? `RehabLookup currently lists ${count.toLocaleString()} verified provider${count === 1 ? "" : "s"} in or near ${city}.` : `RehabLookup is actively expanding ${city} coverage; the directory below blends nearby verified listings.`}`,
+    `Statewide overdose-mortality data (about ${s.overdoseDeathRate.toFixed(1)} per 100,000, ${s.opioidShare}% opioid-related) inform how local programs triage detox vs longer-term residential care. ${count > 0 ? `RehabLookup currently lists ${count.toLocaleString()} provider${count === 1 ? "" : "s"} in or near ${city}.` : `RehabLookup is actively expanding ${city} coverage; the directory below blends nearby verified listings.`}`,
   ].join(" ");
 }
 
@@ -126,7 +126,7 @@ function cityOverviewVariantB(
   return [
     `Addiction-treatment options in ${city}, ${stateName} reflect both the ${s.regionalContext} regional pattern and the broader state context: ${s.signatureNote}`,
     `${popStr ? `${city}'s ${popStr} residents` : `${city} residents`} compare local detox, inpatient, IOP, PHP, and outpatient programs alongside larger metros like ${listAnd(s.secondaryMetros.length > 0 ? s.secondaryMetros : [s.primaryMetro])}.`,
-    `${count > 0 ? `${count.toLocaleString()} verified treatment facilit${count === 1 ? "y is" : "ies are"} currently listed in or near ${city}.` : `The directory below surfaces verified facilities near ${city}.`}`,
+    `${count > 0 ? `${count.toLocaleString()} treatment facilit${count === 1 ? "y is" : "ies are"} currently listed in or near ${city}.` : `The directory below shows facility listings near ${city}.`}`,
   ].join(" ");
 }
 
@@ -137,7 +137,7 @@ function cityOverviewVariantC(
   return [
     `Families researching addiction care in ${city}, ${stateName} typically weigh proximity (a roughly ${popStr ? `${popStr}-resident ` : ""}city core plus the ${s.primaryMetro} regional system), insurance coverage (${s.medicaidExpanded ? "Medicaid expansion is in effect statewide" : "ACA Medicaid expansion is not in effect"}), and program model (medication-assisted, abstinence-based, dual-diagnosis).`,
     `Statewide drivers — about ${s.overdoseDeathRate.toFixed(1)} drug-overdose deaths per 100,000 residents, with opioids implicated in roughly ${s.opioidShare}% — shape how providers across ${stateName} structure detox windows, MAT availability, and aftercare planning.`,
-    `${count > 0 ? `RehabLookup currently surfaces ${count.toLocaleString()} verified ${city} provider${count === 1 ? "" : "s"}.` : "Verified listings near " + city + " appear below."}`,
+    `${count > 0 ? `RehabLookup currently lists ${count.toLocaleString()} ${city} provider${count === 1 ? "" : "s"}.` : "Listings near " + city + " appear below."}`,
   ].join(" ");
 }
 
@@ -148,7 +148,7 @@ function cityOverviewVariantD(
   return [
     `${city} is one of the addiction-treatment hubs serving ${stateName}'s ${s.regionalContext} corridor.`,
     `Local providers operate within a state framework where SAMHSA tracks roughly ${s.samhsaFacilities.toLocaleString()} licensed facilities and CDC data show a recent overdose-death rate near ${s.overdoseDeathRate.toFixed(1)} per 100,000 residents. ${s.signatureNote}`,
-    `${count > 0 ? `${count.toLocaleString()} of those facilit${count === 1 ? "y is" : "ies are"} verified in the RehabLookup directory for ${city}.` : "Use the directory below to compare verified options near " + city + "."}`,
+    `${count > 0 ? `${count.toLocaleString()} of those facilit${count === 1 ? "y is" : "ies are"} listed in the RehabLookup directory for ${city}.` : "Use the directory below to compare listings near " + city + "."}`,
   ].join(" ");
 }
 
@@ -177,7 +177,7 @@ function countyOverviewVariantA(
   return [
     `${county} sits within ${stateName}'s ${s.regionalContext} treatment landscape.`,
     `Across the state, SAMHSA lists about ${s.samhsaFacilities.toLocaleString()} licensed providers and CDC data show a recent overdose-mortality rate near ${s.overdoseDeathRate.toFixed(1)} per 100,000 residents, with ${s.opioidShare}% of those losses opioid-related. ${s.medicaidExpanded ? "Medicaid expansion is in effect statewide, broadening adult coverage." : "Medicaid has not been expanded statewide, leaving wider coverage gaps."}`,
-    `${count > 0 ? `${count.toLocaleString()} verified provider${count === 1 ? "" : "s"} currently serve ${county} via the RehabLookup directory.` : `The directory below blends verified facilities serving ${county} from across ${stateName}.`}`,
+    `${count > 0 ? `The RehabLookup directory currently lists ${count.toLocaleString()} provider${count === 1 ? "" : "s"} in ${county}.` : `The directory below shows facility listings from across ${stateName}.`}`,
   ].join(" ");
 }
 
@@ -187,7 +187,7 @@ function countyOverviewVariantB(
   return [
     `${s.signatureNote}`,
     `${county} residents typically compare local detox, residential, IOP, PHP, and outpatient options against the broader ${stateName} system — anchored in ${s.primaryMetro} and serviced by ${s.samhsaFacilities.toLocaleString()}+ licensed facilities statewide.`,
-    `${count > 0 ? `${count.toLocaleString()} verified ${county} listing${count === 1 ? "" : "s"} are currently tracked.` : `Verified options near ${county} appear below.`}`,
+    `${count > 0 ? `${count.toLocaleString()} ${county} listing${count === 1 ? "" : "s"} are currently in the directory.` : `Listings near ${county} appear below.`}`,
   ].join(" ");
 }
 
@@ -196,6 +196,6 @@ function countyOverviewVariantC(
 ): string {
   return [
     `Treatment access in ${county} reflects ${stateName}'s broader pattern: about ${s.overdoseDeathRate.toFixed(1)} drug-overdose deaths per 100,000 residents (CDC), an estimated ${s.samhsaFacilities.toLocaleString()} licensed facilities, and ${s.medicaidExpanded ? "ACA Medicaid expansion in effect" : "no ACA Medicaid expansion"}.`,
-    `${count > 0 ? `RehabLookup currently surfaces ${count.toLocaleString()} verified provider${count === 1 ? "" : "s"} serving ${county}.` : `Use the directory below to compare facility listings near ${county}.`} ${s.signatureNote}`,
+    `${count > 0 ? `RehabLookup currently lists ${count.toLocaleString()} provider${count === 1 ? "" : "s"} in ${county}.` : `Use the directory below to compare facility listings near ${county}.`} ${s.signatureNote}`,
   ].join(" ");
 }

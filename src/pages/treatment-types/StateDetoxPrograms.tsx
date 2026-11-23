@@ -81,7 +81,7 @@ const StateDetoxPrograms = () => {
     <Layout>
       <SEO
         title={`Detox Centers in ${stateName} (${abbreviation}) | Medical Detox Programs`}
-        description={`Find accredited medical detox centers in ${stateName}. Safe withdrawal from alcohol, opioids & drugs with 24/7 care. Insurance accepted. ${cities.length}+ cities.`}
+        description={`Find medical detox centers in ${stateName}. Safe withdrawal from alcohol, opioids & drugs with 24/7 care. Insurance accepted. ${cities.length}+ cities.`}
         canonical={`/treatment-types/detox-programs/${stateSlug}`}
         structuredData={structuredData}
         breadcrumbs={[
@@ -255,7 +255,7 @@ const StateDetoxPrograms = () => {
           <Building2 className="mx-auto h-12 w-12 text-accent mb-4" />
           <h2 className="text-2xl font-bold text-primary-foreground md:text-3xl">Start Your Recovery in {stateName} Today</h2>
           <p className="mt-3 text-primary-foreground/85 max-w-2xl mx-auto">
-            Connect with a licensed {stateName} detox center. Most facilities offer same-day assessments and free insurance verification.
+            Connect with a licensed {stateName} detox center. Ask each facility about assessment wait times and how it checks your insurance benefits.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Button asChild size="lg" variant="secondary"><Link to="/rehab-centers"><Search className="mr-2 h-4 w-4" />Find Treatment</Link></Button>

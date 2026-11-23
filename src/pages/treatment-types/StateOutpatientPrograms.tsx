@@ -79,7 +79,7 @@ const StateOutpatientPrograms = () => {
     <Layout>
       <SEO
         title={`Outpatient Rehab in ${stateName} (${abbreviation}) | IOP & PHP Programs`}
-        description={`Find accredited outpatient addiction treatment in ${stateName}. IOP, PHP, and flexible programs. Keep working while in recovery. Insurance accepted.`}
+        description={`Find outpatient addiction treatment in ${stateName}. IOP, PHP, and flexible programs. Keep working while in recovery. Insurance accepted.`}
         canonical={`/treatment-types/outpatient-programs/${stateSlug}`}
         structuredData={structuredData}
         breadcrumbs={[

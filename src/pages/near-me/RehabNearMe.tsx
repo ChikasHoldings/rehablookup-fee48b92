@@ -50,7 +50,7 @@ export default function RehabNearMe() {
     <Layout>
       <SEO
         title={`Rehab Near Me ${stateData ? `in ${stateData.state}` : ""} | Find Treatment Centers`}
-        description={`Find rehabilitation centers near you${stateData ? ` in ${stateData.state}` : ""}. Compare ${facilities.length > 0 ? facilities.length + "+" : ""} treatment facilities. Free insurance verification.`}
+        description={`Find rehabilitation centers near you${stateData ? ` in ${stateData.state}` : ""}. Compare ${facilities.length > 0 ? facilities.length + "+" : ""} treatment facilities. Confirm coverage with your plan.`}
         canonical={stateSlug ? `/rehab-near-me/${stateSlug}` : "/rehab-near-me"}
         keywords={[
           "rehab near me",

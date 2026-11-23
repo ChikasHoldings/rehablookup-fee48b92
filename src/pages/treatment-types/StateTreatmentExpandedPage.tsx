@@ -130,7 +130,7 @@ const StateTreatmentExpandedPage = ({ treatmentKey }: StateTreatmentExpandedPage
       "@context": "https://schema.org",
       "@type": "MedicalWebPage",
       name: `${config.label} Centers in ${stateName}`,
-      description: `Find accredited ${config.label.toLowerCase()} centers in ${stateName}. Compare programs, verify insurance coverage, and start treatment.`,
+      description: `Find ${config.label.toLowerCase()} centers in ${stateName}. Compare programs, verify insurance coverage, and start treatment.`,
       url: `https://rehablookup.com/treatment-types/${config.slug}/${stateSlug}`,
       specialty: "Addiction Medicine",
       lastReviewed: new Date().toISOString().split("T")[0],
@@ -154,7 +154,7 @@ const StateTreatmentExpandedPage = ({ treatmentKey }: StateTreatmentExpandedPage
     <Layout>
       <SEO
         title={`${config.label} Centers in ${stateName} (${abbreviation}) | Find Treatment`}
-        description={`Find accredited ${config.label.toLowerCase()} in ${stateName}. Compare verified programs, check insurance, and contact the facilities that fit. ${cities.length}+ cities covered.`}
+        description={`Find ${config.label.toLowerCase()} in ${stateName}. Compare verified programs, check insurance, and contact the facilities that fit. ${cities.length}+ cities covered.`}
         canonical={`/treatment-types/${config.slug}/${stateSlug}`}
         // Thin near-duplicate of /rehab-centers/:state — Google was choosing
         // one as canonical anyway. Keep the page reachable for users (linked

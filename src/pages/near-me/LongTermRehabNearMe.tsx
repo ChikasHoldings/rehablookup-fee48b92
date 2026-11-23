@@ -50,7 +50,7 @@ export default function LongTermRehabNearMe() {
     <Layout>
       <SEO
         title={`Long-Term Rehab Near Me ${stateData ? `in ${stateData.state}` : ""} | Find Treatment Centers`}
-        description={`Find long-term rehabilitation programs near you${stateData ? ` in ${stateData.state}` : ""}. Compare ${facilities.length > 0 ? facilities.length + "+" : ""} treatment facilities. Free insurance verification.`}
+        description={`Find long-term rehabilitation programs near you${stateData ? ` in ${stateData.state}` : ""}. Compare ${facilities.length > 0 ? facilities.length + "+" : ""} treatment facilities. Confirm coverage with your plan.`}
         canonical={stateSlug ? `/long-term-rehab-near-me/${stateSlug}` : "/long-term-rehab-near-me"}
         keywords={[
           "long-term rehab near me",

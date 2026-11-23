@@ -87,7 +87,7 @@ export const TITLES = {
  */
 export const DESCRIPTIONS = {
   // Directory-compatible homepage description. The previous copy ended
-  // "Free insurance verification. 24/7 confidential help." — two claims
+  // "Confirm coverage with your plan. 24/7 confidential help." — two claims
   // RehabLookup does not fulfil: it does not run carrier verification
   // (facility admissions teams do) and it does not staff a 24/7 treatment
   // help line. Search intent is preserved by keeping the same high-value

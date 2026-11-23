@@ -85,7 +85,7 @@ const getStateFAQs = (stateName: string, abbreviation: string, cityCount: number
   },
   {
     question: `What is the success rate of rehab in ${stateName}?`,
-    answer: `Success rates vary by program and individual circumstances. Research shows that completing at least 90 days of treatment significantly improves outcomes, with 40-60% of people maintaining sobriety after quality treatment. ${stateName} treatment centers that offer comprehensive aftercare programs, including ongoing therapy and support groups, tend to have better long-term success rates.`
+    answer: `Outcomes vary by program and individual circumstances. NIDA reports that most people need at least 3 months in treatment to significantly reduce or stop drug use. According to the National Institute on Drug Abuse (NIDA), relapse rates for substance use disorders are estimated at 40–60%, similar to other chronic illnesses such as hypertension and asthma. Relapse does not mean treatment failed; it signals that treatment should be resumed or adjusted. ${stateName} treatment centers that offer comprehensive aftercare programs, including ongoing therapy and support groups, tend to have better long-term success rates.`
   },
   {
     question: `Are there free rehab options in ${stateName}?`,
@@ -230,7 +230,7 @@ const StatePage = () => {
         structuredData={structuredData}
         breadcrumbs={[
           { name: "Home", url: "/" },
-          { name: "Find Rehab", url: "/rehab-centers" },
+          { name: "Find Rehab", url: "/locations" },
           { name: stateData.name, url: `/rehab-centers/${stateData.slug}` },
         ]}
       />
@@ -264,7 +264,7 @@ const StatePage = () => {
           <BreadcrumbNav
             className="mb-5 [&_*]:!text-white/70 [&_a:hover]:!text-white"
             items={[
-              { label: "Find Rehab", href: "/rehab-centers" },
+              { label: "Find Rehab", href: "/locations" },
               { label: stateData.name },
             ]}
           />

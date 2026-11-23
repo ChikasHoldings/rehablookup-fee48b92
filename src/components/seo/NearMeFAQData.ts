@@ -82,7 +82,7 @@ export function getExecutiveRehabNearMeFAQs(location?: LocationParam): FAQ[] {
 export function getRehabNearMeFAQs(location?: LocationParam): FAQ[] {
   const l = loc(location);
   return [
-    { question: `How do I find rehab${l}?`, answer: `Use RehabLookup to search verified rehab centers${l} by location, insurance, treatment type, and specialty. Our directory includes accredited facilities across all 50 states.` },
+    { question: `How do I find rehab${l}?`, answer: `Use RehabLookup to search rehab center listings${l} by location, payment options, and treatment type. The directory covers all 50 states and Washington, D.C.` },
     { question: `How much does rehab cost${l}?`, answer: `Rehab costs${l} range from free (state-funded) to $100,000+ (luxury). Most programs cost $5,000-$30,000 per month. Insurance typically covers a significant portion.` },
     { question: `How long does rehab last${l}?`, answer: `Rehab programs${l} vary from 28-30 days (short-term) to 90+ days (long-term). The recommended duration depends on substance type, severity, and individual needs.` },
     { question: `What types of rehab are available${l}?`, answer: `Rehab options${l} include medical detox, inpatient/residential, outpatient (IOP/PHP), dual diagnosis, holistic, faith-based, luxury, and medication-assisted treatment programs.` },

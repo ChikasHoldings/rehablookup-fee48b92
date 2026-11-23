@@ -112,7 +112,7 @@ function buildHtml(slug, title, desc) {
         <a href="/${slug}/georgia">Georgia</a>
       </p>
       <h2>Insurance Coverage</h2>
-      <p>Most major insurance plans cover addiction treatment under the Mental Health Parity and Addiction Equity Act. Use our free insurance verification tool to check your benefits before starting treatment.</p>
+      <p>Most major insurance plans cover addiction treatment under the Mental Health Parity and Addiction Equity Act. Call the member services number on your insurance card to check your benefits before starting treatment.</p>
       ${seoCtaStrip()}
     </div>
   </main>

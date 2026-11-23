@@ -71,6 +71,11 @@ import { LevelsOfCareTiles } from "@/components/facility-profile/LevelsOfCareTil
 import { TherapyApproachesGrid } from "@/components/facility-profile/TherapyApproachesGrid";
 import { InsuranceShowcase } from "@/components/facility-profile/InsuranceShowcase";
 import { AccreditationsPanel } from "@/components/facility-profile/AccreditationsPanel";
+import {
+  presentListingDescription,
+  provenanceNotice,
+  credentialSourceLabel,
+} from "@/lib/seo/facilityTruth.mjs";
 import { RelatedNearby } from "@/components/facility-profile/RelatedNearby";
 import { InlineMiniSearch } from "@/components/seo/InlineMiniSearch";
 
@@ -120,6 +125,8 @@ interface FacilityData {
   is_claimed?: boolean;
   is_pro?: boolean;
   is_premium_visible?: boolean;
+  /** Provenance tag from public_facilities (e.g. 'samhsa_import'). */
+  data_source?: string | null;
 }
 
 function getInitials(name: string): string {
@@ -742,13 +749,23 @@ const CenterProfile = () => {
     : facility.gender_served === "all" ? "All Genders" 
     : facility.gender_served;
 
+  // Truth rules (src/lib/seo/facilityTruth.mjs): the SAMHSA importer's
+  // "is a licensed … provider" / "is recognized by" phrasing is rendered as
+  // what it is — facility-reported directory data — and every profile says
+  // where its information came from.
+  const listingDescription = presentListingDescription(facility.description);
+  const provenance = {
+    data_source: facility.data_source ?? null,
+    is_claimed: claimFlags?.is_claimed ?? facility.is_claimed ?? false,
+  };
+
   return (
     <Layout>
       <SEO
         title={`${facility.name} - Addiction Treatment in ${facility.city}, ${facility.state}`}
-        description={facility.description
-          ? facility.description.slice(0, 155) + (facility.description.length > 155 ? '...' : '')
-          : `${facility.name} offers comprehensive addiction treatment services in ${facility.city}, ${facility.state}. Verify insurance coverage and start your recovery journey today.`
+        description={listingDescription
+          ? listingDescription.slice(0, 155) + (listingDescription.length > 155 ? '...' : '')
+          : `${facility.name} is an addiction treatment facility in ${facility.city}, ${facility.state}. See listed services and payment options, and contact the facility to confirm details.`
         }
         canonical={`/center/${resolveFacilitySlug(facility)}`}
         // Center profiles render as a local business — surface the right OG
@@ -779,7 +796,7 @@ const CenterProfile = () => {
           // Phone is a Pro-only contact channel; omit from structured data for
           // non-Pro listings so search engines / rich results match the on-page UX.
           phone: showFacilityPhone ? facility.phone : undefined,
-          description: facility.description || `${facility.name} provides quality addiction treatment in ${facility.city}, ${facility.state}.`,
+          description: listingDescription || `${facility.name} is an addiction treatment facility in ${facility.city}, ${facility.state}.`,
           image: facility.logo_url || facility.gallery_urls?.[0] || undefined,
           gallery: facility.gallery_urls || undefined,
           services: services,
@@ -798,23 +815,16 @@ const CenterProfile = () => {
           // Include review ratings for rich snippets when available
           rating: ratingData.averageRating || undefined,
           reviewCount: ratingData.reviewCount || undefined,
-          // E-E-A-T: when this listing was last editorially reviewed and by whom.
-          // We derive `lastReviewed` from updated_at (every approval / edit
-          // touches it) and credit the RehabLookup Editorial Team as reviewer
-          // for verified listings, falling back to the same team for unverified.
-          lastReviewed: facility.updated_at || undefined,
-          reviewedBy: {
-            type: "Organization",
-            name: "RehabLookup Editorial Team",
-            url: "https://rehablookup.com/editorial-policy",
-          },
+          // No reviewedBy / lastReviewed: updated_at is not an editorial
+          // review and no listing-review process exists to credit.
+          acceptingAdmissions: facility.accepting_admissions ?? null,
         })}
         breadcrumbs={(() => {
           const stateSlug = facility.state.toLowerCase().replace(/\s+/g, "-");
           const citySlug = facility.city.toLowerCase().replace(/\s+/g, "-");
           return [
             { name: "Home", url: "/" },
-            { name: "Find Rehab", url: "/rehab-centers" },
+            { name: "Find Rehab", url: "/locations" },
             { name: facility.state, url: `/rehab-centers/${stateSlug}` },
             { name: facility.city, url: `/rehab-centers/${stateSlug}/${citySlug}` },
             { name: facility.name, url: `/center/${facility.slug}` },
@@ -1241,13 +1251,19 @@ const CenterProfile = () => {
                 title="About This Facility"
                 iconColor="bg-primary/10 text-primary"
               >
-                {facility.description ? (
-                  <TruncatedDescription text={facility.description} />
+                {listingDescription ? (
+                  <TruncatedDescription text={listingDescription} />
                 ) : (
                   <p className="text-muted-foreground leading-relaxed italic">
                     No description provided yet. Contact this facility for more information about their programs and services.
                   </p>
                 )}
+                <p
+                  className="mt-4 rounded-md border-l-4 border-slate-400 bg-slate-50 px-4 py-3 text-sm text-slate-700"
+                  data-testid="facility-provenance-notice"
+                >
+                  {provenanceNotice(provenance)}
+                </p>
               </ProfileSection>
 
               {/* Quick Facts Strip — dense info bar surfacing the data the
@@ -1417,7 +1433,10 @@ const CenterProfile = () => {
                   authoritative external verification links (Joint Commission,
                   CARF, SAMHSA, NAATP). Self-hides when no accreditations are
                   recorded; never renders "—" placeholders. */}
-              <AccreditationsPanel accreditations={accreditationTypes} />
+              <AccreditationsPanel
+                accreditations={accreditationTypes}
+                sourceLabel={credentialSourceLabel(provenance)}
+              />
 
 
               {/* Our Team Section — Pro-gated via public_facility_staff.

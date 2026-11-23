@@ -50,7 +50,7 @@ export default function ExecutiveRehabNearMe() {
     <Layout>
       <SEO
         title={`Executive Rehab Near Me ${stateData ? `in ${stateData.state}` : ""} | Find Treatment Centers`}
-        description={`Find executive rehabilitation programs near you${stateData ? ` in ${stateData.state}` : ""}. Compare ${facilities.length > 0 ? facilities.length + "+" : ""} treatment facilities. Free insurance verification.`}
+        description={`Find executive rehabilitation programs near you${stateData ? ` in ${stateData.state}` : ""}. Compare ${facilities.length > 0 ? facilities.length + "+" : ""} treatment facilities. Confirm coverage with your plan.`}
         canonical={stateSlug ? `/executive-rehab-near-me/${stateSlug}` : "/executive-rehab-near-me"}
         keywords={[
           "executive rehab near me",

@@ -92,11 +92,10 @@ export default function ListYourFacilityState() {
         },
         {
           heading: "Upgrade to Pro for Maximum Visibility",
-          content: `Pro listings in ${state.name} receive priority placement in search results, expanded profile features, and access to RehabLookup's concierge placement network — delivering pre-screened, high-intent patient referrals directly to your admissions team.`,
+          content: `Pro listings in ${state.name} receive priority placement in search results, expanded profile features and provider tools such as listing analytics — so families comparing options see complete, current information and can send inquiries directly to your admissions team.`,
           bullets: [
             `Priority placement in all ${state.name} search results and city pages`,
             "Featured badge and enhanced profile with unlimited photos",
-            "Access to concierge placement network for pre-screened referrals",
             "Dedicated account support and marketing consultation",
             "Advanced analytics with competitive benchmarking data",
           ],

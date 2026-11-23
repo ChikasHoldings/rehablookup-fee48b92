@@ -243,7 +243,7 @@ export function InsuranceFacilitiesSection({
                   {heading}
                 </h2>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Many of our verified facilities work with {insurer.name}. Verify
+                  Many treatment facilities work with {insurer.name}. Verify
                   your specific plan benefits or browse our full directory.
                 </p>
               </div>

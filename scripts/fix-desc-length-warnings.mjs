@@ -107,12 +107,12 @@ for (const fname of brc) {
   const filepath = join(PUBLIC, fname);
   const html = readFileSync(filepath, "utf8");
   const m = html.match(
-    /<meta name="description" content="Discover the top-rated rehab centers in ([^"]+)\. Compare accredited addiction treatment facilities, read reviews, and find the right program for your recovery needs\."/
+    /<meta name="description" content="Discover the top-rated rehab centers in ([^"]+)\. Compare addiction treatment facility listings, read reviews, and find the right program for your recovery needs\."/
   );
   if (!m) { skipped++; continue; }
   const state = m[1];
-  const oldDesc = `Discover the top-rated rehab centers in ${state}. Compare accredited addiction treatment facilities, read reviews, and find the right program for your recovery needs.`;
-  const newDesc = `Discover top-rated rehab centers in ${state}. Compare accredited addiction treatment facilities, read reviews, and find the right recovery program.`;
+  const oldDesc = `Discover the top-rated rehab centers in ${state}. Compare addiction treatment facility listings, read reviews, and find the right program for your recovery needs.`;
+  const newDesc = `Discover top-rated rehab centers in ${state}. Compare addiction treatment facility listings, read reviews, and find the right recovery program.`;
   patch(filepath, oldDesc, newDesc);
 }
 
@@ -124,42 +124,42 @@ console.log("\n── Editorial guide pages ──");
 const editorialFixes = [
   {
     file: "12-step-facilitation-therapy.html",
-    old: "12 Step Facilitation Therapy: Expert addiction treatment information and resources from RehabLookup. Find accredited rehab centers, compare programs, and start your recovery journey today.",
-    new: "Learn how 12-Step Facilitation Therapy works, what to expect in sessions, and how it supports long-term sobriety. Find accredited 12-step programs near you.",
+    old: "12 Step Facilitation Therapy: Expert addiction treatment information and resources from RehabLookup. Find rehab centers, compare programs, and start your recovery journey today.",
+    new: "Learn how 12-Step Facilitation Therapy works, what to expect in sessions, and how it supports long-term sobriety. Find 12-step programs near you.",
   },
   {
     file: "addiction-and-relationships-guide.html",
-    old: "Addiction And Relationships Guide: Expert addiction treatment information and resources from RehabLookup. Find accredited rehab centers, compare programs, and start your recovery journey today.",
+    old: "Addiction And Relationships Guide: Expert addiction treatment information and resources from RehabLookup. Find rehab centers, compare programs, and start your recovery journey today.",
     new: "Understand how addiction affects relationships and learn evidence-based strategies for rebuilding trust, setting boundaries, and supporting recovery as a family.",
   },
   {
     file: "recovery-support-groups-guide.html",
-    old: "Recovery Support Groups Guide: Expert addiction treatment information and resources from RehabLookup. Find accredited rehab centers, compare programs, and start your recovery journey today.",
+    old: "Recovery Support Groups Guide: Expert addiction treatment information and resources from RehabLookup. Find rehab centers, compare programs, and start your recovery journey today.",
     new: "Explore recovery support groups including AA, NA, SMART Recovery, and more. Find the right peer support community to strengthen your sobriety and long-term recovery.",
   },
   {
     file: "opioid-withdrawal-timeline.html",
-    old: "Opioid Withdrawal Timeline: Expert addiction treatment information and resources from RehabLookup. Find accredited rehab centers, compare programs, and start your recovery journey today.",
+    old: "Opioid Withdrawal Timeline: Expert addiction treatment information and resources from RehabLookup. Find rehab centers, compare programs, and start your recovery journey today.",
     new: "Understand the opioid withdrawal timeline — from early symptoms at 6–12 hours to post-acute effects. Learn what to expect and how medically supervised detox helps.",
   },
   {
     file: "what-happens-after-rehab.html",
-    old: "What Happens After Rehab: Expert addiction treatment information and resources from RehabLookup. Find accredited rehab centers, compare programs, and start your recovery journey today.",
+    old: "What Happens After Rehab: Expert addiction treatment information and resources from RehabLookup. Find rehab centers, compare programs, and start your recovery journey today.",
     new: "Learn what happens after rehab — from discharge planning and sober living to outpatient follow-up and relapse prevention strategies for lasting recovery.",
   },
   {
     file: "what-to-expect-in-rehab.html",
-    old: "What To Expect In Rehab: Expert addiction treatment information and resources from RehabLookup. Find accredited rehab centers, compare programs, and start your recovery journey today.",
+    old: "What To Expect In Rehab: Expert addiction treatment information and resources from RehabLookup. Find rehab centers, compare programs, and start your recovery journey today.",
     new: "Find out what to expect in rehab: daily schedules, therapy types, detox protocols, and how residential treatment prepares you for a successful recovery.",
   },
   {
     file: "talking-to-your-employer-about-rehab.html",
-    old: "Talking To Your Employer About Rehab: Expert addiction treatment information and resources from RehabLookup. Find accredited rehab centers, compare programs, and start your recovery journey today.",
+    old: "Talking To Your Employer About Rehab: Expert addiction treatment information and resources from RehabLookup. Find rehab centers, compare programs, and start your recovery journey today.",
     new: "Learn how to talk to your employer about rehab, understand your FMLA rights, and navigate confidential leave options while protecting your career and recovery.",
   },
   {
     file: "understanding-rehab-levels-of-care.html",
-    old: "Understanding Rehab Levels Of Care: Expert addiction treatment information and resources from RehabLookup. Find accredited rehab centers, compare programs, and start your recovery journey today.",
+    old: "Understanding Rehab Levels Of Care: Expert addiction treatment information and resources from RehabLookup. Find rehab centers, compare programs, and start your recovery journey today.",
     new: "Understand the ASAM levels of care — from medical detox and inpatient to PHP, IOP, and outpatient — and find the right level of addiction treatment for your needs.",
   },
 ];

@@ -122,7 +122,7 @@ function HeroSection() {
           <div className="mx-auto mt-4 flex flex-wrap items-center justify-center gap-x-5 gap-y-1.5 text-xs md:text-sm text-white/75">
             <span className="flex items-center gap-1.5">
               <Building2 className="h-3.5 w-3.5 text-[#CDA223]" />
-              3,800+ verified facilities
+              3,800+ facility listings
             </span>
             <span className="text-white/25" aria-hidden>·</span>
             <span className="flex items-center gap-1.5">

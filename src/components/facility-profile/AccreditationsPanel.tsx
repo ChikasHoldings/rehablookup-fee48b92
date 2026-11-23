@@ -44,10 +44,17 @@ const ACCREDITATION_META: Record<string, AccreditationMeta> = {
 
 export interface AccreditationsPanelProps {
   accreditations: string[];
+  /**
+   * Where these credentials come from, e.g. "as reported to SAMHSA" (see
+   * src/lib/seo/facilityTruth.mjs → credentialSourceLabel). RehabLookup has
+   * not independently verified listing credentials, so the panel always says
+   * where they came from.
+   */
+  sourceLabel?: string;
   className?: string;
 }
 
-export function AccreditationsPanel({ accreditations, className }: AccreditationsPanelProps) {
+export function AccreditationsPanel({ accreditations, sourceLabel, className }: AccreditationsPanelProps) {
   // Deduplicate while preserving first-seen order; show only those we have
   // metadata for, plus any unknowns rendered with a neutral subtitle.
   const seen = new Set<string>();
@@ -65,12 +72,15 @@ export function AccreditationsPanel({ accreditations, className }: Accreditation
         id="accreditations-heading"
         className="mb-4 font-display text-lg font-bold tracking-tight text-slate-900"
       >
-        Accreditations & Licensing
+        Licensing & Accreditation
       </h2>
+      <p className="-mt-2 mb-4 text-sm text-slate-600" data-testid="accreditations-source">
+        Listed {sourceLabel ?? "as reported for this facility"}. Confirm current status with the issuing organization.
+      </p>
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
         {ordered.map((type) => {
           const meta = ACCREDITATION_META[type] ?? {
-            subtitle: "Independently verified credential.",
+            subtitle: "Credential listed for this facility.",
           };
           return (
             <div

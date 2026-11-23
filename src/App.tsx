@@ -27,9 +27,9 @@ import { SmartCatchAll } from "./components/SmartCatchAll";
 
 // Lazy load all other public pages for reduced initial bundle
 // RehabCenters page is no longer routed — bare /rehab-centers redirects to
-// /search-results (see RehabCentersToSearchResultsRedirect). The file is
-// retained in src/pages/ as documentation of the prior browse-directory UX;
-// safe to delete in a follow-up cleanup once the redirect has propagated.
+// the indexable national directory hub /locations (see
+// RehabCentersToLocationsRedirect; SEO recovery Phase 1 replaced the former
+// redirect to the noindexed /search-results page).
 const SearchResults = lazy(() => import("./pages/SearchResults"));
 const StatePage = lazy(() => import("./pages/StatePage"));
 const CityPage = lazy(() => import("./pages/CityPage"));
@@ -520,12 +520,12 @@ function LocationToRehabCentersRedirect() {
   return <Navigate to={`/rehab-centers/${stateSlug}/${citySlug}`} replace />;
 }
 
-// Bare /rehab-centers → /search-results, preserving the querystring so
-// in-app navigations that still build `/rehab-centers?q=foo` (or external
-// bookmarks bypassing the Vercel-edge 301) don't drop the user's filters.
-function RehabCentersToSearchResultsRedirect() {
+// Bare /rehab-centers → the /locations directory hub (mirrors the Vercel-edge
+// 301). A querystring means the visitor was searching, so it still lands on
+// /search-results with its filters intact.
+function RehabCentersToLocationsRedirect() {
   const loc = useLocation();
-  return <Navigate to={`/search-results${loc.search}`} replace />;
+  return <Navigate to={loc.search ? `/search-results${loc.search}` : "/locations"} replace />;
 }
 
 // Some tooling injects `ref` into top-level elements; these wrappers safely absorb refs
@@ -695,7 +695,7 @@ const AppInner = () => {
                 and are individually indexed by Google. The querystring is
                 preserved so legacy in-app navigations that built
                 `/rehab-centers?q=foo` keep the user's filters. */}
-            <Route path="/rehab-centers" element={<RehabCentersToSearchResultsRedirect />} />
+            <Route path="/rehab-centers" element={<RehabCentersToLocationsRedirect />} />
             <Route path="/compare" element={<PublicRouteGuard><FacilityCompare /></PublicRouteGuard>} />
             <Route path="/search-results" element={<PublicRouteGuard><SearchResults /></PublicRouteGuard>} />
             <Route path="/rehab-centers/:stateSlug/articles/:articleSlug" element={<PublicRouteGuard><StateArticlePage /></PublicRouteGuard>} />

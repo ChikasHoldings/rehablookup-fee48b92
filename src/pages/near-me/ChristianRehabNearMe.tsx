@@ -50,7 +50,7 @@ export default function ChristianRehabNearMe() {
     <Layout>
       <SEO
         title={`Christian Rehab Near Me ${stateData ? `in ${stateData.state}` : ""} | Find Treatment Centers`}
-        description={`Find Christian rehabilitation centers near you${stateData ? ` in ${stateData.state}` : ""}. Compare ${facilities.length > 0 ? facilities.length + "+" : ""} treatment facilities. Free insurance verification.`}
+        description={`Find Christian rehabilitation centers near you${stateData ? ` in ${stateData.state}` : ""}. Compare ${facilities.length > 0 ? facilities.length + "+" : ""} treatment facilities. Confirm coverage with your plan.`}
         canonical={stateSlug ? `/christian-rehab-near-me/${stateSlug}` : "/christian-rehab-near-me"}
         keywords={[
           "christian rehab near me",

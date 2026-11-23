@@ -128,11 +128,11 @@ export function getAlcoholRehabNearMeFAQs(location?: { city?: string; state?: st
     },
     {
       question: `How effective is alcohol rehab?`,
-      answer: `Research shows that quality alcohol treatment is effective, with 40-60% of people maintaining sobriety after completing treatment. Success rates improve significantly when treatment lasts 90+ days and includes aftercare planning, ongoing therapy, and support group participation.`
+      answer: `Treatment can be effective, and outcomes vary from person to person. According to the National Institute on Drug Abuse (NIDA), relapse rates for substance use disorders are estimated at 40–60%, similar to other chronic illnesses such as hypertension and asthma. Relapse does not mean treatment failed; it signals that treatment should be resumed or adjusted. NIDA also reports that remaining in treatment for an adequate period, generally at least 3 months for most people, is important for good outcomes.`
     },
     {
       question: `Does insurance cover alcohol rehab near me?`,
-      answer: `Yes, alcohol addiction treatment is covered by most insurance plans under the Affordable Care Act and Mental Health Parity Act. Coverage varies by plan, so use our free insurance verification tool to check your specific benefits and find covered facilities near you.`
+      answer: `Yes, alcohol addiction treatment is covered by most insurance plans under the Affordable Care Act and Mental Health Parity Act. Coverage varies by plan, so call the member services number on your insurance card to check your benefits, and confirm with each facility that it accepts your plan.`
     },
     {
       question: `Can I keep working while in alcohol treatment?`,

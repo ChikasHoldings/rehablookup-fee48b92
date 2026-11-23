@@ -9,7 +9,7 @@ import { join } from 'path';
 const PUBLIC_DIR = new URL('../public', import.meta.url).pathname;
 
 // The generic fallback description that needs to be replaced
-const GENERIC_DESC = 'Find addiction treatment resources and rehab centers. RehabLookup helps you find accredited facilities, verify insurance, and start recovery.';
+const GENERIC_DESC = 'Find addiction treatment resources and rehab centers. RehabLookup helps you find facilities, verify insurance, and start recovery.';
 
 // Files to process (relative to public dir, with leading slash from check-unique-meta output)
 const FILES_TO_FIX = [
@@ -126,7 +126,7 @@ function generateDescription(title, urlPath) {
   // Best rehab centers in {State}
   const bestRehab = cleanTitle.match(/^Best Rehab Centers In (.+)$/i);
   if (bestRehab) {
-    return `Discover the top-rated rehab centers in ${bestRehab[1]}. Compare accredited addiction treatment facilities, read reviews, and find the right program for your recovery needs.`;
+    return `Discover the top-rated rehab centers in ${bestRehab[1]}. Compare addiction treatment facility listings, read reviews, and find the right program for your recovery needs.`;
   }
   
   // Signs of {X} addiction
@@ -189,7 +189,7 @@ function generateDescription(title, urlPath) {
   }
   
   // Generic fallback based on title
-  return `${cleanTitle}: Expert addiction treatment information and resources from RehabLookup. Find accredited rehab centers, compare programs, and start your recovery journey today.`;
+  return `${cleanTitle}: Expert addiction treatment information and resources from RehabLookup. Find rehab centers, compare programs, and start your recovery journey today.`;
 }
 
 let fixedCount = 0;

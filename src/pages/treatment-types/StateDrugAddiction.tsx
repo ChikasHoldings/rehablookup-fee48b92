@@ -46,7 +46,7 @@ const StateDrugAddiction = () => {
       "@context": "https://schema.org",
       "@type": "MedicalWebPage",
       name: `Drug Addiction Treatment in ${stateName}`,
-      description: `Find accredited drug addiction treatment centers in ${stateName}. Compare detox, inpatient, and outpatient programs with insurance verification.`,
+      description: `Find drug addiction treatment centers in ${stateName}. Compare detox, inpatient, and outpatient programs with insurance verification.`,
       url: `https://rehablookup.com/treatment-types/drug-addiction/${stateSlug}`,
       specialty: "Addiction Medicine",
       lastReviewed: new Date().toISOString().split("T")[0],
@@ -66,7 +66,7 @@ const StateDrugAddiction = () => {
     <Layout>
       <SEO
         title={`Drug Addiction Treatment in ${stateName} (${abbreviation}) | Find Rehab`}
-        description={`Find accredited drug addiction treatment in ${stateName}. Compare detox, MAT, inpatient, and outpatient programs. Verify insurance. ${cities.length}+ cities covered.`}
+        description={`Find drug addiction treatment in ${stateName}. Compare detox, MAT, inpatient, and outpatient programs. Verify insurance. ${cities.length}+ cities covered.`}
         canonical={`/treatment-types/drug-addiction/${stateSlug}`}
         structuredData={structuredData}
         breadcrumbs={[

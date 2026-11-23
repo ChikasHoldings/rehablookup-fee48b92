@@ -44,7 +44,7 @@ const RECOMMENDED_CONTENT = [
   {
     icon: Building2,
     title: "Browse Treatment Centers",
-    description: "Explore verified rehab facilities near you with detailed profiles and amenities.",
+    description: "Explore rehab facility listings near you with detailed profiles.",
     href: "/rehab-centers",
     color: "bg-blue-500/10 text-blue-600",
   },
@@ -100,7 +100,7 @@ function LandingSuccessView({ firstName }: { firstName: string }) {
               Thank You{firstName ? `, ${firstName}` : ""}!
             </h1>
             <p className="text-lg text-muted-foreground max-w-md mx-auto">
-              Your request has been received. A treatment specialist will reach out within 24 hours using your preferred contact method.
+              Your request has been received. RehabLookup is a directory and does not place people in treatment, so the fastest next step is to search listings and contact facilities directly. For free, confidential help any time, call SAMHSA's National Helpline at 1-800-662-4357.
             </p>
           </div>
           
@@ -116,8 +116,8 @@ function LandingSuccessView({ firstName }: { firstName: string }) {
                   <span className="text-sm font-bold text-primary">1</span>
                 </div>
                 <div>
-                  <p className="font-medium text-foreground text-sm">Review</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">A verified specialist reviews your information</p>
+                  <p className="font-medium text-foreground text-sm">Search</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Browse facility listings near you</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -126,7 +126,7 @@ function LandingSuccessView({ firstName }: { firstName: string }) {
                 </div>
                 <div>
                   <p className="font-medium text-foreground text-sm">Contact</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">They reach out using your preferred method</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Send an inquiry to the facilities you choose</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -134,8 +134,8 @@ function LandingSuccessView({ firstName }: { firstName: string }) {
                   <span className="text-sm font-bold text-primary">3</span>
                 </div>
                 <div>
-                  <p className="font-medium text-foreground text-sm">Connect</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">Discuss options and next steps together</p>
+                  <p className="font-medium text-foreground text-sm">Confirm</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Confirm services, insurance and availability with the facility</p>
                 </div>
               </div>
             </div>
@@ -391,9 +391,9 @@ export default function AdLanding() {
                   <Clock className="h-4 w-4 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-medium text-foreground text-sm">Quick Response</h3>
+                  <h3 className="font-medium text-foreground text-sm">Direct Contact</h3>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Get connected with verified treatment centers within hours.
+                    Inquiries go straight to the facility you choose.
                   </p>
                 </div>
               </div>
@@ -415,9 +415,9 @@ export default function AdLanding() {
                   <CheckCircle className="h-4 w-4 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-medium text-foreground text-sm">Verified Centers</h3>
+                  <h3 className="font-medium text-foreground text-sm">Clear Sourcing</h3>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    All treatment facilities are credential-verified for quality care.
+                    Each listing shows where its information came from.
                   </p>
                 </div>
               </div>

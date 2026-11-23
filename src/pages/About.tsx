@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { STATS } from "@/lib/copy/stats";
 import {
   Heart,
+  Search,
   Shield,
   Users,
   CheckCircle,
@@ -20,8 +21,6 @@ import supportSpecialistImg from "@/assets/support-specialist.png";
 import aboutTeamImage from "@/assets/about-team.jpg";
 import aboutMissionImage from "@/assets/about-mission.jpg";
 import founderPortrait from "@/assets/team/founder-chiedu-kabakwu.webp";
-import medicalDirectorPortrait from "@/assets/team/medical-director-portrait.webp";
-import ctoPortrait from "@/assets/team/cto-portrait.webp";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { TOPIC_HERO_IMAGES } from "@/data/locationImages";
 
@@ -44,9 +43,9 @@ const values = [
   },
   {
     icon: CheckCircle,
-    title: "Verification",
+    title: "Clear Sourcing",
     description:
-      "Every facility in our directory is verified for proper licensing, accreditation, and quality standards.",
+      "Every listing says where its information came from, and facilities can claim their listings to keep details current.",
     gradient: "from-emerald-500/20 to-teal-500/20",
     iconBg: "from-emerald-500 to-teal-500",
   },
@@ -64,12 +63,12 @@ const missionCards = [
   {
     icon: Eye,
     title: "Our Vision",
-    description: "A world where every person struggling with addiction can easily find quality, verified treatment options without confusion or barriers.",
+    description: "A world where every person struggling with addiction can easily find clearly sourced treatment information without confusion or barriers.",
   },
   {
     icon: Target,
     title: "Our Mission",
-    description: "To connect families with trusted addiction treatment centers through transparency, compassion, and verified information.",
+    description: "To connect families with trusted addiction treatment centers through transparency, compassion, and clearly sourced information.",
   },
   {
     icon: Heart,
@@ -83,42 +82,26 @@ const About = () => {
     <Layout>
       <SEO
         title="About Us - Trusted Rehab Directory | RehabLookup"
-        description="RehabLookup connects families with verified addiction treatment centers. Learn our mission, values, and commitment to transparency in recovery."
+        description="RehabLookup is a directory of addiction treatment center listings. Learn our mission, values, and how listing information is sourced."
         canonical="/about"
         structuredData={{
           "@context": "https://schema.org",
           "@type": "AboutPage",
           "name": "About RehabLookup",
-          "description": "RehabLookup connects families with verified addiction treatment centers.",
+          "description": "RehabLookup is a directory of addiction treatment center listings.",
           "url": "https://rehablookup.com/about",
           "mainEntity": {
-            "@type": ["Organization", "MedicalBusiness"],
+            "@type": "Organization",
             "name": "RehabLookup",
             "url": "https://rehablookup.com",
-            "description": "Trusted directory connecting families with verified addiction treatment centers across the United States.",
+            "description": "Directory of addiction treatment center listings across the United States.",
             "foundingDate": "2024",
             "foundingLocation": { "@type": "Place", "name": "United States" },
-            "numberOfEmployees": { "@type": "QuantitativeValue", "minValue": 10, "maxValue": 50 },
             "founder": {
               "@type": "Person",
               "name": "Chiedu Kabakwu",
               "jobTitle": "Founder & CEO",
-              "alumniOf": "Business Administration & Healthcare Strategy",
             },
-            "member": [
-              {
-                "@type": "Person",
-                "name": "Dr. Sarah Mitchell",
-                "jobTitle": "Medical Director & Content Advisor",
-                "hasCredential": { "@type": "EducationalOccupationalCredential", "name": "MD, Board Certified Psychiatrist, ASAM Fellow" },
-              },
-              {
-                "@type": "Person",
-                "name": "David Reyes",
-                "jobTitle": "Chief Technology Officer",
-                "hasCredential": { "@type": "EducationalOccupationalCredential", "name": "MS Computer Science, CISSP" },
-              },
-            ],
             "publishingPrinciples": "https://rehablookup.com/editorial-policy",
             "ethicsPolicy": "https://rehablookup.com/editorial-policy",
           },
@@ -361,11 +344,16 @@ const About = () => {
               Meet Our Leadership Team
             </h2>
             <p className="text-muted-foreground max-w-xl mx-auto">
-              Our leadership brings decades of experience in healthcare, technology, and behavioral health.
+              RehabLookup is led by its founder.
             </p>
           </div>
 
-          <div className="grid gap-8 md:grid-cols-3 max-w-5xl mx-auto">
+          {/* SEO recovery Phase 1 (2026-11-23): only people whose role can be
+              confirmed are shown. The previously listed Medical Director, CTO
+              and advisory board had no supporting record in the repository or
+              database; they are withheld pending owner confirmation (see
+              docs/seo-recovery/SEO_PHASE_HANDOFF.md). */}
+          <div className="grid gap-8 max-w-sm mx-auto">
             {[
               {
                 name: "Chiedu Kabakwu",
@@ -375,24 +363,6 @@ const About = () => {
                   "Portrait of Chiedu Kabakwu, Founder and CEO of RehabLookup, a behavioral health and patient advocacy leader guiding families to trusted addiction treatment.",
                 bio: "Founder and CEO of RehabLookup. A decade of experience across behavioral health, technology, and patient advocacy — leading the company's mission to bring transparency and dignity to how families find trusted addiction treatment.",
                 credentials: "MBA — Business Administration & Healthcare Strategy",
-              },
-              {
-                name: "Dr. Sarah Mitchell",
-                title: "Medical Director & Content Advisor",
-                image: medicalDirectorPortrait,
-                imageAlt:
-                  "Portrait of Dr. Sarah Mitchell, MD, board-certified psychiatrist and Medical Director at RehabLookup, specializing in addiction medicine, dual diagnosis, and medication-assisted treatment.",
-                bio: "Board-certified psychiatrist specializing in addiction medicine and dual diagnosis care. Leads clinical review of treatment guides and facility verification standards, ensuring our content reflects evidence-based practices in detox, rehab, and medication-assisted treatment (MAT).",
-                credentials: "MD · Board-Certified Psychiatrist · ASAM Fellow",
-              },
-              {
-                name: "David Reyes",
-                title: "Chief Technology Officer",
-                image: ctoPortrait,
-                imageAlt:
-                  "Portrait of David Reyes, Chief Technology Officer at RehabLookup, a health-tech engineering leader overseeing HIPAA-compliant platform security and patient data privacy.",
-                bio: "Health-tech veteran with a track record of building HIPAA-compliant platforms for hospital systems and digital-health startups. Leads engineering, data security, and privacy — safeguarding every family's information from intake through placement.",
-                credentials: "MS Computer Science · CISSP · HIPAA Security Officer",
               },
             ].map((leader) => (
               <div key={leader.name} className="group rounded-2xl bg-card border border-border/50 overflow-hidden hover:shadow-lg transition-shadow duration-300">
@@ -426,13 +396,13 @@ const About = () => {
               RehabLookup by the Numbers
             </h2>
             <p className="text-primary-foreground/70 max-w-xl mx-auto">
-              Real impact, measured in families helped and facilities served.
+              The directory at a glance.
             </p>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
             {[
-              { value: STATS.facilities, label: "Verified Facilities", sub: STATS.states },
-              { value: STATS.firstResponse, label: "First Response", sub: "Within 1 business hour" },
+              { value: STATS.facilities, label: "Facility Listings", sub: STATS.states },
+              { value: "SAMHSA", label: "Primary Data Source", sub: "FindTreatment.gov listings" },
               { value: "51", label: "Jurisdictions", sub: "All 50 states + D.C." },
               { value: STATS.freeForSeekers, label: "Free for Seekers", sub: "No fees, no upsells" },
             ].map((stat) => (
@@ -440,53 +410,6 @@ const About = () => {
                 <div className="font-display text-3xl md:text-4xl font-bold text-accent tabular-nums mb-1">{stat.value}</div>
                 <div className="text-sm font-medium text-primary-foreground">{stat.label}</div>
                 <div className="text-xs text-primary-foreground/60 mt-0.5">{stat.sub}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Advisory Board */}
-      <section className="section-padding-lg bg-background">
-        <div className="container">
-          <div className="text-center mb-10">
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-accent/10 px-5 py-2.5">
-              <Shield className="h-5 w-5 text-accent" />
-              <span className="text-base font-medium text-accent">Advisory Board</span>
-            </div>
-            <h2 className="font-display text-2xl font-bold text-foreground md:text-3xl mb-4">
-              Clinical & Compliance Advisors
-            </h2>
-            <p className="text-muted-foreground max-w-xl mx-auto">
-              Our content and policies are guided by experienced professionals in addiction medicine and healthcare compliance.
-            </p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-            {[
-              {
-                name: "Dr. Sarah Mitchell",
-                role: "Medical Director",
-                credential: "MD, Board Certified Psychiatrist, ASAM Fellow",
-                focus: "Oversees clinical content accuracy and facility verification standards.",
-              },
-              {
-                name: "Patricia Owens, LCSW",
-                role: "Clinical Advisor",
-                credential: "Licensed Clinical Social Worker, 20+ yrs in SUD treatment",
-                focus: "Ensures family-facing content reflects evidence-based clinical best practices.",
-              },
-              {
-                name: "James Chen, JD",
-                role: "Compliance Officer",
-                credential: "Healthcare Attorney, HIPAA & 42 CFR Part 2 Specialist",
-                focus: "Guides data privacy, HIPAA compliance, and ethical advertising standards.",
-              },
-            ].map((advisor) => (
-              <div key={advisor.name} className="rounded-xl border border-border bg-card p-6">
-                <h3 className="font-display font-bold text-foreground text-lg">{advisor.name}</h3>
-                <p className="text-sm font-medium text-accent mb-2">{advisor.role}</p>
-                <p className="text-sm text-muted-foreground mb-3">{advisor.focus}</p>
-                <p className="text-xs text-muted-foreground/70 italic">{advisor.credential}</p>
               </div>
             ))}
           </div>
@@ -506,10 +429,10 @@ const About = () => {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
             {[
-              { icon: Shield, label: "HIPAA Compliant", desc: "All data encrypted at rest and in transit" },
-              { icon: CheckCircle, label: "SSL Secured", desc: "256-bit encryption on every page" },
-              { icon: Eye, label: "Verified Listings", desc: "Every facility reviewed by our team" },
-              { icon: Heart, label: "Ethical Standards", desc: "No pay-to-rank, no misleading claims" },
+              { icon: Shield, label: "Private Inquiries", desc: "Inquiries go only to the facility you contact" },
+              { icon: CheckCircle, label: "SSL Secured", desc: "Encrypted connection on every page" },
+              { icon: Eye, label: "Clear Sourcing", desc: "Each listing shows where its information came from" },
+              { icon: Heart, label: "Labeled Sponsorship", desc: "Paid Featured placements are labeled" },
             ].map((badge) => (
               <div key={badge.label} className="text-center p-5 rounded-xl bg-card border border-border">
                 <div className="h-10 w-10 rounded-lg bg-accent/10 flex items-center justify-center mx-auto mb-3">
@@ -534,8 +457,7 @@ const About = () => {
           <div className="space-y-6">
             {[
               { year: "2024", title: "Founded", desc: "RehabLookup launched with a mission to bring transparency to addiction treatment search." },
-              { year: "2024", title: "First 100 Facilities", desc: "Onboarded 100+ verified treatment centers across 25 states." },
-              { year: "2025", title: "Nationwide Coverage", desc: "Expanded to all 50 states with 500+ verified facilities on a transparent flat-fee subscription model." },
+              { year: "2026", title: "Nationwide Listings", desc: "Imported facility listings from SAMHSA's FindTreatment.gov directory covering all 50 states and Washington, D.C." },
               { year: "2026", title: "Platform 2.0", desc: "Launched the provider dashboard, listing management, and performance analytics for treatment centers." },
             ].map((milestone, idx) => (
               <div key={idx} className="flex gap-4">
@@ -651,7 +573,7 @@ const About = () => {
                 Ready to Find Treatment?
               </h2>
               <p className="text-muted-foreground text-sm max-w-md">
-                Search our directory or speak with a specialist today.
+                Search the directory and contact facilities directly.
               </p>
             </div>
             

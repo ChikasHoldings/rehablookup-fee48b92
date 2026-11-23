@@ -104,6 +104,11 @@ jobs:
       - name: Verify cross-page meta uniqueness
         run: npm run check:unique-meta
 
+      # SEO recovery Phase 1: generated facility profiles and the whole public
+      # corpus must not reintroduce unsupported trust/schema claims.
+      - name: Verify healthcare trust claims and facility schema truth
+        run: npm run check:trust-claims
+
       - name: Verify SPA <Navigate> ↔ vercel.json 301 parity
         run: npm run check:redirect-parity
 

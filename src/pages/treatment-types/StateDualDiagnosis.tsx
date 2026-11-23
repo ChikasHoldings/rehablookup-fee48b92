@@ -81,7 +81,7 @@ const StateDualDiagnosis = () => {
     <Layout>
       <SEO
         title={`Dual Diagnosis Treatment in ${stateName} (${abbreviation}) | Mental Health & Addiction`}
-        description={`Find accredited dual diagnosis treatment in ${stateName}. Integrated care for depression, anxiety, PTSD, and addiction. Insurance accepted. ${cities.length}+ cities.`}
+        description={`Find dual diagnosis treatment in ${stateName}. Integrated care for depression, anxiety, PTSD, and addiction. Insurance accepted. ${cities.length}+ cities.`}
         canonical={`/treatment-types/dual-diagnosis-treatment/${stateSlug}`}
         structuredData={structuredData}
         breadcrumbs={[

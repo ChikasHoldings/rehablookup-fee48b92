@@ -415,7 +415,7 @@ export function FindOrListStep({ onAdvance, onBack }: FindOrListStepProps) {
           Find or list your facility
         </h2>
         <p className="mt-1 text-sm text-slate-600">
-          Search 3,800+ verified treatment facilities by name, city, or state.
+          Search 3,800+ treatment facility listings by name, city, or state.
           If we don't have your facility yet, you can list it as new.
         </p>
       </header>

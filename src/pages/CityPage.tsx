@@ -201,7 +201,7 @@ const CityPage = () => {
         structuredData={structuredData}
         breadcrumbs={[
           { name: "Home", url: "/" },
-          { name: "Find Rehab", url: "/rehab-centers" },
+          { name: "Find Rehab", url: "/locations" },
           { name: stateData.name, url: `/rehab-centers/${stateData.slug}` },
           { name: cityData.name, url: `/rehab-centers/${stateData.slug}/${cityData.slug}` },
         ]}
@@ -238,7 +238,7 @@ const CityPage = () => {
           <BreadcrumbNav
             className="mb-3 [&_*]:!text-white/70 [&_a:hover]:!text-white"
             items={[
-              { label: "Find Rehab", href: "/rehab-centers" },
+              { label: "Find Rehab", href: "/locations" },
               { label: stateData.name, href: `/rehab-centers/${stateData.slug}` },
               { label: cityData.name },
             ]}

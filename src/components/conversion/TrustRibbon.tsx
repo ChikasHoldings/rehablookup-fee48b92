@@ -35,7 +35,7 @@ export function TrustRibbon() {
                 <span className="inline-block h-[1em] w-[3em] align-middle rounded bg-slate-200" aria-hidden />
               )}
             </strong>
-            <span>verified facilities</span>
+            <span>facility listings</span>
           </li>
           <li className="hidden sm:block w-px h-4 bg-slate-300" aria-hidden />
           <li className="flex items-center gap-1.5">

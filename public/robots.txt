@@ -1,6 +1,11 @@
 # =============================================================================
 # robots.txt for RehabLookup
 # https://rehablookup.com
+# Last updated: 2026-11-23 — SEO recovery Phase 1: removed Disallow lines for
+#   retired consumer/concierge URLs that are 301 redirects (/placement-help,
+#   /concierge/{intake,thank-you,create-password}, /international/{intake,
+#   thank-you}). Blocking a 301 source stops Google from seeing the redirect.
+#   Private auth surfaces stay Disallowed.
 # Last updated: 2026-08-17 — consumer-account retirement (directory cutover
 #   stage 3). /account, /account/*, /my-account/*, /seeker/*, /signup and
 #   /reset-password are now 301s to /search-results, so their Disallow lines
@@ -85,13 +90,7 @@ Disallow: /admin-login
 # canonical URLs. We must NOT Disallow them — blocking the source path prevents
 # Google from discovering the redirect target and produces "Page with redirect"
 # GSC errors.
-Disallow: /placement-help
-Disallow: /concierge/intake
-Disallow: /concierge/thank-you
-Disallow: /concierge/create-password
 Disallow: /concierge/dashboard
-Disallow: /international/intake
-Disallow: /international/thank-you
 Disallow: /lp/
 Disallow: /api/
 Disallow: /functions/
@@ -345,13 +344,7 @@ Disallow: /admin-login
 # for /blog and /treatment/* below. Leave them crawlable so the 301s are
 # processed and the URLs drop out.
 # NOTE: /blog, legacy /treatment/*, and /request-help are 301 redirects — do NOT block.
-Disallow: /placement-help
-Disallow: /concierge/intake
-Disallow: /concierge/thank-you
-Disallow: /concierge/create-password
 Disallow: /concierge/dashboard
-Disallow: /international/intake
-Disallow: /international/thank-you
 Disallow: /lp/
 Disallow: /api/
 Disallow: /functions/

@@ -321,7 +321,7 @@ export default function AetnaRehab() {
               Find Treatment Centers That Accept Aetna
             </h2>
             <p className="text-muted-foreground mb-6">
-              Search our directory to find accredited addiction treatment centers in your area that accept Aetna insurance.
+              Search our directory to find addiction treatment centers in your area that accept Aetna insurance.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <Button asChild size="lg">

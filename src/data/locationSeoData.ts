@@ -23,7 +23,7 @@ export const statesData: StateData[] = [
     slug: "alabama",
     abbreviation: "AL",
     description: "Alabama offers comprehensive addiction treatment options including detox, inpatient, and outpatient programs across the state.",
-    metaDescription: "Find drug and alcohol rehab centers in Alabama. Browse verified treatment facilities offering detox, inpatient, and outpatient programs.",
+    metaDescription: "Find drug and alcohol rehab centers in Alabama. Browse treatment facility listings offering detox, inpatient, and outpatient programs.",
     cities: [
       { name: "Birmingham", slug: "birmingham", population: 200733, description: "Birmingham offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Birmingham, AL. Compare treatment facility listings near you." },
       { name: "Montgomery", slug: "montgomery", population: 200603, description: "Montgomery offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Montgomery, AL. Compare treatment facility listings near you." },
@@ -118,7 +118,7 @@ export const statesData: StateData[] = [
     slug: "arkansas",
     abbreviation: "AR",
     description: "Arkansas offers affordable addiction treatment options throughout the Natural State.",
-    metaDescription: "Find drug and alcohol rehab centers in Arkansas. Browse verified treatment facilities offering quality care.",
+    metaDescription: "Find drug and alcohol rehab centers in Arkansas. Browse treatment facility listings offering quality care.",
     cities: [
       { name: "Little Rock", slug: "little-rock", population: 202591, description: "Little Rock offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Little Rock, AR. Compare treatment facility listings near you." },
       { name: "Fort Smith", slug: "fort-smith", population: 89142, description: "Fort Smith offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Fort Smith, AR. Compare treatment facility listings near you." },
@@ -247,7 +247,7 @@ export const statesData: StateData[] = [
     slug: "delaware",
     abbreviation: "DE",
     description: "Delaware offers quality addiction treatment in a small state with accessible services.",
-    metaDescription: "Find drug and alcohol rehab centers in Delaware. Browse verified treatment facilities statewide.",
+    metaDescription: "Find drug and alcohol rehab centers in Delaware. Browse treatment facility listings statewide.",
     cities: [
       { name: "Wilmington", slug: "wilmington-de", population: 70898, description: "Wilmington offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Wilmington, DE. Compare treatment facility listings near you." },
       { name: "Dover", slug: "dover-de", population: 39403, description: "Dover offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Dover, DE. Compare treatment facility listings near you." },
@@ -309,7 +309,7 @@ export const statesData: StateData[] = [
     slug: "georgia",
     abbreviation: "GA",
     description: "Georgia provides comprehensive addiction treatment services throughout the Peach State.",
-    metaDescription: "Find drug and alcohol rehab centers in Georgia. Browse verified treatment facilities from Atlanta to Savannah.",
+    metaDescription: "Find drug and alcohol rehab centers in Georgia. Browse treatment facility listings from Atlanta to Savannah.",
     cities: [
       { name: "Atlanta", slug: "atlanta", population: 498715, description: "Atlanta offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Atlanta, GA. Compare treatment facility listings near you." },
       { name: "Augusta", slug: "augusta", population: 202081, description: "Augusta offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Augusta, GA. Compare treatment facility listings near you." },
@@ -379,7 +379,7 @@ export const statesData: StateData[] = [
     slug: "idaho",
     abbreviation: "ID",
     description: "Idaho provides addiction treatment in peaceful, nature-surrounded settings.",
-    metaDescription: "Find drug and alcohol rehab centers in Idaho. Browse verified treatment facilities across the Gem State.",
+    metaDescription: "Find drug and alcohol rehab centers in Idaho. Browse treatment facility listings across the Gem State.",
     cities: [
       { name: "Boise", slug: "boise", population: 235684, description: "Boise offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Boise, ID. Compare treatment facility listings near you." },
       { name: "Meridian", slug: "meridian", population: 117635, description: "Meridian offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Meridian, ID. Compare treatment facility listings near you." },
@@ -438,7 +438,7 @@ export const statesData: StateData[] = [
     slug: "indiana",
     abbreviation: "IN",
     description: "Indiana provides affordable and accessible addiction treatment throughout the Hoosier State.",
-    metaDescription: "Find drug and alcohol rehab centers in Indiana. Browse verified treatment facilities statewide.",
+    metaDescription: "Find drug and alcohol rehab centers in Indiana. Browse treatment facility listings statewide.",
     cities: [
       { name: "Indianapolis", slug: "indianapolis", population: 887642, description: "Indianapolis offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Indianapolis, IN. Compare treatment facility listings near you." },
       { name: "Fort Wayne", slug: "fort-wayne", population: 263886, description: "Fort Wayne offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Fort Wayne, IN. Compare treatment facility listings near you." },
@@ -501,7 +501,7 @@ export const statesData: StateData[] = [
     slug: "kansas",
     abbreviation: "KS",
     description: "Kansas provides accessible addiction treatment throughout the Sunflower State.",
-    metaDescription: "Find drug and alcohol rehab centers in Kansas. Browse verified treatment facilities.",
+    metaDescription: "Find drug and alcohol rehab centers in Kansas. Browse treatment facility listings.",
     cities: [
       { name: "Wichita", slug: "wichita", population: 397532, description: "Wichita offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Wichita, KS. Compare treatment facility listings near you." },
       { name: "Overland Park", slug: "overland-park", population: 197238, description: "Overland Park offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Overland Park, KS. Compare treatment facility listings near you." },
@@ -561,7 +561,7 @@ export const statesData: StateData[] = [
     slug: "louisiana",
     abbreviation: "LA",
     description: "Louisiana provides addiction treatment services from New Orleans to Baton Rouge and beyond.",
-    metaDescription: "Find drug and alcohol rehab centers in Louisiana. Browse verified treatment facilities.",
+    metaDescription: "Find drug and alcohol rehab centers in Louisiana. Browse treatment facility listings.",
     cities: [
       { name: "New Orleans", slug: "new-orleans", population: 383997, description: "New Orleans offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in New Orleans, LA. Compare treatment facility listings near you." },
       { name: "Baton Rouge", slug: "baton-rouge", population: 227470, description: "Baton Rouge offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Baton Rouge, LA. Compare treatment facility listings near you." },
@@ -620,7 +620,7 @@ export const statesData: StateData[] = [
     slug: "maryland",
     abbreviation: "MD",
     description: "Maryland provides high-quality addiction treatment with strong medical infrastructure.",
-    metaDescription: "Find drug and alcohol rehab centers in Maryland. Browse verified treatment facilities.",
+    metaDescription: "Find drug and alcohol rehab centers in Maryland. Browse treatment facility listings.",
     cities: [
       { name: "Baltimore", slug: "baltimore", population: 585708, description: "Baltimore offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Baltimore, MD. Compare treatment facility listings near you." },
       { name: "Columbia", slug: "columbia-md", population: 104681, description: "Columbia offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Columbia, MD. Compare treatment facility listings near you." },
@@ -681,7 +681,7 @@ export const statesData: StateData[] = [
     slug: "michigan",
     abbreviation: "MI",
     description: "Michigan provides comprehensive addiction treatment throughout the Great Lakes State.",
-    metaDescription: "Find drug and alcohol rehab centers in Michigan. Browse verified treatment facilities.",
+    metaDescription: "Find drug and alcohol rehab centers in Michigan. Browse treatment facility listings.",
     cities: [
       { name: "Detroit", slug: "detroit", population: 639111, description: "Detroit offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Detroit, MI. Compare treatment facility listings near you." },
       { name: "Grand Rapids", slug: "grand-rapids", population: 198917, description: "Grand Rapids offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Grand Rapids, MI. Compare treatment facility listings near you." },
@@ -746,7 +746,7 @@ export const statesData: StateData[] = [
     slug: "mississippi",
     abbreviation: "MS",
     description: "Mississippi provides accessible addiction treatment throughout the Magnolia State.",
-    metaDescription: "Find drug and alcohol rehab centers in Mississippi. Browse verified treatment facilities.",
+    metaDescription: "Find drug and alcohol rehab centers in Mississippi. Browse treatment facility listings.",
     cities: [
       { name: "Jackson", slug: "jackson-ms", population: 153701, description: "Jackson offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Jackson, MS. Compare treatment facility listings near you." },
       { name: "Gulfport", slug: "gulfport", population: 72926, description: "Gulfport offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Gulfport, MS. Compare treatment facility listings near you." },
@@ -863,7 +863,7 @@ export const statesData: StateData[] = [
     slug: "nevada",
     abbreviation: "NV",
     description: "Nevada offers diverse addiction treatment from Las Vegas to Reno and beyond.",
-    metaDescription: "Find drug and alcohol rehab centers in Nevada. Browse verified treatment facilities.",
+    metaDescription: "Find drug and alcohol rehab centers in Nevada. Browse treatment facility listings.",
     cities: [
       { name: "Las Vegas", slug: "las-vegas", population: 641903, description: "Las Vegas offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Las Vegas, NV. Compare treatment facility listings near you." },
       { name: "Henderson", slug: "henderson", population: 320189, description: "Henderson offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Henderson, NV. Compare treatment facility listings near you." },
@@ -980,7 +980,7 @@ export const statesData: StateData[] = [
     slug: "north-carolina",
     abbreviation: "NC",
     description: "North Carolina provides diverse addiction treatment from the mountains to the coast.",
-    metaDescription: "Find drug and alcohol rehab centers in North Carolina. Browse verified treatment facilities.",
+    metaDescription: "Find drug and alcohol rehab centers in North Carolina. Browse treatment facility listings.",
     cities: [
       { name: "Charlotte", slug: "charlotte", population: 874579, description: "Charlotte offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Charlotte, NC. Compare treatment facility listings near you." },
       { name: "Raleigh", slug: "raleigh", population: 467665, description: "Raleigh offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Raleigh, NC. Compare treatment facility listings near you." },
@@ -1045,7 +1045,7 @@ export const statesData: StateData[] = [
     slug: "ohio",
     abbreviation: "OH",
     description: "Ohio provides comprehensive addiction treatment addressing the state's unique challenges.",
-    metaDescription: "Find drug and alcohol rehab centers in Ohio. Browse verified treatment facilities statewide.",
+    metaDescription: "Find drug and alcohol rehab centers in Ohio. Browse treatment facility listings statewide.",
     cities: [
       { name: "Columbus", slug: "columbus", population: 905748, description: "Columbus offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Columbus, OH. Compare treatment facility listings near you." },
       { name: "Cleveland", slug: "cleveland", population: 372624, description: "Cleveland offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Cleveland, OH. Compare treatment facility listings near you." },
@@ -1175,7 +1175,7 @@ export const statesData: StateData[] = [
     slug: "rhode-island",
     abbreviation: "RI",
     description: "Rhode Island provides quality addiction treatment in New England's smallest state.",
-    metaDescription: "Find drug and alcohol rehab centers in Rhode Island. Browse verified treatment facilities.",
+    metaDescription: "Find drug and alcohol rehab centers in Rhode Island. Browse treatment facility listings.",
     cities: [
       { name: "Providence", slug: "providence", population: 190934, description: "Providence offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Providence, RI. Compare treatment facility listings near you." },
       { name: "Warwick", slug: "warwick", population: 82823, description: "Warwick offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Warwick, RI. Compare treatment facility listings near you." },
@@ -1236,7 +1236,7 @@ export const statesData: StateData[] = [
     slug: "south-dakota",
     abbreviation: "SD",
     description: "South Dakota offers accessible addiction treatment in peaceful Great Plains settings.",
-    metaDescription: "Find drug and alcohol rehab centers in South Dakota. Browse verified treatment facilities.",
+    metaDescription: "Find drug and alcohol rehab centers in South Dakota. Browse treatment facility listings.",
     cities: [
       { name: "Sioux Falls", slug: "sioux-falls", population: 192517, description: "Sioux Falls offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Sioux Falls, SD. Compare treatment facility listings near you." },
       { name: "Rapid City", slug: "rapid-city", population: 77503, description: "Rapid City offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Rapid City, SD. Compare treatment facility listings near you." },
@@ -1392,7 +1392,7 @@ export const statesData: StateData[] = [
     slug: "virginia",
     abbreviation: "VA",
     description: "Virginia offers quality addiction treatment from the DC suburbs to the Blue Ridge.",
-    metaDescription: "Find drug and alcohol rehab centers in Virginia. Browse verified treatment facilities.",
+    metaDescription: "Find drug and alcohol rehab centers in Virginia. Browse treatment facility listings.",
     cities: [
       { name: "Virginia Beach", slug: "virginia-beach", population: 459470, description: "Virginia Beach offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Virginia Beach, VA. Compare treatment facility listings near you." },
       { name: "Norfolk", slug: "norfolk", population: 238005, description: "Norfolk offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Norfolk, VA. Compare treatment facility listings near you." },
@@ -1452,7 +1452,7 @@ export const statesData: StateData[] = [
     slug: "west-virginia",
     abbreviation: "WV",
     description: "West Virginia offers specialized addiction treatment addressing the state's unique recovery needs.",
-    metaDescription: "Find drug and alcohol rehab centers in West Virginia. Browse verified treatment facilities.",
+    metaDescription: "Find drug and alcohol rehab centers in West Virginia. Browse treatment facility listings.",
     cities: [
       { name: "Charleston", slug: "charleston-wv", population: 48006, description: "Charleston offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Charleston, WV. Compare treatment facility listings near you." },
       { name: "Huntington", slug: "huntington", population: 46842, description: "Huntington offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Huntington, WV. Compare treatment facility listings near you." },
@@ -1543,7 +1543,7 @@ export const statesData: StateData[] = [
     slug: "new-jersey",
     abbreviation: "NJ",
     description: "New Jersey provides extensive addiction treatment options with world-class facilities, strong insurance coverage, and innovative programs across the state.",
-    metaDescription: "Find drug and alcohol rehab centers in New Jersey. Browse verified treatment facilities offering detox, inpatient, and outpatient programs.",
+    metaDescription: "Find drug and alcohol rehab centers in New Jersey. Browse treatment facility listings offering detox, inpatient, and outpatient programs.",
     cities: [
       { name: "Newark", slug: "newark", population: 311549, description: "Newark offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Newark, NJ. Compare treatment facility listings near you." },
       { name: "Jersey City", slug: "jersey-city", population: 292449, description: "Jersey City offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Jersey City, NJ. Compare treatment facility listings near you." },
