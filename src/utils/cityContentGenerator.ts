@@ -98,10 +98,10 @@ export function generateCityContentSections(input: CityContentInput): ContentSec
   // Section 1: Local treatment landscape (varies by city size AND density AND variant)
   if (tier === "metro") {
     const densityNote = density === "high"
-      ? `With ${facilityCount}+ verified treatment facilities, ${cityName} offers one of the strongest treatment networks in ${stateName}.`
+      ? `With ${facilityCount}+ treatment facility listings, ${cityName} has one of the larger concentrations of treatment providers in ${stateName}.`
       : density === "moderate"
-      ? `${cityName} hosts a growing number of treatment providers, with several accredited facilities serving the metro area.`
-      : `While ${cityName} is a major metro, treatment facility density is still developing — our concierge team can help identify the best available options.`;
+      ? `${cityName} hosts a growing number of treatment providers serving the metro area.`
+      : `While ${cityName} is a major metro, few treatment facilities are listed here yet — widening the search to nearby cities and the rest of ${stateName} will show more options.`;
 
     const variantContent = [
       `As a major ${regionInfo.region} metropolitan area${popText}, ${cityName} hosts a comprehensive network of addiction treatment providers. ${densityNote} The city's healthcare infrastructure supports everything from hospital-affiliated detox programs and academic medical center research trials to boutique residential facilities and community-based outpatient clinics. ${cityName}'s size means residents can typically find specialized programs — including tracks for professionals, veterans, young adults, and LGBTQ+ individuals — without traveling far from home. The local recovery community is active, with numerous support groups, sober living homes, and peer mentorship programs that strengthen long-term sobriety.`,

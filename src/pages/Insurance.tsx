@@ -633,7 +633,7 @@ export default function Insurance() {
             <AlertCircle className="h-4 w-4 text-primary shrink-0" />
             <p>
               <span className="font-medium text-foreground">RehabLookup is a directory service.</span>{" "}
-              We help you find treatment centers that accept your insurance — contact facilities directly to verify coverage.
+              Listings show the insurance each treatment center reports accepting — contact facilities directly to verify coverage.
             </p>
           </div>
         </div>
