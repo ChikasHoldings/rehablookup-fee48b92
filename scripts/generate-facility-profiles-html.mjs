@@ -24,6 +24,12 @@
  */
 
 import { writeFile, mkdir, readdir, unlink } from "node:fs/promises";
+import {
+  presentListingDescription,
+  provenanceNotice,
+  credentialSourceLabel,
+  credentialFaqAnswer,
+} from "../src/lib/seo/facilityTruth.mjs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { GA_MEASUREMENT_ID } from "./_ga.mjs";
@@ -301,6 +307,12 @@ async function fetchFacilities() {
     "is_pro",
     "video_url",
     "virtual_tour_url",
+    // Provenance + truth inputs (SEO recovery Phase 1): structured data and
+    // visible copy may only assert what these columns support.
+    "data_source",
+    "is_claimed",
+    "accepting_admissions",
+    "hours_of_operation",
   ].join(",");
 
   return fetchAll(
@@ -360,7 +372,7 @@ function buildFaqItems(facility, facSvc, facIns, facAge, facAcc) {
   if (approaches.length) {
     items.push({
       q: `What therapies and treatment approaches does ${name} use?`,
-      a: `${name} uses evidence-based and supportive approaches including ${joinList(approaches.slice(0, 6))}. The clinical team tailors the mix to each client's diagnosis, history, and goals.`,
+      a: `${name} uses evidence-based and supportive approaches including ${joinList(approaches.slice(0, 6))}.`,
     });
   }
 
@@ -413,8 +425,8 @@ function buildFaqItems(facility, facSvc, facIns, facAge, facAcc) {
   // Accreditation
   if (facAcc.length) {
     items.push({
-      q: `Is ${name} accredited?`,
-      a: `Yes. ${name} is recognized by ${joinList(facAcc)}. Each accreditation can be verified directly with the issuing authority.`,
+      q: `What licensing or accreditation does ${name} report?`,
+      a: credentialFaqAnswer(name, facAcc, facility),
     });
   }
 
@@ -644,7 +656,8 @@ ${insurancePlans.map((i) => `<li>${escapeHtml(i)}</li>`).join("\n")}
       })
       .join("\n");
     parts.push(`<section class="rich">
-<h2>Accreditations &amp; Licenses</h2>
+<h2>Licensing &amp; Accreditation</h2>
+<p class="callout">Listed ${escapeHtml(credentialSourceLabel(facility))}. Confirm current status with the issuing organization.</p>
 <ul>
 ${rows}
 </ul>
@@ -788,9 +801,10 @@ function renderFacilityHtml(f, kids) {
   // natural differentiator — each location has its own. (SEO audit fix.)
   const disambig = f._metaDisambiguate && f.address ? ` (${f.address})` : "";
   const title = `${f.name}${disambig} — Addiction Treatment in ${f.city}, ${f.state} | RehabLookup`;
-  const baseDesc = f.description
-    ? truncate((f._metaDisambiguate && f.address ? `${f.address}: ` : "") + f.description, 155)
-    : `${f.name}${disambig} offers comprehensive addiction treatment services in ${f.city}, ${f.state}. Verify insurance and start your recovery journey today.`;
+  const listingDescription = presentListingDescription(f.description);
+  const baseDesc = listingDescription
+    ? truncate((f._metaDisambiguate && f.address ? `${f.address}: ` : "") + listingDescription, 155)
+    : `${f.name}${disambig} is an addiction treatment facility in ${f.city}, ${f.state}. See listed services and payment options, and contact the facility to confirm details.`;
   const metaDescription = baseDesc;
 
   const ogImage =
@@ -800,7 +814,7 @@ function renderFacilityHtml(f, kids) {
 
   const breadcrumbs = [
     { name: "Home", url: `${BASE_URL}/` },
-    { name: "Find Rehab", url: `${BASE_URL}/rehab-centers` },
+    { name: "Find Rehab", url: `${BASE_URL}/locations` },
     { name: f.state, url: `${BASE_URL}/rehab-centers/${stateSlug}` },
     { name: f.city, url: `${BASE_URL}/rehab-centers/${stateSlug}/${cityHrefSlug}` },
     { name: f.name, url: canonical },
@@ -865,30 +879,17 @@ function renderFacilityHtml(f, kids) {
       { "@type": "City", name: f.city },
       { "@type": "State", name: f.state },
     ],
-    geo: {
-      "@type": "GeoCoordinates",
-      addressCountry: "US",
-    },
     hasMap,
-    openingHoursSpecification: {
-      "@type": "OpeningHoursSpecification",
-      dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
-      opens: "00:00",
-      closes: "23:59",
-    },
-    isAccessibleForFree: false,
-    medicalSpecialty: ["Addiction Medicine", "Psychiatry", "Behavioral Health"],
+    // No geo (no coordinates on record), no openingHoursSpecification (no
+    // facility has hours on record), no isAccessibleForFree / medicalSpecialty
+    // / knowsAbout (none is backed by a facility field). See
+    // src/lib/seo/facilityTruth.mjs → findFacilitySchemaViolations().
     ...(f.facility_type ? { "@additionalType": f.facility_type } : {}),
     ...(f.year_established ? { foundingDate: String(f.year_established) } : {}),
     ...(f.website ? { sameAs: [f.website] } : {}),
-    isAcceptingNewPatients: true,
-    knowsAbout: [
-      "Substance Use Disorder Treatment",
-      "Alcohol Addiction Treatment",
-      "Drug Addiction Treatment",
-      "Dual Diagnosis Treatment",
-      "Mental Health Treatment",
-    ],
+    ...(typeof f.accepting_admissions === "boolean"
+      ? { isAcceptingNewPatients: f.accepting_admissions }
+      : {}),
     // Services this facility actually offers — drives Google's MedicalProcedure
     // entity matching and surfaces in some rich-result variants.
     ...(facSvc.length
@@ -903,19 +904,9 @@ function renderFacilityHtml(f, kids) {
     // assistance flags). `paymentAccepted` is the canonical schema.org field
     // for LocalBusiness and is recognized by Google's rich-results parser.
     ...(facIns.length ? { paymentAccepted: facIns } : {}),
-    // Credentials / accreditations as EducationalOccupationalCredential
-    // entities, with a `url` pointing at the issuer's verifier where one
-    // exists (qualitycheck.org, carf.org, findtreatment.samhsa.gov, …).
-    ...(facAcc.length
-      ? {
-          hasCredential: facAcc.map((name) => ({
-            "@type": "EducationalOccupationalCredential",
-            credentialCategory: "Accreditation",
-            name,
-            ...(ACCRED_VERIFY[name] ? { url: ACCRED_VERIFY[name] } : {}),
-          })),
-        }
-      : {}),
+    // Licensing / accreditation is shown in the visible page with its source
+    // ("as reported to SAMHSA"), not asserted in structured data: the records
+    // are facility-reported and RehabLookup has not verified them.
     publisher: {
       "@type": "Organization",
       name: "RehabLookup",
@@ -938,9 +929,10 @@ function renderFacilityHtml(f, kids) {
   const typeLine = f.facility_type
     ? `<p><strong>Facility Type:</strong> ${escapeHtml(f.facility_type)}</p>`
     : "";
-  const descBlock = f.description
-    ? `<h2>About ${escapeHtml(f.name)}</h2><p>${escapeHtml(f.description)}</p>`
-    : `<h2>About ${escapeHtml(f.name)}</h2><p>${escapeHtml(f.name)} provides accredited addiction treatment services in ${escapeHtml(f.city)}, ${escapeHtml(f.state)}. View the full profile for programs, insurance accepted, and admissions details.</p>`;
+  const provenanceBlock = `<p class="callout provenance">${escapeHtml(provenanceNotice(f))}</p>`;
+  const descBlock = listingDescription
+    ? `<h2>About ${escapeHtml(f.name)}</h2><p>${escapeHtml(listingDescription)}</p>${provenanceBlock}`
+    : `<h2>About ${escapeHtml(f.name)}</h2><p>${escapeHtml(f.name)} is an addiction treatment facility in ${escapeHtml(f.city)}, ${escapeHtml(f.state)}. Contact the facility to confirm programs, insurance accepted, and admissions details.</p>${provenanceBlock}`;
 
   const richSections = renderRichSections(f, facSvc, facIns, facAge, facAcc);
   // Pro-only sections — empty string when f.is_pro is false, so the
@@ -1024,6 +1016,7 @@ a:hover{text-decoration:underline}
 .meta p{margin:6px 0}
 .rich{margin-top:8px}
 .rich .callout{background:#fffbeb;border-left:3px solid #f59e0b;padding:10px 14px;margin-top:10px;color:#78350f}
+.provenance{background:#f1f5f9;border-left:3px solid #64748b;padding:10px 14px;margin:10px 0 0;color:#334155;font-size:.92rem}
 .cta{margin-top:28px;padding:20px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px}
 .cta h2{margin-top:0}
 .cta-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}

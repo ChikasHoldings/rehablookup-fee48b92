@@ -161,7 +161,8 @@ export function SEO({
   // Base organization schema with comprehensive trust signals
   const organizationSchema = {
     "@context": "https://schema.org",
-    "@type": ["Organization", "MedicalBusiness"],
+    // A directory, not a care provider: plain Organization only.
+    "@type": "Organization",
     "@id": `${SITE_URL}/#organization`,
     name: SITE_NAME,
     legalName: "RehabLookup, Inc.",
@@ -200,31 +201,16 @@ export function SEO({
       "Medication-Assisted Treatment",
       "Behavioral Health",
     ],
-    hasCredential: [
-      {
-        "@type": "EducationalOccupationalCredential",
-        credentialCategory: "HIPAA Compliance",
-        name: "HIPAA Compliant Platform",
-      },
-      {
-        "@type": "EducationalOccupationalCredential",
-        credentialCategory: "LegitScript Certification",
-        name: "LegitScript Verified",
-      },
-    ],
+    // No hasCredential: neither a LegitScript certification nor a "HIPAA
+    // compliant" credential is documented anywhere. No 24/7 hours: support is
+    // by email and is not staffed around the clock.
     contactPoint: [
       {
         "@type": "ContactPoint",
         email: "help@rehablookup.com",
         contactType: "customer service",
-        availableLanguage: ["English", "Spanish"],
+        availableLanguage: ["English"],
         areaServed: "US",
-        hoursAvailable: {
-          "@type": "OpeningHoursSpecification",
-          dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
-          opens: "00:00",
-          closes: "23:59",
-        },
       },
       {
         "@type": "ContactPoint",
@@ -282,7 +268,7 @@ export function SEO({
         "@type": "SearchAction",
         target: {
           "@type": "EntryPoint",
-          urlTemplate: `${SITE_URL}/rehab-centers?location={search_term_string}`,
+          urlTemplate: `${SITE_URL}/search-results?location={search_term_string}`,
         },
         "query-input": "required name=search_term_string",
       },
@@ -308,13 +294,10 @@ export function SEO({
       "@type": "PeopleAudience",
       audienceType: "Patients and families seeking addiction treatment",
     },
-    specialty: ["Addiction Medicine", "Psychiatry", "Behavioral Health"],
-    lastReviewed: modifiedTime || new Date().toISOString().split("T")[0],
-    dateModified: modifiedTime || new Date().toISOString().split("T")[0],
-    reviewedBy: {
-      "@type": "Organization",
-      name: "RehabLookup Medical Advisory Board",
-    },
+    // No reviewedBy / lastReviewed here: there is no medical advisory board,
+    // and a page render is not a review. Articles with a real, named reviewer
+    // carry reviewedBy through generateArticleSchema() instead.
+    ...(modifiedTime ? { dateModified: modifiedTime } : {}),
     mainContentOfPage: {
       "@type": "WebPageElement",
       cssSelector: "main",
@@ -471,15 +454,8 @@ export function generateLocalBusinessSchema(facility: {
   bedCount?: string | number | null;
   genderServed?: string | null;
   ageGroups?: string[];
-  /** ISO date string for the last editorial review of this listing (E-E-A-T). */
-  lastReviewed?: string;
-  /** Person or Organization that reviewed/verified the listing (E-E-A-T). */
-  reviewedBy?: {
-    name: string;
-    type?: "Person" | "Organization";
-    jobTitle?: string;
-    url?: string;
-  };
+  /** facilities.accepting_admissions — emitted only when the record holds a boolean. */
+  acceptingAdmissions?: boolean | null;
 }) {
   const SITE_URL = "https://rehablookup.com";
   const slug = resolveFacilitySlug(facility);
@@ -556,55 +532,24 @@ export function generateLocalBusinessSchema(facility: {
       { "@type": "City", name: facility.city },
       { "@type": "State", name: facility.state },
     ],
-    geo: {
-      "@type": "GeoCoordinates",
-      addressCountry: "US",
-    },
     hasMap,
-    // Open 24/7 for treatment facilities
-    openingHoursSpecification: {
-      "@type": "OpeningHoursSpecification",
-      dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
-      opens: "00:00",
-      closes: "23:59",
-    },
-    isAccessibleForFree: false,
-    medicalSpecialty: ["Addiction Medicine", "Psychiatry", "Behavioral Health"],
-    availableService: facility.services?.map((service) => ({
-      "@type": "MedicalTherapy",
-      name: service,
-      serviceType: "Addiction Treatment",
-      provider: { "@id": facilityUrl },
-    })),
-    makesOffer: facility.services?.map((service) => ({
-      "@type": "Offer",
-      itemOffered: {
-        "@type": "Service",
-        name: service,
-        serviceType: "Addiction Treatment",
-        category: "Healthcare",
-      },
-      availability: "https://schema.org/InStock",
-    })),
-    hasCredential: facility.accreditations?.map((accreditation) => ({
-      "@type": "EducationalOccupationalCredential",
-      credentialCategory: "Accreditation",
-      name: accreditation,
-    })),
-    paymentAccepted: ["Cash", "Credit Card", "Insurance", ...(facility.insurance || [])],
-    currenciesAccepted: "USD",
-    priceRange: "$$-$$$$",
+    // Truth rules (src/lib/seo/facilityTruth.mjs): no geo without coordinates,
+    // no opening hours, specialty, price range, slogan, generic payment
+    // methods, offer availability or knowsAbout — no facility record supports
+    // them. Licensing/accreditation is shown on the page with its source
+    // rather than asserted here.
+    ...(typeof facility.acceptingAdmissions === "boolean"
+      ? { isAcceptingNewPatients: facility.acceptingAdmissions }
+      : {}),
+    availableService: facility.services?.length
+      ? facility.services.map((service) => ({
+          "@type": "MedicalTherapy",
+          name: service,
+        }))
+      : undefined,
+    paymentAccepted: facility.insurance?.length ? facility.insurance : undefined,
     foundingDate: facility.yearEstablished?.toString(),
     sameAs: facility.website ? [facility.website] : undefined,
-    slogan: "Your Path to Recovery Starts Here",
-    knowsAbout: [
-      "Drug Addiction Treatment",
-      "Alcohol Rehabilitation",
-      "Mental Health Services",
-      "Detoxification Programs",
-      "Outpatient Treatment",
-      "Inpatient Rehabilitation",
-    ],
     numberOfRooms: bedCountNum,
     audience,
     // Only emit AggregateRating with a real review count (>=1). Emitting
@@ -621,47 +566,21 @@ export function generateLocalBusinessSchema(facility: {
         worstRating: 1,
       },
     }),
-    // Additional trust signals
-    ...(facility.verified && {
-      award: "RehabLookup Verified Facility",
-    }),
-    // E-E-A-T: surface the most recent editorial review and reviewer for
-    // medical-content trust signals. `lastReviewed` is a schema.org/MedicalWebPage
-    // property and is also accepted on MedicalOrganization / MedicalClinic.
-    ...(facility.lastReviewed && {
-      lastReviewed: facility.lastReviewed.slice(0, 10),
-    }),
-    ...(facility.reviewedBy && {
-      reviewedBy: {
-        "@type": facility.reviewedBy.type || "Organization",
-        name: facility.reviewedBy.name,
-        ...(facility.reviewedBy.jobTitle ? { jobTitle: facility.reviewedBy.jobTitle } : {}),
-        ...(facility.reviewedBy.url ? { url: facility.reviewedBy.url } : {}),
-      },
-    }),
-    potentialAction: [
-      {
-        "@type": "ReserveAction",
-        target: {
-          "@type": "EntryPoint",
-          urlTemplate: `${facilityUrl}?action=contact`,
-          inLanguage: "en-US",
-          actionPlatform: ["http://schema.org/DesktopWebPlatform", "http://schema.org/MobileWebPlatform"],
+    // No editorial reviewedBy / lastReviewed: RehabLookup has no documented
+    // listing-review process, and updated_at is not a review date. No
+    // ReserveAction: the directory does not book consultations.
+    ...(facility.phone && {
+      potentialAction: [
+        {
+          "@type": "CommunicateAction",
+          target: {
+            "@type": "EntryPoint",
+            telephone: facility.phone,
+            actionPlatform: "http://schema.org/TelephonePlatform",
+          },
         },
-        result: {
-          "@type": "Reservation",
-          name: "Treatment Consultation",
-        },
-      },
-      {
-        "@type": "CommunicateAction",
-        target: {
-          "@type": "EntryPoint",
-          telephone: facility.phone,
-          actionPlatform: "http://schema.org/TelephonePlatform",
-        },
-      },
-    ],
+      ],
+    }),
   };
 
   // Strip undefined values so the emitted JSON-LD stays clean for crawlers.
