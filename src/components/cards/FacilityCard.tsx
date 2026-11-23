@@ -17,6 +17,7 @@ import { Link } from "react-router-dom";
 import { resolvePublicFacilityPhone } from "@/lib/facilityPhoneVisibility";
 import { CheckCircle2, Phone, Star, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { presentListingDescription } from "@/lib/seo/facilityTruth.mjs";
 
 // Subset of fields the card actually reads. Both PublicFacilitySnapshot
 // (legacy snapshot rows) and PublicFacility (view rows) satisfy this
@@ -259,7 +260,7 @@ export function FacilityCard({
 
       {/* Description preview — 2-line clamp. */}
       {facility.description && (
-        <p className="mt-4 line-clamp-2 text-sm text-slate-600">{facility.description}</p>
+        <p className="mt-4 line-clamp-2 text-sm text-slate-600">{presentListingDescription(facility.description)}</p>
       )}
 
       {/* CTAs */}

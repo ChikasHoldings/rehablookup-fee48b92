@@ -30,6 +30,7 @@ import { resolvePublicFacilityPhone } from "@/lib/facilityPhoneVisibility";
 import { useFavorites } from "@/hooks/useFavorites";
 import { CompareButton } from "@/components/comparison/CompareButton";
 import type { ProximityTier } from "@/lib/proximitySearch";
+import { presentListingDescription } from "@/lib/seo/facilityTruth.mjs";
 
 
 interface SearchResultCardProps {
@@ -429,7 +430,7 @@ export const SearchResultCard = memo(forwardRef<HTMLElement, SearchResultCardPro
 
           {/* Description */}
           <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2 mb-2">
-            {center.description}
+            {presentListingDescription(center.description)}
           </p>
 
           {/* Treatment Types & Insurance - Inline */}

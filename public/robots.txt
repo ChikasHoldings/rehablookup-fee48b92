@@ -1,6 +1,12 @@
 # =============================================================================
 # robots.txt for RehabLookup
 # https://rehablookup.com
+# Last updated: 2026-11-23 — AI search access: added explicit Allow groups for
+#   the AI search/assistant agents that were missing (Perplexity-User,
+#   Claude-SearchBot, Claude-User, DuckAssistBot, Applebot-Extended,
+#   GoogleOther, MistralAI-User). robots.txt already allowed GPTBot,
+#   OAI-SearchBot, ChatGPT-User, PerplexityBot and Applebot; the 403s those
+#   agents received came from the Vercel Firewall, not from this file.
 # Last updated: 2026-11-23 — SEO recovery Phase 1: removed Disallow lines for
 #   retired consumer/concierge URLs that are 301 redirects (/placement-help,
 #   /concierge/{intake,thank-you,create-password}, /international/{intake,
@@ -244,6 +250,41 @@ Disallow: /admin
 Disallow: /provider/
 
 User-agent: PerplexityBot
+Allow: /
+Disallow: /admin
+Disallow: /provider/
+
+User-agent: Perplexity-User
+Allow: /
+Disallow: /admin
+Disallow: /provider/
+
+User-agent: Claude-SearchBot
+Allow: /
+Disallow: /admin
+Disallow: /provider/
+
+User-agent: Claude-User
+Allow: /
+Disallow: /admin
+Disallow: /provider/
+
+User-agent: DuckAssistBot
+Allow: /
+Disallow: /admin
+Disallow: /provider/
+
+User-agent: Applebot-Extended
+Allow: /
+Disallow: /admin
+Disallow: /provider/
+
+User-agent: GoogleOther
+Allow: /
+Disallow: /admin
+Disallow: /provider/
+
+User-agent: MistralAI-User
 Allow: /
 Disallow: /admin
 Disallow: /provider/
