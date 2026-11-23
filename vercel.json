@@ -218,7 +218,7 @@
     },
     {
       "source": "/rehab-centers",
-      "destination": "/search-results",
+      "destination": "/locations",
       "statusCode": 301
     },
     {
