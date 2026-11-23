@@ -1,36 +1,46 @@
 # RehabLookup
 
-> Verified directory of 3,800+ addiction treatment facilities across the United
-> States. Free concierge placement, insurance verification, and recovery resources.
-> Not a treatment provider. Confidential, 24/7 support at 214-639-6420.
+> RehabLookup is a free directory of addiction treatment facility listings across
+> the United States (all 50 states and Washington, D.C.). Most listings come from
+> SAMHSA's FindTreatment.gov directory and reflect information facilities report
+> to SAMHSA; RehabLookup has not independently verified them. Facilities can claim
+> and update their listings. RehabLookup is not a treatment provider, does not
+> place people in treatment, and does not verify insurance. In an emergency call
+> 911; for a mental health or substance use crisis call or text 988; for free,
+> confidential treatment referral information call SAMHSA's National Helpline at
+> 1-800-662-4357.
 
-## Treatment finders
-- [Drug & Alcohol Rehab Directory](https://rehablookup.com/): Search facilities by location, type, and insurance
-- [Free Concierge Placement](https://rehablookup.com/concierge): Hand-matched placement within 24–48 hours
-- [Browse by State](https://rehablookup.com/rehab-centers/california): State-level directory (50 states + DC)
+## Find treatment
+- [Directory home](https://rehablookup.com/): Search facility listings by location, level of care, and payment type
+- [Browse by state](https://rehablookup.com/locations): State and city directory pages
+- [Example state directory](https://rehablookup.com/rehab-centers/california): Listings in one state
 
-## Treatment types
-- [Medical Detox](https://rehablookup.com/treatment-types/detox-programs)
-- [Inpatient / Residential](https://rehablookup.com/treatment-types/residential-inpatient)
-- [Outpatient (IOP/PHP)](https://rehablookup.com/treatment-types/outpatient-programs)
-- [Dual Diagnosis](https://rehablookup.com/treatment-types/dual-diagnosis-treatment)
-- [Medication-Assisted Treatment](https://rehablookup.com/treatment-types/drug-addiction-treatment)
+## Levels of care
+- [Treatment types](https://rehablookup.com/treatment-types)
+- [Medical detox](https://rehablookup.com/treatment-types/detox-programs)
+- [Inpatient / residential](https://rehablookup.com/treatment-types/residential-inpatient)
+- [Outpatient (IOP / PHP)](https://rehablookup.com/treatment-types/outpatient-programs)
+- [Dual diagnosis](https://rehablookup.com/treatment-types/dual-diagnosis-treatment)
+- [Alcohol rehabilitation](https://rehablookup.com/treatment-types/alcohol-rehabilitation)
 
-## Insurance coverage
-- [Aetna](https://rehablookup.com/insurance/aetna-rehab)
-- [Blue Cross Blue Shield](https://rehablookup.com/insurance/bcbs-treatment)
-- [Cigna](https://rehablookup.com/insurance/cigna-rehab)
-- [United Healthcare](https://rehablookup.com/insurance/united-healthcare-rehab)
+## Paying for treatment
+- [Insurance guides](https://rehablookup.com/insurance)
 - [Medicaid](https://rehablookup.com/insurance/medicaid-rehab)
 - [Medicare](https://rehablookup.com/insurance/medicare-rehab)
+- [TRICARE](https://rehablookup.com/insurance/tricare-rehab)
+- [Free and low-cost options](https://rehablookup.com/free-rehab-options)
 
 ## Recovery education
-- [Signs of Addiction](https://rehablookup.com/resources/youth-addiction-warning-signs)
-- [Understanding Levels of Care](https://rehablookup.com/resources/understanding-levels-of-care)
-- [Free & Low-Cost Rehab](https://rehablookup.com/free-rehab-options)
+- [Resources](https://rehablookup.com/resources)
+- [Signs of addiction in young people](https://rehablookup.com/resources/youth-addiction-warning-signs)
+- [FAQ](https://rehablookup.com/faq)
 
-## Optional
-- [About](https://rehablookup.com/about)
-- [Privacy Policy](https://rehablookup.com/privacy-policy)
-- [HIPAA Notice](https://rehablookup.com/notice-of-privacy-practices)
+## For treatment providers
+- [List or claim a facility](https://rehablookup.com/for-providers)
+- [Provider FAQ](https://rehablookup.com/provider-faq)
+
+## About
+- [About RehabLookup](https://rehablookup.com/about)
+- [Editorial policy](https://rehablookup.com/editorial-policy)
+- [Privacy policy](https://rehablookup.com/privacy-policy)
 - [Contact](mailto:help@rehablookup.com)

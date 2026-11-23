@@ -158,7 +158,7 @@ export default function CityTreatmentPage() {
     "@context": "https://schema.org",
     "@type": "MedicalWebPage",
     name: pageTitle,
-    description: `Find accredited ${treatment.label.toLowerCase()} in ${city.city}, ${city.stateAbbr}.`,
+    description: `Find ${treatment.label.toLowerCase()} in ${city.city}, ${city.stateAbbr}.`,
     url: `https://rehablookup.com/${slug}`,
     about: {
       "@type": "MedicalCondition",
@@ -180,7 +180,7 @@ export default function CityTreatmentPage() {
     <SEOLandingTemplate
       title={pageTitle}
       metaTitle={`${treatment.pluralLabel} in ${city.city}, ${city.stateAbbr} — Find Treatment | RehabLookup`}
-      metaDescription={`Find accredited ${treatment.label.toLowerCase()} in ${city.city}, ${city.stateAbbr}. Compare ${directMatchCount} facilities, check insurance coverage, read reviews. Get help today.`}
+      metaDescription={`Find ${treatment.label.toLowerCase()} in ${city.city}, ${city.stateAbbr}. Compare ${directMatchCount} facilities, check insurance coverage, read reviews. Get help today.`}
       canonical={`https://rehablookup.com/${slug}`}
       noindex={!validation.shouldIndex}
       structuredData={structuredData}
@@ -194,7 +194,7 @@ export default function CityTreatmentPage() {
       heroLocation={`${city.city}, ${city.state}`}
       heroBadge="Verified & Accredited"
       heroImage={getCityImage(city.stateSlug, city.slug)}
-      introContent={`Looking for ${treatment.label.toLowerCase()} in ${city.city}, ${city.stateAbbr}? RehabLookup connects you with verified, accredited treatment facilities in the ${city.city} area.${populationText} has a range of addiction treatment resources available for individuals and families seeking help. Every listed center is checked for proper licensing, qualified clinical staff, and evidence-based treatment approaches. Whether you need immediate placement or want to compare programs, our directory makes finding the right ${treatment.label.toLowerCase()} simple and confidential.`}
+      introContent={`Looking for ${treatment.label.toLowerCase()} in ${city.city}, ${city.stateAbbr}? RehabLookup lists treatment facilities in the ${city.city} area.${populationText} has a range of addiction treatment resources available for individuals and families seeking help. Every listed center is checked for proper licensing, qualified clinical staff, and evidence-based treatment approaches. Whether you need immediate placement or want to compare programs, our directory makes finding the right ${treatment.label.toLowerCase()} simple and confidential.`}
       sections={treatmentSections}
       whatToExpect={treatmentWhatToExpect}
       benefits={treatmentBenefits}

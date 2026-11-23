@@ -112,7 +112,7 @@ const faqs = [
   {
     question: "What is the success rate of alcohol rehab?",
     answer:
-      "Success rates vary based on multiple factors including program quality, treatment duration, and aftercare engagement. Studies show 40-60% of people who complete quality treatment maintain sobriety at one year. Success improves significantly with treatment lasting 90+ days, active participation in support groups, and comprehensive aftercare. Recovery is a long-term process, and many achieve lasting sobriety after multiple treatment attempts.",
+      "Success rates vary based on multiple factors including program quality, treatment duration, and aftercare engagement. According to the National Institute on Drug Abuse (NIDA), relapse rates for substance use disorders are estimated at 40–60%, similar to other chronic illnesses such as hypertension and asthma. Relapse does not mean treatment failed; it signals that treatment should be resumed or adjusted. Staying in treatment for an adequate period and continuing with aftercare and support can improve outcomes. Recovery is a long-term process, and many achieve lasting sobriety after multiple treatment attempts.",
   },
 ];
 

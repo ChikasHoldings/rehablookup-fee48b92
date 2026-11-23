@@ -3,8 +3,6 @@ import { useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Shield, Clock, CheckCircle2, Star, ArrowRight, Phone, Zap } from "lucide-react";
 import headerLogo from "@/assets/logo-header.webp";
-import { TestimonialsSection } from "@/components/testimonials/TestimonialsSection";
-import { seekerTestimonials } from "@/data/testimonials";
 import { LeadIntakeForm } from "@/components/lead-intake";
 import { LeadIntakeFormData } from "@/components/lead-intake/types";
 import { MarketingLeadSuccess } from "@/components/marketing/MarketingLeadSuccess";
@@ -102,7 +100,7 @@ export default function MarketingLanding() {
     <>
       <Helmet>
         <title>Find Trusted Addiction Treatment Centers | RehabLookup</title>
-        <meta name="description" content="Search and compare top-rated, verified treatment centers near you. Free, confidential, no account required." />
+        <meta name="description" content="Search and compare treatment center listings near you. Free, confidential, no account required." />
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
 
@@ -139,7 +137,7 @@ export default function MarketingLanding() {
               </h1>
 
               <p className="mt-4 text-sm sm:text-base md:text-lg text-white/85 max-w-xl mx-auto leading-relaxed drop-shadow">
-                Tell us what you need and we'll match you with verified treatment centers that accept your insurance — in under 2 minutes.{" "}
+                Tell us what you need and we'll show you treatment center listings that report accepting your insurance — in under 2 minutes.{" "}
                 <strong className="text-white">100% free. 100% confidential.</strong>
               </p>
 
@@ -184,7 +182,7 @@ export default function MarketingLanding() {
             <div className="grid grid-cols-1 sm:grid-cols-3 text-center gap-4">
               <div>
                 <div className="text-xl sm:text-2xl md:text-3xl font-bold text-primary tabular-nums">3,800+</div>
-                <div className="text-xs sm:text-sm text-muted-foreground mt-0.5">Verified Centers</div>
+                <div className="text-xs sm:text-sm text-muted-foreground mt-0.5">Facility Listings</div>
               </div>
               <div className="border-x border-border/50">
                 <div className="text-xl sm:text-2xl md:text-3xl font-bold text-primary tabular-nums">51</div>
@@ -231,7 +229,7 @@ export default function MarketingLanding() {
             <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
               {[
                 { num: "1", title: "Share Your Situation", desc: "Tell us about your needs, location, and insurance — everything stays private.", time: "~60 sec" },
-                { num: "2", title: "See Your Matches", desc: "We surface verified programs that fit your criteria and accept your coverage.", time: "Instant" },
+                { num: "2", title: "See Your Matches", desc: "We show listed programs that match your criteria and report accepting your coverage.", time: "Instant" },
                 { num: "3", title: "Take the Next Step", desc: "Choose a facility and they'll reach out at a time that works for you.", time: "Within 24 hrs" },
               ].map((step, idx) => (
                 <div key={idx} className="relative bg-card rounded-xl p-5 text-center shadow-sm border border-border/30 hover:shadow-md transition-shadow">
@@ -252,12 +250,10 @@ export default function MarketingLanding() {
           </div>
         </section>
 
-        {/* Testimonials */}
-        <TestimonialsSection
-          testimonials={seekerTestimonials}
-          title="Families Who Found Help"
-          subtitle="Real stories from people who used RehabLookup to find treatment"
-        />
+        {/* Testimonials removed (SEO recovery Phase 1): the 26 entries in
+            src/data/testimonials.ts have no verifiable source, and 12 describe
+            the retired matching service. Do not re-add testimonials without
+            documented, consented sources (FTC 16 CFR Part 465). */}
 
         {/* Final CTA */}
         <section className="py-10 sm:py-14 bg-primary/5">
@@ -266,7 +262,7 @@ export default function MarketingLanding() {
               Recovery Is Possible — Take the First Step Today
             </h2>
             <p className="text-sm sm:text-base text-muted-foreground mt-3 max-w-lg mx-auto">
-              Thousands of families have found the right program through RehabLookup. The sooner you reach out, the sooner healing can begin.
+              Compare listings, then contact facilities directly to ask about availability and coverage.
             </p>
             <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
               <button

@@ -45,7 +45,7 @@ const StateAlcoholRehab = () => {
       "@context": "https://schema.org",
       "@type": "MedicalWebPage",
       name: `Alcohol Rehab Centers in ${stateName}`,
-      description: `Find accredited alcohol addiction treatment centers in ${stateName}. Compare detox, inpatient, and outpatient alcohol rehab programs with insurance verification.`,
+      description: `Find alcohol addiction treatment centers in ${stateName}. Compare detox, inpatient, and outpatient alcohol rehab programs with insurance verification.`,
       url: `https://rehablookup.com/treatment-types/alcohol-rehabilitation/${stateSlug}`,
       specialty: "Addiction Medicine",
       lastReviewed: new Date().toISOString().split("T")[0],
@@ -65,7 +65,7 @@ const StateAlcoholRehab = () => {
     <Layout>
       <SEO
         title={`Alcohol Rehab Centers in ${stateName} (${abbreviation}) | Find Treatment`}
-        description={`Find accredited alcohol addiction treatment in ${stateName}. Compare detox, inpatient, and outpatient programs. Verify insurance coverage. ${cities.length}+ cities covered.`}
+        description={`Find alcohol addiction treatment in ${stateName}. Compare detox, inpatient, and outpatient programs. Verify insurance coverage. ${cities.length}+ cities covered.`}
         canonical={`/treatment-types/alcohol-rehabilitation/${stateSlug}`}
         structuredData={structuredData}
         breadcrumbs={[

@@ -214,8 +214,10 @@ describe("applyDirectoryArticleOverride — legacy articles are rewritten", () =
     );
     for (const kept of [
       "Chiedu Kabakwu",
-      "Verified provider network",
-      "documented verification process",
+      "Transparent sourcing",
+      // SEO recovery Phase 1: the "documented verification process" claim was
+      // removed — no listing-verification procedure exists.
+      "each profile says where its information came from",
       "SEO and content infrastructure",
       "Engineering reliability",
     ]) {

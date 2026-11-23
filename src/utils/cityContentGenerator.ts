@@ -243,7 +243,7 @@ export function generateTreatmentCitySections(
   } else {
     sections.push({
       heading: `${treatmentLabel} in ${cityName}`,
-      content: `${cityName}, ${stateAbbr} provides access to quality ${treatmentLabel.toLowerCase()} through a network of licensed, accredited treatment providers. Local programs combine evidence-based clinical methods with holistic wellness approaches to address the full spectrum of addiction and recovery. Whether you're seeking initial assessment, active treatment, or long-term aftercare support, ${cityName}'s treatment community offers programs designed to meet diverse needs and recovery goals.`,
+      content: `${cityName}, ${stateAbbr} provides access to quality ${treatmentLabel.toLowerCase()} through the treatment providers listed in the area. Local programs combine evidence-based clinical methods with holistic wellness approaches to address the full spectrum of addiction and recovery. Whether you're seeking initial assessment, active treatment, or long-term aftercare support, ${cityName}'s treatment community offers programs designed to meet diverse needs and recovery goals.`,
     });
   }
 

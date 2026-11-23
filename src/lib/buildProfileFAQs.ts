@@ -119,11 +119,11 @@ export function buildProfileFAQs(input: BuildProfileFAQsInput): FAQItem[] {
     if (verified) trustParts.push(`a verified provider profile on RehabLookup`);
     if (yearEstablished) trustParts.push(`operations dating back to ${yearEstablished}`);
     faqs.push({
-      question: `Is ${name} a legitimate, accredited treatment center?`,
+      question: `What licensing or accreditation does ${name} report?`,
       answer: `${name} maintains ${formatList(
         trustParts,
         3,
-      )}. Each accreditation is independently reviewed by our team before being displayed on the profile. You can also contact licensing boards in ${
+      )}. These details come from the facility's listing and have not been independently verified by RehabLookup. You can contact licensing boards in ${
         state || "your state"
       } to verify a center's good standing.`,
     });

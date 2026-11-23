@@ -176,19 +176,6 @@ export default function HowWeMakeMoney() {
             don't charge per click, per impression, or per call.
           </p>
 
-          <h3 className="mt-7 mb-2 text-base md:text-lg font-semibold text-slate-900">
-            Concierge Partner — $1,000/mo or $10,200/yr
-          </h3>
-          <p>
-            An optional add-on for facilities that want prominent surfacing
-            when our concierge team matches families to options. Concierge
-            Partners get a "Placement Partner" label in our advisors' match
-            tool. Our advisors are required to present at least two
-            non-partner alternatives alongside any Placement Partner. The
-            family always picks. Calls go directly to whichever facility
-            the family chooses. We never charge per match, per call, or per
-            admission.
-          </p>
 
           {/* Section 3 */}
           <SectionHeader id="ekra">EKRA — the law that shapes our model</SectionHeader>
@@ -217,8 +204,6 @@ export default function HowWeMakeMoney() {
           <ul className="mt-4 space-y-2.5">
             {[
               "Every fee we charge is a flat subscription. We charge for visibility and ad inventory, never for outcomes.",
-              "Our concierge advisors are paid salary. No bonuses, no per-match commissions, no admission-tied compensation.",
-              "Our advisors are required to present non-Placement-Partner alternatives alongside any partner facility. We log every match decision to make this auditable.",
               "Phone numbers shown on the site dial the facility's own admissions line. We don't route, qualify, or intermediate calls.",
               "Featured rotation is random (cookie-seeded per visitor), never weighted by referral value, call quality, or admission rate.",
             ].map((item) => (
@@ -276,7 +261,7 @@ export default function HowWeMakeMoney() {
             </li>
           </ol>
           <p className="mt-4">
-            You can also reach our concierge team directly at{" "}
+            You can also reach RehabLookup support at{" "}
             <a
               href="tel:+12146396420"
               className="text-[#1B365D] underline underline-offset-2 font-medium whitespace-nowrap"

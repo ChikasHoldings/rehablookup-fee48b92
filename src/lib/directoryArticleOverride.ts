@@ -136,7 +136,7 @@ export const DIRECTORY_ARTICLE_OVERRIDES: Record<string, DirectoryArticleOverrid
       },
       "## Looking Ahead",
       "May and June will focus on deepening provider quality, improving international treatment discovery and directory coverage, and shipping a faster, more personalized search experience. Thank you to every family, treatment provider, clinician, and content contributor who trusted us in April. We are just getting started.",
-      "If you or a loved one needs help finding treatment, [search treatment centers](/search-results) by state, level of care, or insurance — comparing verified facilities on RehabLookup is always free.",
+      "If you or a loved one needs help finding treatment, [search treatment centers](/search-results) by state, level of care, or insurance — comparing facility listings on RehabLookup is always free.",
     ],
   },
 
@@ -172,7 +172,7 @@ export const DIRECTORY_ARTICLE_OVERRIDES: Record<string, DirectoryArticleOverrid
       {
         type: "list",
         items: [
-          "**Verified provider network** — every facility on RehabLookup goes through a documented verification process before it can be listed",
+          "**Transparent sourcing** — most listings come from SAMHSA's FindTreatment.gov directory, and each profile says where its information came from",
           "**Open directory access** — search, filter, and compare every verified facility for free, with no account required and no gatekeeping",
           "**Always-on availability** — so a family searching at 3 a.m. can compare programs and reach a treatment center on their own terms",
           "**SEO and content infrastructure** — state directories, treatment guides, and insurance resources built to be discoverable and genuinely useful",

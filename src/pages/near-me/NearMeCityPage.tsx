@@ -59,7 +59,7 @@ function generateCityFAQs(
     );
   } else if (slug.includes("insurance") || slug.includes("blue-cross") || slug.includes("aetna") || slug.includes("cigna") || slug.includes("united") || slug.includes("tricare") || slug.includes("humana")) {
     base.push(
-      { question: `How do I verify my insurance covers ${label.toLowerCase()} in ${cityName}?`, answer: `Contact the treatment facility directly with your insurance card, or use our free insurance verification tool. Ask about in-network vs out-of-network benefits, pre-authorization requirements, and covered levels of care.` },
+      { question: `How do I verify my insurance covers ${label.toLowerCase()} in ${cityName}?`, answer: `Contact the treatment facility directly with your insurance card, and call the member services number on the card. Ask about in-network vs out-of-network benefits, pre-authorization requirements, and covered levels of care.` },
       { question: `What does insurance typically cover for ${treatmentType.toLowerCase()}?`, answer: `Most plans cover medical detox, inpatient/residential treatment, outpatient programs, medication-assisted treatment, and counseling. Coverage duration and copays vary by plan and provider.` }
     );
   } else if (slug.includes("detox")) {

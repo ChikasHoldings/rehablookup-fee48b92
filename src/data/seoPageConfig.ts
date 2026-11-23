@@ -351,7 +351,7 @@ export const seoTreatmentTypes: TreatmentTypeConfig[] = [
     pluralLabel: "Alcohol Rehab Centers",
     shortLabel: "Alcohol",
     filterKey: "alcohol",
-    description: "Find accredited alcohol rehabilitation centers offering medically supervised detox, counseling, and long-term recovery programs.",
+    description: "Find alcohol rehabilitation centers offering medically supervised detox, counseling, and long-term recovery programs.",
     icon: "Wine",
   },
   {
@@ -956,7 +956,7 @@ export const treatmentHubPages: {
     title: "Alcohol Rehab Centers",
     metaTitle: "Alcohol Rehab Centers Near You — Find Treatment Today",
     metaDescription: "Search accredited alcohol rehab centers with verified reviews. Compare inpatient, outpatient & detox programs. Insurance accepted. Get help now.",
-    heroSubtitle: "Find accredited alcohol rehabilitation programs offering medically supervised detox, evidence-based therapy, and long-term recovery support.",
+    heroSubtitle: "Find alcohol rehabilitation programs offering medically supervised detox, evidence-based therapy, and long-term recovery support.",
     filterKey: "alcohol",
     overview: "Alcohol use disorder affects over 14 million adults in the United States. Professional alcohol rehab centers provide structured treatment programs designed to help individuals safely detox, address underlying causes of addiction, and build sustainable recovery skills. Whether you need inpatient residential care or flexible outpatient scheduling, accredited facilities offer evidence-based approaches tailored to your unique needs.",
     whatToExpect: [
@@ -1049,7 +1049,7 @@ export const treatmentHubPages: {
     slug: "inpatient-rehab",
     title: "Inpatient Rehab",
     metaTitle: "Inpatient Rehab Programs Near You — Residential Treatment",
-    metaDescription: "Find residential inpatient rehab programs with 24/7 care. Compare accredited facilities, check insurance, and begin your recovery journey today.",
+    metaDescription: "Find residential inpatient rehab programs with 24/7 care. Compare facility listings, check insurance, and begin your recovery journey today.",
     heroSubtitle: "Explore residential inpatient programs with 24/7 care, structured treatment, and comprehensive therapeutic support.",
     filterKey: "inpatient",
     overview: "Inpatient (residential) rehabilitation provides the highest level of addiction treatment, offering 24/7 care in a structured therapeutic environment. Patients live at the facility for the duration of treatment, receiving intensive individual and group therapy, medical monitoring, and holistic support. This immersive approach is particularly effective for individuals with severe addictions, co-occurring mental health disorders, or those who need to be removed from triggering environments.",

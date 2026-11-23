@@ -157,7 +157,7 @@ export default function SubstanceCityPage() {
       heroLocation={`${cityName}, ${abbreviation}`}
       heroBadge="Verified Programs"
       heroImage={getCityImage(stateSlug, citySlug)}
-      introContent={`Searching for ${substance.conditionName.toLowerCase()} treatment in ${cityName}, ${stateName}? RehabLookup connects you with accredited facilities offering evidence-based care. Whether you need medical detox, residential treatment, or outpatient support, our verified directory helps you compare programs and find the right fit in ${cityName}.`}
+      introContent={`Searching for ${substance.conditionName.toLowerCase()} treatment in ${cityName}, ${stateName}? RehabLookup lists facilities offering evidence-based care. Whether you need medical detox, residential treatment, or outpatient support, our verified directory helps you compare programs and find the right fit in ${cityName}.`}
       sections={[
         {
           heading: `${substance.conditionName} Treatment Options in ${cityName}`,
@@ -165,7 +165,7 @@ export default function SubstanceCityPage() {
         },
         {
           heading: `Finding the Right Program in ${cityName}`,
-          content: `When choosing a ${substance.conditionName.toLowerCase()} treatment program in ${cityName}, consider accreditation status, treatment modalities, staff qualifications, and aftercare support. Programs listed on RehabLookup are verified for proper credentials. Many offer free insurance verification to help you understand coverage before admission.`,
+          content: `When choosing a ${substance.conditionName.toLowerCase()} treatment program in ${cityName}, consider accreditation status, treatment modalities, staff qualifications, and aftercare support. Listings on RehabLookup are not independently verified, so confirm licensing and credentials with each program. Many programs will check your insurance benefits before admission.`,
         },
         {
           heading: `Insurance & Cost in ${cityName}`,

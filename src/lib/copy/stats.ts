@@ -14,12 +14,10 @@
  * verifiable and (for ratings) carry matching AggregateRating schema.
  */
 export const STATS = {
-  /** Verified facility count. Source: facilities table (approved + slug not null). */
+  /** Facility listing count (not a verification claim). Source: public_facilities. */
   facilities: "3,800+",
   /** Coverage area shown alongside facilities count. */
   states: "50 states + Washington, D.C.",
   /** Seeker-side cost. Always free for seekers under the EKRA flat-fee model. */
   freeForSeekers: "100%",
-  /** Time from intake submission to first coordinator response. */
-  firstResponse: "< 1 hour",
 } as const;

@@ -50,7 +50,7 @@ export default function CouplesRehabNearMe() {
     <Layout>
       <SEO
         title={`Couples Rehab Near Me ${stateData ? `in ${stateData.state}` : ""} | Find Treatment Centers`}
-        description={`Find couples rehabilitation programs near you${stateData ? ` in ${stateData.state}` : ""}. Compare ${facilities.length > 0 ? facilities.length + "+" : ""} treatment facilities. Free insurance verification.`}
+        description={`Find couples rehabilitation programs near you${stateData ? ` in ${stateData.state}` : ""}. Compare ${facilities.length > 0 ? facilities.length + "+" : ""} treatment facilities. Confirm coverage with your plan.`}
         canonical={stateSlug ? `/couples-rehab-near-me/${stateSlug}` : "/couples-rehab-near-me"}
         keywords={[
           "couples rehab near me",

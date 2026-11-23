@@ -304,7 +304,7 @@ const CityTreatmentExpandedPage = ({ treatmentKey }: CityTreatmentExpandedPagePr
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="prose prose-lg max-w-none mb-8">
               <p className="text-muted-foreground leading-relaxed">
-                Looking for {config.label.toLowerCase()} in {cityName}, {abbreviation}? RehabLookup connects you with verified, accredited treatment programs in the {cityName} area.
+                Looking for {config.label.toLowerCase()} in {cityName}, {abbreviation}? RehabLookup lists treatment programs in the {cityName} area.
                 {urbanClass === "major-metro" || urbanClass === "metro"
                   ? ` As a major metropolitan area, ${cityName} offers a wide range of ${config.label.toLowerCase()} options with varying approaches and amenities.`
                   : ` While ${cityName} may have fewer local options, quality ${config.label.toLowerCase()} programs are accessible in the surrounding ${stateName} area.`}

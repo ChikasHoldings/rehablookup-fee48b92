@@ -95,7 +95,7 @@ export const comparisonPageConfigs: ComparisonPageConfig[] = [
     faqs: [
       { question: "Can I do detox at home?", answer: "Home detox can be dangerous, especially for alcohol, benzodiazepines, and opioids. Medical detox provides 24/7 monitoring and medications to prevent life-threatening complications like seizures." },
       { question: "How long does detox take?", answer: "Detox typically lasts 3–10 days depending on the substance, severity of use, and individual health factors. Alcohol and benzodiazepine detox may take longer." },
-      { question: "Is detox covered by insurance?", answer: "Yes, most insurance plans cover medical detox as a medically necessary service. Verify your coverage with the facility or use our free insurance verification tool." },
+      { question: "Is detox covered by insurance?", answer: "Yes, most insurance plans cover medical detox as a medically necessary service. Verify your coverage with your insurer and the facility." },
     ],
     relatedSlugs: ["inpatient-vs-outpatient-rehab", "how-to-choose-rehab", "30-day-vs-90-day-rehab"],
   },

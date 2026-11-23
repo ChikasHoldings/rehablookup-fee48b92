@@ -110,7 +110,7 @@ const MedicalDisclaimer = () => {
             <p className="text-muted-foreground">
               Using this website, submitting forms, or communicating with our team does not create a doctor-patient 
               relationship, therapist-client relationship, or any other professional healthcare relationship. 
-              Our concierge service provides referral assistance only and is not a clinical service.
+              RehabLookup is a directory: it does not provide referrals, placement, or clinical services.
             </p>
 
             <h2 className="text-xl font-bold text-foreground">Insurance & Financial Information</h2>

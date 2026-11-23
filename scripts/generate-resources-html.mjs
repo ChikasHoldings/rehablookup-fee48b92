@@ -472,7 +472,7 @@ ${gtagSnippet()}
           <h2>Explore More Resources</h2>
           <ul>
             <li><a href="/resources">All Recovery Resources</a></li>
-            <li><a href="/rehab-centers">Find Rehab Centers</a></li>
+            <li><a href="/locations">Find Rehab Centers</a></li>
             <li><a href="/treatment-types">Treatment Types</a></li>
             <li><a href="/compare">Compare Facilities</a></li>
           </ul>

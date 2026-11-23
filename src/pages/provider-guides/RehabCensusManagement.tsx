@@ -65,7 +65,6 @@ export default function RehabCensusManagement() {
             "Free listing with full profile gets you visible to searchers immediately",
             "Pro listing prioritizes your facility in search results for maximum visibility",
             "Real-time analytics help you track and optimize your inquiry pipeline",
-            "Concierge placement service delivers pre-screened, high-intent referrals",
           ],
         },
       ]}

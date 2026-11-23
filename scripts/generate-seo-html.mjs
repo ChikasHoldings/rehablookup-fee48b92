@@ -83,7 +83,7 @@ const topCities = [
 ];
 
 const treatmentTypes = [
-  { slug: "alcohol-rehab", label: "Alcohol Rehab", shortLabel: "Alcohol", filterKey: "alcohol", description: "Find accredited alcohol rehabilitation centers offering medically supervised detox, counseling, and long-term recovery programs." },
+  { slug: "alcohol-rehab", label: "Alcohol Rehab", shortLabel: "Alcohol", filterKey: "alcohol", description: "Find alcohol rehabilitation centers offering medically supervised detox, counseling, and long-term recovery programs." },
   { slug: "drug-rehab", label: "Drug Rehab", shortLabel: "Drug", filterKey: "drug", description: "Connect with drug rehabilitation facilities providing evidence-based treatment for substance use disorders." },
   { slug: "detox-centers", label: "Detox Centers", shortLabel: "Detox", filterKey: "detox", description: "Locate medically supervised detoxification programs offering safe withdrawal management and 24/7 medical support." },
   { slug: "inpatient-rehab", label: "Inpatient Rehab", shortLabel: "Inpatient", filterKey: "inpatient", description: "Explore residential inpatient rehabilitation programs with round-the-clock care and structured treatment environments." },
@@ -103,7 +103,7 @@ const treatmentHubs = [
   { slug: "alcohol-rehab-centers", title: "Alcohol Rehab Centers", metaTitle: "Alcohol Rehab Centers Near You — Find Treatment Today | RehabLookup", metaDescription: "Search accredited alcohol rehab centers with verified reviews. Compare inpatient, outpatient & detox programs. Insurance accepted.", overview: "Alcohol use disorder affects over 14 million adults in the United States. Professional alcohol rehab centers provide structured treatment programs designed to help individuals safely detox, address underlying causes of addiction, and build sustainable recovery skills." },
   { slug: "drug-rehab-centers", title: "Drug Rehab Centers", metaTitle: "Drug Rehab Centers Near You — Evidence-Based Treatment | RehabLookup", metaDescription: "Find drug rehab center listings offering detox, inpatient & outpatient programs. Compare facilities and start recovery today.", overview: "Drug addiction affects millions of individuals and families across the country. Professional drug rehab centers offer specialized treatment programs addressing addiction to opioids, stimulants, benzodiazepines, and other substances." },
   { slug: "detox-centers", title: "Detox Centers", metaTitle: "Medical Detox Centers Near You — Safe Withdrawal Management | RehabLookup", metaDescription: "Find medically supervised detox centers offering safe withdrawal management. 24/7 medical support, medication-assisted detox.", overview: "Medical detoxification is the critical first step in addiction recovery, providing safe, supervised withdrawal management. Detox centers offer 24/7 medical monitoring, medication-assisted protocols, and compassionate care." },
-  { slug: "inpatient-rehab", title: "Inpatient Rehab", metaTitle: "Inpatient Rehab Programs Near You — Residential Treatment | RehabLookup", metaDescription: "Find residential inpatient rehab programs with 24/7 care. Compare accredited facilities and begin your recovery journey today.", overview: "Inpatient (residential) rehabilitation provides the highest level of addiction treatment, offering 24/7 care in a structured therapeutic environment." },
+  { slug: "inpatient-rehab", title: "Inpatient Rehab", metaTitle: "Inpatient Rehab Programs Near You — Residential Treatment | RehabLookup", metaDescription: "Find residential inpatient rehab programs with 24/7 care. Compare facility listings and begin your recovery journey today.", overview: "Inpatient (residential) rehabilitation provides the highest level of addiction treatment, offering 24/7 care in a structured therapeutic environment." },
   { slug: "outpatient-rehab", title: "Outpatient Rehab", metaTitle: "Outpatient Rehab Programs — Flexible Treatment Options | RehabLookup", metaDescription: "Find flexible outpatient rehab programs including IOP & PHP. Continue working while getting treatment.", overview: "Outpatient rehabilitation provides effective addiction treatment while allowing patients to maintain their daily responsibilities." },
   { slug: "dual-diagnosis-treatment", title: "Dual Diagnosis Treatment", metaTitle: "Dual Diagnosis Treatment Centers — Co-Occurring Disorder Care | RehabLookup", metaDescription: "Find specialized dual diagnosis treatment centers treating addiction and mental health disorders simultaneously.", overview: "Dual diagnosis treatment addresses the complex relationship between substance use disorders and co-occurring mental health conditions." },
   { slug: "php-programs", title: "Partial Hospitalization Programs (PHP)", metaTitle: "Partial Hospitalization Programs Near You — PHP Treatment | RehabLookup", metaDescription: "Find partial hospitalization programs (PHP) offering intensive day treatment for addiction.", overview: "PHP provides the most intensive level of outpatient addiction treatment, offering 5-7 days of structured programming." },
@@ -112,13 +112,13 @@ const treatmentHubs = [
 ];
 
 const substancePages = [
-  { slug: "cocaine-addiction-treatment", title: "Cocaine Addiction Treatment", metaTitle: "Cocaine Addiction Treatment Programs — Find Help Today | RehabLookup", metaDescription: "Find accredited cocaine addiction treatment programs.", conditionName: "Cocaine Addiction", intro: "Cocaine addiction is a serious substance use disorder affecting approximately 1.4 million Americans." },
+  { slug: "cocaine-addiction-treatment", title: "Cocaine Addiction Treatment", metaTitle: "Cocaine Addiction Treatment Programs — Find Help Today | RehabLookup", metaDescription: "Find cocaine addiction treatment programs.", conditionName: "Cocaine Addiction", intro: "Cocaine addiction is a serious substance use disorder affecting approximately 1.4 million Americans." },
   { slug: "opioid-addiction-treatment", title: "Opioid Addiction Treatment", metaTitle: "Opioid Addiction Treatment Programs — MAT & Recovery | RehabLookup", metaDescription: "Find specialized opioid addiction treatment with MAT.", conditionName: "Opioid Addiction", intro: "The opioid epidemic remains one of America's most devastating public health crises." },
   { slug: "heroin-addiction-treatment", title: "Heroin Addiction Treatment", metaTitle: "Heroin Addiction Treatment Centers — Detox & Recovery | RehabLookup", metaDescription: "Find heroin addiction treatment centers offering medical detox and MAT.", conditionName: "Heroin Addiction", intro: "Heroin addiction is one of the most challenging substance use disorders." },
   { slug: "meth-addiction-treatment", title: "Meth Addiction Treatment", metaTitle: "Meth Addiction Treatment Programs — Crystal Meth Recovery | RehabLookup", metaDescription: "Find meth addiction treatment centers offering evidence-based recovery programs.", conditionName: "Methamphetamine Addiction", intro: "Methamphetamine addiction is a devastating substance use disorder." },
   { slug: "prescription-drug-rehab", title: "Prescription Drug Rehab", metaTitle: "Prescription Drug Rehab — Painkiller & Benzo Treatment | RehabLookup", metaDescription: "Find prescription drug addiction treatment for painkillers, benzodiazepines, and stimulants.", conditionName: "Prescription Drug Addiction", intro: "Prescription drug addiction affects millions of Americans who initially received medications for legitimate conditions." },
   { slug: "benzodiazepine-addiction-treatment", title: "Benzodiazepine Addiction Treatment", metaTitle: "Benzodiazepine Addiction Treatment — Xanax, Valium Recovery | RehabLookup", metaDescription: "Find specialized benzodiazepine addiction treatment centers.", conditionName: "Benzodiazepine Addiction", intro: "Benzodiazepine addiction is one of the most medically serious forms of drug dependence." },
-  { slug: "alcohol-addiction-treatment", title: "Alcohol Addiction Treatment", metaTitle: "Alcohol Addiction Treatment Programs — Recovery Help | RehabLookup", metaDescription: "Find accredited alcohol addiction treatment programs offering medical detox and therapy.", conditionName: "Alcohol Use Disorder", intro: "Alcohol use disorder affects over 28 million Americans, making it the most prevalent substance use disorder." },
+  { slug: "alcohol-addiction-treatment", title: "Alcohol Addiction Treatment", metaTitle: "Alcohol Addiction Treatment Programs — Recovery Help | RehabLookup", metaDescription: "Find alcohol addiction treatment programs offering medical detox and therapy.", conditionName: "Alcohol Use Disorder", intro: "Alcohol use disorder affects over 28 million Americans, making it the most prevalent substance use disorder." },
   { slug: "marijuana-addiction-treatment", title: "Marijuana Addiction Treatment", metaTitle: "Marijuana Addiction Treatment — Cannabis Use Disorder Help | RehabLookup", metaDescription: "Find marijuana addiction treatment programs for cannabis use disorder.", conditionName: "Cannabis Use Disorder", intro: "Cannabis use disorder affects approximately 16 million Americans." },
   { slug: "fentanyl-addiction-treatment", title: "Fentanyl Addiction Treatment", metaTitle: "Fentanyl Addiction Treatment — Emergency Recovery Programs | RehabLookup", metaDescription: "Find urgent fentanyl addiction treatment with medical detox and MAT.", conditionName: "Fentanyl Addiction", intro: "Fentanyl has become the deadliest drug in American history, responsible for over 70,000 overdose deaths annually." },
   { slug: "xanax-addiction-treatment", title: "Xanax Addiction Treatment", metaTitle: "Xanax Addiction Treatment — Safe Detox & Recovery | RehabLookup", metaDescription: "Find Xanax addiction treatment with medically supervised tapering and detox.", conditionName: "Xanax Addiction", intro: "Xanax is the most commonly prescribed and misused benzodiazepine in the United States." },
@@ -381,7 +381,7 @@ async function generateSubstancePages() {
       h1: s.title,
       content: `<p>${escHtml(s.intro)}</p>
         <h2>Evidence-Based Treatment for ${s.conditionName}</h2>
-        <p>Professional treatment for ${s.conditionName.toLowerCase()} combines medical care, behavioral therapy, and aftercare planning. Find accredited programs specializing in ${s.conditionName.toLowerCase()} through RehabLookup's directory.</p>
+        <p>Professional treatment for ${s.conditionName.toLowerCase()} combines medical care, behavioral therapy, and aftercare planning. Find programs specializing in ${s.conditionName.toLowerCase()} through RehabLookup's directory.</p>
         <h2>Insurance & Cost</h2>
         <p>Most major insurance plans cover ${s.conditionName.toLowerCase()} treatment. Verify your benefits or explore free and low-cost options through our directory.</p>`,
       breadcrumbs: [
@@ -435,7 +435,7 @@ async function generateBestInStatePages() {
       urlPath: `/${slug}`,
       title,
       metaTitle: `Best Rehab Centers in ${bis.state} 2026 — Top-Rated | RehabLookup`,
-      metaDescription: `Find the best rehab centers in ${bis.state} for 2026. Compare top-rated addiction treatment facilities. Insurance accepted. Expert-verified listings.`,
+      metaDescription: `Find the best rehab centers in ${bis.state} for 2026. Compare top-rated addiction treatment facilities. Insurance accepted. Directory listings.`,
       h1: title,
       content: `<p>Compare ${bis.state}'s top-rated addiction treatment programs. RehabLookup lists the accreditation and licensing details each facility reports. Confirm them with the facility or the issuing authority.</p>
         <h2>Treatment Options in ${bis.state}</h2>
@@ -471,13 +471,13 @@ async function generateCityTreatmentPages() {
         urlPath: `/${slug}`,
         title,
         metaTitle: `${tt.label} in ${city.city}, ${city.stateAbbr} — Find Programs | RehabLookup`,
-        metaDescription: `Find ${tt.label.toLowerCase()} centers in ${city.city}, ${city.stateAbbr}. Compare accredited facilities, verify insurance, and get help today.`,
+        metaDescription: `Find ${tt.label.toLowerCase()} centers in ${city.city}, ${city.stateAbbr}. Compare facility listings and contact programs directly.`,
         h1: title,
         content: `<p>Search accredited ${tt.label.toLowerCase()} programs in ${city.city}, ${city.state}. ${tt.description}</p>
           <h2>${tt.label} Programs in ${city.city}</h2>
           <p>RehabLookup lists verified ${tt.label.toLowerCase()} facilities in the ${city.city} area. Licensing and accreditation details are shown when a program reports them. Confirm them with the program or the issuing authority.</p>
           <h2>Insurance Coverage</h2>
-          <p>Most insurance plans cover ${tt.label.toLowerCase()} in ${city.city}, ${city.stateAbbr} under the Mental Health Parity Act. Use our free insurance verification tool to check your benefits.</p>`,
+          <p>Most insurance plans cover ${tt.label.toLowerCase()} in ${city.city}, ${city.stateAbbr} under the Mental Health Parity Act. Call the member services number on your insurance card to confirm your benefits.</p>`,
         breadcrumbs: (() => {
           // Map tt.slug to a real canonical hub route (must exist in App.tsx).
           const HUB = {
@@ -581,9 +581,9 @@ async function generateStatePages() {
       urlPath: `/rehab-centers/${slug}`,
       title,
       metaTitle: `Rehab Centers in ${state} — Find Addiction Treatment | RehabLookup`,
-      metaDescription: `Find accredited rehab centers in ${state}. Compare inpatient, outpatient, and detox programs. Verify insurance coverage and start recovery today.`,
+      metaDescription: `Find rehab centers in ${state}. Compare inpatient, outpatient, and detox programs. Verify insurance coverage and start recovery today.`,
       h1: title,
-      content: `<p>Browse addiction treatment facility listings in ${state}. RehabLookup lists accredited rehab centers offering detox, inpatient, outpatient, and dual diagnosis programs across the state.</p>
+      content: `<p>Browse addiction treatment facility listings in ${state}. RehabLookup lists rehab centers offering detox, inpatient, outpatient, and dual diagnosis programs across the state.</p>
         ${facilityList}
         <h2>Treatment Options in ${state}</h2>
         <p>${state} offers a range of substance abuse treatment programs including medical detox, residential inpatient, intensive outpatient (IOP), partial hospitalization (PHP), and medication-assisted treatment (MAT).</p>
@@ -685,7 +685,7 @@ async function generateCityPages() {
       urlPath: `/rehab-centers/${stateSlug}/${city.slug}`,
       title,
       metaTitle: `Rehab Centers in ${city.city}, ${city.stateAbbr} — Find Treatment | RehabLookup`,
-      metaDescription: `Find accredited rehab centers in ${city.city}, ${city.stateAbbr}. Compare treatment programs, verify insurance, and start recovery today.`,
+      metaDescription: `Find rehab centers in ${city.city}, ${city.stateAbbr}. Compare treatment programs, verify insurance, and start recovery today.`,
       h1: title,
       content: `<p>Search addiction treatment facility listings in ${city.city}, ${city.state}. Compare inpatient, outpatient, detox, and specialty programs in the ${city.city} metropolitan area.</p>
         <h2>Treatment Programs in ${city.city}</h2>
@@ -693,7 +693,7 @@ async function generateCityPages() {
         <h2>Insurance & Payment</h2>
         <p>Most rehab centers in ${city.city} accept major insurance plans. Verify your coverage with our free insurance check tool to find in-network facilities near you.</p>
         <h2>Getting Help in ${city.city}</h2>
-        <p>If you or a loved one needs help with addiction in ${city.city}, search the directory to compare accredited programs by level of care, insurance accepted, and location.</p>`,
+        <p>If you or a loved one needs help with addiction in ${city.city}, search the directory to compare programs by level of care, insurance accepted, and location.</p>`,
       breadcrumbs: [
         { name: "Home", url: "/" },
         { name: "Locations", url: "/locations" },
@@ -731,13 +731,13 @@ async function generateStateTreatmentPages() {
         urlPath: `/treatment-types/${tt.routePrefix}/${slug}`,
         title,
         metaTitle: `${tt.label} in ${state} — Find Programs | RehabLookup`,
-        metaDescription: `Find ${tt.label.toLowerCase()} centers in ${state}. Compare accredited facilities, verify insurance, and start recovery today.`,
+        metaDescription: `Find ${tt.label.toLowerCase()} centers in ${state}. Compare facility listings and contact programs directly.`,
         h1: title,
         content: `<p>Search accredited ${tt.label.toLowerCase()} programs in ${state}. RehabLookup provides facility listings with program information as reported by each facility.</p>
           <h2>${tt.label} Options in ${state}</h2>
           <p>${state} offers a range of ${tt.label.toLowerCase()} programs with varying levels of care, program lengths, and specializations to meet individual needs.</p>
           <h2>Insurance Coverage</h2>
-          <p>Most insurance plans cover ${tt.label.toLowerCase()} in ${state}. Use our free insurance verification tool to check your benefits and find in-network facilities.</p>`,
+          <p>Most insurance plans cover ${tt.label.toLowerCase()} in ${state}. Call the member services number on your insurance card to confirm your benefits and ask which facilities are in network.</p>`,
         breadcrumbs: [
           { name: "Home", url: "/" },
           { name: "Treatment Types", url: "/treatment-types" },
@@ -819,10 +819,10 @@ async function generateDemographicPages() {
       metaTitle: page.metaTitle,
       metaDescription: page.metaDescription,
       h1: page.title,
-      content: `<p>${page.intro}</p><p>Browse our directory to find accredited ${page.title.toLowerCase()} across the United States.</p>`,
+      content: `<p>${page.intro}</p><p>Browse our directory to find ${page.title.toLowerCase()} across the United States.</p>`,
       breadcrumbs: [
         { name: "Home", url: "/" },
-        { name: "Treatment Programs", url: "/rehab-centers" },
+        { name: "Treatment Programs", url: "/locations" },
         { name: page.title, url: `/${page.slug}` },
       ],
       structuredData: [{
@@ -849,7 +849,7 @@ async function generateSeekerGuidePages() {
       content: `<p>${page.intro}</p><p>Use our resources to get the guidance you need and connect with treatment programs that can help.</p>`,
       breadcrumbs: [
         { name: "Home", url: "/" },
-        { name: "Guides", url: "/rehab-centers" },
+        { name: "Guides", url: "/locations" },
         { name: page.title, url: `/${page.slug}` },
       ],
       structuredData: [{

@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { Link } from 'react-router-dom';
 import { FacilityReview } from '@/hooks/useFacilityReviews';
 
 interface ReviewFormProps {
@@ -169,21 +168,10 @@ export function ReviewForm({
     );
   }
 
+  // RehabLookup no longer offers consumer accounts, and /login is
+  // provider-only, so anonymous visitors are not invited to sign in to review.
   if (!isAuthenticated) {
-    return (
-      <ShellCard className="border-dashed">
-        <ShellContent className="py-8 text-center">
-          <Star className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
-          <h3 className="font-medium text-lg mb-2">Share Your Experience</h3>
-          <p className="text-muted-foreground mb-4">
-            Sign in to leave a review for {facilityName}
-          </p>
-          <Button asChild>
-            <Link to="/login">Sign In to Review</Link>
-          </Button>
-        </ShellContent>
-      </ShellCard>
-    );
+    return null;
   }
 
   if (!isEmailVerified) {

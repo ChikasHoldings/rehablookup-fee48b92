@@ -83,7 +83,7 @@ const StateInpatientRehab = () => {
     <Layout>
       <SEO
         title={`Inpatient Rehab in ${stateName} (${abbreviation}) | Residential Treatment`}
-        description={`Find accredited inpatient rehab centers in ${stateName}. 30-90 day residential programs with 24/7 care. Insurance accepted. ${cities.length}+ cities covered.`}
+        description={`Find inpatient rehab centers in ${stateName}. 30-90 day residential programs with 24/7 care. Insurance accepted. ${cities.length}+ cities covered.`}
         canonical={`/treatment-types/residential-inpatient/${stateSlug}`}
         structuredData={structuredData}
         breadcrumbs={[

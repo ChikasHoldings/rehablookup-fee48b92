@@ -50,7 +50,7 @@ export default function HolisticRehabNearMe() {
     <Layout>
       <SEO
         title={`Holistic Rehab Near Me ${stateData ? `in ${stateData.state}` : ""} | Find Treatment Centers`}
-        description={`Find holistic rehabilitation centers near you${stateData ? ` in ${stateData.state}` : ""}. Compare ${facilities.length > 0 ? facilities.length + "+" : ""} treatment facilities. Free insurance verification.`}
+        description={`Find holistic rehabilitation centers near you${stateData ? ` in ${stateData.state}` : ""}. Compare ${facilities.length > 0 ? facilities.length + "+" : ""} treatment facilities. Confirm coverage with your plan.`}
         canonical={stateSlug ? `/holistic-rehab-near-me/${stateSlug}` : "/holistic-rehab-near-me"}
         keywords={[
           "holistic rehab near me",

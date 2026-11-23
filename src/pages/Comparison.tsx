@@ -617,7 +617,7 @@ function EmptyState() {
         </div>
         <div className="mt-6 text-xs text-muted-foreground flex items-center justify-center gap-1.5">
           <Star className="h-3.5 w-3.5" />
-          Tip: your selection is saved in your browser and your account.
+          Tip: your selection is saved in this browser. No account needed.
         </div>
       </CardContent>
     </Card>

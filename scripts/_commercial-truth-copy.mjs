@@ -441,6 +441,141 @@ export const REWRITES = [
     "compare facility listings",
     "whole-directory verification claim",
   ],
+
+  // ── SEO recovery Phase 1 (2026-11-23): retired insurance-verification tool ─
+  // RehabLookup does not verify insurance for visitors. The prerendered corpus
+  // (~9.5k files) and five generators still advertised "our free insurance
+  // verification tool". Replace it with accurate, actionable guidance.
+  [
+    /Call the member services number on the back of your insurance card, or use our free insurance verification tool to check your coverage before starting treatment\./g,
+    "Call the member services number on the back of your insurance card to check your coverage before starting treatment, and confirm with the facility that it accepts your plan.",
+    "retired insurance-verification tool",
+  ],
+  [
+    /Use our free insurance verification tool to check your benefits and find in-network facilities\./g,
+    "Call the member services number on your insurance card to confirm your benefits and ask which facilities are in network.",
+    "retired insurance-verification tool",
+  ],
+  [
+    /Use our free insurance verification tool to check your benefits before starting treatment\./g,
+    "Call the member services number on your insurance card to check your benefits before starting treatment.",
+    "retired insurance-verification tool",
+  ],
+  [
+    /Use our free insurance verification tool to find in-network facilities\./g,
+    "Call the member services number on your insurance card to ask which facilities are in your plan's network.",
+    "retired insurance-verification tool",
+  ],
+  [
+    /Use our free insurance verification tool to check your benefits\./g,
+    "Call the member services number on your insurance card to confirm your benefits.",
+    "retired insurance-verification tool",
+  ],
+  [
+    /Many facilities offer same-day admissions and free insurance verification\./g,
+    "Ask each facility about current wait times and how it confirms insurance coverage.",
+    "retired insurance-verification tool + unsupported same-day claim",
+  ],
+  [
+    /Free insurance verification available\./g,
+    "Confirm coverage with your insurance plan and the facility.",
+    "retired insurance-verification tool",
+  ],
+  [
+    /Free insurance verification\./g,
+    "Confirm coverage with your plan.",
+    "retired insurance-verification tool",
+  ],
+
+  // ── SEO recovery Phase 1: listings described as accredited / expert-verified ─
+  // Listings come from facility-reported SAMHSA data and are not verified by
+  // RehabLookup. These rules remove the directory-level claim only; advice such
+  // as "look for an accredited program" is deliberately left alone.
+  [
+    /Compare accredited local facilities, verify insurance, and get help today/g,
+    "Compare local facility listings and contact programs directly",
+    "directory described as accredited + retired verification",
+  ],
+  [
+    /Compare accredited facilities, verify insurance, and (?:get help|start recovery) today/g,
+    "Compare facility listings and contact programs directly",
+    "directory described as accredited + retired verification",
+  ],
+  [
+    /\bSearch accredited addiction treatment centers\b/g,
+    "Search addiction treatment center listings",
+    "directory described as accredited",
+  ],
+  [
+    /\bCompare accredited addiction treatment facilities\b/g,
+    "Compare addiction treatment facility listings",
+    "directory described as accredited",
+  ],
+  [
+    /\bconnects you with accredited rehab centers\b/g,
+    "helps you find rehab center listings",
+    "directory described as accredited",
+  ],
+  [
+    /\bRehabLookup connects you with accredited facilities\b/g,
+    "RehabLookup lists facilities",
+    "directory described as accredited",
+  ],
+  [
+    /\bRehabLookup helps you find accredited treatment programs\b/g,
+    "RehabLookup helps you find treatment programs",
+    "directory described as accredited",
+  ],
+  [
+    /\blists accredited rehab centers\b/g,
+    "lists rehab centers",
+    "directory described as accredited",
+  ],
+  [
+    /\bCompare accredited facilities\b/g,
+    "Compare facility listings",
+    "directory described as accredited",
+  ],
+  [
+    /\bFind accredited /g,
+    "Find ",
+    "directory described as accredited",
+  ],
+  [
+    /— Find Accredited Programs \|/g,
+    "— Find Programs |",
+    "directory described as accredited (title)",
+  ],
+  [
+    /\bFind Accredited /g,
+    "Find ",
+    "directory described as accredited (title case)",
+  ],
+  [
+    /\bCompare Accredited /g,
+    "Compare ",
+    "directory described as accredited (title case)",
+  ],
+  [
+    /\bhelps patients find accredited, licensed facilities\b/g,
+    "helps patients find facility listings",
+    "directory described as accredited (lowercase)",
+  ],
+  [
+    /\b(the directory|our directory) to (find|compare) accredited /g,
+    "$1 to $2 ",
+    "directory described as accredited (lowercase)",
+  ],
+  [
+    /\bRehabLookup helps you (find|compare) accredited /g,
+    "RehabLookup helps you $1 ",
+    "directory described as accredited (lowercase)",
+  ],
+  [
+    /\bExpert-verified listings\b/g,
+    "Directory listings",
+    "listings described as expert-verified",
+  ],
 ];
 
 export default REWRITES;

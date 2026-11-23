@@ -24,7 +24,7 @@ const coreBestInStateConfigs: BestInStateConfig[] = [
     state: "California",
     stateAbbr: "CA",
     metaTitle: "Best Rehab Centers in California 2026 — Top-Rated Facilities | RehabLookup",
-    metaDescription: "Find the best rehab centers in California for 2026. Compare top-rated facilities in LA, San Diego, Malibu, SF. Insurance accepted. Expert-verified listings.",
+    metaDescription: "Find the best rehab centers in California for 2026. Compare top-rated facilities in LA, San Diego, Malibu, SF. Compare listings and contact facilities directly.",
     heroSubtitle: "Compare California's top-rated addiction treatment programs — from luxury Malibu facilities to evidence-based programs across the state.",
     introContent: "California is home to the largest concentration of addiction treatment facilities in the United States, offering unparalleled options ranging from world-renowned luxury programs in Malibu to comprehensive evidence-based centers across Los Angeles, San Diego, San Francisco, and Orange County. The state's progressive healthcare policies, year-round mild climate, and diverse therapeutic landscapes make it a premier destination for addiction recovery. With Medi-Cal providing expanded coverage for substance abuse treatment, California offers accessible options for all income levels. RehabLookup has verified and reviewed the state's top programs to help you find the perfect match for your recovery needs.",
     sections: [

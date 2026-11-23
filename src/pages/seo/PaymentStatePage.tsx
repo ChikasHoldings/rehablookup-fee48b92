@@ -27,7 +27,7 @@ const paymentConfigs: PaymentStateConfig[] = [
     slug: "medicaid-rehab",
     title: "Medicaid Rehab Centers",
     metaTitle: "Medicaid Rehab Centers in {state} — Find Covered Treatment | RehabLookup",
-    metaDescription: "Find rehab centers accepting Medicaid in {state}. Compare verified programs with Medicaid coverage. Free insurance verification available.",
+    metaDescription: "Find rehab centers accepting Medicaid in {state}. Compare verified programs with Medicaid coverage. Confirm coverage with your insurance plan and the facility.",
     heroSubtitle: "Find addiction treatment facilities that accept Medicaid coverage in your state.",
     filterKeys: ["medicaid", "state-funded", "sliding-scale", "free"],
     introTemplate: (state, expanded) =>
