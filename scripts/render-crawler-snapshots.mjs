@@ -45,7 +45,7 @@
 import http from "node:http";
 import os from "node:os";
 import path from "node:path";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { selectSnapshotRoutes, sitemapPaths } from "./_crawler-snapshot-routes.mjs";
 
@@ -98,6 +98,20 @@ function selectRoutes() {
   for (const f of ["sitemap.xml", "sitemap-extras.xml", "sitemap-facilities.xml"]) {
     const file = path.join(DIST, f);
     if (existsSync(file)) advertised.push(...sitemapPaths(readFileSync(file, "utf8")));
+  }
+  // City hubs with listings are crawlable and linked from state pages, but
+  // the sitemap generator advertises only a few dozen of them. Include every
+  // city hub whose crawler page already lists facilities.
+  const stateDirs = path.join(DIST, "rehab-centers");
+  if (existsSync(stateDirs)) {
+    for (const state of readdirSync(stateDirs, { withFileTypes: true })) {
+      if (!state.isDirectory()) continue;
+      for (const f of readdirSync(path.join(stateDirs, state.name))) {
+        if (!f.endsWith(".html")) continue;
+        const html = readFileSync(path.join(stateDirs, state.name, f), "utf8");
+        if (html.includes('href="/center/')) advertised.push(`/rehab-centers/${state.name}/${f.slice(0, -5)}`);
+      }
+    }
   }
   const families = opt("families", "");
   let routes = selectSnapshotRoutes(advertised, {
