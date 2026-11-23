@@ -53,8 +53,8 @@
 ## Exact next steps (next session)
 1. Re-read this file, the master audit status table, and the log. Check `git log origin/main` and the Vercel production deployment for PR #89.
 2. Record any owner answers (blockers 1–9) in the log; a manual action makes the removal waves urgent.
-3. **Deploy the seeker-email edge functions** changed in batch 2 (from `main`, after merge): Actions → "Deploy all stale edge functions" → functions = `send-concierge-notifications send-tour-notifications send-message-notifications send-lead-message send-review-notification support-ticket-reply support-ticket-status send-marketing-followup submit-marketing-lead placement-monitor`.
-4. **Verify the first production build log** shows `[crawler-snapshots] browser via playwright` and a pass count; if it says "no browser could start", the Vercel build image needs a different Chromium (see ADR-001) — crawlers then simply keep the generator HTML.
+3. ~~Deploy the seeker-email edge functions~~ — **done 2026-11-23** (10/10 via the deploy workflow, after adding `--yes` for the current Supabase CLI).
+4. ~~Verify the first production build log~~ — **done**: production build `dpl_Cc7TdhMdaYVKVweFRBTcxyQm3dg1` wrote 2,147/2,754 snapshots via Playwright's Chromium. Keep an eye on this line in every build log (monitoring plan).
 5. **Remaining parity gaps for the owner's removal decisions** (generator HTML kept): 571 routes the app itself noindexes; 50 "best cities" state articles and ~12 specialty/treatment pages that 404 for visitors; treatment × city pages the app redirects to the state page. Lists come from the snapshot report (`node_modules/.cache/crawler-snapshots/report.json` after a build).
 6. *(Previous batch-2 list, now done except where noted:)*
    1. Stop injecting gtag into crawler-only HTML (`scripts/backfill-ga-snippet.mjs`) — F-15.

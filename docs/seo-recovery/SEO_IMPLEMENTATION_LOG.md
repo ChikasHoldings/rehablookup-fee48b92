@@ -4,6 +4,18 @@ Append-only log. Each entry records what changed, where, how it was tested, and 
 
 ---
 
+## 2026-11-23 · Phase 1 batch 2 · deployment record
+
+* **Final preview (head `603daff1d8`):** build green in 21 min. `[crawler-snapshots] 2133/2754 snapshots written in 908s` — home 1, state hubs 50/50, **city hubs 484/485**, county hubs 438/438, provider guides 254/254, insurance hubs 17/17, government-payer state pages 150/150, resources 109/114, state articles 100/150, content pages 147/169, treatment types 383/926. Kept on generator HTML: 511 the app marks noindex, 59 that 404 for visitors, ~30 the app redirects. Every guard passed on the snapshot output (`check:directory-public-shell`, `check:no-fake-inventory`, `check:trust-claims`, `check:crawler-analytics` on 100,923 files, `check:canonical-ga` 0 errors on 50,461 pages, 0 dead redirects).
+* **Merged:** PR #90 squash-merged as `b2cecafd5b`.
+* **Production:** Vercel `dpl_Cc7TdhMdaYVKVweFRBTcxyQm3dg1`, **READY 2026-11-23 18:31:54 UTC**, aliased to `rehablookup.com` / `www`. Production build: `[crawler-snapshots] 2147/2754 snapshots written in 1070s`; all guards passed. Runtime errors in the following hour: none.
+* **Edge functions (10):** the first dispatch of "Deploy all stale edge functions" failed for every function — the workflow installs the latest Supabase CLI, which now refuses non-interactive deploys without `--yes` ("Nothing was changed"). Fixed in the workflows (`--yes`), re-dispatched; that run hit a GitHub API rate limit while installing the CLI and was re-run once. **Result: 10/10 deployed** (`placement-monitor`, `send-concierge-notifications`, `send-lead-message`, `send-marketing-followup`, `send-message-notifications`, `send-review-notification`, `send-tour-notifications`, `submit-marketing-lead`, `support-ticket-reply`, `support-ticket-status`). Verified: live `send-lead-message` v5 links `/contact`.
+* **Database:** `20261123000200` applied earlier the same day (see batch 2 entry).
+* **Not verified — production HTTP**: this environment is still challenged by the Vercel Security Checkpoint. Owner: GSC URL Inspection → *Test live URL* on `/`, `/rehab-centers/texas`, `/rehab-centers/texas/houston`, `/treatment-types` and `/for-providers` — the rendered HTML should now match what a visitor sees, and `/rehab-centers/texas` should contain links to `/center/…` pages.
+* **Still owner-only:** Vercel Firewall → AI Bots → Off/Log (AI search crawlers are still denied until then).
+
+---
+
 ## 2026-11-23 · Phase 1 batch 2 (owner-requested fixes) · code, one schema change, edge functions
 
 **Owner request (2026-11-23):** allow AI search engines; fix crawler/visitor parity; remove GA from crawler-only HTML; fix every listed remaining problem (facility sitemap, thin hubs and homepage, facility-card links, seeker emails, `/ads` `/lp/convert` `/insurance-verification`, the CEO "65,000 users" claim, `/rehab-centers?…`); document the SAMHSA expansion as deferred. Owner also reported the May 29 GA tag switch (checked; see root-cause doc).
