@@ -124,9 +124,9 @@ export default function RehabUSAFromUK() {
           </motion.div>
           <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-5">
             {[
-              { step: "1", title: "Apply Online", desc: "Complete our confidential intake form with your treatment needs." },
+              { step: "1", title: "Define Your Needs", desc: "Note the level of care, budget, language and timing you need." },
               { step: "2", title: "Compare Programs", desc: "Filter listings by level of care, insurance, and location to build a shortlist." },
-              { step: "3", title: "Arrange Travel", desc: "We coordinate flights, ESTA, and airport transfers." },
+              { step: "3", title: "Contact the Facility", desc: "Ask about admission, a letter for your ESTA or visa, and airport transfers. You book your own flights." },
               { step: "4", title: "Begin Recovery", desc: "Arrive and begin your personalised treatment programme." },
             ].map((item, i) => (
               <motion.div key={item.step} {...fadeUp} transition={{ duration: 0.4, delay: i * 0.1 }} className="text-center">
@@ -148,9 +148,9 @@ export default function RehabUSAFromUK() {
           </motion.div>
           <div className="space-y-4">
             {[
-              { icon: Plane, title: "Travel & Entry", content: "UK citizens travel visa-free under the ESTA Visa Waiver Program for stays up to 90 days. Apply online at least 72 hours before travel. For longer programmes, a B-2 medical visa is recommended. Our team provides supporting documentation." },
+              { icon: Plane, title: "Travel & Entry", content: "UK citizens travel visa-free under the ESTA Visa Waiver Program for stays up to 90 days. Apply online at least 72 hours before travel. For longer programmes, a B-2 medical visa is recommended. The treatment facility typically provides an admission letter to support the application." },
               { icon: FileText, title: "Costs & Payment", content: "UK patients typically invest £12,000–£65,000+ per month for US treatment, depending on the facility level. This is self-pay as NHS coverage doesn't extend abroad. Wire transfers, credit cards, and payment plans are accepted." },
-              { icon: Heart, title: "Aftercare & Return", content: "We coordinate your return to the UK with continuing care: local therapists, SMART Recovery and 12-step meetings, and virtual follow-up sessions with your US clinical team." },
+              { icon: Heart, title: "Aftercare & Return", content: "Ask the facility about aftercare planning for your return to the UK: many arrange local therapists, SMART Recovery and 12-step meetings, and virtual follow-up with your US clinical team." },
             ].map((item, i) => (
               <motion.div key={item.title} {...fadeUp} transition={{ duration: 0.4, delay: i * 0.08 }}
                 className="flex gap-4 p-5 md:p-6 rounded-xl border bg-background hover:shadow-md transition-shadow">

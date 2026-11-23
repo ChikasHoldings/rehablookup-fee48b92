@@ -124,9 +124,9 @@ export default function RehabUSAFromAustralia() {
           </motion.div>
           <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-5">
             {[
-              { step: "1", title: "Apply Online", desc: "Complete our confidential intake form with your treatment preferences." },
+              { step: "1", title: "Define Your Needs", desc: "Note the level of care, budget, language and timing you need." },
               { step: "2", title: "Compare Programs", desc: "Filter listings by level of care and location to build a shortlist of US programs." },
-              { step: "3", title: "Arrange Travel", desc: "We coordinate ESTA, flights from Sydney/Melbourne, and arrival logistics." },
+              { step: "3", title: "Contact the Facility", desc: "Ask about admission, a letter for your ESTA or visa, and arrival help. You book your own flights." },
               { step: "4", title: "Begin Recovery", desc: "Arrive at your facility and begin your personalised treatment programme." },
             ].map((item, i) => (
               <motion.div key={item.step} {...fadeUp} transition={{ duration: 0.4, delay: i * 0.1 }} className="text-center">
@@ -150,7 +150,7 @@ export default function RehabUSAFromAustralia() {
             {[
               { icon: Plane, title: "Travel & Entry", content: "Australians enter the US visa-free via ESTA for stays up to 90 days. Direct flights from Sydney/Melbourne to LA are ~14 hours. For longer programmes, a B-2 medical visa is recommended." },
               { icon: FileText, title: "Costs & Payment", content: "Australians typically invest AUD $20,000–$80,000+ per month. Medicare doesn't cover overseas treatment. Wire transfers, credit cards, and payment plans are accepted." },
-              { icon: Heart, title: "Aftercare & Return", content: "We coordinate your return with local therapists, support groups, and virtual follow-up with your US clinical team. Many facilities offer alumni networks across time zones." },
+              { icon: Heart, title: "Aftercare & Return", content: "Ask the facility about aftercare planning for your return: many arrange local therapists, support groups and virtual follow-up, and some run alumni networks across time zones." },
             ].map((item, i) => (
               <motion.div key={item.title} {...fadeUp} transition={{ duration: 0.4, delay: i * 0.08 }}
                 className="flex gap-4 p-5 md:p-6 rounded-xl border bg-background hover:shadow-md transition-shadow">
@@ -240,7 +240,7 @@ export default function RehabUSAFromAustralia() {
                   <span>Australian Patient Specialist Team</span>
                 </div>
                 <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-3">Start Your American Recovery Journey</h2>
-                <p className="text-sm sm:text-base text-muted-foreground mb-8 max-w-xl mx-auto leading-relaxed">Our team understands Australian patient needs. Premium US placement with full travel coordination.</p>
+                <p className="text-sm sm:text-base text-muted-foreground mb-8 max-w-xl mx-auto leading-relaxed">Compare US programs, then contact facilities directly about admission, travel letters and aftercare.</p>
                 <Button asChild size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground text-base px-8 py-6 shadow-lg shadow-accent/25">
                   <Link to="/international/apply" className="flex items-center gap-2">Apply for Treatment <ArrowRight className="h-5 w-5" /></Link>
                 </Button>

@@ -10,7 +10,7 @@ const FastAdmissionRehabUSA = () => {
   const faqs = [
     { question: "How fast can I be admitted to rehab in the USA?", answer: "Many U.S. facilities offer same-day or next-day admission for domestic patients. International patients can typically be admitted within 3–7 days, accounting for travel arrangements. Emergency admissions may be possible within 24–48 hours." },
     { question: "Can international patients get same-day admission?", answer: "If you're already in the United States, yes—many facilities accept same-day walk-ins. For patients abroad, we can have a bed reserved and admission paperwork completed within 24 hours while you arrange travel." },
-    { question: "What do I need for fast admission?", answer: "A valid passport, travel visa (B-2 or ESTA), a brief medical history, current medications list, and payment method. Our team can expedite the intake process to minimize delays." },
+    { question: "What do I need for fast admission?", answer: "A valid passport, travel visa (B-2 or ESTA), a brief medical history, current medications list, and payment method. Call the facility's admissions line directly; many can complete a phone assessment the same day." },
     { question: "Is rapid admission safe for medical detox?", answer: "Absolutely. Facilities with fast-admission protocols maintain 24/7 medical staff ready for immediate intake. Medical assessments are conducted upon arrival to ensure safe detoxification." },
     { question: "Can I reserve a bed while I arrange travel?", answer: "Yes. Many facilities will hold a bed for 48–72 hours with a deposit. Ask the facility's admissions team directly about holding a bed while you arrange travel." },
   ];
@@ -19,7 +19,7 @@ const FastAdmissionRehabUSA = () => {
     <Layout>
       <SEO
         title="Fast Admission Rehab USA | Same-Day & Rapid Intake Treatment"
-        description="Immediate admission to top US rehab centers. Same-day intake, rapid medical detox, and expedited placement for urgent addiction treatment needs."
+        description="Immediate admission to top US rehab centers. Same-day intake, rapid medical detox, and rapid admission for urgent addiction treatment needs."
         canonical="/fast-admission-rehab-usa"
         keywords={["fast admission rehab USA", "same day rehab admission", "immediate intake rehab", "urgent rehab admission USA", "rapid detox admission"]}
         structuredData={{
@@ -40,7 +40,7 @@ const FastAdmissionRehabUSA = () => {
         flag="⚡"
         badge="Rapid Intake Available"
         title="Fast Admission Rehab in the USA"
-        subtitle="Same-Day Intake & Expedited Placement"
+        subtitle="Same-Day Intake & Rapid Admission"
         description="When you're ready for treatment, every hour counts. Access U.S. facilities with same-day admission, 24/7 intake teams, and rapid medical detox protocols."
         trustPoints={["Same-Day Admission", "24/7 Intake Teams", "Medical Detox Ready", "Bed Reservation"]}
         breadcrumbItems={[

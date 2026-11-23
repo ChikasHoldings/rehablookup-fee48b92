@@ -45,7 +45,7 @@ const BestRehabUSA = () => {
     },
     {
       question: "Can I tour US rehab facilities before committing?",
-      answer: "Yes, many facilities offer virtual tours for international clients. Some high-end programs offer in-person tours with accommodation provided. Our team can arrange comprehensive virtual or in-person facility visits."
+      answer: "Yes, many facilities offer virtual tours for international clients. Some high-end programs offer in-person tours with accommodation provided. Ask each facility directly about virtual or in-person tours."
     }
   ];
 
@@ -93,7 +93,7 @@ const BestRehabUSA = () => {
 
       <DirectorySearchCTA 
         title="Find the Best Treatment for Your Needs"
-        description="Our specialists connect you with America's top-rated facilities based on your specific requirements, preferences, and budget."
+        description="Search and compare US facilities by level of care, location, budget and the services they list."
       />
     </Layout>
   );

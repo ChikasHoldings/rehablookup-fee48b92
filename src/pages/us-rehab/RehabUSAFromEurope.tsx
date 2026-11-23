@@ -121,7 +121,7 @@ export default function RehabUSAFromEurope() {
         <div className="container mx-auto px-4 max-w-4xl">
           <motion.div {...fadeUp} transition={{ duration: 0.4 }} className="text-center mb-10">
             <p className="text-xs sm:text-sm font-semibold text-primary uppercase tracking-wide mb-2">Coverage</p>
-            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-3">We Help Patients From Across Europe</h2>
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-3">Patients From Across Europe</h2>
           </motion.div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
             {[
@@ -147,9 +147,9 @@ export default function RehabUSAFromEurope() {
           </motion.div>
           <div className="space-y-4">
             {[
-              { icon: Plane, title: "ESTA & Visa Requirements", content: "VWP countries (UK, Germany, France, most EU) can enter on ESTA for up to 90 days. For longer programs, a B-2 medical visa may be required. Our team guides you through the process." },
+              { icon: Plane, title: "ESTA & Visa Requirements", content: "VWP countries (UK, Germany, France, most EU) can enter on ESTA for up to 90 days. For longer programs, a B-2 medical visa may be required. The treatment facility typically provides an admission letter to support the application." },
               { icon: FileText, title: "Payment & Insurance", content: "European health insurance typically doesn't cover US treatment. Most patients self-pay or use private international insurance. Costs range from $15,000-$80,000 for 30-day programs." },
-              { icon: Heart, title: "Aftercare & Continuity", content: "We coordinate your return with local therapists and support groups. Many US facilities offer virtual aftercare to maintain continuity across time zones." },
+              { icon: Heart, title: "Aftercare & Continuity", content: "Ask the facility about aftercare planning: many arrange local therapists and support groups, and many US facilities offer virtual aftercare across time zones." },
             ].map((item, i) => (
               <motion.div key={item.title} {...fadeUp} transition={{ duration: 0.4, delay: i * 0.08 }}
                 className="flex gap-4 p-5 md:p-6 rounded-xl border bg-background hover:shadow-md transition-shadow">

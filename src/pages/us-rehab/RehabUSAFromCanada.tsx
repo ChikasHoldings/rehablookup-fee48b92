@@ -124,9 +124,9 @@ export default function RehabUSAFromCanada() {
           </motion.div>
           <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-5">
             {[
-              { step: "1", title: "Apply Online", desc: "Complete our confidential intake form with your treatment needs and preferences." },
+              { step: "1", title: "Define Your Needs", desc: "Note the level of care, budget, language and timing you need." },
               { step: "2", title: "Compare Programs", desc: "Filter listings for programs that state they accept Canadian patients." },
-              { step: "3", title: "Arrange Travel", desc: "We coordinate travel logistics, border documentation, and admissions." },
+              { step: "3", title: "Contact the Facility", desc: "Ask about admission, the documents to carry at the border, and arrival. You arrange your own travel." },
               { step: "4", title: "Begin Treatment", desc: "Arrive at your facility and begin your personalized recovery program." },
             ].map((item, i) => (
               <motion.div key={item.step} {...fadeUp} transition={{ duration: 0.4, delay: i * 0.1 }} className="text-center">
@@ -148,9 +148,9 @@ export default function RehabUSAFromCanada() {
           </motion.div>
           <div className="space-y-4">
             {[
-              { icon: FileText, title: "Insurance & Payment", content: "Most provincial health plans (OHIP, MSP, etc.) don't cover US treatment. Many families use private insurance, self-pay, or employer EAP programs. We help you understand costs upfront and explore payment options." },
-              { icon: Plane, title: "Travel & Entry", content: "Canadians can enter the US for medical treatment with a valid passport. No visa required for stays under 6 months. We provide guidance on border crossing and customs." },
-              { icon: Heart, title: "Aftercare Planning", content: "We coordinate your return to Canada with continuing care: local therapists, support groups, and virtual follow-up with your US treatment team." },
+              { icon: FileText, title: "Insurance & Payment", content: "Most provincial health plans (OHIP, MSP, etc.) don't cover US treatment. Many families use private insurance, self-pay, or employer EAP programs. Ask each facility for its costs upfront and about payment options." },
+              { icon: Plane, title: "Travel & Entry", content: "Canadians can enter the US for medical treatment with a valid passport. No visa required for stays under 6 months. Check current entry requirements with US Customs and Border Protection before you travel." },
+              { icon: Heart, title: "Aftercare Planning", content: "Ask the facility about aftercare planning for your return to Canada: many arrange local therapists, support groups and virtual follow-up with your US treatment team." },
             ].map((item, i) => (
               <motion.div key={item.title} {...fadeUp} transition={{ duration: 0.4, delay: i * 0.08 }}
                 className="flex gap-4 p-5 md:p-6 rounded-xl border bg-background hover:shadow-md transition-shadow">
@@ -209,7 +209,7 @@ export default function RehabUSAFromCanada() {
                   <span>Canadian Patient Specialist Team</span>
                 </div>
                 <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-3">Ready to Begin Your Recovery?</h2>
-                <p className="text-sm sm:text-base text-muted-foreground mb-8 max-w-xl mx-auto leading-relaxed">Our team specializes in helping Canadian patients access the best US treatment programs.</p>
+                <p className="text-sm sm:text-base text-muted-foreground mb-8 max-w-xl mx-auto leading-relaxed">Compare US programs, then contact facilities directly about admission and aftercare.</p>
                 <div className="flex flex-wrap justify-center gap-x-6 gap-y-3 mb-8">
                   {["Search Privately", "No-Obligation", "Canadian Specialist Advisors"].map(item => (
                     <div key={item} className="flex items-center gap-2 text-sm text-muted-foreground">

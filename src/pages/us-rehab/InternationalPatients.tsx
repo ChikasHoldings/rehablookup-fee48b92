@@ -17,9 +17,9 @@ const fadeUp = {
 };
 
 const internationalServices = [
-  { icon: Plane, title: "Travel Coordination", description: "Airport pickup, transportation, and arrival assistance arranged end-to-end." },
-  { icon: FileCheck, title: "Visa Support", description: "Documentation and guidance for ESTA and B-2 medical visa applications." },
-  { icon: Globe, title: "Multilingual Staff", description: "Treatment teams fluent in multiple languages across partner facilities." },
+  { icon: Plane, title: "Arrival Assistance", description: "Some facilities offer airport pickup and arrival help — ask each facility what it provides." },
+  { icon: FileCheck, title: "Visa Letters", description: "Facilities that accept international patients usually provide an admission letter for ESTA or B-2 applications." },
+  { icon: Globe, title: "Multilingual Staff", description: "Some treatment teams speak multiple languages — check each listing and ask the facility." },
   { icon: Heart, title: "Cultural Sensitivity", description: "Programmes respecting diverse backgrounds, dietary needs, and traditions." },
   { icon: Users, title: "Family Support", description: "International family programmes and virtual sessions across time zones." },
   { icon: MessageCircle, title: "24/7 Communication", description: "Support available across all time zones via phone, email, and secure chat." }
@@ -63,7 +63,7 @@ const InternationalPatients = () => {
         badge="Serving Clients from 50+ Countries"
         title="US Rehab for International Patients"
         subtitle="World-Class Treatment, Global Accessibility"
-        description="We specialise in helping international clients access America's finest addiction treatment facilities. From visa guidance to airport pickup, we handle every detail."
+        description="Compare US addiction treatment facilities that accept international patients, and learn what to ask about visas, travel and aftercare before you contact them."
         trustPoints={["1,000+ Vetted Facilities", "24-Hour Response", "100% Confidential"]}
         heroImage={heroImage}
         heroAlt="Panoramic view of luxury US rehab destinations for international patients"
@@ -167,9 +167,9 @@ const InternationalPatients = () => {
           </motion.div>
           <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-5">
             {[
-              { step: "1", title: "Apply Online", desc: "Complete our confidential intake form with your treatment needs." },
+              { step: "1", title: "Define Your Needs", desc: "Note the level of care, budget, language and timing you need." },
               { step: "2", title: "Compare Programs", desc: "Filter listings for programs that state they accept international patients." },
-              { step: "3", title: "Arrange Travel", desc: "We coordinate visa documents, flights, and airport transfers." },
+              { step: "3", title: "Contact the Facility", desc: "Ask about admission, an admission letter for your visa or ESTA, and airport transfers. You book your own travel." },
               { step: "4", title: "Begin Recovery", desc: "Arrive and begin your personalised treatment programme." },
             ].map((item, i) => (
               <motion.div key={item.step} {...fadeUp} transition={{ duration: 0.4, delay: i * 0.1 }} className="text-center">
@@ -192,7 +192,7 @@ const InternationalPatients = () => {
           <div className="space-y-3">
             {[
               { q: "Why do international patients choose US rehab?", a: "International patients choose US treatment for world-class clinical care, privacy from their home community, access to innovative therapies, and the opportunity to focus entirely on recovery in a new environment." },
-              { q: "How does the visa process work?", a: "Most patients enter on a B-2 tourist visa for medical treatment or via ESTA for eligible countries. You'll need a letter from the treatment facility and proof of funds. Our team helps facilitate the documentation process." },
+              { q: "How does the visa process work?", a: "Most patients enter on a B-2 tourist visa for medical treatment or via ESTA for eligible countries. You'll need a letter from the treatment facility and proof of funds. The treatment facility provides the letter on request." },
               { q: "What if I don't speak English fluently?", a: "Many US treatment centres have multilingual staff and translation services. Ask each facility about language support before you commit." },
               { q: "How do I pay for treatment without US insurance?", a: "International patients typically self-pay. Treatment centres accept wire transfers, credit cards, and payment plans. Costs range from $20,000–$100,000+ per month depending on the programme." },
               { q: "Is my treatment confidential?", a: "Absolutely. US HIPAA laws protect your privacy, and being in a different country adds geographic separation from your community. Records cannot be shared without explicit consent." },
