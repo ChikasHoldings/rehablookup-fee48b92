@@ -2,6 +2,15 @@
 
 Phase 1 deliverable, 2026-11-23. **Status: investigation and preparation only. No staged record has been published, and no facility row has been changed.** The owner approved investigating, cleaning and preparing this data; publishing it is not approved.
 
+> **DEFERRED by the owner (2026-11-23).** "We will get back to it when we have fully fixed all the other issues that are wrong with the platform." Nothing in this plan is to be started until the owner reopens it. The summary the owner wants kept on record:
+>
+> * **Usable records:** 7,434 new facilities, about 7,300 after dedupe; 454 need manual review.
+> * **Impact:** cities with 3 or more listings would go from 322 to 1,075.
+> * **Caveats:** the scrape looks incomplete (14,726 rows against about 22,106 facilities per HHS-OIG). It cannot tell us whether a facility has closed. HHS-OIG found errors at 66 of 100 sampled facilities in this source.
+> * **Plan when reopened:** re-scrape, keep provenance per field, run a 1–2 state pilot, roll back by batch (§5).
+>
+> Because the staged data was scraped on 2026-05-14, every count above must be re-measured after the re-scrape; they are not to be reused as-is.
+
 * Full validation report, with every SQL query: `SEO_SAMHSA_VALIDATION_APPENDIX.md`. That analysis was read-only and covered 37 query blocks.
 * Independent spot-checks I re-ran myself all matched: 674 rows have the literal website `https://`, 1,420 phones with extensions have a NULL `normalized_phone`, and 1,320 rows have no latitude/longitude.
 

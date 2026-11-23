@@ -14,6 +14,18 @@
 | Production code | `main@a81a79a294`, Vercel `dpl_ByWrZ5ruxRQJKUtLjqXt3zFZxfJU`, READY 2026-11-23 03:51 UTC. Production HTTP not verifiable from this environment (Security Checkpoint); owner live tests pending. Vercel firewall config unchanged since 2026-09-06. |
 | Approvals received | Batch 1 (non-destructive). **Not approved:** bulk deletion, mass redirects, publishing staged SAMHSA facilities, merging `seo/content-uniqueness-audit` (PR #88). |
 
+## Completed in Phase 1, batch 2 (2026-11-23, owner-requested)
+* **Crawler parity:** crawlers receive a build-time snapshot of the real SPA render for every retained family, plus the homepage (ADR-001 step 1, `scripts/render-crawler-snapshots.mjs`). Facility cards are real links.
+* **Crashes fixed:** 9 public pages and provider Settings (undefined identifiers); new CI guard `check:undefined-identifiers`. Comparison pages and the privacy notice now render for visitors.
+* **Analytics:** removed from all crawler-only HTML; `check:crawler-analytics` blocks it from returning. GA was never a crawlability factor; this keeps analytics human-only.
+* **AI search:** robots.txt adds the missing AI search/assistant agents; middleware serves them the prerendered HTML. **The Vercel Firewall still denies them — owner action below.**
+* **Sitemap `lastmod`:** ranking job no longer rewrites `updated_at` (migration `20261123000200`, applied and verified).
+* **Seeker emails:** no retired account/concierge links remain in 10 edge functions (they need deploying — see next steps).
+* **Retired lead pages:** `/ads/:slug`, `/lp/convert` → `/`; `/insurance-verification` (+ `/vob`, `/verify-insurance`) → `/insurance`; insurance CTAs rewritten as self-serve guidance.
+* **Articles:** the April 2026 "65,000 users" post is now a correction (the figure included crawler traffic); the CEO note no longer repeats it or the "verified"/"no pay-to-play" claims.
+* **May 29 / GA:** the GA switch was on 2026-05-09 and cannot affect Google Search (`SEO_ROOT_CAUSE_INVESTIGATION.md`).
+* **SAMHSA expansion: deferred by the owner** until the platform fixes are complete.
+
 ## Completed in Phase 1
 * Facility schema emits only data-backed attributes, from one shared module (`src/lib/seo/facilityTruth.mjs`) used by the crawler generator and the SPA. Provenance notice on every profile.
 * Bulk "medically reviewed" stamps cleared (40 articles, backed up); Advisory Board schema, unverified staff, testimonials, "verified/accredited directory", insurance-verification, concierge and placement claims removed from source and the committed corpus.
@@ -22,6 +34,7 @@
 * Investigations: `SEO_ROOT_CAUSE_INVESTIGATION.md`, `SEO_SAMHSA_IMPORT_PLAN.md`, `SEO_REMOVAL_PLAN.md` (six classes, destinations validated), `ADR-001-single-document-rendering.md` (parity measured).
 
 ## Blockers / owner inputs needed (in priority order)
+0. **Vercel Firewall — allow AI search crawlers (owner action; this integration has no firewall access).** Vercel dashboard → project `rehablookup-fee48b92` → Firewall → Bot Management / Managed rulesets → **AI Bots: set to Off (or Log)**, and remove any custom rule that denies `applebot` or `googleother`. Then confirm in Observability that `oai-searchbot`, `chatgpt-user`, `perplexitybot` and `applebot` show `waf_action = allow`.
 1. **GSC → Manual actions + Security issues** (screenshot). Still the most important missing input.
 2. **GSC → Crawl stats** (Aug–Nov, response codes and host status) and **URL Inspection → Test live URL** on `/`, `/locations`, `/rehab-centers/colorado`, one `/center/*` and one `/provider-guides/*`. This environment is challenged by the Vercel checkpoint, so it cannot verify production pages; the owner's live tests are the production verification.
 3. **Firewall / AI bots decision** (F-26): allow Applebot, OAI-SearchBot, ChatGPT-User, PerplexityBot? Screenshot of the 2026-09-06 rules.
@@ -40,7 +53,10 @@
 ## Exact next steps (next session)
 1. Re-read this file, the master audit status table, and the log. Check `git log origin/main` and the Vercel production deployment for PR #89.
 2. Record any owner answers (blockers 1–9) in the log; a manual action makes the removal waves urgent.
-3. **Phase 1 batch 2 (non-destructive, already in scope):**
+3. **Deploy the seeker-email edge functions** changed in batch 2 (from `main`, after merge): Actions → "Deploy all stale edge functions" → functions = `send-concierge-notifications send-tour-notifications send-message-notifications send-lead-message send-review-notification support-ticket-reply support-ticket-status send-marketing-followup submit-marketing-lead placement-monitor`.
+4. **Verify the first production build log** shows `[crawler-snapshots] browser via playwright` and a pass count; if it says "no browser could start", the Vercel build image needs a different Chromium (see ADR-001) — crawlers then simply keep the generator HTML.
+5. **Remaining parity gaps for the owner's removal decisions** (generator HTML kept): 571 routes the app itself noindexes; 50 "best cities" state articles and ~12 specialty/treatment pages that 404 for visitors; treatment × city pages the app redirects to the state page. Lists come from the snapshot report (`node_modules/.cache/crawler-snapshots/report.json` after a build).
+6. *(Previous batch-2 list, now done except where noted:)*
    1. Stop injecting gtag into crawler-only HTML (`scripts/backfill-ga-snippet.mjs`) — F-15.
    2. Redeploy the `sitemap-facilities` edge function so the live response matches source (`application/xml`, `updated_at` lastmod) — F-14; verify from an allowed network.
    3. Crawler hubs `/resources`, `/treatment-types`, `/insurance`, `/provider-guides` list their children like `/locations` now does — F-10.

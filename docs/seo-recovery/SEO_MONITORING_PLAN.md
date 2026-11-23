@@ -65,6 +65,9 @@ For each retained family: URLs live, URLs in the sitemap, % indexed (GSC URL-pre
 | Banned trust/retired-service phrase, or a `/center/*` JSON-LD node with an unsupported attribute | any | **Implemented:** `check:trust-claims` fails `build:vercel`, `validate:blocking` and the SEO Validators workflow |
 | Vercel logs: `googlebot` or `bingbot` with `waf_action` ≠ allow, or status 403/429 | any | Check the firewall rule immediately (F-06/F-26) |
 | Crawler vs visitor parity (title, H1, canonical, word count ±15%) on a sample of each retained template | any mismatch after ADR-001 ships | Block the deploy (`tools/render_parity.mjs` as a CI step) |
+| Crawler snapshots written per production build (`[crawler-snapshots] N/M snapshots written` in the Vercel build log) | "no browser could start", or N/M below 80% | Check the build log reasons; crawlers fall back to generator HTML until fixed (set `SNAPSHOT_REQUIRED=1` once stable to make this a hard gate) |
+| References to undefined names (`check:undefined-identifiers`) | any | **Implemented:** blocks the SEO Validators workflow |
+| Analytics in crawler-only HTML (`check:crawler-analytics`) | any | **Implemented:** blocks `validate:blocking` and CI |
 | Clicks or impressions for a retained family | −30% over 28 days vs the prior 28 days | Template review |
 
 ---

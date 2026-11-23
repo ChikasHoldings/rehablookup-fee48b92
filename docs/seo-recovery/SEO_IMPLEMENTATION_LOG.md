@@ -4,6 +4,45 @@ Append-only log. Each entry records what changed, where, how it was tested, and 
 
 ---
 
+## 2026-11-23 · Phase 1 batch 2 (owner-requested fixes) · code, one schema change, edge functions
+
+**Owner request (2026-11-23):** allow AI search engines; fix crawler/visitor parity; remove GA from crawler-only HTML; fix every listed remaining problem (facility sitemap, thin hubs and homepage, facility-card links, seeker emails, `/ads` `/lp/convert` `/insurance-verification`, the CEO "65,000 users" claim, `/rehab-centers?…`); document the SAMHSA expansion as deferred. Owner also reported the May 29 GA tag switch (checked; see root-cause doc).
+
+### Commits (branch `henry/zealous-lovelace-83d834`, PR #90)
+| Commit | What |
+|---|---|
+| `127cca65ef` | 9 public pages + provider Settings no longer crash (missing `Search` imports; removed setters still called). New `check:undefined-identifiers`. |
+| `dc212732fd` | Crawler snapshots of the live SPA (`render-crawler-snapshots.mjs`, route selection, fail-soft browser provisioning); homepage snapshot for crawlers; AI agents in middleware + robots.txt; facility cards are real links; comparison pages render; privacy notice served; trust guard scans snapshots. |
+| `6dfc6843cf` | GA removed from 46,665 committed crawler-only pages; `backfill-ga-snippet` replaced by `strip-crawler-analytics` (+ `--check`). |
+| `794308c223` | Seeker emails/SMS in 10 edge functions: no `/account/*`, `/seeker-auth`, `/concierge` links. |
+| `185687960e` | `/ads/:slug`, `/lp/convert` → `/`; `/insurance-verification`, `/vob`, `/verify-insurance` → `/insurance` (0 submissions ever recorded); honest insurance CTAs; `/rehab-centers?<query>` → `/search-results`. |
+| `77ae92dd43` | April 2026 traffic post rewritten as a correction (headline overridden); CEO note claims removed. |
+| `c971005138` | Migration `20261123000200_facilities_updated_at_ignores_ranking_scores.sql`. |
+| `da07059edb` | Build and CI wiring. |
+
+### Data / platform changes
+* **Applied 2026-11-23** (Supabase `mldbxpntzcjalgjmwnqa`): trigger `update_facilities_updated_at` now runs `facilities_touch_updated_at()`. Verified in two rolled-back transactions: a score-only update keeps `updated_at`; a description edit bumps it. No rows changed. Rollback SQL in the migration header. (The first attempt timed out waiting for confirmation and applied nothing; the retry succeeded.)
+* **Not changed:** the Vercel Firewall (this integration returns "access denied" for firewall settings). Owner steps are in the handoff.
+* **Edge functions:** source changed; deployment via the existing "Deploy all stale edge functions" workflow after merge (see the deployment record below).
+
+### Validation
+* `vitest run`: 61 files, 1,103 tests passed.
+* `tsc`: 108 errors (was 121; **0 undefined-identifier errors**, was 13). `check:undefined-identifiers` passes.
+* ESLint on changed files: 0 new errors (4 pre-existing `require()` errors in `seeker-account-retirement.test.ts`, untouched lines).
+* `check:redirect-parity`: 92 SPA redirects ↔ 92 vercel.json 301s, 0 missing. `check-redirect-targets`: 0 dead. `check:crawler-analytics`: 0 files with GA.
+* Snapshot renderer, local production-equivalent `dist/` (dry run, 3,630 routes): 2,910 snapshots in 21 min on 4 cores; failures were the crashes and not-found pages since fixed, plus the parity gaps listed in ADR-001.
+* After the fixes, local full run: 2,941 of 3,630 routes snapshotted in 1,284 s (2,803 via in-app navigation); `check:trust-claims` clean across all 2,941 snapshots.
+* **Vercel preview builds.** Chromium launched on Vercel's build image (`[snapshot-browser] chromium-headless-shell ready`, `[crawler-snapshots] browser via playwright`) and rendered the 2,300-route production set in about 7 minutes. Two previews then **failed on purpose**: the existing retired-product guard (`check:directory-public-shell`) now sees the live pages, and found concierge copy that visitors had been shown all along — about 330 city pages ("our concierge team can help"), 300 treatment × state pages ("Our concierge team can help verify your benefits"), the `/for-providers` Concierge add-on, Concierge Partner section and FAQ, plus homepage and `/insurance` lines. All were rewritten (commits after `da07059edb`), and the guard passes on a re-rendered sample.
+* SEO Validators CI initially failed `check:crawler-analytics` because 13 generators inlined the GA tag (the build strips it later; CI regenerated facility profiles without stripping). The tag was removed from the generators; CI passes.
+
+### Known issues / not done
+* **International pages (`/us-rehab/*`, `/international`, `/travel-to-usa-for-rehab`)** still describe a retired international placement service in about 22 places ("We coordinate visa documents, flights, and airport transfers", "Our team helps verify your coverage and negotiate with facilities"). The guard does not catch this wording. Keeping, rewriting or retiring these pages is an open owner decision.
+* Provider-only screens (Knowledge Base, ROI widget) still describe concierge placements and "Verified Leads". They are not public pages, but they misdescribe the product to providers.
+* Parity gaps kept on generator HTML pending the removal decisions: 575 routes the app itself marks noindex, 63 that 404 for visitors (50 "best cities" state articles and about 13 others), and treatment × city pages that the app redirects to the state page.
+* The Vercel Firewall still denies AI search crawlers until the owner changes the AI Bots setting.
+
+---
+
 ## 2026-11-23 · Phase 1 batch 1 · deployment record
 
 * **CI on PR #89 (head `e1a6401a43`):** SEO Validators passed; Vercel preview `dpl_4dDVmV1sxriEbFCfRb33Muv27sbZ` built and deployed.
