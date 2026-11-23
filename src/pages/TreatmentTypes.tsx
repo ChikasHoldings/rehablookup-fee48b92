@@ -33,6 +33,7 @@ import {
   Shield,
   MapPin,
   Navigation,
+  Search,
 } from "lucide-react";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { TOPIC_HERO_IMAGES } from "@/data/locationImages";

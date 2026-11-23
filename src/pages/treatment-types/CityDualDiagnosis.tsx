@@ -16,6 +16,7 @@ import {
   MapPin,
   Building2,
   Sparkles,
+  Search,
 } from "lucide-react";
 import { StateFacilitiesSection } from "@/components/seo/StateFacilitiesSection";
 import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";

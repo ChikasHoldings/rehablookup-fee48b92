@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, CheckCircle } from "lucide-react";
+import { ArrowRight, CheckCircle, Search } from "lucide-react";
 import { motion } from "framer-motion";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 

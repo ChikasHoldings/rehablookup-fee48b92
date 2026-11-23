@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { PageFAQ } from "@/components/seo/PageFAQ";
 import { costEstimatorFaqs } from "@/data/pageFaqs";
-import { Calculator, DollarSign, Shield, Clock, AlertCircle, CheckCircle2, Info, MapPin, Building2, ArrowRight, RotateCcw, TrendingDown, Heart, Stethoscope } from "lucide-react";
+import { Calculator, DollarSign, Shield, Clock, AlertCircle, CheckCircle2, Info, MapPin, Building2, ArrowRight, RotateCcw, TrendingDown, Heart, Stethoscope, Search } from "lucide-react";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { Card, CardContent } from "@/components/ui/card";
