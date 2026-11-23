@@ -65,6 +65,7 @@ import { rewrite, next } from "@vercel/edge";
 // extensions in ESM imports. TypeScript resolves the .js back to
 // prerender-manifest.ts at build time.
 import { PRERENDERED_PATHS } from "./prerender-manifest.js";
+import { CRAWLER_REDIRECTS } from "./crawler-redirects.js";
 
 export const config = {
   matcher: [
@@ -249,6 +250,23 @@ export default function middleware(request: Request) {
   // (same React page, captured at build time) instead of an empty shell.
   if (pathname === "/") {
     return CRAWLER_UA.test(ua) ? rewrite(new URL(HOME_SNAPSHOT_PATH, url)) : next();
+  }
+
+  // Pages whose React route immediately redirects visitors elsewhere: serve
+  // the same move as a 301 (map generated at build by the snapshot step).
+  const mirrored = CRAWLER_REDIRECTS[pathname.replace(/\/+$/, "") || "/"];
+  if (mirrored) {
+    const target = new URL(mirrored, url);
+    target.search = url.search;
+    return new Response(null, { status: 301, headers: { Location: target.toString(), "Cache-Control": "public, max-age=3600" } });
+  }
+
+  // Old app slug for the "best cities" state articles → the slug the
+  // prerendered page, the sitemap and now the app all use.
+  const bestCities = /^\/rehab-centers\/([a-z-]+)\/articles\/best-cities-in-([a-z-]+)-for-addiction-treatment\/?$/.exec(pathname);
+  if (bestCities) {
+    const target = new URL(`/rehab-centers/${bestCities[1]}/articles/best-cities-for-addiction-treatment-in-${bestCities[2]}`, url);
+    return new Response(null, { status: 301, headers: { Location: target.toString(), "Cache-Control": "public, max-age=3600" } });
   }
 
   // Standalone static pages with no React route: serve the HTML file to

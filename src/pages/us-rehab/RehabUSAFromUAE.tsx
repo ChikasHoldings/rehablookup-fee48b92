@@ -146,8 +146,8 @@ export default function RehabUSAFromUAE() {
           <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-5">
             {[
               { step: "1", title: "Confidential Inquiry", desc: "Complete our secure intake form. All communications are encrypted." },
-              { step: "2", title: "Facility Matching", desc: "Compare facilities that list Arabic support and cultural accommodations, and confirm them with each facility." },
-              { step: "3", title: "Travel Coordination", desc: "Visa documentation, private flights, and discreet airport transfers arranged." },
+              { step: "2", title: "Compare Programs", desc: "Compare facilities that list Arabic support and cultural accommodations, and confirm them with each facility." },
+              { step: "3", title: "Contact the Facility", desc: "Ask for an admission letter for your visa application and about arrival services. You arrange your own travel." },
               { step: "4", title: "Begin Treatment", desc: "Arrive at your luxury facility and begin your personalised recovery programme." },
             ].map((item, i) => (
               <motion.div key={item.step} {...fadeUp} transition={{ duration: 0.4, delay: i * 0.1 }} className="text-center">
@@ -169,9 +169,9 @@ export default function RehabUSAFromUAE() {
           </motion.div>
           <div className="space-y-4">
             {[
-              { icon: Plane, title: "Visa & Travel", content: "UAE citizens require a US B-1/B-2 visa for medical treatment. Our team provides all necessary facility documentation. Private jet charters and VIP airport services can be arranged." },
+              { icon: Plane, title: "Visa & Travel", content: "UAE citizens require a US B-1/B-2 visa for medical treatment. The treatment facility typically provides an admission letter to support the application. Ask each programme which travel and arrival services it offers." },
               { icon: FileText, title: "Investment & Payment", content: "Premium US programmes range from $30,000–$100,000+ per month. Wire transfers, bank guarantees, and family office coordination are standard. All financial arrangements remain confidential." },
-              { icon: Heart, title: "Aftercare & Return", content: "We coordinate continuing care upon your return, including virtual therapy across time zones and connection with local recovery resources." },
+              { icon: Heart, title: "Aftercare & Return", content: "Ask the facility about aftercare planning for your return, including virtual therapy across time zones and local recovery resources." },
             ].map((item, i) => (
               <motion.div key={item.title} {...fadeUp} transition={{ duration: 0.4, delay: i * 0.08 }}
                 className="flex gap-4 p-5 md:p-6 rounded-xl border bg-background hover:shadow-md transition-shadow">
@@ -230,8 +230,8 @@ export default function RehabUSAFromUAE() {
               { q: "Is treatment in America confidential from UAE authorities?", a: "Absolutely. US treatment facilities operate completely independently. Records are protected by HIPAA and cannot be shared with UAE authorities, employers, or family without explicit written consent." },
               { q: "Do US rehabs accommodate Arabic-speaking patients?", a: "Many facilities offer Arabic-speaking staff or professional translation. Ask each programme about language, dietary (halal), and prayer accommodations before you commit." },
               { q: "What is the cost for UAE patients?", a: "Luxury US treatment ranges from $30,000–$100,000+ per month. Executive programmes with private suites and concierge services are most popular with Gulf region patients." },
-              { q: "How do I travel from Dubai to US rehab?", a: "UAE citizens apply for a US B-2 visa for medical treatment. Our team coordinates all logistics including visa documentation, private flights, and VIP airport transfers." },
-              { q: "Can my family be involved in treatment?", a: "Yes. Many programmes offer family therapy via secure video conferencing across time zones. We can arrange luxury accommodation for visiting family members." },
+              { q: "How do I travel from Dubai to US rehab?", a: "UAE citizens apply for a US B-2 visa for medical treatment. The facility can provide an admission letter for the application; ask it which arrival services it offers." },
+              { q: "Can my family be involved in treatment?", a: "Yes. Many programmes offer family therapy via secure video conferencing across time zones. Ask each programme whether it can help families find nearby accommodation." },
             ].map((faq, i) => (
               <motion.details key={i} {...fadeUp} transition={{ duration: 0.3, delay: i * 0.05 }}
                 className="group bg-background rounded-xl border overflow-hidden hover:shadow-sm transition-shadow">

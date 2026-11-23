@@ -104,7 +104,7 @@ const SameDayDetoxUSA = () => {
 
       <StateDestinations title="Top States for Medical Detox" subtitle="These states have the highest concentration of accredited detox facilities with same-day intake capabilities." />
       <InternationalFAQ title="Same-Day Detox FAQs" subtitle="Common questions about immediate medical detoxification in the United States." faqs={faqs} schemaId="same-day-detox-usa-faq" />
-      <DirectorySearchCTA title="Start Detox Today" description="Our team connects you with facilities offering immediate medical detox. Call now or submit an inquiry for rapid placement." />
+      <DirectorySearchCTA title="Find Detox Today" description="Search detox programs and contact them directly to ask about same-day admission." />
     </Layout>
   );
 };

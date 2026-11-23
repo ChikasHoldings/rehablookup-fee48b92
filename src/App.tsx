@@ -351,7 +351,7 @@ const ProviderBillingPlacementsPage = lazy(() => import("./pages/provider/Billin
 const ProviderBillingConciergePage = lazy(() => import("./pages/provider/BillingConcierge"));
 const ProviderMarketingHub = lazy(() => import("./pages/provider/MarketingHub"));
 const ProviderMarketingFeatured = lazy(() => import("./pages/provider/MarketingFeatured"));
-const ProviderMarketingConcierge = lazy(() => import("./pages/provider/MarketingConcierge"));
+const ProviderConciergeRetired = lazy(() => import("./pages/provider/ConciergeRetired"));
 // Pro upgrade page + Placement network removed in monetization rebuild.
 // /provider/pro-upgrade and /provider/placement-network now Navigate
 // to /for-providers so any stale bookmark / external link still lands
@@ -788,14 +788,18 @@ const AppInner = () => {
             <Route path="/womens-rehab" element={<PublicRouteGuard><ExpandedTreatmentHubPage /></PublicRouteGuard>} />
             <Route path="/mens-rehab" element={<PublicRouteGuard><ExpandedTreatmentHubPage /></PublicRouteGuard>} />
             <Route path="/free-rehab-options" element={<PublicRouteGuard><ExpandedTreatmentHubPage /></PublicRouteGuard>} />
-            {/* "*-rehab-centers" hub aliases (mirror prerendered HTML so client-side nav works) */}
-            <Route path="/faith-based-rehab-centers" element={<PublicRouteGuard><ExpandedTreatmentHubPage /></PublicRouteGuard>} />
-            <Route path="/fentanyl-rehab-centers" element={<PublicRouteGuard><ExpandedTreatmentHubPage /></PublicRouteGuard>} />
-            <Route path="/veterans-rehab-centers" element={<PublicRouteGuard><ExpandedTreatmentHubPage /></PublicRouteGuard>} />
-            <Route path="/womens-rehab-centers" element={<PublicRouteGuard><ExpandedTreatmentHubPage /></PublicRouteGuard>} />
-            <Route path="/mens-rehab-centers" element={<PublicRouteGuard><ExpandedTreatmentHubPage /></PublicRouteGuard>} />
-            <Route path="/inpatient-rehab-centers" element={<PublicRouteGuard><TreatmentHubPage /></PublicRouteGuard>} />
-            <Route path="/luxury-rehab-centers" element={<PublicRouteGuard><ExpandedTreatmentHubPage /></PublicRouteGuard>} />
+            {/* "*-rehab-centers" duplicates of the hub pages: they rendered "not found" (no hub config for these slugs) — 301 to the hub (mirrors vercel.json). */}
+            <Route path="/faith-based-rehab-centers" element={<Navigate to="/faith-based-rehab" replace />} />
+            <Route path="/fentanyl-rehab-centers" element={<Navigate to="/fentanyl-rehab" replace />} />
+            <Route path="/veterans-rehab-centers" element={<Navigate to="/veterans-rehab" replace />} />
+            <Route path="/womens-rehab-centers" element={<Navigate to="/womens-rehab" replace />} />
+            <Route path="/mens-rehab-centers" element={<Navigate to="/mens-rehab" replace />} />
+            <Route path="/inpatient-rehab-centers" element={<Navigate to="/inpatient-rehab" replace />} />
+            <Route path="/luxury-rehab-centers" element={<Navigate to="/treatment-types/luxury-rehab" replace />} />
+            <Route path="/near-me" element={<Navigate to="/rehab-near-me" replace />} />
+            <Route path="/treatment-types/aftercare-programs" element={<Navigate to="/aftercare-and-relapse-prevention" replace />} />
+            <Route path="/treatment-types/medication-assisted-treatment" element={<Navigate to="/mat-programs" replace />} />
+            <Route path="/treatment-types/outpatient-rehab" element={<Navigate to="/treatment-types/outpatient-programs" replace />} />
             {/* Typo / duplicate slug → canonical */}
             <Route path="/detox-centers-centers" element={<Navigate to="/detox-centers" replace />} />
             {/* Inverse comparison alias → canonical */}
@@ -1848,7 +1852,7 @@ const AppInner = () => {
               <Route path="billing/concierge" element={<ProviderBillingConciergePage />} />
               <Route path="marketing" element={<ProviderMarketingHub />} />
               <Route path="marketing/featured" element={<ProviderMarketingFeatured />} />
-              <Route path="marketing/concierge" element={<ProviderMarketingConcierge />} />
+              <Route path="marketing/concierge" element={<ProviderConciergeRetired />} />
               <Route path="settings" element={<ProviderSettingsPage />} />
               <Route path="embed-badge" element={<ProviderEmbedBadgePage />} />
               {/* Credential Kit — Pro + verified gate enforced server-side

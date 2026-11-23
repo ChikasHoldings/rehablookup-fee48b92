@@ -8,7 +8,6 @@ import {
   Clock,
   AlertCircle,
   Shield,
-  Handshake,
   CreditCard,
   Crown,
   Users,
@@ -66,34 +65,16 @@ const faqSections = [
     ],
   },
   {
-    title: "Concierge Add-On",
-    icon: Handshake,
-    items: [
-      {
-        question: "What is the Concierge Add-On?",
-        answer: "The Concierge Add-On ($1,000/month) makes you a verified Concierge Partner. Our human advisors prioritize your facility when matching families whose geography and level of care fit your program. EKRA-compliant by design — never per-call, per-lead, or per-admission."
-      },
-      {
-        question: "How do I enable the Concierge Add-On?",
-        answer: "Subscribe to Pro first, then go to Marketing → Concierge and activate the add-on. You'll set your admissions contact, accepted care types, and geography. Once active, you'll start receiving advisor-matched introductions."
-      },
-      {
-        question: "Are there any per-placement fees?",
-        answer: "No. The Concierge Add-On is a flat monthly subscription. There are no per-admission, per-call, or per-lead fees on any plan — RehabLookup uses flat-fee subscriptions only."
-      },
-    ],
-  },
-  {
     title: "Billing & Pro Membership",
     icon: CreditCard,
     items: [
       {
         question: "What does Pro membership include?",
-        answer: "Pro ($99/month, or $1,009.80/yr — save 15%) includes: verified badge, direct contact info visible to clients, inquiries delivered directly to your inbox with full contact details, review responses, 10 photos plus 1 video, up to 5 facility listings, priority support, analytics dashboard, and an embeddable trust badge. Featured rotation placements and Concierge Partner surfacing are optional add-ons priced separately — see /for-providers for the full lineup."
+        answer: "Pro ($99/month, or $1,009.80/yr — save 15%) includes: verified badge, direct contact info visible to clients, inquiries delivered directly to your inbox with full contact details, review responses, 10 photos plus 1 video, up to 5 facility listings, priority support, analytics dashboard, and an embeddable trust badge. Featured rotation placements are an optional add-on priced separately — see /for-providers for the full lineup."
       },
       {
         question: "How does billing work?",
-        answer: "Your base listing is free. Pro is a flat $99/month (or annual) subscription billed via Stripe — no per-lead fees, no credits, no per-placement charges. Featured and Concierge add-ons are billed separately as flat monthly subscriptions when activated."
+        answer: "Your base listing is free. Pro is a flat $99/month (or annual) subscription billed via Stripe — no per-lead fees, no credits, no per-placement charges. The Featured add-on is billed separately as a flat monthly subscription when activated."
       },
       {
         question: "How do I manage my subscription?",
@@ -107,11 +88,11 @@ const faqSections = [
     items: [
       {
         question: "What analytics are available?",
-        answer: "The Analytics page shows profile views, lead volume, response times, and placement activity. You can filter by date range including weekly, monthly, quarterly, or custom periods."
+        answer: "The Analytics page shows profile views, lead volume, and response times. You can filter by date range including weekly, monthly, quarterly, or custom periods."
       },
       {
         question: "How do I change my notification preferences?",
-        answer: "Go to Settings > Notifications to customize email alerts for new leads, placement introductions, billing events, and system updates."
+        answer: "Go to Settings > Notifications to customize email alerts for new leads, billing events, and system updates."
       },
     ],
   },
@@ -123,12 +104,6 @@ const helpTopics = [
     title: "Knowledge Base",
     description: "Search articles and guides",
     link: "/provider/knowledge-base"
-  },
-  {
-    icon: Handshake,
-    title: "Concierge Partner",
-    description: "How advisor-matched cases reach your facility",
-    link: "/provider/knowledge-base?category=placements"
   },
   {
     icon: Crown,

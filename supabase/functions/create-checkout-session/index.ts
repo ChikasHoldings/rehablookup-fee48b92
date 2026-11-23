@@ -139,8 +139,14 @@ Deno.serve(async (req) => {
     if (intent === "initial_subscription" && product !== "pro") {
       return json(400, { error: "items[0].product must be 'pro' for initial_subscription", code: "INVALID_PRODUCT" });
     }
-    if (intent === "add_addon" && product !== "featured" && product !== "concierge") {
-      return json(400, { error: "items[0].product must be 'featured' or 'concierge' for add_addon", code: "INVALID_PRODUCT" });
+    // The Concierge Partner add-on was retired with the concierge/placement
+    // service (no facility ever held it). Refuse new purchases outright so it
+    // cannot be bought by calling this function directly.
+    if (product === "concierge") {
+      return json(410, { error: "The Concierge Partner add-on has been retired", code: "PRODUCT_RETIRED" });
+    }
+    if (intent === "add_addon" && product !== "featured") {
+      return json(400, { error: "items[0].product must be 'featured' for add_addon", code: "INVALID_PRODUCT" });
     }
 
     const svc = createClient(SUPABASE_URL, SUPABASE_SRK);

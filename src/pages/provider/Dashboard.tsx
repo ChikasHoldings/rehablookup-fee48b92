@@ -919,7 +919,6 @@ export default function ProviderDashboardPage() {
                 <CardContent className="grid gap-1 p-2 sm:grid-cols-2">
                   {[
                     { icon: Megaphone, label: "Featured placements", href: "/provider/marketing/featured", active: hasFeatured, locked: !proStatus.isPro },
-                    { icon: Users, label: "Concierge Partner", href: "/provider/marketing/concierge", active: hasConcierge, locked: !proStatus.isPro },
                     { icon: Code2, label: "Embed widgets", href: "/provider/embed-badge", active: false, locked: !proStatus.isPro || !isVerified },
                     { icon: ShieldCheck, label: "Credential kit", href: "/provider/credential-kit", active: false, locked: !proStatus.isPro || !isVerified },
                   ].map((row) => {

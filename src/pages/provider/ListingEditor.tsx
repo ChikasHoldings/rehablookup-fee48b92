@@ -1888,7 +1888,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
                         <p className="text-xs text-muted-foreground">
                           {isConciergePartner
                             ? "Enable if you accept patients from outside the US"
-                            : "Available to Concierge Partners — international exposure is part of the Concierge upgrade"}
+                            : "Not currently available — international listings were part of the retired Concierge Partner add-on"}
                         </p>
                       </div>
                       {/* International acceptance is a Concierge-Partner-only
@@ -1901,16 +1901,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
                         aria-label="Accept International Patients"
                       />
                     </div>
-                    {!isConciergePartner ? (
-                      <div className="mt-3 p-3 rounded-md bg-violet-50 border border-violet-200 flex items-center justify-between gap-3">
-                        <p className="text-xs text-violet-800">
-                          Become a Concierge Partner to be featured on our international pages and accept patients from abroad.
-                        </p>
-                        <Button asChild size="sm" variant="outline" className="shrink-0 border-violet-300 text-violet-700 hover:bg-violet-100">
-                          <Link to="/provider/marketing/concierge">Learn more</Link>
-                        </Button>
-                      </div>
-                    ) : facility.accepts_international_patients ? (
+                    {isConciergePartner && facility.accepts_international_patients ? (
                       <div className="mt-3 p-3 rounded-md bg-primary/5 border border-primary/10"><p className="text-xs text-primary">Your facility will be visible to international clients.</p></div>
                     ) : null}
                   </div>

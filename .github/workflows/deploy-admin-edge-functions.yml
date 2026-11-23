@@ -76,6 +76,7 @@ jobs:
             if [ "$VJ" = "false" ]; then FLAGS+=(--no-verify-jwt); fi
             supabase functions deploy "$fn" \
               --project-ref mldbxpntzcjalgjmwnqa \
+              --yes \
               "${FLAGS[@]}"
           done
 
@@ -115,6 +116,7 @@ jobs:
             if [ "$VJ" = "false" ]; then FLAGS+=(--no-verify-jwt); fi
             supabase functions deploy "$fn" \
               --project-ref mldbxpntzcjalgjmwnqa \
+              --yes \
               "${FLAGS[@]}"
           done
 

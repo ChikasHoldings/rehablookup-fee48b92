@@ -160,6 +160,7 @@ jobs:
 
             if supabase functions deploy "$FN" \
               --project-ref mldbxpntzcjalgjmwnqa \
+              --yes \
               "${FLAGS[@]}"; then
               OK=$((OK+1))
               echo "  ✓ deployed $FN"

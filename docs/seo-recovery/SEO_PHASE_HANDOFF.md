@@ -26,6 +26,15 @@
 * **May 29 / GA:** the GA switch was on 2026-05-09 and cannot affect Google Search (`SEO_ROOT_CAUSE_INVESTIGATION.md`).
 * **SAMHSA expansion: deferred by the owner** until the platform fixes are complete.
 
+## Completed in Phase 1, batch 3 (2026-11-23, owner-requested, PR #91)
+* **International pages** (`/us-rehab/*`, 14 pages): no longer claim RehabLookup runs intake, matches patients, arranges visas, travel or insurance, or negotiates with or vets facilities. They describe a directory: compare programs, then contact the facility.
+* **Concierge Partner add-on retired in the provider portal:** 0 holders, 0 introductions and 0 active subscriptions ever. The offer was removed everywhere, `/provider/marketing/concierge` shows a notice, and checkout refuses `concierge` (410). "Verified Leads" became "Direct Inquiries".
+* **Visitor 404 / crawler-content mismatches:**
+  * 50 "best cities" state articles fixed (slug mismatch).
+  * 12 dead-end or duplicate routes now 301.
+  * `/drug-rehabilitation-{state}` now points to a real page.
+  * Every remaining client-side redirect in the snapshot set is mirrored as a crawler 301 (`crawler-redirects.ts`, generated per build) and dropped from the built sitemaps.
+
 ## Completed in Phase 1
 * Facility schema emits only data-backed attributes, from one shared module (`src/lib/seo/facilityTruth.mjs`) used by the crawler generator and the SPA. Provenance notice on every profile.
 * Bulk "medically reviewed" stamps cleared (40 articles, backed up); Advisory Board schema, unverified staff, testimonials, "verified/accredited directory", insurance-verification, concierge and placement claims removed from source and the committed corpus.
@@ -40,9 +49,9 @@
 3. **Firewall / AI bots decision** (F-26): allow Applebot, OAI-SearchBot, ChatGPT-User, PerplexityBot? Screenshot of the 2026-09-06 rules.
 4. **Removal waves A–D** (`SEO_REMOVAL_PLAN.md` §8): approve wave by wave, after a backlink export and a full-history GSC page export.
 5. **People:** confirm or permanently remove the staff previously named in `About.tsx` (removed in Phase 1); name any real medical reviewer before any "reviewed" label returns.
-6. **Product decisions:** `/ads/:slug` and `/lp/convert` (lead forms with no concierge behind them), `/insurance-verification` (promises an admissions-team check), `/us-rehab/*` international pages.
+6. **Product decisions:** ~~`/ads/:slug`, `/lp/convert`, `/insurance-verification`, `/us-rehab/*` copy~~ (done in batches 2–3). Still open: **international acceptance on listings** is gated on the retired Concierge add-on (ListingEditor toggle and a DB trigger), so no facility can currently mark "accepts international patients". Unlocking it for all claimed listings is a schema/product change for the owner.
 7. **SAMHSA:** approve a complete re-scrape, the facet schema migration, and 1–2 pilot states (`SEO_SAMHSA_IMPORT_PLAN.md` §6).
-8. **Editorial:** the CEO article override still claims "65,000 users we served in April".
+8. ~~**Editorial:** the CEO article "65,000 users" claim~~ (corrected in batch 2).
 9. GSC date-compared Pages/Queries export (Apr 30–May 28 vs May 29–Jun 26), Sitemaps report, Core Web Vitals, GA4 source/medium, backlinks.
 
 ## Decisions taken (by analysis; the owner may overrule)
@@ -53,9 +62,9 @@
 ## Exact next steps (next session)
 1. Re-read this file, the master audit status table, and the log. Check `git log origin/main` and the Vercel production deployment for PR #89.
 2. Record any owner answers (blockers 1–9) in the log; a manual action makes the removal waves urgent.
-3. **Deploy the seeker-email edge functions** changed in batch 2 (from `main`, after merge): Actions → "Deploy all stale edge functions" → functions = `send-concierge-notifications send-tour-notifications send-message-notifications send-lead-message send-review-notification support-ticket-reply support-ticket-status send-marketing-followup submit-marketing-lead placement-monitor`.
-4. **Verify the first production build log** shows `[crawler-snapshots] browser via playwright` and a pass count; if it says "no browser could start", the Vercel build image needs a different Chromium (see ADR-001) — crawlers then simply keep the generator HTML.
-5. **Remaining parity gaps for the owner's removal decisions** (generator HTML kept): 571 routes the app itself noindexes; 50 "best cities" state articles and ~12 specialty/treatment pages that 404 for visitors; treatment × city pages the app redirects to the state page. Lists come from the snapshot report (`node_modules/.cache/crawler-snapshots/report.json` after a build).
+3. ~~Deploy the seeker-email edge functions~~ — **done 2026-11-23** (10/10 via the deploy workflow, after adding `--yes` for the current Supabase CLI).
+4. ~~Verify the first production build log~~ — **done**: production build `dpl_Cc7TdhMdaYVKVweFRBTcxyQm3dg1` wrote 2,147/2,754 snapshots via Playwright's Chromium. Keep an eye on this line in every build log (monitoring plan).
+5. **Remaining parity gaps for the owner's removal decisions** (generator HTML kept): about 511 routes the app itself noindexes (unsupported treatment × state, consolidated duplicate articles). *Fixed in batch 3:* the best-cities articles, the specialty/treatment 404s, and client redirects (now mirrored as crawler 301s). Lists come from the snapshot report (`node_modules/.cache/crawler-snapshots/report.json` after a build).
 6. *(Previous batch-2 list, now done except where noted:)*
    1. Stop injecting gtag into crawler-only HTML (`scripts/backfill-ga-snippet.mjs`) — F-15.
    2. Redeploy the `sitemap-facilities` edge function so the live response matches source (`application/xml`, `updated_at` lastmod) — F-14; verify from an allowed network.

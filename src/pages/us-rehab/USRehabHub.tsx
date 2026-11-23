@@ -26,7 +26,7 @@ const USRehabHub = () => {
       "@type": "Country",
       "name": "United States"
     },
-    "serviceType": "Addiction Treatment Placement",
+    "serviceType": "Addiction treatment directory",
     "audience": {
       "@type": "Audience",
       "audienceType": "International patients seeking addiction treatment in the USA"
@@ -54,7 +54,7 @@ const USRehabHub = () => {
       <InternationalHero
         title="Find Addiction Treatment in the United States"
         subtitle="World-Class Care for International Patients"
-        description="Access America's leading rehabilitation centers with dedicated support for international clients. From luxury Malibu retreats to executive New York programs, we connect you with the perfect treatment facility."
+        description="Access America's leading rehabilitation centers that accept international clients. From luxury Malibu retreats to executive New York programs, compare facilities and contact them directly."
         keywords={["best rehab USA", "luxury rehab America", "US treatment for foreigners", "American addiction centers"]}
       />
 

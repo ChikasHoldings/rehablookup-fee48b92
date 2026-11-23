@@ -8,14 +8,14 @@ import heroImg from "@/assets/hero-international-rehab.jpg";
 const paymentOptions = [
   { icon: CreditCard, title: "Private Pay (Self-Pay)", description: "The most common method for international patients. Pay directly via wire transfer, credit card, or bank draft. Many facilities offer discounted self-pay rates." },
   { icon: Percent, title: "Payment Plans & Financing", description: "Structured payment plans spread the cost over months. Some facilities partner with medical financing companies offering low-interest options." },
-  { icon: Landmark, title: "International Insurance", description: "Some global health insurance policies cover addiction treatment abroad. Our team helps verify your international coverage and negotiate with facilities." },
+  { icon: Landmark, title: "International Insurance", description: "Some global health insurance policies cover addiction treatment abroad. Check with your insurer whether treatment abroad is covered, and ask facilities about direct billing." },
   { icon: DollarSign, title: "Sliding Scale & Scholarships", description: "Select facilities offer need-based financial assistance. While less common for international patients, scholarship programs do exist at certain centers." },
 ];
 
 const PayingForRehabUSANoInsurance = () => {
   const faqs = [
     { question: "Can I attend rehab in the USA without American insurance?", answer: "Absolutely. The majority of international patients are self-pay. U.S. facilities routinely admit patients without domestic insurance and often offer competitive self-pay rates that can be lower than insured rates." },
-    { question: "What are the cheapest rehab options in the USA for foreigners?", answer: "Standard programs start around $10,000–$15,000 per month. Some facilities offer 30-day intensive programs at reduced rates for self-pay patients. Our team can identify programs that match your budget." },
+    { question: "What are the cheapest rehab options in the USA for foreigners?", answer: "Standard programs start around $10,000–$15,000 per month. Some facilities offer 30-day intensive programs at reduced rates for self-pay patients. Use the directory to compare programs and ask each one about self-pay rates." },
     { question: "Can I pay for US rehab in my local currency?", answer: "Most facilities accept international wire transfers in USD. Some accept payments in GBP, EUR, AED, and other currencies. Credit cards with international processing are also widely accepted." },
     { question: "Do US rehab centers offer refunds if I leave early?", answer: "Refund policies vary by facility. Many programs offer prorated refunds for unused days. We recommend reviewing the refund policy carefully before admission and can help negotiate favorable terms." },
     { question: "Is it cheaper to do rehab in the USA or my home country?", answer: "While U.S. treatment may cost more upfront, the quality of care, access to FDA-approved medications, higher success rates, and stronger privacy protections often make it a better long-term investment." },
@@ -98,7 +98,7 @@ const PayingForRehabUSANoInsurance = () => {
       </section>
 
       <InternationalFAQ title="Payment & Financing FAQs" subtitle="Common questions about paying for addiction treatment in the USA as an international patient." faqs={faqs} schemaId="paying-rehab-usa-faq" />
-      <DirectorySearchCTA title="Get a Personalized Payment Plan" description="Our team helps international patients navigate costs and find programs that fit their budget—with no insurance required." />
+      <DirectorySearchCTA title="Compare Programs by Cost" description="Search programs and ask each facility about self-pay rates, payment plans and financing — no insurance required." />
     </Layout>
   );
 };

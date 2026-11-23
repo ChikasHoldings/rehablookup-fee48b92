@@ -8,7 +8,7 @@ import heroImg from "@/assets/hero-international-rehab.jpg";
 
 const travelSteps = [
   { icon: FileCheck, title: "1. Initial Assessment", description: "Search the directory by level of care, location, and insurance to build a shortlist of US programs." },
-  { icon: Plane, title: "2. Visa & Travel Planning", description: "Guidance on B-2 visa applications, ESTA waivers, and medical travel documentation. We coordinate with the facility for admission letters." },
+  { icon: Plane, title: "2. Visa & Travel Planning", description: "Guidance on B-2 visa applications, ESTA waivers, and medical travel documentation. Ask the facility for an admission letter to support your application." },
   { icon: Home, title: "3. Arrival & Admission", description: "Airport pickup, luxury transport to your facility, and seamless check-in. Many centers offer private transfer services." },
   { icon: CreditCard, title: "4. Treatment & Aftercare", description: "World-class clinical care followed by comprehensive discharge planning and international aftercare coordination." },
 ];
@@ -31,7 +31,7 @@ const TravelToUSAForRehab = () => {
   };
 
   const faqs = [
-    { question: "Do I need a visa to attend rehab in the USA?", answer: "Most international patients enter on a B-2 (tourist/medical) visa or, for eligible countries like the UK and Australia, an ESTA waiver. Treatment facilities provide admission letters to support your visa application. Our team guides you through the entire process." },
+    { question: "Do I need a visa to attend rehab in the USA?", answer: "Most international patients enter on a B-2 (tourist/medical) visa or, for eligible countries like the UK and Australia, an ESTA waiver. Treatment facilities provide admission letters to support your visa application." },
     { question: "How long does the travel planning process take?", answer: "Most patients are admitted within 7–14 days of initial contact. Emergency admissions can be arranged in 24–72 hours for urgent cases. Visa processing time varies by country but ESTA approvals are typically instant." },
     { question: "Will the facility help with airport transfers?", answer: "Yes. Most premium U.S. facilities offer private airport pickup and transportation. Some provide luxury vehicle or helicopter transfers for VIP clients." },
     { question: "Can my family visit during treatment?", answer: "Many facilities welcome family involvement and offer dedicated family therapy programs, visiting hours, and even on-site guest accommodations at luxury centers." },
@@ -58,7 +58,7 @@ const TravelToUSAForRehab = () => {
         badge="International Treatment Travel"
         title="Travel to the USA for World-Class Rehab"
         subtitle="Your Complete Guide to Addiction Treatment Abroad"
-        description="Thousands of international patients travel to the United States each year for addiction treatment. We handle the logistics so you can focus on recovery."
+        description="Thousands of international patients travel to the United States each year for addiction treatment. This guide explains the steps, and what to arrange with the facility and yourself."
         trustPoints={["Visa Guidance Articles", "Licensed Facilities", "50+ Countries", "HIPAA Protected"]}
         heroImage={heroImg}
         heroAlt="International patient traveling to USA for addiction treatment"
