@@ -92,7 +92,7 @@ export function TreatmentCityHero({
             {treatmentName} in {cityName}
           </h1>
           <p className="mt-2 text-sm md:text-base text-white/85 max-w-2xl">
-            Verified {treatmentName.toLowerCase()} programs in {cityName}, {abbreviation}. Compare facilities, insurance, and admission times.
+            {treatmentName} programs listed in {cityName}, {abbreviation}. Compare facilities, then contact them about insurance and admission.
           </p>
           <div className="mt-4 flex flex-col sm:flex-row gap-2.5">
             <Link to={`/rehab-centers/${stateSlug}/${citySlug}`}>

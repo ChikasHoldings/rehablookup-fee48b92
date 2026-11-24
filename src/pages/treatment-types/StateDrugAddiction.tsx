@@ -17,10 +17,12 @@ import {
   Clock, Shield, CheckCircle, ArrowRight, Search, Pill,
 } from "lucide-react";
 import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
+import { TREATMENT_CITY_KEYWORDS, useTreatmentCitiesWithListings } from "@/hooks/useTreatmentCityValidation";
 
 const StateDrugAddiction = () => {
   const { stateSlug } = useParams<{ stateSlug: string }>();
   const stateData = statesData.find((s) => s.slug === stateSlug);
+  const citiesWithListings = useTreatmentCitiesWithListings(stateData?.name, TREATMENT_CITY_KEYWORDS["drug-addiction"]);
 
   if (!stateData) {
     return (
@@ -34,6 +36,8 @@ const StateDrugAddiction = () => {
   }
 
   const { name: stateName, abbreviation, cities } = stateData;
+  // Only cities whose treatment × city page has listings (the others redirect).
+  const linkedCities = citiesWithListings ? cities.filter((c) => citiesWithListings.has(c.name.toLowerCase())) : cities;
   const nearbyStates = getNearbyStates(stateSlug!, 4);
   const cityNames = cities.map((c) => c.name);
 
@@ -64,6 +68,7 @@ const StateDrugAddiction = () => {
 
   return (
     <Layout>
+      {!citiesWithListings && <span data-snapshot-wait="directory" hidden />}
       <SEO
         title={`Drug Addiction Treatment in ${stateName} (${abbreviation}) | Find Rehab`}
         description={`Find drug addiction treatment in ${stateName}. Compare detox, MAT, inpatient, and outpatient programs. Verify insurance. ${cities.length}+ cities covered.`}
@@ -86,7 +91,7 @@ const StateDrugAddiction = () => {
         stateSlug={stateSlug!}
         treatmentHubHref="/treatment-types/drug-addiction"
         treatmentHubLabel="Drug Addiction"
-        cities={cities}
+        cities={linkedCities}
       />
 
       {/* Featured rotation — paid Featured pool for this
@@ -139,23 +144,25 @@ const StateDrugAddiction = () => {
         </div></div>
       </section>
 
-      <section className="py-12 md:py-16 bg-muted/30">
-        <div className="container">
-          <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">Find Drug Rehab by City in {stateName}</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {cities.map((city) => (
-              <Link key={city.slug} to={`/treatment-types/drug-addiction/${stateSlug}/${city.slug}`}
-                className="group p-5 rounded-xl border bg-background hover:border-primary hover:shadow-lg transition-all">
-                <h3 className="font-semibold group-hover:text-primary transition-colors">{city.name}</h3>
-                <p className="text-sm text-muted-foreground mt-1">Drug rehab programs</p>
-                <div className="mt-3 flex items-center text-sm text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                  <span>View centers</span><ArrowRight className="ml-1 h-4 w-4" />
-                </div>
-              </Link>
-            ))}
+      {linkedCities.length > 0 && (
+        <section className="py-12 md:py-16 bg-muted/30">
+          <div className="container">
+            <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">Find Drug Rehab by City in {stateName}</h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {linkedCities.map((city) => (
+                <Link key={city.slug} to={`/treatment-types/drug-addiction/${stateSlug}/${city.slug}`}
+                  className="group p-5 rounded-xl border bg-background hover:border-primary hover:shadow-lg transition-all">
+                  <h3 className="font-semibold group-hover:text-primary transition-colors">{city.name}</h3>
+                  <p className="text-sm text-muted-foreground mt-1">Drug rehab programs</p>
+                  <div className="mt-3 flex items-center text-sm text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                    <span>View centers</span><ArrowRight className="ml-1 h-4 w-4" />
+                  </div>
+                </Link>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       <TreatmentFAQSection faqs={faqs} treatmentType="Drug Addiction Treatment" location={{ state: stateName }} />
 

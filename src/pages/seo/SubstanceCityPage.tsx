@@ -142,7 +142,7 @@ export default function SubstanceCityPage() {
     <SEOLandingTemplate
       title={pageTitle}
       metaTitle={`${substance.title} in ${cityName}, ${abbreviation} — Find Help | RehabLookup`}
-      metaDescription={`Find ${substance.conditionName.toLowerCase()} treatment centers in ${cityName}, ${stateName}. Compare verified programs, check insurance, get help today.`}
+      metaDescription={`Find ${substance.conditionName.toLowerCase()} treatment centers in ${cityName}, ${stateName}. Compare listed programs, check insurance, get help today.`}
       canonical={`https://rehablookup.com${canonicalPath}`}
       noindex={!validation.shouldIndex}
       structuredData={structuredData}

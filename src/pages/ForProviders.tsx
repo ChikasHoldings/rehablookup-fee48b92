@@ -108,7 +108,7 @@ function HeroSection() {
           </h1>
 
           <p className="mx-auto mt-3 max-w-2xl text-base md:text-lg text-white/85 leading-relaxed">
-            List your accredited treatment center on the largest verified rehab directory in the U.S. Get in front of families who are actively searching for care.
+            List your accredited treatment center on RehabLookup's nationwide treatment directory Get in front of families who are actively searching for care.
           </p>
 
           {/* Trust-strip — outcome metrics under the subhead */}
@@ -865,7 +865,7 @@ export default function ForProviders() {
     <Layout>
       <SEO
         title="List Your Facility | For Treatment Providers — RehabLookup"
-        description="Reach more families. Grow admissions. List your accredited treatment center on the largest verified rehab directory in the U.S. Pro from $99/mo. Cancel anytime. EKRA-compliant by design."
+        description="Reach more families. Grow admissions. List your accredited treatment center on RehabLookup's nationwide treatment directory Pro from $99/mo. Cancel anytime. EKRA-compliant by design."
         canonical="/for-providers"
       />
       <HeroSection />

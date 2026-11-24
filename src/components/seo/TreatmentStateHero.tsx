@@ -90,7 +90,8 @@ export function TreatmentStateHero({
               {treatmentName} in {stateName}
             </h1>
             <p className="mt-2 text-sm md:text-base text-white/85 max-w-2xl">
-              Verified {treatmentName.toLowerCase()} programs across {stateName} · {cities.length}+ cities
+              Compare {treatmentName.toLowerCase()} programs listed across {stateName}
+              {cities.length > 0 ? ` · ${cities.length} ${cities.length === 1 ? "city" : "cities"} with listings` : ""}
             </p>
             <div className="mt-4 flex flex-col sm:flex-row gap-2.5">
               <Link to={`/rehab-centers/${stateSlug}`}>
@@ -124,7 +125,7 @@ export function TreatmentStateHero({
             />
             <LocationStatTile
               size="sm"
-              label="Cities Covered"
+              label="Cities With Listings"
               value={cities.length.toLocaleString()}
               icon={MapPin}
             />

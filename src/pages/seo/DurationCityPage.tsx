@@ -150,7 +150,7 @@ export default function DurationCityPage() {
     <SEOLandingTemplate
       title={pageTitle}
       metaTitle={`${config.title} in ${cityName}, ${abbreviation} | RehabLookup`}
-      metaDescription={`Find ${config.title.toLowerCase()} in ${cityName}, ${stateName}. Compare verified treatment facilities and contact them directly.`}
+      metaDescription={`Find ${config.title.toLowerCase()} in ${cityName}, ${stateName}. Compare treatment facilities and contact them directly.`}
       canonical={`https://rehablookup.com${canonicalPath}`}
       noindex={!validation.shouldIndex}
       structuredData={structuredData}
@@ -165,7 +165,7 @@ export default function DurationCityPage() {
       heroLocation={`${cityName}, ${abbreviation}`}
       heroBadge="Treatment Programs"
       heroImage={getCityImage(stateSlug, citySlug)}
-      introContent={`Looking for ${config.title.toLowerCase()} in ${cityName}? RehabLookup connects you with verified treatment facilities offering structured programs designed for effective recovery. Compare options, check insurance coverage, and contact the programs that fit.`}
+      introContent={`Looking for ${config.title.toLowerCase()} in ${cityName}? RehabLookup lists treatment facilities offering structured programs designed for effective recovery. Compare options, check insurance coverage, and contact the programs that fit.`}
       sections={[
         {
           heading: `${config.title} in ${cityName}`,

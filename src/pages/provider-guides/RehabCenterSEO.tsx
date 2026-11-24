@@ -41,7 +41,7 @@ export default function RehabCenterSEO() {
           bullets: [
             "Claim and fully optimize your Google Business Profile with photos and services",
             "Ensure NAP (Name, Address, Phone) consistency across all online directories",
-            "List your facility on verified treatment directories like RehabLookup",
+            "List your facility on treatment directories like RehabLookup",
             "Actively request and respond to patient reviews on Google",
             "Create location-specific content targeting nearby cities and neighborhoods",
           ],

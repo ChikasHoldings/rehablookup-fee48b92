@@ -97,24 +97,6 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://rehablookup.com/faith-based-rehab-centers</loc>
-    <lastmod>2026-05-20</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://rehablookup.com/fentanyl-rehab-centers</loc>
-    <lastmod>2026-05-20</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://rehablookup.com/inpatient-rehab-centers</loc>
-    <lastmod>2026-05-20</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
     <loc>https://rehablookup.com/inpatient-rehabilitation-montana</loc>
     <lastmod>2026-05-20</lastmod>
     <changefreq>monthly</changefreq>
@@ -163,19 +145,7 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://rehablookup.com/luxury-rehab-centers</loc>
-    <lastmod>2026-05-20</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
     <loc>https://rehablookup.com/mat-clinic-near-me/oregon/portland</loc>
-    <lastmod>2026-05-20</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://rehablookup.com/mens-rehab-centers</loc>
     <lastmod>2026-05-20</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
@@ -248,12 +218,6 @@
   </url>
   <url>
     <loc>https://rehablookup.com/rehab-centers/new-mexico/county/curry</loc>
-    <lastmod>2026-05-20</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://rehablookup.com/rehab-centers/new-york/new-york</loc>
     <lastmod>2026-05-20</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
@@ -374,12 +338,6 @@
   </url>
   <url>
     <loc>https://rehablookup.com/treatment-types/dual-diagnosis-treatment/vermont/montpelier</loc>
-    <lastmod>2026-05-20</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://rehablookup.com/treatment-types/mens-rehab/texas/houston</loc>
     <lastmod>2026-05-20</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
@@ -1440,22 +1398,10 @@
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
-  <url>
-    <loc>https://rehablookup.com/veterans-rehab-centers</loc>
-    <lastmod>2026-05-20</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
   <!-- /womens-rehab-centers removed: route redirects to /treatment-types and
        Google was flagging it as duplicate of an unrelated canonical. The
        real hub is /womens-rehab (already in sitemap.xml). -->
 
-  <url>
-    <loc>https://rehablookup.com/near-me</loc>
-    <lastmod>2026-05-20</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
   <url>
     <loc>https://rehablookup.com/news</loc>
     <lastmod>2026-05-20</lastmod>
@@ -1465,12 +1411,6 @@
   <!-- /rehab-score retired 2026-05-23 — composite score removed.
        Removed from sitemap to avoid GSC "Page with redirect" noise
        (the URL now 301s to /editorial-policy). -->
-  <url>
-    <loc>https://rehablookup.com/womens-rehab-centers</loc>
-    <lastmod>2026-05-20</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
   <!-- Resource topic hubs (Phase 4F) -->
   <url>
     <loc>https://rehablookup.com/resources/category/getting-started</loc>

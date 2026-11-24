@@ -17,6 +17,7 @@ import { ArrowRight, CheckCircle, Shield, Heart,
   Calendar, Briefcase, GraduationCap, Search, Stethoscope,
 } from "lucide-react";
 import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
+import { TREATMENT_CITY_KEYWORDS, useTreatmentCitiesWithListings } from "@/hooks/useTreatmentCityValidation";
 
 const programTypes = [
   { name: "Intensive Outpatient (IOP)", hours: "9-20 hrs/week", description: "Structured treatment while maintaining work and family responsibilities.", features: ["Group therapy", "Individual counseling", "Flexible scheduling"] },
@@ -35,6 +36,7 @@ const idealFor = [
 const StateOutpatientPrograms = () => {
   const { stateSlug } = useParams<{ stateSlug: string }>();
   const stateData = statesData.find(s => s.slug === stateSlug);
+  const citiesWithListings = useTreatmentCitiesWithListings(stateData?.name, TREATMENT_CITY_KEYWORDS["outpatient-programs"]);
 
   if (!stateData) {
     return (
@@ -48,6 +50,8 @@ const StateOutpatientPrograms = () => {
   }
 
   const { name: stateName, abbreviation, cities } = stateData;
+  // Only cities whose treatment × city page has listings (the others redirect).
+  const linkedCities = citiesWithListings ? cities.filter((c) => citiesWithListings.has(c.name.toLowerCase())) : cities;
   const nearbyStates = getNearbyStates(stateSlug!, 4);
   const cityNames = cities.map(c => c.name);
 
@@ -77,6 +81,7 @@ const StateOutpatientPrograms = () => {
 
   return (
     <Layout>
+      {!citiesWithListings && <span data-snapshot-wait="directory" hidden />}
       <SEO
         title={`Outpatient Rehab in ${stateName} (${abbreviation}) | IOP & PHP Programs`}
         description={`Find outpatient addiction treatment in ${stateName}. IOP, PHP, and flexible programs. Keep working while in recovery. Insurance accepted.`}
@@ -99,7 +104,7 @@ const StateOutpatientPrograms = () => {
         stateSlug={stateSlug!}
         treatmentHubHref="/treatment-types/outpatient-programs"
         treatmentHubLabel="Outpatient Programs"
-        cities={cities}
+        cities={linkedCities}
       />
 
       {/* Featured rotation — paid Featured pool for this
@@ -196,20 +201,22 @@ const StateOutpatientPrograms = () => {
       </section>
 
       {/* Cities */}
-      <section className="py-12 md:py-16">
-        <div className="container">
-          <h2 className="text-2xl font-bold text-center md:text-3xl mb-8">Outpatient Programs by City in {stateName}</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {cities.map(city => (
-              <Link key={city.slug} to={`/treatment-types/outpatient-programs/${stateSlug}/${city.slug}`}
-                className="group p-5 rounded-xl border bg-background hover:border-primary hover:shadow-lg transition-all">
-                <h3 className="font-semibold group-hover:text-primary transition-colors">{city.name}</h3>
-                <p className="text-sm text-muted-foreground mt-1">Outpatient programs</p>
-              </Link>
-            ))}
+      {linkedCities.length > 0 && (
+        <section className="py-12 md:py-16">
+          <div className="container">
+            <h2 className="text-2xl font-bold text-center md:text-3xl mb-8">Outpatient Programs by City in {stateName}</h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {linkedCities.map(city => (
+                <Link key={city.slug} to={`/treatment-types/outpatient-programs/${stateSlug}/${city.slug}`}
+                  className="group p-5 rounded-xl border bg-background hover:border-primary hover:shadow-lg transition-all">
+                  <h3 className="font-semibold group-hover:text-primary transition-colors">{city.name}</h3>
+                  <p className="text-sm text-muted-foreground mt-1">Outpatient programs</p>
+                </Link>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       <TreatmentFAQSection faqs={faqs} treatmentType="Outpatient Programs" location={{ state: stateName }} />
 

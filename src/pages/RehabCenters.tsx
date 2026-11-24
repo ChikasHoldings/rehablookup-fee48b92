@@ -832,7 +832,7 @@ const RehabCenters = () => {
                       onClick={clearBrowseFilters}
                     >
                       <Sparkles className="h-3.5 w-3.5" />
-                      See all verified centers
+                      See all listed centers
                     </Button>
                   </div>
                 )}

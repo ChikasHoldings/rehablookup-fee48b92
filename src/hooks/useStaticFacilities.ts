@@ -41,6 +41,8 @@ export interface PublicFacility extends TreatmentCenter {
   listingCompletenessScore?: number;
   responseRateScore?: number;
   acceptingAdmissions?: boolean | null;
+  /** Provider-reported: the facility admits patients from outside the US. */
+  acceptsInternationalPatients?: boolean;
   hoursOfOperation?: string | null;
   languagesSpoken?: string[];
   accessibilityFeatures?: string[];
@@ -198,6 +200,7 @@ export const useStaticFacilities = () => {
       listingCompletenessScore: facility.listingCompletenessScore,
       responseRateScore: facility.responseRateScore,
       acceptingAdmissions: facility.acceptingAdmissions,
+      acceptsInternationalPatients: facility.acceptsInternationalPatients === true,
       hoursOfOperation: facility.hoursOfOperation,
       languagesSpoken: facility.languagesSpoken ?? [],
       accessibilityFeatures: facility.accessibilityFeatures ?? [],
@@ -218,6 +221,8 @@ export const useStaticFacilities = () => {
   return {
     data: publicFacilities,
     isLoading: query.isLoading,
+    /** True once the live directory has loaded (not the localStorage placeholder). */
+    isFresh: query.isSuccess && !query.isPlaceholderData,
     isFetching: query.isFetching || isFeaturedLoading,
     error: query.error,
     refetch: query.refetch,

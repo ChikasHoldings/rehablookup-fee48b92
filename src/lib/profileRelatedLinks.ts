@@ -7,6 +7,8 @@
 // IMPORTANT: every emitted href MUST match a literal Route or SmartCatchAll
 // prefix in src/App.tsx so `npm run check:internal-links` stays green.
 
+import { isLocationConsolidated } from "@/lib/seo/consolidatedTreatments";
+
 export interface RelatedLink {
   title: string;
   href: string;
@@ -168,6 +170,9 @@ export function buildProfileRelatedLinks({
   const treatmentLinksAll: RelatedLink[] = [];
   for (const cand of familyBest.values()) {
     if (seenSlugs.has(cand.slug)) continue;
+    // Consolidated into the state hub (no facility data for the specialty):
+    // a "{label} in {state}" link would only redirect.
+    if (isLocationConsolidated(cand.slug)) continue;
     seenSlugs.add(cand.slug);
     treatmentSlugsEmitted.add(cand.slug);
     treatmentFamiliesEmitted.add(cand.family);

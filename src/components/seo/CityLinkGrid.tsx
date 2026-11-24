@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { statesData } from "@/data/locationSeoData";
 import { ArrowRight } from "lucide-react";
+import { treatmentStateHref } from "@/lib/seo/consolidatedTreatments";
 
 interface CityLinkGridProps {
   stateSlug: string;
@@ -108,7 +109,7 @@ export function NearbyStatesLinks({
 
   const getHref = (stateSlug: string) => {
     if (treatmentType) {
-      return `/treatment-types/${treatmentType}/${stateSlug}`;
+      return treatmentStateHref(treatmentType, stateSlug);
     }
     return `/rehab-centers/${stateSlug}`;
   };

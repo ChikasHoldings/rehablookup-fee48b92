@@ -76,7 +76,7 @@ export default function CountyInsurancePage() {
     },
     {
       question: `How do I find ${insurer.name}-accepting rehab centers in ${countyData.name} County?`,
-      answer: `Use RehabLookup to search verified treatment centers in ${countyData.name} County that accept ${insurer.name}. You can filter by treatment type, compare facilities in ${cityList}, and verify insurance coverage directly with admissions teams. Filter the directory by insurance accepted to surface in-network ${insurer.name} providers.`,
+      answer: `Use RehabLookup to search treatment centers in ${countyData.name} County that accept ${insurer.name}. You can filter by treatment type, compare facilities in ${cityList}, and verify insurance coverage directly with admissions teams. Filter the directory by insurance accepted to surface in-network ${insurer.name} providers.`,
     },
     {
       question: `What types of treatment does ${insurer.name} cover in ${stateData.name}?`,
@@ -124,11 +124,11 @@ export default function CountyInsurancePage() {
         { name: `${countyData.name} County`, url: `/insurance/${slug}/${stateSlug}/county/${countySlug}` },
       ]}
       heroTitle={pageTitle}
-      heroSubtitle={`Find verified treatment centers in ${countyData.name} County that accept ${insurer.name} insurance.`}
+      heroSubtitle={`Find treatment centers in ${countyData.name} County that accept ${insurer.name} insurance.`}
       heroLocation={`${countyData.name} County, ${stateData.name}`}
       heroImage={getStateImage(stateSlug)}
       heroBadge={`${insurer.name} Coverage`}
-      introContent={`Looking for rehab centers in ${countyData.name} County, ${stateData.name} that accept ${insurer.name}? RehabLookup connects you with verified treatment facilities serving ${cityList} and surrounding areas. ${density === "high" ? `${countyData.name} County has strong access to ${insurer.name}-accepting programs.` : density === "moderate" ? `${countyData.name} County offers several ${insurer.name}-accepting options.` : `While local options may be limited, nearby ${stateData.name} facilities provide accessible ${insurer.name}-covered treatment.`}`}
+      introContent={`Looking for rehab centers in ${countyData.name} County, ${stateData.name} that accept ${insurer.name}? RehabLookup lists treatment facilities serving ${cityList} and surrounding areas. ${density === "high" ? `${countyData.name} County has strong access to ${insurer.name}-accepting programs.` : density === "moderate" ? `${countyData.name} County offers several ${insurer.name}-accepting options.` : `While local options may be limited, nearby ${stateData.name} facilities provide accessible ${insurer.name}-covered treatment.`}`}
       sections={[
         {
           heading: `${insurer.name} Coverage in ${countyData.name} County`,

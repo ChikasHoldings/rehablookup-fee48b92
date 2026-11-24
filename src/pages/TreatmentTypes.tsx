@@ -225,7 +225,7 @@ const TreatmentTypes = () => {
     <Layout>
       <SEO
         title="Types of Addiction Treatment Programs | Find the Right Care"
-        description="Explore addiction treatment options: detox, inpatient rehab, outpatient programs, dual diagnosis, MAT, holistic therapy, and specialized programs. Find verified treatment centers."
+        description="Explore addiction treatment options: detox, inpatient rehab, outpatient programs, dual diagnosis, MAT, holistic therapy, and specialized programs. Find treatment centers."
         canonical="/treatment-types"
         keywords={[
           "types of addiction treatment",
@@ -317,7 +317,7 @@ const TreatmentTypes = () => {
       {/* Featured Centers - Right after hero */}
       <FeaturedCentersSection 
         title="Featured Treatment Centers"
-        description="Verified facilities offering these treatment programs"
+        description="Listed facilities offering these treatment programs"
         limit={6}
         className="bg-gradient-to-b from-background to-muted/20"
       />

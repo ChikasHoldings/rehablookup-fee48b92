@@ -18,6 +18,7 @@ import {
   Pill, Timer, HeartPulse, Stethoscope, Thermometer, MapPin, Building2, Search,
 } from "lucide-react";
 import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
+import { TREATMENT_CITY_KEYWORDS, useTreatmentCitiesWithListings } from "@/hooks/useTreatmentCityValidation";
 
 const detoxTypes = [
   { name: "Alcohol Detox", duration: "3-7 days", description: "Medically supervised alcohol withdrawal with medication support to prevent seizures and delirium tremens.", features: ["Benzodiazepine protocols", "24/7 monitoring", "Nutritional support"] },
@@ -36,6 +37,7 @@ const detoxProcess = [
 const StateDetoxPrograms = () => {
   const { stateSlug } = useParams<{ stateSlug: string }>();
   const stateData = statesData.find(s => s.slug === stateSlug);
+  const citiesWithListings = useTreatmentCitiesWithListings(stateData?.name, TREATMENT_CITY_KEYWORDS["detox-programs"]);
 
   if (!stateData) {
     return (
@@ -49,6 +51,8 @@ const StateDetoxPrograms = () => {
   }
 
   const { name: stateName, abbreviation, cities } = stateData;
+  // Only cities whose treatment × city page has listings (the others redirect).
+  const linkedCities = citiesWithListings ? cities.filter((c) => citiesWithListings.has(c.name.toLowerCase())) : cities;
   const nearbyStates = getNearbyStates(stateSlug!, 4);
   const cityNames = cities.map(c => c.name);
 
@@ -79,6 +83,7 @@ const StateDetoxPrograms = () => {
 
   return (
     <Layout>
+      {!citiesWithListings && <span data-snapshot-wait="directory" hidden />}
       <SEO
         title={`Detox Centers in ${stateName} (${abbreviation}) | Medical Detox Programs`}
         description={`Find medical detox centers in ${stateName}. Safe withdrawal from alcohol, opioids & drugs with 24/7 care. Insurance accepted. ${cities.length}+ cities.`}
@@ -101,7 +106,7 @@ const StateDetoxPrograms = () => {
         stateSlug={stateSlug!}
         treatmentHubHref="/treatment-types/detox-programs"
         treatmentHubLabel="Detox Programs"
-        cities={cities}
+        cities={linkedCities}
       />
 
       {/* Featured rotation — paid Featured pool for this
@@ -210,24 +215,26 @@ const StateDetoxPrograms = () => {
       </section>
 
       {/* Cities */}
-      <section className="py-12 md:py-16">
-        <div className="container">
-          <h2 className="text-2xl font-bold text-center md:text-3xl mb-8">Detox Centers by City in {stateName}</h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 max-w-5xl mx-auto">
-            {cities.map(city => (
-              <Link key={city.slug} to={`/treatment-types/detox-programs/${stateSlug}/${city.slug}`}
-                className="group flex items-center gap-3 rounded-xl border bg-card p-4 hover:shadow-md transition-all hover:border-primary/30">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10"><MapPin className="h-5 w-5 text-primary" /></div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold group-hover:text-primary transition-colors">Detox in {city.name}, {abbreviation}</h3>
-                  <p className="text-sm text-muted-foreground truncate">Medical detox centers</p>
-                </div>
-                <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
-              </Link>
-            ))}
+      {linkedCities.length > 0 && (
+        <section className="py-12 md:py-16">
+          <div className="container">
+            <h2 className="text-2xl font-bold text-center md:text-3xl mb-8">Detox Centers by City in {stateName}</h2>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 max-w-5xl mx-auto">
+              {linkedCities.map(city => (
+                <Link key={city.slug} to={`/treatment-types/detox-programs/${stateSlug}/${city.slug}`}
+                  className="group flex items-center gap-3 rounded-xl border bg-card p-4 hover:shadow-md transition-all hover:border-primary/30">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10"><MapPin className="h-5 w-5 text-primary" /></div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold group-hover:text-primary transition-colors">Detox in {city.name}, {abbreviation}</h3>
+                    <p className="text-sm text-muted-foreground truncate">Medical detox centers</p>
+                  </div>
+                  <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+                </Link>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* FAQs */}
       <TreatmentFAQSection faqs={faqs} treatmentType="Detox Programs" location={{ state: stateName }} />

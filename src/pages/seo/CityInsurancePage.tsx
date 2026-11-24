@@ -179,7 +179,7 @@ export default function CityInsurancePage() {
       heroLocation={`${cityName}, ${stateConfig.state}`}
       heroBadge="Insurance Verified"
       heroImage={getCityImage(stateSlug, citySlug)}
-      introContent={`Looking for rehab centers that accept ${insurer.name} in ${cityName}, ${stateConfig.state}? Under federal law, ${insurer.name} must cover substance abuse treatment at the same level as other medical conditions. RehabLookup helps you find verified facilities in ${cityName} that accept ${insurer.name}, compare programs, and start treatment with confidence.${stateConfig.medicaidExpanded ? ` ${stateConfig.state} has expanded Medicaid, providing additional coverage options for qualifying residents.` : ""}`}
+      introContent={`Looking for rehab centers that accept ${insurer.name} in ${cityName}, ${stateConfig.state}? Under federal law, ${insurer.name} must cover substance abuse treatment at the same level as other medical conditions. RehabLookup helps you find facilities in ${cityName} that accept ${insurer.name}, compare programs, and start treatment with confidence.${stateConfig.medicaidExpanded ? ` ${stateConfig.state} has expanded Medicaid, providing additional coverage options for qualifying residents.` : ""}`}
       sections={[
         {
           heading: `${insurer.name} Coverage in ${cityName}`,

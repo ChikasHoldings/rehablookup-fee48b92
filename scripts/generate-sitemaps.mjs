@@ -423,6 +423,7 @@ async function dedupeExtrasAgainstMain() {
   const before = (extrasXml.match(/<url>/g) || []).length;
   let dupes = 0;
   let blocked = 0;
+  let redirected = 0;
 
   extrasXml = extrasXml.replace(/  <url>[\s\S]*?<\/url>\n?/g, (block) => {
     const lm = block.match(/<loc>\s*([^<\s]+)\s*<\/loc>/);
@@ -434,6 +435,12 @@ async function dedupeExtrasAgainstMain() {
       blocked++;
       return "";
     }
+    // A URL that vercel.json 301s must never be advertised (GSC "Page with
+    // redirect"); extras is hand-maintained, so new redirects land here too.
+    if (isRedirectSource(p.toLowerCase().replace(/\/$/, "") || "/")) {
+      redirected++;
+      return "";
+    }
     if (mainUrls.has(loc)) {
       dupes++;
       return "";
@@ -441,11 +448,11 @@ async function dedupeExtrasAgainstMain() {
     return block;
   });
 
-  if (dupes > 0 || blocked > 0) {
+  if (dupes > 0 || blocked > 0 || redirected > 0) {
     await writeFile(extrasPath, extrasXml, "utf8");
     const after = (extrasXml.match(/<url>/g) || []).length;
     console.log(
-      `[sitemap] sitemap-extras.xml dedupe: ${before} → ${after} URLs (dropped ${dupes} duplicates, ${blocked} robots-blocked)`,
+      `[sitemap] sitemap-extras.xml dedupe: ${before} → ${after} URLs (dropped ${dupes} duplicates, ${blocked} robots-blocked, ${redirected} redirect sources)`,
     );
   }
 }

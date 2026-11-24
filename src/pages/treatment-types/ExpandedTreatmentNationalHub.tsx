@@ -26,9 +26,9 @@ const HUB_CONFIGS: Record<string, HubConfig> = {
     slug: "sober-living",
     title: "Sober Living Homes",
     metaTitle: "Find Sober Living Homes by State — Transitional Recovery Housing | RehabLookup",
-    metaDescription: "Browse sober living homes in all 50 states. Find structured, substance-free transitional housing near you. Compare verified programs.",
+    metaDescription: "Browse sober living homes in all 50 states. Find structured, substance-free transitional housing near you. Compare listed programs.",
     heroSubtitle: "Find structured, substance-free transitional housing that supports your recovery journey.",
-    overview: "Sober living homes provide safe, structured environments for individuals transitioning from treatment to independent living. Browse verified programs by state to find the right fit.",
+    overview: "Sober living homes provide safe, structured environments for individuals transitioning from treatment to independent living. Browse listed programs by state to find the right fit.",
     stateRoutePrefix: "/treatment-types/sober-living",
     faqs: [
       { question: "What is sober living?", answer: "Sober living homes are substance-free residences that provide structured environments with house rules, drug testing, and peer support. They bridge the gap between intensive treatment and independent living, helping residents develop real-world recovery skills." },
@@ -54,7 +54,7 @@ const HUB_CONFIGS: Record<string, HubConfig> = {
     slug: "faith-based-rehab",
     title: "Faith-Based Rehab Programs",
     metaTitle: "Faith-Based Rehab by State — Spiritual Recovery Programs | RehabLookup",
-    metaDescription: "Find faith-based rehab programs in every state. Treatment integrating spiritual principles with clinical care. Compare verified programs.",
+    metaDescription: "Find faith-based rehab programs in every state. Treatment integrating spiritual principles with clinical care. Compare listed programs.",
     heroSubtitle: "Discover treatment programs combining spiritual growth with evidence-based addiction care.",
     overview: "Faith-based rehabilitation programs integrate spiritual counseling, prayer, and scriptural principles alongside evidence-based clinical treatment. These programs serve individuals who draw strength from their faith during recovery.",
     stateRoutePrefix: "/treatment-types/faith-based-rehab",
@@ -255,16 +255,20 @@ const ExpandedTreatmentNationalHub = ({ treatmentKey }: ExpandedTreatmentNationa
         {/* State Directory */}
         <section className="py-12 bg-muted/30">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 className="text-2xl font-bold text-foreground mb-8">
-              Browse {config.title} by State
+            <h2 className="text-2xl font-bold text-foreground mb-3">
+              Find treatment centers by state
             </h2>
+            <p className="text-sm text-muted-foreground mb-8 max-w-3xl">
+              Our listings don&apos;t yet record which facilities offer {config.title.toLowerCase()}. Browse the
+              treatment centers in your state and ask each facility directly whether it offers this.
+            </p>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
               {statesData
                 .sort((a, b) => a.name.localeCompare(b.name))
                 .map((state) => (
                   <Link
                     key={state.slug}
-                    to={`${config.stateRoutePrefix}/${state.slug}`}
+                    to={`/rehab-centers/${state.slug}`}
                     className="flex items-center gap-2 px-4 py-3 bg-card border rounded-lg hover:border-primary/50 hover:bg-primary/5 transition-colors text-sm font-medium text-foreground"
                   >
                     <MapPin className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />

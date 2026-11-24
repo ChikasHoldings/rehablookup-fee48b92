@@ -58,7 +58,7 @@ const CityDrugAddiction = () => {
   const stateData = statesData.find((s) => s.slug === stateSlug);
   const cityData = stateData?.cities.find((c) => c.slug === citySlug);
 
-  const { validation } = useTreatmentCityValidation({
+  const { validation, ready } = useTreatmentCityValidation({
     stateName: stateData?.name,
     cityName: cityData?.name,
     treatmentKeywords: ["drug", "substance", "opioid", "stimulant"],
@@ -67,6 +67,14 @@ const CityDrugAddiction = () => {
 
   if (!stateData || !cityData) {
     return <Navigate to="/treatment-types/drug-addiction-treatment" replace />;
+  }
+
+  // Thin-page consolidation (2026-11-24): with no matching listing in this
+  // city, the page is a template over the state list. Once the directory
+  // data has loaded, send visitors to the state page; the build mirrors this
+  // redirect as a 301 for crawlers and drops the URL from the sitemap.
+  if (ready && !validation.shouldIndex) {
+    return <Navigate to={`/treatment-types/drug-addiction/${stateSlug}`} replace />;
   }
 
   const { name: stateName, abbreviation } = stateData;
@@ -92,11 +100,12 @@ const CityDrugAddiction = () => {
 
   return (
     <Layout>
+      {/* Lets the build snapshot wait for the live directory before judging this page. */}
+      {!ready && <span data-snapshot-wait="directory" hidden />}
       <SEO
         title={`Drug Addiction Treatment in ${cityName}, ${abbreviation} | Find Rehab`}
         description={`Find drug addiction treatment centers in ${cityName}, ${stateName}. Compare detox, inpatient, outpatient drug rehab programs with insurance verification.`}
         canonical={`/treatment-types/drug-addiction/${stateSlug}/${citySlug}`}
-        noindex={!validation.shouldIndex}
         structuredData={structuredData}
       />      <TreatmentCityHero
         treatmentKey="drug"

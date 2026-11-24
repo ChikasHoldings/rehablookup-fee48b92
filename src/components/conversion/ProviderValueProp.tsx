@@ -24,7 +24,7 @@ const BENEFITS: Benefit[] = [
     icon: Shield,
     title: "Build Trust with Verification Badges",
     description:
-      "Display your JCAHO, CARF, LegitScript, and state license badges prominently. Verified facilities receive 3× more inquiries than unverified ones.",
+      "Display your JCAHO, CARF, LegitScript, and state license badges prominently so families can see your credentials.",
   },
   {
     icon: Star,
@@ -67,7 +67,7 @@ export function ProviderValueProp({ className }: ProviderValuePropProps) {
           Grow Your Admissions with Qualified Referrals
         </h2>
         <p className="mt-2 text-sm text-muted-foreground max-w-xl mx-auto">
-          Join thousands of verified treatment providers who use RehabLookup to
+          Join the treatment providers who use RehabLookup to
           connect with clients who are ready to start their recovery journey.
         </p>
       </div>

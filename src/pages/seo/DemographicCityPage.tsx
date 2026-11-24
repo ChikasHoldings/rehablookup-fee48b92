@@ -156,7 +156,7 @@ export default function DemographicCityPage() {
       heroLocation={`${cityName}, ${abbreviation}`}
       heroBadge="Specialized Programs"
       heroImage={getCityImage(stateSlug, citySlug)}
-      introContent={`Looking for ${demographic.title.toLowerCase()} in ${cityName}, ${stateName}? RehabLookup connects you with verified treatment facilities offering specialized, evidence-based programs tailored to specific needs, challenges, and circumstances.`}
+      introContent={`Looking for ${demographic.title.toLowerCase()} in ${cityName}, ${stateName}? RehabLookup lists treatment facilities offering specialized, evidence-based programs tailored to specific needs, challenges, and circumstances.`}
       sections={[
         {
           heading: `${demographic.title} Programs in ${cityName}`,

@@ -91,6 +91,13 @@ const LIMIT = Number(opt("limit", 0));
 const DRY = flag("dry-run");
 
 // ── Route selection ──────────────────────────────────────────────────────────
+// Literal vercel.json redirect sources: the edge answers them with a 301 before
+// any file is served, so they are never snapshot candidates.
+const REDIRECT_SOURCES = new Set(
+  (JSON.parse(readFileSync(path.join(ROOT, "vercel.json"), "utf8")).redirects ?? [])
+    .map((r) => String(r.source ?? "").split("?")[0].replace(/\/$/, ""))
+    .filter((src) => src && !src.includes(":") && !src.includes("*")),
+);
 function selectRoutes() {
   const explicit = opt("paths", "");
   if (explicit) return explicit.split(",").filter(Boolean).map((p) => ({ path: p, family: "explicit" }));
@@ -109,7 +116,8 @@ function selectRoutes() {
       for (const f of readdirSync(path.join(stateDirs, state.name))) {
         if (!f.endsWith(".html")) continue;
         const html = readFileSync(path.join(stateDirs, state.name, f), "utf8");
-        if (html.includes('href="/center/')) advertised.push(`/rehab-centers/${state.name}/${f.slice(0, -5)}`);
+        const hubPath = `/rehab-centers/${state.name}/${f.slice(0, -5)}`;
+        if (html.includes('href="/center/') && !REDIRECT_SOURCES.has(hubPath)) advertised.push(hubPath);
       }
     }
   }
@@ -253,8 +261,16 @@ async function capture(page, quiet, port, route, mode) {
       .waitForFunction(() => !document.querySelector("main .animate-pulse, [aria-busy='true']"), null, { timeout: 4000 })
       .catch(() => {});
 
+    // Pages whose indexability (or redirect) depends on the live directory
+    // render [data-snapshot-wait] until that data has loaded. Judge them only
+    // after it clears; a redirect fired meanwhile is caught just below.
+    const pending = await page
+      .waitForFunction(() => !document.querySelector("[data-snapshot-wait]"), null, { timeout: 20000 })
+      .then(() => false, () => true);
+
     const finalPath = new URL(page.url()).pathname.replace(/\/+$/, "") || "/";
     if (finalPath !== route) return { ok: false, reason: `client redirect → ${finalPath}` };
+    if (pending) return { ok: false, reason: "directory data did not load" };
 
     // Clean the document in place: analytics out; Helmet's per-page tags win
     // over the SPA shell's static defaults (no duplicate description/robots/og).
@@ -423,6 +439,11 @@ for (const r of results) if (!r.ok) reasons[r.reason.replace(/\d+/g, "N")] = (re
 console.log(`[crawler-snapshots] ${ok}/${results.length} snapshots written in ${Math.round((Date.now() - started) / 1000)}s (${viaNav} via in-app navigation)`);
 for (const [f, c] of Object.entries(byFamily)) console.log(`  ${f.padEnd(20)} snapshot ${c.ok}  kept generator ${c.kept}`);
 for (const [reason, n] of Object.entries(reasons).sort((a, b) => b[1] - a[1]).slice(0, 12)) console.log(`  kept (${n}): ${reason}`);
+// Name the pages that still diverge for a reason other than a mirrored
+// redirect, so a build log alone is enough to fix them.
+const divergent = results.filter((r) => !r.ok && !/^client redirect → /.test(r.reason ?? ""));
+for (const r of divergent.slice(0, 40)) console.log(`  kept: ${r.path} — ${r.reason}`);
+if (divergent.length > 40) console.log(`  … and ${divergent.length - 40} more (see report.json)`);
 const reportDir = path.join(ROOT, "node_modules", ".cache", "crawler-snapshots");
 mkdirSync(reportDir, { recursive: true });
 writeFileSync(path.join(reportDir, "report.json"), JSON.stringify({ via, results }, null, 1));

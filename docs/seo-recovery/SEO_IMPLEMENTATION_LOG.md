@@ -4,6 +4,46 @@ Append-only log. Each entry records what changed, where, how it was tested, and 
 
 ---
 
+## 2026-11-24 · Phase 1 batch 4 · consolidation of the app-noindexed pages, international opt-in
+
+**Owner request:** "International patients: add it so providers can opt in." "About 520 noindex pages: consolidate, fix thin, duplicate, template pages. We want to ensure all remaining pages are fully indexable and rank correctly." Firewall AI Bots change done by the owner. Then: "when done, merge and deploy".
+
+### Firewall (owner change) — verified
+Vercel observability, 2026-11-23 20:30 → 2026-11-24 06:00 UTC, AI bot categories: every request `waf_action = allow` (PerplexityBot 11,817; GPTBot 4,623; OAI-SearchBot 239; Applebot 11; no deny or challenge rows). Note: `shapbot` made 224,502 requests in the same window (allowed).
+
+### What the ~520 noindex pages were (local render of every treatment/resource/content route + production build reports)
+| Group | URLs | Why noindex | Evidence (GSC 16 months, top-1,000 export) |
+|---|---:|---|---|
+| Specialty × state: faith-based, fentanyl, free, luxury, men's, sober living, veterans, women's (+ holistic route) | 400 (+9 city variants) | Always noindex: template text over the same listings as `/rehab-centers/{state}` (the substring "filter" fell back to every facility in the state) | 13–662 impressions per specialty across 50 states |
+| Treatment × city (residential, outpatient, dual diagnosis, alcohol, detox, drug) | ~95–120 of 210 | noindex when 0 listings in the city match the treatment, **and** while facility data was still loading, which is why the count varied 498–576 between builds | outpatient-city 4,225 impressions / 9 clicks across 120 URLs; others less |
+| Resource overlap articles (3) | 0 reachable | The three slugs no longer exist; no HTML, sitemap entry or link | — |
+
+**Data check (2026-11-24):** facility services record CBT, aftercare, trauma, MAT (1,955), dual diagnosis (1,853), outpatient (1,437), 12-step, IOP, detox (723), PHP, family therapy; gender "Men Only" 140. **Nothing records faith-based, veterans, women's, luxury, sober living, free/sliding-scale or holistic. 0 of 3,796 public listings are `verified`.**
+
+### Changes
+* **Specialty × location → location hubs (301).** `vercel.json`: `/treatment-types/{specialty}/:state[/:city]` → `/rehab-centers/:state[/:city]` for the 9 specialty slugs (and the old `/treatment-types/holistic/:state` rule now points at the state hub, no chain). App routes navigate the same way; `StateTreatmentExpandedPage` / `CityTreatmentExpandedPage` deleted. The national specialty guides stay; their state grid now links the state hubs and says the listings do not record the specialty. The sitemap generator drops redirect sources automatically.
+* **Thin treatment × city pages → state treatment page.** When the live directory has loaded and no listing in the city matches the treatment, the page redirects to `/treatment-types/{type}/{state}`; the snapshot step mirrors that as a crawler 301 and removes the URL from the built sitemaps. Decided per build from live data, never on cached or failed data (≥ 500 facilities required). Pages with matching listings stay and are indexable for visitors and crawlers alike (no noindex is ever rendered while data loads).
+* **State treatment pages** list (grid and hero chips) only the cities whose page stays; the hero no longer says "Verified … programs" and counts "cities with listings".
+* **"Verified" claims removed from public copy** (62 phrases in 38 files: "Compare verified programs", "connects you with verified treatment facilities", "largest verified rehab directory in the U.S.", "Each facility verified for licensing, accreditation, and quality of care", "Verified facilities receive 3× more inquiries"). `check:trust-claims` now blocks them.
+* **Article bodies (data correction, with backup).** The new trust rule failed the first preview build on 9 resource guides generated from `blog_articles`. Migration `20261124000200_articles_remove_verified_listing_claims.sql` (applied): backed up 15 affected rows to `seo_recovery_backup.blog_articles_verified_copy_20261124` (RLS-locked, not readable by anon), then rewrote only the matched phrases ("find verified treatment centers" → "find treatment centers"; Philadelphia's "contacting our team for personalized guidance" → "contacting the facilities directly"). Verified: 15 changed, 0 remaining, valid JSON; published_at and medical-review dates untouched. Rollback in the file.
+* **International patients: provider opt-in.** Migration `20261124000100_international_patients_provider_opt_in.sql` (applied; drops the Concierge-only trigger; 0 rows changed; rollback in the file). Listing editor and Add Location offer the switch to every owner; the public profile badge, the crawler profile page and a new "Facilities that accept international patients" list on `/us-rehab` and `/us-rehab/international-patients` show opted-in listings (renders nothing until one opts in). Also removed "1,000+ vetted facilities" and "We've helped thousands of international clients" from the international pages.
+
+* **Last divergences found by the preview build** (the snapshot step now names every kept route):
+  * 5 retired article slugs (`aftercare-planning`, `luxury-vs-standard-rehab`, `recovery-support-groups`, `understanding-levels-of-care`, `holistic-recovery-approaches`) had no article record, but the `sitemap-facilities` edge function's static list still advertised them and stale HTML files remained. They now 301 to the closest live guide, and the files are deleted.
+  * A timing gap: when a snapshot retried with a cold page load, a thin city page could be captured before the directory data arrived (29 pages in one preview build). Pages that decide from the live directory now render a hidden `data-snapshot-wait` marker until it loads, and the snapshot step waits for it (20 s) before judging the page.
+  * `/rehab-centers/new-york/new-york` (a batch 3 301 source) is no longer picked up from city-hub files.
+  * `sitemap-extras.xml` still advertised 10 URLs that now 301 (the `/*-rehab-centers` aliases, `/near-me`, NYC `new-york`, a specialty city page). Removed, and `generate-sitemaps` now drops redirect sources from extras on every build.
+* **Final preview** (`dpl_7g8hhhzpTJvSyS2Cmtq2pRDzW4Us`): 2,188/2,341 snapshots; **0** "SPA noindex vs indexable generator page" (519 before); 152 client redirects mirrored as crawler 301s; resources 109/109; all guards pass.
+
+### Validation (local)
+* `vitest run` 61 files / 1,103 passed; `check:undefined-identifiers`, `check:redirect-parity` (103/103), `check-redirect-targets` (0 dead, 0 chained), internal links, trust claims, fake inventory, retired-concierge shell: pass.
+* Local render (fresh build, live data): specialty state/city pages → state/city hub; `/treatment-types/residential-inpatient/texas/dallas`, `/…/alaska/fairbanks`, `/outpatient-programs/hawaii/kailua` → state treatment page; `/outpatient-programs/texas/dallas`, `/dual-diagnosis-treatment/texas/dallas` snapshot as indexable pages; residential Texas lists 0 cities (no Texas listing records residential care), outpatient Texas lists 20.
+
+### Not in this batch (owner approval still required)
+The removal waves A–D in `SEO_REMOVAL_PLAN.md` (~37,000 near-me, city-combo, insurance × county, county × service and provider-marketing URLs) are a separate decision: they are excluded from crawler snapshots and keep their generator pages.
+
+---
+
 ## 2026-11-23 · Phase 1 batch 3 (remaining problems) · code + one edge function
 
 **Owner request:** "continue fixing the remaining problems" — the items left open after batch 2.
@@ -18,6 +58,13 @@ Append-only log. Each entry records what changed, where, how it was tested, and 
 ### Validation
 * `vitest run`: 61 files, 1,103 passed. `check:undefined-identifiers` passes. `check:redirect-parity`: every SPA redirect mirrored; `check-redirect-targets`: all resolve. Lint clean on changed files.
 * Local snapshot test: both sampled "best cities" articles now render for visitors and snapshot; client redirects recorded only when the destination exists in the build.
+
+### Deployment record
+* **Merged:** PR #91, squash `49bdce4bca`. SEO Validators passed on the final head. The final preview (`dpl_8CtGgLsLHUxGiqPp5pysamj8JyEJ`) wrote 2,183/2,754 snapshots and mirrored 59 client-side redirects, and every build guard passed (retired-concierge scan of 100,935 artifacts, trust claims, analytics, redirect targets, internal links).
+* **Production:** `dpl_J3w58ZCDVeqB6M5Cn6GPJvWHCVer` READY at 2026-11-23 20:16 UTC (aliases rehablookup.com and www). Build log: 2,175/2,754 snapshots via Playwright's Chromium; all 150 state articles snapshot (0 kept); **59 client-side redirects mirrored as 301s for crawlers**. Vercel runtime errors (last hour): none.
+* **Edge function:** `create-checkout-session` deployed from `main` by workflow run 45253901305 (success). The live version 21 contains the `PRODUCT_RETIRED` guard.
+* **Not verified from here:** live HTTP responses on rehablookup.com. This environment is challenged by the Vercel Security Checkpoint, so the owner's URL Inspection is the production check, for example `/drug-rehabilitation-ohio` with a Googlebot UA should return 301 → `/treatment-types/drug-addiction/ohio`.
+* **Observation:** the "SPA noindex vs indexable generator page" count varies between builds (498 / 511 / 519). Some treatment × state pages decide indexability from live data at render time. Those routes keep their generator page, so the variation cannot regress anything. It is part of the noindex alignment decision.
 
 ### Known issues / not done
 * **International acceptance on listings** stays locked behind the retired add-on (UI + a DB trigger), so no listing can mark "accepts international patients". Unlocking it for every claimed listing is a schema change for the owner to approve.

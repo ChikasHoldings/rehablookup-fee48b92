@@ -1008,7 +1008,7 @@ export default function Insurance() {
                 Find Treatment Centers That Accept Your Insurance
               </h2>
               <p className="mb-6 text-muted-foreground text-sm">
-                Search our directory for verified treatment facilities and filter by insurance accepted.
+                Search our directory for treatment facilities and filter by insurance accepted.
               </p>
               <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
                 <Link to="/cost-estimator">

@@ -63,7 +63,7 @@ const CityDualDiagnosis = () => {
   const cityData = stateData?.cities.find(c => c.slug === citySlug);
 
   // Hooks first — never call after a conditional return.
-  const { validation } = useTreatmentCityValidation({
+  const { validation, ready } = useTreatmentCityValidation({
     stateName: stateData?.name,
     cityName: cityData?.name,
     treatmentKeywords: ["dual diagnosis", "co-occurring", "mental health"],
@@ -82,6 +82,14 @@ const CityDualDiagnosis = () => {
   }
 
   if (!cityData) {
+    return <Navigate to={`/treatment-types/dual-diagnosis-treatment/${stateSlug}`} replace />;
+  }
+
+  // Thin-page consolidation (2026-11-24): with no matching listing in this
+  // city, the page is a template over the state list. Once the directory
+  // data has loaded, send visitors to the state page; the build mirrors this
+  // redirect as a 301 for crawlers and drops the URL from the sitemap.
+  if (ready && !validation.shouldIndex) {
     return <Navigate to={`/treatment-types/dual-diagnosis-treatment/${stateSlug}`} replace />;
   }
 
@@ -106,11 +114,12 @@ const CityDualDiagnosis = () => {
 
   return (
     <Layout>
+      {/* Lets the build snapshot wait for the live directory before judging this page. */}
+      {!ready && <span data-snapshot-wait="directory" hidden />}
       <SEO
         title={`Dual Diagnosis Treatment in ${cityName}, ${abbreviation} | Mental Health & Addiction`}
         description={`Find dual diagnosis treatment centers in ${cityName}, ${stateName}. Integrated care for depression, anxiety, PTSD, and addiction. Insurance accepted.`}
         canonical={`/treatment-types/dual-diagnosis-treatment/${stateSlug}/${citySlug}`}
-        noindex={!validation.shouldIndex}
         structuredData={structuredData}
         breadcrumbs={[
           { name: "Home", url: "/" },

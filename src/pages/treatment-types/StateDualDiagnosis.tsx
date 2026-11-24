@@ -18,6 +18,7 @@ import {
   Pill, Stethoscope, MapPin, Search,
 } from "lucide-react";
 import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
+import { TREATMENT_CITY_KEYWORDS, useTreatmentCitiesWithListings } from "@/hooks/useTreatmentCityValidation";
 
 const mentalHealthConditions = [
   { name: "Depression & Addiction", description: "Integrated treatment for major depressive disorder co-occurring with substance use disorders.", features: ["Antidepressant management", "CBT therapy", "Mood monitoring"] },
@@ -36,6 +37,7 @@ const treatmentComponents = [
 const StateDualDiagnosis = () => {
   const { stateSlug } = useParams<{ stateSlug: string }>();
   const stateData = statesData.find(s => s.slug === stateSlug);
+  const citiesWithListings = useTreatmentCitiesWithListings(stateData?.name, TREATMENT_CITY_KEYWORDS["dual-diagnosis-treatment"]);
 
   if (!stateData) {
     return (
@@ -49,6 +51,8 @@ const StateDualDiagnosis = () => {
   }
 
   const { name: stateName, abbreviation, cities } = stateData;
+  // Only cities whose treatment × city page has listings (the others redirect).
+  const linkedCities = citiesWithListings ? cities.filter((c) => citiesWithListings.has(c.name.toLowerCase())) : cities;
   const nearbyStates = getNearbyStates(stateSlug!, 4);
   const cityNames = cities.map(c => c.name);
 
@@ -79,6 +83,7 @@ const StateDualDiagnosis = () => {
 
   return (
     <Layout>
+      {!citiesWithListings && <span data-snapshot-wait="directory" hidden />}
       <SEO
         title={`Dual Diagnosis Treatment in ${stateName} (${abbreviation}) | Mental Health & Addiction`}
         description={`Find dual diagnosis treatment in ${stateName}. Integrated care for depression, anxiety, PTSD, and addiction. Insurance accepted. ${cities.length}+ cities.`}
@@ -101,7 +106,7 @@ const StateDualDiagnosis = () => {
         stateSlug={stateSlug!}
         treatmentHubHref="/treatment-types/dual-diagnosis-treatment"
         treatmentHubLabel="Dual Diagnosis"
-        cities={cities}
+        cities={linkedCities}
       />
 
       {/* Featured rotation — paid Featured pool for this
@@ -203,21 +208,23 @@ const StateDualDiagnosis = () => {
       </section>
 
       {/* Cities */}
-      <section className="py-12 md:py-16">
-        <div className="container">
-          <h2 className="text-2xl font-bold text-center md:text-3xl mb-8">Dual Diagnosis Treatment by City in {stateName}</h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 max-w-5xl mx-auto">
-            {cities.slice(0, 12).map(city => (
-              <Link key={city.slug} to={`/treatment-types/dual-diagnosis-treatment/${stateSlug}/${city.slug}`}
-                className="flex items-center gap-3 rounded-xl border bg-card p-4 hover:shadow-md hover:border-primary/30 transition-all group">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10"><MapPin className="h-5 w-5 text-primary" /></div>
-                <div className="flex-1"><h3 className="font-medium group-hover:text-primary transition-colors">{city.name}</h3><p className="text-sm text-muted-foreground">Dual Diagnosis Centers</p></div>
-                <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-              </Link>
-            ))}
+      {linkedCities.length > 0 && (
+        <section className="py-12 md:py-16">
+          <div className="container">
+            <h2 className="text-2xl font-bold text-center md:text-3xl mb-8">Dual Diagnosis Treatment by City in {stateName}</h2>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 max-w-5xl mx-auto">
+              {linkedCities.slice(0, 12).map(city => (
+                <Link key={city.slug} to={`/treatment-types/dual-diagnosis-treatment/${stateSlug}/${city.slug}`}
+                  className="flex items-center gap-3 rounded-xl border bg-card p-4 hover:shadow-md hover:border-primary/30 transition-all group">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10"><MapPin className="h-5 w-5 text-primary" /></div>
+                  <div className="flex-1"><h3 className="font-medium group-hover:text-primary transition-colors">{city.name}</h3><p className="text-sm text-muted-foreground">Dual Diagnosis Centers</p></div>
+                  <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                </Link>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       <TreatmentFAQSection faqs={faqs} treatmentType="Dual Diagnosis Treatment" location={{ state: stateName }} />
 

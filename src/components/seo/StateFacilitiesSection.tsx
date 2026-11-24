@@ -112,7 +112,7 @@ export function StateFacilitiesSection({
           </h2>
           <p className="mt-2 text-muted-foreground max-w-2xl mx-auto">
             {subheading ||
-              `Browse verified rehab facilities in ${stateName}. Each center is checked for licensing, accreditation, and quality of care.`}
+              `Browse the rehab facilities listed in ${stateName}. Confirm licensing, accreditation and programs directly with each facility.`}
           </p>
         </div>
 

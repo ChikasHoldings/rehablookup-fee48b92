@@ -1,6 +1,7 @@
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
+import { InternationalFacilitiesSection } from "@/components/international/InternationalFacilitiesSection";
 import { 
   InternationalHero,
   CountriesServed,
@@ -37,7 +38,7 @@ const USRehabHub = () => {
     <Layout>
       <SEO
         title="US Rehab for International Patients | Best Addiction Treatment in America"
-        description="Find world-class addiction treatment in the United States. Luxury rehab centers, executive programs, and confidential care for international patients. 1,000+ vetted facilities."
+        description="Addiction treatment in the United States for international patients: compare programs by state and treatment type, see which listed facilities accept international patients, and contact them directly."
         canonical="/us-rehab"
         keywords={["rehab in USA", "American rehab for foreigners", "luxury rehab California", "best rehab USA", "US addiction treatment international", "private rehab America", "treatment centers USA"]}
         structuredData={schemaData}
@@ -54,10 +55,11 @@ const USRehabHub = () => {
       <InternationalHero
         title="Find Addiction Treatment in the United States"
         subtitle="World-Class Care for International Patients"
-        description="Access America's leading rehabilitation centers that accept international clients. From luxury Malibu retreats to executive New York programs, compare facilities and contact them directly."
+        description="Compare US treatment programs by state and type, see which listed facilities report accepting international patients, and contact them directly about admission and travel."
         keywords={["best rehab USA", "luxury rehab America", "US treatment for foreigners", "American addiction centers"]}
       />
 
+      <InternationalFacilitiesSection />
       <WhyUSATreatment />
       <StateDestinations />
       <TreatmentCategories />

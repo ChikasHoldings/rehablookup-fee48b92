@@ -16,10 +16,12 @@ import {
 import { Clock, Shield, CheckCircle, ArrowRight, Search, Activity,
 } from "lucide-react";
 import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
+import { TREATMENT_CITY_KEYWORDS, useTreatmentCitiesWithListings } from "@/hooks/useTreatmentCityValidation";
 
 const StateAlcoholRehab = () => {
   const { stateSlug } = useParams<{ stateSlug: string }>();
   const stateData = statesData.find((s) => s.slug === stateSlug);
+  const citiesWithListings = useTreatmentCitiesWithListings(stateData?.name, TREATMENT_CITY_KEYWORDS["alcohol-rehabilitation"]);
 
   if (!stateData) {
     return (
@@ -33,6 +35,8 @@ const StateAlcoholRehab = () => {
   }
 
   const { name: stateName, abbreviation, cities } = stateData;
+  // Only cities whose treatment × city page has listings (the others redirect).
+  const linkedCities = citiesWithListings ? cities.filter((c) => citiesWithListings.has(c.name.toLowerCase())) : cities;
   const nearbyStates = getNearbyStates(stateSlug!, 4);
   const cityNames = cities.map((c) => c.name);
 
@@ -63,6 +67,7 @@ const StateAlcoholRehab = () => {
 
   return (
     <Layout>
+      {!citiesWithListings && <span data-snapshot-wait="directory" hidden />}
       <SEO
         title={`Alcohol Rehab Centers in ${stateName} (${abbreviation}) | Find Treatment`}
         description={`Find alcohol addiction treatment in ${stateName}. Compare detox, inpatient, and outpatient programs. Verify insurance coverage. ${cities.length}+ cities covered.`}
@@ -85,7 +90,7 @@ const StateAlcoholRehab = () => {
         stateSlug={stateSlug!}
         treatmentHubHref="/treatment-types/alcohol-rehabilitation"
         treatmentHubLabel="Alcohol Rehab"
-        cities={cities}
+        cities={linkedCities}
       />
 
       {/* Featured rotation — paid Featured pool for this
@@ -163,29 +168,31 @@ const StateAlcoholRehab = () => {
       </section>
 
       {/* Cities Grid */}
-      <section className="py-12 md:py-16 bg-muted/30">
-        <div className="container">
-          <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">
-            Find Alcohol Rehab by City in {stateName}
-          </h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {cities.map((city) => (
-              <Link
-                key={city.slug}
-                to={`/treatment-types/alcohol-rehabilitation/${stateSlug}/${city.slug}`}
-                className="group p-5 rounded-xl border bg-background hover:border-primary hover:shadow-lg transition-all"
-              >
-                <h3 className="font-semibold group-hover:text-primary transition-colors">{city.name}</h3>
-                <p className="text-sm text-muted-foreground mt-1">Alcohol rehab programs</p>
-                <div className="mt-3 flex items-center text-sm text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                  <span>View centers</span>
-                  <ArrowRight className="ml-1 h-4 w-4" />
-                </div>
-              </Link>
-            ))}
+      {linkedCities.length > 0 && (
+        <section className="py-12 md:py-16 bg-muted/30">
+          <div className="container">
+            <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">
+              Find Alcohol Rehab by City in {stateName}
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {linkedCities.map((city) => (
+                <Link
+                  key={city.slug}
+                  to={`/treatment-types/alcohol-rehabilitation/${stateSlug}/${city.slug}`}
+                  className="group p-5 rounded-xl border bg-background hover:border-primary hover:shadow-lg transition-all"
+                >
+                  <h3 className="font-semibold group-hover:text-primary transition-colors">{city.name}</h3>
+                  <p className="text-sm text-muted-foreground mt-1">Alcohol rehab programs</p>
+                  <div className="mt-3 flex items-center text-sm text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                    <span>View centers</span>
+                    <ArrowRight className="ml-1 h-4 w-4" />
+                  </div>
+                </Link>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* FAQs */}
       <TreatmentFAQSection

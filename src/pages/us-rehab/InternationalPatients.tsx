@@ -4,7 +4,7 @@ import { internationalFaqs } from "@/data/pageFaqs";
 import { Button } from "@/components/ui/button";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
-import { FeaturedRail } from "@/components/featured/FeaturedRail";
+import { InternationalFacilitiesSection } from "@/components/international/InternationalFacilitiesSection";
 import { InternationalPageHero } from "./components";
 import { motion } from "framer-motion";
 import { Globe, Plane, FileCheck, Heart, Users, MessageCircle, ArrowRight, ChevronRight, Sparkles, Clock, Building2, Shield } from "lucide-react";
@@ -91,17 +91,8 @@ const InternationalPatients = () => {
         </div>
       </section>
 
-      {/* Featured Concierge Partners — paid advertising rotation. Self-hides
-          when no Concierge Partner holds an international placement. */}
-      <section className="py-10 md:py-12 bg-background">
-        <div className="container mx-auto px-4 max-w-6xl">
-          <FeaturedRail
-            placement_type="international"
-            placement_value="global"
-            title="Featured facilities accepting international patients"
-          />
-        </div>
-      </section>
+      {/* Listings that opted in to international patients (provider portal). */}
+      <InternationalFacilitiesSection />
 
       {/* Services */}
       <section className="py-14 md:py-20 bg-background">

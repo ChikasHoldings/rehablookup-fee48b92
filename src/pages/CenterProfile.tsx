@@ -1671,7 +1671,7 @@ const CenterProfile = () => {
         placement_value={facility.city ? slugifyName(facility.city) : null}
         slot_count={6}
         title={`More Featured Facilities in ${facility.city}`}
-        subtitle="Other verified centers near here, sponsored by their providers."
+        subtitle="Other centers near here, sponsored by their providers."
       />
 
       {/* Facility contact modal.

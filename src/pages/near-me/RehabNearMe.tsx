@@ -73,7 +73,7 @@ export default function RehabNearMe() {
 
       <NearMeHero
         title={`Rehab Near Me${stateData ? ` in ${stateData.state}` : ""}`}
-        subtitle={`Find verified addiction treatment centers${stateData ? ` in ${stateData.state}` : " near you"}. Search verified rehab centers near you offering detox, inpatient, outpatient, and specialty addiction treatment programs.`}
+        subtitle={`Find verified addiction treatment centers${stateData ? ` in ${stateData.state}` : " near you"}. Search rehab centers near you offering detox, inpatient, outpatient, and specialty addiction treatment programs.`}
         treatmentType="Rehabilitation Centers"
         location={stateData ? { state: stateData.state, stateAbbr: stateData.stateAbbr } : undefined}
         facilityCount={facilities.length}

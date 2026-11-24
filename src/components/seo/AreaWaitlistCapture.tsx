@@ -24,7 +24,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
  * Lead-capture block shown on SEO pages that have zero matching listings.
- * Visitors enter their email to be notified when verified facilities are
+ * Visitors enter their email to be notified when listed facilities are
  * added to that area / treatment type. Stored in `area_waitlist`.
  *
  * No PII beyond email is collected. RLS allows anon insert only.
@@ -112,7 +112,7 @@ export function AreaWaitlistCapture({
         </h3>
         <p className="text-sm text-muted-foreground">
           We'll notify <span className="font-medium text-foreground">{email}</span>{" "}
-          as soon as verified centers are available
+          as soon as listed centers are available
           {areaLabel ? ` for ${areaLabel}` : ""}.
         </p>
       </div>

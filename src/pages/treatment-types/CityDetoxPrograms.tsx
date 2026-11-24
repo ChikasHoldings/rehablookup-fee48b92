@@ -60,7 +60,7 @@ const CityDetoxPrograms = () => {
   const stateData = statesData.find(s => s.slug === stateSlug);
   const cityData = stateData?.cities.find(c => c.slug === citySlug);
 
-  const { validation } = useTreatmentCityValidation({
+  const { validation, ready } = useTreatmentCityValidation({
     stateName: stateData?.name,
     cityName: cityData?.name,
     treatmentKeywords: ["detox", "withdrawal", "medical detoxification"],
@@ -78,6 +78,14 @@ const CityDetoxPrograms = () => {
     );
   }
   if (!cityData) {
+    return <Navigate to={`/treatment-types/detox-programs/${stateSlug}`} replace />;
+  }
+
+  // Thin-page consolidation (2026-11-24): with no matching listing in this
+  // city, the page is a template over the state list. Once the directory
+  // data has loaded, send visitors to the state page; the build mirrors this
+  // redirect as a 301 for crawlers and drops the URL from the sitemap.
+  if (ready && !validation.shouldIndex) {
     return <Navigate to={`/treatment-types/detox-programs/${stateSlug}`} replace />;
   }
 
@@ -102,11 +110,12 @@ const CityDetoxPrograms = () => {
 
   return (
     <Layout>
+      {/* Lets the build snapshot wait for the live directory before judging this page. */}
+      {!ready && <span data-snapshot-wait="directory" hidden />}
       <SEO
         title={`Detox Centers in ${cityName}, ${abbreviation} | Medical Detox Programs`}
         description={`Find medical detox centers in ${cityName}, ${stateName}. Safe withdrawal from alcohol & drugs with 24/7 care. Insurance accepted.`}
         canonical={`/treatment-types/detox-programs/${stateSlug}/${citySlug}`}
-        noindex={!validation.shouldIndex}
         structuredData={structuredData}
         breadcrumbs={[
           { name: "Home", url: "/" },

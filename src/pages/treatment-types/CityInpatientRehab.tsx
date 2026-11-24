@@ -54,7 +54,7 @@ const CityInpatientRehab = () => {
   const stateData = statesData.find(s => s.slug === stateSlug);
   const cityData = stateData?.cities.find(c => c.slug === citySlug);
 
-  const { validation } = useTreatmentCityValidation({
+  const { validation, ready } = useTreatmentCityValidation({
     stateName: stateData?.name,
     cityName: cityData?.name,
     treatmentKeywords: ["inpatient", "residential"],
@@ -72,6 +72,14 @@ const CityInpatientRehab = () => {
     );
   }
   if (!cityData) {
+    return <Navigate to={`/treatment-types/residential-inpatient/${stateSlug}`} replace />;
+  }
+
+  // Thin-page consolidation (2026-11-24): with no matching listing in this
+  // city, the page is a template over the state list. Once the directory
+  // data has loaded, send visitors to the state page; the build mirrors this
+  // redirect as a 301 for crawlers and drops the URL from the sitemap.
+  if (ready && !validation.shouldIndex) {
     return <Navigate to={`/treatment-types/residential-inpatient/${stateSlug}`} replace />;
   }
 
@@ -96,11 +104,12 @@ const CityInpatientRehab = () => {
 
   return (
     <Layout>
+      {/* Lets the build snapshot wait for the live directory before judging this page. */}
+      {!ready && <span data-snapshot-wait="directory" hidden />}
       <SEO
         title={`Inpatient Rehab Centers in ${cityName}, ${abbreviation} | Residential Treatment`}
         description={`Find inpatient rehab centers in ${cityName}, ${stateName}. 24/7 residential addiction treatment. Insurance accepted. Call now.`}
         canonical={`/treatment-types/residential-inpatient/${stateSlug}/${citySlug}`}
-        noindex={!validation.shouldIndex}
         structuredData={structuredData}
         breadcrumbs={[
           { name: "Home", url: "/" },

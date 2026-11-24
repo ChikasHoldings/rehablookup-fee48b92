@@ -129,7 +129,7 @@ export default function InsuranceStatePage() {
       heroLocation={stateConfig.state}
       heroImage={getStateImage(stateSlug)}
       heroBadge="Insurance Verified"
-      introContent={`Looking for rehab centers that accept ${insurer.name} in ${stateConfig.state}? Under the Mental Health Parity and Addiction Equity Act, ${insurer.name} is required to cover substance abuse treatment at the same level as other medical conditions. ${stateConfig.medicaidExpanded ? `${stateConfig.state} has expanded Medicaid, providing additional coverage options for qualifying residents.` : ""} RehabLookup helps you find verified facilities in ${stateConfig.state} that accept ${insurer.name}, compare programs, and start treatment with confidence.`}
+      introContent={`Looking for rehab centers that accept ${insurer.name} in ${stateConfig.state}? Under the Mental Health Parity and Addiction Equity Act, ${insurer.name} is required to cover substance abuse treatment at the same level as other medical conditions. ${stateConfig.medicaidExpanded ? `${stateConfig.state} has expanded Medicaid, providing additional coverage options for qualifying residents.` : ""} RehabLookup helps you find facilities in ${stateConfig.state} that accept ${insurer.name}, compare programs, and start treatment with confidence.`}
       sections={[
         {
           heading: `${insurer.name} Coverage in ${stateConfig.state}`,

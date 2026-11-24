@@ -70,6 +70,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -423,9 +424,8 @@ export default function AddLocationPage() {
       } else if (draft.accepting_admissions === "no") {
         insertPayload.accepting_admissions = false;
       }
-      // accepts_international_patients is intentionally never sent from the
-      // create flow — it's a Concierge Partner capability enabled post-upgrade,
-      // and the server trigger rejects it on INSERT for non-partners.
+      // Provider-reported opt-in (open to every listing since 2026-11-24).
+      if (draft.accepts_international_patients) insertPayload.accepts_international_patients = true;
       if (draft.year_established) {
         const y = Number(draft.year_established);
         if (Number.isInteger(y)) insertPayload.year_established = y;
@@ -1152,11 +1152,21 @@ function Step1Identity({
           </SelectContent>
         </Select>
       </Field>
-      {/* International-patients is a Concierge Partner capability, not a
-          self-serve flag. A brand-new listing is never an active partner, so
-          the option isn't offered at create time (the server trigger also
-          rejects accepts_international_patients=true on INSERT for non-partners).
-          It becomes available after a facility upgrades to Concierge Partner. */}
+      <div className="flex items-center justify-between gap-4 rounded-lg border bg-muted/30 p-3">
+        <div className="space-y-0.5">
+          <Label htmlFor="add-location-international" className="text-xs sm:text-sm font-medium">
+            Accepts international patients
+          </Label>
+          <p className="text-xs text-muted-foreground">
+            Turn on only if this location admits patients who travel from outside the US.
+          </p>
+        </div>
+        <Switch
+          id="add-location-international"
+          checked={draft.accepts_international_patients}
+          onCheckedChange={(checked) => updateField("accepts_international_patients", checked)}
+        />
+      </div>
     </div>
   );
 }

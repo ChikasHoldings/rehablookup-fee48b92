@@ -190,7 +190,7 @@ export default function SubstanceRehabNearMe({ configSlug }: SubstanceRehabNearM
     <Layout>
       <SEO
         title={`${config.label} Near Me ${stateData ? `in ${stateData.state}` : ""} | Find Treatment Centers`}
-        description={`Find ${config.label.toLowerCase()} centers${stateData ? ` in ${stateData.state}` : " near you"}. Compare verified treatment programs, check insurance coverage, and get help today.`}
+        description={`Find ${config.label.toLowerCase()} centers${stateData ? ` in ${stateData.state}` : " near you"}. Compare treatment programs, check insurance coverage, and get help today.`}
         canonical={stateSlug ? `/${config.slug}/${stateSlug}` : `/${config.slug}`}
         keywords={[
           ...config.keywords,
@@ -209,7 +209,7 @@ export default function SubstanceRehabNearMe({ configSlug }: SubstanceRehabNearM
 
       <NearMeHero
         title={`${config.label} Near Me${stateData ? ` in ${stateData.state}` : ""}`}
-        subtitle={`Find specialized ${config.treatmentType.toLowerCase()} programs${stateData ? ` in ${stateData.state}` : " near you"}. Verified facilities, evidence-based treatment, insurance accepted.`}
+        subtitle={`Find specialized ${config.treatmentType.toLowerCase()} programs${stateData ? ` in ${stateData.state}` : " near you"}. Compare listed facilities and confirm insurance with each one.`}
         treatmentType={config.treatmentType}
         location={stateData ? { state: stateData.state, stateAbbr: stateData.stateAbbr } : undefined}
         facilityCount={facilities.length}

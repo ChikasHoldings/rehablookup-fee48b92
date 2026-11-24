@@ -225,7 +225,7 @@ const OutpatientPrograms = () => {
                   Outpatient Treatment Centers
                 </h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Verified facilities offering outpatient programs
+                  Listed facilities offering outpatient programs
                 </p>
               </div>
               <Link to="/rehab-centers">
