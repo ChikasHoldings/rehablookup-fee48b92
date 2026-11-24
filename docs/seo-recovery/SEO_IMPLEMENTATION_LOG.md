@@ -32,6 +32,8 @@ Vercel observability, 2026-11-23 20:30 → 2026-11-24 06:00 UTC, AI bot categori
   * 5 retired article slugs (`aftercare-planning`, `luxury-vs-standard-rehab`, `recovery-support-groups`, `understanding-levels-of-care`, `holistic-recovery-approaches`) had no article record, but the `sitemap-facilities` edge function's static list still advertised them and stale HTML files remained. They now 301 to the closest live guide, and the files are deleted.
   * A timing gap: when a snapshot retried with a cold page load, a thin city page could be captured before the directory data arrived (29 pages in one preview build). Pages that decide from the live directory now render a hidden `data-snapshot-wait` marker until it loads, and the snapshot step waits for it (20 s) before judging the page.
   * `/rehab-centers/new-york/new-york` (a batch 3 301 source) is no longer picked up from city-hub files.
+  * `sitemap-extras.xml` still advertised 10 URLs that now 301 (the `/*-rehab-centers` aliases, `/near-me`, NYC `new-york`, a specialty city page). Removed, and `generate-sitemaps` now drops redirect sources from extras on every build.
+* **Final preview** (`dpl_7g8hhhzpTJvSyS2Cmtq2pRDzW4Us`): 2,188/2,341 snapshots; **0** "SPA noindex vs indexable generator page" (519 before); 152 client redirects mirrored as crawler 301s; resources 109/109; all guards pass.
 
 ### Validation (local)
 * `vitest run` 61 files / 1,103 passed; `check:undefined-identifiers`, `check:redirect-parity` (103/103), `check-redirect-targets` (0 dead, 0 chained), internal links, trust claims, fake inventory, retired-concierge shell: pass.
