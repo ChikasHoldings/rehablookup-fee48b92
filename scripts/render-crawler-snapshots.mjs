@@ -423,6 +423,11 @@ for (const r of results) if (!r.ok) reasons[r.reason.replace(/\d+/g, "N")] = (re
 console.log(`[crawler-snapshots] ${ok}/${results.length} snapshots written in ${Math.round((Date.now() - started) / 1000)}s (${viaNav} via in-app navigation)`);
 for (const [f, c] of Object.entries(byFamily)) console.log(`  ${f.padEnd(20)} snapshot ${c.ok}  kept generator ${c.kept}`);
 for (const [reason, n] of Object.entries(reasons).sort((a, b) => b[1] - a[1]).slice(0, 12)) console.log(`  kept (${n}): ${reason}`);
+// Name the pages that still diverge for a reason other than a mirrored
+// redirect, so a build log alone is enough to fix them.
+const divergent = results.filter((r) => !r.ok && !/^client redirect → /.test(r.reason ?? ""));
+for (const r of divergent.slice(0, 40)) console.log(`  kept: ${r.path} — ${r.reason}`);
+if (divergent.length > 40) console.log(`  … and ${divergent.length - 40} more (see report.json)`);
 const reportDir = path.join(ROOT, "node_modules", ".cache", "crawler-snapshots");
 mkdirSync(reportDir, { recursive: true });
 writeFileSync(path.join(reportDir, "report.json"), JSON.stringify({ via, results }, null, 1));
