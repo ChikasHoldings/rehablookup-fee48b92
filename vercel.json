@@ -187,6 +187,96 @@
       "statusCode": 301
     },
     {
+      "source": "/treatment-types/faith-based-rehab/:state/:city",
+      "destination": "/rehab-centers/:state/:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment-types/faith-based-rehab/:state",
+      "destination": "/rehab-centers/:state",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment-types/fentanyl-rehab/:state/:city",
+      "destination": "/rehab-centers/:state/:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment-types/fentanyl-rehab/:state",
+      "destination": "/rehab-centers/:state",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment-types/free-rehab/:state/:city",
+      "destination": "/rehab-centers/:state/:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment-types/free-rehab/:state",
+      "destination": "/rehab-centers/:state",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment-types/luxury-rehab/:state/:city",
+      "destination": "/rehab-centers/:state/:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment-types/luxury-rehab/:state",
+      "destination": "/rehab-centers/:state",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment-types/mens-rehab/:state/:city",
+      "destination": "/rehab-centers/:state/:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment-types/mens-rehab/:state",
+      "destination": "/rehab-centers/:state",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment-types/sober-living/:state/:city",
+      "destination": "/rehab-centers/:state/:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment-types/sober-living/:state",
+      "destination": "/rehab-centers/:state",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment-types/veterans-rehab/:state/:city",
+      "destination": "/rehab-centers/:state/:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment-types/veterans-rehab/:state",
+      "destination": "/rehab-centers/:state",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment-types/womens-rehab/:state/:city",
+      "destination": "/rehab-centers/:state/:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment-types/womens-rehab/:state",
+      "destination": "/rehab-centers/:state",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment-types/holistic-therapy/:state/:city",
+      "destination": "/rehab-centers/:state/:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment-types/holistic-therapy/:state",
+      "destination": "/rehab-centers/:state",
+      "statusCode": 301
+    },
+    {
       "source": "/lp/social",
       "destination": "/",
       "statusCode": 301
@@ -657,7 +747,7 @@
     },
     {
       "source": "/treatment-types/holistic/:state",
-      "destination": "/treatment-types/holistic-therapy/:state",
+      "destination": "/rehab-centers/:state",
       "statusCode": 301
     },
     {

@@ -252,7 +252,7 @@ const CityPage = () => {
               Rehab Centers in {cityData.name}
             </h1>
             <p className="mt-2 text-sm text-white/80 md:text-base max-w-xl">
-              Verified treatment programs in {cityData.name}, {stateData.abbreviation}.
+              Treatment programs in {cityData.name}, {stateData.abbreviation}.
             </p>
             <div className="mt-4 flex flex-col sm:flex-row gap-2.5">
               <Link to="/search-results">
@@ -429,7 +429,7 @@ const CityPage = () => {
               <Building2 className="mx-auto h-12 w-12 text-muted-foreground/40" />
               <h3 className="mt-4 text-lg font-semibold">No Facilities Listed Yet in {cityData.name}</h3>
               <p className="mt-2 text-muted-foreground max-w-md mx-auto">
-                We're actively adding verified treatment centers. In the meantime, explore treatment options across {stateData.name} or get personalized help.
+                We're actively adding treatment centers. In the meantime, explore treatment options across {stateData.name} or get personalized help.
               </p>
               <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Link to={`/rehab-centers/${stateData.slug}`}>

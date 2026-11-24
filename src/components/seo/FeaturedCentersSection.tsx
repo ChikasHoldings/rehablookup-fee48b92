@@ -70,7 +70,7 @@ interface FeaturedCentersSectionProps {
 
 export function FeaturedCentersSection({
   title = "Featured Treatment Centers",
-  description = "Verified facilities with comprehensive addiction treatment programs",
+  description = "Facilities offering addiction treatment programs",
   limit = 8,
   stateFilter,
   className,

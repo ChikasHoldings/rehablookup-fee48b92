@@ -7,6 +7,7 @@ import { shouldEmitFAQSchema } from "@/utils/seoPageValidator";
 import { statesData } from "@/data/locationSeoData";
 import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
 import { TOPIC_HERO_IMAGES } from "@/data/locationImages";
+import { isLocationConsolidated, treatmentStateHref } from "@/lib/seo/consolidatedTreatments";
 
 interface ExpandedHubConfig {
   slug: string;
@@ -274,9 +275,10 @@ export default function ExpandedTreatmentHubPage() {
     const stateRouteSlug = config.slug === "sober-living-homes" ? "sober-living"
       : config.slug === "free-rehab-options" ? "free-rehab"
       : config.slug;
+    const consolidated = isLocationConsolidated(stateRouteSlug);
     return statesData.slice(0, 12).map((s) => ({
-      title: `${config.title} in ${s.name}`,
-      href: `/treatment-types/${stateRouteSlug}/${s.slug}`,
+      title: consolidated ? `Treatment centers in ${s.name}` : `${config.title} in ${s.name}`,
+      href: treatmentStateHref(stateRouteSlug, s.slug),
     }));
   }, [config]);
 

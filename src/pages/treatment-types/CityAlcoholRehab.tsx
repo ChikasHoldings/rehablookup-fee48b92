@@ -59,7 +59,7 @@ const CityAlcoholRehab = () => {
   const cityData = stateData?.cities.find((c) => c.slug === citySlug);
 
   // Hooks must run on every render — call BEFORE any conditional return.
-  const { validation } = useTreatmentCityValidation({
+  const { validation, ready } = useTreatmentCityValidation({
     stateName: stateData?.name,
     cityName: cityData?.name,
     treatmentKeywords: ["alcohol"],
@@ -68,6 +68,14 @@ const CityAlcoholRehab = () => {
 
   if (!stateData || !cityData) {
     return <Navigate to="/treatment-types/alcohol-rehabilitation" replace />;
+  }
+
+  // Thin-page consolidation (2026-11-24): with no matching listing in this
+  // city, the page is a template over the state list. Once the directory
+  // data has loaded, send visitors to the state page; the build mirrors this
+  // redirect as a 301 for crawlers and drops the URL from the sitemap.
+  if (ready && !validation.shouldIndex) {
+    return <Navigate to={`/treatment-types/alcohol-rehabilitation/${stateSlug}`} replace />;
   }
 
   const { name: stateName, abbreviation } = stateData;
@@ -97,7 +105,6 @@ const CityAlcoholRehab = () => {
         title={`Alcohol Rehab Centers in ${cityName}, ${abbreviation} | Find Treatment`}
         description={`Find alcohol addiction treatment centers in ${cityName}, ${stateName}. Compare detox, inpatient, outpatient alcohol rehab programs with insurance verification.`}
         canonical={`/treatment-types/alcohol-rehabilitation/${stateSlug}/${citySlug}`}
-        noindex={!validation.shouldIndex}
         structuredData={structuredData}
       />      <TreatmentCityHero
         treatmentKey="alcohol"

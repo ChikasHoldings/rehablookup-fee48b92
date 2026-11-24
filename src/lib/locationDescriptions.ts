@@ -153,7 +153,7 @@ function cityOverviewVariantD(
 }
 
 function defaultCityOverview(stateName: string, city: string, count: number): string {
-  return `Find verified treatment providers near ${city}, ${stateName}. ${count > 0 ? `${count} listings.` : ""}`;
+  return `Find treatment providers near ${city}, ${stateName}. ${count > 0 ? `${count} listings.` : ""}`;
 }
 
 // ── County-level overview ───────────────────────────────────────────────────

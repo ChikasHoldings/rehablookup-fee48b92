@@ -218,7 +218,7 @@ const AlcoholRehabilitation = () => {
                   Alcohol Treatment Centers
                 </h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Verified facilities offering alcohol rehabilitation
+                  Listed facilities offering alcohol rehabilitation
                 </p>
               </div>
               <Link to="/rehab-centers">

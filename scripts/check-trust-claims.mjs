@@ -45,6 +45,12 @@ export const BANNED = [
   [/(?:helps patients|directory to|RehabLookup helps you) (?:find|compare) accredited\b/i, "listings described as accredited"],
   [/[0-9,]+\+ verified (?:treatment )?facilit/i, "inflated verified-facility count"],
   [/All listed facilities go through a verification process/i, "no listing verification process exists"],
+  // 2026-11-24: 0 of 3,796 public listings are verified; seeker-facing copy may
+  // not describe programs, facilities or centers as verified (provider-portal
+  // screens about the verification badge are not public pages).
+  [/\b(?:compare|browse|find|search|with|of|to) (?:our )?verified (?:treatment |rehab )?(?:programs|facilit|centers|providers)/i, "listings are not verified", { publicOnly: true }],
+  [/largest verified rehab directory/i, "unsupported directory-size / verification claim"],
+  [/Verified facilities receive \d/i, "unsupported verified-listing statistic"],
   [/Each accreditation is independently reviewed by our team/i, "accreditations are not independently reviewed"],
   [/The clinical team tailors the mix/i, "fabricated facility capability"],
   [/is a licensed addiction treatment provider in /i, "unattributed importer claim (use presentListingDescription)"],

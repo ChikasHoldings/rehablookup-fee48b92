@@ -140,7 +140,7 @@ export default function DemographicStatePage() {
       heroLocation={stateName}
       heroImage={getStateImage(stateSlug)}
       heroBadge="Specialized Programs"
-      introContent={`Looking for ${demographic.title.toLowerCase()} in ${stateName}? RehabLookup connects you with verified treatment facilities across ${stateName} that offer specialized, evidence-based programs. ${stateData.cities.length > 5 ? `With programs available in ${stateData.cities.slice(0, 3).map(c => c.name).join(", ")}, and throughout ${stateName},` : `With programs throughout ${stateName},`} you can find care tailored to specific needs, challenges, and circumstances.`}
+      introContent={`Looking for ${demographic.title.toLowerCase()} in ${stateName}? RehabLookup lists treatment facilities across ${stateName} that offer specialized, evidence-based programs. ${stateData.cities.length > 5 ? `With programs available in ${stateData.cities.slice(0, 3).map(c => c.name).join(", ")}, and throughout ${stateName},` : `With programs throughout ${stateName},`} you can find care tailored to specific needs, challenges, and circumstances.`}
       sections={[
         {
           heading: `${demographic.title} Programs in ${stateName}`,

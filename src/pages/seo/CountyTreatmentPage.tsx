@@ -118,7 +118,7 @@ export default function CountyTreatmentPage() {
     },
     {
       question: `How do I find the best ${treatment.label.toLowerCase()} near ${countyData.name} County?`,
-      answer: `Start by comparing verified facilities in the ${countyData.name} County area on RehabLookup. Look for programs with proper state licensing, accreditation from bodies like JCAHO or CARF, evidence-based treatment approaches, and positive patient outcomes. Use the filters and the compare page to narrow the list before you call.`,
+      answer: `Start by comparing listed facilities in the ${countyData.name} County area on RehabLookup. Look for programs with proper state licensing, accreditation from bodies like JCAHO or CARF, evidence-based treatment approaches, and positive patient outcomes. Use the filters and the compare page to narrow the list before you call.`,
     },
   ];
 
@@ -165,7 +165,7 @@ export default function CountyTreatmentPage() {
       heroLocation={`${countyData.name} County, ${stateData.name}`}
       heroImage={getStateImage(stateSlug)}
       heroBadge="County Treatment Guide"
-      introContent={`Looking for ${treatment.label.toLowerCase()} in ${countyData.name} County, ${stateData.name}? RehabLookup connects you with verified treatment facilities serving the ${countyData.majorCities.slice(0, 4).join(", ")} area. ${density === "high" ? `${countyData.name} County has strong access to ${treatment.label.toLowerCase()} with multiple accredited programs.` : density === "moderate" ? `${countyData.name} County offers several ${treatment.label.toLowerCase()} options for residents.` : `While ${countyData.name} County has limited local options, nearby facilities across ${stateData.name} provide accessible ${treatment.label.toLowerCase()}.`}`}
+      introContent={`Looking for ${treatment.label.toLowerCase()} in ${countyData.name} County, ${stateData.name}? RehabLookup lists treatment facilities serving the ${countyData.majorCities.slice(0, 4).join(", ")} area. ${density === "high" ? `${countyData.name} County has strong access to ${treatment.label.toLowerCase()} with multiple accredited programs.` : density === "moderate" ? `${countyData.name} County offers several ${treatment.label.toLowerCase()} options for residents.` : `While ${countyData.name} County has limited local options, nearby facilities across ${stateData.name} provide accessible ${treatment.label.toLowerCase()}.`}`}
       sections={[
         {
           heading: `${treatment.label} Services in ${countyData.name} County`,

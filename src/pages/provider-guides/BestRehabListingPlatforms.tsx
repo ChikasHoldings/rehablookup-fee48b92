@@ -83,7 +83,7 @@ export default function BestRehabListingPlatforms() {
         { src: pgExclusiveLeads, alt: "Admissions coordinator reviewing exclusive patient leads", caption: "Exclusive leads convert at 3–5x the rate of shared leads across the industry." },
       ]}
       ctaHeadline="List Your Facility on a Platform Built for Results"
-      ctaSubheadline="Join verified treatment centers receiving exclusive, high-intent patient inquiries through RehabLookup."
+      ctaSubheadline="List your facility and receive inquiries directly from families searching RehabLookup."
     />
   );
 }

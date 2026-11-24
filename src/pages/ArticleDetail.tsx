@@ -840,7 +840,7 @@ const ArticleDetail = () => {
                   Need Help Finding Treatment?
                 </h3>
                 <p className="text-sm text-white/80 mb-4">
-                  Our free service connects you with verified rehab centers.
+                  Search the free directory to compare rehab centers near you.
                 </p>
                 <Link to="/search-results">
                   <Button variant="secondary" size="sm" className="w-full bg-white text-primary hover:bg-white/90">
@@ -898,7 +898,7 @@ const ArticleDetail = () => {
                 Ready to Start Your Recovery?
               </h2>
               <p className="mb-6 text-sm text-white/80 max-w-md mx-auto">
-                Find verified treatment centers near you and take the first step toward a healthier future.
+                Find treatment centers near you and take the first step toward a healthier future.
               </p>
               <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
                 <Link to="/rehab-centers">

@@ -17,6 +17,7 @@ import { CheckCircle, Shield, Clock, Heart,
   Home, Home as HomeIcon, Users, Brain, Activity, Calendar, Search,
 } from "lucide-react";
 import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
+import { TREATMENT_CITY_KEYWORDS, useTreatmentCitiesWithListings } from "@/hooks/useTreatmentCityValidation";
 
 const programFeatures = [
   { name: "30-Day Program", description: "Ideal for mild to moderate addiction requiring structured initial care and foundation building.", features: ["Medical stabilization", "Therapy introduction", "Recovery planning"] },
@@ -39,6 +40,7 @@ const dailySchedule = [
 const StateInpatientRehab = () => {
   const { stateSlug } = useParams<{ stateSlug: string }>();
   const stateData = statesData.find(s => s.slug === stateSlug);
+  const citiesWithListings = useTreatmentCitiesWithListings(stateData?.name, TREATMENT_CITY_KEYWORDS["residential-inpatient"]);
 
   if (!stateData) {
     return (
@@ -52,6 +54,8 @@ const StateInpatientRehab = () => {
   }
 
   const { name: stateName, abbreviation, cities } = stateData;
+  // Only cities whose treatment × city page has listings (the others redirect).
+  const linkedCities = citiesWithListings ? cities.filter((c) => citiesWithListings.has(c.name.toLowerCase())) : cities;
   const nearbyStates = getNearbyStates(stateSlug!, 4);
   const cityNames = cities.map(c => c.name);
 
@@ -103,7 +107,7 @@ const StateInpatientRehab = () => {
         stateSlug={stateSlug!}
         treatmentHubHref="/treatment-types/residential-inpatient"
         treatmentHubLabel="Inpatient Rehab"
-        cities={cities}
+        cities={linkedCities}
       />
 
       {/* Featured rotation — paid Featured pool for this
@@ -196,20 +200,22 @@ const StateInpatientRehab = () => {
       </section>
 
       {/* Cities */}
-      <section className="py-12 md:py-16">
-        <div className="container">
-          <h2 className="text-2xl font-bold text-center md:text-3xl mb-8">Inpatient Rehab by City in {stateName}</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {cities.map(city => (
-              <Link key={city.slug} to={`/treatment-types/residential-inpatient/${stateSlug}/${city.slug}`}
-                className="group p-5 rounded-xl border bg-background hover:border-primary hover:shadow-lg transition-all">
-                <h3 className="font-semibold group-hover:text-primary transition-colors">{city.name}</h3>
-                <p className="text-sm text-muted-foreground mt-1">Inpatient programs</p>
-              </Link>
-            ))}
+      {linkedCities.length > 0 && (
+        <section className="py-12 md:py-16">
+          <div className="container">
+            <h2 className="text-2xl font-bold text-center md:text-3xl mb-8">Inpatient Rehab by City in {stateName}</h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {linkedCities.map(city => (
+                <Link key={city.slug} to={`/treatment-types/residential-inpatient/${stateSlug}/${city.slug}`}
+                  className="group p-5 rounded-xl border bg-background hover:border-primary hover:shadow-lg transition-all">
+                  <h3 className="font-semibold group-hover:text-primary transition-colors">{city.name}</h3>
+                  <p className="text-sm text-muted-foreground mt-1">Inpatient programs</p>
+                </Link>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       <TreatmentFAQSection faqs={faqs} treatmentType="Inpatient Rehab" location={{ state: stateName }} />
 

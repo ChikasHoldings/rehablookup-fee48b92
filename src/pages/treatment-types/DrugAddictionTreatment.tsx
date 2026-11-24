@@ -192,7 +192,7 @@ const DrugAddictionTreatment = () => {
                   Drug Addiction Treatment Centers
                 </h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Verified facilities offering drug addiction treatment
+                  Listed facilities offering drug addiction treatment
                 </p>
               </div>
               <Link to="/rehab-centers">

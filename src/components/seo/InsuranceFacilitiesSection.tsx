@@ -285,7 +285,7 @@ export function InsuranceFacilitiesSection({
                   {heading}
                 </h2>
                 <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 sm:mt-1">
-                  Verified facilities that list {insurer.name} as an accepted insurer
+                  Facilities that list {insurer.name} as an accepted insurer
                 </p>
               </div>
               <div className="flex items-center gap-3 shrink-0">

@@ -421,7 +421,7 @@ const StatePage = () => {
                 <p className="mt-1 text-sm text-muted-foreground">
                   {stateCenters.length > 0
                     ? `Showing top ${Math.min(stateCenters.length, 12)} of ${stateCenters.length} listed ${stateCenters.length === 1 ? "facility" : "facilities"} · sorted by ranking`
-                    : `We're actively adding verified centers in ${stateData.name}.`}
+                    : `We're actively adding listed centers in ${stateData.name}.`}
                 </p>
               )}
             </div>
@@ -454,7 +454,7 @@ const StatePage = () => {
               <Building2 className="mx-auto h-12 w-12 text-muted-foreground/40" />
               <h3 className="mt-4 text-lg font-semibold">No Facilities Listed Yet</h3>
               <p className="mt-2 text-muted-foreground">
-                We're actively adding verified treatment centers in {stateData.name}.
+                We're actively adding treatment centers in {stateData.name}.
               </p>
               <Link to="/search-results" className="mt-6 inline-block">
                 <Button>Search Treatment Centers</Button>
@@ -506,7 +506,7 @@ const StatePage = () => {
                 Treatment by City
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                {stateData.cities.length} {stateData.name} cities with verified centers
+                {stateData.cities.length} {stateData.name} cities with listed centers
               </p>
             </div>
           </div>

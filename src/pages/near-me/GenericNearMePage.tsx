@@ -113,7 +113,7 @@ const genericNearMeConfigs: GenericNearMeConfig[] = [
     serviceType: "Medicare-Accepted Treatment Centers",
     treatmentType: "Medicare-Covered Treatment",
     keywords: ["medicare rehab near me", "medicare addiction treatment", "medicare drug rehab", "rehab that accepts medicare"],
-    introContent: "Medicare covers substance abuse treatment including inpatient rehab, outpatient programs, MAT medications, and counseling. Find verified treatment centers in your area that accept Medicare Part A (inpatient) and Part B (outpatient) benefits.",
+    introContent: "Medicare covers substance abuse treatment including inpatient rehab, outpatient programs, MAT medications, and counseling. Find treatment centers in your area that accept Medicare Part A (inpatient) and Part B (outpatient) benefits.",
     faqs: [
       { question: "What addiction treatment does Medicare cover?", answer: "Medicare Part A covers inpatient substance abuse treatment at hospitals and some residential facilities. Part B covers outpatient counseling, group therapy, MAT medications (Suboxone, Vivitrol), psychiatric services, and annual alcohol screening. Part D covers prescription medications used in treatment." },
       { question: "Does Medicare cover inpatient rehab?", answer: "Yes, Medicare Part A covers inpatient substance abuse treatment at Medicare-certified facilities. Coverage includes room, meals, nursing care, medications, and therapy during the stay. A benefit period starts when admitted and ends 60 days after discharge." },
@@ -389,7 +389,7 @@ export default function GenericNearMePage({ configSlug }: GenericNearMePageProps
     <Layout>
       <SEO
         title={`${config.label} Near Me ${stateData ? `in ${stateData.state}` : ""} | Find Treatment Centers`}
-        description={`Find ${config.label.toLowerCase()} centers${stateData ? ` in ${stateData.state}` : " near you"}. Compare verified treatment programs, check insurance coverage, and get help today.`}
+        description={`Find ${config.label.toLowerCase()} centers${stateData ? ` in ${stateData.state}` : " near you"}. Compare treatment programs, check insurance coverage, and get help today.`}
         canonical={stateSlug ? `/${config.slug}/${stateSlug}` : `/${config.slug}`}
         noindex={shouldNoindex}
         keywords={[

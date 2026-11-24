@@ -327,10 +327,11 @@ export function SEOLandingTemplate({
                 </span>
               </div>
               <h2 className="text-xl md:text-2xl font-bold text-foreground">
-                Verified {title}
+                {title}: listed facilities
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Each facility verified for licensing, accreditation, and quality of care.
+                Listings come from public treatment-locator records and the facilities themselves. Confirm
+                licensing, accreditation and programs directly with each facility.
               </p>
             </div>
             {showMoreLink && displayFacilities.length > 0 && (

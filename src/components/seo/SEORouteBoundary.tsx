@@ -151,7 +151,7 @@ class SEORouteBoundaryClass extends React.Component<Props, State> {
             </h1>
             <p className="text-muted-foreground">
               We're working to restore this page. In the meantime, you can browse our full
-              directory of verified treatment centers or explore by state.
+              directory of treatment centers or explore by state.
             </p>
             <div className="flex flex-wrap justify-center gap-3 pt-2">
               <Button onClick={this.handleHardSearch}>

@@ -217,7 +217,7 @@ const DetoxPrograms = () => {
                   Detox Centers Near You
                 </h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Verified facilities offering medical detox programs
+                  Listed facilities offering medical detox programs
                 </p>
               </div>
               <Link to="/rehab-centers">

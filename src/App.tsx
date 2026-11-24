@@ -59,9 +59,7 @@ const StateOutpatientPrograms = lazy(() => import("./pages/treatment-types/State
 const CityOutpatientPrograms = lazy(() => import("./pages/treatment-types/CityOutpatientPrograms"));
 const StateDualDiagnosis = lazy(() => import("./pages/treatment-types/StateDualDiagnosis"));
 const CityDualDiagnosis = lazy(() => import("./pages/treatment-types/CityDualDiagnosis"));
-const StateTreatmentExpandedPage = lazy(() => import("./pages/treatment-types/StateTreatmentExpandedPage"));
 const ExpandedTreatmentHubPage = lazy(() => import("./pages/seo/ExpandedTreatmentHubPage"));
-const CityTreatmentExpandedPage = lazy(() => import("./pages/treatment-types/CityTreatmentExpandedPage"));
 const ExpandedTreatmentNationalHub = lazy(() => import("./pages/treatment-types/ExpandedTreatmentNationalHub"));
 const CityInsurancePage = lazy(() => import("./pages/seo/CityInsurancePage"));
 const CountyInsurancePage = lazy(() => import("./pages/seo/CountyInsurancePage"));
@@ -426,12 +424,15 @@ function BlogRedirect() {
   return <Navigate to={`/resources/${id}`} replace />;
 }
 
-// Legacy /treatment-types/holistic/<state> → canonical holistic-therapy.
-// The old sitemap edge fn emitted this short slug; redirect any cached
-// backlinks so Googlebot lands on a real page.
-function NavigateHolisticState() {
-  const { stateSlug } = useParams();
-  return <Navigate to={`/treatment-types/holistic-therapy/${stateSlug}`} replace />;
+// Specialty × location pages (luxury, sober living, free, faith-based,
+// fentanyl, veterans, women's, men's, holistic) were consolidated into the
+// location hubs on 2026-11-24: no facility attribute supports the specialty,
+// so each page was a template over the same listings as /rehab-centers/:state
+// (Google had already chosen the state hub as canonical). vercel.json carries
+// the matching 301s; the national specialty guides remain.
+function NavigateToLocationHub() {
+  const { stateSlug, citySlug } = useParams();
+  return <Navigate to={`/rehab-centers/${stateSlug}${citySlug ? `/${citySlug}` : ""}`} replace />;
 }
 
 // Legacy /outpatient-near-me/<state> → canonical /outpatient-rehab-near-me/<state>.
@@ -725,7 +726,7 @@ const AppInner = () => {
             <Route path="/treatment-types/outpatient-programs/:stateSlug" element={<PublicRouteGuard><StateOutpatientPrograms /></PublicRouteGuard>} />
             <Route path="/treatment-types/outpatient-programs/:stateSlug/:citySlug" element={<PublicRouteGuard><CityOutpatientPrograms /></PublicRouteGuard>} />
             <Route path="/treatment-types/holistic-therapy" element={<PublicRouteGuard><HolisticTherapy /></PublicRouteGuard>} />
-            <Route path="/treatment-types/holistic-therapy/:stateSlug" element={<PublicRouteGuard><StateTreatmentExpandedPage treatmentKey="holistic" /></PublicRouteGuard>} />
+            <Route path="/treatment-types/holistic-therapy/:stateSlug" element={<NavigateToLocationHub />} />
             <Route path="/treatment-types/holistic-treatment" element={<Navigate to="/treatment-types/holistic-therapy" replace />} />
             {/* Legacy /treatment-types/holistic/<state> — the sitemap edge
                 fn used to emit this short slug, which doesn't match the
@@ -733,26 +734,26 @@ const AppInner = () => {
                 the canonical URL so Googlebot and visitors land on a
                 real page instead of the SPA 404. */}
             <Route path="/treatment-types/holistic" element={<Navigate to="/treatment-types/holistic-therapy" replace />} />
-            <Route path="/treatment-types/holistic/:stateSlug" element={<NavigateHolisticState />} />
+            <Route path="/treatment-types/holistic/:stateSlug" element={<NavigateToLocationHub />} />
             <Route path="/treatment-types/luxury-rehab" element={<PublicRouteGuard><LuxuryRehab /></PublicRouteGuard>} />
-            <Route path="/treatment-types/luxury-rehab/:stateSlug" element={<PublicRouteGuard><StateTreatmentExpandedPage treatmentKey="luxury-rehab" /></PublicRouteGuard>} />
-            <Route path="/treatment-types/sober-living/:stateSlug" element={<PublicRouteGuard><StateTreatmentExpandedPage treatmentKey="sober-living" /></PublicRouteGuard>} />
-            <Route path="/treatment-types/free-rehab/:stateSlug" element={<PublicRouteGuard><StateTreatmentExpandedPage treatmentKey="free-rehab" /></PublicRouteGuard>} />
-            <Route path="/treatment-types/faith-based-rehab/:stateSlug" element={<PublicRouteGuard><StateTreatmentExpandedPage treatmentKey="faith-based-rehab" /></PublicRouteGuard>} />
-            <Route path="/treatment-types/fentanyl-rehab/:stateSlug" element={<PublicRouteGuard><StateTreatmentExpandedPage treatmentKey="fentanyl-rehab" /></PublicRouteGuard>} />
-            <Route path="/treatment-types/veterans-rehab/:stateSlug" element={<PublicRouteGuard><StateTreatmentExpandedPage treatmentKey="veterans-rehab" /></PublicRouteGuard>} />
-            <Route path="/treatment-types/womens-rehab/:stateSlug" element={<PublicRouteGuard><StateTreatmentExpandedPage treatmentKey="womens-rehab" /></PublicRouteGuard>} />
-            <Route path="/treatment-types/mens-rehab/:stateSlug" element={<PublicRouteGuard><StateTreatmentExpandedPage treatmentKey="mens-rehab" /></PublicRouteGuard>} />
+            <Route path="/treatment-types/luxury-rehab/:stateSlug" element={<NavigateToLocationHub />} />
+            <Route path="/treatment-types/sober-living/:stateSlug" element={<NavigateToLocationHub />} />
+            <Route path="/treatment-types/free-rehab/:stateSlug" element={<NavigateToLocationHub />} />
+            <Route path="/treatment-types/faith-based-rehab/:stateSlug" element={<NavigateToLocationHub />} />
+            <Route path="/treatment-types/fentanyl-rehab/:stateSlug" element={<NavigateToLocationHub />} />
+            <Route path="/treatment-types/veterans-rehab/:stateSlug" element={<NavigateToLocationHub />} />
+            <Route path="/treatment-types/womens-rehab/:stateSlug" element={<NavigateToLocationHub />} />
+            <Route path="/treatment-types/mens-rehab/:stateSlug" element={<NavigateToLocationHub />} />
 
-            {/* City-level expanded treatment pages */}
-            <Route path="/treatment-types/luxury-rehab/:stateSlug/:citySlug" element={<PublicRouteGuard><CityTreatmentExpandedPage treatmentKey="luxury-rehab" /></PublicRouteGuard>} />
-            <Route path="/treatment-types/sober-living/:stateSlug/:citySlug" element={<PublicRouteGuard><CityTreatmentExpandedPage treatmentKey="sober-living" /></PublicRouteGuard>} />
-            <Route path="/treatment-types/free-rehab/:stateSlug/:citySlug" element={<PublicRouteGuard><CityTreatmentExpandedPage treatmentKey="free-rehab" /></PublicRouteGuard>} />
-            <Route path="/treatment-types/faith-based-rehab/:stateSlug/:citySlug" element={<PublicRouteGuard><CityTreatmentExpandedPage treatmentKey="faith-based-rehab" /></PublicRouteGuard>} />
-            <Route path="/treatment-types/fentanyl-rehab/:stateSlug/:citySlug" element={<PublicRouteGuard><CityTreatmentExpandedPage treatmentKey="fentanyl-rehab" /></PublicRouteGuard>} />
-            <Route path="/treatment-types/veterans-rehab/:stateSlug/:citySlug" element={<PublicRouteGuard><CityTreatmentExpandedPage treatmentKey="veterans-rehab" /></PublicRouteGuard>} />
-            <Route path="/treatment-types/womens-rehab/:stateSlug/:citySlug" element={<PublicRouteGuard><CityTreatmentExpandedPage treatmentKey="womens-rehab" /></PublicRouteGuard>} />
-            <Route path="/treatment-types/mens-rehab/:stateSlug/:citySlug" element={<PublicRouteGuard><CityTreatmentExpandedPage treatmentKey="mens-rehab" /></PublicRouteGuard>} />
+            {/* City-level specialty pages: consolidated into the city hub (see NavigateToLocationHub). */}
+            <Route path="/treatment-types/luxury-rehab/:stateSlug/:citySlug" element={<NavigateToLocationHub />} />
+            <Route path="/treatment-types/sober-living/:stateSlug/:citySlug" element={<NavigateToLocationHub />} />
+            <Route path="/treatment-types/free-rehab/:stateSlug/:citySlug" element={<NavigateToLocationHub />} />
+            <Route path="/treatment-types/faith-based-rehab/:stateSlug/:citySlug" element={<NavigateToLocationHub />} />
+            <Route path="/treatment-types/fentanyl-rehab/:stateSlug/:citySlug" element={<NavigateToLocationHub />} />
+            <Route path="/treatment-types/veterans-rehab/:stateSlug/:citySlug" element={<NavigateToLocationHub />} />
+            <Route path="/treatment-types/womens-rehab/:stateSlug/:citySlug" element={<NavigateToLocationHub />} />
+            <Route path="/treatment-types/mens-rehab/:stateSlug/:citySlug" element={<NavigateToLocationHub />} />
 
             {/* National hub pages for expanded treatment types */}
             <Route path="/treatment-types/sober-living" element={<PublicRouteGuard><ExpandedTreatmentNationalHub treatmentKey="sober-living" /></PublicRouteGuard>} />

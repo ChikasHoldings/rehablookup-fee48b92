@@ -27,11 +27,11 @@ const paymentConfigs: PaymentStateConfig[] = [
     slug: "medicaid-rehab",
     title: "Medicaid Rehab Centers",
     metaTitle: "Medicaid Rehab Centers in {state} — Find Covered Treatment | RehabLookup",
-    metaDescription: "Find rehab centers accepting Medicaid in {state}. Compare verified programs with Medicaid coverage. Confirm coverage with your insurance plan and the facility.",
+    metaDescription: "Find rehab centers accepting Medicaid in {state}. Compare listed programs with Medicaid coverage. Confirm coverage with your insurance plan and the facility.",
     heroSubtitle: "Find addiction treatment facilities that accept Medicaid coverage in your state.",
     filterKeys: ["medicaid", "state-funded", "sliding-scale", "free"],
     introTemplate: (state, expanded) =>
-      `Looking for rehab centers that accept Medicaid in ${state}? ${expanded ? `${state} has expanded Medicaid under the ACA, providing broader coverage for substance abuse treatment including medical detox, residential rehabilitation, outpatient programs, and medication-assisted treatment.` : `While ${state} has not expanded Medicaid, traditional Medicaid and other state-funded programs provide coverage for substance abuse treatment for qualifying residents.`} RehabLookup helps you find verified facilities in ${state} that accept Medicaid, compare programs, and start treatment with confidence.`,
+      `Looking for rehab centers that accept Medicaid in ${state}? ${expanded ? `${state} has expanded Medicaid under the ACA, providing broader coverage for substance abuse treatment including medical detox, residential rehabilitation, outpatient programs, and medication-assisted treatment.` : `While ${state} has not expanded Medicaid, traditional Medicaid and other state-funded programs provide coverage for substance abuse treatment for qualifying residents.`} RehabLookup helps you find facilities in ${state} that accept Medicaid, compare programs, and start treatment with confidence.`,
     sections: (state) => [
       {
         heading: `Medicaid Coverage for Rehab in ${state}`,
@@ -44,7 +44,7 @@ const paymentConfigs: PaymentStateConfig[] = [
     ],
     faqs: (state) => [
       { question: `Does Medicaid cover rehab in ${state}?`, answer: `Yes, Medicaid covers substance abuse treatment in ${state} as an essential health benefit. Coverage includes medical detox, residential treatment, outpatient programs, medication-assisted treatment, and therapy. Specific coverage details, duration limits, and pre-authorization requirements vary by Medicaid plan type.` },
-      { question: `How do I find Medicaid rehab in ${state}?`, answer: `Use RehabLookup to find verified treatment facilities in ${state} that accept Medicaid. You can also call your Medicaid managed care plan's member services for a list of in-network providers, or contact SAMHSA's helpline (1-800-662-4357) for immediate assistance finding Medicaid-accepting programs.` },
+      { question: `How do I find Medicaid rehab in ${state}?`, answer: `Use RehabLookup to find treatment facilities in ${state} that accept Medicaid. You can also call your Medicaid managed care plan's member services for a list of in-network providers, or contact SAMHSA's helpline (1-800-662-4357) for immediate assistance finding Medicaid-accepting programs.` },
       { question: `What does Medicaid rehab include in ${state}?`, answer: `Medicaid-covered treatment in ${state} typically includes medical detox, residential/inpatient treatment (usually 28-30 days, extendable with authorization), intensive outpatient programs (IOP), medication-assisted treatment (buprenorphine, methadone, naltrexone), individual and group therapy, and case management services.` },
       { question: `Are there wait lists for Medicaid rehab in ${state}?`, answer: `Wait times vary by facility and location. Some Medicaid-accepting programs in ${state} have immediate availability while others may have waiting lists of days to weeks. Contact multiple facilities simultaneously and ask about wait times. Some programs prioritize urgent cases (pregnant women, IV drug users, those at medical risk).` },
     ],
@@ -53,7 +53,7 @@ const paymentConfigs: PaymentStateConfig[] = [
     slug: "medicare-rehab",
     title: "Medicare Rehab Centers",
     metaTitle: "Medicare Rehab Centers in {state} — Find Covered Treatment | RehabLookup",
-    metaDescription: "Find rehab centers accepting Medicare in {state}. Compare verified programs with Medicare coverage for addiction treatment.",
+    metaDescription: "Find rehab centers accepting Medicare in {state}. Compare listed programs with Medicare coverage for addiction treatment.",
     heroSubtitle: "Find addiction treatment facilities that accept Medicare Part A and Part B coverage.",
     filterKeys: ["medicare", "inpatient", "outpatient"],
     introTemplate: (state) =>

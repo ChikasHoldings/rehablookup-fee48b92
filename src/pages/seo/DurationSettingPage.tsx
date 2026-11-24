@@ -123,7 +123,7 @@ const settingPages: SettingConfig[] = [
     slug: "beach-rehab-programs",
     title: "Beach & Coastal Rehab Programs",
     metaTitle: "Beach Rehab Programs — Coastal Addiction Treatment | RehabLookup",
-    metaDescription: "Find beach and coastal rehab centers offering ocean-view treatment settings. California, Florida, Hawaii, and more. Compare verified programs.",
+    metaDescription: "Find beach and coastal rehab centers offering ocean-view treatment settings. California, Florida, Hawaii, and more. Compare listed programs.",
     heroSubtitle: "Healing by the ocean — treatment programs in beautiful coastal settings that enhance recovery through nature.",
     filterKeys: ["luxury", "holistic", "residential"],
     introContent: "Beach and coastal rehab programs combine clinical addiction treatment with the natural therapeutic benefits of ocean settings. Research shows that proximity to water reduces cortisol, lowers heart rate, and promotes a sense of calm — creating an ideal environment for recovery. Coastal programs are concentrated in California, Florida, Hawaii, and the Southeast, offering both luxury and standard treatment options in settings where the natural environment actively supports healing.",
@@ -142,7 +142,7 @@ const settingPages: SettingConfig[] = [
     slug: "mountain-rehab-programs",
     title: "Mountain & Rural Rehab Programs",
     metaTitle: "Mountain Rehab Programs — Wilderness Recovery Centers | RehabLookup",
-    metaDescription: "Find mountain and rural rehab programs offering secluded, nature-based treatment. Colorado, Montana, Utah, and more. Verified programs.",
+    metaDescription: "Find mountain and rural rehab programs offering secluded, nature-based treatment. Colorado, Montana, Utah, and more. Listed programs.",
     heroSubtitle: "Secluded mountain and wilderness settings that provide distance from triggers and connection to nature for deeper healing.",
     filterKeys: ["residential", "wilderness", "adventure", "holistic"],
     introContent: "Mountain and rural rehab programs offer secluded treatment environments far removed from the people, places, and pressures associated with active addiction. The physical distance from triggers — combined with the proven mental health benefits of nature immersion — creates powerful conditions for transformation. Programs in Colorado, Montana, Utah, Arizona, and Appalachian regions leverage wilderness settings for adventure therapy, equine therapy, and mindfulness-based outdoor activities.",
@@ -231,7 +231,7 @@ export default function DurationSettingPage() {
         ? `${config.title} in ${stateData!.name} (${stateData!.abbreviation}) | RehabLookup`
         : config.metaTitle}
       metaDescription={isStatePage
-        ? `Find ${config.title.toLowerCase()} in ${stateData!.name}. Compare verified programs. Get help today.`
+        ? `Find ${config.title.toLowerCase()} in ${stateData!.name}. Compare listed programs. Get help today.`
         : config.metaDescription}
       canonical={`https://rehablookup.com${canonicalPath}`}
       structuredData={structuredData}
@@ -246,7 +246,7 @@ export default function DurationSettingPage() {
       heroImage={TOPIC_HERO_IMAGES.treatment}
       heroLocation={isStatePage ? stateData!.name : undefined}
       introContent={isStatePage
-        ? `Looking for ${config.title.toLowerCase()} in ${stateData!.name}? RehabLookup connects you with verified treatment facilities across ${stateData!.name}. ${stateData!.cities.length > 5 ? `Programs are available in ${stateData!.cities.slice(0, 3).map(c => c.name).join(", ")}, and more.` : ""}`
+        ? `Looking for ${config.title.toLowerCase()} in ${stateData!.name}? RehabLookup lists treatment facilities across ${stateData!.name}. ${stateData!.cities.length > 5 ? `Programs are available in ${stateData!.cities.slice(0, 3).map(c => c.name).join(", ")}, and more.` : ""}`
         : config.introContent}
       sections={config.sections.map(s => ({
         heading: isStatePage ? `${s.heading} in ${stateData!.name}` : s.heading,

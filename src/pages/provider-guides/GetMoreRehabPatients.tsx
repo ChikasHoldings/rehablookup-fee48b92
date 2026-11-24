@@ -37,7 +37,7 @@ export default function GetMoreRehabPatients() {
           heading: "5 Proven Strategies to Get More Patients",
           content: "Top-performing treatment centers don't rely on a single channel for admissions. They build diversified acquisition systems that generate consistent, qualified patient inquiries.",
           bullets: [
-            "List on verified treatment directories like RehabLookup where families actively search",
+            "List on treatment directories like RehabLookup where families actively search",
             "Optimize your Google Business Profile with accurate, complete information",
             "Build a referral network with hospitals, therapists, and primary care physicians",
             "Create educational content that ranks for treatment-related search terms",

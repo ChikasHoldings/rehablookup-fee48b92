@@ -29,7 +29,7 @@ const steps = [
     icon: Search,
     image: step1Image,
     title: "Search Treatment Centers",
-    description: "Enter your location and preferences to browse verified treatment facilities in your area. Filter by treatment type, insurance, amenities, and more.",
+    description: "Enter your location and preferences to browse treatment facilities in your area. Filter by treatment type, insurance, amenities, and more.",
     details: [
       "Search by city, state, or ZIP code",
       "Filter by treatment type and specialization",
@@ -99,7 +99,7 @@ const HowItWorks = () => {
     <Layout>
       <SEO
         title="How It Works - Find Rehab in 3 Steps | RehabLookup"
-        description="Learn how RehabLookup helps you find addiction treatment. Search, compare, and connect with verified rehab centers in three easy steps."
+        description="Learn how RehabLookup helps you find addiction treatment. Search, compare, and connect with rehab centers in three easy steps."
         canonical="/how-it-works"
         breadcrumbs={[
           { name: "Home", url: "/" },
@@ -117,7 +117,7 @@ const HowItWorks = () => {
                 "@type": "HowToStep",
                 "position": 1,
                 "name": "Search Treatment Centers",
-                "text": "Enter your location and preferences to browse verified treatment facilities in your area. Filter by treatment type, insurance, amenities, and more.",
+                "text": "Enter your location and preferences to browse treatment facilities in your area. Filter by treatment type, insurance, amenities, and more.",
                 "url": "https://rehablookup.com/how-it-works#step-1"
               },
               {
