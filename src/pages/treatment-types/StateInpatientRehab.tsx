@@ -85,6 +85,7 @@ const StateInpatientRehab = () => {
 
   return (
     <Layout>
+      {!citiesWithListings && <span data-snapshot-wait="directory" hidden />}
       <SEO
         title={`Inpatient Rehab in ${stateName} (${abbreviation}) | Residential Treatment`}
         description={`Find inpatient rehab centers in ${stateName}. 30-90 day residential programs with 24/7 care. Insurance accepted. ${cities.length}+ cities covered.`}

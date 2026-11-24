@@ -114,6 +114,8 @@ const CityDualDiagnosis = () => {
 
   return (
     <Layout>
+      {/* Lets the build snapshot wait for the live directory before judging this page. */}
+      {!ready && <span data-snapshot-wait="directory" hidden />}
       <SEO
         title={`Dual Diagnosis Treatment in ${cityName}, ${abbreviation} | Mental Health & Addiction`}
         description={`Find dual diagnosis treatment centers in ${cityName}, ${stateName}. Integrated care for depression, anxiety, PTSD, and addiction. Insurance accepted.`}

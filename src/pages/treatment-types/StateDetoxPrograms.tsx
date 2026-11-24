@@ -83,6 +83,7 @@ const StateDetoxPrograms = () => {
 
   return (
     <Layout>
+      {!citiesWithListings && <span data-snapshot-wait="directory" hidden />}
       <SEO
         title={`Detox Centers in ${stateName} (${abbreviation}) | Medical Detox Programs`}
         description={`Find medical detox centers in ${stateName}. Safe withdrawal from alcohol, opioids & drugs with 24/7 care. Insurance accepted. ${cities.length}+ cities.`}

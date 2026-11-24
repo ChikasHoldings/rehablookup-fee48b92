@@ -104,6 +104,8 @@ const CityInpatientRehab = () => {
 
   return (
     <Layout>
+      {/* Lets the build snapshot wait for the live directory before judging this page. */}
+      {!ready && <span data-snapshot-wait="directory" hidden />}
       <SEO
         title={`Inpatient Rehab Centers in ${cityName}, ${abbreviation} | Residential Treatment`}
         description={`Find inpatient rehab centers in ${cityName}, ${stateName}. 24/7 residential addiction treatment. Insurance accepted. Call now.`}

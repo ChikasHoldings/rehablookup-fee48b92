@@ -277,6 +277,31 @@
       "statusCode": 301
     },
     {
+      "source": "/resources/aftercare-planning",
+      "destination": "/resources/understanding-rehab-aftercare-programs",
+      "statusCode": 301
+    },
+    {
+      "source": "/resources/luxury-vs-standard-rehab",
+      "destination": "/resources/luxury-rehab-vs-standard",
+      "statusCode": 301
+    },
+    {
+      "source": "/resources/recovery-support-groups",
+      "destination": "/resources/12-step-program-guide",
+      "statusCode": 301
+    },
+    {
+      "source": "/resources/understanding-levels-of-care",
+      "destination": "/resources/php-vs-iop-vs-outpatient",
+      "statusCode": 301
+    },
+    {
+      "source": "/resources/holistic-recovery-approaches",
+      "destination": "/treatment-types/holistic-therapy",
+      "statusCode": 301
+    },
+    {
       "source": "/lp/social",
       "destination": "/",
       "statusCode": 301

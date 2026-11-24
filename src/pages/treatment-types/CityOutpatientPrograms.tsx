@@ -109,6 +109,8 @@ const CityOutpatientPrograms = () => {
 
   return (
     <Layout>
+      {/* Lets the build snapshot wait for the live directory before judging this page. */}
+      {!ready && <span data-snapshot-wait="directory" hidden />}
       <SEO
         title={`Outpatient Rehab Programs in ${cityName}, ${abbreviation} | IOP & PHP`}
         description={`Find outpatient addiction treatment in ${cityName}, ${stateName}. IOP, PHP & flexible programs. Insurance accepted. Call now.`}

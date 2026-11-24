@@ -110,6 +110,8 @@ const CityDetoxPrograms = () => {
 
   return (
     <Layout>
+      {/* Lets the build snapshot wait for the live directory before judging this page. */}
+      {!ready && <span data-snapshot-wait="directory" hidden />}
       <SEO
         title={`Detox Centers in ${cityName}, ${abbreviation} | Medical Detox Programs`}
         description={`Find medical detox centers in ${cityName}, ${stateName}. Safe withdrawal from alcohol & drugs with 24/7 care. Insurance accepted.`}

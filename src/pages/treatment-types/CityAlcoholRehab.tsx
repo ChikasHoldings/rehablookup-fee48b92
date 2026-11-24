@@ -101,6 +101,8 @@ const CityAlcoholRehab = () => {
 
   return (
     <Layout>
+      {/* Lets the build snapshot wait for the live directory before judging this page. */}
+      {!ready && <span data-snapshot-wait="directory" hidden />}
       <SEO
         title={`Alcohol Rehab Centers in ${cityName}, ${abbreviation} | Find Treatment`}
         description={`Find alcohol addiction treatment centers in ${cityName}, ${stateName}. Compare detox, inpatient, outpatient alcohol rehab programs with insurance verification.`}

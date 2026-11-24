@@ -1311,6 +1311,12 @@ const AppInner = () => {
                 phase AA / AB fixes. Redirect to the canonical existing
                 articles. These MUST come before /resources/:id so the
                 Navigate fires first. */}
+            {/* Retired article slugs (no article record) → closest live guide, 2026-11-24. */}
+            <Route path="/resources/aftercare-planning" element={<Navigate to="/resources/understanding-rehab-aftercare-programs" replace />} />
+            <Route path="/resources/luxury-vs-standard-rehab" element={<Navigate to="/resources/luxury-rehab-vs-standard" replace />} />
+            <Route path="/resources/recovery-support-groups" element={<Navigate to="/resources/12-step-program-guide" replace />} />
+            <Route path="/resources/understanding-levels-of-care" element={<Navigate to="/resources/php-vs-iop-vs-outpatient" replace />} />
+            <Route path="/resources/holistic-recovery-approaches" element={<Navigate to="/treatment-types/holistic-therapy" replace />} />
             <Route path="/resources/signs-of-addiction" element={<Navigate to="/resources/youth-addiction-warning-signs" replace />} />
             <Route path="/resources/what-to-expect-in-rehab" element={<Navigate to="/resources/drug-withdrawal-symptoms-timeline" replace />} />
             <Route path="/resources/insurance-coverage-guide" element={<Navigate to="/resources/insurance-appeal-rehab-denial" replace />} />
