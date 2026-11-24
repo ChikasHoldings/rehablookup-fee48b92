@@ -39,6 +39,12 @@ Vercel observability, 2026-11-23 20:30 → 2026-11-24 06:00 UTC, AI bot categori
 * `vitest run` 61 files / 1,103 passed; `check:undefined-identifiers`, `check:redirect-parity` (103/103), `check-redirect-targets` (0 dead, 0 chained), internal links, trust claims, fake inventory, retired-concierge shell: pass.
 * Local render (fresh build, live data): specialty state/city pages → state/city hub; `/treatment-types/residential-inpatient/texas/dallas`, `/…/alaska/fairbanks`, `/outpatient-programs/hawaii/kailua` → state treatment page; `/outpatient-programs/texas/dallas`, `/dual-diagnosis-treatment/texas/dallas` snapshot as indexable pages; residential Texas lists 0 cities (no Texas listing records residential care), outpatient Texas lists 20.
 
+### Deployment record
+* **Merged:** PR #92, squash `391f60f2b5` (SEO Validators green; final preview `dpl_3ySLvwd23kmJ2vKW28SZo7GaCJgg` clean).
+* **Production:** `dpl_7SyeddSRvkKnKTZDUpNHhgTveM25` READY 2026-11-24 ~08:20 UTC (aliases rehablookup.com, www). Build log: 2,331 routes selected (2,754 before the batch), 2,188 snapshots, **0 routes where the app is noindex but crawler HTML was indexable (519 in batch 3's production build)**, 143 client-side redirects mirrored as crawler 301s, resources 109/109, city hubs 484/484, no other divergent route. Runtime errors (1 h): none.
+* **Database (applied earlier, live before the deploy):** `20261124000100` (international opt-in), `20261124000200` (article copy, backup in `seo_recovery_backup`).
+* **Not verified from here:** live HTTP on rehablookup.com (Vercel Security Checkpoint). Owner checks in Search Console: URL Inspection on `/treatment-types/faith-based-rehab/texas` (expect 301 → `/rehab-centers/texas`), `/treatment-types/residential-inpatient/texas/dallas` (expect 301 → `/treatment-types/residential-inpatient/texas`), `/treatment-types/outpatient-programs/texas/dallas` (expect 200, indexable); resubmit `sitemap-index.xml`.
+
 ### Not in this batch (owner approval still required)
 The removal waves A–D in `SEO_REMOVAL_PLAN.md` (~37,000 near-me, city-combo, insurance × county, county × service and provider-marketing URLs) are a separate decision: they are excluded from crawler snapshots and keep their generator pages.
 
