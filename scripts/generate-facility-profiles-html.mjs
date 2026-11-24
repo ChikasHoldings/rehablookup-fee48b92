@@ -312,6 +312,7 @@ async function fetchFacilities() {
     "is_claimed",
     "accepting_admissions",
     "hours_of_operation",
+    "accepts_international_patients",
   ].join(",");
 
   return fetchAll(
@@ -928,6 +929,10 @@ function renderFacilityHtml(f, kids) {
   const typeLine = f.facility_type
     ? `<p><strong>Facility Type:</strong> ${escapeHtml(f.facility_type)}</p>`
     : "";
+  // Provider-reported opt-in; mirrors the SPA's "International" badge.
+  const internationalLine = f.accepts_international_patients === true
+    ? `<p><strong>International patients:</strong> Accepted (reported by the facility). Contact the facility about admission letters and arrival.</p>`
+    : "";
   const provenanceBlock = `<p class="callout provenance">${escapeHtml(provenanceNotice(f))}</p>`;
   const descBlock = listingDescription
     ? `<h2>About ${escapeHtml(f.name)}</h2><p>${escapeHtml(listingDescription)}</p>${provenanceBlock}`
@@ -1050,6 +1055,7 @@ ${seoHeader()}
 <p><em>Addiction treatment in ${escapeHtml(f.city)}, ${escapeHtml(f.state)}</em></p>
 <div class="meta">
 ${typeLine}
+${internationalLine}
 ${addressLine}
 ${phoneLine}
 ${websiteLine}

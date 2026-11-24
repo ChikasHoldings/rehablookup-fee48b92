@@ -65,7 +65,6 @@ import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { ProviderTrustForm } from "@/components/provider/ProviderTrustForm";
 
 import { useProStatus } from "@/hooks/useProStatus";
-import { useFacilitySubscription } from "@/hooks/useFacilitySubscription";
 import { PLAN_LIMITS } from "@/lib/planLimits";
 import { getListingStatusMeta, type ListingStatusTone } from "@/lib/listingStatus";
 import { FacilityPhoneVerifySection } from "@/components/provider/listing/FacilityPhoneVerifySection";
@@ -286,16 +285,6 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
   // Use prop facilityId if provided, otherwise use selectedFacility
   const currentFacilityId = propFacilityId || selectedFacility?.id;
   const { data: proStatus } = useProStatus(currentFacilityId);
-  // International-patient acceptance is a Concierge-Partner-exclusive
-  // capability (mirrors the is_active_concierge_partner DB gate + trigger).
-  const { data: editorSubscription } = useFacilitySubscription(currentFacilityId);
-  const isConciergePartner =
-    editorSubscription?.has_concierge_partner === true &&
-    // Mirror the is_active_concierge_partner DB gate exactly: grace window
-    // (active OR past_due) + the add-on's own period must not have lapsed.
-    (editorSubscription?.status === "active" || editorSubscription?.status === "past_due") &&
-    (!editorSubscription?.concierge_current_period_end ||
-      new Date(editorSubscription.concierge_current_period_end) > new Date());
   
   // Gallery cap reflects the active plan — Free 5, Pro 10 (matches the
   // enforce_facility_plan_photo_cap server-side trigger). proStatus.isPro
@@ -658,7 +647,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
           logo_url: facility.logo_url,
           gallery_urls: facility.gallery_urls,
           year_established: facility.year_established,
-          accepts_international_patients: isConciergePartner ? facility.accepts_international_patients : false,
+          accepts_international_patients: facility.accepts_international_patients ?? false,
           hours_of_operation: facility.hours_of_operation,
           languages_spoken: facility.languages_spoken,
           accessibility_features: facility.accessibility_features,
@@ -702,11 +691,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
     } finally {
       setIsAutoSaving(false);
     }
-    // isConciergePartner gates the persisted accepts_international_patients
-    // value (line ~660); omitting it let a stale `false` overwrite a Concierge
-    // partner's enabled flag when the subscription query resolved after the
-    // last `facility` change.
-  }, [facility, isSaving, currentFacilityId, queryClient, toast, isConciergePartner]);
+  }, [facility, isSaving, currentFacilityId, queryClient, toast]);
 
   // Auto-save effect
   useEffect(() => {
@@ -832,7 +817,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
           logo_url: facility.logo_url,
           gallery_urls: facility.gallery_urls,
           year_established: facility.year_established,
-          accepts_international_patients: isConciergePartner ? facility.accepts_international_patients : false,
+          accepts_international_patients: facility.accepts_international_patients ?? false,
           hours_of_operation: facility.hours_of_operation,
           languages_spoken: facility.languages_spoken,
           accessibility_features: facility.accessibility_features,
@@ -931,13 +916,11 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
     } finally {
       setIsSaving(false);
     }
-    // isConciergePartner gates the persisted accepts_international_patients
-    // value (~826) and profileCompletion drives the one-time 100%-complete
-    // celebration (~803); both live outside `facility`, so they must be deps
-    // or a stale value can wipe a partner's international flag / mis-fire the
-    // completion email.
+    // profileCompletion drives the one-time 100%-complete celebration (~803);
+    // it lives outside `facility`, so it must be a dep or a stale value can
+    // mis-fire the completion email.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- validateAllFields is declared below; React runs callbacks after the full render so the forward reference is safe.
-  }, [facility, canEdit, toast, queryClient, currentFacilityId, setFacility, isConciergePartner, profileCompletion]);
+  }, [facility, canEdit, toast, queryClient, currentFacilityId, setFacility, profileCompletion]);
 
   // Keyboard shortcut: Ctrl+S / Cmd+S
   useEffect(() => {
@@ -1886,23 +1869,19 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
                       <div className="space-y-0.5">
                         <Label className="text-sm font-medium flex items-center gap-2"><Globe className="h-4 w-4 text-primary" />Accept International Patients</Label>
                         <p className="text-xs text-muted-foreground">
-                          {isConciergePartner
-                            ? "Enable if you accept patients from outside the US"
-                            : "Not currently available — international listings were part of the retired Concierge Partner add-on"}
+                          Turn this on only if your facility admits patients who travel from outside the US.
                         </p>
                       </div>
-                      {/* International acceptance is a Concierge-Partner-only
-                          capability — the toggle is disabled for non-partners
-                          (a DB trigger also blocks enabling it server-side). */}
+                      {/* Provider-reported opt-in, available to every listing
+                          owner (the Concierge-only gate was retired 2026-11-24). */}
                       <Switch
-                        checked={isConciergePartner && (facility.accepts_international_patients || false)}
+                        checked={facility.accepts_international_patients || false}
                         onCheckedChange={(checked) => updateField("accepts_international_patients", checked)}
-                        disabled={!isConciergePartner}
                         aria-label="Accept International Patients"
                       />
                     </div>
-                    {isConciergePartner && facility.accepts_international_patients ? (
-                      <div className="mt-3 p-3 rounded-md bg-primary/5 border border-primary/10"><p className="text-xs text-primary">Your facility will be visible to international clients.</p></div>
+                    {facility.accepts_international_patients ? (
+                      <div className="mt-3 p-3 rounded-md bg-primary/5 border border-primary/10"><p className="text-xs text-primary">Your listing will show an "International" badge and appear in the list of facilities accepting international patients on RehabLookup’s international pages. You handle admission letters and arrival details directly with the patient.</p></div>
                     ) : null}
                   </div>
 

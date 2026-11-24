@@ -30,11 +30,11 @@ export const CountriesServed = () => {
             <span className="text-sm font-semibold uppercase tracking-wide">Global Reach</span>
           </div>
           <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
-            Serving Clients Worldwide
+            Guides by Home Country
           </h2>
           <p className="text-base text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            We've helped thousands of international clients access world-class addiction treatment
-            in the United States.
+            Guides for patients travelling to the United States for addiction treatment, by home
+            country: how to compare programs, pay, and plan admission with the facility.
           </p>
         </div>
 

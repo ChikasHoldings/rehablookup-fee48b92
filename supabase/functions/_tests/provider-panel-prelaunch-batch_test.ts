@@ -1,6 +1,6 @@
 // Regression tests for the 2026-07-03 pre-go-live provider panel hardening batch.
 //   1. public_facilities hides facilities with an active pending/under_review claim
-//   2. accepts_international_patients gate fires on INSERT (not just UPDATE)
+//   2. accepts_international_patients is a provider opt-in (gate removed 2026-11-24)
 //   3. create-checkout-session blocks a 2nd checkout for pending/incomplete Pro;
 //      Billing hides ProUpgradeChoices for incomplete
 //   4. suspended copy says "contact support", never "upgrade to reactivate"
@@ -39,21 +39,24 @@ Deno.test("public_facilities excludes pending/under_review claims", async () => 
   assert(!/WITH\s*\(\s*security_invoker/i.test(sql), "must NOT be created WITH (security_invoker) — would neuter the claim subquery under anon RLS");
 });
 
-// ── 2. international flag INSERT gate ─────────────────────────────────────────
-Deno.test("international-partner trigger fires on INSERT OR UPDATE", async () => {
-  const sql = await read("supabase/migrations/20260829005000_international_partner_gate_on_insert.sql");
+// ── 2. international flag: provider opt-in ───────────────────────────────────
+// Superseded 2026-11-24: the Concierge-Partner-only gate (20260829005000) was
+// removed when the add-on was retired; every listing owner may now opt in.
+Deno.test("international opt-in migration drops the partner-only trigger", async () => {
+  const sql = await read("supabase/migrations/20261124000100_international_patients_provider_opt_in.sql");
   assert(
-    /BEFORE INSERT OR UPDATE OF accepts_international_patients/.test(sql),
-    "trigger must fire on INSERT OR UPDATE (was UPDATE-only)",
+    /DROP TRIGGER IF EXISTS trg_enforce_international_partner_only ON public\.facilities;/.test(sql),
+    "opt-in migration must drop the partner-only trigger",
   );
 });
 
-Deno.test("create flows never offer the international checkbox", async () => {
+Deno.test("provider flows offer the international opt-in to every listing", async () => {
   const add = await read("src/pages/provider/AddLocation.tsx");
-  const signup = await read("src/pages/ProviderSignup.tsx");
-  assert(!/checked=\{draft\.accepts_international_patients\}/.test(add), "AddLocation must not render the intl checkbox");
-  assert(!/insertPayload\.accepts_international_patients = true/.test(add), "AddLocation must not send intl=true");
-  assert(!/id="acceptsInternationalPatients"/.test(signup), "ProviderSignup must not render the intl checkbox");
+  const editor = await read("src/pages/provider/ListingEditor.tsx");
+  inc(add, "checked={draft.accepts_international_patients}");
+  inc(add, "insertPayload.accepts_international_patients = true");
+  assert(!/isConciergePartner/.test(editor), "ListingEditor must not gate the toggle on the retired Concierge add-on");
+  inc(editor, "accepts_international_patients: facility.accepts_international_patients ?? false");
 });
 
 // ── 3. duplicate-checkout guard ──────────────────────────────────────────────
