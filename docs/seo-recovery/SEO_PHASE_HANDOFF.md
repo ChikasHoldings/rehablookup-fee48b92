@@ -26,6 +26,12 @@
 * **May 29 / GA:** the GA switch was on 2026-05-09 and cannot affect Google Search (`SEO_ROOT_CAUSE_INVESTIGATION.md`).
 * **SAMHSA expansion: deferred by the owner** until the platform fixes are complete.
 
+## Completed in Phase 1, batch 4 (2026-11-24, owner-requested, PR #92)
+* **Firewall:** owner switched AI Bots off; verified in observability (all AI crawler requests allowed).
+* **International patients:** self-serve opt-in for every listing (migration `20261124000100`); opted-in listings show a badge and appear on `/us-rehab` and `/us-rehab/international-patients`.
+* **Consolidation of the app-noindexed pages (519 → 0):** specialty × location pages 301 to the location hubs (no data supports the specialties); thin treatment × city pages redirect to the state treatment page when the live directory has no matching listing (decided every build, never on cached/failed data); state pages link only the city pages that stay; 5 retired article slugs 301 to live guides; redirect sources no longer advertised in `sitemap-extras.xml`.
+* **Trust copy:** 0 of 3,796 listings are verified, so "verified programs/facilities" claims were removed from 38 source files and 15 article bodies (migration `20261124000200`, with backup); `check:trust-claims` blocks them.
+
 ## Completed in Phase 1, batch 3 (2026-11-23, owner-requested, PR #91)
 * **International pages** (`/us-rehab/*`, 14 pages): no longer claim RehabLookup runs intake, matches patients, arranges visas, travel or insurance, or negotiates with or vets facilities. They describe a directory: compare programs, then contact the facility.
 * **Concierge Partner add-on retired in the provider portal:** 0 holders, 0 introductions and 0 active subscriptions ever. The offer was removed everywhere, `/provider/marketing/concierge` shows a notice, and checkout refuses `concierge` (410). "Verified Leads" became "Direct Inquiries".
@@ -64,7 +70,7 @@
 2. Record any owner answers (blockers 1–9) in the log; a manual action makes the removal waves urgent.
 3. ~~Deploy the seeker-email edge functions~~ — **done 2026-11-23** (10/10 via the deploy workflow, after adding `--yes` for the current Supabase CLI).
 4. ~~Verify the first production build log~~ — **done**: production build `dpl_Cc7TdhMdaYVKVweFRBTcxyQm3dg1` wrote 2,147/2,754 snapshots via Playwright's Chromium. Keep an eye on this line in every build log (monitoring plan).
-5. **Remaining parity gaps for the owner's removal decisions** (generator HTML kept): about 511 routes the app itself noindexes (unsupported treatment × state, consolidated duplicate articles). *Fixed in batch 3:* the best-cities articles, the specialty/treatment 404s, and client redirects (now mirrored as crawler 301s). Lists come from the snapshot report (`node_modules/.cache/crawler-snapshots/report.json` after a build).
+5. ~~Remaining parity gaps~~ — **done in batch 4**: 0 app-noindexed routes serve indexable crawler HTML (production build 2026-11-24).
 6. *(Previous batch-2 list, now done except where noted:)*
    1. Stop injecting gtag into crawler-only HTML (`scripts/backfill-ga-snippet.mjs`) — F-15.
    2. Redeploy the `sitemap-facilities` edge function so the live response matches source (`application/xml`, `updated_at` lastmod) — F-14; verify from an allowed network.

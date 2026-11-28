@@ -58,6 +58,7 @@ import { PageFAQ } from "@/components/seo/PageFAQ";
 import { buildProfileFAQs } from "@/lib/buildProfileFAQs";
 import { ProfileDirectoryCTACard } from "@/components/profile/ProfileDirectoryCTACard";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
+import { locationHubs } from "@/lib/seo/locationHubs";
 import { loadFacilityBySlug } from "@/hooks/useFacilityBySlug";
 import { loadFacilityDetails } from "@/hooks/useFacilityDetails";
 // Premium facility-profile augmentation components (Phase 3 v2). The
@@ -820,13 +821,14 @@ const CenterProfile = () => {
           acceptingAdmissions: facility.accepting_admissions ?? null,
         })}
         breadcrumbs={(() => {
-          const stateSlug = facility.state.toLowerCase().replace(/\s+/g, "-");
-          const citySlug = facility.city.toLowerCase().replace(/\s+/g, "-");
+          const statePath = locationHubs.statePath(facility.state);
+          // Link the city only when its hub exists (most small towns have none).
+          const cityPath = locationHubs.cityPath(facility.state, facility.city);
           return [
             { name: "Home", url: "/" },
             { name: "Find Rehab", url: "/locations" },
-            { name: facility.state, url: `/rehab-centers/${stateSlug}` },
-            { name: facility.city, url: `/rehab-centers/${stateSlug}/${citySlug}` },
+            ...(statePath ? [{ name: facility.state, url: statePath }] : []),
+            ...(cityPath ? [{ name: facility.city, url: cityPath }] : []),
             { name: facility.name, url: `/center/${facility.slug}` },
           ];
         })()}
@@ -837,14 +839,15 @@ const CenterProfile = () => {
       <div className="bg-gradient-to-b from-muted/40 via-background to-background min-h-screen pb-24 md:pb-8">
         <div className="container max-w-7xl px-4 py-6 md:px-6 md:py-10">
           {(() => {
-            const stateSlug = facility.state.toLowerCase().replace(/\s+/g, "-");
-            const citySlug = facility.city.toLowerCase().replace(/\s+/g, "-");
+            const statePath = locationHubs.statePath(facility.state);
+            const cityPath = locationHubs.cityPath(facility.state, facility.city);
             return (
               <BreadcrumbNav
                 items={[
-                  { label: "Find Rehab", href: "/rehab-centers" },
-                  { label: facility.state, href: `/rehab-centers/${stateSlug}` },
-                  { label: facility.city, href: `/rehab-centers/${stateSlug}/${citySlug}` },
+                  { label: "Find Rehab", href: "/locations" },
+                  statePath ? { label: facility.state, href: statePath } : { label: facility.state },
+                  // Plain text (no link) when the city has no hub page.
+                  cityPath ? { label: facility.city, href: cityPath } : { label: facility.city },
                   { label: facility.name },
                 ]}
                 className="mb-4"

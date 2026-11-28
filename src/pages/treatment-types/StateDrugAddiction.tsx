@@ -36,7 +36,8 @@ const StateDrugAddiction = () => {
   }
 
   const { name: stateName, abbreviation, cities } = stateData;
-  // Only cities whose treatment × city page has listings (the others redirect).
+  // Cities with at least one matching listing; each links to its city hub
+  // (treatment × city pages were consolidated into the city hubs, 2026-11-28).
   const linkedCities = citiesWithListings ? cities.filter((c) => citiesWithListings.has(c.name.toLowerCase())) : cities;
   const nearbyStates = getNearbyStates(stateSlug!, 4);
   const cityNames = cities.map((c) => c.name);
@@ -150,10 +151,10 @@ const StateDrugAddiction = () => {
             <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">Find Drug Rehab by City in {stateName}</h2>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {linkedCities.map((city) => (
-                <Link key={city.slug} to={`/treatment-types/drug-addiction/${stateSlug}/${city.slug}`}
+                <Link key={city.slug} to={`/rehab-centers/${stateSlug}/${city.slug}`}
                   className="group p-5 rounded-xl border bg-background hover:border-primary hover:shadow-lg transition-all">
                   <h3 className="font-semibold group-hover:text-primary transition-colors">{city.name}</h3>
-                  <p className="text-sm text-muted-foreground mt-1">Drug rehab programs</p>
+                  <p className="text-sm text-muted-foreground mt-1">Listed treatment centers</p>
                   <div className="mt-3 flex items-center text-sm text-primary opacity-0 group-hover:opacity-100 transition-opacity">
                     <span>View centers</span><ArrowRight className="ml-1 h-4 w-4" />
                   </div>

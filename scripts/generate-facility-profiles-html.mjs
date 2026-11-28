@@ -33,6 +33,11 @@ import {
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { seoHeader, seoFooter, seoStyles } from "./_seo-page-shell.mjs";
+import { statesData } from "../src/data/locationSeoData.ts";
+import { createLocationHubResolver } from "../src/lib/seo/cityHubs.mjs";
+
+// Link only to location hubs that exist (see src/lib/seo/cityHubs.mjs).
+const locationHubs = createLocationHubResolver(statesData);
 import {
   fetchPaginated,
   writeFacilityManifest,
@@ -793,7 +798,10 @@ function renderFacilityHtml(f, kids) {
   const slug = f.slug;
   const canonical = `${BASE_URL}/center/${slug}`;
   const stateSlug = locationSlug(f.state);
-  const cityHrefSlug = locationSlug(f.city);
+  // Both null when no hub page exists (e.g. District of Columbia has no state hub).
+  const stateHref = locationHubs.statePath(f.state);
+  // null when the city has no hub page (most small towns): link the state.
+  const cityHref = locationHubs.cityPath(f.state, f.city);
 
   // Facilities that share name+city+state with a sibling (multi-location orgs,
   // e.g. several "Crossroads" sites in one city) would otherwise emit identical
@@ -815,8 +823,8 @@ function renderFacilityHtml(f, kids) {
   const breadcrumbs = [
     { name: "Home", url: `${BASE_URL}/` },
     { name: "Find Rehab", url: `${BASE_URL}/locations` },
-    { name: f.state, url: `${BASE_URL}/rehab-centers/${stateSlug}` },
-    { name: f.city, url: `${BASE_URL}/rehab-centers/${stateSlug}/${cityHrefSlug}` },
+    ...(stateHref ? [{ name: f.state, url: `${BASE_URL}${stateHref}` }] : []),
+    ...(cityHref ? [{ name: f.city, url: `${BASE_URL}${cityHref}` }] : []),
     { name: f.name, url: canonical },
   ];
 
@@ -1046,9 +1054,9 @@ ${seoHeader()}
 <main class="rl-main">
 <nav class="breadcrumbs" aria-label="Breadcrumb"><ul>
 <li><a href="/">Home</a> &rsaquo; </li>
-<li><a href="/rehab-centers">Find Rehab</a> &rsaquo; </li>
-<li><a href="/rehab-centers/${stateSlug}">${escapeHtml(f.state)}</a> &rsaquo; </li>
-<li><a href="/rehab-centers/${stateSlug}/${cityHrefSlug}">${escapeHtml(f.city)}</a> &rsaquo; </li>
+<li><a href="/locations">Find Rehab</a> &rsaquo; </li>
+${stateHref ? `<li><a href="${stateHref}">${escapeHtml(f.state)}</a> &rsaquo; </li>` : `<li>${escapeHtml(f.state)} &rsaquo; </li>`}
+${cityHref ? `<li><a href="${cityHref}">${escapeHtml(f.city)}</a> &rsaquo; </li>` : `<li>${escapeHtml(f.city)} &rsaquo; </li>`}
 <li>${escapeHtml(f.name)}</li>
 </ul></nav>
 <h1>${escapeHtml(f.name)}</h1>
@@ -1067,9 +1075,10 @@ ${contactCta}
 <section class="related">
 <h2>Search Other Rehab Centers</h2>
 <ul>
-<li><a href="/rehab-centers/${stateSlug}/${cityHrefSlug}">Rehab centers in ${escapeHtml(f.city)}, ${escapeHtml(f.state)}</a></li>
-<li><a href="/rehab-centers/${stateSlug}">All rehab centers in ${escapeHtml(f.state)}</a></li>
-<li><a href="/rehab-centers">Browse the full RehabLookup directory</a></li>
+${cityHref ? `<li><a href="${cityHref}">Rehab centers in ${escapeHtml(f.city)}, ${escapeHtml(f.state)}</a></li>
+` : ""}${stateHref ? `<li><a href="${stateHref}">All rehab centers in ${escapeHtml(f.state)}</a></li>
+` : ""}
+<li><a href="/locations">Browse the full RehabLookup directory</a></li>
 <li><a href="/search-results">Search other treatment centers</a></li>
 </ul>
 </section>

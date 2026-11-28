@@ -8,6 +8,7 @@
 // prefix in src/App.tsx so `npm run check:internal-links` stays green.
 
 import { isLocationConsolidated } from "@/lib/seo/consolidatedTreatments";
+import { locationHubs } from "@/lib/seo/locationHubs";
 
 export interface RelatedLink {
   title: string;
@@ -127,7 +128,6 @@ export function buildProfileRelatedLinks({
   maxPerCategory = 5,
 }: BuildArgs): RelatedLinkSets {
   const stateSlug = slugify(state);
-  const citySlug = slugify(city);
 
   // ─── Treatment links: family-aware dedupe, scope to this state ───
   // Track best (lowest-priority) match per family AND per slug. We collect
@@ -168,7 +168,9 @@ export function buildProfileRelatedLinks({
   const treatmentSlugsEmitted = new Set<string>();
   const treatmentFamiliesEmitted = new Set<string>();
   const treatmentLinksAll: RelatedLink[] = [];
+  const stateKnown = !!locationHubs.statePath(state);
   for (const cand of familyBest.values()) {
+    if (!stateKnown) break; // e.g. District of Columbia: no /treatment-types/{type}/{state} pages
     if (seenSlugs.has(cand.slug)) continue;
     // Consolidated into the state hub (no facility data for the specialty):
     // a "{label} in {state}" link would only redirect.
@@ -194,17 +196,22 @@ export function buildProfileRelatedLinks({
   // Only add the Inpatient/Outpatient state shortcuts when the treatment
   // bucket didn't already feature that "setting" family — otherwise we'd
   // emit /treatment-types/residential-inpatient/<state> twice on the page.
+  // The city hub exists only for the cities in locationSeoData; otherwise
+  // the link would 404, so the state hub carries the location bucket.
+  const cityHubPath = locationHubs.cityPath(state, city);
+  const statePath = locationHubs.statePath(state);
   const locationCandidates: RelatedLink[] = [
-    { title: `All Rehabs in ${city}`, href: `/rehab-centers/${stateSlug}/${citySlug}` },
-    { title: `${state} Treatment Directory`, href: `/rehab-centers/${stateSlug}` },
+    ...(cityHubPath ? [{ title: `All Rehabs in ${city}`, href: cityHubPath }] : []),
+    ...(statePath ? [{ title: `${state} Treatment Directory`, href: statePath }] : []),
   ];
-  if (!treatmentSlugsEmitted.has("residential-inpatient")) {
+  // State-level treatment pages exist only for the 50 states in locationSeoData.
+  if (statePath && !treatmentSlugsEmitted.has("residential-inpatient")) {
     locationCandidates.push({
       title: `Inpatient Rehab in ${state}`,
       href: `/treatment-types/residential-inpatient/${stateSlug}`,
     });
   }
-  if (!treatmentSlugsEmitted.has("outpatient-programs")) {
+  if (statePath && !treatmentSlugsEmitted.has("outpatient-programs")) {
     locationCandidates.push({
       title: `Outpatient in ${state}`,
       href: `/treatment-types/outpatient-programs/${stateSlug}`,

@@ -51,7 +51,8 @@ const StateDetoxPrograms = () => {
   }
 
   const { name: stateName, abbreviation, cities } = stateData;
-  // Only cities whose treatment × city page has listings (the others redirect).
+  // Cities with at least one matching listing; each links to its city hub
+  // (treatment × city pages were consolidated into the city hubs, 2026-11-28).
   const linkedCities = citiesWithListings ? cities.filter((c) => citiesWithListings.has(c.name.toLowerCase())) : cities;
   const nearbyStates = getNearbyStates(stateSlug!, 4);
   const cityNames = cities.map(c => c.name);
@@ -221,12 +222,12 @@ const StateDetoxPrograms = () => {
             <h2 className="text-2xl font-bold text-center md:text-3xl mb-8">Detox Centers by City in {stateName}</h2>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 max-w-5xl mx-auto">
               {linkedCities.map(city => (
-                <Link key={city.slug} to={`/treatment-types/detox-programs/${stateSlug}/${city.slug}`}
+                <Link key={city.slug} to={`/rehab-centers/${stateSlug}/${city.slug}`}
                   className="group flex items-center gap-3 rounded-xl border bg-card p-4 hover:shadow-md transition-all hover:border-primary/30">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10"><MapPin className="h-5 w-5 text-primary" /></div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold group-hover:text-primary transition-colors">Detox in {city.name}, {abbreviation}</h3>
-                    <p className="text-sm text-muted-foreground truncate">Medical detox centers</p>
+                    <h3 className="font-semibold group-hover:text-primary transition-colors">{city.name}, {abbreviation}</h3>
+                    <p className="text-sm text-muted-foreground truncate">Listed treatment centers</p>
                   </div>
                   <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
                 </Link>

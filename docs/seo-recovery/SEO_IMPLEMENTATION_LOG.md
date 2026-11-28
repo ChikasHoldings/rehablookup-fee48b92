@@ -4,6 +4,26 @@ Append-only log. Each entry records what changed, where, how it was tested, and 
 
 ---
 
+## 2026-11-28 · Phase 1 batch 5 · crawler 404s from internal links
+
+**Owner request:** "continue fixing".
+
+### What production showed (Vercel observability, 2026-11-24 → 11-28, search and AI crawlers)
+* Googlebot: ~810 × 200 in four days (low crawl rate), almost no errors. AI crawlers: GPTBot 5,390 × 404 and PerplexityBot 2,504 × 404, almost all on 11-24 (the first day after the firewall change), one or two hits per URL across thousands of URLs.
+* Two sources, both **internal links to pages that do not exist for crawlers**:
+  1. **Facility profiles → missing city hubs.** Every profile linked `/rehab-centers/{state}/{lowercased city}` (breadcrumb, BreadcrumbList schema, "Rehab centers in {city}"). City hubs exist only for the 1,103 cities in `locationSeoData`, so **2,165 of 3,796 profiles** (1,551 cities) linked a 404, some with the wrong slug (`arlington` vs `arlington-tx`); 18 DC profiles linked a non-existent DC state hub.
+  2. **State treatment pages → treatment × city pages.** The state pages linked ~1,750 `/treatment-types/{type}/{state}/{city}` pages; ~1,680 had no crawler page (404 for crawlers, a working SPA page for visitors). Measured against the city hub, these pages listed **92% (drug addiction; 120 of 183 identical), 84% (outpatient), 74% (dual diagnosis)** of the same facilities; only detox (38%) and alcohol (37%) were distinct subsets, 29 pages with ≥ 3 listings.
+
+### Changes
+* **One resolver for location links** (`src/lib/seo/cityHubs.mjs`, shared by the SPA and `generate-facility-profiles-html.mjs`): link a city hub only when it exists, using its real slug; otherwise show the city as plain text and link the state hub; states without a hub (DC) likewise. Applied to profile breadcrumbs, BreadcrumbList schema, related links and the "Search other rehab centers" block; "Find Rehab" now links `/locations` instead of the `/rehab-centers` redirect. Regenerated locally: **11,154 location/treatment links in 3,796 profiles, 0 broken** (2,165 profiles had a broken city link before).
+* **Treatment × city pages consolidated into the city hubs (301).** `/treatment-types/{alcohol-rehabilitation|detox-programs|drug-addiction|dual-diagnosis-treatment|residential-inpatient|outpatient-programs}/:state/:city` → `/rehab-centers/:state/:city`, with 26 explicit rules for slugs whose hub differs (e.g. `texas/arlington` → `arlington-tx`, NYC boroughs → `new-york-city`, no hub → state hub) and 23 legacy alias rules re-pointed so no chain forms. App routes navigate the same way; the six city components and `TreatmentCityHero` are deleted. State treatment pages keep the "by city" list (cities with matching listings) but link each city hub. State-level treatment pages are unchanged. This supersedes batch 4's data-driven city redirect.
+
+### Validation (local)
+* `vitest run` 62 files / 1,107 passed (new `locationHubs` tests: real hub, alternate slug, no-hub town, every resolvable hub has a prerendered page); lint, `check:undefined-identifiers`, `check:redirect-parity` (0 missing), `check-redirect-targets` (0 dead, 0 chained), internal links: pass.
+* Local render: `/treatment-types/outpatient-programs/texas` links 20 city hubs and 0 treatment × city pages; `/treatment-types/outpatient-programs/texas/dallas` → `/rehab-centers/texas/dallas`; the Calistoga facility profile links no missing hub.
+
+---
+
 ## 2026-11-24 · Phase 1 batch 4 · consolidation of the app-noindexed pages, international opt-in
 
 **Owner request:** "International patients: add it so providers can opt in." "About 520 noindex pages: consolidate, fix thin, duplicate, template pages. We want to ensure all remaining pages are fully indexable and rank correctly." Firewall AI Bots change done by the owner. Then: "when done, merge and deploy".
@@ -38,6 +58,12 @@ Vercel observability, 2026-11-23 20:30 → 2026-11-24 06:00 UTC, AI bot categori
 ### Validation (local)
 * `vitest run` 61 files / 1,103 passed; `check:undefined-identifiers`, `check:redirect-parity` (103/103), `check-redirect-targets` (0 dead, 0 chained), internal links, trust claims, fake inventory, retired-concierge shell: pass.
 * Local render (fresh build, live data): specialty state/city pages → state/city hub; `/treatment-types/residential-inpatient/texas/dallas`, `/…/alaska/fairbanks`, `/outpatient-programs/hawaii/kailua` → state treatment page; `/outpatient-programs/texas/dallas`, `/dual-diagnosis-treatment/texas/dallas` snapshot as indexable pages; residential Texas lists 0 cities (no Texas listing records residential care), outpatient Texas lists 20.
+
+### Deployment record
+* **Merged:** PR #92, squash `391f60f2b5` (SEO Validators green; final preview `dpl_3ySLvwd23kmJ2vKW28SZo7GaCJgg` clean).
+* **Production:** `dpl_7SyeddSRvkKnKTZDUpNHhgTveM25` READY 2026-11-24 ~08:20 UTC (aliases rehablookup.com, www). Build log: 2,331 routes selected (2,754 before the batch), 2,188 snapshots, **0 routes where the app is noindex but crawler HTML was indexable (519 in batch 3's production build)**, 143 client-side redirects mirrored as crawler 301s, resources 109/109, city hubs 484/484, no other divergent route. Runtime errors (1 h): none.
+* **Database (applied earlier, live before the deploy):** `20261124000100` (international opt-in), `20261124000200` (article copy, backup in `seo_recovery_backup`).
+* **Not verified from here:** live HTTP on rehablookup.com (Vercel Security Checkpoint). Owner checks in Search Console: URL Inspection on `/treatment-types/faith-based-rehab/texas` (expect 301 → `/rehab-centers/texas`), `/treatment-types/residential-inpatient/texas/dallas` (expect 301 → `/treatment-types/residential-inpatient/texas`), `/treatment-types/outpatient-programs/texas/dallas` (expect 200, indexable); resubmit `sitemap-index.xml`.
 
 ### Not in this batch (owner approval still required)
 The removal waves A–D in `SEO_REMOVAL_PLAN.md` (~37,000 near-me, city-combo, insurance × county, county × service and provider-marketing URLs) are a separate decision: they are excluded from crawler snapshots and keep their generator pages.
