@@ -20,20 +20,9 @@ export function CityLinkGrid({
   
   if (!state || !state.cities.length) return null;
 
-  const getHref = (citySlug: string) => {
-    switch (treatmentType) {
-      case "detox":
-        return `/treatment-types/detox-programs/${stateSlug}/${citySlug}`;
-      case "inpatient":
-        return `/treatment-types/residential-inpatient/${stateSlug}/${citySlug}`;
-      case "outpatient":
-        return `/treatment-types/outpatient-programs/${stateSlug}/${citySlug}`;
-      case "dual-diagnosis":
-        return `/treatment-types/dual-diagnosis-treatment/${stateSlug}/${citySlug}`;
-      default:
-        return `/rehab-centers/${stateSlug}/${citySlug}`;
-    }
-  };
+  // Treatment × city pages were consolidated into the city hubs (2026-11-28),
+  // so every variant links the hub; treatmentType only changes the labels.
+  const getHref = (citySlug: string) => `/rehab-centers/${stateSlug}/${citySlug}`;
 
   const getTreatmentLabel = () => {
     switch (treatmentType) {

@@ -11,7 +11,7 @@
     "generate:county-pages": "node --experimental-strip-types scripts/generate-county-pages.mjs",
     "generate:missing-html": "node scripts/generate-missing-html.mjs",
     "generate:gsc-recovery-html": "node scripts/generate-gsc-recovery-html.mjs",
-    "generate:facility-profiles-html": "node scripts/generate-facility-profiles-html.mjs",
+    "generate:facility-profiles-html": "node --experimental-strip-types scripts/generate-facility-profiles-html.mjs",
     "generate:prerender-manifest": "node scripts/generate-prerender-manifest.mjs",
     "sync:prerendered-shell": "node scripts/sync-prerendered-shell.mjs --apply",
     "check:prerendered-shell": "node scripts/sync-prerendered-shell.mjs",

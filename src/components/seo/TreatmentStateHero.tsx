@@ -155,7 +155,7 @@ export function TreatmentStateHero({
                   // (10% bg vs 90% text was a same-shade collision).
                   <Link
                     key={city.slug}
-                    to={`${treatmentHubHref}/${stateSlug}/${city.slug}`}
+                    to={`/rehab-centers/${stateSlug}/${city.slug}`}
                     className="shrink-0 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white/90 ring-1 ring-white/15 transition hover:bg-white/30 hover:text-white"
                   >
                     {city.name}

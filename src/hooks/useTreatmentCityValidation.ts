@@ -1,18 +1,13 @@
 import { useMemo } from "react";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { treatmentCenters } from "@/data/treatmentCenters";
-import { validatePage, type PageType } from "@/utils/seoPageValidator";
 
 /**
- * Shared indexability gate for legacy `/treatment-types/{type}/{state}/{city}` pages.
+ * Treatment keyword matching for the state treatment pages' city lists.
  *
- * Counts facilities that match BOTH the city/state AND a treatment-type keyword.
- * Returns `validatePage()` output so the page can render `noindex` when there is
- * no real local inventory and no usable state-level fallback.
- *
- * Used to eliminate the long tail of "Crawled - currently not indexed" and
- * "Soft 404" GSC issues on combo pages where Google sees a templated layout
- * with zero real listings.
+ * Treatment × city pages (/treatment-types/{type}/{state}/{city}) were
+ * consolidated into the city hubs on 2026-11-28; state treatment pages still
+ * list the cities that have matching listings and link each city hub.
  */
 /** The live directory lists ~3,800 facilities; fewer than this means a failed or partial load. */
 const MIN_PLAUSIBLE_DIRECTORY_SIZE = 500;
@@ -65,52 +60,3 @@ export function useTreatmentCitiesWithListings(
   }, [approvedFacilities, isFresh, stateName, treatmentKeywords]);
 }
 
-export function useTreatmentCityValidation(opts: {
-  stateName: string | undefined;
-  cityName: string | undefined;
-  /** Substrings to match against facility.treatmentTypes / description (lowercased). */
-  treatmentKeywords: string[];
-  /** Validator page type — controls minimum facility threshold. */
-  pageType?: PageType;
-}) {
-  const { stateName, cityName, treatmentKeywords, pageType = "city-treatment" } = opts;
-  const { data: approvedFacilities = [], isFresh } = useStaticFacilities();
-  // Decisions that send visitors elsewhere (thin-page consolidation) may only
-  // be taken on the live directory: never on the cached placeholder, and never
-  // on an empty or truncated response (a failed fetch must not look "thin").
-  const ready = !!isFresh && approvedFacilities.length >= MIN_PLAUSIBLE_DIRECTORY_SIZE;
-
-  return useMemo(() => {
-    if (!stateName || !cityName) {
-      return {
-        directMatchCount: 0,
-        stateFallbackCount: 0,
-        ready,
-        validation: { shouldIndex: false, facilityCount: 0, hasMinimumContent: false, recommendation: "noindex" as const },
-      };
-    }
-
-    const all = [...treatmentCenters, ...approvedFacilities];
-    const stateLower = stateName.toLowerCase();
-    const cityLower = cityName.toLowerCase();
-    const keys = treatmentKeywords.map((k) => k.toLowerCase()).filter(Boolean);
-
-    const matchesKeyword = (f: (typeof all)[number]) => facilityMatchesTreatment(f, keys);
-
-    const stateMatched = all.filter((f) => f.state.toLowerCase() === stateLower);
-    const direct = stateMatched.filter(
-      (f) => f.city.toLowerCase() === cityLower && matchesKeyword(f)
-    );
-
-    const validation = validatePage(pageType, direct.length, {
-      stateFallbackCount: stateMatched.length,
-    });
-
-    return {
-      directMatchCount: direct.length,
-      stateFallbackCount: stateMatched.length,
-      ready,
-      validation,
-    };
-  }, [approvedFacilities, ready, stateName, cityName, treatmentKeywords, pageType]);
-}

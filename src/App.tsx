@@ -24,6 +24,7 @@ import { safeReturnTo } from "@/lib/safeReturnTo";
 import Index from "./pages/Index";
 const InquiryConfirmationPage = lazy(() => import("./pages/InquiryConfirmation"));
 import { SmartCatchAll } from "./components/SmartCatchAll";
+import { locationHubs } from "@/lib/seo/locationHubs";
 
 // Lazy load all other public pages for reduced initial bundle
 // RehabCenters page is no longer routed — bare /rehab-centers redirects to
@@ -41,10 +42,8 @@ const CenterProfile = lazy(() => import("./pages/CenterProfile"));
 const TreatmentTypes = lazy(() => import("./pages/TreatmentTypes"));
 const DrugAddictionTreatment = lazy(() => import("./pages/treatment-types/DrugAddictionTreatment"));
 const StateDrugAddiction = lazy(() => import("./pages/treatment-types/StateDrugAddiction"));
-const CityDrugAddiction = lazy(() => import("./pages/treatment-types/CityDrugAddiction"));
 const AlcoholRehabilitation = lazy(() => import("./pages/treatment-types/AlcoholRehabilitation"));
 const StateAlcoholRehab = lazy(() => import("./pages/treatment-types/StateAlcoholRehab"));
-const CityAlcoholRehab = lazy(() => import("./pages/treatment-types/CityAlcoholRehab"));
 const DualDiagnosisTreatment = lazy(() => import("./pages/treatment-types/DualDiagnosisTreatment"));
 const ResidentialInpatient = lazy(() => import("./pages/treatment-types/ResidentialInpatient"));
 const OutpatientPrograms = lazy(() => import("./pages/treatment-types/OutpatientPrograms"));
@@ -52,13 +51,9 @@ const HolisticTherapy = lazy(() => import("./pages/treatment-types/HolisticThera
 const DetoxPrograms = lazy(() => import("./pages/treatment-types/DetoxPrograms"));
 const LuxuryRehab = lazy(() => import("./pages/treatment-types/LuxuryRehab"));
 const StateDetoxPrograms = lazy(() => import("./pages/treatment-types/StateDetoxPrograms"));
-const CityDetoxPrograms = lazy(() => import("./pages/treatment-types/CityDetoxPrograms"));
 const StateInpatientRehab = lazy(() => import("./pages/treatment-types/StateInpatientRehab"));
-const CityInpatientRehab = lazy(() => import("./pages/treatment-types/CityInpatientRehab"));
 const StateOutpatientPrograms = lazy(() => import("./pages/treatment-types/StateOutpatientPrograms"));
-const CityOutpatientPrograms = lazy(() => import("./pages/treatment-types/CityOutpatientPrograms"));
 const StateDualDiagnosis = lazy(() => import("./pages/treatment-types/StateDualDiagnosis"));
-const CityDualDiagnosis = lazy(() => import("./pages/treatment-types/CityDualDiagnosis"));
 const ExpandedTreatmentHubPage = lazy(() => import("./pages/seo/ExpandedTreatmentHubPage"));
 const ExpandedTreatmentNationalHub = lazy(() => import("./pages/treatment-types/ExpandedTreatmentNationalHub"));
 const CityInsurancePage = lazy(() => import("./pages/seo/CityInsurancePage"));
@@ -424,15 +419,20 @@ function BlogRedirect() {
   return <Navigate to={`/resources/${id}`} replace />;
 }
 
-// Specialty × location pages (luxury, sober living, free, faith-based,
-// fentanyl, veterans, women's, men's, holistic) were consolidated into the
-// location hubs on 2026-11-24: no facility attribute supports the specialty,
-// so each page was a template over the same listings as /rehab-centers/:state
-// (Google had already chosen the state hub as canonical). vercel.json carries
-// the matching 301s; the national specialty guides remain.
+// Location consolidations. vercel.json carries the matching 301s.
+// * Specialty × location (luxury, sober living, free, faith-based, fentanyl,
+//   veterans, women's, men's, holistic), 2026-11-24: no facility attribute
+//   supports the specialty, so each page was a template over the state or
+//   city hub's listings. The national specialty guides remain.
+// * Treatment × city (alcohol, detox, drug, dual diagnosis, residential,
+//   outpatient), 2026-11-28: they listed 74–92% of the city hub's facilities
+//   and most had no crawler page (crawlers got 404s from the state pages'
+//   city links). State-level treatment pages remain.
 function NavigateToLocationHub() {
   const { stateSlug, citySlug } = useParams();
-  return <Navigate to={`/rehab-centers/${stateSlug}${citySlug ? `/${citySlug}` : ""}`} replace />;
+  const statePath = locationHubs.statePath(stateSlug) ?? "/locations";
+  const cityPath = citySlug ? locationHubs.cityPath(stateSlug, citySlug) : null;
+  return <Navigate to={cityPath ?? statePath} replace />;
 }
 
 // Legacy /outpatient-near-me/<state> → canonical /outpatient-rehab-near-me/<state>.
@@ -711,20 +711,20 @@ const AppInner = () => {
             <Route path="/treatment-types/drug-addiction" element={<Navigate to="/treatment-types/drug-addiction-treatment" replace />} />
             <Route path="/treatment-types/drug-addiction-treatment" element={<PublicRouteGuard><DrugAddictionTreatment /></PublicRouteGuard>} />
             <Route path="/treatment-types/drug-addiction/:stateSlug" element={<PublicRouteGuard><StateDrugAddiction /></PublicRouteGuard>} />
-            <Route path="/treatment-types/drug-addiction/:stateSlug/:citySlug" element={<PublicRouteGuard><CityDrugAddiction /></PublicRouteGuard>} />
+            <Route path="/treatment-types/drug-addiction/:stateSlug/:citySlug" element={<NavigateToLocationHub />} />
             <Route path="/treatment-types/alcohol-rehabilitation" element={<PublicRouteGuard><AlcoholRehabilitation /></PublicRouteGuard>} />
             <Route path="/treatment-types/alcohol-rehabilitation/:stateSlug" element={<PublicRouteGuard><StateAlcoholRehab /></PublicRouteGuard>} />
-            <Route path="/treatment-types/alcohol-rehabilitation/:stateSlug/:citySlug" element={<PublicRouteGuard><CityAlcoholRehab /></PublicRouteGuard>} />
+            <Route path="/treatment-types/alcohol-rehabilitation/:stateSlug/:citySlug" element={<NavigateToLocationHub />} />
             <Route path="/treatment-types/dual-diagnosis" element={<Navigate to="/treatment-types/dual-diagnosis-treatment" replace />} />
             <Route path="/treatment-types/dual-diagnosis-treatment" element={<PublicRouteGuard><DualDiagnosisTreatment /></PublicRouteGuard>} />
             <Route path="/treatment-types/dual-diagnosis-treatment/:stateSlug" element={<PublicRouteGuard><StateDualDiagnosis /></PublicRouteGuard>} />
-            <Route path="/treatment-types/dual-diagnosis-treatment/:stateSlug/:citySlug" element={<PublicRouteGuard><CityDualDiagnosis /></PublicRouteGuard>} />
+            <Route path="/treatment-types/dual-diagnosis-treatment/:stateSlug/:citySlug" element={<NavigateToLocationHub />} />
             <Route path="/treatment-types/residential-inpatient" element={<PublicRouteGuard><ResidentialInpatient /></PublicRouteGuard>} />
             <Route path="/treatment-types/residential-inpatient/:stateSlug" element={<PublicRouteGuard><StateInpatientRehab /></PublicRouteGuard>} />
-            <Route path="/treatment-types/residential-inpatient/:stateSlug/:citySlug" element={<PublicRouteGuard><CityInpatientRehab /></PublicRouteGuard>} />
+            <Route path="/treatment-types/residential-inpatient/:stateSlug/:citySlug" element={<NavigateToLocationHub />} />
             <Route path="/treatment-types/outpatient-programs" element={<PublicRouteGuard><OutpatientPrograms /></PublicRouteGuard>} />
             <Route path="/treatment-types/outpatient-programs/:stateSlug" element={<PublicRouteGuard><StateOutpatientPrograms /></PublicRouteGuard>} />
-            <Route path="/treatment-types/outpatient-programs/:stateSlug/:citySlug" element={<PublicRouteGuard><CityOutpatientPrograms /></PublicRouteGuard>} />
+            <Route path="/treatment-types/outpatient-programs/:stateSlug/:citySlug" element={<NavigateToLocationHub />} />
             <Route path="/treatment-types/holistic-therapy" element={<PublicRouteGuard><HolisticTherapy /></PublicRouteGuard>} />
             <Route path="/treatment-types/holistic-therapy/:stateSlug" element={<NavigateToLocationHub />} />
             <Route path="/treatment-types/holistic-treatment" element={<Navigate to="/treatment-types/holistic-therapy" replace />} />
@@ -766,7 +766,7 @@ const AppInner = () => {
             {/* luxury-rehab national hub defined at line 524 */}
             <Route path="/treatment-types/detox-programs" element={<PublicRouteGuard><DetoxPrograms /></PublicRouteGuard>} />
             <Route path="/treatment-types/detox-programs/:stateSlug" element={<PublicRouteGuard><StateDetoxPrograms /></PublicRouteGuard>} />
-            <Route path="/treatment-types/detox-programs/:stateSlug/:citySlug" element={<PublicRouteGuard><CityDetoxPrograms /></PublicRouteGuard>} />
+            <Route path="/treatment-types/detox-programs/:stateSlug/:citySlug" element={<NavigateToLocationHub />} />
             
             {/* SEO Treatment Hub Pages */}
             <Route path="/alcohol-rehab-centers" element={<PublicRouteGuard><TreatmentHubPage /></PublicRouteGuard>} />

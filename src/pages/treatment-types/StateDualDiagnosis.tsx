@@ -51,7 +51,8 @@ const StateDualDiagnosis = () => {
   }
 
   const { name: stateName, abbreviation, cities } = stateData;
-  // Only cities whose treatment × city page has listings (the others redirect).
+  // Cities with at least one matching listing; each links to its city hub
+  // (treatment × city pages were consolidated into the city hubs, 2026-11-28).
   const linkedCities = citiesWithListings ? cities.filter((c) => citiesWithListings.has(c.name.toLowerCase())) : cities;
   const nearbyStates = getNearbyStates(stateSlug!, 4);
   const cityNames = cities.map(c => c.name);
@@ -214,10 +215,10 @@ const StateDualDiagnosis = () => {
             <h2 className="text-2xl font-bold text-center md:text-3xl mb-8">Dual Diagnosis Treatment by City in {stateName}</h2>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 max-w-5xl mx-auto">
               {linkedCities.slice(0, 12).map(city => (
-                <Link key={city.slug} to={`/treatment-types/dual-diagnosis-treatment/${stateSlug}/${city.slug}`}
+                <Link key={city.slug} to={`/rehab-centers/${stateSlug}/${city.slug}`}
                   className="flex items-center gap-3 rounded-xl border bg-card p-4 hover:shadow-md hover:border-primary/30 transition-all group">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10"><MapPin className="h-5 w-5 text-primary" /></div>
-                  <div className="flex-1"><h3 className="font-medium group-hover:text-primary transition-colors">{city.name}</h3><p className="text-sm text-muted-foreground">Dual Diagnosis Centers</p></div>
+                  <div className="flex-1"><h3 className="font-medium group-hover:text-primary transition-colors">{city.name}</h3><p className="text-sm text-muted-foreground">Listed treatment centers</p></div>
                   <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                 </Link>
               ))}
